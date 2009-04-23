@@ -540,24 +540,51 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.fileNameStem = fileNameStem;
         } else {
             // This is an additional partition so check it uses the same taxa
+        	if (!dataPanel.allowDifferentTaxa.isSelected()) { // not allow Different Taxa
+	            java.util.List<String> oldTaxa = new ArrayList<String>();
+	            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+	                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+	            }
+	            java.util.List<String> newTaxa = new ArrayList<String>();
+	            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+	                newTaxa.add(taxa.getTaxon(i).getId());
+	            }
+            
+	            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {              
+	                Object[] options = { "Allow Different Taxa", "No way!" };
+	                int adt = JOptionPane.showOptionDialog(this,
+							"This file contains different taxa from the previously loaded\n" +
+                            	"data partitions.\n\n" +
+                            	"Would you like to allow different taxa in these files?\n\n" +
+                            	"If no, please check the taxon name(s) before reloading the data\n file.",
+							"Validation of Non-matching Taxon Name(s)", 
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.QUESTION_MESSAGE, null, 
+							options, // the titles of buttons
+							options[0]); // default button title
 
-            java.util.List<String> oldTaxa = new ArrayList<String>();
-            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
-                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
-            }
-            java.util.List<String> newTaxa = new ArrayList<String>();
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                newTaxa.add(taxa.getTaxon(i).getId());
-            }
-
-            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                JOptionPane.showMessageDialog(this,
-                        "This file contains different taxa from the previously loaded\n" +
-                                "data partitions.\n\n" +
-                                "Please check the taxon name(s) before reloading the data file.",
-                        "Non-matching Taxon Name(s)",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
+					if (adt == JOptionPane.YES_OPTION) {
+						// set to Allow Different Taxa
+						dataPanel.allowDifferentTaxa.setSelected(true); 						
+						//changeTabs();// can be added, if required in future
+						
+						// add the new diff taxa
+		            	if (beautiOptions.multiTaxaList.size() < 1) {
+		            		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+		            	} 
+		            	beautiOptions.multiTaxaList.add(taxa);
+		            	 
+					} else {  
+						return;
+					}
+	            }
+            } else { // allow Different Taxa
+            	// add the new diff taxa
+            	if (beautiOptions.multiTaxaList.size() < 1) {
+            		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+            	}
+            	beautiOptions.multiTaxaList.add(taxa);
+            	
             }
         }
 

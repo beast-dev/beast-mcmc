@@ -42,6 +42,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -62,6 +64,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelAction = new LinkModelsAction();
     MapTaxaToSpeciesAction mapTaxaToSpeciesAction = new MapTaxaToSpeciesAction();
+    
+    JCheckBox allowDifferentTaxa = new JCheckBox("Allow different taxa");
 
     SelectModelDialog selectModelDialog = null;
 
@@ -114,9 +118,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         button = new JButton(mapTaxaToSpeciesAction);
-        unlinkModelsAction.setEnabled(true);
+        mapTaxaToSpeciesAction.setEnabled(true);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
+        
+        allowDifferentTaxa.setSelected(false);
+        toolBar1.add(allowDifferentTaxa);
+        
+        allowDifferentTaxa.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {            	          	
+                boolean sele = allowDifferentTaxa.isSelected();
+                options.allowDiffTaxa = sele; 
+                
+    /*            clearDatesAction.setEnabled(enabled);
+                guessDatesAction.setEnabled(enabled);
+                unitsLabel.setEnabled(enabled);
+                unitsCombo.setEnabled(enabled);
+                directionCombo.setEnabled(enabled);
+                scrollPane.setEnabled(enabled);
+                dataTable.setEnabled(enabled);
+                tipDateSamplingCombo.setEnabled(enabled);
+                tipDateSamplingLabel.setEnabled(enabled);*/
+                
+            }
+        });
         
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);
@@ -200,7 +225,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
             try {                
             	loadMappingFile (file);
             	
-            	//frame.changeTabs();// can be added, if required in future 
+            	// Allow Different Taxa
+				allowDifferentTaxa.setSelected(true); 
+				//frame.changeTabs();// can be added, if required in future 
+				
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                         "Unable to open file",

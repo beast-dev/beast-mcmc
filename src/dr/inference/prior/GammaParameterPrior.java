@@ -54,7 +54,8 @@ public class GammaParameterPrior extends AbstractParameterPrior {
     }
 
     public double getLogPriorComponent(double value) {
-        return Math.log(gammaDistribution.pdf(value));
+        return gammaDistribution.logPdf(value);
+       // return Math.log(gammaDistribution.pdf(value));
     }
 
     public Element createElement(Document d) {

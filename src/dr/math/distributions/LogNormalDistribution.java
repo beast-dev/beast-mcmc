@@ -26,11 +26,9 @@
 package dr.math.distributions;
 
 import dr.math.UnivariateFunction;
-import dr.math.interfaces.OneVariableFunction;
-import dr.math.iterations.BisectionZeroFinder;
 
 /**
- * normal distribution (pdf, cdf, quantile)
+ * log normal distribution (pdf, cdf, quantile)
  *
  * @author Korbinian Strimmer
  * @version $Id: LogNormalDistribution.java,v 1.3 2005/06/21 16:25:15 beth Exp $
@@ -41,7 +39,8 @@ public class LogNormalDistribution implements Distribution {
     //
 
     /**
-     * Constructor
+     * @param M the mean of the random variable's natural logarithm
+     * @param S the stdev of the random variable's natural logarithm
      */
     public LogNormalDistribution(double M, double S) {
         this.M = M;
@@ -86,6 +85,10 @@ public class LogNormalDistribution implements Distribution {
 
     public double variance() {
         return variance(M, S);
+    }
+
+    public double mode() {
+        return mode(M, S);
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -166,6 +169,17 @@ public class LogNormalDistribution implements Distribution {
     }
 
     /**
+     * mode
+     *
+     * @param M log mean
+     * @param S log standard deviation
+     * @return mode
+     */
+    public static double mode(double M, double S) {
+        return Math.exp(M - S * S);
+    }
+
+    /**
      * variance
      *
      * @param M log mean
@@ -181,20 +195,4 @@ public class LogNormalDistribution implements Distribution {
     // Private
 
     protected double M, S;
-
-
-    public static void main(String[] args) {
-
-        final LogNormalDistribution f = new LogNormalDistribution(1, 1);
-        for (double i = 0.01; i < 1; i += 0.01) {
-            final double y = i;
-            BisectionZeroFinder zeroFinder = new BisectionZeroFinder(new OneVariableFunction() {
-                public double value(double x) {
-                    return f.cdf(x) - y;
-                }
-            }, 0, 100);
-            zeroFinder.evaluate();
-            System.err.println("" + f.quantile(i) + "\t" + zeroFinder.getResult());
-        }
-    }
 }

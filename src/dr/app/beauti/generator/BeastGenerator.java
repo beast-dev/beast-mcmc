@@ -82,7 +82,8 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-
+    private final String mulitTaxaTagName = "gene";
+    
     private TreePriorGenerator treePriorGenerator;
     private TreeLikelihoodGenerator treeLikelihoodGenerator;
     private PartitionModelGenerator partitionModelGenerator;
@@ -170,6 +171,7 @@ public class BeastGenerator extends Generator {
         	}
         	
         	for (int n = 0; n < multiTaxaList.size(); n++) { 
+        		// TaxonList is a java class not a list
         		writeTaxa(writer, (TaxonList) multiTaxaList.get(n), n);
         	}
         }
@@ -178,8 +180,6 @@ public class BeastGenerator extends Generator {
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTaxonSets(writer, taxonSets);
         }
-        
-        
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
@@ -200,8 +200,14 @@ public class BeastGenerator extends Generator {
             int index = 1;
             for (Alignment alignment : alignments) {
                 if (alignments.size() > 1) {
-                    alignment.setId("alignment" + index);
-                } else alignment.setId("alignment");
+                	 //if (!options.allowDiffTaxa) {
+                		 alignment.setId("alignment" + index);
+                     //} else { // e.g. alignment_gene1
+                    	// alignment.setId("alignment_" + mulitTaxaTagName + index);
+                     //}
+                } else {
+                	alignment.setId("alignment");
+                }
                 writeAlignment(alignment, writer);
                 index += 1;
                 writer.writeText("");
@@ -280,6 +286,12 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
 
+        // species tag for multi-taxa
+        if (options.allowDiffTaxa) {
+        	//writeSpecies(writer, options.);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SPECIES, writer);
+        }
+         
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTMRCAStatistics(writer);
         }
@@ -315,20 +327,22 @@ public class BeastGenerator extends Generator {
      * @param taxonList the taxon list to write
      */
     private void writeTaxa(XMLWriter writer, TaxonList taxonList, int numOfTaxa) {
-    	
-    	if (numOfTaxa < 1) { // -1, 0
+    	// -1 (single taxa), 0 (1st gene of multi-taxa)
+    	if (numOfTaxa < 1) {
     		writer.writeComment("The list of taxa analyse (can also include dates/ages).");
     	} 
     	
-    	if (numOfTaxa < 0) {
+    	if (numOfTaxa < 0) { // single taxa
 	        writer.writeComment("ntax=" + taxonList.getTaxonCount());
-	        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id", "taxa")});
-    	} else {
-    		writer.writeComment("multi-taxa: taxa " + (numOfTaxa + 1));
+	        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id", 
+	        		"taxa")});
+    	} else { // multi-taxa
+    		writer.writeComment("multi-taxa: " + mulitTaxaTagName + " " + (numOfTaxa + 1));
     		writer.writeComment("ntax=" + taxonList.getTaxonCount());
 	        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id", 
-	        		"taxa" + Integer.toString(numOfTaxa + 1))}); // e.g. id = taxa1
+	        		mulitTaxaTagName + Integer.toString(numOfTaxa + 1))}); // e.g. id = gene1
     	}
+    	
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
@@ -338,9 +352,15 @@ public class BeastGenerator extends Generator {
             if (options.maximumTipHeight > 0.0) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
-
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id", taxon.getId())}, !hasDate);
-
+            
+            if (numOfTaxa < 0) { // single taxa 
+            	writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id", 
+            			taxon.getId())}, !hasDate);
+            } else { // multi-taxa
+            	writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id", 
+            			(taxon.getId() + "_" + mulitTaxaTagName + Integer.toString(numOfTaxa + 1)))}, !hasDate);
+            }
+            
             if (hasDate) {
                 dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
 
@@ -396,7 +416,18 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag("taxa");
         }
     }
-
+    
+    /**
+     * Generate a species for multi-taxa block from these beast options
+     *
+     * @param writer    the writer
+     * @param taxonList the taxon list to write
+     */
+    private void writeSpecies(XMLWriter writer, TaxonList taxonList) {
+    	
+    	
+    }
+    
     /**
      * Determine and return the datatype description for these beast options
      * note that the datatype in XML may differ from the actual datatype

@@ -581,8 +581,14 @@ public class BeautiFrame extends DocumentFrame {
             } else { // allow Different Taxa
             	// add the new diff taxa
             	if (beautiOptions.multiTaxaList.size() < 1) {
+            		// update the taxon name by adding gene name
+            		
+            		
             		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
             	}
+            	// update the taxon name by adding gene name
+            	
+            	
             	beautiOptions.multiTaxaList.add(taxa);
             	
             }

@@ -29,6 +29,10 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.app.util.Utils;
+
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -47,8 +51,8 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;;
 
 /**
  * @author Andrew Rambaut
@@ -223,7 +227,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
             try {                
-            	loadMappingFile (file);
+            	loadMappingFileToBeautiOption (file);
             	
             	// Allow Different Taxa
 				allowDifferentTaxa.setSelected(true); 
@@ -242,9 +246,26 @@ public class DataPanel extends BeautiPanel implements Exportable {
     	
     }
     
-    protected void loadMappingFile (File file) throws IOException {
+    protected void loadMappingFileToBeautiOption (File file) throws IOException {
+    	String delimiter = "|";    	
+    	Map<String, List<Taxon>> mapTaxonSpecies = new HashMap<String, List<Taxon>>();    	
     	
+    	Map<String, List<String>> mapTaxonNameListSpecies = Utils.readFileIntoMap (file, delimiter);
+    	List<TaxonList> multiTaxaList = options.multiTaxaList;
     	
+    	Set<String> keys = mapTaxonNameListSpecies.keySet();
+    	TreeSet<String> sortedKeys = new TreeSet<String> (keys);// sort keys
+    	
+    	for (String speci : sortedKeys) {
+			List<String> taxonNameList = mapTaxonNameListSpecies.get(speci);
+
+			for (TaxonList taxonList : multiTaxaList) {
+				for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+					Taxon taxon = taxonList.getTaxon(i);
+
+				}
+			}
+		}
     	
     }
     

@@ -104,7 +104,7 @@ public class GammaDistribution implements Distribution {
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
         }
@@ -598,8 +598,7 @@ public class GammaDistribution implements Distribution {
         int idx2 = 0;
         int max = 0;
         for (int i = 0; i < l1.size(); i++) {
-            while (idx2 < l2.size()
-                    && l2.get(idx2).doubleValue() < l1.get(i).doubleValue()) {
+            while (idx2 < l2.size() && l2.get(idx2) < l1.get(i) ) {
                 idx2++;
             }
             max = Math.max(max, idx2 - i);

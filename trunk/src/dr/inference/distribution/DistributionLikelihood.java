@@ -194,6 +194,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
+    public static final String INVGAMMA_PRIOR = "invgammaPrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
@@ -493,6 +494,54 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given gamma distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+      /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser INVGAMMA_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return INVGAMMA_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final double shape = xo.getDoubleAttribute(SHAPE);
+            final double scale = xo.getDoubleAttribute(SCALE);
+            final double offset = xo.getDoubleAttribute(OFFSET);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new InverseGammaDistribution(shape, scale), offset);
+
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(SHAPE),
+                AttributeRule.newDoubleRule(SCALE),
+                AttributeRule.newDoubleRule(OFFSET),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given inverse gamma distribution.";
         }
 
         public Class getReturnType() {

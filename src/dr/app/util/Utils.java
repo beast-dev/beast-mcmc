@@ -27,6 +27,9 @@ package dr.app.util;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
+import java.util.List;;
 
 /**
  *
@@ -34,7 +37,7 @@ import java.io.File;
  * @version
  */
 public class Utils {
-
+	
 	public static String getLoadFileName(String message) {
 		java.io.File file = getLoadFile(message);
 		if (file == null) return null;
@@ -74,6 +77,49 @@ public class Utils {
 		return file;
 	}
 
+	/**
+	 * Read mapping file of species and taxa, store it into a HashMap,
+	 * Key is the 1st column of file referring to species, Value is 
+	 * the List containing the rest of elements in the line referring to taxa.
+	 * @param file
+	 * @param delim, delimiters if null it will use the default in sys.
+	 * @return map, HashMap containing mapping between species and taxa. 
+	 */
+	public static Map<String, List<String>> readFileIntoMap(File file, String delim) {
+		Map<String, List<String>> map = new HashMap <String, List<String>>();
+		Scanner scanner = null;
+		
+		try {
+			scanner = new Scanner (file);
+		} catch (FileNotFoundException e) {
+			System.err.println("Exception to open file : " + e);
+			System.exit(1);
+		}
+		
+		String line;
+		StringTokenizer tok; 
+		String speci;
+		List<String> taxonNameList = new ArrayList<String> (); 
+		while (scanner.hasNextLine()) {
+			line = scanner.nextLine();	
+			
+			if (delim == null || delim.isEmpty()) {
+				tok = new StringTokenizer (line);
+			} else {
+				tok = new StringTokenizer (line, delim);
+			}
+			
+			speci = tok.nextToken().trim();
+			while (tok.hasMoreTokens()) {
+				taxonNameList.add(tok.nextToken().trim());				
+			}
+			map.put(speci, taxonNameList);
+			taxonNameList.clear();
+		}	
+		
+		return map;
+	}
+	
 	/**
 	 * This function takes a file name and an array of extensions (specified
 	 * without the leading '.'). If the file name ends with one of the extensions

@@ -1268,11 +1268,13 @@ public class BeautiOptions extends ModelOptions {
 
     public TaxonList taxonList = null;
     public List<TaxonList> multiTaxaList = new ArrayList<TaxonList>();
+    public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
+
     public DateGuesser dateGuesser = new DateGuesser();
 
     public List<String> traits = new ArrayList<String>();
     public Map<String, Class> traitTypes = new HashMap<String, Class>();
-
+    
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();

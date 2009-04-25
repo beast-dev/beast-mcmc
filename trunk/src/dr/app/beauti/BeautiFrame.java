@@ -15,6 +15,7 @@ import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.app.beauti.components.TipDateSamplingComponent;
+import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
@@ -34,8 +35,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
-import java.util.Date;
-import java.text.NumberFormat;
 
 /**
  * @author Andrew Rambaut
@@ -104,7 +103,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
         tipDatesPanel = new TipDatesPanel(this);
         tipSpeciesPanel = new TipSpeciesPanel(this);
-        traitsPanel = new TraitsPanel(this);
+        traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
         treesPanel = new TreesPanel(this);
@@ -540,7 +539,7 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.fileNameStem = fileNameStem;
         } else {
             // This is an additional partition so check it uses the same taxa
-        	if (!dataPanel.allowDifferentTaxa.isSelected()) { // not allow Different Taxa
+        	if (!dataPanel.allowDifferentTaxaCheck.isSelected()) { // not allow Different Taxa
 	            java.util.List<String> oldTaxa = new ArrayList<String>();
 	            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
 	                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
@@ -549,32 +548,32 @@ public class BeautiFrame extends DocumentFrame {
 	            for (int i = 0; i < taxa.getTaxonCount(); i++) {
 	                newTaxa.add(taxa.getTaxon(i).getId());
 	            }
-            
-	            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {              
+
+	            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
 	                Object[] options = { "Allow Different Taxa", "No way!" };
 	                int adt = JOptionPane.showOptionDialog(this,
 							"This file contains different taxa from the previously loaded\n" +
                             	"data partitions.\n\n" +
                             	"Would you like to allow different taxa in these files?\n\n" +
                             	"If no, please check the taxon name(s) before reloading the data\n file.",
-							"Validation of Non-matching Taxon Name(s)", 
+							"Validation of Non-matching Taxon Name(s)",
 							JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE, null, 
+							JOptionPane.QUESTION_MESSAGE, null,
 							options, // the titles of buttons
 							options[0]); // default button title
 
 					if (adt == JOptionPane.YES_OPTION) {
 						// set to Allow Different Taxa
-						dataPanel.allowDifferentTaxa.setSelected(true); 						
+						dataPanel.allowDifferentTaxaCheck.setSelected(true);
 						//changeTabs();// can be added, if required in future
-						
+
 						// add the new diff taxa
 		            	if (beautiOptions.multiTaxaList.size() < 1) {
 		            		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
-		            	} 
+		            	}
 		            	beautiOptions.multiTaxaList.add(taxa);
-		            	 
-					} else {  
+
+					} else {
 						return;
 					}
 	            }
@@ -582,15 +581,15 @@ public class BeautiFrame extends DocumentFrame {
             	// add the new diff taxa
             	if (beautiOptions.multiTaxaList.size() < 1) {
             		// update the taxon name by adding gene name
-            		
-            		
+
+
             		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
             	}
             	// update the taxon name by adding gene name
-            	
-            	
+
+
             	beautiOptions.multiTaxaList.add(taxa);
-            	
+
             }
         }
 
@@ -749,13 +748,13 @@ public class BeautiFrame extends DocumentFrame {
 
             beautiOptions.traits.add(labels[i]);
             if (isBoolean) {
-                beautiOptions.traitTypes.put(labels[i], Boolean.class);
+                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
             } else if (isInteger) {
-                beautiOptions.traitTypes.put(labels[i], Integer.class);
+                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.INTEGER);
             } else if (isNumber) {
-                beautiOptions.traitTypes.put(labels[i], Double.class);
+                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.CONTINUOUS);
             } else {
-                beautiOptions.traitTypes.put(labels[i], String.class);
+                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
             }
         }
 

@@ -29,8 +29,7 @@ import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.util.Attributable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * data structure for binary rooted trees
@@ -670,7 +669,32 @@ public class FlexibleTree implements MutableTree {
 		return -1;
 	}
 
-	/**
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
+    }
+
+    /**
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
 	 * @param name       the name of the attribute of interest.
 	 * @return an object representing the named attributed for the taxon of the given
@@ -832,7 +856,7 @@ public class FlexibleTree implements MutableTree {
         if (obj == null) {
             return false;
         }
-        
+
         if (!(obj instanceof Tree)) {
 			throw new IllegalArgumentException("FlexibleTree.equals can only compare instances of Tree");
 		}

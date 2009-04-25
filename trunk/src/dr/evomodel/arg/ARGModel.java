@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  */
 public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
-	
+
     public static final String TREE_MODEL = "argTreeModel";
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String LEAF_HEIGHT = "leafHeight";
@@ -530,18 +530,18 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 //
 ////		System.out.println("\n************************************");
 ////		System.out.println("Analyzing MCMC results");
-////		
+////
 ////		BufferedReader read = null;
 ////		try{
 ////			read = new BufferedReader( new FileReader("prior.args"));
 ////			String s = read.readLine();
 ////			s = read.readLine();
-////			
+////
 ////			while(s != null){
 ////				mcmcFreq[Collections.binarySearch(trees, s)]++;
 ////				s = read.readLine();
 ////			}
-////			
+////
 ////		}catch(Exception e){
 ////			System.exit(-1);
 ////		}
@@ -740,56 +740,56 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // }
 
     }
-    
+
     public boolean isAncestral(){
-    	
+
     	//zero everything first.
     	for(int i = 0; i < getNodeCount(); i++){
     		Node x = (Node)getNode(i);
-    		
+
     		x.fullAncestralMaterial = false;
     		x.hasSomeAncestralMaterial = false;
-    		
+
     		if(x.ancestralMaterial == null){
     			x.ancestralMaterial = new boolean[getNumberOfPartitions()];
     		}
-    		
+
     		for(int j = 0; j < x.ancestralMaterial.length; j++){
     			x.ancestralMaterial[j] = false;
     		}
-    		
+
     	}
-    	
+
     	//post order up with the external nodes
-    	 
+
     	for(int i = 0 ; i < getExternalNodeCount(); i++){
     		Node currentNode = (Node)getExternalNode(i);
-    		
+
     		currentNode.fullAncestralMaterial = true;
     		currentNode.hasSomeAncestralMaterial = true;
-    		
+
     		for(int j = 0; j < currentNode.ancestralMaterial.length; j++){
     			currentNode.ancestralMaterial[j] = true;
     		}
-    	 	
+
     		currentNode.leftParent.setAncestralMaterial(currentNode.ancestralMaterial);
     	}
-    	
-    	
-    	
+
+
+
     	//check that everything has some ancestral stuff.
     	for(int i = 0, n = getNodeCount(); i < n; i++){
     		Node currentNode = (Node)getNode(i);
-    		
+
     		if(!currentNode.hasSomeAncestralMaterial){
     			return false;
     		}
     	}
-    	
-    	
+
+
     	return true;
     }
-    
+
 
     public CompoundParameter getPartitioningParameters() {
         return partitioningParameters;
@@ -1427,8 +1427,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         if (!hasRates) {
             return 1.0;
         }
-      
-        
+
+
         return 0.0;
     }
 
@@ -2049,14 +2049,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             CompoundParameter internalNodeParameters,
             CompoundParameter internalAndRootNodeParameters,
             CompoundParameter nodeRates){
-    	
+
     	 addParameter(newbie1.heightParameter);
          addParameter(newbie2.heightParameter);
          addParameter(newbie2.partitioning);
 
          addParameter(newbie1.rateParameter);
          addParameter(newbie2.rateParameter);
-        
+
          addedParameters = new Parameter[4];
          addedParameters[0] = newbie1.heightParameter;
          addedParameters[1] = newbie2.heightParameter;
@@ -2083,9 +2083,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
          internalNodeCount += 2;
 
 //         pushTreeSizeIncreasedEvent();
-    	
+
     }
-    
+
     public void expandARGWithRecombinant(Node newbie1, Node newbie2,
                                          CompoundParameter internalNodeParameters,
                                          CompoundParameter internalAndRootNodeParameters,
@@ -2199,7 +2199,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     }
 
-    
+
     public void contractARG(Node oldie1, Node oldie2,
             CompoundParameter internalNodeParameters,
             CompoundParameter internalAndRootNodeParameters,
@@ -2243,9 +2243,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     	internalNodeCount -= 2;
 //    	pushTreeSizeDecreasedEvent();
 }
-    
-    
-    
+
+
+
     /**
      * Cleans up the arg model after a deletion event.
      *
@@ -2459,6 +2459,31 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                 return i;
         }
         return -1;
+    }
+
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
     }
 
     /**
@@ -2824,13 +2849,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             else a += " " + node.rightChild.number + space;
 
             a += format.formatDecimal(getNodeHeight(node), 4) + space;
-           
+
             if(node.partitioning != null){
             	for(int i = 0, n = getNumberOfPartitions(); i < n ; i++){
             		a += node.partitioning.getParameterValue(i) + space;
             	}
             }
-            
+
             if (node.taxon == null) {
                 a += "internal" + space;
             } else {
@@ -2937,7 +2962,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         throw new RuntimeException("Not implemented yet");
     }
 
-    
+
 
     // ***********************************************************************
     // Private methods
@@ -3101,7 +3126,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
         if (hasRates) {
         	System.exit(-1);
-        	
+
             rate1 = n1.getRate(0);
             rate2 = n2.getRate(0);
         }
@@ -4018,23 +4043,23 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 	public double getNodeRate(NodeRef node) {
 		if(true)
 			throw new RuntimeException("This should not be called");
-		
+
 		return 0;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////
 	//PARSER
 	///////////////////////////////////////////////////////////////////////
-	
+
 	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
             return TREE_MODEL;
         }
-        
+
         public String[] getParserNames(){
         	return new String[]{
-        		getParserName(), "argModel"	
+        		getParserName(), "argModel"
         	};
         }
 
@@ -4056,13 +4081,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                     throw new XMLParseException("Must use either correct partition type");
                 }
             }
-            
+
             int numberPartitions = 1;
-            
+
             if(xo.hasAttribute(NUM_PARTITIONS)){
             	numberPartitions = xo.getIntegerAttribute(NUM_PARTITIONS);
             }
-            
+
 
             Logger.getLogger("dr.evomodel").info(
                     xo.getId() + " has partition type: " + treeModel.partitionType);

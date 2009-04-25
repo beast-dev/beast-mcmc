@@ -34,10 +34,7 @@ import dr.evolution.datatype.GeneticCode;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Date;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.TimeScale;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -385,7 +382,7 @@ public class BeautiTester {
         if (beautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
 
-            beautiOptions.taxonList = taxa;
+            beautiOptions.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;

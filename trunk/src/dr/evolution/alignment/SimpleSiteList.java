@@ -29,6 +29,9 @@ import dr.evolution.datatype.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.List;
+import java.util.Iterator;
+
 /**
  * Stores a set of site patterns. This is setup by loading site patterns using the
  * addPattern method. It is assumed they are added in order.
@@ -225,7 +228,18 @@ public class SimpleSiteList implements SiteList {
 		return taxonList.getTaxonIndex(taxon);
 	}
 
-	/**
+    public List<Taxon> asList() {
+        if (taxonList == null) throw new RuntimeException("SimpleSiteList has no taxonList");
+        return taxonList.asList();
+    }
+
+    public Iterator<Taxon> iterator() {
+        if (taxonList == null) throw new RuntimeException("SimpleSiteList has no taxonList");
+        return taxonList.iterator();
+    }
+
+
+    /**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
 	 * @param name the name of the attribute of interest.

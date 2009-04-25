@@ -29,8 +29,7 @@ import dr.evolution.util.Taxon;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Class for storing sequences.
@@ -85,7 +84,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 		Sequence sequence = getSequence(index);
 		return sequence.getAttribute(name);
 	}
-	
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************
@@ -125,7 +124,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * returns the index of the given taxon.
 	 */
@@ -135,8 +134,16 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 		}
 		return -1;
 	}
-	
-	/**
+
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    /**
 	 * Sets an named attribute for the taxon of a given sequence. If the sequence
 	 * doesn't have a taxon then the attribute is added to the sequence itself.
 	 * @param taxonIndex the index of the taxon whose attribute is being set.
@@ -163,6 +170,23 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 		else
 			return getSequenceAttribute(taxonIndex, name);
 	}
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
+    }
 
     // **************************************************************
     // Identifiable IMPLEMENTATION
@@ -209,7 +233,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 	public Sequence removeSequence(int index) {
 		Sequence sequence = getSequence(index);
 		sequences.removeElementAt(index);
-		
+
 		return sequence;
 	}
 
@@ -248,12 +272,12 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
 		else
 			return attributes.getAttributeNames();
 	}
-	
+
 	// **************************************************************
 	// INSTANCE VARIABLES
 	// **************************************************************
 
 	private Vector sequences = new Vector();
-	
+
 	private Attributable.AttributeHelper attributes = null;
 }

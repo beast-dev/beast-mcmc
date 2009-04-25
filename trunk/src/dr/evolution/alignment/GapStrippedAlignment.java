@@ -29,8 +29,10 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 
+import java.util.*;
+
 /**
- * Provides bootstrap replicate patterns 
+ * Provides bootstrap replicate patterns
  *
  * @version $Id: GapStrippedAlignment.java,v 1.4 2005/05/24 20:25:55 rambaut Exp $
  *
@@ -41,11 +43,11 @@ public class GapStrippedAlignment extends Alignment.Abstract
     Alignment alignment;
     boolean[] hasGap = null;
 
- 	/**
-	 * Constructor
-	 */
-	public GapStrippedAlignment(Alignment a) {
-	    this.alignment = a;
+    /**
+     * Constructor
+     */
+    public GapStrippedAlignment(Alignment a) {
+        this.alignment = a;
         DataType dataType = a.getDataType();
         hasGap = new boolean[a.getSiteCount()];
         for (int i = 0; i < hasGap.length; i++) {
@@ -123,6 +125,14 @@ public class GapStrippedAlignment extends Alignment.Abstract
 
     public final Object getTaxonAttribute(int taxonIndex, String name) {
         return alignment.getTaxonAttribute(taxonIndex, name);
+    }
+
+    public List<Taxon> asList() {
+        return alignment.asList();
+    }
+
+    public Iterator<Taxon> iterator() {
+        return alignment.iterator();
     }
 
     public final int getSiteCount() {

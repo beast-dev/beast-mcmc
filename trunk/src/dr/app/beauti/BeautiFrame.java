@@ -507,12 +507,12 @@ public class BeautiFrame extends DocumentFrame {
         if (beautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
 
-            beautiOptions.taxonList = taxa;
+            beautiOptions.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                String name = taxa.getTaxon(i).getId();
+            for (Taxon taxon : taxa) {
+                String name = taxon.getId();
                 if (name.indexOf('&') >= 0) {
                     foundAmp = true;
                 }
@@ -552,14 +552,17 @@ public class BeautiFrame extends DocumentFrame {
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
                     // AR - Yes and No are perfectly good answers to this question
-                    int adt = JOptionPane.showConfirmDialog(this,
+                    int adt = JOptionPane.showOptionDialog(this,
                             "This file contains different taxa from the previously loaded\n" +
-                                    "data partitions.\n\n" +
-                                    "Would you like to allow different taxa in these files?\n\n" +
-                                    "If no, please check the taxon name(s) before reloading the data\n file.",
+                            "data partitions. This may be because the taxa are mislabelled\n" +
+                            "and need correcting before reloading.\n\n" +
+                            "Would you like to allow different taxa for each partition?\n",
                             "Validation of Non-matching Taxon Name(s)",
                             JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE
+                            JOptionPane.WARNING_MESSAGE,
+                            null,
+                            new String[] { "Yes", "No"},
+                            "No"
                     ); // default button title
 
                     if (adt == JOptionPane.YES_OPTION) {
@@ -578,17 +581,26 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
             } else { // allow Different Taxa
-                // add the new diff taxa
-                if (beautiOptions.multiTaxaList.size() < 1) {
-                    // update the taxon name by adding gene name
+                // AR - it will be much simpler just to consider beautiOptions.taxonList
+                // to be the union set of all taxa. Each data partition has an alignment
+                // which is a taxon list containing the taxa specific to that partition
 
-
-                    beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+                for (Taxon taxon : taxa) {
+                    if (!beautiOptions.taxonList.contains(taxon)) {
+                        beautiOptions.taxonList.addTaxon(taxon);
+                    }
                 }
-                // update the taxon name by adding gene name
-
-
-                beautiOptions.multiTaxaList.add(taxa);
+//                // add the new diff taxa
+//                if (beautiOptions.multiTaxaList.size() < 1) {
+//                    // update the taxon name by adding gene name
+//
+//
+//                    beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+//                }
+//                // update the taxon name by adding gene name
+//
+//
+//                beautiOptions.multiTaxaList.add(taxa);
 
             }
         }

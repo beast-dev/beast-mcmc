@@ -47,7 +47,7 @@ public abstract class ClusteringTree extends SimpleTree {
 		this.distanceMatrix = distanceMatrix;
 		
 		if (distanceMatrix.getTaxonCount() < minimumTaxa) {
-			new IllegalArgumentException("less than " + minimumTaxa + " taxa in distance matrix");
+			throw new IllegalArgumentException("less than " + minimumTaxa + " taxa in distance matrix");
 		}
 		
 		init(distanceMatrix);

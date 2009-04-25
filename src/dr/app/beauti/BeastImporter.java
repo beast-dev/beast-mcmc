@@ -6,12 +6,15 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.sequence.SequenceList;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.List;
+import java.util.*;
+import java.text.DateFormat;
+import java.text.ParseException;
 
 import org.jdom.input.SAXBuilder;
 import org.jdom.*;
@@ -23,6 +26,8 @@ import org.jdom.*;
 public class BeastImporter {
 
     private final Element root;
+    private final DateFormat dateFormat;
+    private final java.util.Date origin;
 
     public BeastImporter(Reader reader) throws IOException, JDOMException, Importer.ImportException {
         SAXBuilder builder = new SAXBuilder();
@@ -32,6 +37,14 @@ public class BeastImporter {
         if (!root.getName().equalsIgnoreCase("beast")) {
             throw new Importer.ImportException("Unrecognized root element in XML file");
         }
+
+        dateFormat = DateFormat.getDateInstance(java.text.DateFormat.SHORT, Locale.UK);
+        dateFormat.setLenient(true);
+
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+        cal.set(0000, 01, 01);
+        origin = cal.getTime();
+
     }
 
     public void importBEAST(List<TaxonList> taxonLists, List<Alignment> alignments) throws Importer.ImportException {
@@ -128,11 +141,24 @@ public class BeastImporter {
         String value = e.getAttributeValue("value");
         boolean backwards = true;
         String direction = e.getAttributeValue("direction");
-        if (direction.equalsIgnoreCase("forwards")) {
+        if (direction != null && direction.equalsIgnoreCase("forwards")) {
             backwards = false;
         }
+        try {
+            return new Date(dateFormat.parse(value), Units.Type.YEARS, origin);
+        } catch (ParseException e1) {
+            e1.printStackTrace();
+        }
+        try {
+            return new Date(dateFormat.parse(value), Units.Type.YEARS, origin);
+        } catch (ParseException e1) {
 
+            // do nothing
+        }
+
+        // try just parsing it as a number
         return new Date(Double.valueOf(value), Units.Type.YEARS, backwards);
+
     }
 
 

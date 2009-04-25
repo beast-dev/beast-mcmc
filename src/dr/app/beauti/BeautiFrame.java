@@ -160,10 +160,10 @@ public class BeautiFrame extends DocumentFrame {
 
 
     public void changeTabs() {
-    	// remove tipDatesPanel with tipSpeciesPanel
-    	tabbedPane.removeTabAt(2);
-    	tabbedPane.insertTab("Tip Species", null, tipSpeciesPanel, "replace Tip Dates", 2);
-    	currentPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
+        // remove tipDatesPanel with tipSpeciesPanel
+        tabbedPane.removeTabAt(2);
+        tabbedPane.insertTab("Tip Species", null, tipSpeciesPanel, "replace Tip Dates", 2);
+        currentPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
     }
 
     /**
@@ -539,56 +539,56 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.fileNameStem = fileNameStem;
         } else {
             // This is an additional partition so check it uses the same taxa
-        	if (!dataPanel.allowDifferentTaxaCheck.isSelected()) { // not allow Different Taxa
-	            java.util.List<String> oldTaxa = new ArrayList<String>();
-	            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
-	                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
-	            }
-	            java.util.List<String> newTaxa = new ArrayList<String>();
-	            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-	                newTaxa.add(taxa.getTaxon(i).getId());
-	            }
+            if (!dataPanel.allowDifferentTaxaCheck.isSelected()) { // not allow Different Taxa
+                java.util.List<String> oldTaxa = new ArrayList<String>();
+                for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+                    oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+                }
+                java.util.List<String> newTaxa = new ArrayList<String>();
+                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                    newTaxa.add(taxa.getTaxon(i).getId());
+                }
 
-	            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-	                Object[] options = { "Allow Different Taxa", "No way!" };
-	                int adt = JOptionPane.showOptionDialog(this,
-							"This file contains different taxa from the previously loaded\n" +
-                            	"data partitions.\n\n" +
-                            	"Would you like to allow different taxa in these files?\n\n" +
-                            	"If no, please check the taxon name(s) before reloading the data\n file.",
-							"Validation of Non-matching Taxon Name(s)",
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE, null,
-							options, // the titles of buttons
-							options[0]); // default button title
+                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+                    Object[] options = { "Allow Different Taxa", "No way!" };
+                    int adt = JOptionPane.showOptionDialog(this,
+                            "This file contains different taxa from the previously loaded\n" +
+                                    "data partitions.\n\n" +
+                                    "Would you like to allow different taxa in these files?\n\n" +
+                                    "If no, please check the taxon name(s) before reloading the data\n file.",
+                            "Validation of Non-matching Taxon Name(s)",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE, null,
+                            options, // the titles of buttons
+                            options[0]); // default button title
 
-					if (adt == JOptionPane.YES_OPTION) {
-						// set to Allow Different Taxa
-						dataPanel.allowDifferentTaxaCheck.setSelected(true);
-						//changeTabs();// can be added, if required in future
+                    if (adt == JOptionPane.YES_OPTION) {
+                        // set to Allow Different Taxa
+                        dataPanel.allowDifferentTaxaCheck.setSelected(true);
+                        //changeTabs();// can be added, if required in future
 
-						// add the new diff taxa
-		            	if (beautiOptions.multiTaxaList.size() < 1) {
-		            		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
-		            	}
-		            	beautiOptions.multiTaxaList.add(taxa);
+                        // add the new diff taxa
+                        if (beautiOptions.multiTaxaList.size() < 1) {
+                            beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+                        }
+                        beautiOptions.multiTaxaList.add(taxa);
 
-					} else {
-						return;
-					}
-	            }
+                    } else {
+                        return;
+                    }
+                }
             } else { // allow Different Taxa
-            	// add the new diff taxa
-            	if (beautiOptions.multiTaxaList.size() < 1) {
-            		// update the taxon name by adding gene name
+                // add the new diff taxa
+                if (beautiOptions.multiTaxaList.size() < 1) {
+                    // update the taxon name by adding gene name
 
 
-            		beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
-            	}
-            	// update the taxon name by adding gene name
+                    beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+                }
+                // update the taxon name by adding gene name
 
 
-            	beautiOptions.multiTaxaList.add(taxa);
+                beautiOptions.multiTaxaList.add(taxa);
 
             }
         }
@@ -666,6 +666,7 @@ public class BeautiFrame extends DocumentFrame {
 
             try {
                 importTraitsFromFile(file);
+                setAllOptions();
 
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
@@ -731,21 +732,7 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
 
-            int j = 0;
-            for (String valueString : column) {
-                Taxon taxon = beautiOptions.taxonList.getTaxon(beautiOptions.taxonList.getTaxonIndex(taxa.get(j)));
-                if (isBoolean) {
-                    taxon.setAttribute(labels[i], new Boolean(valueString));
-                } else if (isInteger) {
-                    taxon.setAttribute(labels[i], new Integer(valueString));
-                } else if (isNumber) {
-                    taxon.setAttribute(labels[i], new Double(valueString));
-                } else {
-                    taxon.setAttribute(labels[i], valueString);
-                }
-                j++;
-            }
-
+            // @todo check if the trait already exists - ask to overwrite
             beautiOptions.traits.add(labels[i]);
             if (isBoolean) {
                 beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
@@ -755,6 +742,26 @@ public class BeautiFrame extends DocumentFrame {
                 beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.CONTINUOUS);
             } else {
                 beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
+            }
+
+            int j = 0;
+            for (String valueString : column) {
+                int index = beautiOptions.taxonList.getTaxonIndex(taxa.get(j));
+                if (index >= 0) {
+                    // if the taxon isn't in the list then ignore it.
+                    // @todo provide a warning of unmatched taxa
+                    Taxon taxon = beautiOptions.taxonList.getTaxon(index);
+                    if (isBoolean) {
+                        taxon.setAttribute(labels[i], new Boolean(valueString));
+                    } else if (isInteger) {
+                        taxon.setAttribute(labels[i], new Integer(valueString));
+                    } else if (isNumber) {
+                        taxon.setAttribute(labels[i], new Double(valueString));
+                    } else {
+                        taxon.setAttribute(labels[i], valueString);
+                    }
+                }
+                j++;
             }
         }
 

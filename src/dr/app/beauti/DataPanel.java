@@ -25,14 +25,8 @@
 
 package dr.app.beauti;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.app.util.Utils;
-
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -45,14 +39,9 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
+import java.awt.event.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -67,9 +56,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelAction = new LinkModelsAction();
-    MapTaxaToSpeciesAction mapTaxaToSpeciesAction = new MapTaxaToSpeciesAction();
 
-    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa");
+    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
 
     SelectModelDialog selectModelDialog = null;
 
@@ -118,11 +106,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         button = new JButton(linkModelAction);
         linkModelAction.setEnabled(false);
-        PanelUtils.setupComponent(button);
-        toolBar1.add(button);
-
-        button = new JButton(mapTaxaToSpeciesAction);
-        mapTaxaToSpeciesAction.setEnabled(true);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
@@ -204,59 +187,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTableModel.fireTableDataChanged();
 
         fireDataChanged();
-    }
-
-    @Deprecated // should be using the traits panel to load these
-    private void mapTaxaToSpecies() {
-
-        FileDialog dialog = new FileDialog(this.frame, "Import Mapping File...", FileDialog.LOAD);
-
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-
-            try {
-                loadMappingFileToBeautiOption (file);
-
-                // Allow Different Taxa
-                allowDifferentTaxaCheck.setSelected(true);
-                //frame.changeTabs();// can be added, if required in future
-
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe,
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-    }
-
-    @Deprecated // should be using the traits panel to load these
-    protected void loadMappingFileToBeautiOption (File file) throws IOException {
-        String delimiter = "|";
-        Map<String, List<Taxon>> mapTaxonSpecies = new HashMap<String, List<Taxon>>();
-
-        Map<String, List<String>> mapTaxonNameListSpecies = Utils.readFileIntoMap (file, delimiter);
-        List<TaxonList> multiTaxaList = options.multiTaxaList;
-
-        Set<String> keys = mapTaxonNameListSpecies.keySet();
-        TreeSet<String> sortedKeys = new TreeSet<String> (keys);// sort keys
-
-        for (String speci : sortedKeys) {
-            List<String> taxonNameList = mapTaxonNameListSpecies.get(speci);
-
-            for (TaxonList taxonList : multiTaxaList) {
-                for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                    Taxon taxon = taxonList.getTaxon(i);
-
-                }
-            }
-        }
-
     }
 
     private void unlinkModels() {
@@ -423,17 +353,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
 
             return buffer.toString();
-        }
-    }
-
-    public class MapTaxaToSpeciesAction extends AbstractAction {
-        public MapTaxaToSpeciesAction() {
-            super("Map Taxa To Species");
-            setToolTipText("Load the mapping file and trigger the function");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            mapTaxaToSpecies();
         }
     }
 

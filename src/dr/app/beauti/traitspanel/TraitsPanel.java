@@ -189,12 +189,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
-        setupTable();
-
-        dataTableModel.fireTableDataChanged();
-    }
-
-    private void setupTable() {
+        traitsTableModel.fireTableDataChanged();
         dataTableModel.fireTableDataChanged();
     }
 

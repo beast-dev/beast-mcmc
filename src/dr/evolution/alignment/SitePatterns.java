@@ -32,6 +32,8 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.*;
+
 /**
  * Stores a set of site patterns. This differs from the simple Patterns
  * class because it stores the pattern index for each site. Thus it has
@@ -486,6 +488,31 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     public int getTaxonIndex(Taxon taxon) {
         if (siteList == null) throw new RuntimeException("SitePatterns has no alignment");
         return siteList.getTaxonIndex(taxon);
+    }
+
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
     }
 
     /**

@@ -1309,7 +1309,7 @@ public class BeautiOptions extends ModelOptions {
     public DataType dataType = null;
     public boolean dataReset = true;
 
-    public TaxonList taxonList = null;
+    public Taxa taxonList = null;
     public List<TaxonList> multiTaxaList = new ArrayList<TaxonList>();
     public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
 

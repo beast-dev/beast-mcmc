@@ -31,6 +31,8 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.matrix.Matrix;
 
+import java.util.*;
+
 /**
  * storage for pairwise distance matrices.<p>
  *
@@ -240,6 +242,31 @@ public class DistanceMatrix extends Matrix.AbstractMatrix implements TaxonList {
      */
     public int getTaxonIndex(Taxon taxon) {
         return taxa.getTaxonIndex(taxon);
+    }
+
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
     }
 
     /**

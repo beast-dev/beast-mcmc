@@ -28,6 +28,8 @@ package dr.evolution.alignment;
 import dr.evolution.datatype.*;
 import dr.evolution.util.Taxon;
 
+import java.util.*;
+
 /**
  * Stores a set of site patterns. This differs from the simple Patterns
  * class because it stores the pattern index for each site. Thus it has
@@ -229,7 +231,17 @@ public class PairedSitePatterns implements SiteList {
 		return siteList.getTaxonIndex(taxon);
 	}
 
-	/**
+    public List<Taxon> asList() {
+        if (siteList == null) throw new RuntimeException("SitePatterns has no alignment");
+        return siteList.asList();
+    }
+
+    public Iterator<Taxon> iterator() {
+        if (siteList == null) throw new RuntimeException("SitePatterns has no alignment");
+        return siteList.iterator();
+    }
+
+    /**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
 	 * @param name the name of the attribute of interest.

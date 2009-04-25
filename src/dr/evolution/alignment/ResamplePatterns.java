@@ -31,6 +31,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxon;
 
+import java.util.*;
+
 /**
  * Provides an abstract base class for resampling patterns (i.e. bootstrap and jackknife).
  *
@@ -58,7 +60,7 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 	public void setPatterns(SiteList patterns) {
 		this.patterns = patterns;
 	}
-	
+
 	/**
 	 * Perform a resampling of the patterns
 	 */
@@ -93,8 +95,8 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		return patterns.getPatternLength();
 	}
 
-	/** 
-	 * Gets the pattern as an array of state numbers (one per sequence) 
+	/**
+	 * Gets the pattern as an array of state numbers (one per sequence)
 	 * @return the pattern at patternIndex
 	 */
 	public int[] getPattern(int patternIndex) {
@@ -102,14 +104,14 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		return patterns.getPattern(patternIndices[patternIndex]);
 	}
 
-	/** 
-	 * @return state at (taxonIndex, patternIndex) 
+	/**
+	 * @return state at (taxonIndex, patternIndex)
 	 */
 	public int getPatternState(int taxonIndex, int patternIndex) {
 		return getPattern(patternIndex)[taxonIndex];
 	}
 
-	/** 
+	/**
 	 * Gets the weight of a site pattern
 	 */
 	public double getPatternWeight(int patternIndex) {
@@ -173,7 +175,7 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		if (patterns == null) throw new RuntimeException("ResamplePatterns has no source patterns");
 		return patterns.getTaxonIndex(id);
 	}
-	
+
 	/**
 	 * returns the index of the given taxon.
 	 */
@@ -181,7 +183,7 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		if (patterns == null) throw new RuntimeException("SitePatterns has no alignment");
 		return patterns.getTaxonIndex(taxon);
 	}
-	
+
 	/**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
@@ -192,6 +194,30 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		return patterns.getTaxonAttribute(taxonIndex, name);
 	}
 
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
+    }
     // **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************
@@ -220,32 +246,32 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		String xhtml = "<p><em>Jackknife Pattern List</em>  pattern count = ";
 		xhtml += getPatternCount();
 		xhtml += "</p>";
-		
+
 		xhtml += "<pre>";
-		
+
 		int count, state;
 		int type = getDataType().getType();
-		
-		count = getPatternCount();			
-		
+
+		count = getPatternCount();
+
 		int length, maxLength = 0;
 		for (int i = 0; i < count; i++) {
 			length = Integer.toString((int)getPatternWeight(i)).length();
 			if (length > maxLength)
 				maxLength = length;
 		}
-			
+
 		for (int i = 0; i < count; i++) {
 			length = Integer.toString(i+1).length();
 			for (int j = length; j < maxLength; j++)
 				xhtml += " ";
 			xhtml += Integer.toString(i+1) + ": ";
-				
+
 			length = Integer.toString((int)getPatternWeight(i)).length();
 			xhtml += Integer.toString((int)getPatternWeight(i));
 			for (int j = length; j <= maxLength; j++)
 				xhtml += " ";
-				
+
 			for (int j = 0; j < getTaxonCount(); j++) {
 				state = getPatternState(j, i);
 

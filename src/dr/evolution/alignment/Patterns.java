@@ -29,6 +29,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.*;
+
 /**
  * A concrete implementation of PatternList. Patterns can be added and
  * removed from the list individually or in bulk from an alignment.
@@ -475,6 +477,17 @@ public class Patterns implements PatternList {
         if (taxonList == null) throw new RuntimeException("Patterns has no TaxonList");
         return taxonList.getTaxonIndex(taxon);
     }
+
+    public List<Taxon> asList() {
+        if (taxonList == null) throw new RuntimeException("Patterns has no TaxonList");
+        return taxonList.asList();
+    }
+
+    public Iterator<Taxon> iterator() {
+        if (taxonList == null) throw new RuntimeException("Patterns has no TaxonList");
+        return taxonList.iterator();
+    }
+
 
     /**
      * @return an object representing the named attributed for the given taxon.

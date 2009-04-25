@@ -35,8 +35,7 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -219,7 +218,7 @@ public class CommandLineBeauti {
         if (beautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
 
-            beautiOptions.taxonList = taxa;
+            beautiOptions.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;

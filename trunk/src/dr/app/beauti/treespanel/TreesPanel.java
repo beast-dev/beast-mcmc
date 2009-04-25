@@ -248,7 +248,7 @@ public class TreesPanel extends BeautiPanel {
 	private void selectionChanged() {
 		int selRow = treesTable.getSelectedRow();
 		if (selRow >= 0) {
-			treeDisplayPanel.setTree(options.trees.get(selRow));
+			treeDisplayPanel.setTree(options.userTrees.get(selRow));
 		} else {
 			treeDisplayPanel.setTree(null);
 		}
@@ -284,9 +284,9 @@ public class TreesPanel extends BeautiPanel {
 			}
 
 			tree.setId(createTreeDialog.getName());
-			options.trees.add(tree);
+			options.userTrees.add(tree);
 			treesTableModel.fireTableDataChanged();
-			int row = options.trees.size() - 1;
+			int row = options.userTrees.size() - 1;
 			treesTable.getSelectionModel().setSelectionInterval(row, row);
 		}
 
@@ -359,11 +359,11 @@ public class TreesPanel extends BeautiPanel {
 		startingTreeCombo.setSelectedItem(options.startingTreeType);
 
 		userTreeCombo.removeAllItems();
-		if (options.trees.size() == 0) {
+		if (options.userTrees.size() == 0) {
 			userTreeCombo.addItem("no trees loaded");
 			userTreeCombo.setEnabled(false);
 		} else {
-			for (Tree tree : options.trees) {
+			for (Tree tree : options.userTrees) {
 				userTreeCombo.addItem(tree.getId());
 			}
 			userTreeCombo.setEnabled(true);
@@ -410,7 +410,7 @@ public class TreesPanel extends BeautiPanel {
 
 	private Tree getSelectedUserTree() {
 		String treeId = (String) userTreeCombo.getSelectedItem();
-		for (Tree tree : options.trees) {
+		for (Tree tree : options.userTrees) {
 			if (tree.getId().equals(treeId)) {
 				return tree;
 			}
@@ -436,11 +436,11 @@ public class TreesPanel extends BeautiPanel {
 
 		public int getRowCount() {
 			if (options == null) return 0;
-			return options.trees.size();
+			return options.userTrees.size();
 		}
 
 		public Object getValueAt(int row, int col) {
-			Tree tree = options.trees.get(row);
+			Tree tree = options.userTrees.get(row);
 			switch (col) {
 				case 0:
 					return tree.getId();
@@ -450,7 +450,7 @@ public class TreesPanel extends BeautiPanel {
 		}
 
 		public void setValueAt(Object aValue, int row, int col) {
-			Tree tree = options.trees.get(row);
+			Tree tree = options.userTrees.get(row);
 			switch (col) {
 				case 0:
 					String name = ((String) aValue).trim();

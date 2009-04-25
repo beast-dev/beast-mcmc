@@ -257,7 +257,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         dataPartitions.clear();
-        trees.clear();
+        userTrees.clear();
 
         meanDistance = 1.0;
         datesUnits = YEARS;
@@ -267,7 +267,8 @@ public class BeautiOptions extends ModelOptions {
         startingTreeType = StartingTreeType.RANDOM;
         userStartingTree = null;
 
-        models.clear();
+        partitionModels.clear();
+        partitionTrees.clear();
 
         fixedSubstitutionRate = true;
         meanSubstitutionRate = 1.0;
@@ -307,8 +308,8 @@ public class BeautiOptions extends ModelOptions {
 
     public void addPartitionModel(PartitionModel model) {
 
-        if (!models.contains(model)) {
-            models.add(model);
+        if (!partitionModels.contains(model)) {
+            partitionModels.add(model);
         }
     }
 
@@ -316,7 +317,7 @@ public class BeautiOptions extends ModelOptions {
      * @return a list of all partition models, whether or not they are used
      */
     public List<PartitionModel> getPartitionModels() {
-        return models;
+        return partitionModels;
     }
 
     /**
@@ -330,6 +331,20 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return models;
+    }
+
+    public void addPartitionTree(PartitionTree tree) {
+
+        if (!partitionTrees.contains(tree)) {
+            partitionTrees.add(tree);
+        }
+    }
+
+    /**
+     * @return a list of all partition trees, whether or not they are used
+     */
+    public List<PartitionTree> getPartitionTrees() {
+        return partitionTrees;
     }
 
     private double round(double value, int sf) {
@@ -362,9 +377,9 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentStatistics(this, parameters);
 
-        boolean multiplePartitions = getTotalActivePartitionCount() > 1;
+        boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
 
-        for (PartitionModel model : getActiveModels()) {
+        for (PartitionModel model : getActivePartitionModels()) {
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -477,7 +492,7 @@ public class BeautiOptions extends ModelOptions {
         return meanSubstitutionRate;
     }
 
-    public List<PartitionModel> getActiveModels() {
+    public List<PartitionModel> getActivePartitionModels() {
 
         Set<PartitionModel> models = new HashSet<PartitionModel>();
 
@@ -485,7 +500,7 @@ public class BeautiOptions extends ModelOptions {
             models.add(partition.getPartitionModel());
         }
 
-        // I have changed this to a list to ensure that the order is kept the same as in the table.
+        // Change to a list to ensure that the order is kept the same as in the table.
         List<PartitionModel> activeModels = new ArrayList<PartitionModel>();
         for (PartitionModel model : getPartitionModels()) {
             if (models.contains(model)) {
@@ -496,9 +511,9 @@ public class BeautiOptions extends ModelOptions {
         return activeModels;
     }
 
-    public int getTotalActivePartitionCount() {
+    public int getTotalActivePartitionModelCount() {
         int totalPartitionCount = 0;
-        for (PartitionModel model : getActiveModels()) {
+        for (PartitionModel model : getActivePartitionModels()) {
             totalPartitionCount += model.getCodonPartitionCount();
         }
         return totalPartitionCount;
@@ -509,10 +524,10 @@ public class BeautiOptions extends ModelOptions {
      * are strictly in the same order as the 'mu' relative rates are listed.
      */
     public int[] getPartitionWeights() {
-        int[] weights = new int[getTotalActivePartitionCount()];
+        int[] weights = new int[getTotalActivePartitionModelCount()];
 
         int k = 0;
-        for (PartitionModel model : getActiveModels()) {
+        for (PartitionModel model : getActivePartitionModels()) {
             for (DataPartition partition : dataPartitions) {
                 if (partition.getPartitionModel() == model) {
                     model.addWeightsForPartition(partition, weights, k);
@@ -524,6 +539,29 @@ public class BeautiOptions extends ModelOptions {
         assert (k == weights.length);
 
         return weights;
+    }
+
+    public List<PartitionTree> getActivePartitionTrees() {
+
+        Set<PartitionTree> trees = new HashSet<PartitionTree>();
+
+        for (DataPartition partition : dataPartitions) {
+            trees.add(partition.getPartitionTree());
+        }
+
+        // Change to a list to ensure that the order is kept the same as in the table.
+        List<PartitionTree> activeTrees = new ArrayList<PartitionTree>();
+        for (PartitionTree tree : getPartitionTrees()) {
+            if (trees.contains(tree)) {
+                activeTrees.add(tree);
+            }
+        }
+
+        return activeTrees;
+    }
+
+    public int getTotalActivePartitionTreeCount() {
+        return getActivePartitionTrees().size();
     }
 
     /**
@@ -539,9 +577,9 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
-        boolean multiplePartitions = getTotalActivePartitionCount() > 1;
+        boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
 
-        for (PartitionModel model : getActiveModels()) {
+        for (PartitionModel model : getActivePartitionModels()) {
             ops.addAll(model.getOperators());
         }
 
@@ -550,7 +588,7 @@ public class BeautiOptions extends ModelOptions {
 
             // update delta mu operator weight
             deltaMuOperator.weight = 0.0;
-            for (PartitionModel pm : getActiveModels()) {
+            for (PartitionModel pm : getActivePartitionModels()) {
                 deltaMuOperator.weight += pm.getCodonPartitionCount();
             }
 
@@ -923,7 +961,7 @@ public class BeautiOptions extends ModelOptions {
 
         root.addContent(taxaElement);
 
-        for (PartitionModel model : models) {
+        for (PartitionModel model : partitionModels) {
 
             Element modelElement = new Element("model");
 
@@ -1283,17 +1321,20 @@ public class BeautiOptions extends ModelOptions {
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();
-    public List<Tree> trees = new ArrayList<Tree>();
+
     public double meanDistance = 1.0;
     public int datesUnits = YEARS;
     public int datesDirection = FORWARDS;
     public double maximumTipHeight = 0.0;
     public int translation = 0;
+
     public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     public Tree userStartingTree = null;
+    public List<Tree> userTrees = new ArrayList<Tree>();
 
     // Model options
-    List<PartitionModel> models = new ArrayList<PartitionModel>();
+    List<PartitionModel> partitionModels = new ArrayList<PartitionModel>();
+    List<PartitionTree> partitionTrees = new ArrayList<PartitionTree>();
 
     public boolean fixedSubstitutionRate = true;
     public double meanSubstitutionRate = 1.0;

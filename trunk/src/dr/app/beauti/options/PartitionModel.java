@@ -642,7 +642,7 @@ public class PartitionModel extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActiveModels().size() > 1) {
+        if (options.getActivePartitionModels().size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }
@@ -651,7 +651,7 @@ public class PartitionModel extends ModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getActiveModels().size() > 1) {
+        if (options.getActivePartitionModels().size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }

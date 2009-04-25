@@ -143,7 +143,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         // check is using isCompatible(), which requires completion of construction.
         boolean check = spTree.getAttribute("check") != null;
         spTree.setAttribute("check", null);
-        
+
         while( check ) {
             // Start tree had branch info, keep it when compatible, decrease height by 1% until
             // compatible otherwise.
@@ -1185,6 +1185,14 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
     public int getTaxonIndex(Taxon taxon) {
         return spTree.getTaxonIndex(taxon);
+    }
+
+    public List<Taxon> asList() {
+        return spTree.asList();
+    }
+
+    public Iterator<Taxon> iterator() {
+        return spTree.iterator();
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {

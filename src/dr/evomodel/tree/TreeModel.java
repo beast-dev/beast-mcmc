@@ -471,7 +471,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         }
         treeChangedEvents.clear();
     }
-    
+
     public void endTreeEditUnsafe() throws MutableTree.InvalidTreeException {
         if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
 
@@ -658,6 +658,31 @@ public class TreeModel extends AbstractModel implements MutableTree {
             if (getTaxon(i) == taxon) return i;
         }
         return -1;
+    }
+
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
     }
 
     /**

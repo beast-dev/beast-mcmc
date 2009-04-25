@@ -32,6 +32,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 
+import java.util.*;
+
 /**
  * An alignment class that takes another alignment and converts it on the fly
  * to a different dataType.
@@ -326,7 +328,32 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 		return alignment.getTaxonIndex(taxon);
 	}
 
-	/**
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
+    }
+
+    /**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
 	 * @param name the name of the attribute of interest.

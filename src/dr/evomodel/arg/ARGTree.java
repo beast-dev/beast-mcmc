@@ -27,14 +27,14 @@ public class ARGTree implements Tree {
 //    public Map<NodeRef,Integer> getMappingInts() { return mapARGNodesToInts; }
 
 //    public Map<ARGModel.Node, NodeRef> getMappingNodes() { return mapARGNodesToTreeNodes; }
-	
+
 	private int partition = -9;
 
-	/**
-	 * Constructor to represent complete ARG as a tree
-	 *
-	 * @param arg
-	 */
+//	/**
+//	 * Constructor to represent complete ARG as a tree
+//	 *
+//	 * @param arg
+//	 */
 //	public ARGTree(ARGModel arg) {
 //              this.argModel = arg;
 //              mapNodesARGToTree = new HashMap<Node,Node>(arg.getNodeCount());
@@ -42,12 +42,12 @@ public class ARGTree implements Tree {
 //	}
 
 
-	/**
-	 * Constructor for specific partition tree
-	 *
-	 * @param arg
-	 * @param partition
-	 */
+//	/**
+//	 * Constructor for specific partition tree
+//	 *
+//	 * @param arg
+//	 * @param partition
+//	 */
 
 //	ArrayList<Node> nodeList;
 
@@ -109,7 +109,7 @@ public class ARGTree implements Tree {
                                   mapARGNodesToTreeNodes.put(node.mirrorNode,node);
 			} else {
                                   // Reorder in new post-order succession
-			
+
 				nodes[j] = node;
                                         node.number = j;
 				j++;
@@ -163,7 +163,7 @@ public class ARGTree implements Tree {
 	 *         tree.
 	 */
 	public final int getNodeCount() {
-		return nodeCount;               
+		return nodeCount;
 	}
 
 	public final boolean hasNodeHeights() {
@@ -192,12 +192,12 @@ public class ARGTree implements Tree {
 	 * @return the rate parameter associated with this node.
 	 */
 	public final double getNodeRate(NodeRef node) {
-		
-		
+
+
 		if (!hasRates) {
 			return 1.0;
 		}
-				
+
 		return ((Node) node).getRate(partition);
 	}
 
@@ -347,7 +347,32 @@ public class ARGTree implements Tree {
 		return -1;
 	}
 
-	/**
+    public List<Taxon> asList() {
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
+    }
+
+    public Iterator<Taxon> iterator() {
+        return new Iterator<Taxon>() {
+            private int index = -1;
+
+            public boolean hasNext() {
+                return index < getTaxonCount();
+            }
+
+            public Taxon next() {
+                index ++;
+                return getTaxon(index);
+            }
+
+            public void remove() { /* do nothing */ }
+        };
+    }
+
+    /**
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
 	 * @param name       the name of the attribute of interest.
 	 * @return an object representing the named attributed for the taxon of the given
@@ -453,7 +478,7 @@ public class ARGTree implements Tree {
 	public final String getNewick() {
 		return Tree.Utils.newick(this);
 	}
-	
+
 	public final String getUniqueNewick(){
 		return Tree.Utils.uniqueNewick(this,this.getRoot());
 	}
@@ -502,9 +527,9 @@ public class ARGTree implements Tree {
 	 */
 	protected int internalNodeCount;
 
-	
-	
-	
+
+
+
 	/**
 	 * holds the units of the trees branches.
 	 */

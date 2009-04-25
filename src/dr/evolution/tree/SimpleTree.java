@@ -373,7 +373,7 @@ public class SimpleTree implements MutableTree {
             private int index = -1;
 
             public boolean hasNext() {
-                return index < getTaxonCount();
+                return index < getTaxonCount() - 1;
             }
 
             public Taxon next() {

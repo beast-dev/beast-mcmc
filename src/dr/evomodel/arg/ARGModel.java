@@ -2474,7 +2474,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             private int index = -1;
 
             public boolean hasNext() {
-                return index < getTaxonCount();
+                return index < getTaxonCount() - 1;
             }
 
             public Taxon next() {

@@ -228,7 +228,14 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         settingOptions = false;
 
+        int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
+        if (options.getPartitionModels().size() > 0) {
+            if (selRow < 0) {
+                selRow = 0;
+            }
+            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
 
         if (currentModel == null && options.getPartitionModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -250,7 +257,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         if (settingOptions) return;
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
-        
+
         SequenceErrorModelComponent comp = (SequenceErrorModelComponent)options.getComponentOptions(SequenceErrorModelComponent.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 

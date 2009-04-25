@@ -51,7 +51,7 @@ import java.util.Set;
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
-    private final static boolean ALLOW_UNLINKED_TREES = true;
+    public final static boolean ALLOW_UNLINKED_TREES = false;
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
@@ -88,10 +88,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(5);
-        comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        col.setCellRenderer(comboBoxRenderer);
+        if (ALLOW_UNLINKED_TREES) {
+            col = dataTable.getColumnModel().getColumn(5);
+            comboBoxRenderer = new ComboBoxRenderer();
+            comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+            col.setCellRenderer(comboBoxRenderer);
+        }
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
@@ -122,19 +124,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-        toolBar1.addSeparator();
+        if (ALLOW_UNLINKED_TREES) {
+            toolBar1.addSeparator();
 
-        button = new JButton(unlinkTreesAction);
-        unlinkTreesAction.setEnabled(false);
-        PanelUtils.setupComponent(button);
-        toolBar1.add(button);
+            button = new JButton(unlinkTreesAction);
+            unlinkTreesAction.setEnabled(false);
+            PanelUtils.setupComponent(button);
+            toolBar1.add(button);
 
-        button = new JButton(linkTreesAction);
-        linkTreesAction.setEnabled(false);
-        PanelUtils.setupComponent(button);
-        toolBar1.add(button);
-
-
+            button = new JButton(linkTreesAction);
+            linkTreesAction.setEnabled(false);
+            PanelUtils.setupComponent(button);
+            toolBar1.add(button);
+        }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);

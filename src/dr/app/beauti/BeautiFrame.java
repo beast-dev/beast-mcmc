@@ -16,6 +16,7 @@ import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.traitspanel.TraitsPanel;
+import dr.app.beauti.datapanel.DataPanel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.io.Importer;
@@ -539,7 +540,7 @@ public class BeautiFrame extends DocumentFrame {
             beautiOptions.fileNameStem = fileNameStem;
         } else {
             // This is an additional partition so check it uses the same taxa
-            if (!dataPanel.allowDifferentTaxaCheck.isSelected()) { // not allow Different Taxa
+            if (!beautiOptions.allowDifferentTaxa) { // not allow Different Taxa
                 java.util.List<String> oldTaxa = new ArrayList<String>();
                 for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
                     oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
@@ -550,21 +551,20 @@ public class BeautiFrame extends DocumentFrame {
                 }
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                    Object[] options = { "Allow Different Taxa", "No way!" };
-                    int adt = JOptionPane.showOptionDialog(this,
+                    // AR - Yes and No are perfectly good answers to this question
+                    int adt = JOptionPane.showConfirmDialog(this,
                             "This file contains different taxa from the previously loaded\n" +
                                     "data partitions.\n\n" +
                                     "Would you like to allow different taxa in these files?\n\n" +
                                     "If no, please check the taxon name(s) before reloading the data\n file.",
                             "Validation of Non-matching Taxon Name(s)",
                             JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE, null,
-                            options, // the titles of buttons
-                            options[0]); // default button title
+                            JOptionPane.QUESTION_MESSAGE
+                    ); // default button title
 
                     if (adt == JOptionPane.YES_OPTION) {
                         // set to Allow Different Taxa
-                        dataPanel.allowDifferentTaxaCheck.setSelected(true);
+                        beautiOptions.allowDifferentTaxa = true;
                         //changeTabs();// can be added, if required in future
 
                         // add the new diff taxa
@@ -627,6 +627,13 @@ public class BeautiFrame extends DocumentFrame {
                         partition.setPartitionModel(pm);
                         beautiOptions.addPartitionModel(pm);
                     }
+                    if (beautiOptions.getPartitionTrees().size() > 0) {
+                        partition.setPartitionTree(beautiOptions.getPartitionTrees().get(0));
+                    } else {
+                        PartitionTree pt = new PartitionTree(beautiOptions, "default");
+                        partition.setPartitionTree(pt);
+                        beautiOptions.addPartitionTree(pt);
+                    }
                 }
             }
         }
@@ -637,11 +644,11 @@ public class BeautiFrame extends DocumentFrame {
             for (Tree tree : trees) {
                 String id = tree.getId();
                 if (id == null || id.trim().length() == 0) {
-                    tree.setId("tree_" + (beautiOptions.trees.size() + 1));
+                    tree.setId("tree_" + (beautiOptions.userTrees.size() + 1));
                 } else {
                     String newId = id;
                     int count = 1;
-                    for (Tree tree1 : beautiOptions.trees) {
+                    for (Tree tree1 : beautiOptions.userTrees) {
                         if (tree1.getId().equals(newId)) {
                             newId = id + "_" + count;
                             count ++;
@@ -649,7 +656,7 @@ public class BeautiFrame extends DocumentFrame {
                     }
                     tree.setId(newId);
                 }
-                beautiOptions.trees.add(tree);
+                beautiOptions.userTrees.add(tree);
             }
         }
     }
@@ -773,13 +780,13 @@ public class BeautiFrame extends DocumentFrame {
             message += "Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                     beautiOptions.dataPartitions.size() +
                     (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
-            if (beautiOptions.trees.size() > 0) {
-                message += ", " + beautiOptions.trees.size() +
-                        (beautiOptions.trees.size() > 1 ? " trees" : " tree");
+            if (beautiOptions.userTrees.size() > 0) {
+                message += ", " + beautiOptions.userTrees.size() +
+                        (beautiOptions.userTrees.size() > 1 ? " trees" : " tree");
             }
-        } else if (beautiOptions.trees.size() > 0) {
-            message += "Trees only : " + beautiOptions.trees.size() +
-                    (beautiOptions.trees.size() > 1 ? " trees, " : " tree, ") +
+        } else if (beautiOptions.userTrees.size() > 0) {
+            message += "Trees only : " + beautiOptions.userTrees.size() +
+                    (beautiOptions.userTrees.size() > 1 ? " trees, " : " tree, ") +
                     beautiOptions.taxonList.getTaxonCount() + " taxa";
         } else {
             message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";

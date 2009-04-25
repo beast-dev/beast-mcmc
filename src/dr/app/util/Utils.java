@@ -29,7 +29,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.List;;
+import java.util.List;
 
 /**
  *
@@ -78,43 +78,44 @@ public class Utils {
 	}
 
 	/**
-	 * Read mapping file of species and taxa, store it into a HashMap,
-	 * Key is the 1st column of file referring to species, Value is 
-	 * the List containing the rest of elements in the line referring to taxa.
-	 * @param file
+	 * Read an assignment of attributes from a mapping file into a HashMap,
+     *
+     * Each non empty line in file defines one entry. The attribute (Key) is first and the rest of the line
+     * contains elements whose attribute value is that key.
+	 *
+	 * @param file to load
 	 * @param delim, delimiters if null it will use the default in sys.
-	 * @return map, HashMap containing mapping between species and taxa. 
+	 * @return HashMap containing mapping in file.
 	 */
 	public static Map<String, List<String>> readFileIntoMap(File file, String delim) {
-		Map<String, List<String>> map = new HashMap <String, List<String>>();
-		Scanner scanner = null;
+
+		Scanner scanner;
 		
 		try {
-			scanner = new Scanner (file);
+			scanner = new Scanner(file);
 		} catch (FileNotFoundException e) {
-			System.err.println("Exception to open file : " + e);
-			System.exit(1);
+			System.err.println("Failed to open file : " + e.getMessage());
+			throw new RuntimeException(e.getMessage());
 		}
-		
-		String line;
-		StringTokenizer tok; 
-		String speci;
-		List<String> taxonNameList = new ArrayList<String> (); 
-		while (scanner.hasNextLine()) {
-			line = scanner.nextLine();	
+
+        if( delim != null && delim.length() == 0 ) {
+            delim = null;
+        }
+
+        Map<String, List<String>> map = new HashMap <String, List<String>>();
+		List<String> nameList = new ArrayList<String>();
+
+		while( scanner.hasNextLine() ) {
+			final String line = scanner.nextLine();
+			final StringTokenizer tok = (delim == null) ? new StringTokenizer(line) : new StringTokenizer(line, delim);
 			
-			if (delim == null || delim.isEmpty()) {
-				tok = new StringTokenizer (line);
-			} else {
-				tok = new StringTokenizer (line, delim);
+			final String key = tok.nextToken().trim();
+
+			while( tok.hasMoreTokens() ) {
+				nameList.add(tok.nextToken().trim());
 			}
-			
-			speci = tok.nextToken().trim();
-			while (tok.hasMoreTokens()) {
-				taxonNameList.add(tok.nextToken().trim());				
-			}
-			map.put(speci, taxonNameList);
-			taxonNameList.clear();
+			map.put(key, nameList);
+			nameList.clear();
 		}	
 		
 		return map;
@@ -131,16 +132,14 @@ public class Utils {
 
 		String newName = null;
 
-		for (int i = 0; i < extensions.length; i++) {
-			String ext = "." + extensions[i];
-			if (fileName.toUpperCase().endsWith(ext.toUpperCase())) {
-				newName = fileName.substring(0, fileName.length() - ext.length());
-			}
-		}
+        for( String extension : extensions ) {
+            final String ext = "." + extension;
+            if( fileName.toUpperCase().endsWith(ext.toUpperCase()) ) {
+                newName = fileName.substring(0, fileName.length() - ext.length());
+            }
+        }
 
-		if (newName == null) newName = fileName;
-
-		return newName;
+		return ( newName != null ) ? newName : fileName;
 	}
 
 	/**

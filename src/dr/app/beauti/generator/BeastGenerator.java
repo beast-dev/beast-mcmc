@@ -215,7 +215,7 @@ public class BeastGenerator extends Generator {
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
 
-            for (PartitionModel model : options.getActiveModels()) {
+            for (PartitionModel model : options.getActivePartitionModels()) {
                 writePatternList(model, writer);
                 writer.writeText("");
             }
@@ -252,23 +252,23 @@ public class BeastGenerator extends Generator {
         new BranchRatesModelGenerator(options).writeBranchRatesModel(writer);
         writer.writeText("");
 
-        for (PartitionModel partitionModel : options.getActiveModels()) {
+        for (PartitionModel partitionModel : options.getActivePartitionModels()) {
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
             writer.writeText("");
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
-        boolean writeMuParameters = options.getTotalActivePartitionCount() > 1;
+        boolean writeMuParameters = options.getTotalActivePartitionModelCount() > 1;
 
-        for (PartitionModel partitionModel : options.getActiveModels()) {
+        for (PartitionModel partitionModel : options.getActivePartitionModels()) {
             partitionModelGenerator.writeSiteModel(partitionModel, writeMuParameters, writer);
             writer.writeText("");
         }
 
         if (writeMuParameters) {
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
-            for (PartitionModel partitionModel : options.getActiveModels()) {
+            for (PartitionModel partitionModel : options.getActivePartitionModels()) {
                 partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
@@ -279,7 +279,7 @@ public class BeastGenerator extends Generator {
 
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
 
-        for (PartitionModel model : options.getActiveModels()) {
+        for (PartitionModel model : options.getActivePartitionModels()) {
             treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
             writer.writeText("");
         }
@@ -1574,7 +1574,7 @@ public class BeastGenerator extends Generator {
 
         treePriorGenerator.writeParameterLog(writer);
 
-        for (PartitionModel model : options.getActiveModels()) {
+        for (PartitionModel model : options.getActivePartitionModels()) {
             partitionModelGenerator.writeLog(writer, model);
         }
         if (hasCodonOrUserPartitions()) {
@@ -1630,7 +1630,7 @@ public class BeastGenerator extends Generator {
      *         broken into codon positions.
      */
     private boolean hasCodonOrUserPartitions() {
-        return (options.getActiveModels().size() > 1 || options.getActiveModels().get(0).getCodonPartitionCount() > 1);
+        return (options.getActivePartitionModels().size() > 1 || options.getActivePartitionModels().get(0).getCodonPartitionCount() > 1);
     }
 
 }

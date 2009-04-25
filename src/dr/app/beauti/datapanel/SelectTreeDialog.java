@@ -23,44 +23,34 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionModel;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
-import org.virion.jam.components.RealNumberField;
+import dr.app.beauti.options.PartitionTree;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
+ * @version $Id:$
  */
-public class SelectModelDialog {
+public class SelectTreeDialog {
 
     private JFrame frame;
 
-    JComboBox modelCombo;
+    JComboBox treeCombo;
     JCheckBox copyCheck;
     JTextField nameField;
 
     OptionsPanel optionPanel;
 
-    public SelectModelDialog(JFrame frame) {
+    public SelectTreeDialog(JFrame frame) {
         this.frame = frame;
 
-        modelCombo = new JComboBox();
+        treeCombo = new JComboBox();
 
         copyCheck = new JCheckBox("Make copy with name:");
         nameField = new JTextField();
@@ -68,12 +58,12 @@ public class SelectModelDialog {
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition Model:", modelCombo);
+        optionPanel.addComponentWithLabel("Partition tree:", treeCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
                         nameField.setEnabled(copyCheck.isSelected());
                     }
                 }
@@ -81,11 +71,11 @@ public class SelectModelDialog {
 
     }
 
-    public int showDialog(Object[] models) {
+    public int showDialog(Object[] trees) {
 
-        modelCombo.removeAllItems();
-        for (Object model : models) {
-            modelCombo.addItem(model);
+        treeCombo.removeAllItems();
+        for (Object tree : trees) {
+            treeCombo.addItem(tree);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -96,7 +86,7 @@ public class SelectModelDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Model");
+        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Tree");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -110,8 +100,8 @@ public class SelectModelDialog {
         return result;
     }
 
-    public PartitionModel getModel() {
-        return (PartitionModel)modelCombo.getSelectedItem();
+    public PartitionTree getTree() {
+        return (PartitionTree) treeCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

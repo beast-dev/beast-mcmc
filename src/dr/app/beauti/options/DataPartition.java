@@ -57,6 +57,14 @@ public class DataPartition {
         return model;
     }
 
+    public void setPartitionTree(final PartitionTree tree) {
+        this.tree = tree;
+    }
+
+    public PartitionTree getPartitionTree() {
+        return tree;
+    }
+
     public boolean isCoding() {
         return coding;
     }
@@ -106,4 +114,5 @@ public class DataPartition {
 
 
     private PartitionModel model;
+    private PartitionTree tree;
 }

@@ -130,10 +130,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         toolBar1.setOpaque(false);
 
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        JButton button = new JButton(clearDatesAction);
+        JButton button = new JButton(guessDatesAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
-        button = new JButton(guessDatesAction);
+        button = new JButton(clearDatesAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));

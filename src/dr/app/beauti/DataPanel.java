@@ -52,7 +52,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -68,8 +68,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelAction = new LinkModelsAction();
     MapTaxaToSpeciesAction mapTaxaToSpeciesAction = new MapTaxaToSpeciesAction();
-    
-    JCheckBox allowDifferentTaxa = new JCheckBox("Allow different taxa");
+
+    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa");
 
     SelectModelDialog selectModelDialog = null;
 
@@ -125,28 +125,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
         mapTaxaToSpeciesAction.setEnabled(true);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
-        
-        allowDifferentTaxa.setSelected(false);
-        toolBar1.add(allowDifferentTaxa);
-        
-        allowDifferentTaxa.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {            	          	
-                boolean sele = allowDifferentTaxa.isSelected();
-                options.allowDiffTaxa = sele; 
-                
-    /*            clearDatesAction.setEnabled(enabled);
-                guessDatesAction.setEnabled(enabled);
-                unitsLabel.setEnabled(enabled);
-                unitsCombo.setEnabled(enabled);
-                directionCombo.setEnabled(enabled);
-                scrollPane.setEnabled(enabled);
-                dataTable.setEnabled(enabled);
-                tipDateSamplingCombo.setEnabled(enabled);
-                tipDateSamplingLabel.setEnabled(enabled);*/
-                
+
+        allowDifferentTaxaCheck.setSelected(false);
+        toolBar1.add(allowDifferentTaxaCheck);
+
+        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
             }
         });
-        
+
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);
         actionPanel1.setRemoveAction(removeDataAction);
@@ -218,21 +206,22 @@ public class DataPanel extends BeautiPanel implements Exportable {
         fireDataChanged();
     }
 
+    @Deprecated // should be using the traits panel to load these
     private void mapTaxaToSpecies() {
-        
-    	FileDialog dialog = new FileDialog(this.frame, "Import Mapping File...", FileDialog.LOAD);
+
+        FileDialog dialog = new FileDialog(this.frame, "Import Mapping File...", FileDialog.LOAD);
 
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
-            try {                
-            	loadMappingFileToBeautiOption (file);
-            	
-            	// Allow Different Taxa
-				allowDifferentTaxa.setSelected(true); 
-				//frame.changeTabs();// can be added, if required in future 
-				
+            try {
+                loadMappingFileToBeautiOption (file);
+
+                // Allow Different Taxa
+                allowDifferentTaxaCheck.setSelected(true);
+                //frame.changeTabs();// can be added, if required in future
+
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                         "Unable to open file",
@@ -242,33 +231,34 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         "Unable to read file",
                         JOptionPane.ERROR_MESSAGE);
             }
-        }  	
-    	
+        }
+
     }
-    
+
+    @Deprecated // should be using the traits panel to load these
     protected void loadMappingFileToBeautiOption (File file) throws IOException {
-    	String delimiter = "|";    	
-    	Map<String, List<Taxon>> mapTaxonSpecies = new HashMap<String, List<Taxon>>();    	
-    	
-    	Map<String, List<String>> mapTaxonNameListSpecies = Utils.readFileIntoMap (file, delimiter);
-    	List<TaxonList> multiTaxaList = options.multiTaxaList;
-    	
-    	Set<String> keys = mapTaxonNameListSpecies.keySet();
-    	TreeSet<String> sortedKeys = new TreeSet<String> (keys);// sort keys
-    	
-    	for (String speci : sortedKeys) {
-			List<String> taxonNameList = mapTaxonNameListSpecies.get(speci);
+        String delimiter = "|";
+        Map<String, List<Taxon>> mapTaxonSpecies = new HashMap<String, List<Taxon>>();
 
-			for (TaxonList taxonList : multiTaxaList) {
-				for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-					Taxon taxon = taxonList.getTaxon(i);
+        Map<String, List<String>> mapTaxonNameListSpecies = Utils.readFileIntoMap (file, delimiter);
+        List<TaxonList> multiTaxaList = options.multiTaxaList;
 
-				}
-			}
-		}
-    	
+        Set<String> keys = mapTaxonNameListSpecies.keySet();
+        TreeSet<String> sortedKeys = new TreeSet<String> (keys);// sort keys
+
+        for (String speci : sortedKeys) {
+            List<String> taxonNameList = mapTaxonNameListSpecies.get(speci);
+
+            for (TaxonList taxonList : multiTaxaList) {
+                for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                    Taxon taxon = taxonList.getTaxon(i);
+
+                }
+            }
+        }
+
     }
-    
+
     private void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
@@ -435,7 +425,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             return buffer.toString();
         }
     }
-   
+
     public class MapTaxaToSpeciesAction extends AbstractAction {
         public MapTaxaToSpeciesAction() {
             super("Map Taxa To Species");
@@ -443,7 +433,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-        	mapTaxaToSpecies();
+            mapTaxaToSpecies();
         }
     }
 

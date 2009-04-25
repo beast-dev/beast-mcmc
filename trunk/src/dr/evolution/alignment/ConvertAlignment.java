@@ -341,7 +341,7 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
             private int index = -1;
 
             public boolean hasNext() {
-                return index < getTaxonCount();
+                return index < getTaxonCount() - 1;
             }
 
             public Taxon next() {

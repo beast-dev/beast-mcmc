@@ -46,7 +46,7 @@ import java.awt.event.*;
  * @author Alexei Drummond
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class CreateTreeDialog {
+public class GenerateTreeDialog {
 
     private JFrame frame;
 
@@ -62,7 +62,7 @@ public class CreateTreeDialog {
 
     OptionsPanel optionPanel;
 
-    public CreateTreeDialog(JFrame frame) {
+    public GenerateTreeDialog(JFrame frame) {
         this.frame = frame;
 
         nameField = new JTextField();

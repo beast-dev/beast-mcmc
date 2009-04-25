@@ -13,6 +13,7 @@ import dr.app.beauti.modelsPanel.ModelsPanel;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.traitspanel.TraitsPanel;
@@ -61,6 +62,7 @@ public class BeautiFrame extends DocumentFrame {
     private TraitsPanel traitsPanel;
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
+    private OldTreesPanel oldTreesPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -107,7 +109,8 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
-        treesPanel = new TreesPanel(this);
+        oldTreesPanel = new OldTreesPanel(this);
+        treesPanel = new TreesPanel(this, getDeleteAction());
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
@@ -117,7 +120,11 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Models", modelsPanel);
-        tabbedPane.addTab("Trees", treesPanel);
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+            tabbedPane.addTab("Trees", treesPanel);
+        } else {
+            tabbedPane.addTab("Trees", oldTreesPanel);
+        }
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -177,7 +184,11 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
-        treesPanel.setOptions(beautiOptions);
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+            treesPanel.setOptions(beautiOptions);
+        } else {
+            oldTreesPanel.setOptions(beautiOptions);
+        }
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
@@ -193,7 +204,11 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelsPanel.getOptions(beautiOptions);
-        treesPanel.getOptions(beautiOptions);
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+            treesPanel.getOptions(beautiOptions);
+        } else {
+            oldTreesPanel.getOptions(beautiOptions);
+        }
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
@@ -554,9 +569,9 @@ public class BeautiFrame extends DocumentFrame {
                     // AR - Yes and No are perfectly good answers to this question
                     int adt = JOptionPane.showOptionDialog(this,
                             "This file contains different taxa from the previously loaded\n" +
-                            "data partitions. This may be because the taxa are mislabelled\n" +
-                            "and need correcting before reloading.\n\n" +
-                            "Would you like to allow different taxa for each partition?\n",
+                                    "data partitions. This may be because the taxa are mislabelled\n" +
+                                    "and need correcting before reloading.\n\n" +
+                                    "Would you like to allow different taxa for each partition?\n",
                             "Validation of Non-matching Taxon Name(s)",
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE,

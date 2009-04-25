@@ -207,7 +207,7 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
             private int index = -1;
 
             public boolean hasNext() {
-                return index < getTaxonCount();
+                return index < getTaxonCount() - 1;
             }
 
             public Taxon next() {

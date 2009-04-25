@@ -26,7 +26,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
-import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
@@ -247,7 +246,7 @@ public class BeautiOptions extends ModelOptions {
         substTreeFileName = null;
 
         // Data options
-        allowDiffTaxa = false;
+        allowDifferentTaxa = false;
         dataType = null;
         dataReset = true;
 
@@ -1253,6 +1252,12 @@ public class BeautiOptions extends ModelOptions {
         return dataPartitions.size() > 0;
     }
 
+    public static enum TraitType {
+        DISCRETE,
+        INTEGER,
+        CONTINUOUS
+    }
+
     public String fileNameStem = "untitled";
     public String logFileName = null;
     public String treeFileName = null;
@@ -1262,7 +1267,7 @@ public class BeautiOptions extends ModelOptions {
     public String substTreeFileName = null;
 
     // Data options
-    public boolean allowDiffTaxa = false;
+    public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
     public boolean dataReset = true;
 
@@ -1273,8 +1278,8 @@ public class BeautiOptions extends ModelOptions {
     public DateGuesser dateGuesser = new DateGuesser();
 
     public List<String> traits = new ArrayList<String>();
-    public Map<String, Class> traitTypes = new HashMap<String, Class>();
-    
+    public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
+
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();

@@ -37,7 +37,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface TaxonList extends Identifiable {
+public interface TaxonList extends Identifiable, Iterable<Taxon> {
 
 	/**
 	 * @return a count of the number of taxa in the list.
@@ -64,6 +64,12 @@ public interface TaxonList extends Identifiable {
 	 */
 	int getTaxonIndex(Taxon taxon);
 
+    /**
+     * returns the taxa as a Java list
+     * @return
+     */
+    List<Taxon> asList();
+
 	/**
 	 * @return an object representing the named attributed for the given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
@@ -88,7 +94,7 @@ public interface TaxonList extends Identifiable {
 
 	class MissingTaxonException extends Exception {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 1864895946392309485L;
 

@@ -27,7 +27,7 @@ package dr.evolution.util;
 
 import dr.util.Identifiable;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Class for a list of taxa.
@@ -46,6 +46,10 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 
     public Taxa(TaxonList list) {
         addTaxa(list);
+    }
+
+    public Taxa(Collection<Taxon> taxa) {
+        addTaxa(taxa);
     }
 
     /**
@@ -79,9 +83,21 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
         }
     }
 
+    public void addTaxa(Collection<Taxon> taxa) {
+        for(Taxon taxon : taxa) {
+            addTaxon(taxon);
+        }
+    }
+
     public void removeTaxa(TaxonList taxa) {
         for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
             removeTaxon(taxa.getTaxon(nt));
+        }
+    }
+
+    public void removeTaxa(Collection<Taxon> taxa) {
+        for(Taxon taxon : taxa) {
+            removeTaxon(taxon);
         }
     }
 
@@ -139,6 +155,19 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return -1;
 	}
 
+    public List<Taxon> asList() {
+        return new ArrayList<Taxon>(taxa);
+    }
+
+    /**
+     * returns whether the list contains this taxon
+     * @param taxon
+     * @return true if taxon is in the list
+     */
+    public boolean contains(Taxon taxon) {
+        return taxa.contains(taxon);
+    }
+
     /**
      * Returns true if at least 1 member of taxonList is contained in this Taxa.
      * @param taxonList a TaxonList
@@ -148,6 +177,21 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
+            if (taxa.contains(taxon)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if at least 1 member of taxonList is contained in this Taxa.
+     * @param taxa a collection of taxa
+     * @return true if any of taxa is in this Taxa
+     */
+    public boolean containsAny(Collection<Taxon> taxa) {
+
+        for (Taxon taxon : taxa) {
             if (taxa.contains(taxon)) {
                 return true;
             }
@@ -171,6 +215,21 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 		return true;
 	}
 
+    /**
+     * Returns true if taxonList is a subset of the taxa in this Taxa.
+     * @param taxa a collection of taxa
+     * @return true if all of taxa is in this Taxa
+     */
+    public boolean containsAll(Collection<Taxon> taxa) {
+
+        for (Taxon taxon : taxa) {
+            if (!taxa.contains(taxon)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 	public String getId() { return id; }
 	public void setId(String id) { this.id = id; }
 
@@ -180,7 +239,11 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 
 	public String toString() { return id; }
 
-	private String id = null;
+    public Iterator<Taxon> iterator() {
+        return taxa.iterator();
+    }
+
+    private String id = null;
 
 	/**
 	 * Sets an named attribute for a given taxon.

@@ -60,8 +60,12 @@ public class TraceAnalysis {
 
         return report(fileName, -1, null);
     }
+    public static TraceList report(String fileName, int burnin, String likelihoodName) throws java.io.IOException, TraceException {
+        return report(fileName, burnin, likelihoodName,false);
+    }
 
-    public static TraceList report(String fileName, int burnin, String likelihoodName)
+
+    public static TraceList report(String fileName, int burnin, String likelihoodName, boolean withStdError)
             throws java.io.IOException, TraceException {
 
         int fieldWidth = 14;
@@ -85,7 +89,12 @@ public class TraceAnalysis {
         System.out.println();
 
         System.out.print(formatter.formatToFieldWidth("statistic", firstField));
-        String[] names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
+        String[] names;
+
+        if (!withStdError)
+            names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
+        else
+            names = new String[]{"mean", "sterr", "hpdLower", "hpdUpper", "ESS"};
 
         for (String name : names) {
             System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
@@ -101,6 +110,10 @@ public class TraceAnalysis {
             double ess = distribution.getESS();
             System.out.print(formatter.formatToFieldWidth(traces.getTraceName(i), firstField));
             System.out.print(formatter.format(distribution.getMean()));
+
+            if (withStdError)
+                System.out.print(formatter.format(distribution.getStdError()));
+
             System.out.print(formatter.format(distribution.getLowerHPD()));
             System.out.print(formatter.format(distribution.getUpperHPD()));
             System.out.print(formatter.format(ess));

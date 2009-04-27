@@ -29,12 +29,14 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         if (!(prior instanceof GammaDistribution || prior instanceof GammaDistributionModel))
             throw new RuntimeException("Mean prior must be Normal");
 
-        this.likelihood = inLikelihood.getDistribution();
+        Distribution likelihood = inLikelihood.getDistribution();
         this.dataList = inLikelihood.getDataList();
-        if (likelihood instanceof NormalDistributionModel)
+        if (likelihood instanceof NormalDistributionModel) {
             this.precisionParameter = ((NormalDistributionModel) likelihood).getPrecisionParameter();
-        else if (likelihood instanceof LogNormalDistributionModel) {
+            this.meanParameter = ((NormalDistributionModel) likelihood).getMeanParameter();
+        } else if (likelihood instanceof LogNormalDistributionModel) {
             this.precisionParameter = ((LogNormalDistributionModel) likelihood).getPrecisionParameter();
+            this.meanParameter = ((LogNormalDistributionModel) likelihood).getMeanParameter();
             isLog = true;
         } else
             throw new RuntimeException("Likelihood must be Normal or log Normal");
@@ -68,56 +70,37 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         final double priorMean = prior.mean();
         final double priorVariance = prior.variance();
 
-        double priorRate; //= priorMean / priorVariance;
-        double priorShape;// = priorMean * priorRate;
+        double priorRate;
+        double priorShape;
 
         if (priorMean == 0) {
             priorRate = 0;
-            priorShape = 0;
+            priorShape = -0.5; // Uninformative prior
         } else {
             priorRate = priorMean / priorVariance;
             priorShape = priorMean * priorRate;
         }
 
-
-//        double priorPrecision = 1.0 / prior.variance();
-//        double priorMean = prior.mean();
-
-//        System.err.println("priorShape = "+priorShape);
-//        System.err.println("priorRate = "+priorRate);
-//        System.exit(-1);
-
-//        double likelihoodPrecision = 1.0 / likelihood.variance();
-
         // Calculate weighted sum-of-squares
-        double total = 0;
+        final double mu = meanParameter.getParameterValue(0);
         double SSE = 0;
         int n = 0;
         for (Statistic statistic : dataList) {
             for (double x : statistic.getAttributeValue()) {
                 if (isLog) {
                     final double logX = Math.log(x);
-                    total += logX;
-                    SSE   += logX*logX;
+                    SSE += (logX - mu)*(logX - mu);
                 } else {
-                    total += x;
-                    SSE   += x*x;
+                    SSE += (x - mu)*(x - mu);
                 }
                 n++;
             }
         }
-        SSE -= total*total / n;
 
         final double shape = priorShape + n / 2.0;
         final double rate  = priorRate  + 0.5 * SSE;
 
-//        System.err.println("shape = "+shape);
-//        System.err.println("rate  = "+rate);
-        
-        final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (\tau/2)*SSE )
-//        System.err.println("draw  = "+draw);
-//        System.exit(-1);
-
+        final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
         precisionParameter.setParameterValue(0,draw);
 
         return 0;
@@ -186,11 +169,10 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     };
 
-    private Distribution likelihood;
     private Distribution prior;
     private boolean isLog = false;
 
     private List<Statistic> dataList;
-//    private Parameter meanParameter;
+    private Parameter meanParameter;
     private Parameter precisionParameter;
 }

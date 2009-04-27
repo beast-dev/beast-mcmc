@@ -176,6 +176,8 @@ public class GammaDistribution implements Distribution {
         if (shape == 1.0) {
             return (-x / scale) - Math.log(scale);
         }
+        if (shape == 0.0)  // uninformative
+            return -Math.log(x);
 
         return ((shape - 1.0) * Math.log(x / scale) - x / scale - GammaFunction
                 .lnGamma(shape))

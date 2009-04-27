@@ -30,6 +30,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Statistic;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -62,6 +63,10 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
     protected boolean getLikelihoodKnown() {
         return false;
 	}
+
+    public List<Statistic> getDataList() {
+        return dataList;
+    }
 	
 }
 

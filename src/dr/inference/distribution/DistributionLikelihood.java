@@ -203,6 +203,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public static final String SHAPE = "shape";
     public static final String SCALE = "scale";
     public static final String OFFSET = "offset";
+    public static final String UNINFORMATIVE = "uninformative";
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.
@@ -489,6 +490,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newBooleanRule(UNINFORMATIVE,true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

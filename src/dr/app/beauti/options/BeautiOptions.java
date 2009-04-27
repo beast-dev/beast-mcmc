@@ -1310,7 +1310,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean dataReset = true;
 
     public Taxa taxonList = null;
-    public List<TaxonList> multiTaxaList = new ArrayList<TaxonList>();
     public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
 
     public DateGuesser dateGuesser = new DateGuesser();

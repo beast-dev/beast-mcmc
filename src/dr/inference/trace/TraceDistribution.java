@@ -54,6 +54,10 @@ public class TraceDistribution {
         return mean;
     }
 
+    public double getStdError() {
+        return stdError;
+    }
+
     public boolean hasGeometricMean() {
         return hasGeometricMean;
     }
@@ -102,6 +106,7 @@ public class TraceDistribution {
     private void analyseDistribution(double[] values) {
 
         mean = DiscreteStatistics.mean(values);
+        stdError = DiscreteStatistics.stdev(values);
 
         minimum = Double.POSITIVE_INFINITY;
         maximum = Double.NEGATIVE_INFINITY;
@@ -151,7 +156,7 @@ public class TraceDistribution {
     protected boolean hasGeometricMean = false;
 
     protected double minimum, maximum;
-    protected double mean, median, geometricMean;
+    protected double mean, median, geometricMean, stdError;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
 }

@@ -53,7 +53,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         double logL = 0.0;
 
         for (Parameter parameter : dataList) {
-            logL += distribution.logPdf(parameter.getParameterValues());
+                logL += distribution.logPdf(parameter.getParameterValues());
         }
         return logL;
     }

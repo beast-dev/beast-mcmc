@@ -121,8 +121,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     public final double getM() {
         if (isMeanInRealSpace) {
             double stDev = getStDev();
-            double M = Math.log(meanParameter.getParameterValue(0)) - (0.5 * stDev * stDev);
-            return M;
+            return Math.log(meanParameter.getParameterValue(0)) - (0.5 * stDev * stDev);
         } else {
             return meanParameter.getParameterValue(0);
 
@@ -138,8 +137,14 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         }
     }
 
-    public final Parameter getMnParameter() {
+    public final Parameter getMeanParameter() {
         return meanParameter;
+    }
+
+     public Parameter getPrecisionParameter() {
+        if (!usesStDev)
+            return scaleParameter;
+        return null;
     }
 
     // *****************************************************************
@@ -176,10 +181,11 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
      * @return the variance of the log normal distribution.
      */
     public double variance() {
-        double S2 = getStDev();
-        S2 *= S2;
-
-        return Math.exp(S2 + 2 * getM()) * (Math.exp(S2) - 1);
+        if (usesStDev) {
+            double stdev = scaleParameter.getParameterValue(0);
+            return stdev * stdev;
+        }
+        return 1.0 / scaleParameter.getParameterValue(0);
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {

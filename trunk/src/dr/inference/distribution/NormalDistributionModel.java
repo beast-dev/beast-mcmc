@@ -85,6 +85,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return stdevParameter.getParameterValue(0);
     }
 
+    public Parameter getMeanParameter() {
+        return meanParameter;
+    }
+
+    public Parameter getPrecisionParameter() {
+        if (hasPrecision)
+            return precisionParameter;
+        return null;
+    }
+
     // *****************************************************************
     // Interface Distribution
     // *****************************************************************
@@ -110,7 +120,10 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     public double variance() {
-        return NormalDistribution.variance(mean(), getStdev());
+        if (hasPrecision)
+            return 1.0 / precisionParameter.getParameterValue(0);
+        double stdev = stdevParameter.getParameterValue(0);
+        return stdev * stdev;        
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {

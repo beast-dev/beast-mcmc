@@ -65,7 +65,6 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
         double priorMean = prior.mean();
         double likelihoodPrecision = 1.0 / likelihood.variance();
 
-        // Calculate weighted sum-of-squares
         double total = 0;
         int n = 0;
         for (Statistic statistic : dataList) {

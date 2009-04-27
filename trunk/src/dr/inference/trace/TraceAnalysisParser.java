@@ -41,6 +41,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
     public static final String TRACE_ANALYSIS = "traceAnalysis";
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
+    public static final String STD_ERROR ="stdError";
 
     public String getParserName() {
         return TRACE_ANALYSIS;
@@ -49,6 +50,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String fileName = xo.getStringAttribute(FILE_NAME);
+        boolean withStdError = xo.getAttribute(STD_ERROR,false);
         try {
 
             File file = new File(fileName);
@@ -66,7 +68,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
                 // leaving the burnin attribute off will result in 10% being used
                 int burnin = xo.getAttribute(BURN_IN, -1);
 
-                TraceList traces = TraceAnalysis.report(fileName, burnin, null);
+                TraceList traces = TraceAnalysis.report(fileName, burnin, null, withStdError);
                 for (int x = 0; x < xo.getChildCount(); x++) {
                     XMLObject child = (XMLObject) xo.getChild(x);
                     String statName = child.getStringAttribute(Attribute.NAME);

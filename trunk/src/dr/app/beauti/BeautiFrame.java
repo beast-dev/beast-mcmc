@@ -586,10 +586,11 @@ public class BeautiFrame extends DocumentFrame {
                         //changeTabs();// can be added, if required in future
 
                         // add the new diff taxa
-                        if (beautiOptions.multiTaxaList.size() < 1) {
-                            beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
+                        for (Taxon taxon : taxa) {
+                            if (!beautiOptions.taxonList.contains(taxon)) {
+                                beautiOptions.taxonList.addTaxon(taxon);
+                            }
                         }
-                        beautiOptions.multiTaxaList.add(taxa);
 
                     } else {
                         return;
@@ -600,22 +601,11 @@ public class BeautiFrame extends DocumentFrame {
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
 
-                for (Taxon taxon : taxa) {
+                for (Taxon taxon : taxa) { // add the new diff taxa
                     if (!beautiOptions.taxonList.contains(taxon)) {
                         beautiOptions.taxonList.addTaxon(taxon);
                     }
                 }
-//                // add the new diff taxa
-//                if (beautiOptions.multiTaxaList.size() < 1) {
-//                    // update the taxon name by adding gene name
-//
-//
-//                    beautiOptions.multiTaxaList.add(beautiOptions.taxonList);
-//                }
-//                // update the taxon name by adding gene name
-//
-//
-//                beautiOptions.multiTaxaList.add(taxa);
 
             }
         }

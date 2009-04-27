@@ -161,21 +161,8 @@ public class BeastGenerator extends Generator {
         // chance to generate XML at this point in the BEAST file.
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
 
-        if (!options.allowDifferentTaxa) {
-        	writeTaxa(writer, options.taxonList, -1);
-        } else {
-        	List<TaxonList> multiTaxaList = options.multiTaxaList; // Is this right?
-
-        	if (multiTaxaList.size() <= 1) { // validation to require more that 1 taxa (file)
-
-        	}
-
-        	for (int n = 0; n < multiTaxaList.size(); n++) {
-        		// TaxonList is a java class not a list
-        		writeTaxa(writer, (TaxonList) multiTaxaList.get(n), n);
-        	}
-        }
-
+        writeTaxa(writer, options.taxonList);
+        
         List<Taxa> taxonSets = options.taxonSets;
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTaxonSets(writer, taxonSets);
@@ -326,22 +313,13 @@ public class BeastGenerator extends Generator {
      * @param writer    the writer
      * @param taxonList the taxon list to write
      */
-    private void writeTaxa(XMLWriter writer, TaxonList taxonList, int numOfTaxa) {
+    private void writeTaxa(XMLWriter writer, TaxonList taxonList) {
     	// -1 (single taxa), 0 (1st gene of multi-taxa)
-    	if (numOfTaxa < 1) {
-    		writer.writeComment("The list of taxa analyse (can also include dates/ages).");
-    	}
-
-    	if (numOfTaxa < 0) { // single taxa
-	        writer.writeComment("ntax=" + taxonList.getTaxonCount());
-	        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id",
-	        		"taxa")});
-    	} else { // multi-taxa
-    		writer.writeComment("multi-taxa: " + mulitTaxaTagName + " " + (numOfTaxa + 1));
-    		writer.writeComment("ntax=" + taxonList.getTaxonCount());
-	        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id",
-	        		mulitTaxaTagName + Integer.toString(numOfTaxa + 1))}); // e.g. id = gene1
-    	}
+    	
+    	writer.writeComment("The list of taxa analyse (can also include dates/ages).");
+    	writer.writeComment("ntax=" + taxonList.getTaxonCount());
+	    writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>("id", "taxa")});
+    	
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -353,13 +331,9 @@ public class BeastGenerator extends Generator {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
-            if (numOfTaxa < 0) { // single taxa
-            	writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id",
-            			taxon.getId())}, !hasDate);
-            } else { // multi-taxa
-            	writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id",
-            			(taxon.getId() + "_" + mulitTaxaTagName + Integer.toString(numOfTaxa + 1)))}, !hasDate);
-            }
+           
+            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("id", taxon.getId())}, !hasDate);
+           
 
             if (hasDate) {
                 dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);

@@ -23,8 +23,9 @@
  * have any questions.
  */
 
-package javax.swing.filechooser;
+package dr.java16compat;
 
+import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.util.Locale;
 

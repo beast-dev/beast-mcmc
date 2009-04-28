@@ -30,8 +30,8 @@ import org.virion.jam.util.IconUtils;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -69,6 +69,8 @@ public class BeautiFrame extends DocumentFrame {
     private MCMCPanel mcmcPanel;
 
     private BeautiPanel currentPanel;
+    
+    private JFileChooser chooser; // make JFileChooser chooser remeber previous path
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
@@ -164,6 +166,8 @@ public class BeautiFrame extends DocumentFrame {
         setAllOptions();
 
         setSize(new java.awt.Dimension(1024, 768));
+        
+        chooser = new JFileChooser(); // make JFileChooser chooser remeber previous path
     }
 
 
@@ -295,28 +299,41 @@ public class BeautiFrame extends DocumentFrame {
 
     public final void doImport() {
 
-        FileDialog dialog = new FileDialog(this,
-                "Import NEXUS File...",
-                FileDialog.LOAD);
-
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-
-            try {
-                importFromFile(file);
-
-                setDirty();
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+//        FileDialog dialog = new FileDialog(this, "Import NEXUS Files...", FileDialog.LOAD);
+//        dialog.setVisible(true);
+                
+        chooser.setMultiSelectionEnabled(true);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
+        chooser.setFileFilter(filter);
+      
+        int returnVal = chooser.showDialog(this, "Import Aligment...");
+        if(returnVal == JFileChooser.APPROVE_OPTION) {           
+        	File[] files = chooser.getSelectedFiles();        	
+        	for (File file : files) {
+        		if (file == null || file.getName().equals("")) {
+        			JOptionPane.showMessageDialog(this, "Invalid file name",
+                            "Invalid file name", JOptionPane.ERROR_MESSAGE);
+        		} else {
+	                try {
+	                	importFromFile(file);
+	
+	                    setDirty();
+	                } catch (FileNotFoundException fnfe) {
+	                    JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+	                            "Unable to open file", JOptionPane.ERROR_MESSAGE);
+	                } catch (IOException ioe) {
+	                    JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+	                            "Unable to read file", JOptionPane.ERROR_MESSAGE);
+	                }
+        		}
+        	}
         }
+    	
+//        if (dialog.getFile() != null) {
+//            File file = new File(dialog.getDirectory(), dialog.getFile());
+//
+//        }
 
     }
 
@@ -585,12 +602,15 @@ public class BeautiFrame extends DocumentFrame {
                         beautiOptions.allowDifferentTaxa = true;
                         //changeTabs();// can be added, if required in future
 
-                        // add the new diff taxa
-                        for (Taxon taxon : taxa) {
-                            if (!beautiOptions.taxonList.contains(taxon)) {
-                                beautiOptions.taxonList.addTaxon(taxon);
-                            }
-                        }
+        				java.util.List<String> prevTaxa = new ArrayList<String>();
+        				for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+        					prevTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+        				}
+        				for (int i = 0; i < taxa.getTaxonCount(); i++) {
+        					if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
+        						beautiOptions.taxonList.addTaxon(taxa.getTaxon(i));
+        					}
+        				}
 
                     } else {
                         return;
@@ -601,12 +621,23 @@ public class BeautiFrame extends DocumentFrame {
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
 
-                for (Taxon taxon : taxa) { // add the new diff taxa
-                    if (!beautiOptions.taxonList.contains(taxon)) {
-                        beautiOptions.taxonList.addTaxon(taxon);
-                    }
-                }
-
+//                for (Taxon taxon : taxa) { // not working
+//                    if (!beautiOptions.taxonList.contains(taxon)) {
+//                        beautiOptions.taxonList.addTaxon(taxon);
+//                    }
+//                }
+            	
+            	// add the new diff taxa
+				java.util.List<String> prevTaxa = new ArrayList<String>();
+				for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
+					prevTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+				}
+				for (int i = 0; i < taxa.getTaxonCount(); i++) {
+					if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
+						beautiOptions.taxonList.addTaxon(taxa.getTaxon(i));
+					}
+				}
+                 
             }
         }
 

@@ -13,6 +13,7 @@ import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 import dr.inference.trace.TraceList;
+import dr.java16compat.FileNameExtensionFilter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
@@ -21,7 +22,6 @@ import org.virion.jam.util.LongTask;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
@@ -637,40 +637,23 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 
     public final void doImport() {
-        JFileChooser chooser = new JFileChooser(openDefaultDirectory);
+        final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
-        //chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log");
         chooser.setFileFilter(filter);
 
         final int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
+        if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File[] files = chooser.getSelectedFiles();
             LogFileTraces[] traces = new LogFileTraces[files.length];
 
-            for (int i = 0; i < files.length; i++) {
+            for(int i = 0; i < files.length; i++) {
                 traces[i] = new LogFileTraces(files[i].getName(), files[i]);
             }
 
             processTraces(traces);
         }
-
-//        FileDialog dialog = new FileDialog(this,
-//                "Import Trace File...",
-//                FileDialog.LOAD);
-//
-//        dialog.setVisible(true);
-//        dialog.setMode(FileDialog.);
-//        if (dialog.getFile() != null) {
-//            File file = new File(dialog.getDirectory(), dialog.getFile());
-//
-//            LogFileTraces traces = new LogFileTraces(dialog.getFile(), file);
-//
-//            processTraces(traces);
-//
-//        }
-
     }
 
     private File openDefaultDirectory = null;

@@ -30,6 +30,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.java16compat.FileNameExtensionFilter;
 import org.jdom.JDOMException;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
@@ -38,7 +39,6 @@ import org.virion.jam.util.IconUtils;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -311,17 +311,13 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-
-//        FileDialog dialog = new FileDialog(this, "Import NEXUS Files...", FileDialog.LOAD);
-//        dialog.setVisible(true);
-                
         chooser.setMultiSelectionEnabled(true);
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
             "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
         chooser.setFileFilter(filter);
       
         int returnVal = chooser.showDialog(this, "Import Aligment...");
-        if(returnVal == JFileChooser.APPROVE_OPTION) {           
+        if( returnVal == JFileChooser.APPROVE_OPTION ) {
         	File[] files = chooser.getSelectedFiles();        	
         	for (File file : files) {
         		if (file == null || file.getName().equals("")) {
@@ -342,12 +338,6 @@ public class BeautiFrame extends DocumentFrame {
         		}
         	}
         }
-    	
-//        if (dialog.getFile() != null) {
-//            File file = new File(dialog.getDirectory(), dialog.getFile());
-//
-//        }
-
     }
 
     protected void importFromFile(File file) throws IOException {
@@ -379,7 +369,6 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected void importBEASTFile(File file) throws IOException {
-
 
         try {
             FileReader reader = new FileReader(file);

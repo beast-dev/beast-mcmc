@@ -313,7 +313,7 @@ public class BeautiFrame extends DocumentFrame {
     public final void doImport() {
         chooser.setMultiSelectionEnabled(true);
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
+            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast");
         chooser.setFileFilter(filter);
       
         int returnVal = chooser.showDialog(this, "Import Aligment...");

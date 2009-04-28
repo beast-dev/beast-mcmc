@@ -31,7 +31,7 @@ import org.jdom.JDOMException;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+//import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -53,8 +53,8 @@ public class BeautiFrame extends DocumentFrame {
     private final BeautiOptions beautiOptions;
     private final BeastGenerator generator;
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
-    private JLabel statusLabel = new JLabel("No data loaded");
+    private final JTabbedPane tabbedPane = new JTabbedPane();
+    private final JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
@@ -70,7 +70,7 @@ public class BeautiFrame extends DocumentFrame {
 
     private BeautiPanel currentPanel;
     
-    private JFileChooser chooser; // make JFileChooser chooser remeber previous path
+    private JFileChooser chooser; // make JFileChooser chooser remember previous path
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
@@ -96,11 +96,14 @@ public class BeautiFrame extends DocumentFrame {
         // install components:
         SequenceErrorModelComponent comp1 = new SequenceErrorModelComponent(beautiOptions);
         beautiOptions.addComponent(comp1);
-        generator.addComponent(comp1);
+
+        BeastGenerator.addComponent(comp1);
+        //generator.addComponent(comp1);
 
         TipDateSamplingComponent comp2 = new TipDateSamplingComponent(beautiOptions);
         beautiOptions.addComponent(comp2);
-        generator.addComponent(comp2);
+        BeastGenerator.addComponent(comp2);
+        //generator.addComponent(comp2);
     }
 
     public void initializeComponents() {
@@ -303,9 +306,9 @@ public class BeautiFrame extends DocumentFrame {
 //        dialog.setVisible(true);
                 
         chooser.setMultiSelectionEnabled(true);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
-        chooser.setFileFilter(filter);
+//        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+//            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
+//        chooser.setFileFilter(filter);
       
         int returnVal = chooser.showDialog(this, "Import Aligment...");
         if(returnVal == JFileChooser.APPROVE_OPTION) {           
@@ -339,9 +342,7 @@ public class BeautiFrame extends DocumentFrame {
 
     protected void importFromFile(File file) throws IOException {
 
-        Reader reader = null;
-
-        reader = new FileReader(file);
+        Reader reader = new FileReader(file);
 
         BufferedReader bufferedReader = new BufferedReader(reader);
         String line = bufferedReader.readLine();
@@ -390,7 +391,6 @@ public class BeautiFrame extends DocumentFrame {
                     "Unable to import file: " + e.getMessage(),
                     "Unable to import file",
                     JOptionPane.WARNING_MESSAGE);
-            return;
         } catch (Importer.ImportException e) {
             JOptionPane.showMessageDialog(this,
                     "Unable to import file: " + e.getMessage(),
@@ -799,27 +799,28 @@ public class BeautiFrame extends DocumentFrame {
                 beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
             }
 
-            int j = 0;
-            for (String valueString : column) {
-                int index = beautiOptions.taxonList.getTaxonIndex(taxa.get(j));
-                if (index >= 0) {
-                    // if the taxon isn't in the list then ignore it.
-                    // @todo provide a warning of unmatched taxa
-                    Taxon taxon = beautiOptions.taxonList.getTaxon(index);
-                    if (isBoolean) {
-                        taxon.setAttribute(labels[i], new Boolean(valueString));
-                    } else if (isInteger) {
-                        taxon.setAttribute(labels[i], new Integer(valueString));
-                    } else if (isNumber) {
-                        taxon.setAttribute(labels[i], new Double(valueString));
-                    } else {
-                        taxon.setAttribute(labels[i], valueString);
+            if( beautiOptions.taxonList != null ) {
+                int j = 0;
+                for (String valueString : column) {
+                    int index = beautiOptions.taxonList.getTaxonIndex(taxa.get(j));
+                    if (index >= 0) {
+                        // if the taxon isn't in the list then ignore it.
+                        // @todo provide a warning of unmatched taxa
+                        Taxon taxon = beautiOptions.taxonList.getTaxon(index);
+                        if (isBoolean) {
+                            taxon.setAttribute(labels[i], Boolean.valueOf(valueString));
+                        } else if (isInteger) {
+                            taxon.setAttribute(labels[i], new Integer(valueString));
+                        } else if (isNumber) {
+                            taxon.setAttribute(labels[i], new Double(valueString));
+                        } else {
+                            taxon.setAttribute(labels[i], valueString);
+                        }
                     }
+                    j++;
                 }
-                j++;
             }
         }
-
     }
 
     private void setStatusMessage() {
@@ -933,7 +934,7 @@ public class BeautiFrame extends DocumentFrame {
         return openTemplateAction;
     }
 
-    private AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
+    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
         private static final long serialVersionUID = 2450459627280385426L;
 
         public void actionPerformed(ActionEvent ae) {
@@ -949,7 +950,7 @@ public class BeautiFrame extends DocumentFrame {
         return saveAsAction;
     }
 
-    private AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
+    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
         private static final long serialVersionUID = 2424923366448459342L;
 
         public void actionPerformed(ActionEvent ae) {

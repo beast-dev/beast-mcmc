@@ -8,35 +8,45 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.modelsPanel.ModelsPanel;
-import dr.app.beauti.options.*;
-import dr.app.beauti.priorsPanel.PriorsPanel;
-import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.app.beauti.components.TipDateSamplingComponent;
-import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.datapanel.DataPanel;
-import dr.evolution.alignment.SimpleAlignment;
+import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.modelsPanel.ModelsPanel;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionTree;
+import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.traitspanel.TraitsPanel;
+import dr.app.beauti.treespanel.OldTreesPanel;
+import dr.app.beauti.treespanel.TreesPanel;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
+import org.jdom.JDOMException;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
-import org.jdom.JDOMException;
 
 import javax.swing.*;
-import javax.swing.event.*;
-//import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -306,9 +316,9 @@ public class BeautiFrame extends DocumentFrame {
 //        dialog.setVisible(true);
                 
         chooser.setMultiSelectionEnabled(true);
-//        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-//            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
-//        chooser.setFileFilter(filter);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+            "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "xml");
+        chooser.setFileFilter(filter);
       
         int returnVal = chooser.showDialog(this, "Import Aligment...");
         if(returnVal == JFileChooser.APPROVE_OPTION) {           

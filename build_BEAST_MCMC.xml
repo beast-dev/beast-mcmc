@@ -69,6 +69,7 @@
 			<include name="dr/util/**" />
 			<include name="dr/xml/**" />
 			<include name="dr/geo/**"/>
+			<include name="dr/java16compat/**"/>
 			<include name="org/virion/jam/**" />
 			<!-- complie JUnit test classes -->
 			<include name="test/dr/**" />
@@ -107,6 +108,7 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
+				<include name="dr/java16compat/**/*.class"/>
 				<include name="org/virion/jam/**/*.class" />
 			</fileset>
 			<fileset dir="">
@@ -169,6 +171,7 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
+				<include name="dr/java16compat/**/*.class"/>
 				<include name="org/virion/jam/**/*.class" />
 			</fileset>
 			<fileset dir="">

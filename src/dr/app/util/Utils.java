@@ -26,10 +26,11 @@
 package dr.app.util;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.*;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -75,6 +76,56 @@ public class Utils {
 		frame.dispose();
 
 		return file;
+	}
+	
+	/**
+	 * Parse traits files into HashMap
+	 * 1st element of each line is always the key of Map, no duplicate
+	 * the rest elements are stored in the List
+	 * 
+	 * @param file
+	 * @param delim
+	 * @return HashMap
+	 * @throws IOException
+	 */
+	public static Map<String, List<String>> readFileIntoMapColumns(File file, String delim, Frame frame) throws IOException {
+		Map<String, List<String>> columns = new HashMap<String, List<String>>();
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(file));
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to open file : " + e.getMessage());
+			throw new RuntimeException(e.getMessage());
+		}
+        
+        String line = reader.readLine();
+        String[] elements;
+        while (line != null) {
+        	elements = line.split(delim);
+        	
+        	if (elements.length > 0) {
+        		// 1st element of each line is always the key of Map, no duplicate         		
+        		// the rest elements are stored in the List
+        		List<String> restEle = new ArrayList<String>();
+                for (int i = 1; i < elements.length; i++) {
+                    restEle.add(elements[i]);                    
+                }
+                
+                if (!columns.containsKey(elements[0])) {
+                	columns.put(elements[0], restEle);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "There are duplicate elements in 1st column of the file !",
+                            "Duplicate elements in 1st column", JOptionPane.ERROR_MESSAGE);
+                }
+        	} else {
+                JOptionPane.showMessageDialog(frame, "There is empty line in the file !",
+                        "Empty line in the file", JOptionPane.WARNING_MESSAGE);
+        	}
+        	
+        	line = reader.readLine();
+        }
+                
+        return columns;
 	}
 
 	/**

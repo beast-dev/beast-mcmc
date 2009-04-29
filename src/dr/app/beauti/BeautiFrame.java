@@ -21,6 +21,7 @@ import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
@@ -43,10 +44,13 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Andrew Rambaut
@@ -717,26 +721,52 @@ public class BeautiFrame extends DocumentFrame {
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
             File file = new File(dialog.getDirectory(), dialog.getFile());
-
-            try {
-                importTraitsFromFile(file);
-                setAllOptions();
-
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+           
+	        importTraitsFromFile(file);
+	        setAllOptions(); 
         }
 
     }
 
-    protected void importTraitsFromFile(File file) throws IOException {
-
+    protected void importTraitsFromFile(File file) {
+    	String delimiter = "\t";
+    	
+    	try {
+    		Map<String, List<String>> columns = Utils.readFileIntoMapColumns(file, delimiter, this);
+    		    		
+//    		Object[] keys = columns.keySet().toArray();
+//    		
+//    		for (Object key : keys) {
+//    			System.out.println(key.toString());
+//    		}
+//    		
+//    		TreeSet<String> sortedKeys = new TreeSet<String> (columns.keySet());// sort keys
+//    		for (Object key : sortedKeys) {
+//    			System.out.println(key.toString());
+//    		}
+    		
+    		
+    		if (columns.containsKey("species")) { // Joseph
+    			JOptionPane.showMessageDialog(this, "Are you happy with this code ?",
+                        "test", JOptionPane.QUESTION_MESSAGE);
+    			
+    		} else { // Andrew
+    			importMultiTraits (file);
+       		}
+    		
+        } catch (FileNotFoundException fnfe) {
+            JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                    "Unable to open file",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                    "Unable to read file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+ 
+    }
+    
+    private void importMultiTraits (File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
 
         java.util.List<String> taxa = new ArrayList<String>();

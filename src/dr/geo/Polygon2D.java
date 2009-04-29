@@ -6,8 +6,13 @@ import dr.geo.cartogram.CartogramMapping;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.io.File;
+import java.io.IOException;
 
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.Document;
 
 
 /**
@@ -26,6 +31,7 @@ public class Polygon2D {
             Point2D start = points.get(0);
             points.add(start);
         }
+        convertPointsToArrays();
         length = points.size() - 1;
     }
 
@@ -34,11 +40,13 @@ public class Polygon2D {
         point2Ds = new LinkedList<Point2D>();
     }
 
+    public String getID() { return id; }
+
     public Polygon2D(Element e) {
 
-        List children = e.getChildren();
-        for (int a = 0; a < children.size(); a++) {
-            Element childElement = (Element) children.get(a);
+        List<Element> children = e.getChildren();
+        id = e.getAttributeValue("id");
+        for(Element childElement : children) {
             if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 
                 String value = childElement.getTextTrim();
@@ -56,11 +64,25 @@ public class Polygon2D {
 
                     point2Ds.add(new Point2D.Double(x, y));
                 }
-
+                convertPointsToArrays();
                 length = point2Ds.size() - 1;
                 break;
 
             }
+        }
+    }
+
+    private void convertPointsToArrays() {
+        final int length = point2Ds.size();
+        if (x == null || x.length != length) {
+            x = new double[length];
+            y = new double[length];
+        }
+        Iterator<Point2D> it = point2Ds.iterator();
+        for(int i=0; i<length; i++) {
+            final Point2D point = it.next();
+            x[i] = point.getX();
+            y[i] = point.getY();
         }
     }
 
@@ -76,26 +98,26 @@ public class Polygon2D {
             if(!last.equals(Point2D))
                 point2Ds.add(last);
         }
-
+        convertPointsToArrays();
         length = point2Ds.size() - 1;
     }
 
-//    public boolean contains2DPoint(double inX, double inY) {
-//        if (!planarInZ)
-//            throw new RuntimeException("Only 2D polygons are currently implemented");
-//        boolean contains = false;
-//
-//        // Take a horizontal ray from (inX,inY) to the right.
-//        // If ray across the polygon edges an odd # of times, the point is inside.
-//        for (int i = 0, j = length - 1; i < length; j = i++) {
-//
-//             if ((((y[i] <= inY) && (inY < y[j])) ||
-//                    ((y[j] <= inY) && (inY < y[i]))) &&
-//                    (inX < (x[j] - x[i]) * (inY - y[i]) / (y[j] - y[i]) + x[i]))
-//                contains = !contains;
-//        }
-//        return contains;
-//    }
+    public boolean containsPoint2D(Point2D Point2D) {
+
+        final double inX = Point2D.getX();
+        final double inY = Point2D.getY();
+        boolean contains = false;
+
+        // Take a horizontal ray from (inX,inY) to the right.
+        // If ray across the polygon edges an odd # of times, the point is inside.
+        for (int i = 0, j = length - 1; i < length; j = i++) {
+             if ((((y[i] <= inY) && (inY < y[j])) ||
+                    ((y[j] <= inY) && (inY < y[i]))) &&
+                    (inX < (x[j] - x[i]) * (inY - y[i]) / (y[j] - y[i]) + x[i]))
+                contains = !contains;
+        }
+        return contains;
+    }
 
     public void setFillValue(double value) {
         fillValue = value;
@@ -105,37 +127,37 @@ public class Polygon2D {
         return fillValue;
     }
 
-    public boolean containsPoint2D(Point2D Point2D) { // TODO Still takes 3 times as long as Polygon.contains, why???
-
-        final double inX = Point2D.getX();
-        final double inY = Point2D.getY();
-        boolean contains = false;
-
-        // Take a horizontal ray from (inX,inY) to the right.
-        // If ray across the polygon edges an odd # of times, the Point2D is inside.
-
-        final Point2D end   = point2Ds.get(length-1); // assumes closed
-        double xi = end.getX();
-        double yi = end.getY();
-
-        Iterator<Point2D> listIterator = point2Ds.iterator();
-
-        for(int i=0; i<length; i++) {
-
-            final double xj = xi;
-            final double yj = yi;
-
-            final Point2D next = listIterator.next();
-            xi = next.getX();
-            yi = next.getY();
-
-            if ((((yi <= inY) && (inY < yj)) ||
-                    ((yj <= inY) && (inY < yi))) &&
-                    (inX < (xj - xi) * (inY - yi) / (yj - yi) + xi))
-                contains = !contains;
-        }
-        return contains;
-    }
+//    public boolean containsPoint2D(Point2D Point2D) { // this takes 3 times as long as the above code, why???
+//
+//        final double inX = Point2D.getX();
+//        final double inY = Point2D.getY();
+//        boolean contains = false;
+//
+//        // Take a horizontal ray from (inX,inY) to the right.
+//        // If ray across the polygon edges an odd # of times, the Point2D is inside.
+//
+//        final Point2D end   = point2Ds.get(length-1); // assumes closed
+//        double xi = end.getX();
+//        double yi = end.getY();
+//
+//        Iterator<Point2D> listIterator = point2Ds.iterator();
+//
+//        for(int i=0; i<length; i++) {
+//
+//            final double xj = xi;
+//            final double yj = yi;
+//
+//            final Point2D next = listIterator.next();
+//            xi = next.getX();
+//            yi = next.getY();
+//
+//            if ((((yi <= inY) && (inY < yj)) ||
+//                    ((yj <= inY) && (inY < yi))) &&
+//                    (inX < (xj - xi) * (inY - yi) / (yj - yi) + xi))
+//                contains = !contains;
+//        }
+//        return contains;
+//    }
 
     private enum Side {
         left, right, top, bottom
@@ -243,6 +265,35 @@ public class Polygon2D {
         return sb.toString();
     }
 
+    public static List<Polygon2D> readKMLFile(String fileName) {
+
+        List<Polygon2D> polygons = new ArrayList<Polygon2D>();
+        try {
+
+            SAXBuilder builder = new SAXBuilder();
+            builder.setValidation(false);
+            builder.setIgnoringElementContentWhitespace(true);
+            Document doc = builder.build(new File(fileName));
+            Element root = doc.getRootElement();
+            if (!root.getName().equalsIgnoreCase("KML"))
+                throw new RuntimeException("Not a KML file");
+
+            List<Element> children = root.getChildren();
+            for(Element e : children) {
+                if (e.getName().equalsIgnoreCase("polygon")) {
+                    Polygon2D polygon = new Polygon2D(e);
+                    polygons.add(polygon);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JDOMException e) {
+            e.printStackTrace();
+        }
+        return polygons;
+    }
+
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -278,7 +329,7 @@ public class Polygon2D {
         }
 
         public Class getReturnType() {
-            return SpatialTemporalPolygon.class;
+            return Polygon2D.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -315,7 +366,13 @@ public class Polygon2D {
     }
 
     protected LinkedList<Point2D> point2Ds;
+
     protected int length;
     private double fillValue;
+    private String id;
+
+    protected double[] x;
+    protected double[] y;
+
 
 }

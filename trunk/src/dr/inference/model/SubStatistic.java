@@ -42,8 +42,12 @@ public class SubStatistic extends Statistic.Abstract {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final String name = xo.getAttribute(NAME, xo.getId());
-
+            String name;
+                 if (xo.hasAttribute(NAME) || xo.hasAttribute(ID))
+                     name = xo.getAttribute(NAME, xo.getId());
+                 else
+                     name = "";
+              
             final Statistic stat = (Statistic) xo.getChild(Statistic.class);
             
             final int[] values = xo.getIntegerArrayAttribute(DIMENSION);

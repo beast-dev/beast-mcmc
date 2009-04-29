@@ -1,10 +1,13 @@
 package dr.geo;
 
 import dr.xml.*;
+import dr.geo.cartogram.CartogramMapping;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
-import java.util.LinkedList;
+import java.util.*;
+
+import org.jdom.Element;
 
 
 /**
@@ -18,7 +21,7 @@ public class Polygon2D {
     public static final String FILL_VALUE = "fillValue";
 
     public Polygon2D(LinkedList<Point2D> points, boolean closed) {
-        this.Point2Ds = points;
+        this.point2Ds = points;
         if (!closed) {
             Point2D start = points.get(0);
             points.add(start);
@@ -28,24 +31,71 @@ public class Polygon2D {
 
     public Polygon2D() {
         length = 0;
-        Point2Ds = new LinkedList<Point2D>();
+        point2Ds = new LinkedList<Point2D>();
+    }
+
+    public Polygon2D(Element e) {
+
+        List children = e.getChildren();
+        for (int a = 0; a < children.size(); a++) {
+            Element childElement = (Element) children.get(a);
+            if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
+
+                String value = childElement.getTextTrim();
+                StringTokenizer st1 = new StringTokenizer(value, "\n");
+                int count = st1.countTokens();  //System.out.println(count);
+
+                point2Ds = new LinkedList<Point2D>();
+                for (int i = 0; i < count; i++) {
+                    String line = st1.nextToken();
+                    StringTokenizer st2 = new StringTokenizer(line, ",");
+                    if (st2.countTokens() != 3)
+                        throw new IllegalArgumentException("All KML coordinates must contain (X,Y,Z) values.  Three dimensions not found in element '" + line + "'");
+                    final double x = Double.valueOf(st2.nextToken());
+                    final double y = Double.valueOf(st2.nextToken());
+
+                    point2Ds.add(new Point2D.Double(x, y));
+                }
+
+                length = point2Ds.size() - 1;
+                break;
+
+            }
+        }
     }
 
     public void addPoint2D(Point2D Point2D) {
-        if (Point2Ds.size() == 0)
-            Point2Ds.add(Point2D);
-        else if (Point2Ds.size() == 1) {
-            Point2Ds.add(Point2D);
-            Point2Ds.add(Point2Ds.get(0));
+        if (point2Ds.size() == 0)
+            point2Ds.add(Point2D);
+        else if (point2Ds.size() == 1) {
+            point2Ds.add(Point2D);
+            point2Ds.add(point2Ds.get(0));
         } else {
-            Point2D last = Point2Ds.removeLast();
-            Point2Ds.add(Point2D);
+            Point2D last = point2Ds.removeLast();
+            point2Ds.add(Point2D);
             if(!last.equals(Point2D))
-                Point2Ds.add(last);
+                point2Ds.add(last);
         }
 
-        length = Point2Ds.size() - 1;
+        length = point2Ds.size() - 1;
     }
+
+//    public boolean contains2DPoint(double inX, double inY) {
+//        if (!planarInZ)
+//            throw new RuntimeException("Only 2D polygons are currently implemented");
+//        boolean contains = false;
+//
+//        // Take a horizontal ray from (inX,inY) to the right.
+//        // If ray across the polygon edges an odd # of times, the point is inside.
+//        for (int i = 0, j = length - 1; i < length; j = i++) {
+//
+//             if ((((y[i] <= inY) && (inY < y[j])) ||
+//                    ((y[j] <= inY) && (inY < y[i]))) &&
+//                    (inX < (x[j] - x[i]) * (inY - y[i]) / (y[j] - y[i]) + x[i]))
+//                contains = !contains;
+//        }
+//        return contains;
+//    }
 
     public void setFillValue(double value) {
         fillValue = value;
@@ -55,7 +105,7 @@ public class Polygon2D {
         return fillValue;
     }
 
-    public boolean containsPoint2D(Point2D Point2D) {
+    public boolean containsPoint2D(Point2D Point2D) { // TODO Still takes 3 times as long as Polygon.contains, why???
 
         final double inX = Point2D.getX();
         final double inY = Point2D.getY();
@@ -63,20 +113,27 @@ public class Polygon2D {
 
         // Take a horizontal ray from (inX,inY) to the right.
         // If ray across the polygon edges an odd # of times, the Point2D is inside.
-        for (int i = 0, j = length - 1; i < length; j = i++) {
 
-            final double xi = Point2Ds.get(i).getX();
-            final double xj = Point2Ds.get(j).getX();
+        final Point2D end   = point2Ds.get(length-1); // assumes closed
+        double xi = end.getX();
+        double yi = end.getY();
 
-            final double yi = Point2Ds.get(i).getY();
-            final double yj = Point2Ds.get(j).getY();
+        Iterator<Point2D> listIterator = point2Ds.iterator();
+
+        for(int i=0; i<length; i++) {
+
+            final double xj = xi;
+            final double yj = yi;
+
+            final Point2D next = listIterator.next();
+            xi = next.getX();
+            yi = next.getY();
 
             if ((((yi <= inY) && (inY < yj)) ||
                     ((yj <= inY) && (inY < yi))) &&
                     (inX < (xj - xi) * (inY - yi) / (yj - yi) + xi))
                 contains = !contains;
         }
-
         return contains;
     }
 
@@ -92,7 +149,7 @@ public class Polygon2D {
         Point2D p2;       // next Point2D
 
         // make copy of original polygon to work with
-        LinkedList<Point2D> workPoly = new LinkedList<Point2D>(Point2Ds);
+        LinkedList<Point2D> workPoly = new LinkedList<Point2D>(point2Ds);
 
         // loop through all for clipping edges
         for (Side side : Side.values()) {
@@ -102,7 +159,7 @@ public class Polygon2D {
                 p2 = workPoly.get(i + 1);
                 if (isInsideClip(p, side, boundingBox)) {
                     if (isInsideClip(p2, side, boundingBox))
-                        // here both Point2Ds are inside the clipping window so add the second one
+                        // here both point2Ds are inside the clipping window so add the second one
                         clippedPolygon.add(p2);
                     else
                         // the seond Point2D is outside so add the intersection Point2D
@@ -123,6 +180,23 @@ public class Polygon2D {
             workPoly = new LinkedList<Point2D>(clippedPolygon);
         }
         return new Polygon2D(clippedPolygon,true);
+    }
+
+    public void transformByMapping(CartogramMapping mapping){
+        for (int i = 0; i < length +1; i++) {
+            point2Ds.set(i, mapping.map(point2Ds.get(i)));
+        }
+    }
+    public void swapXYs(){
+        for (int i = 0; i < length +1; i++) {
+            point2Ds.set(i, new Point2D.Double(point2Ds.get(i).getY(), point2Ds.get(i).getX()));
+        }
+    }
+
+    public void rescale(double longMin, double longwidth, double gridXSize, double latMax, double latwidth, double gridYSize){
+        for (int i = 0; i < length +1; i++) {
+            point2Ds.set(i, new Point2D.Double(((point2Ds.get(i).getX()-longMin)*(gridXSize/longwidth)),((latMax- point2Ds.get(i).getY())*(gridYSize/latwidth))));
+        }
     }
 
     private static boolean isInsideClip(Point2D p, Side side, Rectangle2D boundingBox) {
@@ -160,7 +234,7 @@ public class Polygon2D {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("polygon[\n");
-        for(Point2D pt : Point2Ds) {
+        for(Point2D pt : point2Ds) {
             sb.append("\t");
             sb.append(pt);
             sb.append("\n");
@@ -168,6 +242,7 @@ public class Polygon2D {
         sb.append("]");
         return sb.toString();
     }
+
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -182,7 +257,7 @@ public class Polygon2D {
 
             if ((!closed && coordinates.length < 3) ||
                     (closed && coordinates.length < 4))
-                throw new XMLParseException("Insufficient Point2Ds in polygon '" + xo.getId() + "' to define a polygon in 2D");
+                throw new XMLParseException("Insufficient point2Ds in polygon '" + xo.getId() + "' to define a polygon in 2D");
 
             LinkedList<Point2D> Point2Ds = new LinkedList<Point2D>();
             for (int i = 0; i < coordinates.length; i++)
@@ -239,7 +314,7 @@ public class Polygon2D {
 
     }
 
-    protected LinkedList<Point2D> Point2Ds;
+    protected LinkedList<Point2D> point2Ds;
     protected int length;
     private double fillValue;
 

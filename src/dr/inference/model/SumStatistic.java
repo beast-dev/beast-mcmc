@@ -100,7 +100,11 @@ public class SumStatistic extends Statistic.Abstract {
 
             boolean elementwise = xo.getAttribute("elementwise", false);
 
-            SumStatistic sumStatistic = new SumStatistic(SUM_STATISTIC, elementwise);
+            String name = SUM_STATISTIC;
+            if (xo.hasAttribute(NAME) || xo.hasAttribute(ID))
+                name = xo.getAttribute(NAME, xo.getId());
+
+            SumStatistic sumStatistic = new SumStatistic(name, elementwise);
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);

@@ -10,8 +10,8 @@ import java.io.DataOutputStream;
 
 public class TIFFWriter {
 
-	public static final short MAXROWS = 3000;    // maximum # of rows
-	public static final short MAXCOLUMNS = 1400; // maximum # of columns
+	public static final short MAXROWS = 6000;    // maximum # of rows
+	public static final short MAXCOLUMNS = 3000; // maximum # of columns
 
 	// Create TIFF image of integer array
 	public static void writeDoubleArray(

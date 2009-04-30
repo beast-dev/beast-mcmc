@@ -70,12 +70,14 @@ public class Binomial
 	{
 		// not sure how much overhead there is with try-catch blocks
 		// i.e. would an if statement be better?
-		
+
 		try {
 			return choose2LUT[n];
-			
 		} catch (ArrayIndexOutOfBoundsException e) {
-			
+			if( n < 0 ) {
+                return 0;
+            }
+            
 			while (maxN < n) {
 				maxN += 1000;
 			}

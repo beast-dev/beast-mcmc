@@ -477,9 +477,9 @@ sppA <<>> gapA <<>> pabB <<>> zwf
 	  <mean>
 	    <parameter id="mu.mean" value="0.0"/>
 	  </mean>
-	  <prec>
+	  <precision>
 	    <parameter id="mu.prec" value="2.0"/>
-	  </prec>
+	  </precision>
 	</logNormalDistributionModel>
       </distribution>
       <data>
@@ -493,9 +493,9 @@ sppA <<>> gapA <<>> pabB <<>> zwf
 	  <mean>
 	    <parameter id="kappa.mean" value="2.0"/>
 	  </mean>
-	  <prec>
+	  <precision>
 	    <parameter id="kappa.prec" value="1.0"/>
-	  </prec>
+	  </precision>
 	</logNormalDistributionModel>
       </distribution>
       <data>
@@ -509,9 +509,9 @@ sppA <<>> gapA <<>> pabB <<>> zwf
 	  <mean>
 	    <parameter id="alpha.mean" value="-2.0"/>
 	  </mean>
-	  <prec>
+	  <precision>
 	    <parameter id="alpha.prec" value="2.0"/>
-	  </prec>
+	  </precision>
 	</logNormalDistributionModel>
       </distribution>
       <data>

@@ -196,7 +196,7 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
 						new XMLSyntaxRule[]{
@@ -204,7 +204,6 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 								new ElementRule(Parameter.class, true)}
 				)
 		};
-
 	};
 
 	protected Parameter ratesParameter = null;

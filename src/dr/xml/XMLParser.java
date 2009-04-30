@@ -331,7 +331,7 @@ public class XMLParser {
     }
 
     //anonymous object store class
-    private ObjectStore objectStore = new ObjectStore() {
+    private final ObjectStore objectStore = new ObjectStore() {
         public Object getObjectById(Object uid) throws ObjectNotFoundException {
             XMLObject obj = (XMLObject) store.get(uid);
             if (obj == null) throw new ObjectNotFoundException("Object with uid=" + uid + " not found in ObjectStore");
@@ -367,8 +367,8 @@ public class XMLParser {
         }
     };
 
-    private Hashtable<String, Object> store = new Hashtable<String, Object>();
-    private TreeMap<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
+    private final Hashtable<String, Object> store = new Hashtable<String, Object>();
+    private final TreeMap<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
     private boolean concurrent = false;
     private XMLObject root = null;
 

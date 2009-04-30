@@ -224,12 +224,9 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		};
 	};
 
-
-
 	// ****************************************************************
 	// Private and protected stuff
 	// ****************************************************************
-
 
 	/** The demographic model. */
 	private DemographicModel demoModel = null;

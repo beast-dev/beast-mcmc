@@ -266,7 +266,7 @@ public class GTR extends AbstractNucleotideModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(FREQUENCIES,
                         new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
                 new ElementRule(A_TO_C,

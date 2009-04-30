@@ -5,6 +5,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.List;
+import java.awt.geom.Point2D;
 
 /**
  * @author Marc A. Suchard
@@ -44,8 +45,8 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
     protected void storeState() {
 
-        System.arraycopy(storedCachedPointLogLikelihood,0,cachedPointLogLikelihood,0,dim);
-        System.arraycopy(storedValidPointLogLikelihood,0,validPointLogLikelihood,0,dim);
+        System.arraycopy(cachedPointLogLikelihood,0,storedCachedPointLogLikelihood,0,dim);
+        System.arraycopy(validPointLogLikelihood,0,storedValidPointLogLikelihood,0,dim);
 
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
@@ -79,10 +80,10 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
             return logLikelihood;
 
         logLikelihood = 0.0;
+        final double[] point = new double[GeoSpatialDistribution.dimPoint];
+
         for(int i=0; i<dim; i++) {
             if (!validPointLogLikelihood[i]) {
-
-                final double[] point = new double[GeoSpatialDistribution.dimPoint];
                 final int offset = i*GeoSpatialDistribution.dimPoint;
                 for(int j=0; j<GeoSpatialDistribution.dimPoint; j++)
                     point[j] = points.getParameterValue(offset+j);

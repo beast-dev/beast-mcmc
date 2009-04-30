@@ -50,10 +50,13 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     public static final String BELOW_ROOT_PROBABILITY = "belowRootProbability";
     public static final String FLIP_MEAN = "flipMean";
     public static final String JOINT_PARTITIONING = "jointPartitioning";
-        
+    public static final String RELAXED = "relaxed";    
+    
     public static final double LOG_TWO = Math.log(2.0);
     
 
+    private boolean relaxed = false;
+    
     private ARGModel arg = null;
     private double size = 0.0;  //Translates into add probability of 50%
     private double probBelowRoot = 0.9; //Transformed in constructor for computational efficiency
@@ -87,6 +90,10 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         this.partLike = partLike;
         this.ratePrior = ratePrior;
+        
+        if(ratePrior != null){
+        	relaxed = true;
+        }
         
 //        this.isRecombination = arg.isRecombinationPartitionType();
 ////		this.mode = mode;
@@ -309,15 +316,18 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         Node newReassortment = arg.new Node();
         newReassortment.bifurcation = false;
        
-        double[] reassortmentValues = ratePrior.generateValues();
-              
+        double[] reassortmentValues = {1.0};
+        
+        if(relaxed){
+        	reassortmentValues = ratePrior.generateValues();
+        }
         
 //        logHastings += ratePrior.getAddHastingsRatio(reassortmentValues);
         
         newReassortment.rateParameter = new Parameter.Default(reassortmentValues);
         
         newReassortment.rateParameter.addBounds(new Parameter.DefaultBounds(
-        		Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+        		Double.POSITIVE_INFINITY, 0, reassortmentValues.length));
         
         newReassortment.number = arg.getNodeCount() + 1;
 
@@ -325,13 +335,17 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         
         Node newBifurcation = arg.new Node();
         
-        double[] bifurcationValues = ratePrior.generateValues();
-        logHastings += ratePrior.getAddHastingsRatio(bifurcationValues);
-                
+        double[] bifurcationValues = {1.0};
+        
+        if(relaxed){
+        	bifurcationValues = ratePrior.generateValues();
+        	logHastings += ratePrior.getAddHastingsRatio(bifurcationValues);
+        }
+        
         newBifurcation.rateParameter = new Parameter.Default(bifurcationValues);
         
         newBifurcation.rateParameter.addBounds(new Parameter.DefaultBounds(
-        		Double.POSITIVE_INFINITY, 0, arg.getNumberOfPartitions()));
+        		Double.POSITIVE_INFINITY, 0, bifurcationValues.length));
         
         newBifurcation.number = arg.getNodeCount();
 
@@ -1059,9 +1073,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             recParent = recDeleteParent;
         }
 
-        double[] rateValues = recParent.rateParameter.getParameterValues();
-        logHastings -= ratePrior.getAddHastingsRatio(rateValues); 
-
+        if(relaxed){
+        
+        	double[] rateValues = recParent.rateParameter.getParameterValues();
+        	logHastings -= ratePrior.getAddHastingsRatio(rateValues); 
+        }
         
         
         if (doneSomething) {
@@ -1565,8 +1581,11 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             		Logger.getLogger("dr.evomodel").info(ARG_EVENT_OPERATOR + " is joint with " + ARGPartitioningOperator.OPERATOR_NAME);
             }
             
-            ARGRatePrior ratePrior = (ARGRatePrior)xo.getChild(ARGRatePrior.class);
-
+            ARGRatePrior ratePrior = null;
+            
+            if(xo.hasAttribute(RELAXED)){
+            	ratePrior = (ARGRatePrior)xo.getChild(ARGRatePrior.class);
+            }
 
             return new ARGAddRemoveEventOperator(treeModel, weight, size,
                     mode, parameter1, parameter2, parameter3,
@@ -1596,7 +1615,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 AttributeRule.newIntegerRule(WEIGHT,false),
                 new ElementRule(ARGModel.class,false),
                 new ElementRule(ARGPartitionLikelihood.class,false),
-                new ElementRule(ARGRatePrior.class,false),
+                new ElementRule(ARGRatePrior.class,true),
                 new ElementRule(INTERNAL_NODES,
                         new XMLSyntaxRule[]{
                                 new ElementRule(CompoundParameter.class)}),

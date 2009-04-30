@@ -8299,9 +8299,9 @@
 				<mean>
 					<parameter id="mu.mean" value="0.0"/>
 				</mean>
-				<prec>
+				<precision>
 					<parameter id="mu.precision" value="1.0" lower="0.0" upper="Infinity"/>
-				</prec>
+				</precision>
 			</logNormalDistributionModel>
 		</distribution>
 		<data>
@@ -8321,9 +8321,9 @@
 				<mean>
 					<parameter id="kappa.mean" value="2.0"/>
 				</mean>
-				<prec>
+				<precision>
 					<parameter id="kappa.precision" value="1.0" lower="0.0" upper="Infinity"/>
-				</prec>
+				</precision>
 			</logNormalDistributionModel>
 		</distribution>
 		<data>
@@ -8342,9 +8342,9 @@
 				<mean>
 					<parameter id="alpha.mean" value="2.0"/>
 				</mean>
-				<prec>
+				<precision>
 					<parameter id="alpha.precision" value="1.0" lower="0.0" upper="Infinity"/>
-				</prec>
+				</precision>
 			</logNormalDistributionModel>
 		</distribution>
 		<data>

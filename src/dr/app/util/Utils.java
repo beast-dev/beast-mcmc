@@ -132,7 +132,8 @@ public class Utils {
      * @return  A map whose key is the trait. The value is a list of <taxa, value> as a string array of size 2.
      * @throws IOException
      */
-    public static Map<String, List<String[]>> importTraitsFromFile(File file, final String delimiter) throws IOException {
+    public static Map<String, List<String[]>> importTraitsFromFile(File file, final String delimiter)
+            throws IOException, Arguments.ArgumentException {
         final BufferedReader reader = new BufferedReader(new FileReader(file));
 
         String line = nextNonCommentLine(reader);
@@ -160,6 +161,9 @@ public class Utils {
             int k = Arrays.asList(labels).indexOf(first);
             if( k >= 0 ) {
                 java.util.List<String[]> trait = traits.get(first);
+                if( trait == null ) {
+                    throw new Arguments.ArgumentException("undefined trait " + first);
+                }
                 final String traitVal = values[1].trim();
                 for(int i = 2; i < values.length; i++) {
                     trait.add(new String[]{values[i], traitVal});

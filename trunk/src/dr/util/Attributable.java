@@ -78,6 +78,14 @@ public interface Attributable {
 		}
 
 		/**
+		 * @param name attribute name
+		 * @return boolean whether contains attribute by given its name
+		 */
+		public boolean containsAttribute(String name) {
+			return attributes.containsKey(name);
+		}
+				
+		/**
 		 * @return an iterator of the attributes that this object has.
 		 */
 		public Iterator getAttributeNames() {

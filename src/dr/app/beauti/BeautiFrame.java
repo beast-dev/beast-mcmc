@@ -44,13 +44,10 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author Andrew Rambaut
@@ -720,7 +717,7 @@ public class BeautiFrame extends DocumentFrame {
 
         dialog.setVisible(true);
         if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
+            final File file = new File(dialog.getDirectory(), dialog.getFile());
            
 	        importTraitsFromFile(file);
 	        setAllOptions(); 
@@ -728,32 +725,10 @@ public class BeautiFrame extends DocumentFrame {
 
     }
 
-    protected void importTraitsFromFile(File file) {
-    	String delimiter = "\t";
-    	
-    	try {
-    		Map<String, List<String>> columns = Utils.readFileIntoMapColumns(file, delimiter, this);
-    		    		
-//    		Object[] keys = columns.keySet().toArray();
-//    		
-//    		for (Object key : keys) {
-//    			System.out.println(key.toString());
-//    		}
-//    		
-//    		TreeSet<String> sortedKeys = new TreeSet<String> (columns.keySet());// sort keys
-//    		for (Object key : sortedKeys) {
-//    			System.out.println(key.toString());
-//    		}
-    		
-    		
-    		if (columns.containsKey("species")) { // Joseph
-    			JOptionPane.showMessageDialog(this, "Are you happy with this code ?",
-                        "test", JOptionPane.QUESTION_MESSAGE);
-    			
-    		} else { // Andrew
-    			importMultiTraits (file);
-       		}
-    		
+    protected void importTraitsFromFile(final File file) {
+
+        try {
+            importMultiTraits(file);
         } catch (FileNotFoundException fnfe) {
             JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                     "Unable to open file",
@@ -763,90 +738,47 @@ public class BeautiFrame extends DocumentFrame {
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
         }
- 
     }
-    
-    private void importMultiTraits (File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
 
-        java.util.List<String> taxa = new ArrayList<String>();
-
-        String line = reader.readLine();
-        String[] labels = line.split("\t");
-        Map<String, java.util.List<String>> columns = new HashMap<String, java.util.List<String>>();
-        for (int i = 1; i < labels.length; i++) {
-            columns.put(labels[i], new ArrayList<String>());
+   
+    private void importMultiTraits(final File file) throws IOException {
+        if( beautiOptions.taxonList == null ) {
+             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",
+                            "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
-        line = reader.readLine();
-        while (line != null) {
-            String[] values = line.split("\t");
+        for( Map.Entry<String, List<String[]>> e : traits.entrySet() ) {
+            final List<String[]> value = e.getValue();
+            Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
+            final String label = e.getKey();
 
-            if (values.length > 0) {
-                taxa.add(values[0]);
-                for (int i = 1; i < values.length; i++) {
-                    if (i < labels.length) {
-                        java.util.List<String> column = columns.get(labels[i]);
-                        column.add(values[i]);
-                    }
-                }
-            }
-            line = reader.readLine();
-        }
-
-        for (int i = 1; i < labels.length; i++) {
-            java.util.List<String> column = columns.get(labels[i]);
-
-            boolean isInteger = true;
-            boolean isNumber = true;
-            boolean isBoolean = true;
-
-            for (String valueString : column) {
-                if (!valueString.equalsIgnoreCase("TRUE") && !valueString.equalsIgnoreCase("FALSE")) {
-                    isBoolean = false;
-                    try {
-                        double number = Double.parseDouble(valueString);
-                        if (Math.round(number) != number) {
-                            isInteger = false;
-                        }
-                    } catch (NumberFormatException pe) {
-                        isInteger = false;
-                        isNumber = false;
-                    }
+            Boolean warningGiven = false;
+            for( String[] v : e.getValue() ) {
+                final Class c1 = Utils.detectTYpe(v[1]);
+                if( c != c1 && ! warningGiven) {
+                    JOptionPane.showMessageDialog(this, "Not all values of same type in column" + label,
+                            "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                    warningGiven = true;
+                    // Error - not all values of same type
                 }
             }
 
-            // @todo check if the trait already exists - ask to overwrite
-            beautiOptions.traits.add(labels[i]);
-            if (isBoolean) {
-                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
-            } else if (isInteger) {
-                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.INTEGER);
-            } else if (isNumber) {
-                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.CONTINUOUS);
-            } else {
-                beautiOptions.traitTypes.put(labels[i], BeautiOptions.TraitType.DISCRETE);
-            }
+            beautiOptions.traits.add(label);
+            BeautiOptions.TraitType t = (c == Boolean.class || c == String.class) ?  BeautiOptions.TraitType.DISCRETE :
+                    (c == Integer.class) ? BeautiOptions.TraitType.INTEGER : BeautiOptions.TraitType.CONTINUOUS;
 
-            if( beautiOptions.taxonList != null ) {
-                int j = 0;
-                for (String valueString : column) {
-                    int index = beautiOptions.taxonList.getTaxonIndex(taxa.get(j));
-                    if (index >= 0) {
-                        // if the taxon isn't in the list then ignore it.
-                        // @todo provide a warning of unmatched taxa
-                        Taxon taxon = beautiOptions.taxonList.getTaxon(index);
-                        if (isBoolean) {
-                            taxon.setAttribute(labels[i], Boolean.valueOf(valueString));
-                        } else if (isInteger) {
-                            taxon.setAttribute(labels[i], new Integer(valueString));
-                        } else if (isNumber) {
-                            taxon.setAttribute(labels[i], new Double(valueString));
-                        } else {
-                            taxon.setAttribute(labels[i], valueString);
-                        }
-                    }
-                    j++;
+            beautiOptions.traitTypes.put(label, t);
+
+            for( String[] v : e.getValue() ) {
+                int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
+                if (index >= 0) {
+                    // if the taxon isn't in the list then ignore it.
+                    // @todo provide a warning of unmatched taxa
+                    final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
+                    taxon.setAttribute(label, Utils.constructFromString(c, v[1]));
                 }
             }
         }

@@ -25,7 +25,8 @@ public interface ComponentGenerator {
         AFTER_SITE_MODEL,           // after all site models
         IN_TREE_LIKELIHOOD,         // in the tree likelihood(s)
         AFTER_TREE_LIKELIHOOD,      // after all tree likelihoods
-        AFTER_SPECIES,				// after each species mapping 
+        AFTER_TRAITS,				// after each traits mapping 
+        //AFTER_SPECIES,				// after each species mapping 
         AFTER_OPERATORS,            // after the operator schedule
         IN_MCMC_PRIOR,              // in the prior section of the MCMC
         IN_MCMC_LIKELIHOOD,         // in the likelihood section of the MCMC

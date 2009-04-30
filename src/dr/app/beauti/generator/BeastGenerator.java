@@ -273,10 +273,14 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
 
-        // species tag for multi-taxa
-        if (options.allowDifferentTaxa) {
-        	//writeSpecies(writer, options.);
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SPECIES, writer);
+        // traits tag 
+        if (options.traits.size() > 0) {
+        	for (String trait : options.traits) {
+        		BeautiOptions.TraitType traiType = options.traitTypes.get(trait);
+        		        		
+        		writeTraits(writer, trait, traiType.toString(), options.taxonList);
+        	} 
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }
 
         if (taxonSets != null && taxonSets.size() > 0) {
@@ -391,16 +395,6 @@ public class BeastGenerator extends Generator {
         }
     }
 
-    /**
-     * Generate a species for multi-taxa block from these beast options
-     *
-     * @param writer    the writer
-     * @param taxonList the taxon list to write
-     */
-    private void writeSpecies(XMLWriter writer, TaxonList taxonList) {
-
-
-    }
 
     /**
      * Determine and return the datatype description for these beast options
@@ -475,7 +469,55 @@ public class BeastGenerator extends Generator {
         }
         writer.writeCloseTag("alignment");
     }
+    
+    
+    private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
+    	String SPECIES = "species";
+        
+    	writer.writeText("");
+        writer.writeComment("trait = " + trait + " trait_type = " + traitType);
+        
+        if (trait.equals(SPECIES)) { // hard code
+        	writer.writeComment("Species definition: binds taxa, species and gene trees");
+        } 
+    	
+        writer.writeOpenTag(trait, new Attribute[]{new Attribute.Default<String>("id", trait),
+        		new Attribute.Default<String>("traitType", traitType)});
+        
+        // write sub-tags for species
+        if (trait.equals(SPECIES)) { // hard code
+        	List<String> species = new ArrayList<String>(); // hard code 
+        	String sp;
+        	
+        	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+        		Taxon taxon = taxonList.getTaxon(i);
+	        	sp = taxon.getAttribute(SPECIES).toString();
+	        	
+	        	if (!species.contains(sp)) {
+	        		species.add(sp);
+	        	}
+        	}
+        	
+        	for (String eachSp : species) {
+        		writer.writeOpenTag("sp", new Attribute[]{new Attribute.Default<String>("id", eachSp)});
+        	
+        		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+        			Taxon taxon = taxonList.getTaxon(i);
+        			sp = taxon.getAttribute(SPECIES).toString();	        	
+        			
+        			if (sp.equals(eachSp)) {
+        				writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("idref", taxon.getId())}, true);
+        			}
+	        	
+        		}
+        		writer.writeCloseTag("sp");
+        	}
+        } // end write sub-tags for species
+        
+        writer.writeCloseTag(trait);
+    }
 
+    
     /**
      * Writes the pattern lists
      *

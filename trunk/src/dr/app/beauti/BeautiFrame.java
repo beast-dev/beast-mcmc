@@ -710,18 +710,22 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImportTraits() {
-
-        FileDialog dialog = new FileDialog(this,
-                "Import Traits File...",
-                FileDialog.LOAD);
-
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            final File file = new File(dialog.getDirectory(), dialog.getFile());
-           
-	        importTraitsFromFile(file);
-	        setAllOptions(); 
-        }
+    	if( beautiOptions.taxonList != null ) { // validation of check empty taxonList
+	        FileDialog dialog = new FileDialog(this,
+	                "Import Traits File...",
+	                FileDialog.LOAD);
+	
+	        dialog.setVisible(true);
+	        if (dialog.getFile() != null) {
+	            final File file = new File(dialog.getDirectory(), dialog.getFile());
+	           
+		        importTraitsFromFile(file);
+		        setAllOptions(); 
+	        }
+    	} else {
+    		JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+                  "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+    	}
 
     }
 
@@ -742,11 +746,11 @@ public class BeautiFrame extends DocumentFrame {
 
    
     private void importMultiTraits(final File file) throws IOException {
-        if( beautiOptions.taxonList == null ) {
-             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",
-                            "No taxa loaded", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+//        if( beautiOptions.taxonList == null ) {
+//             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",
+//                            "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        } // move to doImportTraits()
         
         Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 

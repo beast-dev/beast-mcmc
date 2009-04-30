@@ -93,7 +93,7 @@ public class DummyModel extends AbstractModelLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
         };
 

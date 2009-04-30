@@ -237,7 +237,7 @@ public class FrequencyModel extends AbstractModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(NORMALIZE, true),
 
                 new ElementRule(PatternList.class, "Initial value", 0, 1),

@@ -22,6 +22,7 @@ import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.util.Utils;
+import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;
@@ -180,8 +181,9 @@ public class BeautiFrame extends DocumentFrame {
         setAllOptions();
 
         setSize(new java.awt.Dimension(1024, 768));
-        
-        chooser = new JFileChooser(); // make JFileChooser chooser remeber previous path
+
+        // make JFileChooser chooser remember previous path
+        chooser = new JFileChooser();
     }
 
 
@@ -233,19 +235,11 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void dataSelectionChanged(boolean isSelected) {
-        if (isSelected) {
-            getDeleteAction().setEnabled(true);
-        } else {
-            getDeleteAction().setEnabled(false);
-        }
+        getDeleteAction().setEnabled(isSelected);
     }
 
     public final void modelSelectionChanged(boolean isSelected) {
-        if (isSelected) {
-            getDeleteAction().setEnabled(true);
-        } else {
-            getDeleteAction().setEnabled(false);
-        }
+        getDeleteAction().setEnabled(isSelected);
     }
 
     public void doDelete() {
@@ -751,40 +745,45 @@ public class BeautiFrame extends DocumentFrame {
 //                            "No taxa loaded", JOptionPane.ERROR_MESSAGE);
 //            return;
 //        } // move to doImportTraits()
-        
-        Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
-        for( Map.Entry<String, List<String[]>> e : traits.entrySet() ) {
-            final List<String[]> value = e.getValue();
-            Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
-            final String label = e.getKey();
+        try {
+            Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
-            Boolean warningGiven = false;
-            for( String[] v : e.getValue() ) {
-                final Class c1 = Utils.detectTYpe(v[1]);
-                if( c != c1 && ! warningGiven) {
-                    JOptionPane.showMessageDialog(this, "Not all values of same type in column" + label,
-                            "Incompatible values", JOptionPane.WARNING_MESSAGE);
-                    warningGiven = true;
-                    // Error - not all values of same type
+            for( Map.Entry<String, List<String[]>> e : traits.entrySet() ) {
+                final List<String[]> value = e.getValue();
+                final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
+                final String label = e.getKey();
+
+                Boolean warningGiven = false;
+                for( String[] v : e.getValue() ) {
+                    final Class c1 = Utils.detectTYpe(v[1]);
+                    if( c != c1 && ! warningGiven) {
+                        JOptionPane.showMessageDialog(this, "Not all values of same type in column" + label,
+                                "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                        warningGiven = true;
+                        // Error - not all values of same type
+                    }
+                }
+
+                beautiOptions.traits.add(label);
+                BeautiOptions.TraitType t = (c == Boolean.class || c == String.class) ?  BeautiOptions.TraitType.DISCRETE :
+                        (c == Integer.class) ? BeautiOptions.TraitType.INTEGER : BeautiOptions.TraitType.CONTINUOUS;
+
+                beautiOptions.traitTypes.put(label, t);
+
+                for( final String[] v : e.getValue() ) {
+                    final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
+                    if (index >= 0) {
+                        // if the taxon isn't in the list then ignore it.
+                        // @todo provide a warning of unmatched taxa
+                        final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
+                        taxon.setAttribute(label, Utils.constructFromString(c, v[1]));
+                    }
                 }
             }
-
-            beautiOptions.traits.add(label);
-            BeautiOptions.TraitType t = (c == Boolean.class || c == String.class) ?  BeautiOptions.TraitType.DISCRETE :
-                    (c == Integer.class) ? BeautiOptions.TraitType.INTEGER : BeautiOptions.TraitType.CONTINUOUS;
-
-            beautiOptions.traitTypes.put(label, t);
-
-            for( String[] v : e.getValue() ) {
-                int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
-                if (index >= 0) {
-                    // if the taxon isn't in the list then ignore it.
-                    // @todo provide a warning of unmatched taxa
-                    final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
-                    taxon.setAttribute(label, Utils.constructFromString(c, v[1]));
-                }
-            }
+        } catch( Arguments.ArgumentException e ) {
+            JOptionPane.showMessageDialog(this, "Error in loading traits file: " + e.getMessage(),
+                                "Error Loading file", JOptionPane.ERROR_MESSAGE);
         }
     }
 

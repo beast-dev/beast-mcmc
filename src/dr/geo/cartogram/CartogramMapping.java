@@ -33,6 +33,10 @@ public class CartogramMapping {
 
     }
 
+    public double getAverageDensity() { return averageDensity; }
+
+    public void setAverageDensity(double d) { averageDensity = d; }
+
     public void readCartogramOutput(String fileName) throws IOException {
         readCartogramOutput(LoggerParser.getFile(fileName));
     }
@@ -159,4 +163,5 @@ public class CartogramMapping {
     private double dX, dY;
     private Point2D[][] gridPt;
     private boolean loaded = false;
+    private double averageDensity = 1.0;    
 }

@@ -208,17 +208,20 @@ public class Polygon2D {
         for (int i = 0; i < length +1; i++) {
             point2Ds.set(i, mapping.map(point2Ds.get(i)));
         }
+        convertPointsToArrays();
     }
     public void swapXYs(){
         for (int i = 0; i < length +1; i++) {
             point2Ds.set(i, new Point2D.Double(point2Ds.get(i).getY(), point2Ds.get(i).getX()));
         }
+        convertPointsToArrays();
     }
 
     public void rescale(double longMin, double longwidth, double gridXSize, double latMax, double latwidth, double gridYSize){
         for (int i = 0; i < length +1; i++) {
             point2Ds.set(i, new Point2D.Double(((point2Ds.get(i).getX()-longMin)*(gridXSize/longwidth)),((latMax- point2Ds.get(i).getY())*(gridYSize/latwidth))));
         }
+        convertPointsToArrays();
     }
 
     private static boolean isInsideClip(Point2D p, Side side, Rectangle2D boundingBox) {

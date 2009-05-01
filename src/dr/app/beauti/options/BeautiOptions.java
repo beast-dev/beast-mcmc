@@ -1316,6 +1316,7 @@ public class BeautiOptions extends ModelOptions {
 
     public List<String> traits = new ArrayList<String>();
     public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
+    public final String TRAIT_SPECIES = "species";
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

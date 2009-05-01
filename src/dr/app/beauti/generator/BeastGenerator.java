@@ -470,28 +470,32 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag("alignment");
     }
     
-    
+    /**
+     * Generate traits block regarding specific trait name (e.g. <species>) from these beast options
+     * @param writer
+     * @param trait
+     * @param traitType
+     * @param taxonList
+     */
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
-    	String SPECIES = "species";
-        
+    	
     	writer.writeText("");
+        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
+        	writer.writeComment("Species definition: binds taxa, species and gene trees");
+        }         
         writer.writeComment("trait = " + trait + " trait_type = " + traitType);
         
-        if (trait.equals(SPECIES)) { // hard code
-        	writer.writeComment("Species definition: binds taxa, species and gene trees");
-        } 
-    	
-        writer.writeOpenTag(trait, new Attribute[]{new Attribute.Default<String>("id", trait),
-        		new Attribute.Default<String>("traitType", traitType)});
+        writer.writeOpenTag(trait, new Attribute[]{new Attribute.Default<String>("id", trait)});
+        		//new Attribute.Default<String>("traitType", traitType)});
         
         // write sub-tags for species
-        if (trait.equals(SPECIES)) { // hard code
+        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
         	List<String> species = new ArrayList<String>(); // hard code 
         	String sp;
         	
         	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
         		Taxon taxon = taxonList.getTaxon(i);
-	        	sp = taxon.getAttribute(SPECIES).toString();
+	        	sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
 	        	
 	        	if (!species.contains(sp)) {
 	        		species.add(sp);
@@ -503,7 +507,7 @@ public class BeastGenerator extends Generator {
         	
         		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
         			Taxon taxon = taxonList.getTaxon(i);
-        			sp = taxon.getAttribute(SPECIES).toString();	        	
+        			sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();	        	
         			
         			if (sp.equals(eachSp)) {
         				writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("idref", taxon.getId())}, true);
@@ -512,11 +516,45 @@ public class BeastGenerator extends Generator {
         		}
         		writer.writeCloseTag("sp");
         	}
+        	
+        	writeGeneTrees (writer);
         } // end write sub-tags for species
         
         writer.writeCloseTag(trait);
+        
+        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
+        	writeSpeciesTree (writer);
+        	
+        }
+        
     }
 
+    
+    private void writeGeneTrees(XMLWriter writer) {
+    	writer.writeComment("Collection of Gene Trees"); 
+            	
+//        writer.writeOpenTag("geneTrees", new Attribute[]{new Attribute.Default<String>("id", )});
+        
+//        for () {
+//        	writer.writeTag("treeModel", new Attribute[]{new Attribute.Default<String>("idref", )}, true);
+//        }
+        
+//        writer.writeCloseTag("geneTrees");
+    }
+    
+    
+    private void writeSpeciesTree(XMLWriter writer) {
+    	writer.writeComment("Species Tree: Provides Per branch demographic function"); 
+    	
+//        writer.writeOpenTag("speciesTree", new Attribute[]{new Attribute.Default<String>("id", ),
+//				new Attribute.Default<String>("bmPrior", "true")});
+//        writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{new Attribute.Default<String>("idref", options.TRAIT_SPECIES)}, true);
+
+        
+//        writer.writeCloseTag("speciesTree");	
+    	
+    }
+    
     
     /**
      * Writes the pattern lists

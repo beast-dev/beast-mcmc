@@ -40,7 +40,7 @@ public class MixtureCartogramDiffusionModel extends CartogramDiffusionModel {
 
         mappingList.add(mapping);
         Logger.getLogger("dr.evomodel.continuous").info(
-            "\tMapping  : " + mapping.toString() + "\n"
+            "\tMapping  : " + mapping.toString() + " with density "+mapping.getAverageDensity()
         );
     }
 

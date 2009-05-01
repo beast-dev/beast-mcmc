@@ -107,11 +107,11 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
 
         if (xo.hasAttribute(FILENAME)) {
 
-//            try {
-//                mapping.readCartogramOutput(fileName);
-//            } catch (IOException e) {
-//                throw new XMLParseException(e.getMessage());
-//            }
+            try {
+                mapping.readCartogramOutput(fileName);
+            } catch (IOException e) {
+                throw new XMLParseException(e.getMessage());
+            }
         }
         return mapping;
     }

@@ -3,6 +3,7 @@ package dr.app.beauti.generator;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.options.StartingTreeType;
 import dr.evolution.util.Units;
@@ -27,13 +28,18 @@ import dr.util.Attribute;
  * @author Alexei Drummond
  */
 public class TreePriorGenerator extends Generator {
+	
+	private String treeModel; // "treeModel"
+	private String coal;
 
 	public TreePriorGenerator(BeautiOptions options) {
 		super(options);
 	}
 
 	void writeTreePrior(XMLWriter writer) {
-
+		treeModel = TreeModel.TREE_MODEL; // "treeModel"
+		coal = "coalescent";
+		
 		writeNodeHeightPrior(writer);
 		if (options.nodeHeightPrior == TreePrior.LOGISTIC) {
 			writer.writeText("");
@@ -42,6 +48,22 @@ public class TreePriorGenerator extends Generator {
 			writer.writeText("");
 			writeExponentialMarkovLikelihood(writer);
 		}
+	}
+	
+	void writeTreePrior(PartitionModel model, XMLWriter writer) {
+		treeModel = TreeModel.TREE_MODEL + "_" + model.getName(); // "treeModel"
+		coal = "coalescent" + "_" + model.getName();
+	    //skyline = model.getName() + "." + skyline;    		
+    	    	
+		writeNodeHeightPrior(writer);
+		if (options.nodeHeightPrior == TreePrior.LOGISTIC) {
+			writer.writeText("");
+			writeBooleanLikelihood(writer);
+		} else if (options.nodeHeightPrior == TreePrior.SKYLINE) {
+			writer.writeText("");
+			writeExponentialMarkovLikelihood(writer);
+		}
+
 	}
 
 	/**
@@ -259,7 +281,7 @@ public class TreePriorGenerator extends Generator {
 			writeNodeHeightPriorModelRef(writer);
 			writer.writeCloseTag(SpeciationLikelihood.MODEL);
 			writer.writeOpenTag(SpeciationLikelihood.TREE);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", treeModel), true);
 			writer.writeCloseTag(SpeciationLikelihood.TREE);
 
 			writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
@@ -291,7 +313,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", treeModel), true);
 			writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 
 			writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
@@ -321,14 +343,14 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
 
 			writer.writeOpenTag(VariableDemographicModel.POP_TREE);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", treeModel), true);
 			writer.writeCloseTag(VariableDemographicModel.POP_TREE);
 
 			writer.writeCloseTag(VariableDemographicModel.POPULATION_TREES);
 
 			writer.writeCloseTag(tagName);
 
-			writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", "coalescent"));
+			writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("id", coal));
 			writer.writeOpenTag(CoalescentLikelihood.MODEL);
 			writer.writeTag(tagName, new Attribute.Default<String>("idref", VariableDemographicModel.demoElementName), true);
 			writer.writeCloseTag(CoalescentLikelihood.MODEL);
@@ -381,7 +403,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeCloseTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_TREE);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", treeModel), true);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_TREE);
 
 			writer.writeCloseTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD);
@@ -391,13 +413,13 @@ public class TreePriorGenerator extends Generator {
 
 			writer.writeOpenTag(
 					CoalescentLikelihood.COALESCENT_LIKELIHOOD,
-					new Attribute[]{new Attribute.Default<String>("id", "coalescent")}
+					new Attribute[]{new Attribute.Default<String>("id", coal)}
 			);
 			writer.writeOpenTag(CoalescentLikelihood.MODEL);
 			writeNodeHeightPriorModelRef(writer);
 			writer.writeCloseTag(CoalescentLikelihood.MODEL);
 			writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", treeModel), true);
 			writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 			writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 		}
@@ -599,6 +621,7 @@ public class TreePriorGenerator extends Generator {
 			// Currently nothing additional needs logging
 		} else {
 			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+//			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", coal), true);
 		}
 
 	}

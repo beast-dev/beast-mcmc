@@ -218,6 +218,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
 
+                	
         treePriorGenerator = new TreePriorGenerator(options);
 
         treePriorGenerator.writeTreePriorModel(writer);
@@ -225,13 +226,26 @@ public class BeastGenerator extends Generator {
 
         new InitialTreeGenerator(options).writeStartingTree(writer);
         writer.writeText("");
-
-        new TreeModelGenerator(options).writeTreeModel(writer);
+        
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+	        // generate gene trees regarding each data partition, if no species, only create 1 tree
+	    	for (PartitionModel model : options.getActivePartitionModels()) {
+	    		new TreeModelGenerator(options).writeTreeModel(model, writer);
+	        }  
+        } else { // no species
+        	new TreeModelGenerator(options).writeTreeModel(writer);	
+	    }
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
-
-        treePriorGenerator.writeTreePrior(writer);
+        
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	treePriorGenerator.writeTreePrior(model, writer);
+	        }
+        } else { // no species
+        	treePriorGenerator.writeTreePrior(writer);	
+	    }
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
@@ -248,15 +262,15 @@ public class BeastGenerator extends Generator {
 
         boolean writeMuParameters = options.getTotalActivePartitionModelCount() > 1;
 
-        for (PartitionModel partitionModel : options.getActivePartitionModels()) {
-            partitionModelGenerator.writeSiteModel(partitionModel, writeMuParameters, writer);
+        for (PartitionModel model : options.getActivePartitionModels()) {
+            partitionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
             writer.writeText("");
         }
 
         if (writeMuParameters) {
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
-            for (PartitionModel partitionModel : options.getActivePartitionModels()) {
-                partitionModelGenerator.writeMuParameterRefs(partitionModel, writer);
+            for (PartitionModel model : options.getActivePartitionModels()) {
+                partitionModelGenerator.writeMuParameterRefs(model, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
             writer.writeText("");
@@ -271,8 +285,8 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
-
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);        
+        
         // traits tag 
         if (options.traits.size() > 0) {
         	for (String trait : options.traits) {
@@ -533,13 +547,15 @@ public class BeastGenerator extends Generator {
     private void writeGeneTrees(XMLWriter writer) {
     	writer.writeComment("Collection of Gene Trees"); 
             	
-//        writer.writeOpenTag("geneTrees", new Attribute[]{new Attribute.Default<String>("id", )});
+        writer.writeOpenTag("geneTrees", new Attribute[]{new Attribute.Default<String>("id", "geneTrees")});
         
-//        for () {
-//        	writer.writeTag("treeModel", new Attribute[]{new Attribute.Default<String>("idref", )}, true);
-//        }
-        
-//        writer.writeCloseTag("geneTrees");
+    	// generate gene trees regarding each data partition
+    	for (PartitionModel partitionModel : options.getActivePartitionModels()) {
+    		writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", 
+    				TreeModel.TREE_MODEL + "_" + partitionModel.getName())}, true); 
+        }
+
+        writer.writeCloseTag("geneTrees");
     }
     
     

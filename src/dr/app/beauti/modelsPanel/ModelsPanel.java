@@ -29,8 +29,9 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.modelsPanel.CreateModelDialog;
 import dr.app.beauti.PanelUtils;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.SequenceErrorModelComponent;
+import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
 import dr.app.beauti.components.SequenceErrorType;
+import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
@@ -223,7 +224,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         //setModelOptions(currentModel);
 
         clockModelCombo.setSelectedItem(options.clockType);
-        SequenceErrorModelComponent comp = (SequenceErrorModelComponent)options.getComponentOptions(SequenceErrorModelComponent.class);
+        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
 
         settingOptions = false;
@@ -258,7 +259,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         options.clockType = (ClockType) clockModelCombo.getSelectedItem();
 
-        SequenceErrorModelComponent comp = (SequenceErrorModelComponent)options.getComponentOptions(SequenceErrorModelComponent.class);
+        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();

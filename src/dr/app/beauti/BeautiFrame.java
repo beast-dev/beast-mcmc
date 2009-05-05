@@ -8,16 +8,20 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.components.SequenceErrorModelComponent;
 import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.modelsPanel.ModelsPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.PartitionTree;
 import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.treespanel.OldTreesPanel;
+import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
+import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
@@ -81,7 +85,7 @@ public class BeautiFrame extends DocumentFrame {
     private MCMCPanel mcmcPanel;
 
     private BeautiPanel currentPanel;
-    
+
     private JFileChooser chooser; // make JFileChooser chooser remember previous path
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
@@ -103,19 +107,19 @@ public class BeautiFrame extends DocumentFrame {
         getZoomWindowAction().setEnabled(false);
 
         beautiOptions = new BeautiOptions();
-        generator = new BeastGenerator(beautiOptions);
+
+        ComponentGenerator[] components = {
+                new SequenceErrorModelComponentGenerator(beautiOptions),
+                new TipDateSamplingComponent(beautiOptions)
+        };
+        generator = new BeastGenerator(beautiOptions, components);
 
         // install components:
-        SequenceErrorModelComponent comp1 = new SequenceErrorModelComponent(beautiOptions);
-        beautiOptions.addComponent(comp1);
-
-        BeastGenerator.addComponent(comp1);
-        //generator.addComponent(comp1);
-
-        TipDateSamplingComponent comp2 = new TipDateSamplingComponent(beautiOptions);
-        beautiOptions.addComponent(comp2);
-        BeastGenerator.addComponent(comp2);
-        //generator.addComponent(comp2);
+//        SequenceErrorModelComponentGenerator comp1 = new SequenceErrorModelComponentGenerator(beautiOptions);
+//        beautiOptions.addComponent(comp1);
+//
+//        TipDateSamplingComponent comp2 = new TipDateSamplingComponent(beautiOptions);
+//        beautiOptions.addComponent(comp2);
     }
 
     public void initializeComponents() {
@@ -310,10 +314,10 @@ public class BeautiFrame extends DocumentFrame {
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
             "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast");
         chooser.setFileFilter(filter);
-      
+
         int returnVal = chooser.showDialog(this, "Import Aligment...");
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
-        	File[] files = chooser.getSelectedFiles();        	
+        	File[] files = chooser.getSelectedFiles();
         	for (File file : files) {
         		if (file == null || file.getName().equals("")) {
         			JOptionPane.showMessageDialog(this, "Invalid file name",
@@ -321,7 +325,7 @@ public class BeautiFrame extends DocumentFrame {
         		} else {
 	                try {
 	                	importFromFile(file);
-	
+
 	                    setDirty();
 	                } catch (FileNotFoundException fnfe) {
 	                    JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
@@ -620,7 +624,7 @@ public class BeautiFrame extends DocumentFrame {
 //                        beautiOptions.taxonList.addTaxon(taxon);
 //                    }
 //                }
-            	
+
             	// add the new diff taxa
 				java.util.List<String> prevTaxa = new ArrayList<String>();
 				for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
@@ -631,7 +635,7 @@ public class BeautiFrame extends DocumentFrame {
 						beautiOptions.taxonList.addTaxon(taxa.getTaxon(i));
 					}
 				}
-                 
+
             }
         }
 

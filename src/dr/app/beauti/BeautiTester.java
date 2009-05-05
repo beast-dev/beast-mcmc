@@ -59,7 +59,7 @@ public class BeautiTester {
         BeautiOptions beautiOptions = createOptions();
         importFromFile("examples/Primates.nex", beautiOptions, false);
 
-        generator = new BeastGenerator(beautiOptions);
+        generator = new BeastGenerator(beautiOptions, null);
 
         buildNucModels("tests/pri_", beautiOptions);
 

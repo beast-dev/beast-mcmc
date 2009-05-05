@@ -103,7 +103,7 @@ public class UCLikelihood extends RateEvolutionLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
                 AttributeRule.newBooleanRule(LOGSPACE, true, "true if model considers the log of the rates."),
@@ -112,7 +112,7 @@ public class UCLikelihood extends RateEvolutionLikelihood {
         };
     };
 
-    private Parameter variance;
+    private final Parameter variance;
 
     boolean isLogSpace = false;
 }

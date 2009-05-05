@@ -3,15 +3,15 @@ package dr.app.beauti.components;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
-import dr.util.Attribute;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.loggers.Columns;
-import dr.evolution.util.*;
-import dr.evolution.util.Date;
+import dr.util.Attribute;
+import dr.xml.XMLParser;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -52,7 +52,7 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
                                         new Attribute.Default<String>("taxon", taxon.getId()),
                                 }
                         );
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "age(" + taxon.getId() + ")"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
                         writer.writeCloseTag("leafHeight");
                     }
                 } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
@@ -61,7 +61,7 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
 //                                    new Attribute.Default<Boolean>("external", taxon.getId()),
 //                            }
 //                    );
-//                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "age(" + taxon.getId() + ")"), true);
+//                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
 //                    writer.writeCloseTag("leafHeight");
                 }
             } break;
@@ -77,10 +77,10 @@ public class TipDateSamplingComponent extends BaseComponentGenerator implements 
                     TaxonList taxa = getTaxonSet();
                     for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "age(" + taxon.getId() + ")"), true);
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "age(" + taxon.getId() + ")"), true);
                     }
                 } else if (tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "treeModel.tipDates"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.tipDates"), true);
                 }
                 break;
             default:

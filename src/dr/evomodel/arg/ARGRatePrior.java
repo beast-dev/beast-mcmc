@@ -137,7 +137,7 @@ public class ARGRatePrior extends AbstractModelLikelihood {
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			String id = xo.getAttribute("id","");
+			String id = xo.getAttribute(XMLParser.ID,"");
 			
 			
 			Parameter sigma = (Parameter)xo.getChild(Parameter.class);

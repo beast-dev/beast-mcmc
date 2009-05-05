@@ -27,8 +27,6 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.BranchAttributeProvider;
 import dr.evolution.tree.BranchRateController;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.inference.model.Model;
 
 /**
@@ -39,6 +37,7 @@ import dr.inference.model.Model;
  * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface BranchRateModel extends Model, BranchRateController, BranchAttributeProvider {
+    public static String BRANCH_RATES = "branchRates";
 
     // There is no need to override an interface in a derived interface, is there?
     //double getBranchRate(Tree tree, NodeRef node);

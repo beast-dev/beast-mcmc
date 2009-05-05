@@ -7,11 +7,11 @@ import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
+import dr.xml.XMLParser;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -51,7 +51,7 @@ public abstract class Generator {
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", id), true);
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, id), true);
         writer.writeCloseTag(wrapperName);
     }
 
@@ -137,7 +137,7 @@ public abstract class Generator {
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
-        attributes.add(new Attribute.Default<String>("id", id));
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
         if (dimension > 1) {
             attributes.add(new Attribute.Default<String>("dimension", dimension + ""));
         }
@@ -184,7 +184,7 @@ public abstract class Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag("sumStatistic", new Attribute.Default<String>("idref", name), true);
+        writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, name), true);
         writer.writeCloseTag(Columns.COLUMN);
     }
 

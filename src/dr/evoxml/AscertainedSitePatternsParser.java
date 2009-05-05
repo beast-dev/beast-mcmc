@@ -73,7 +73,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         if (from < 0) from = 0;
         if (to < 0) to = alignment.getSiteCount() - 1;
 
-        if (xo.hasAttribute("id")) {
+        if (xo.hasAttribute(XMLParser.ID)) {
             Logger.getLogger("dr.evoxml").info("Creating ascertained site patterns '" + xo.getId() + "' from positions " +
                     Integer.toString(from + 1) + "-" + Integer.toString(to + 1) +
                     " of alignment '" + alignment.getId() + "'");

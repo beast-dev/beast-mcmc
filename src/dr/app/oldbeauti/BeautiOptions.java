@@ -38,8 +38,10 @@ import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.evoxml.AlignmentParser;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
+import dr.xml.XMLParser;
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -947,11 +949,11 @@ public class BeautiOptions {
         dataElement.addContent(createChild("userTree", userTree));
 
         if (includeData && originalAlignment != null) {
-            Element alignmentElement = new Element("alignment");
+            Element alignmentElement = new Element(AlignmentParser.ALIGNMENT);
             alignmentElement.addContent(createChild("dataType", originalAlignment.getDataType().getType()));
             for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
                 Element taxonElement = new Element("taxon");
-                taxonElement.addContent(createChild("id", originalAlignment.getTaxonId(i)));
+                taxonElement.addContent(createChild(XMLParser.ID, originalAlignment.getTaxonId(i)));
                 dr.evolution.util.Date date = originalAlignment.getTaxon(i).getDate();
                 if (date != null) {
                     taxonElement.addContent(createChild("date", date.getTimeValue()));
@@ -978,12 +980,12 @@ public class BeautiOptions {
 
         for (Taxa taxonSet : taxonSets) {
             Element taxonSetElement = new Element("taxonSet");
-            taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+            taxonSetElement.addContent(createChild(XMLParser.ID, taxonSet.getId()));
             taxonSetElement.addContent(createChild("enforceMonophyly",
                     taxonSetsMono.get(taxonSet) ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
                 Element taxonElement = new Element("taxon");
-                taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
+                taxonElement.addContent(createChild(XMLParser.ID, taxonSet.getTaxon(j).getId()));
                 taxonSetElement.addContent(taxonElement);
             }
             taxaElement.addContent(taxonSetElement);
@@ -1161,7 +1163,7 @@ public class BeautiOptions {
             if (datesUnits == MONTHS) theUnits = Units.Type.MONTHS;
             if (datesUnits == DAYS) theUnits = Units.Type.DAYS;
 
-            Element alignmentElement = dataElement.getChild("alignment");
+            Element alignmentElement = dataElement.getChild(AlignmentParser.ALIGNMENT);
             if (alignmentElement != null) {
                 originalAlignment = new SimpleAlignment();
 
@@ -1183,7 +1185,7 @@ public class BeautiOptions {
                 for (Object o : alignmentElement.getChildren("taxon")) {
                     Element taxonElement = (Element) o;
 
-                    String id = getStringChild(taxonElement, "id", "");
+                    String id = getStringChild(taxonElement, XMLParser.ID, "");
                     Taxon taxon = new Taxon(id);
 
                     if (taxonElement.getChild("date") != null) {
@@ -1218,13 +1220,13 @@ public class BeautiOptions {
             for (Object ts : taxaElement.getChildren("taxonSet")) {
                 Element taxonSetElement = (Element) ts;
 
-                String id = getStringChild(taxonSetElement, "id", "");
+                String id = getStringChild(taxonSetElement, XMLParser.ID, "");
                 final Taxa taxonSet = new Taxa(id);
 
                 Boolean enforceMonophyly = Boolean.valueOf(getStringChild(taxonSetElement, "enforceMonophyly", "false"));
                 for (Object o : taxonSetElement.getChildren("taxon")) {
                     Element taxonElement = (Element) o;
-                    String taxonId = getStringChild(taxonElement, "id", "");
+                    String taxonId = getStringChild(taxonElement, XMLParser.ID, "");
                     int index = taxonList.getTaxonIndex(taxonId);
                     if (index != -1) {
                         taxonSet.addTaxon(taxonList.getTaxon(index));

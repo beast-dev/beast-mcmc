@@ -36,7 +36,7 @@ import java.util.*;
 
 public class XMLParser {
 
-    public static final String ID = "id";
+    public static final String ID = XMLObject.ID;
     public static final String IDREF = "idref";
     public static final String CONCURRENT = "concurrent";
 

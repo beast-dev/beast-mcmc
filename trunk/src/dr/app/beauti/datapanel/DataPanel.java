@@ -221,8 +221,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         fireDataChanged();
     }
+    
+    public void selectAll () {
+    	dataTable.selectAll();
+    }
 
-    private void unlinkModels() {
+    public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             DataPartition partition = options.dataPartitions.get(row);

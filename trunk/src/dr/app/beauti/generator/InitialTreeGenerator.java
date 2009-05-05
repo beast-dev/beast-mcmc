@@ -18,10 +18,21 @@ import dr.util.Attribute;
  * @author Alexei Drummond
  */
 public class InitialTreeGenerator extends Generator {
-
+	private String prefix; // gene file name
+	
     public InitialTreeGenerator(BeautiOptions options) {
         super(options);
+        prefix = "";
     }
+    
+    public String getPrefix() {
+		return prefix;
+	}
+
+
+	public void setPrefix(String prefix) {
+		this.prefix = prefix;
+	}
 
     /**
      * Generate XML for the starting tree
@@ -44,7 +55,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", "startingTree"),
+                                    new Attribute.Default<String>("id", prefix + "startingTree"),
                                     new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
@@ -52,7 +63,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", "startingTree")
+                                    new Attribute.Default<String>("id", prefix + "startingTree")
                             }
                     );
                 }
@@ -77,7 +88,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", "startingTree"),
+                                    new Attribute.Default<String>("id", prefix + "startingTree"),
                                     new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
                                             "" + rootHeight.initial)
                             }
@@ -86,7 +97,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", "startingTree")
+                                    new Attribute.Default<String>("id", prefix + "startingTree")
                             }
                     );
                 }

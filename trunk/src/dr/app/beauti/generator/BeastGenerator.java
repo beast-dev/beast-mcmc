@@ -82,9 +82,10 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-    private final String mulitTaxaTagName = "gene";
+//    private final String mulitTaxaTagName = "gene";
 
     private TreePriorGenerator treePriorGenerator;
+    private TreeModelGenerator treeModelGenerator;
     private TreeLikelihoodGenerator treeLikelihoodGenerator;
     private PartitionModelGenerator partitionModelGenerator;
 
@@ -227,13 +228,16 @@ public class BeastGenerator extends Generator {
         new InitialTreeGenerator(options).writeStartingTree(writer);
         writer.writeText("");
         
+        treeModelGenerator = new TreeModelGenerator(options);
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
-	    	for (PartitionModel model : options.getActivePartitionModels()) {
-	    		new TreeModelGenerator(options).writeTreeModel(model, writer);
+	    	for (PartitionModel model : options.getActivePartitionModels()) {	    		
+	    		treeModelGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
+	    		treeModelGenerator.writeTreeModel(writer);
 	        }  
         } else { // no species
-        	new TreeModelGenerator(options).writeTreeModel(writer);	
+        	treeModelGenerator.setPrefix("");
+        	treeModelGenerator.writeTreeModel(writer);
 	    }
         writer.writeText("");
 
@@ -241,9 +245,11 @@ public class BeastGenerator extends Generator {
         
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
 	        for (PartitionModel model : options.getActivePartitionModels()) {
-	        	treePriorGenerator.writeTreePrior(model, writer);
+	        	treePriorGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
+	        	treePriorGenerator.writeTreePrior(writer);
 	        }
         } else { // no species
+        	treePriorGenerator.setPrefix("");
         	treePriorGenerator.writeTreePrior(writer);	
 	    }
         writer.writeText("");

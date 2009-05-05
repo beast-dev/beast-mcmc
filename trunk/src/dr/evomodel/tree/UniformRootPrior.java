@@ -53,6 +53,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     public static final String UNIFORM_ROOT_PRIOR = "uniformRootPrior";
     public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
 
+    private static final double tolerance = 1E-6;
+
     private int k = 0;
     private double logFactorialK;
 
@@ -92,6 +94,20 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         } else {
             reversedTipDateList.addAll(tipDates);
             Collections.reverse(reversedTipDateList);
+
+            // Prune out intervals smaller in length than tolerance
+            double intervalStart = tree.getNodeHeight(tree.getRoot());
+            List<Double> pruneDates = new ArrayList<Double>();
+
+            for (Double intervalEnd : reversedTipDateList) {
+                if (intervalStart - intervalEnd < tolerance) {
+                    pruneDates.add(intervalStart);
+                }
+                intervalStart = intervalEnd;
+            }
+
+            for (Double date : pruneDates)
+                reversedTipDateList.remove(date);         
         }
 
     }
@@ -217,20 +233,26 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 //                }
 //
 //                logLike = logFactorial(k1) - (double) k1 * Math.log(rootHeight - maxTipHeight);
-                intervals.clear();
-                for (Double date : tipDates) {
-                    intervals.put(date, 0);
+
+                // TODO Recalculate only when a tip sampling time changes
+                if (!intervalCountsKnown) {
+
+                    intervals.clear();
+                    for (Double date : reversedTipDateList) {
+                        intervals.put(date, 0);
+                    }
+
+                    traverse(tree, tree.getRoot());
+                    intervalCountsKnown = true;
                 }
 
-                traverse(tree, tree.getRoot());
-
                 logLike = 0.0;
-                int k = 0;
                 for (Double date : reversedTipDateList) {
                     double s = rootHeight - date;
-                    k += intervals.get(date);
+                    int k = intervals.get(date);  // There was a bug here, was +=
+                    if (k > 0)
+                        logLike += logFactorial(k) - (double) k * Math.log(s);
 
-                    logLike += logFactorial(k) - (double) k * Math.log(s);
                 }
             }
 
@@ -241,25 +263,43 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
 
     private double logFactorial(int n) {
-        if (n == 0) {
+        if (n == 0 || n == 1) {
             return 0;
         }
 
         double rValue = 0;
 
-        for (int i = n; i > 0; i--) {
+        for (int i = n; i > 1; i--) {
             rValue += Math.log(i);
         }
         return rValue;
     }
 
+//    private void addCountToInterval(double date) {
+//        for(Double prunedDate : reversedTipDateList) {
+//            if( date > prunedDate) {
+//                intervals.put(prunedDate, intervals.get(prunedDate) + 1);
+//                break;
+//            }
+//        }
+//    }
 
     private Double traverse(Tree tree, NodeRef node) {
         Double date;
         if (tree.isExternal(node)) {
             date = tree.getNodeHeight(node);
             if (!intervals.keySet().contains(date)) {
-                throw new RuntimeException("Tip date not found");
+                // Find closest within tolerance
+                boolean found = false;
+                for(Double prunedDate : reversedTipDateList) {
+                    if (Math.abs(date - prunedDate) < tolerance) {
+                        date = prunedDate;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    throw new RuntimeException("Tip date not found");
             }
 
         } else {
@@ -267,6 +307,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
             Double date2 = traverse(tree, tree.getChild(node, 1));
             date = (date1 > date2 ? date1 : date2);
             if (!tree.isRoot(node)) {
+                // Only increases counts for internal nodes
                 intervals.put(date, intervals.get(date) + 1);
             }
         }
@@ -337,4 +378,5 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private double storedLogLikelihood;
     boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
+    private boolean intervalCountsKnown = false;
 }

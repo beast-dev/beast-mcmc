@@ -4,6 +4,7 @@ import dr.app.beauti.XMLWriter;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodelxml.BinarySubstitutionModelParser;
@@ -436,7 +437,7 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>("id", prefix + "siteModel")});
+                new Attribute[]{new Attribute.Default<String>("id", prefix + SiteModel.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
@@ -533,7 +534,7 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>("id", prefix + "siteModel")});
+                new Attribute[]{new Attribute.Default<String>("id", prefix + SiteModel.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
@@ -583,7 +584,7 @@ public class PartitionModelGenerator extends Generator {
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>("id", prefix + "siteModel")});
+                new Attribute.Default<String>("id", prefix + SiteModel.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);

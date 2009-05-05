@@ -1,14 +1,13 @@
 
 package dr.app.seqgen;
 
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.datatype.DataType;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.Nucleotides;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
@@ -18,13 +17,7 @@ import dr.evomodel.substmodel.HKY;
 import dr.evomodel.substmodel.SubstitutionEpochModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /** Class for performing random sequence generation for a given site model.
  * Sequences for the leave nodes in the tree are returned as an alignment.
@@ -180,7 +173,7 @@ public class SequenceSimulator {
     
     /* standard xml parser stuff follows */
     public static final String SEQUENCE_SIMULATOR = "sequenceSimulator";
-    public static final String SITE_MODEL = "siteModel";
+    public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String TREE = "tree";
     public static final String BRANCH_RATE_MODEL = "branchRateModel";
     public static final String REPLICATIONS = "replications";

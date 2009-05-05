@@ -45,7 +45,6 @@ import java.util.logging.Logger;
 public class GammaSiteModel extends AbstractModel
         implements SiteModel {
 
-    public static final String SITE_MODEL = "siteModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String RELATIVE_RATE = "relativeRate";
@@ -429,7 +428,7 @@ public class GammaSiteModel extends AbstractModel
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                         new ElementRule(SubstitutionModel.class)
                 }),

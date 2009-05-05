@@ -237,7 +237,7 @@ public class LogCombiner {
         }
     }
 
-    private Map<String, Integer> taxonMap = new HashMap<String, Integer>();
+    private final Map<String, Integer> taxonMap = new HashMap<String, Integer>();
 
     private void startLog(Tree tree, PrintWriter writer) {
 

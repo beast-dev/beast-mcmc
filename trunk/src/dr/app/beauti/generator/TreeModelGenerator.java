@@ -40,8 +40,10 @@ public class TreeModelGenerator extends Generator {
      * @param writer the writer
      */
     void writeTreeModel(XMLWriter writer) { // for species, partitionName.treeModel
-    	
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL), false);
+
+        final String treeModelName = prefix + TreeModel.TREE_MODEL;
+
+        writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("id", treeModelName), false);
 
         final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
 
@@ -54,13 +56,13 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL + "." + CoalescentSimulator.ROOT_HEIGHT), true);
+                new Attribute.Default<String>("id", treeModelName + "." + CoalescentSimulator.ROOT_HEIGHT), true);
         writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 
         writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS, new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"));
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL + "." + "internalNodeHeights"), true);
+                new Attribute.Default<String>("id", treeModelName + "." + "internalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
         writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
@@ -69,7 +71,7 @@ public class TreeModelGenerator extends Generator {
                         new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true")
                 });
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL + "." + "allInternalNodeHeights"), true);
+                new Attribute.Default<String>("id", treeModelName + "." + "allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
         switch (options.clockType) {
@@ -86,7 +88,7 @@ public class TreeModelGenerator extends Generator {
                                 new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL + "." + TreeModelParser.NODE_RATES), true);
+                        new Attribute.Default<String>("id", treeModelName + "." + TreeModelParser.NODE_RATES), true);
                 writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
                 writer.writeOpenTag(TreeModelParser.NODE_RATES,
@@ -97,7 +99,7 @@ public class TreeModelGenerator extends Generator {
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
                         new Attribute.Default<String>("id",
-                                prefix + TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), true);
+                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
                 writer.writeCloseTag(TreeModelParser.NODE_RATES);
                 break;
 
@@ -155,11 +157,11 @@ public class TreeModelGenerator extends Generator {
         if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
             writer.writeText("");
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>("id", prefix + TreeModel.TREE_MODEL + "." + "allRates")});
+                    new Attribute[]{new Attribute.Default<String>("id", treeModelName + "." + "allRates")});
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>("idref", prefix + TreeModel.TREE_MODEL + "." + TreeModelParser.NODE_RATES), true);
+                    new Attribute.Default<String>("idref", treeModelName + "." + TreeModelParser.NODE_RATES), true);
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>("idref", prefix + TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), true);
+                    new Attribute.Default<String>("idref", treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         }
     }

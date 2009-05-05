@@ -28,6 +28,7 @@ package dr.app.oldbeauti;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.generator.InitialTreeGenerator;
 import dr.app.beauti.options.AminoAcidModelType;
+import dr.app.beauti.options.ClockType;
 import dr.app.beauti.options.NucModelType;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
@@ -48,6 +49,7 @@ import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
@@ -684,7 +686,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
                             new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                     });
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "localClock.rates"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", ClockType.LOCAL_CLOCK + "." + "rates"), true);
             writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
             writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
@@ -693,7 +695,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
                             new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                     });
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", "localClock.changes"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("id", ClockType.LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
         }
 
@@ -997,7 +999,7 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>("id", "allMus")});
                     for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + i + ".mu")}, true);
+                                new Attribute[]{new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + i + ".mu")}, true);
                     }
                     writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
                 } else {
@@ -1027,7 +1029,7 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeNucSiteModel(int num, XMLWriter writer) {
 
-        String id = "siteModel";
+        String id = SiteModel.SITE_MODEL;
         if (num > 0) {
             id += Integer.toString(num);
         }
@@ -1085,9 +1087,9 @@ public class BeastGenerator extends BeautiOptions {
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter("siteModel.alpha", writer);
+                    writeParameter(SiteModel.SITE_MODEL + "." + "alpha", writer);
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.alpha"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + "." + "alpha"), true);
                 }
             }
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
@@ -1100,9 +1102,9 @@ public class BeastGenerator extends BeautiOptions {
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
-                    writeParameter("siteModel.pInv", writer);
+                    writeParameter(SiteModel.SITE_MODEL + "." + "pInv", writer);
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.pInv"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + "." + "pInv"), true);
                 }
             }
             writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
@@ -1118,7 +1120,7 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeTwoStateSiteModel(XMLWriter writer) {
 
-        String id = "siteModel";
+        String id = SiteModel.SITE_MODEL;
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("id", id)});
@@ -1165,7 +1167,7 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeComment("site model");
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>("id", "siteModel")});
+                new Attribute.Default<String>("id", SiteModel.SITE_MODEL)});
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
@@ -1177,13 +1179,13 @@ public class BeastGenerator extends BeautiOptions {
 
         if (gammaHetero) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + gammaCategories));
-            writeParameter("siteModel.alpha", writer);
+            writeParameter(SiteModel.SITE_MODEL + "." + "alpha", writer);
             writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
         }
 
         if (invarHetero) {
             writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
-            writeParameter("siteModel.pInv", writer);
+            writeParameter(SiteModel.SITE_MODEL + "." + "pInv", writer);
             writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
         }
 
@@ -1228,11 +1230,11 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
 
             writer.writeOpenTag("rates");
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.rates"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "rates"), true);
             writer.writeCloseTag("rates");
 
             writer.writeOpenTag("rateIndicator");
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag("rateIndicator");
 
             writer.writeOpenTag("clockRate");
@@ -1250,7 +1252,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>("elementwise", "true"),
                     }
             );
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 
             writer.writeText("");
@@ -1306,26 +1308,26 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag("distribution");
             if (clockModel == UNCORRELATED_EXPONENTIAL) {
                 if (fixedSubstitutionRate) {
-                    fixParameter("uced.mean", meanSubstitutionRate);
+                    fixParameter(ClockType.UCED_MEAN, meanSubstitutionRate);
                 }
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                 writer.writeOpenTag(eModelName);
                 writer.writeOpenTag("mean");
-                writeParameter("uced.mean", writer);
+                writeParameter(ClockType.UCED_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeCloseTag(eModelName);
             } else if (clockModel == UNCORRELATED_LOGNORMAL) {
                 if (fixedSubstitutionRate) {
-                    fixParameter("ucld.mean", meanSubstitutionRate);
+                    fixParameter(ClockType.UCLD_MEAN, meanSubstitutionRate);
                 }
 
                 writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
                 writer.writeOpenTag("mean");
-                writeParameter("ucld.mean", writer);
+                writeParameter(ClockType.UCLD_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeOpenTag("stdev");
-                writeParameter("ucld.stdev", writer);
+                writeParameter(ClockType.UCLD_STDEV, writer);
                 writer.writeCloseTag("stdev");
                 writer.writeCloseTag("logNormalDistributionModel");
             } else {
@@ -1625,7 +1627,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns" + num)}, true);
             }
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
-            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "siteModel" + num)}, true);
+            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + num)}, true);
         } else {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
@@ -1636,7 +1638,7 @@ public class BeastGenerator extends BeautiOptions {
             );
             writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>("idref", "patterns")}, true);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
-            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "siteModel")}, true);
+            writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>("idref", SiteModel.SITE_MODEL)}, true);
         }
         if (clockModel == STRICT_CLOCK) {
             writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>("idref", "branchRates")}, true);
@@ -2606,7 +2608,7 @@ public class BeastGenerator extends BeautiOptions {
                     if (partitionCount > 1) {
                         for (int i = 1; i <= partitionCount; i++) {
                             writer.writeTag(ParameterParser.PARAMETER,
-                                    new Attribute.Default<String>("idref", "siteModel" + i + ".mu"), true);
+                                    new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + i + ".mu"), true);
                         }
                     }
                     switch (nucSubstitutionModel) {
@@ -2664,10 +2666,10 @@ public class BeastGenerator extends BeautiOptions {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", "siteModel" + i + ".alpha"), true);
+                                new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + i + ".alpha"), true);
                     }
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.alpha"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + "." + "alpha"), true);
                 }
             }
 
@@ -2675,10 +2677,10 @@ public class BeastGenerator extends BeautiOptions {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
-                                new Attribute.Default<String>("idref", "siteModel" + i + ".pInv"), true);
+                                new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + i + ".pInv"), true);
                     }
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "siteModel.pInv"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", SiteModel.SITE_MODEL + "." + "pInv"), true);
                 }
             }
         }
@@ -2686,10 +2688,10 @@ public class BeastGenerator extends BeautiOptions {
         if (clockModel != STRICT_CLOCK) {
 //			if (!fixedSubstitutionRate) {
             if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCED_MEAN), true);
             } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCLD_MEAN), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCLD_STDEV), true);
             }
 //			}
             writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);

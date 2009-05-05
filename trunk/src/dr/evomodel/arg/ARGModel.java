@@ -47,7 +47,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     public static final String LEAF_HEIGHT = "leafHeight";
     public static final String NODE_HEIGHTS = "nodeHeights";
     public static final String NODE_RATES = TreeModelParser.NODE_RATES;
-    public static final String NODE_TRAITS = "nodeTraits";
+    public static final String NODE_TRAITS = TreeModelParser.NODE_TRAITS;
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
     public static final String LEAF_NODES = "leafNodes";
@@ -3089,7 +3089,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                     "At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeTraits");
+        CompoundParameter parameter = new CompoundParameter(TreeModelParser.NODE_TRAITS);
 
         hasTraits = true;
 

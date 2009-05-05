@@ -1,9 +1,10 @@
 package dr.evomodel.beagle.parsers;
 
-import dr.xml.*;
-import dr.inference.model.Parameter;
 import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
 import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.inference.model.Parameter;
+import dr.xml.*;
 
 import java.util.logging.Logger;
 
@@ -14,7 +15,7 @@ import java.util.logging.Logger;
  */
 public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
-    public static final String SITE_MODEL = "siteModel";
+    public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";

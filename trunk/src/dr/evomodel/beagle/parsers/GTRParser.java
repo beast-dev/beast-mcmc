@@ -1,11 +1,9 @@
 package dr.evomodel.beagle.parsers;
 
+import dr.evomodel.beagle.substmodel.FrequencyModel;
+import dr.evomodel.beagle.substmodel.GTR;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.GTR;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-
-import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -104,7 +102,7 @@ public class GTRParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new ElementRule(FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
             new ElementRule(A_TO_C,

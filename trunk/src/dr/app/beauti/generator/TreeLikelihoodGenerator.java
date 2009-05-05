@@ -1,14 +1,17 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.PartitionModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
@@ -78,7 +81,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", treeModel)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + SiteModel.SITE_MODEL)}, true);
         } else {
             String prefix = model.getPrefix();
             writer.writeOpenTag(
@@ -99,7 +102,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeTag(TreeModel.TREE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", treeModel)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", prefix + SiteModel.SITE_MODEL)}, true);
         }
 
         switch (options.clockType) {

@@ -1685,13 +1685,13 @@ public class BeastGenerator extends Generator {
                 break;
 
             case UNCORRELATED_EXPONENTIAL:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "uced.mean"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCED_MEAN), true);
                 writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
                 writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
                 break;
             case UNCORRELATED_LOGNORMAL:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.mean"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "ucld.stdev"), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCLD_MEAN), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", ClockType.UCLD_STDEV), true);
                 writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>("idref", "coefficientOfVariation"), true);
                 writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>("idref", "covariance"), true);
                 break;

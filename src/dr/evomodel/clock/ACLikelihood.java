@@ -16,7 +16,7 @@ import dr.xml.*;
 public class ACLikelihood extends RateEvolutionLikelihood {
 
     public static final String AC_LIKELIHOOD = "ACLikelihood";
-    public static final String ROOTRATE = "rootRate";
+
     public static final String VARIANCE = "variance";
 
     public ACLikelihood(TreeModel tree, Parameter ratesParameter, Parameter variance, Parameter rootRate, boolean isEpisodic, boolean isLogSpace) {

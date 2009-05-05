@@ -107,7 +107,7 @@ public class Coalescent implements MultivariateFunction, Units {
                        logL -= Math.log(demographicAtCoalPoint);
                     } else {
                         // remove this at some stage
-                        System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                      //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
                         return Double.NEGATIVE_INFINITY;
                     }
 

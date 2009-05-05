@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.*;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.math.UnivariateFunction;
 import dr.xml.*;
@@ -45,7 +46,7 @@ public class CoalescentSimulator {
     public static final String COALESCENT_TREE = "coalescentTree";
     public static final String COALESCENT_SIMULATOR = "coalescentSimulator";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
-    public static final String ROOT_HEIGHT = "rootHeight";
+    public static final String ROOT_HEIGHT = TreeModelParser.ROOT_HEIGHT;
     public static final String CONSTRAINED_TAXA = "constrainedTaxa";
     public static final String TMRCA_CONSTRAINT = "tmrca";
     public static final String IS_MONOPHYLETIC = "monophyletic";
@@ -446,7 +447,7 @@ public class CoalescentSimulator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
                 AttributeRule.newDoubleRule(ROOT_HEIGHT, true, ""),
                 new ElementRule(Tree.class, 0, Integer.MAX_VALUE),

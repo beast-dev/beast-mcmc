@@ -71,7 +71,6 @@ public class BeautiFrame extends DocumentFrame {
 
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
-    private TipSpeciesPanel tipSpeciesPanel;
     private TraitsPanel traitsPanel;
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
@@ -123,7 +122,6 @@ public class BeautiFrame extends DocumentFrame {
 
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
         tipDatesPanel = new TipDatesPanel(this);
-        tipSpeciesPanel = new TipSpeciesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
         modelsPanel = new ModelsPanel(this, getDeleteAction());
@@ -187,21 +185,12 @@ public class BeautiFrame extends DocumentFrame {
         chooser = new JFileChooser();
     }
 
-
-    public void changeTabs() {
-        // remove tipDatesPanel with tipSpeciesPanel
-        tabbedPane.removeTabAt(2);
-        tabbedPane.insertTab("Tip Species", null, tipSpeciesPanel, "replace Tip Dates", 2);
-        currentPanel = (BeautiPanel)tabbedPane.getSelectedComponent();
-    }
-
     /**
      * set all the options for all panels
      */
     private void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         tipDatesPanel.setOptions(beautiOptions);
-        tipSpeciesPanel.setOptions(beautiOptions);
         traitsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
@@ -221,7 +210,6 @@ public class BeautiFrame extends DocumentFrame {
     private void getAllOptions() {
         dataPanel.getOptions(beautiOptions);
         tipDatesPanel.getOptions(beautiOptions);
-        tipSpeciesPanel.getOptions(beautiOptions);
         traitsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelsPanel.getOptions(beautiOptions);

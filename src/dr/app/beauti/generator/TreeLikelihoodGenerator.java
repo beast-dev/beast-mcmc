@@ -18,7 +18,8 @@ import dr.util.Attribute;
  * @author Andrew Rambaut
  */
 public class TreeLikelihoodGenerator extends Generator {
-
+	private String treeModel; // "treeModel"
+	
     public TreeLikelihoodGenerator(BeautiOptions options) {
         super(options);
     }
@@ -28,9 +29,15 @@ public class TreeLikelihoodGenerator extends Generator {
      *
      * @param model  the partition model to write likelihood block for
      * @param writer the writer
+     * @param traitsContainSpecies
      */
-    void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
-
+    void writeTreeLikelihood(PartitionModel model, XMLWriter writer, boolean traitsContainSpecies) {
+    	if (traitsContainSpecies) {
+    		treeModel = TreeModel.TREE_MODEL + "_" + model.getName(); // "treeModel"
+    	} else {
+    		treeModel = TreeModel.TREE_MODEL; // "treeModel"
+    	}
+    	
         if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writeTreeLikelihood("treeLikelihood", i, model, writer);
@@ -39,7 +46,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writeTreeLikelihood("treeLikelihood", -1, model, writer);
         }
     }
-
+    
     /**
      * Write the tree likelihood XML block.
      *
@@ -69,7 +76,7 @@ public class TreeLikelihoodGenerator extends Generator {
             }
 
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", treeModel)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         } else {
@@ -90,7 +97,7 @@ public class TreeLikelihoodGenerator extends Generator {
                         new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
             }
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>("idref", "treeModel")}, true);
+                    new Attribute[]{new Attribute.Default<String>("idref", treeModel)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>("idref", prefix + "siteModel")}, true);
         }

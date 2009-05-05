@@ -16,8 +16,8 @@ import dr.util.Attribute;
  */
 public class PartitionModelGenerator extends Generator {
 
-    public PartitionModelGenerator(BeautiOptions options) {
-        super(options);
+    public PartitionModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
     }
 
     /**

@@ -21,8 +21,8 @@ import dr.util.Attribute;
  */
 public class BranchRatesModelGenerator extends Generator {
 
-    public BranchRatesModelGenerator(BeautiOptions options) {
-        super(options);
+    public BranchRatesModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
     }
 
     /**

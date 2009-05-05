@@ -10,6 +10,8 @@ import dr.util.Attribute;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.Arrays;
 
 /**
  * @author Alexei Drummond
@@ -18,8 +20,11 @@ public abstract class Generator {
 
     protected final BeautiOptions options;
 
-    public Generator(BeautiOptions options) {
+    public Generator(BeautiOptions options, ComponentGenerator[] components) {
         this.options = options;
+        if (components != null) {
+            this.components.addAll(Arrays.asList(components));
+        }
     }
 
     /**
@@ -210,9 +215,5 @@ public abstract class Generator {
         }
     }
 
-    public static void addComponent(ComponentGenerator componentGenerator) {
-        components.add(componentGenerator);
-    }
-
-    private static final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
+    private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
 }

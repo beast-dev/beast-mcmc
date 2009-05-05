@@ -31,8 +31,8 @@ public class TreePriorGenerator extends Generator {
 	
 	private String prefix; 
 
-	public TreePriorGenerator(BeautiOptions options) {
-		super(options);
+	public TreePriorGenerator(BeautiOptions options, ComponentGenerator[] components) {
+		super(options, components);
 		prefix = "";
 	}
 

@@ -16,8 +16,8 @@ public class TreeModelGenerator extends Generator {
 	
 	private String prefix; // gene file name
 	
-    public TreeModelGenerator(BeautiOptions options) {
-        super(options);
+    public TreeModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
         prefix = "";
     }
        

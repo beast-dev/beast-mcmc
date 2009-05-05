@@ -11,7 +11,7 @@ import dr.app.beauti.XMLWriter;
  */
 public abstract class BaseComponentGenerator extends Generator implements ComponentGenerator {
     protected BaseComponentGenerator(final BeautiOptions options) {
-        super(options);
+        super(options, null);
     }
 
     public void generateAtInsertionPoint(final InsertionPoint point, final Object item, final XMLWriter writer) {

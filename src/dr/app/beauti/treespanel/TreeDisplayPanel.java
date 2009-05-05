@@ -62,10 +62,11 @@ public class TreeDisplayPanel extends JPanel {
 
         tabbedPane.add("Tree", treePanel);
 
+//      AR - have removed root-to-tip chart for now.
 //        rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
 //        rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
 //        rootToTipPanel.setOpaque(false);
-
+//
 //        tabbedPane.add("Root-to-tip", rootToTipPanel);
 
         scaledTreePanel = new JTreeDisplay(new SquareTreePainter());
@@ -85,8 +86,9 @@ public class TreeDisplayPanel extends JPanel {
         if (tree != null) {
             treePanel.setTree(tree);
             TemporalRooting temporalRooting = new TemporalRooting(tree);
-            Regression r = temporalRooting.getRootToTipRegression(tree);
 
+//            Regression r = temporalRooting.getRootToTipRegression(tree);
+//
 //            rootToTipChart.removeAllPlots();
 //            rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
 //            rootToTipChart.addPlot(new RegressionPlot(r));

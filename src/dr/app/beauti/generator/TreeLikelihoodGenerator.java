@@ -20,8 +20,8 @@ import dr.util.Attribute;
 public class TreeLikelihoodGenerator extends Generator {
 	private String treeModel; // "treeModel"
 	
-    public TreeLikelihoodGenerator(BeautiOptions options) {
-        super(options);
+    public TreeLikelihoodGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
     }
 
     /**

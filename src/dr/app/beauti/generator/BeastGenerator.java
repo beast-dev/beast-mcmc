@@ -67,10 +67,7 @@ import dr.util.Attribute;
 import dr.util.Version;
 
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -84,13 +81,23 @@ public class BeastGenerator extends Generator {
     private final static Version version = new BeastVersion();
 //    private final String mulitTaxaTagName = "gene";
 
-    private TreePriorGenerator treePriorGenerator;
-    private TreeModelGenerator treeModelGenerator;
-    private TreeLikelihoodGenerator treeLikelihoodGenerator;
-    private PartitionModelGenerator partitionModelGenerator;
+    private final TreePriorGenerator treePriorGenerator;
+    private final TreeLikelihoodGenerator treeLikelihoodGenerator;
+    private final PartitionModelGenerator partitionModelGenerator;
+    private final InitialTreeGenerator initialTreeGenerator;
+    private final TreeModelGenerator treeModelGenerator;
+    private final BranchRatesModelGenerator branchRatesModelGenerator;
 
-    public BeastGenerator(BeautiOptions options) {
-        super(options);
+    public BeastGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
+
+        partitionModelGenerator = new PartitionModelGenerator(options, components);
+        treePriorGenerator = new TreePriorGenerator(options, components);
+        treeLikelihoodGenerator = new TreeLikelihoodGenerator(options, components);
+
+        initialTreeGenerator = new InitialTreeGenerator(options, components);
+        treeModelGenerator = new TreeModelGenerator(options, components);
+        branchRatesModelGenerator = new BranchRatesModelGenerator(options, components);
     }
 
     /**
@@ -182,7 +189,6 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        partitionModelGenerator = new PartitionModelGenerator(options);
 
         if (!options.samplePriorOnly) {
             int index = 1;
@@ -219,16 +225,14 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
 
-                	
-        treePriorGenerator = new TreePriorGenerator(options);
 
         treePriorGenerator.writeTreePriorModel(writer);
         writer.writeText("");
 
-        new InitialTreeGenerator(options).writeStartingTree(writer);
+        initialTreeGenerator.writeStartingTree(writer);
         writer.writeText("");
         
-        treeModelGenerator = new TreeModelGenerator(options);
+//        treeModelGenerator = new TreeModelGenerator(options);
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
 	    	for (PartitionModel model : options.getActivePartitionModels()) {	    		
@@ -256,7 +260,7 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
 
-        new BranchRatesModelGenerator(options).writeBranchRatesModel(writer);
+        branchRatesModelGenerator.writeBranchRatesModel(writer);
         writer.writeText("");
 
         for (PartitionModel partitionModel : options.getActivePartitionModels()) {
@@ -284,8 +288,6 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
-        treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
-        
         for (PartitionModel model : options.getActivePartitionModels()) {
         	// PartitionModel model, XMLWriter writer, boolean traitsContainSpecies
             treeLikelihoodGenerator.writeTreeLikelihood(model, writer, (options.traits.contains(options.TRAIT_SPECIES)));

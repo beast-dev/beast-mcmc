@@ -49,7 +49,7 @@ import java.io.*;
  */
 public class CommandLineBeauti {
     private BeautiOptions beautiOptions = new BeautiOptions();
-    private BeastGenerator generator = new BeastGenerator(beautiOptions);
+    private BeastGenerator generator = new BeastGenerator(beautiOptions, null);
 
     public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
 

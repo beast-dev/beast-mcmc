@@ -20,8 +20,8 @@ import dr.util.Attribute;
 public class InitialTreeGenerator extends Generator {
 	private String prefix; // gene file name
 	
-    public InitialTreeGenerator(BeautiOptions options) {
-        super(options);
+    public InitialTreeGenerator(BeautiOptions options, ComponentGenerator[] components) {
+        super(options, components);
         prefix = "";
     }
     

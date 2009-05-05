@@ -736,6 +736,11 @@ public class BeautiFrame extends DocumentFrame {
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
         }
+        
+        if (beautiOptions.traits.contains(beautiOptions.TRAIT_SPECIES)) { // species 
+        	dataPanel.selectAll();
+        	dataPanel.unlinkModels();
+        }
     }
 
    

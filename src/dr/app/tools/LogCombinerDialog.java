@@ -45,24 +45,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LogCombinerDialog {
-	private JFrame frame;
+	private final JFrame frame;
 
-	private OptionsPanel optionPanel;
+	private final OptionsPanel optionPanel;
 
 	private JTable filesTable = null;
 	private FilesTableModel filesTableModel = null;
 
-	private JComboBox fileTypeCombo = new JComboBox(new String[] { "Log Files", "Tree Files" });
-	private JCheckBox decimalCheck = new JCheckBox("Convert numbers from scientific to decimal notation");
-	private JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
-	private WholeNumberField resampleText = new WholeNumberField(0, Integer.MAX_VALUE);
+	private final JComboBox fileTypeCombo = new JComboBox(new String[] { "Log Files", "Tree Files" });
+	private final JCheckBox decimalCheck = new JCheckBox("Convert numbers from scientific to decimal notation");
+	private final JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
+	private final WholeNumberField resampleText = new WholeNumberField(0, Integer.MAX_VALUE);
 
-	private List files = new ArrayList();
+	private final List files = new ArrayList();
 
-	private final JButton button = new JButton("Choose File...");
-	private ActionListener buttonListener;
-
-	private final JTextField fileNameText = new JTextField("not selected", 16);
+    private final JTextField fileNameText = new JTextField("not selected", 16);
 	private File outputFile = null;
 
 	public LogCombinerDialog(final JFrame frame) {
@@ -70,7 +67,7 @@ public class LogCombinerDialog {
 
 		optionPanel = new OptionsPanel(12, 12);
 
-		this.frame = frame;
+		//this.frame = frame;
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setOpaque(false);
@@ -115,24 +112,26 @@ public class LogCombinerDialog {
 			}
 		});
 
-		buttonListener = new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				FileDialog dialog = new FileDialog(frame,
-						"Select output file...",
-						FileDialog.SAVE);
+        ActionListener buttonListener = new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                FileDialog dialog = new FileDialog(frame,
+                        "Select output file...",
+                        FileDialog.SAVE);
 
-				dialog.setVisible(true);
-				if (dialog.getFile() == null) {
-					// the dialog was cancelled...
-					return;
-				}
+                dialog.setVisible(true);
+                if( dialog.getFile() == null ) {
+                    // the dialog was cancelled...
+                    return;
+                }
 
-				outputFile = new File(dialog.getDirectory(), dialog.getFile());
-				fileNameText.setText(outputFile.getName());
+                outputFile = new File(dialog.getDirectory(), dialog.getFile());
+                fileNameText.setText(outputFile.getName());
 
-			}};
+            }
+        };
 
-		button.addActionListener(buttonListener);
+        JButton button = new JButton("Choose File...");
+        button.addActionListener(buttonListener);
 
 		JPanel panel2 = new JPanel(new BorderLayout(0,0));
 		panel2.add(resampleCheck, BorderLayout.CENTER);
@@ -188,7 +187,7 @@ public class LogCombinerDialog {
 		int[] burnins = new int[files.size()];
 		for (int i = 0; i < files.size(); i++) {
 			FileInfo fileInfo = (FileInfo)files.get(i);
-			burnins[i] = fileInfo.burnin.intValue();
+			burnins[i] = fileInfo.burnin;
 		}
 		return burnins;
 	}
@@ -206,7 +205,7 @@ public class LogCombinerDialog {
 	}
 
 	public int getResampleFrequency() {
-		return resampleText.getValue().intValue();
+		return resampleText.getValue();
 	}
 
 	public String getOutputFileName() {
@@ -235,7 +234,7 @@ public class LogCombinerDialog {
 			if (file != null) {
 				FileInfo fileInfo = new FileInfo();
 				fileInfo.file = file;
-				fileInfo.burnin = new Integer(0);
+				fileInfo.burnin = 0;
 
 				files.add(fileInfo);
 

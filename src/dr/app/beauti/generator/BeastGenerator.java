@@ -279,9 +279,10 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options);
-
+        
         for (PartitionModel model : options.getActivePartitionModels()) {
-            treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
+        	// PartitionModel model, XMLWriter writer, boolean traitsContainSpecies
+            treeLikelihoodGenerator.writeTreeLikelihood(model, writer, (options.traits.contains(options.TRAIT_SPECIES)));
             writer.writeText("");
         }
 
@@ -306,8 +307,9 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
-
-        writeMCMC(writer);
+        
+        // XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies
+        writeMCMC(writer, options.getActivePartitionModels(), (options.traits.contains(options.TRAIT_SPECIES)));
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
@@ -1177,7 +1179,7 @@ public class BeastGenerator extends Generator {
      *
      * @param writer the writer
      */
-    public void writeMCMC(XMLWriter writer) {
+    public void writeMCMC(XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies) {
         writer.writeOpenTag(
                 "mcmc",
                 new Attribute[]{
@@ -1215,7 +1217,15 @@ public class BeastGenerator extends Generator {
                 writer.writeTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD,
                         new Attribute.Default<String>("idref", "booleanLikelihood1"), true);
             default:
-                writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>("idref", "coalescent"), true);
+            	if (traitsContainSpecies) { // species
+            		for (PartitionModel model : models) {
+            			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
+            						("idref", "coalescent" + "_" + model.getName()), true);
+            		}
+            	} else { // no species
+            		writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
+            						("idref", "coalescent"), true);
+            	}
         }
 
         if (options.nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
@@ -1315,7 +1325,18 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
                         new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
+        
+    	if (traitsContainSpecies) { // species
+    		for (PartitionModel model : models) {
+    			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
+    						("idref", TreeModel.TREE_MODEL + "_" + model.getName()), true);
+    						
+    		}
+    	} else { // no species
+			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
+						("idref", TreeModel.TREE_MODEL), true);
+    	}
+        
 
         switch (options.clockType) {
             case STRICT_CLOCK:

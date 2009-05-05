@@ -15,7 +15,7 @@ import dr.xml.*;
 public class UCLikelihood extends RateEvolutionLikelihood {
 
     public static final String UC_LIKELIHOOD = "UCLikelihood";
-    public static final String ROOTRATE = "rootRate";
+
     public static final String VARIANCE = "variance";
 
     public UCLikelihood(TreeModel tree, Parameter ratesParameter, Parameter variance, Parameter rootRate, boolean isLogSpace) {

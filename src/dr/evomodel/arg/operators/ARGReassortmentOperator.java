@@ -1,6 +1,7 @@
 package dr.evomodel.arg.operators;
 
 import dr.evomodel.arg.ARGModel;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -14,7 +15,7 @@ public class ARGReassortmentOperator extends SimpleMCMCOperator {
     public static final String ARG_REASSORTMENT_OPERATOR = "argReassortmentOperator";
     public static final String INTERNAL_NODES = "internalNodes";
     public static final String INTERNAL_AND_ROOT = "internalNodesPlusRoot";
-    public static final String NODE_RATES = "nodeRates";
+    public static final String NODE_RATES = TreeModelParser.NODE_RATES;
     public static final String CHOOSE_BRANCHES_FIRST = "chooseBranchesFirst";
     public static final double LOG_TWO = Math.log(2.0);
 

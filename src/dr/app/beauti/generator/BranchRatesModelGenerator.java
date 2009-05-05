@@ -5,10 +5,11 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.clock.ACLikelihood;
+import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -82,7 +83,8 @@ public class BranchRatesModelGenerator extends Generator {
                         fixParameter("ucld.mean", options.getMeanSubstitutionRate());
                     }
 
-                    writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
+                    writer.writeOpenTag("logNormalDistributionModel",
+                            new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
                     writeParameter("mean", "ucld.mean", options, writer);
                     writeParameter("stdev", "ucld.stdev", options, writer);
                     writer.writeCloseTag("logNormalDistributionModel");
@@ -108,7 +110,8 @@ public class BranchRatesModelGenerator extends Generator {
                         }
                 );
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                        new Attribute.Default<String>("idref", "branchRates"), true);
                 writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
                 writer.writeText("");
@@ -123,7 +126,8 @@ public class BranchRatesModelGenerator extends Generator {
                         }
                 );
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                        new Attribute.Default<String>("idref", "branchRates"), true);
                 writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
                 writer.writeText("");
@@ -135,7 +139,8 @@ public class BranchRatesModelGenerator extends Generator {
                         }
                 );
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>("idref", "branchRates"), true);
+                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                        new Attribute.Default<String>("idref", "branchRates"), true);
                 writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
                 break;
 
@@ -156,7 +161,7 @@ public class BranchRatesModelGenerator extends Generator {
                 }
 
                 writeParameterRef("rates", "treeModel.nodeRates", writer);
-                writeParameterRef("rootRate", "treeModel.rootRate", writer);
+                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, "treeModel.rootRate", writer);
                 writeParameter("variance", "branchRates.var", options, writer);
 
                 writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
@@ -222,11 +227,11 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
 
                 writer.writeOpenTag("rates");
-                writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.rates"), true);
+                writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "rates"), true);
                 writer.writeCloseTag("rates");
 
                 writer.writeOpenTag("rateIndicator");
-                writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+                writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
                 writer.writeCloseTag("rateIndicator");
 
                 writeParameter("clockRate", "clock.rate", options, writer);
@@ -242,7 +247,7 @@ public class BranchRatesModelGenerator extends Generator {
                                 new Attribute.Default<String>("elementwise", "true"),
                         }
                 );
-                writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+                writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
                 writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 
                 writer.writeText("");
@@ -309,7 +314,7 @@ public class BranchRatesModelGenerator extends Generator {
             );
             writeParameter("rate", "clock.rate", options, writer);
             writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
-        } else if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
+        } else if( options.clockType == ClockType.RANDOM_LOCAL_CLOCK ) {
             if (options.isFixedSubstitutionRate()) {
 
                 fixParameter("clock.rate", options.getMeanSubstitutionRate());
@@ -326,11 +331,11 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("idref", "treeModel"), true);
 
             writer.writeOpenTag("rates");
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.rates"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "rates"), true);
             writer.writeCloseTag("rates");
 
             writer.writeOpenTag("rateIndicator");
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag("rateIndicator");
 
             writeParameter("clockRate", "clock.rate", options, writer);
@@ -346,7 +351,7 @@ public class BranchRatesModelGenerator extends Generator {
                             new Attribute.Default<String>("elementwise", "true"),
                     }
             );
-            writer.writeTag("parameter", new Attribute.Default<String>("idref", "localClock.changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>("idref", ClockType.LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 
             writer.writeText("");

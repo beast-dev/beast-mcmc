@@ -13,6 +13,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.likelihood.ARGLikelihood;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -42,10 +43,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
 
     public static final String TREE_MODEL = "argTreeModel";
-    public static final String ROOT_HEIGHT = "rootHeight";
+    public static final String ROOT_HEIGHT = TreeModelParser.ROOT_HEIGHT;
     public static final String LEAF_HEIGHT = "leafHeight";
     public static final String NODE_HEIGHTS = "nodeHeights";
-    public static final String NODE_RATES = "nodeRates";
+    public static final String NODE_RATES = TreeModelParser.NODE_RATES;
     public static final String NODE_TRAITS = "nodeTraits";
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
@@ -3053,7 +3054,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                     "At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeRates");
+        CompoundParameter parameter = new CompoundParameter(TreeModelParser.NODE_RATES);
 
         hasRates = true;
 

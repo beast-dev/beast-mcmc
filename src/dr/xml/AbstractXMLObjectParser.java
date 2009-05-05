@@ -25,15 +25,14 @@
 
 package dr.xml;
 
+import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import org.w3c.dom.NamedNodeMap;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
 
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
@@ -125,9 +124,9 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
     public abstract XMLSyntaxRule[] getSyntaxRules();
 
     public final boolean isAllowed(String elementName) {
-        XMLSyntaxRule[] rules = getSyntaxRules();
-        if (rules != null && rules.length > 0) {
-            for(XMLSyntaxRule rule : rules ) {
+        final XMLSyntaxRule[] rules = getSyntaxRules();
+        if( rules != null && rules.length > 0 ) {
+            for( XMLSyntaxRule rule : rules ) {
                 if( rule.isAllowed(elementName) ) {
                     return true;
                 }

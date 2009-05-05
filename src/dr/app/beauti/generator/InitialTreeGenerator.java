@@ -18,6 +18,8 @@ import dr.util.Attribute;
  * @author Alexei Drummond
  */
 public class InitialTreeGenerator extends Generator {
+    final static public String STARTING_TREE = "startingTree";
+
 	private String prefix; // gene file name
 	
     public InitialTreeGenerator(BeautiOptions options, ComponentGenerator[] components) {
@@ -41,7 +43,7 @@ public class InitialTreeGenerator extends Generator {
      */
     public void writeStartingTree(XMLWriter writer) {
         dr.app.beauti.options.Parameter rootHeight;
-        
+
         switch (options.startingTreeType) {
             case USER:
                 writeUserTree(options.userStartingTree, writer);
@@ -55,7 +57,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + "startingTree"),
+                                    new Attribute.Default<String>("id", prefix + STARTING_TREE),
                                     new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
@@ -63,7 +65,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + "startingTree")
+                                    new Attribute.Default<String>("id", prefix + STARTING_TREE)
                             }
                     );
                 }
@@ -74,7 +76,8 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeTag(AlignmentParser.ALIGNMENT, new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+                writer.writeTag(AlignmentParser.ALIGNMENT,
+                        new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
                 writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
@@ -88,7 +91,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + "startingTree"),
+                                    new Attribute.Default<String>("id", prefix + STARTING_TREE),
                                     new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
                                             "" + rootHeight.initial)
                             }
@@ -97,12 +100,12 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + "startingTree")
+                                    new Attribute.Default<String>("id", prefix + STARTING_TREE)
                             }
                     );
                 }
 
-                Attribute[] taxaAttribute = new Attribute[]{new Attribute.Default<String>("idref", "taxa")};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>("idref", "taxa")};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -163,7 +166,7 @@ public class InitialTreeGenerator extends Generator {
         writer.writeOpenTag(
                 "tree",
                 new Attribute[]{
-                        new Attribute.Default<String>("height", "startingTree"),
+                        new Attribute.Default<String>("height", STARTING_TREE),
                         new Attribute.Default<String>("usingDates", (options.maximumTipHeight > 0 ? "true" : "false"))
                 }
         );

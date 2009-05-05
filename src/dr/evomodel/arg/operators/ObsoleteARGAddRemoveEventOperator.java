@@ -13,6 +13,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -40,7 +41,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 
     public static final String JUST_INTERNAL = "justInternalNodes";
     public static final String INTERNAL_AND_ROOT = "internalAndRootNodes";
-    public static final String NODE_RATES = "nodeRates";
+    public static final String NODE_RATES = TreeModelParser.NODE_RATES;
 
     private ARGModel arg = null;
     private double size = 1.0;

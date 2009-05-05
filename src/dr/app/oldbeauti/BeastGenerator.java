@@ -26,8 +26,9 @@
 package dr.app.oldbeauti;
 
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.generator.InitialTreeGenerator;
 import dr.app.beauti.options.AminoAcidModelType;
+import dr.app.beauti.options.NucModelType;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
@@ -38,7 +39,6 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
@@ -239,7 +239,7 @@ public class BeastGenerator extends BeautiOptions {
                     }
                 }
 
-                Attribute[] attributes = new Attribute[]{
+                Attribute[] attributes = {
                         new Attribute.Default<Double>("value", date.getTimeValue()),
                         new Attribute.Default<String>("direction", date.isBackwards() ? "backwards" : "forwards"),
                         new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -655,9 +655,9 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>("id", "treeModel"), false);
 
         if (userTree) {
-            writer.writeTag("tree", new Attribute.Default<String>("idref", "startingTree"), true);
+            writer.writeTag("tree", new Attribute.Default<String>("idref", InitialTreeGenerator.STARTING_TREE), true);
         } else {
-            writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default<String>("idref", "startingTree"), true);
+            writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default<String>("idref", InitialTreeGenerator.STARTING_TREE), true);
         }
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
@@ -2840,7 +2840,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeOpenTag(
                         UPGMATreeParser.UPGMA_TREE,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", "startingTree"),
+                                new Attribute.Default<String>("id", InitialTreeGenerator.STARTING_TREE),
                                 new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                         }
                 );
@@ -2848,7 +2848,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeOpenTag(
                         UPGMATreeParser.UPGMA_TREE,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", "startingTree")
+                                new Attribute.Default<String>("id", InitialTreeGenerator.STARTING_TREE)
                         }
                 );
             }
@@ -2871,20 +2871,20 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeOpenTag(
                         CoalescentSimulator.COALESCENT_TREE,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", "startingTree"),
-                                new Attribute.Default<String>("rootHeight", "" + rootHeight.initial)
+                                new Attribute.Default<String>("id", InitialTreeGenerator.STARTING_TREE),
+                                new Attribute.Default<String>(TreeModelParser.ROOT_HEIGHT, "" + rootHeight.initial)
                         }
                 );
             } else {
                 writer.writeOpenTag(
                         CoalescentSimulator.COALESCENT_TREE,
                         new Attribute[]{
-                                new Attribute.Default<String>("id", "startingTree")
+                                new Attribute.Default<String>("id", InitialTreeGenerator.STARTING_TREE)
                         }
                 );
             }
 
-            Attribute[] taxaAttribute = new Attribute[]{new Attribute.Default<String>("idref", "taxa")};
+            Attribute[] taxaAttribute = {new Attribute.Default<String>("idref", "taxa")};
             if (taxonSets.size() > 0) {
                 writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -2960,7 +2960,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(
                 "tree",
                 new Attribute[]{
-                        new Attribute.Default<String>("height", "startingTree"),
+                        new Attribute.Default<String>("height", InitialTreeGenerator.STARTING_TREE),
                         new Attribute.Default<String>("usingDates", (maximumTipHeight > 0 ? "true" : "false"))
                 }
         );

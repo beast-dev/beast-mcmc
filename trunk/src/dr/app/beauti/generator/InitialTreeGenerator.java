@@ -13,6 +13,7 @@ import dr.evomodel.coalescent.ExponentialGrowthModel;
 import dr.evoxml.*;
 import dr.inference.distribution.UniformDistributionModel;
 import dr.util.Attribute;
+import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
@@ -57,7 +58,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE),
                                     new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
@@ -65,7 +66,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE)
                             }
                     );
                 }
@@ -77,7 +78,7 @@ public class InitialTreeGenerator extends Generator {
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeTag(AlignmentParser.ALIGNMENT,
-                        new Attribute[]{new Attribute.Default<String>("idref", "alignment")}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
                 writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
@@ -91,7 +92,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE),
                                     new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
                                             "" + rootHeight.initial)
                             }
@@ -100,12 +101,12 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>("id", prefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE)
                             }
                     );
                 }
 
-                Attribute[] taxaAttribute = {new Attribute.Default<String>("idref", "taxa")};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, "taxa")};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -118,7 +119,7 @@ public class InitialTreeGenerator extends Generator {
                         writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
 
                         writer.writeTag(TaxaParser.TAXA,
-                                new Attribute[]{new Attribute.Default<String>("idref", taxonSet.getId())}, true);
+                                new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
                         if (statistic.isNodeHeight) {
                             if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                                 writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
@@ -146,11 +147,11 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeInitialDemoModelRef(XMLWriter writer) {
         if (options.nodeHeightPrior == TreePrior.CONSTANT) {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "constant")}, true);
+            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
         } else if (options.nodeHeightPrior == TreePrior.EXPONENTIAL) {
-            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "exponential")}, true);
+            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
         } else {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>("idref", "initialDemo")}, true);
+            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "initialDemo")}, true);
         }
     }
 
@@ -189,7 +190,7 @@ public class InitialTreeGenerator extends Generator {
         );
 
         if (tree.getChildCount(node) == 0) {
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>("idref", tree.getNodeTaxon(node).getId())}, true);
+            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeNode(tree, tree.getChild(node, i), writer);

@@ -634,7 +634,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     }
 
     public String toString() {
-        return Double.toString(getLogLikelihood());
+        return getId(); // Double.toString(getLogLikelihood());
     }
 
     // **************************************************************

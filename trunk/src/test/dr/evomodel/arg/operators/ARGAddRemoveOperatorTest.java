@@ -7,7 +7,7 @@ import dr.evomodel.arg.ARGLogger;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGReassortmentNodeCountStatistic;
 import dr.evomodel.arg.coalescent.ARGUniformPrior;
-//import dr.evomodel.arg.operators.ARGAddRemoveEventOperator;
+import dr.evomodelxml.TreeModelParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -152,7 +152,7 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
         TraceCorrelation rootHeightStats = traceList.getCorrelationStatistics(4);
 
         assertExpectation("nodeCount", nodeCountStats, poisson.truncatedMean(maxCount));
-        assertExpectation("rootHeight", rootHeightStats, rootHeightAlpha * rootHeightBeta);
+        assertExpectation(TreeModelParser.ROOT_HEIGHT, rootHeightStats, rootHeightAlpha * rootHeightBeta);
 
     }
 

@@ -264,8 +264,8 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.RateExchangeOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);
-  //      addXMLObjectParser(dr.evomodel.operators.TreeUniform.PARSSR);
-  //      addXMLObjectParser(dr.evomodel.operators.INS.INS_PARSER);
+        addXMLObjectParser(dr.evomodel.operators.TreeUniform.PARSSR);
+        addXMLObjectParser(dr.evomodel.operators.INS.INS_PARSER);
 
         // rate operators
         addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
@@ -348,7 +348,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.BitMoveOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.JointOperator.PARSER);
-   //     addXMLObjectParser(dr.inference.operators.TeamOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.TeamOperator.PARSER);
 
         // trace analysis
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());

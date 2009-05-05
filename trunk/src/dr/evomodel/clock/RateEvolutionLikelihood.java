@@ -21,6 +21,8 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
     public static final String EPISODIC = "episodic";
     public static final String LOGSPACE = "logspace";
 
+    public static final String ROOTRATE = "rootRate";
+
     private final int rateCount;
     private final double[] rates;
 

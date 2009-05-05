@@ -30,6 +30,7 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.UPGMATree;
 import dr.evolution.util.TimeScale;
+import dr.evomodelxml.TreeModelParser;
 import dr.xml.*;
 
 /**
@@ -45,7 +46,7 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
 
     public static final String UPGMA_TREE = "upgmaTree";
     public static final String DISTANCES = "distances";
-    public static final String ROOT_HEIGHT = "rootHeight";
+    public static final String ROOT_HEIGHT = TreeModelParser.ROOT_HEIGHT;
 
     public String getParserName() {
         return UPGMA_TREE;
@@ -156,7 +157,7 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
             AttributeRule.newDoubleRule(ROOT_HEIGHT, true),
             new ElementRule(DistanceMatrix.class)

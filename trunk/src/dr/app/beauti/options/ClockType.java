@@ -21,4 +21,6 @@ public enum ClockType {
     }
 
     private final String displayName;
+
+    final public static String LOCAL_CLOCK = "localClock";
 }

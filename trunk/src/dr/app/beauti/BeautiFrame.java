@@ -8,6 +8,7 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
 import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
@@ -18,15 +19,11 @@ import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.PartitionTree;
 import dr.app.beauti.priorsPanel.PriorsPanel;
-import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.beauti.treespanel.OldTreesPanel;
-import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
-import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.util.Utils;
 import dr.app.util.Arguments;
+import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.Importer;

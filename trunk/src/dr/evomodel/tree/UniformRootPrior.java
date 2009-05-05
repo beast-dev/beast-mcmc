@@ -224,41 +224,54 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                 logLike = logFactorialK - (double) k * Math.log(rootHeight);
 
             } else {
-//                int k1 = -1; // the root will always be > maxRootHeight
-//                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-//                    double h = tree.getNodeHeight(tree.getInternalNode(i));
-//                    if (h > maxTipHeight) {
-//                        k1++;
+
+//                // TODO Recalculate only when a tip sampling time changes
+//                if (!intervalCountsKnown) {
+//
+//                    intervals.clear();
+//                    for (Double date : reversedTipDateList) {
+//                        intervals.put(date, 0);
 //                    }
+//
+//                    traverse(tree, tree.getRoot());
+//                    intervalCountsKnown = true;
 //                }
 //
-//                logLike = logFactorial(k1) - (double) k1 * Math.log(rootHeight - maxTipHeight);
+//                logLike = 0.0;
+//                for (Double date : reversedTipDateList) {
+//                    double s = rootHeight - date;
+//                    int k = intervals.get(date);  // There was a bug here, was +=
+//                    if (k > 0)
+//                        logLike += logFactorial(k) - (double) k * Math.log(s);
+//
+//                }
 
-                // TODO Recalculate only when a tip sampling time changes
-                if (!intervalCountsKnown) {
-
-                    intervals.clear();
-                    for (Double date : reversedTipDateList) {
-                        intervals.put(date, 0);
-                    }
-
-                    traverse(tree, tree.getRoot());
-                    intervalCountsKnown = true;
-                }
-
-                logLike = 0.0;
-                for (Double date : reversedTipDateList) {
-                    double s = rootHeight - date;
-                    int k = intervals.get(date);  // There was a bug here, was +=
-                    if (k > 0)
-                        logLike += logFactorial(k) - (double) k * Math.log(s);
-
-                }
+                tmpLogLikelihood = 0;
+                recursivelyComputeConditionalUniform(tree, tree.getRoot(), 0.0);
+                logLike = tmpLogLikelihood;
             }
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
             return logLike;
         }
+    }
+
+    private double recursivelyComputeConditionalUniform(Tree tree, NodeRef node, double parentHeight) {
+
+        if(tree.isExternal(node))
+            return tree.getNodeHeight(node);
+
+        double thisNodeHeight = tree.getNodeHeight(node);
+        double childHeight1 = recursivelyComputeConditionalUniform(tree, tree.getChild(node,0), thisNodeHeight);
+        double childHeight2 = recursivelyComputeConditionalUniform(tree, tree.getChild(node,1), thisNodeHeight);
+
+
+        if (!tree.isRoot(node)) {
+            double maxChildHeight = (childHeight1 > childHeight2 ? childHeight1 : childHeight2);
+            tmpLogLikelihood -= Math.log(parentHeight - maxChildHeight);
+        }
+
+        return thisNodeHeight;
     }
 
 
@@ -379,4 +392,5 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
     private boolean intervalCountsKnown = false;
+    private double tmpLogLikelihood;
 }

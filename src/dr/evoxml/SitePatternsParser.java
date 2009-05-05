@@ -89,7 +89,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         int t = to + 1; // fixed a *display* error by adding + 1 for consistency with f = from + 1
         if (to == -1) t = alignment.getSiteCount();
 
-        if (xo.hasAttribute("id")) {
+        if (xo.hasAttribute(XMLParser.ID)) {
             final Logger logger = Logger.getLogger("dr.evoxml");
             logger.info("Site patterns '" + xo.getId() + "' created from positions " +
                     Integer.toString(f) + "-" + Integer.toString(t) +

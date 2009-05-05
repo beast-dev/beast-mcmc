@@ -120,7 +120,7 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(RATE, Parameter.class, "The molecular evolutionary rate parameter", false),
         };
     };

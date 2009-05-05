@@ -1,18 +1,17 @@
 package dr.geo;
 
-import dr.xml.*;
 import dr.geo.cartogram.CartogramMapping;
-
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.Point2D;
-import java.util.*;
-import java.io.File;
-import java.io.IOException;
-
+import dr.xml.*;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.jdom.Document;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 
 /**
@@ -45,7 +44,7 @@ public class Polygon2D {
     public Polygon2D(Element e) {
 
         List<Element> children = e.getChildren();
-        id = e.getAttributeValue("id");
+        id = e.getAttributeValue(XMLParser.ID);
         for(Element childElement : children) {
             if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 

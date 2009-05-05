@@ -55,7 +55,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     public static final String GRAPH_ELEMENT = "graph";
     public static final String NODE_ELEMENT = "node";
     public static final String EDGE_ELEMENT = "edge";
-    public static final String ID_ATTRIBUTE = "id";
+    public static final String ID_ATTRIBUTE = XMLParser.ID;
     public static final String EDGE_FROM = "source";
     public static final String EDGE_TO = "target";
     public static final String TAXON_NAME = "taxonName";

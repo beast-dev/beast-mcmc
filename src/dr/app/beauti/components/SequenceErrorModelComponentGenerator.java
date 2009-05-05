@@ -2,12 +2,11 @@ package dr.app.beauti.components;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
-import dr.util.Attribute;
 import dr.inference.model.ParameterParser;
-
-import java.util.List;
+import dr.util.Attribute;
+import dr.xml.XMLParser;
 
 /**
  * @author Andrew Rambaut
@@ -45,13 +44,13 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 break;
             case IN_TREE_LIKELIHOOD:
                 writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,
-                        new Attribute[]{new Attribute.Default<String>("idref", "errorModel")}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "errorModel")}, true);
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 if (comp.errorModelType == SequenceErrorType.AGE_ALL || comp.errorModelType == SequenceErrorType.AGE_TRANSITIONS) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "errorModel.ageRate"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "errorModel.ageRate"), true);
                 } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>("idref", "errorModel.baseRate"), true);
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "errorModel.baseRate"), true);
                 }
                 break;
             default:
@@ -73,7 +72,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
         writer.writeOpenTag(
                 SequenceErrorModel.SEQUENCE_ERROR_MODEL,
                 new Attribute[]{
-                        new Attribute.Default<String>("id", "errorModel"),
+                        new Attribute.Default<String>(XMLParser.ID, "errorModel"),
                         new Attribute.Default<String>("type", errorType)
                 }
         );

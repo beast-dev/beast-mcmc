@@ -1,23 +1,24 @@
 package dr.app.beauti;
 
-import dr.evolution.io.*;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.sequence.SequenceList;
+import dr.evolution.io.Importer;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.*;
-import dr.evolution.util.Date;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
+import dr.evoxml.AlignmentParser;
+import dr.xml.XMLParser;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
 import java.text.DateFormat;
 import java.text.ParseException;
-
-import org.jdom.input.SAXBuilder;
-import org.jdom.*;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Andrew Rambaut
@@ -62,7 +63,7 @@ public class BeastImporter {
                 } else {
                     taxonLists.add(readTaxa(child));
                 }
-            } else  if (child.getName().equalsIgnoreCase("alignment")) {
+            } else  if (child.getName().equalsIgnoreCase(AlignmentParser.ALIGNMENT)) {
                 if (taxa == null) {
                     throw new Importer.ImportException("taxa not defined");
                 }
@@ -87,7 +88,7 @@ public class BeastImporter {
 
     private Taxon readTaxon(Element e) throws Importer.ImportException {
 
-        String id = e.getAttributeValue("id");
+        String id = e.getAttributeValue(XMLParser.ID);
 
         Taxon taxon = new Taxon(id);
 
@@ -123,7 +124,7 @@ public class BeastImporter {
 
     private Sequence readSequence(Element e, TaxonList taxa) throws Importer.ImportException {
 
-        String taxonID = e.getChild("taxon").getAttributeValue("idref");
+        String taxonID = e.getChild("taxon").getAttributeValue(XMLParser.IDREF);
         int index = taxa.getTaxonIndex(taxonID);
         if (index < 0) {
             throw new Importer.ImportException("Unknown taxon, " + taxonID + ", in alignment");

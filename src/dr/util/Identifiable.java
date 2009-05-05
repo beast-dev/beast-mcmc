@@ -34,7 +34,7 @@ package dr.util;
  */
 public interface Identifiable {
 
-	public final static String ID = "id";
+	public final static String ID = dr.xml.XMLParser.ID;
 	
 	/**
 	 * @return the id as a string.

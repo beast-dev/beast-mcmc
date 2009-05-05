@@ -7,6 +7,7 @@ import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
 import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
 import dr.evomodel.beagle.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
@@ -19,7 +20,7 @@ import dr.xml.*;
  */
 public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String TREE_LIKELIHOOD = "treeLikelihood";
+    public static final String TREE_LIKELIHOOD = TreeLikelihood.TREE_LIKELIHOOD;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
 
     public String getParserName() {
@@ -79,4 +80,4 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true)
     };
-};
+}

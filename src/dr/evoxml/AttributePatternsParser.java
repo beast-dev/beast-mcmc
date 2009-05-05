@@ -77,7 +77,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
 
         patterns.addPattern(pattern);
 
-        if (xo.hasAttribute("id")) {
+        if (xo.hasAttribute(XMLParser.ID)) {
 		    Logger.getLogger("dr.evoxml").info("Read attribute patterns, '" + xo.getId() + "' for attribute, "+ attributeName);
 	    } else {
             Logger.getLogger("dr.evoxml").info("Read attribute patterns for attribute, "+ attributeName);

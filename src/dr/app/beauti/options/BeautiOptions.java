@@ -28,12 +28,15 @@ package dr.app.beauti.options;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
 import dr.evolution.util.Date;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.Units;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.inference.operators.OperatorSchedule;
 import dr.util.NumberFormatter;
+import dr.xml.XMLParser;
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -948,12 +951,12 @@ public class BeautiOptions extends ModelOptions {
 
         for (Taxa taxonSet : taxonSets) {
             Element taxonSetElement = new Element("taxonSet");
-            taxonSetElement.addContent(createChild("id", taxonSet.getId()));
+            taxonSetElement.addContent(createChild(XMLParser.ID, taxonSet.getId()));
             taxonSetElement.addContent(createChild("enforceMonophyly",
                     taxonSetsMono.get(taxonSet) ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
                 Element taxonElement = new Element("taxon");
-                taxonElement.addContent(createChild("id", taxonSet.getTaxon(j).getId()));
+                taxonElement.addContent(createChild(XMLParser.ID, taxonSet.getTaxon(j).getId()));
                 taxonSetElement.addContent(taxonElement);
             }
             taxaElement.addContent(taxonSetElement);
@@ -1123,13 +1126,13 @@ public class BeautiOptions extends ModelOptions {
                       for (Object ts : taxaElement.getChildren("taxonSet")) {
                           Element taxonSetElement = (Element) ts;
 
-                          String id = getStringChild(taxonSetElement, "id", "");
+                          String id = getStringChild(taxonSetElement, XMLParser.ID, "");
                           final Taxa taxonSet = new Taxa(id);
 
                           Boolean enforceMonophyly = Boolean.valueOf(getStringChild(taxonSetElement, "enforceMonophyly", "false"));
                           for (Object o : taxonSetElement.getChildren("taxon")) {
                               Element taxonElement = (Element) o;
-                              String taxonId = getStringChild(taxonElement, "id", "");
+                              String taxonId = getStringChild(taxonElement, XMLParser.ID, "");
                               int index = taxonList.getTaxonIndex(taxonId);
                               if (index != -1) {
                                   taxonSet.addTaxon(taxonList.getTaxon(index));

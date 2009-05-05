@@ -25,6 +25,7 @@
 
 package dr.app.oldbeauti;
 
+import dr.app.beauti.options.ClockType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
@@ -35,6 +36,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
@@ -99,12 +101,12 @@ public class BeautiOptions {
         //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("localClock.changes", "random local clock rate change indicator");
+        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
 
         //Substitution model parameters
         createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -153,12 +155,12 @@ public class BeautiOptions {
         createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
 
-        createParameter("siteModel.alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(SiteModel.SITE_MODEL + "." + "alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel2.alpha", "gamma shape parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
         createParameter("siteModel3.alpha", "gamma shape parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameter("siteModel.pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
+        createParameter(SiteModel.SITE_MODEL + "." + "pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
         createParameter("siteModel1.pInv", "proportion of invariant sites parameter for codon position 1", NONE, 0.5, 0.0, 1.0);
         createParameter("siteModel2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
         createParameter("siteModel3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
@@ -203,15 +205,15 @@ public class BeautiOptions {
         //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
         createOperator("clock.rate", SCALE, 0.75, rateWeights);
-        createOperator("uced.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.mean", SCALE, 0.75, rateWeights);
-        createOperator("ucld.stdev", SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCED_MEAN, SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCLD_MEAN, SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCLD_STDEV, SCALE, 0.75, rateWeights);
 //        createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", "branchRates.categories", SWAP, 1, branchWeights);
         createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
         createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
 
-        createOperator("localClock.rates", SCALE, 0.75, treeWeights);
-        createOperator("localClock.changes", BITFLIP, 1, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "rates", SCALE, 0.75, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
@@ -257,19 +259,19 @@ public class BeautiOptions {
         createOperator("bcov.frequencies", DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("bcov.hfrequencies", DELTA_EXCHANGE, 0.01, substWeights);
 
-        createOperator("siteModel.alpha", SCALE, 0.75, substWeights);
+        createOperator(SiteModel.SITE_MODEL + "." + "alpha", SCALE, 0.75, substWeights);
         createOperator("siteModel1.alpha", SCALE, 0.75, substWeights);
         createOperator("siteModel2.alpha", SCALE, 0.75, substWeights);
         createOperator("siteModel3.alpha", SCALE, 0.75, substWeights);
 
-        createOperator("siteModel.pInv", SCALE, 0.75, substWeights);
+        createOperator(SiteModel.SITE_MODEL + "." + "pInv", SCALE, 0.75, substWeights);
         createOperator("siteModel1.pInv", SCALE, 0.75, substWeights);
         createOperator("siteModel2.pInv", SCALE, 0.75, substWeights);
         createOperator("siteModel3.pInv", SCALE, 0.75, substWeights);
 
         createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", "uced.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", "ucld.mean", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", ClockType.UCED_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
         createOperator("centeredMu", "Relative rates", "Scales codon position rates relative to each other maintaining mean", "allMus", CENTERED_SCALE, 0.75, substWeights);
         createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
 
@@ -484,7 +486,7 @@ public class BeautiOptions {
 
             if (partitionCount > 1) {
                 for (int i = 1; i <= partitionCount; i++) {
-                    params.add(getParameter("siteModel" + i + ".mu"));
+                    params.add(getParameter(SiteModel.SITE_MODEL + i + ".mu"));
                 }
             }
             switch (dataType) {
@@ -549,20 +551,20 @@ public class BeautiOptions {
             if (gammaHetero) {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
-                        params.add(getParameter("siteModel" + i + ".alpha"));
+                        params.add(getParameter(SiteModel.SITE_MODEL + i + ".alpha"));
                     }
                 } else {
-                    params.add(getParameter("siteModel.alpha"));
+                    params.add(getParameter(SiteModel.SITE_MODEL + "." + "alpha"));
                 }
             }
             // if pinv do pinv move
             if (invarHetero) {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
-                        params.add(getParameter("siteModel" + i + ".pInv"));
+                        params.add(getParameter(SiteModel.SITE_MODEL + i + ".pInv"));
                     }
                 } else {
-                    params.add(getParameter("siteModel.pInv"));
+                    params.add(getParameter(SiteModel.SITE_MODEL + "." + "pInv"));
                 }
             }
 
@@ -575,12 +577,12 @@ public class BeautiOptions {
                     params.add(rateParam);
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        rateParam = getParameter("uced.mean");
+                        rateParam = getParameter(ClockType.UCED_MEAN);
                         params.add(rateParam);
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        rateParam = getParameter("ucld.mean");
+                        rateParam = getParameter(ClockType.UCLD_MEAN);
                         params.add(rateParam);
-                        params.add(getParameter("ucld.stdev"));
+                        params.add(getParameter(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
@@ -593,10 +595,10 @@ public class BeautiOptions {
                     rateParam = getParameter("clock.rate");
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        rateParam = getParameter("uced.mean");
+                        rateParam = getParameter(ClockType.UCED_MEAN);
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        rateParam = getParameter("ucld.mean");
-                        params.add(getParameter("ucld.stdev"));
+                        rateParam = getParameter(ClockType.UCLD_MEAN);
+                        params.add(getParameter(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
@@ -669,7 +671,7 @@ public class BeautiOptions {
                 localClockRateChangesStatistic.poissonOffset = 0.0;
             }
             if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter("localClock.rates", "random local clock rates", false);
+                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
 
                 localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
                 localClockRatesStatistic.gammaAlpha = 0.5;
@@ -790,20 +792,20 @@ public class BeautiOptions {
             if (gammaHetero) {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
-                        ops.add(getOperator("siteModel" + i + ".alpha"));
+                        ops.add(getOperator(SiteModel.SITE_MODEL + i + ".alpha"));
                     }
                 } else {
-                    ops.add(getOperator("siteModel.alpha"));
+                    ops.add(getOperator(SiteModel.SITE_MODEL + "." + "alpha"));
                 }
             }
             // if pinv do pinv move
             if (invarHetero) {
                 if (partitionCount > 1 && unlinkedHeterogeneityModel) {
                     for (int i = 1; i <= partitionCount; i++) {
-                        ops.add(getOperator("siteModel" + i + ".pInv"));
+                        ops.add(getOperator(SiteModel.SITE_MODEL + i + ".pInv"));
                     }
                 } else {
-                    ops.add(getOperator("siteModel.pInv"));
+                    ops.add(getOperator(SiteModel.SITE_MODEL + "." + "pInv"));
                 }
             }
 
@@ -822,16 +824,16 @@ public class BeautiOptions {
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
                     ops.add(getOperator("clock.rate"));
                     ops.add(getOperator("upDownRateHeights"));
-                    ops.add(getOperator("localClock.rates"));
-                    ops.add(getOperator("localClock.changes"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                     ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        ops.add(getOperator("uced.mean"));
+                        ops.add(getOperator(ClockType.UCED_MEAN));
                         ops.add(getOperator("upDownUCEDMeanHeights"));
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        ops.add(getOperator("ucld.mean"));
-                        ops.add(getOperator("ucld.stdev"));
+                        ops.add(getOperator(ClockType.UCLD_MEAN));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                         ops.add(getOperator("upDownUCLDMeanHeights"));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
@@ -844,14 +846,14 @@ public class BeautiOptions {
                 if (clockModel == STRICT_CLOCK) {
                     // no parameter to operator on
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
-                    ops.add(getOperator("localClock.rates"));
-                    ops.add(getOperator("localClock.changes"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                     ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         // no parameter to operator on
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        ops.add(getOperator("ucld.stdev"));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }

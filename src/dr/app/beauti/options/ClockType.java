@@ -23,4 +23,7 @@ public enum ClockType {
     private final String displayName;
 
     final public static String LOCAL_CLOCK = "localClock";
+    final public static String UCED_MEAN = "uced.mean";
+    final public static String UCLD_MEAN = "ucld.mean";
+    final public static String UCLD_STDEV = "ucld.stdev";    
 }

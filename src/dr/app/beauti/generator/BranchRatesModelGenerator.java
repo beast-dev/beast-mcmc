@@ -70,23 +70,23 @@ public class BranchRatesModelGenerator extends Generator {
                 if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                     if (options.isFixedSubstitutionRate()) {
 
-                        fixParameter("uced.mean", options.getMeanSubstitutionRate());
+                        fixParameter(ClockType.UCED_MEAN, options.getMeanSubstitutionRate());
                     }
 
                     final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                     writer.writeOpenTag(eModelName);
-                    writeParameter("mean", "uced.mean", options, writer);
+                    writeParameter("mean", ClockType.UCED_MEAN, options, writer);
                     writer.writeCloseTag(eModelName);
                 } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                     if (options.isFixedSubstitutionRate()) {
 
-                        fixParameter("ucld.mean", options.getMeanSubstitutionRate());
+                        fixParameter(ClockType.UCLD_MEAN, options.getMeanSubstitutionRate());
                     }
 
                     writer.writeOpenTag("logNormalDistributionModel",
                             new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
-                    writeParameter("mean", "ucld.mean", options, writer);
-                    writeParameter("stdev", "ucld.stdev", options, writer);
+                    writeParameter("mean", ClockType.UCLD_MEAN, options, writer);
+                    writeParameter("stdev", ClockType.UCLD_STDEV, options, writer);
                     writer.writeCloseTag("logNormalDistributionModel");
                 } else {
                     throw new RuntimeException("Unrecognised relaxed clock model");
@@ -414,22 +414,22 @@ public class BranchRatesModelGenerator extends Generator {
             if (options.clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
                 if (options.isFixedSubstitutionRate()) {
 
-                    fixParameter("uced.mean", options.getMeanSubstitutionRate());
+                    fixParameter(ClockType.UCED_MEAN, options.getMeanSubstitutionRate());
                 }
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                 writer.writeOpenTag(eModelName);
-                writeParameter("mean", "uced.mean", options, writer);
+                writeParameter("mean", ClockType.UCED_MEAN, options, writer);
                 writer.writeCloseTag(eModelName);
             } else if (options.clockType == ClockType.UNCORRELATED_LOGNORMAL) {
                 if (options.isFixedSubstitutionRate()) {
 
-                    fixParameter("ucld.mean", options.getMeanSubstitutionRate());
+                    fixParameter(ClockType.UCLD_MEAN, options.getMeanSubstitutionRate());
                 }
 
                 writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
-                writeParameter("mean", "ucld.mean", options, writer);
-                writeParameter("stdev", "ucld.stdev", options, writer);
+                writeParameter("mean", ClockType.UCLD_MEAN, options, writer);
+                writeParameter("stdev", ClockType.UCLD_STDEV, options, writer);
                 writer.writeCloseTag("logNormalDistributionModel");
             } else {
                 throw new RuntimeException("Unrecognised relaxed clock model");

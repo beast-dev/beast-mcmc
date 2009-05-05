@@ -40,6 +40,8 @@ import dr.inference.model.Model;
 
 public interface SiteModel extends Model {
 
+    public static final String SITE_MODEL = "siteModel";
+
     /**
      * Get this site model's substitution model
      * @return the substitution model

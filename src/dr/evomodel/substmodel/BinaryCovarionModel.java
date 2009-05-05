@@ -193,7 +193,7 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(FREQUENCIES, Parameter.class),
                 new ElementRule(HIDDEN_FREQUENCIES, Parameter.class),
                 new ElementRule(ALPHA,

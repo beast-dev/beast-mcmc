@@ -63,12 +63,12 @@ public class BeautiOptions extends ModelOptions {
         createParameter("allMus", "All the relative rates");
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("uced.mean", "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.mean", "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("ucld.stdev", "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameter("localClock.rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("localClock.changes", "random local clock rate change indicator");
+        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
 
         {
             final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -172,9 +172,9 @@ public class BeautiOptions extends ModelOptions {
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
 
         createScaleOperator("clock.rate", rateWeights);
-        createScaleOperator("uced.mean", rateWeights);
-        createScaleOperator("ucld.mean", rateWeights);
-        createScaleOperator("ucld.stdev", rateWeights);
+        createScaleOperator(ClockType.UCED_MEAN, rateWeights);
+        createScaleOperator(ClockType.UCLD_MEAN, rateWeights);
+        createScaleOperator(ClockType.UCLD_STDEV, rateWeights);
 
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
@@ -204,8 +204,8 @@ public class BeautiOptions extends ModelOptions {
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createScaleOperator("localClock.rates", treeWeights);
-        createOperator("localClock.changes", OperatorType.BITFLIP, 1, treeWeights);
+        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
@@ -217,10 +217,10 @@ public class BeautiOptions extends ModelOptions {
                 "Scales substitution rates inversely to node heights of the tree", "clock.rate",
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
         createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
-                "Scales UCED mean inversely to node heights of the tree", "uced.mean",
+                "Scales UCED mean inversely to node heights of the tree", ClockType.UCED_MEAN,
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
         createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
-                "Scales UCLD mean inversely to node heights of the tree", "ucld.mean",
+                "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN,
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
 
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
@@ -639,14 +639,14 @@ public class BeautiOptions extends ModelOptions {
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
-                    rateParam = getParameter("uced.mean");
+                    rateParam = getParameter(ClockType.UCED_MEAN);
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_LOGNORMAL:
-                    rateParam = getParameter("ucld.mean");
+                    rateParam = getParameter(ClockType.UCLD_MEAN);
                     if (!fixed) params.add(rateParam);
-                    params.add(getParameter("ucld.stdev"));
+                    params.add(getParameter(ClockType.UCLD_STDEV));
                     break;
 
                 case AUTOCORRELATED_LOGNORMAL:
@@ -750,7 +750,7 @@ public class BeautiOptions extends ModelOptions {
                 localClockRateChangesStatistic.poissonOffset = 0.0;
             }
             if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter("localClock.rates", "random local clock rates", false);
+                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
 
                 localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
                 localClockRatesStatistic.gammaAlpha = 0.5;
@@ -785,7 +785,7 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
-                        ops.add(getOperator("uced.mean"));
+                        ops.add(getOperator(ClockType.UCED_MEAN));
                         ops.add(getOperator("upDownUCEDMeanHeights"));
                         ops.add(getOperator("swapBranchRateCategories"));
                         ops.add(getOperator("randomWalkBranchRateCategories"));
@@ -793,8 +793,8 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("ucld.mean"));
-                        ops.add(getOperator("ucld.stdev"));
+                        ops.add(getOperator(ClockType.UCLD_MEAN));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                         ops.add(getOperator("upDownUCLDMeanHeights"));
                         ops.add(getOperator("swapBranchRateCategories"));
                         ops.add(getOperator("randomWalkBranchRateCategories"));
@@ -813,8 +813,8 @@ public class BeautiOptions extends ModelOptions {
                     case RANDOM_LOCAL_CLOCK:
                         ops.add(getOperator("clock.rate"));
                         ops.add(getOperator("upDownRateHeights"));
-                        ops.add(getOperator("localClock.rates"));
-                        ops.add(getOperator("localClock.changes"));
+                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                         ops.add(getOperator("treeBitMove"));
                         break;
 
@@ -834,7 +834,7 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("ucld.stdev"));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                         ops.add(getOperator("swapBranchRateCategories"));
                         ops.add(getOperator("randomWalkBranchRateCategories"));
                         ops.add(getOperator("unformBranchRateCategories"));
@@ -847,8 +847,8 @@ public class BeautiOptions extends ModelOptions {
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator("localClock.rates"));
-                        ops.add(getOperator("localClock.changes"));
+                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                         ops.add(getOperator("treeBitMove"));
                         break;
 

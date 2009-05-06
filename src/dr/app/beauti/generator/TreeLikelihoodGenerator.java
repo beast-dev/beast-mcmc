@@ -24,10 +24,19 @@ import dr.xml.XMLParser;
  * @author Andrew Rambaut
  */
 public class TreeLikelihoodGenerator extends Generator {
-	private String treeModel; // "treeModel"
+	private String genePrefix; // gene file name
 	
-    public TreeLikelihoodGenerator(BeautiOptions options, ComponentGenerator[] components) {
+    public String getGenePrefix() {
+		return genePrefix;
+	}
+
+	public void setGenePrefix(String genePrefix) {
+		this.genePrefix = genePrefix;
+	}
+
+	public TreeLikelihoodGenerator(BeautiOptions options, ComponentGenerator[] components) {
         super(options, components);
+        genePrefix = "";
     }
 
     /**
@@ -37,13 +46,8 @@ public class TreeLikelihoodGenerator extends Generator {
      * @param writer the writer
      * @param traitsContainSpecies
      */
-    void writeTreeLikelihood(PartitionModel model, XMLWriter writer, boolean traitsContainSpecies) {
-    	if (traitsContainSpecies) {
-    		treeModel = TreeModel.TREE_MODEL + "_" + model.getName(); // "treeModel"
-    	} else {
-    		treeModel = TreeModel.TREE_MODEL; // "treeModel"
-    	}
-    	
+    void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
+
         if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writeTreeLikelihood(TreeLikelihood.TREE_LIKELIHOOD, i, model, writer);
@@ -82,7 +86,7 @@ public class TreeLikelihoodGenerator extends Generator {
             }
 
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, treeModel)}, true);
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TreeModel.TREE_MODEL)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, prefix + SiteModel.SITE_MODEL)}, true);
         } else {
@@ -103,7 +107,7 @@ public class TreeLikelihoodGenerator extends Generator {
                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
             }
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, treeModel)}, true);
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TreeModel.TREE_MODEL)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, prefix + SiteModel.SITE_MODEL)}, true);
         }

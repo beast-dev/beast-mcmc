@@ -158,7 +158,7 @@ public class ALSTreeLikelihood extends TreeLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),

@@ -121,9 +121,9 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeOpenTag(
                         RateStatistic.RATE_STATISTIC,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                                new Attribute.Default<String>("name", "coefficientOfVariation"),
-                                new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                                new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                                 new Attribute.Default<String>("internal", "true"),
                                 new Attribute.Default<String>("external", "true")
                         }
@@ -188,9 +188,9 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeOpenTag(
                         RateStatistic.RATE_STATISTIC,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                                new Attribute.Default<String>("name", "coefficientOfVariation"),
-                                new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                                new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                                 new Attribute.Default<String>("internal", "true"),
                                 new Attribute.Default<String>("external", "true")
                         }
@@ -273,9 +273,9 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeOpenTag(
                         RateStatistic.RATE_STATISTIC,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                                new Attribute.Default<String>("name", "coefficientOfVariation"),
-                                new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                                new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                                 new Attribute.Default<String>("internal", "true"),
                                 new Attribute.Default<String>("external", "true")
                         }
@@ -377,9 +377,9 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeOpenTag(
                     RateStatistic.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                            new Attribute.Default<String>("name", "coefficientOfVariation"),
-                            new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }
@@ -463,9 +463,9 @@ public class BranchRatesModelGenerator extends Generator {
             writer.writeOpenTag(
                     RateStatistic.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                            new Attribute.Default<String>("name", "coefficientOfVariation"),
-                            new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }

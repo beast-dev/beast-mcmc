@@ -107,7 +107,7 @@ public class InitialTreeGenerator extends Generator {
                     );
                 }
 
-                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, prefix + "taxa")};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, prefix + TaxaParser.TAXA)};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -191,7 +191,7 @@ public class InitialTreeGenerator extends Generator {
         );
 
         if (tree.getChildCount(node) == 0) {
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeNode(tree, tree.getChild(node, i), writer);

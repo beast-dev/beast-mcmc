@@ -25,8 +25,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.priorsPanel.PriorType;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
@@ -34,7 +34,10 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.inference.operators.OperatorSchedule;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParser;
@@ -165,7 +168,7 @@ public class BeautiOptions extends ModelOptions {
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree",
+        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
                 0.0, Double.POSITIVE_INFINITY);
         createStatistic("covariance",
                 "The covariance in rates of evolution on each lineage with their ancestral lineages",
@@ -775,7 +778,7 @@ public class BeautiOptions extends ModelOptions {
 
         if (clockType != ClockType.STRICT_CLOCK) {
             params.add(getParameter("meanRate"));
-            params.add(getParameter("coefficientOfVariation"));
+            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
             params.add(getParameter("covariance"));
         }
 
@@ -957,7 +960,7 @@ public class BeautiOptions extends ModelOptions {
 
         root.addContent(dataElement);
 
-        Element taxaElement = new Element("taxa");
+        Element taxaElement = new Element(TaxaParser.TAXA);
 
         for (Taxa taxonSet : taxonSets) {
             Element taxonSetElement = new Element("taxonSet");
@@ -965,7 +968,7 @@ public class BeautiOptions extends ModelOptions {
             taxonSetElement.addContent(createChild("enforceMonophyly",
                     taxonSetsMono.get(taxonSet) ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
-                Element taxonElement = new Element("taxon");
+                Element taxonElement = new Element(TaxonParser.TAXON);
                 taxonElement.addContent(createChild(XMLParser.ID, taxonSet.getTaxon(j).getId()));
                 taxonSetElement.addContent(taxonElement);
             }
@@ -1126,7 +1129,7 @@ public class BeautiOptions extends ModelOptions {
             throw new dr.xml.XMLParseException("This document does not appear to be a BEAUti file");
         }
 
-        Element taxaElement = root.getChild("taxa");
+        Element taxaElement = root.getChild(TaxaParser.TAXA);
         Element modelElement = root.getChild("model");
         Element priorsElement = root.getChild("priors");
         Element operatorsElement = root.getChild("operators");

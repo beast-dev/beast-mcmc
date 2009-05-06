@@ -115,18 +115,18 @@ public class TreeLikelihoodGenerator extends Generator {
         switch (options.clockType) {
             case STRICT_CLOCK:
                 writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
                 writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
                 writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
 
             default:

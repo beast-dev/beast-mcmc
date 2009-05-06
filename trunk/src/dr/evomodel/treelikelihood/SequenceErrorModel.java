@@ -1,7 +1,6 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -36,6 +35,8 @@ public class SequenceErrorModel extends TipPartialsModel {
 
     public static final String EXCLUDE = "exclude";
     public static final String INCLUDE = "include";
+
+    public static final String TYPE = "type";
 
     public SequenceErrorModel(TaxonList includeTaxa, TaxonList excludeTaxa,
                               ErrorType errorType, Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
@@ -135,11 +136,11 @@ public class SequenceErrorModel extends TipPartialsModel {
 
             ErrorType errorType = ErrorType.ALL_SUBSTITUTIONS;
 
-            if (xo.hasAttribute("type")) {
-                if (xo.getStringAttribute("type").equalsIgnoreCase("transitions")) {
+            if (xo.hasAttribute(TYPE)) {
+                if (xo.getStringAttribute(TYPE).equalsIgnoreCase("transitions")) {
                     errorType = ErrorType.TRANSITIONS_ONLY;
-                } else if (!xo.getStringAttribute("type").equalsIgnoreCase("all")) {
-                    throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute("type"));
+                } else if (!xo.getStringAttribute(TYPE).equalsIgnoreCase("all")) {
+                    throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute(TYPE));
                 }
             }
 
@@ -154,7 +155,8 @@ public class SequenceErrorModel extends TipPartialsModel {
             }
 
             if (baseDamageRateParameter == null && ageRelatedRateParameter == null) {
-                throw new XMLParseException("You must specify one or other or both of " + BASE_ERROR_RATE + " and " + AGE_RELATED_RATE + " parameters");
+                throw new XMLParseException("You must specify one or other or both of " +
+                        BASE_ERROR_RATE + " and " + AGE_RELATED_RATE + " parameters");
             }
 
             TaxonList includeTaxa = null;
@@ -171,7 +173,8 @@ public class SequenceErrorModel extends TipPartialsModel {
             SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(includeTaxa, excludeTaxa,
                     errorType, baseDamageRateParameter, ageRelatedRateParameter);
 
-            Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " + (errorType == ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
+            Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " +
+                    (errorType == ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
 
             return aDNADamageModel;
         }
@@ -181,16 +184,15 @@ public class SequenceErrorModel extends TipPartialsModel {
         //************************************************************************
 
         public String getParserDescription() {
-            return
-                    "This element returns a model that allows for post-mortem DNA damage.";
+            return "This element returns a model that allows for post-mortem DNA damage.";
         }
 
         public Class getReturnType() { return SequenceErrorModel.class; }
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newStringRule("type", true),
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule(TYPE, true),
                 new ElementRule(BASE_ERROR_RATE, Parameter.class, "The base error rate per site per sequence", true),
                 new ElementRule(AGE_RELATED_RATE, Parameter.class, "The error rate per site per unit time", true),
                 new XORRule(

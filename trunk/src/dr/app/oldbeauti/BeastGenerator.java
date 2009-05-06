@@ -98,7 +98,7 @@ public class BeastGenerator extends BeautiOptions {
     public void checkOptions() throws IllegalArgumentException {
         Set<String> ids = new HashSet<String>();
 
-        ids.add("taxa");
+        ids.add(TaxaParser.TAXA);
         ids.add(AlignmentParser.ALIGNMENT);
 
         if (taxonList != null) {
@@ -217,7 +217,7 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeComment("The list of taxa analyse (can also include dates/ages).");
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
-        writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "taxa")});
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -229,7 +229,7 @@ public class BeastGenerator extends BeautiOptions {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
 
             if (hasDate) {
                 dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
@@ -252,11 +252,11 @@ public class BeastGenerator extends BeautiOptions {
                 };
 
                 writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
-                writer.writeCloseTag("taxon");
+                writer.writeCloseTag(TaxonParser.TAXON);
             }
         }
 
-        writer.writeCloseTag("taxa");
+        writer.writeCloseTag(TaxaParser.TAXA);
     }
 
     /**
@@ -269,7 +269,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeText("");
         for (Taxa taxa : taxonSets) {
             writer.writeOpenTag(
-                    "taxa",
+                    TaxaParser.TAXA,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, taxa.getId())
                     }
@@ -278,9 +278,9 @@ public class BeastGenerator extends BeautiOptions {
             for (int j = 0; j < taxa.getTaxonCount(); j++) {
                 Taxon taxon = taxa.getTaxon(j);
 
-                writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+                writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
             }
-            writer.writeCloseTag("taxa");
+            writer.writeCloseTag(TaxaParser.TAXA);
         }
     }
 
@@ -343,7 +343,7 @@ public class BeastGenerator extends BeautiOptions {
             Taxon taxon = alignment.getTaxon(i);
 
             writer.writeOpenTag("sequence");
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
             if (!samplePriorOnly) {
                 writer.writeText(alignment.getAlignedSequenceString(i));
             } else {
@@ -1277,9 +1277,9 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag(
                     RateStatistic.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                            new Attribute.Default<String>("name", "coefficientOfVariation"),
-                            new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }
@@ -1361,9 +1361,9 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag(
                     RateStatistic.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "coefficientOfVariation"),
-                            new Attribute.Default<String>("name", "coefficientOfVariation"),
-                            new Attribute.Default<String>("mode", "coefficientOfVariation"),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }
@@ -2696,7 +2696,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_STDEV), true);
             }
 //			}
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "coefficientOfVariation"), true);
+            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, RateStatistic.COEFFICIENT_OF_VARIATION), true);
             writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
 
             if (clockModel == RANDOM_LOCAL_CLOCK) {
@@ -2888,7 +2888,7 @@ public class BeastGenerator extends BeautiOptions {
                 );
             }
 
-            Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, "taxa")};
+            Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, TaxaParser.TAXA)};
             if (taxonSets.size() > 0) {
                 writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -2987,7 +2987,7 @@ public class BeastGenerator extends BeautiOptions {
         );
 
         if (tree.getChildCount(node) == 0) {
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeNode(tree, tree.getChild(node, i), writer);

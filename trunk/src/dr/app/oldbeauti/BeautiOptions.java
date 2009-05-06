@@ -37,8 +37,11 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.util.NumberFormatter;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
@@ -174,7 +177,7 @@ public class BeautiOptions {
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic("coefficientOfVariation", "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
         createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
         createOperator("constant.popSize", SCALE, 0.75, demoWeights);
@@ -685,7 +688,7 @@ public class BeautiOptions {
 
         if (clockModel != STRICT_CLOCK) {
             params.add(getParameter("meanRate"));
-            params.add(getParameter("coefficientOfVariation"));
+            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
             params.add(getParameter("covariance"));
         }
     }
@@ -952,7 +955,7 @@ public class BeautiOptions {
             Element alignmentElement = new Element(AlignmentParser.ALIGNMENT);
             alignmentElement.addContent(createChild("dataType", originalAlignment.getDataType().getType()));
             for (int i = 0; i < originalAlignment.getTaxonCount(); i++) {
-                Element taxonElement = new Element("taxon");
+                Element taxonElement = new Element(TaxonParser.TAXON);
                 taxonElement.addContent(createChild(XMLParser.ID, originalAlignment.getTaxonId(i)));
                 dr.evolution.util.Date date = originalAlignment.getTaxon(i).getDate();
                 if (date != null) {
@@ -976,7 +979,7 @@ public class BeautiOptions {
 
         root.addContent(dataElement);
 
-        Element taxaElement = new Element("taxa");
+        Element taxaElement = new Element(TaxaParser.TAXA);
 
         for (Taxa taxonSet : taxonSets) {
             Element taxonSetElement = new Element("taxonSet");
@@ -984,7 +987,7 @@ public class BeautiOptions {
             taxonSetElement.addContent(createChild("enforceMonophyly",
                     taxonSetsMono.get(taxonSet) ? "true" : "false"));
             for (int j = 0; j < taxonSet.getTaxonCount(); j++) {
-                Element taxonElement = new Element("taxon");
+                Element taxonElement = new Element(TaxonParser.TAXON);
                 taxonElement.addContent(createChild(XMLParser.ID, taxonSet.getTaxon(j).getId()));
                 taxonSetElement.addContent(taxonElement);
             }
@@ -1144,7 +1147,7 @@ public class BeautiOptions {
         }
 
         Element dataElement = root.getChild("data");
-        Element taxaElement = root.getChild("taxa");
+        Element taxaElement = root.getChild(TaxaParser.TAXA);
         Element modelElement = root.getChild("model");
         Element priorsElement = root.getChild("priors");
         Element operatorsElement = root.getChild("operators");
@@ -1182,7 +1185,7 @@ public class BeautiOptions {
                         originalAlignment.setDataType(Nucleotides.INSTANCE);
                 }
 
-                for (Object o : alignmentElement.getChildren("taxon")) {
+                for (Object o : alignmentElement.getChildren(TaxonParser.TAXON)) {
                     Element taxonElement = (Element) o;
 
                     String id = getStringChild(taxonElement, XMLParser.ID, "");
@@ -1224,7 +1227,7 @@ public class BeautiOptions {
                 final Taxa taxonSet = new Taxa(id);
 
                 Boolean enforceMonophyly = Boolean.valueOf(getStringChild(taxonSetElement, "enforceMonophyly", "false"));
-                for (Object o : taxonSetElement.getChildren("taxon")) {
+                for (Object o : taxonSetElement.getChildren(TaxonParser.TAXON)) {
                     Element taxonElement = (Element) o;
                     String taxonId = getStringChild(taxonElement, XMLParser.ID, "");
                     int index = taxonList.getTaxonIndex(taxonId);

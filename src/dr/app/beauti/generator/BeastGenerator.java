@@ -235,16 +235,18 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
-
+        
+        // TODO: setGenePrefix ?
         treePriorGenerator.writeTreePriorModel(writer);
         writer.writeText("");
 
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species
         	for (PartitionModel model : options.getActivePartitionModels()) {
-	        	initialTreeGenerator.setPrefix(model.getName() + "."); // partitionName.startingTree
+	        	initialTreeGenerator.setGenePrefix(model.getName() + "."); // partitionName.startingTree
 	        	initialTreeGenerator.writeStartingTree(writer);
         	}
         } else { // no species
+        	initialTreeGenerator.setGenePrefix("");
         	initialTreeGenerator.writeStartingTree(writer);
         }
         writer.writeText("");
@@ -253,11 +255,11 @@ public class BeastGenerator extends Generator {
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
 	    	for (PartitionModel model : options.getActivePartitionModels()) {
-	    		treeModelGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
+	    		treeModelGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
 	    		treeModelGenerator.writeTreeModel(writer);
 	        }
         } else { // no species
-        	treeModelGenerator.setPrefix("");
+        	treeModelGenerator.setGenePrefix("");
         	treeModelGenerator.writeTreeModel(writer);
 	    }
         writer.writeText("");
@@ -266,20 +268,30 @@ public class BeastGenerator extends Generator {
 
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
-	        	treePriorGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
+	        	// TODO: writeParameterLog
+	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
 	        	treePriorGenerator.writeTreePrior(writer);
 	        }
         } else { // no species
-        	treePriorGenerator.setPrefix("");
+        	treePriorGenerator.setGenePrefix("");
         	treePriorGenerator.writeTreePrior(writer);
 	    }
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
-
-        branchRatesModelGenerator.writeBranchRatesModel(writer);
+        
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	branchRatesModelGenerator.setGenePrefix(model.getName() + ".");
+	        	//TODO: fixParameters 
+	        	branchRatesModelGenerator.writeBranchRatesModel(writer);
+	        }
+        } else { // no species
+        	branchRatesModelGenerator.setGenePrefix("");
+        	branchRatesModelGenerator.writeBranchRatesModel(writer);
+        }
         writer.writeText("");
-
+        
         for (PartitionModel partitionModel : options.getActivePartitionModels()) {
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
             writer.writeText("");

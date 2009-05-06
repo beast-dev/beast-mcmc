@@ -107,13 +107,6 @@ public class BeautiFrame extends DocumentFrame {
 
         beautiOptions = new BeautiOptions(components);
         generator = new BeastGenerator(beautiOptions, components);
-
-        // install components:
-//        SequenceErrorModelComponentGenerator comp1 = new SequenceErrorModelComponentGenerator(beautiOptions);
-//        beautiOptions.addComponent(comp1);
-//
-//        TipDateSamplingComponent comp2 = new TipDateSamplingComponent(beautiOptions);
-//        beautiOptions.addComponent(comp2);
     }
 
     public void initializeComponents() {

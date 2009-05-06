@@ -4,7 +4,7 @@ import dr.math.UnivariateFunction;
 import dr.math.ErrorFunction;
 
 /*
- * NormalDistribution.java
+ * InverseGaussianDistribution.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -132,10 +132,6 @@ public class InverseGaussianDistribution implements Distribution {
      * @return pdf at x
      */
     public static double pdf(double x, double m, double shape) {
-        // For normal
-        //double a = 1.0 / (Math.sqrt(2.0 * Math.PI) * sd);
-        //double b = -(x - m) * (x - m) / (2.0 * sd * sd);
-
         double a = Math.sqrt(shape/(2.0 * Math.PI * x * x * x));
         double b = ((-shape) * (x - m) * (x - m))/(2.0 * m * m * x);
 
@@ -151,17 +147,11 @@ public class InverseGaussianDistribution implements Distribution {
      * @return log pdf at x
      */
     public static double logPdf(double x, double m, double shape) {
-        // For normal
-        //double a = 1.0 / (Math.sqrt(2.0 * Math.PI) * sd);
-        //double b = -(x - m) * (x - m) / (2.0 * sd * sd);
-
         double a = Math.sqrt(shape/(2.0 * Math.PI * x * x * x));
         double b = ((-shape) * (x - m) * (x - m))/(2.0 * m * m * x);
 
         return Math.log(a) + b;
     }
-
-    // ============================================HAVE NOT COMPLETED FROM HERE DOWNWARDS=========================================================================================
 
     /**
      * cumulative density function
@@ -172,10 +162,6 @@ public class InverseGaussianDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double m, double shape) {
-        // For normal
-        //double a = (x - m) / (Math.sqrt(2.0) * sd);
-
-        //return 0.5 * (1.0 + ErrorFunction.erf(a));
         double a = Math.sqrt(shape / (2.0 * x)) * ((x / m) - 1);
         double b = (1.0 + ErrorFunction.erf(a));
         double c = Math.sqrt(shape / (2.0 * x)) * ((x / m) + 1);
@@ -202,12 +188,6 @@ public class InverseGaussianDistribution implements Distribution {
         double x=0;
 
         throw new RuntimeException("Quantile function for Inverse Gaussian Distribution is not yet implemented");
-
-        //System.out.println(cdf(x, m, shape));
-
-        // For normal
-        //return m + Math.sqrt(2.0) * sd * ErrorFunction.inverseErf(2.0 * z - 1.0);
-        //return 0.0;
     }
 
     /**

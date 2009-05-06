@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorType;
@@ -22,12 +23,12 @@ public class InitialTreeGenerator extends Generator {
     final static public String STARTING_TREE = "startingTree";
 
 	private String prefix; // gene file name
-	
-    public InitialTreeGenerator(BeautiOptions options, ComponentGenerator[] components) {
+
+    public InitialTreeGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         prefix = "";
     }
-    
+
     public String getPrefix() {
 		return prefix;
 	}

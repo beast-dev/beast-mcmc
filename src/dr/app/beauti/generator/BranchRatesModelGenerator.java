@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -24,7 +25,7 @@ import dr.xml.XMLParser;
  */
 public class BranchRatesModelGenerator extends Generator {
 
-    public BranchRatesModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+    public BranchRatesModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

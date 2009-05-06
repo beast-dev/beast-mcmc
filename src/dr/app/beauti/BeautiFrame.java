@@ -8,11 +8,8 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
-import dr.app.beauti.components.TipDateSamplingComponent;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.modelsPanel.ModelsPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
@@ -22,6 +19,7 @@ import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.components.*;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
@@ -102,12 +100,12 @@ public class BeautiFrame extends DocumentFrame {
 
         getZoomWindowAction().setEnabled(false);
 
-        beautiOptions = new BeautiOptions();
-
-        ComponentGenerator[] components = {
-                new SequenceErrorModelComponentGenerator(beautiOptions),
-                new TipDateSamplingComponent(beautiOptions)
+        ComponentFactory[] components = {
+                SequenceErrorModelComponentFactory.INSTANCE,
+                TipDateSamplingComponentFactory.INSTANCE
         };
+
+        beautiOptions = new BeautiOptions(components);
         generator = new BeastGenerator(beautiOptions, components);
 
         // install components:
@@ -697,13 +695,13 @@ public class BeautiFrame extends DocumentFrame {
 	        FileDialog dialog = new FileDialog(this,
 	                "Import Traits File...",
 	                FileDialog.LOAD);
-	
+
 	        dialog.setVisible(true);
 	        if (dialog.getFile() != null) {
 	            final File file = new File(dialog.getDirectory(), dialog.getFile());
-	           
+
 		        importTraitsFromFile(file);
-		        setAllOptions(); 
+		        setAllOptions();
 	        }
     	} else {
     		JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
@@ -725,14 +723,14 @@ public class BeautiFrame extends DocumentFrame {
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
         }
-        
-        if (beautiOptions.traits.contains(beautiOptions.TRAIT_SPECIES)) { // species 
+
+        if (beautiOptions.traits.contains(beautiOptions.TRAIT_SPECIES)) { // species
         	dataPanel.selectAll();
         	dataPanel.unlinkModels();
         }
     }
 
-   
+
     private void importMultiTraits(final File file) throws IOException {
 //        if( beautiOptions.taxonList == null ) {
 //             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",

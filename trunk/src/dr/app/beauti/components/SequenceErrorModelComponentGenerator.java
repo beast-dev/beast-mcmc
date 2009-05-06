@@ -47,11 +47,8 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "errorModel")}, true);
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                if (comp.errorModelType == SequenceErrorType.AGE_ALL || comp.errorModelType == SequenceErrorType.AGE_TRANSITIONS) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "errorModel.ageRate"), true);
-                } else {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "errorModel.baseRate"), true);
-                }
+                writer.writeTag(ParameterParser.PARAMETER,
+                        new Attribute.Default<String>(XMLParser.IDREF, comp.qualifiedErrTypeName()), true);
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -64,7 +61,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
     }
 
     private void writeErrorModel(XMLWriter writer, SequenceErrorModelComponentOptions component) {
-        String errorType = (component.errorModelType == SequenceErrorType.AGE_TRANSITIONS ||
+        final String errorType = (component.errorModelType == SequenceErrorType.AGE_TRANSITIONS ||
                 component.errorModelType == SequenceErrorType.BASE_TRANSITIONS ?
                 "transitions" : "all");
 
@@ -77,17 +74,13 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 }
         );
 
-        if (component.errorModelType == SequenceErrorType.AGE_TRANSITIONS ||
-                component.errorModelType == SequenceErrorType.AGE_ALL) {
-            writeParameter(SequenceErrorModel.AGE_RELATED_RATE, "errorModel.ageRate", 1, writer);
-        } else if (component.errorModelType == SequenceErrorType.BASE_TRANSITIONS ||
-                component.errorModelType == SequenceErrorType.BASE_ALL) {
-            writeParameter(SequenceErrorModel.BASE_ERROR_RATE, "errorModel.baseRate", 1, writer);
+        final String name = component.qualifiedErrTypeName();
+        if( name != null ) {
+           writeParameter(SequenceErrorModel.AGE_RELATED_RATE, name, 1, writer);
         } else {
             throw new IllegalArgumentException("Unknown error type");
         }
 
         writer.writeCloseTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL);
     }
-
 }

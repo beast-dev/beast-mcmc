@@ -1,11 +1,6 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.XMLWriter;
-import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
-import dr.util.Attribute;
-import dr.inference.model.ParameterParser;
 
 import java.util.List;
 
@@ -14,24 +9,41 @@ import java.util.List;
  * @version $Id$
  */
 public class SequenceErrorModelComponentOptions implements ComponentOptions {
+    static public final String ERROR_MODEL = "errorModel";
+    static private final String AGE_RATE = "ageRate";
+    static private final String BASE_RATE = "baseRate";
 
     public SequenceErrorModelComponentOptions() {
     }
 
-    public void createParameters(final ModelOptions modelOptions) {
-        modelOptions.createParameter("errorModel.ageRate", "age dependent sequence error rate", ModelOptions.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
-        modelOptions.createParameter("errorModel.baseRate", "base sequence error rate", ModelOptions.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
+    public String errTypeName() {
+        switch( errorModelType ) {
+            case AGE_ALL:
+            case AGE_TRANSITIONS:
+                return AGE_RATE;
+            case  BASE_ALL:
+            case BASE_TRANSITIONS:
+                return BASE_RATE;
+        }
+        return null;
+    }
 
-        modelOptions.createScaleOperator("errorModel.ageRate", 3.0);
-        modelOptions.createOperator("errorModel.baseRate", OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);
+    public String qualifiedErrTypeName() {
+        return ERROR_MODEL + "." + errTypeName();
+    }
+
+    public void createParameters(final ModelOptions modelOptions) {
+        modelOptions.createParameter(ERROR_MODEL + "." + AGE_RATE,
+                "age dependent sequence error rate", ModelOptions.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
+        modelOptions.createParameter(ERROR_MODEL + "." + BASE_RATE,
+                "base sequence error rate", ModelOptions.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
+
+        modelOptions.createScaleOperator(ERROR_MODEL + "." + AGE_RATE, 3.0);
+        modelOptions.createOperator(ERROR_MODEL + "." + BASE_RATE, OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        if (errorModelType == SequenceErrorType.AGE_ALL || errorModelType == SequenceErrorType.AGE_TRANSITIONS) {
-            params.add(modelOptions.getParameter("errorModel.ageRate"));
-        } else if (errorModelType == SequenceErrorType.BASE_ALL || errorModelType == SequenceErrorType.BASE_TRANSITIONS) {
-            params.add(modelOptions.getParameter("errorModel.baseRate"));
-        }
+        params.add(modelOptions.getParameter(qualifiedErrTypeName()));
     }
 
     public void selectStatistics(final ModelOptions modelOptions, final List<Parameter> stats) {
@@ -39,11 +51,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        if (errorModelType == SequenceErrorType.AGE_ALL || errorModelType == SequenceErrorType.AGE_TRANSITIONS) {
-            ops.add(modelOptions.getOperator("errorModel.ageRate"));
-        } else if (errorModelType == SequenceErrorType.BASE_ALL || errorModelType == SequenceErrorType.BASE_TRANSITIONS) {
-            ops.add(modelOptions.getOperator("errorModel.baseRate"));
-        }
+        ops.add(modelOptions.getOperator(qualifiedErrTypeName()));
     }
 
     public static SequenceErrorType errorModelType = SequenceErrorType.NO_ERROR;

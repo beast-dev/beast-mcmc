@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.sitemodel.GammaSiteModel;
@@ -19,7 +20,7 @@ import dr.xml.XMLParser;
  */
 public class PartitionModelGenerator extends Generator {
 
-    public PartitionModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+    public PartitionModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.StartingTreeType;
@@ -27,16 +28,16 @@ import dr.xml.XMLParser;
  * @author Alexei Drummond
  */
 public class TreePriorGenerator extends Generator {
-	
-	private String prefix; 
 
-	public TreePriorGenerator(BeautiOptions options, ComponentGenerator[] components) {
+	private String prefix;
+
+	public TreePriorGenerator(BeautiOptions options, ComponentFactory[] components) {
 		super(options, components);
 		prefix = "";
 	}
 
 	void writeTreePrior(XMLWriter writer) {	// for species, partitionName.treeModel
-		
+
 		writeNodeHeightPrior(writer);
 		if (options.nodeHeightPrior == TreePrior.LOGISTIC) {
 			writer.writeText("");
@@ -46,7 +47,7 @@ public class TreePriorGenerator extends Generator {
 			writeExponentialMarkovLikelihood(writer);
 		}
 	}
-	
+
 	public String getPrefix() {
 		return prefix;
 	}
@@ -458,7 +459,7 @@ public class TreePriorGenerator extends Generator {
 
 	void writeParameterLog(XMLWriter writer) {
 		prefix = "";
-		
+
 		switch (options.nodeHeightPrior) {
 
 			case CONSTANT:

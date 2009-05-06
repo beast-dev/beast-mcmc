@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.PartitionModel;
@@ -25,7 +26,7 @@ import dr.xml.XMLParser;
  */
 public class TreeLikelihoodGenerator extends Generator {
 	private String genePrefix; // gene file name
-	
+
     public String getGenePrefix() {
 		return genePrefix;
 	}
@@ -34,7 +35,7 @@ public class TreeLikelihoodGenerator extends Generator {
 		this.genePrefix = genePrefix;
 	}
 
-	public TreeLikelihoodGenerator(BeautiOptions options, ComponentGenerator[] components) {
+	public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         genePrefix = "";
     }
@@ -44,7 +45,6 @@ public class TreeLikelihoodGenerator extends Generator {
      *
      * @param model  the partition model to write likelihood block for
      * @param writer the writer
-     * @param traitsContainSpecies
      */
     void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
 
@@ -56,7 +56,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writeTreeLikelihood(TreeLikelihood.TREE_LIKELIHOOD, -1, model, writer);
         }
     }
-    
+
     /**
      * Write the tree likelihood XML block.
      *

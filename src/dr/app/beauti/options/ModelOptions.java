@@ -132,7 +132,7 @@ public class ModelOptions {
     HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     HashMap<String, Operator> operators = new HashMap<String, Operator>();
 
-    public void addComponent(ComponentOptions component) {
+    protected void addComponent(ComponentOptions component) {
         components.add(component);
         component.createParameters(this);
     }

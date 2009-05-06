@@ -181,20 +181,27 @@ public class BeastGenerator extends Generator {
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTaxonSets(writer, taxonSets);
         }
-
+                     
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+        	writer.writeText("");
+        	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
+        	// write all taxa in each gene tree regarding each data partition,
+        	for (DataPartition partition : options.dataPartitions) {
+        		// do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
+        		writeAllTaxaForMultiGene(partition, writer);
+        	}
+        }
+        
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
-
-        List<DataPartition> dataPartitions = options.dataPartitions;
-
+        
         List<Alignment> alignments = new ArrayList<Alignment>();
 
-        for (DataPartition partition : dataPartitions) {
+        for (DataPartition partition : options.dataPartitions) {
             Alignment alignment = partition.getAlignment();
             if (!alignments.contains(alignment)) {
                 alignments.add(alignment);
             }
         }
-
 
         if (!options.samplePriorOnly) {
             int index = 1;
@@ -231,11 +238,17 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
 
-
         treePriorGenerator.writeTreePriorModel(writer);
         writer.writeText("");
-
-        initialTreeGenerator.writeStartingTree(writer);
+        
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+        	for (PartitionModel model : options.getActivePartitionModels()) {	
+	        	initialTreeGenerator.setPrefix(model.getName() + "."); // partitionName.startingTree
+	        	initialTreeGenerator.writeStartingTree(writer);
+        	}
+        } else { // no species
+        	initialTreeGenerator.writeStartingTree(writer);
+        }        
         writer.writeText("");
         
 //        treeModelGenerator = new TreeModelGenerator(options);
@@ -295,8 +308,13 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-        	// PartitionModel model, XMLWriter writer, boolean traitsContainSpecies
-            treeLikelihoodGenerator.writeTreeLikelihood(model, writer, (options.traits.contains(options.TRAIT_SPECIES)));
+        	if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+        		treeLikelihoodGenerator.setGenePrefix(model.getName() + ".");
+        	} else {
+        		treeLikelihoodGenerator.setGenePrefix("");
+        	}
+            //TODO: need merge genePrifx and prefix
+        	treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
             writer.writeText("");
         }
 
@@ -323,7 +341,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
         
         // XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies
-        writeMCMC(writer, options.getActivePartitionModels(), (options.traits.contains(options.TRAIT_SPECIES)));
+        writeMCMC(options.getActivePartitionModels(), (options.traits.contains(options.TRAIT_SPECIES)), writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
@@ -461,6 +479,22 @@ public class BeastGenerator extends Generator {
         return description;
     }
 
+    
+    public void writeAllTaxaForMultiGene(DataPartition dataPartition, XMLWriter writer) {
+    	String gene = dataPartition.getName(); 
+    	Alignment alignment = dataPartition.getAlignment();
+    	
+    	writer.writeComment("gene name = " + gene + ", ntax= " + alignment.getTaxonCount());    	
+    	writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});    	
+    	
+    	for (int i = 0; i < alignment.getTaxonCount(); i++) {
+            Taxon taxon = alignment.getTaxon(i);
+            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+    	}
+    	
+    	writer.writeCloseTag("taxa");
+    }
+    
 
     /**
      * Generate an alignment block from these beast options
@@ -1193,8 +1227,8 @@ public class BeastGenerator extends Generator {
      *
      * @param writer the writer
      */
-    public void writeMCMC(XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies) {
-        writer.writeOpenTag(
+    public void writeMCMC(List<PartitionModel> models, boolean traitsContainSpecies, XMLWriter writer) {
+    	writer.writeOpenTag(
                 "mcmc",
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, "mcmc"),
@@ -1234,7 +1268,7 @@ public class BeastGenerator extends Generator {
             	if (traitsContainSpecies) { // species
             		for (PartitionModel model : models) {
             			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
-            						(XMLParser.IDREF, "coalescent" + "_" + model.getName()), true);
+            						(XMLParser.IDREF, model.getName() + "." + "coalescent"), true);
             		}
             	} else { // no species
             		writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
@@ -1343,7 +1377,7 @@ public class BeastGenerator extends Generator {
     	if (traitsContainSpecies) { // species
     		for (PartitionModel model : models) {
     			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
-    						(XMLParser.IDREF, TreeModel.TREE_MODEL + "_" + model.getName()), true);
+    						(XMLParser.IDREF, model.getName() + "." + TreeModel.TREE_MODEL), true);
     						
     		}
     	} else { // no species

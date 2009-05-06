@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.priorsPanel.PriorType;
@@ -20,10 +21,17 @@ public abstract class Generator {
 
     protected final BeautiOptions options;
 
-    public Generator(BeautiOptions options, ComponentGenerator[] components) {
+
+    protected Generator(BeautiOptions options) {
+        this.options = options;
+    }
+
+    public Generator(BeautiOptions options, ComponentFactory[] components) {
         this.options = options;
         if (components != null) {
-            this.components.addAll(Arrays.asList(components));
+            for (ComponentFactory component : components) {
+                this.components.add(component.getGenerator(options));
+            }
         }
     }
 

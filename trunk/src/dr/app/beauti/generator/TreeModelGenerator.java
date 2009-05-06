@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.app.beauti.options.StartingTreeType;
@@ -17,14 +18,14 @@ import dr.xml.XMLParser;
  * @author Alexei Drummond
  */
 public class TreeModelGenerator extends Generator {
-	
+
 	private String prefix; // gene file name
-	
-    public TreeModelGenerator(BeautiOptions options, ComponentGenerator[] components) {
+
+    public TreeModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         prefix = "";
     }
-       
+
     public String getPrefix() {
 		return prefix;
 	}
@@ -152,7 +153,7 @@ public class TreeModelGenerator extends Generator {
         }*/
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, writer);
-        
+
         writer.writeCloseTag(TreeModel.TREE_MODEL);
 
         if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {

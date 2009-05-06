@@ -26,6 +26,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.components.ComponentFactory;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
@@ -51,6 +52,10 @@ import java.util.*;
 public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
+        this(new ComponentFactory[] {});
+    }
+    
+    public BeautiOptions(ComponentFactory[] components) {
 
         double demoWeights = 3.0;
         double branchWeights = 30.0;
@@ -234,6 +239,11 @@ public class BeautiOptions extends ModelOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
+
+        // Install all the component's options from the given list of factories:
+        for (ComponentFactory component : components) {
+            addComponent(component.getOptions(this));
+        }
     }
 
     /**

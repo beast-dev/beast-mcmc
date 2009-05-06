@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.XMLWriter;
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.alignment.Alignment;
@@ -94,7 +95,7 @@ public class BeastGenerator extends Generator {
     private final TreeModelGenerator treeModelGenerator;
     private final BranchRatesModelGenerator branchRatesModelGenerator;
 
-    public BeastGenerator(BeautiOptions options, ComponentGenerator[] components) {
+    public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
 
         partitionModelGenerator = new PartitionModelGenerator(options, components);
@@ -176,13 +177,13 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
 
         writeTaxa(writer, options.taxonList);
-        
+
         List<Taxa> taxonSets = options.taxonSets;
         if (taxonSets != null && taxonSets.size() > 0) {
             writeTaxonSets(writer, taxonSets);
         }
-                     
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
         	writer.writeText("");
         	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
         	// write all taxa in each gene tree regarding each data partition,
@@ -191,9 +192,9 @@ public class BeastGenerator extends Generator {
         		writeAllTaxaForMultiGene(partition, writer);
         	}
         }
-        
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
-        
+
         List<Alignment> alignments = new ArrayList<Alignment>();
 
         for (DataPartition partition : options.dataPartitions) {
@@ -240,24 +241,24 @@ public class BeastGenerator extends Generator {
 
         treePriorGenerator.writeTreePriorModel(writer);
         writer.writeText("");
-        
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
-        	for (PartitionModel model : options.getActivePartitionModels()) {	
+
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        	for (PartitionModel model : options.getActivePartitionModels()) {
 	        	initialTreeGenerator.setPrefix(model.getName() + "."); // partitionName.startingTree
 	        	initialTreeGenerator.writeStartingTree(writer);
         	}
         } else { // no species
         	initialTreeGenerator.writeStartingTree(writer);
-        }        
+        }
         writer.writeText("");
-        
+
 //        treeModelGenerator = new TreeModelGenerator(options);
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
-	    	for (PartitionModel model : options.getActivePartitionModels()) {	    		
+	    	for (PartitionModel model : options.getActivePartitionModels()) {
 	    		treeModelGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
 	    		treeModelGenerator.writeTreeModel(writer);
-	        }  
+	        }
         } else { // no species
         	treeModelGenerator.setPrefix("");
         	treeModelGenerator.writeTreeModel(writer);
@@ -265,15 +266,15 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
-        
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	treePriorGenerator.setPrefix(model.getName() + "."); // partitionName.treeModel
 	        	treePriorGenerator.writeTreePrior(writer);
 	        }
         } else { // no species
         	treePriorGenerator.setPrefix("");
-        	treePriorGenerator.writeTreePrior(writer);	
+        	treePriorGenerator.writeTreePrior(writer);
 	    }
         writer.writeText("");
 
@@ -308,7 +309,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-        	if (options.traits.contains(options.TRAIT_SPECIES)) { // species 
+        	if (options.traits.contains(options.TRAIT_SPECIES)) { // species
         		treeLikelihoodGenerator.setGenePrefix(model.getName() + ".");
         	} else {
         		treeLikelihoodGenerator.setGenePrefix("");
@@ -318,15 +319,15 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);        
-        
-        // traits tag 
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
+
+        // traits tag
         if (options.traits.size() > 0) {
         	for (String trait : options.traits) {
         		BeautiOptions.TraitType traiType = options.traitTypes.get(trait);
-        		        		
+
         		writeTraits(writer, trait, traiType.toString(), options.taxonList);
-        	} 
+        	}
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }
 
@@ -339,7 +340,7 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
-        
+
         // XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies
         writeMCMC(options.getActivePartitionModels(), (options.traits.contains(options.TRAIT_SPECIES)), writer);
         writer.writeText("");
@@ -367,11 +368,11 @@ public class BeastGenerator extends Generator {
      */
     private void writeTaxa(XMLWriter writer, TaxonList taxonList) {
     	// -1 (single taxa), 0 (1st gene of multi-taxa)
-    	
+
     	writer.writeComment("The list of taxa analyse (can also include dates/ages).");
     	writer.writeComment("ntax=" + taxonList.getTaxonCount());
 	    writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "taxa")});
-    	
+
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -383,9 +384,9 @@ public class BeastGenerator extends Generator {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
-           
+
             writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
-           
+
 
             if (hasDate) {
                 dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
@@ -479,22 +480,22 @@ public class BeastGenerator extends Generator {
         return description;
     }
 
-    
+
     public void writeAllTaxaForMultiGene(DataPartition dataPartition, XMLWriter writer) {
-    	String gene = dataPartition.getName(); 
+    	String gene = dataPartition.getName();
     	Alignment alignment = dataPartition.getAlignment();
-    	
-    	writer.writeComment("gene name = " + gene + ", ntax= " + alignment.getTaxonCount());    	
-    	writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});    	
-    	
+
+    	writer.writeComment("gene name = " + gene + ", ntax= " + alignment.getTaxonCount());
+    	writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});
+
     	for (int i = 0; i < alignment.getTaxonCount(); i++) {
             Taxon taxon = alignment.getTaxon(i);
             writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
     	}
-    	
+
     	writer.writeCloseTag("taxa");
     }
-    
+
 
     /**
      * Generate an alignment block from these beast options
@@ -533,7 +534,7 @@ public class BeastGenerator extends Generator {
         }
         writer.writeCloseTag(AlignmentParser.ALIGNMENT);
     }
-    
+
     /**
      * Generate traits block regarding specific trait name (e.g. <species>) from these beast options
      * @param writer
@@ -542,86 +543,86 @@ public class BeastGenerator extends Generator {
      * @param taxonList
      */
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
-    	
+
     	writer.writeText("");
         if (trait.equals(options.TRAIT_SPECIES)) { // hard code
         	writer.writeComment("Species definition: binds taxa, species and gene trees");
-        }         
+        }
         writer.writeComment("trait = " + trait + " trait_type = " + traitType);
-        
+
         writer.writeOpenTag(trait, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, trait)});
         		//new Attribute.Default<String>("traitType", traitType)});
-        
+
         // write sub-tags for species
         if (trait.equals(options.TRAIT_SPECIES)) { // hard code
-        	List<String> species = new ArrayList<String>(); // hard code 
+        	List<String> species = new ArrayList<String>(); // hard code
         	String sp;
-        	
+
         	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
         		Taxon taxon = taxonList.getTaxon(i);
 	        	sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
-	        	
+
 	        	if (!species.contains(sp)) {
 	        		species.add(sp);
 	        	}
         	}
-        	
+
         	for (String eachSp : species) {
         		writer.writeOpenTag("sp", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, eachSp)});
-        	
+
         		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
         			Taxon taxon = taxonList.getTaxon(i);
-        			sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();	        	
-        			
+        			sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
+
         			if (sp.equals(eachSp)) {
         				writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
         			}
-	        	
+
         		}
         		writer.writeCloseTag("sp");
         	}
-        	
+
         	writeGeneTrees (writer);
         } // end write sub-tags for species
-        
+
         writer.writeCloseTag(trait);
-        
+
         if (trait.equals(options.TRAIT_SPECIES)) { // hard code
         	writeSpeciesTree (writer);
-        	
+
         }
-        
+
     }
 
-    
+
     private void writeGeneTrees(XMLWriter writer) {
-    	writer.writeComment("Collection of Gene Trees"); 
-            	
+    	writer.writeComment("Collection of Gene Trees");
+
         writer.writeOpenTag("geneTrees", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "geneTrees")});
-        
+
     	// generate gene trees regarding each data partition
     	for (PartitionModel partitionModel : options.getActivePartitionModels()) {
     		writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF,
-    				TreeModel.TREE_MODEL + "_" + partitionModel.getName())}, true); 
+    				TreeModel.TREE_MODEL + "_" + partitionModel.getName())}, true);
         }
 
         writer.writeCloseTag("geneTrees");
     }
-    
-    
+
+
     private void writeSpeciesTree(XMLWriter writer) {
-    	writer.writeComment("Species Tree: Provides Per branch demographic function"); 
-    	
+    	writer.writeComment("Species Tree: Provides Per branch demographic function");
+
 //        writer.writeOpenTag("speciesTree", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, ),
 //				new Attribute.Default<String>("bmPrior", "true")});
 //        writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, options.TRAIT_SPECIES)}, true);
 
-        
-//        writer.writeCloseTag("speciesTree");	
-    	
+
+//        writer.writeCloseTag("speciesTree");
+
     }
-    
-    
+
+
     /**
      * Writes the pattern lists
      *
@@ -1373,18 +1374,18 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
                         new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                 });
-        
+
     	if (traitsContainSpecies) { // species
     		for (PartitionModel model : models) {
     			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
     						(XMLParser.IDREF, model.getName() + "." + TreeModel.TREE_MODEL), true);
-    						
+
     		}
     	} else { // no species
 			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
 						(XMLParser.IDREF, TreeModel.TREE_MODEL), true);
     	}
-        
+
 
         switch (options.clockType) {
             case STRICT_CLOCK:

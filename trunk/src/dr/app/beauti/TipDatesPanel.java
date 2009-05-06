@@ -35,7 +35,6 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
-import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -289,7 +288,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         options.datesUnits = unitsCombo.getSelectedIndex();
         options.datesDirection = directionCombo.getSelectedIndex();
 
-        TipDateSamplingComponent comp = (TipDateSamplingComponent)options.getComponentOptions(TipDateSamplingComponent.class);
+        TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions)options.getComponentOptions(TipDateSamplingComponentOptions.class);
         comp.tipDateSamplingType = (TipDateSamplingType) tipDateSamplingCombo.getSelectedItem();
         if (tipDateTaxonSetCombo.getSelectedItem() instanceof TaxonList) {
             comp.tipDateSamplingTaxonSet = (TaxonList) tipDateTaxonSetCombo.getSelectedItem();

@@ -85,7 +85,7 @@ public class TaxaParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private final XMLSyntaxRule[] rules = {
         new OrRule(
             new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
             new ElementRule(Taxon.class, 1, Integer.MAX_VALUE)

@@ -19,20 +19,20 @@ import dr.xml.XMLParser;
  */
 public class TreeModelGenerator extends Generator {
 
-	private String prefix; // gene file name
+	private String genePrefix; // gene file name
 
     public TreeModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        prefix = "";
+        genePrefix = "";
     }
 
-    public String getPrefix() {
-		return prefix;
+    public String getGenePrefix() {
+		return genePrefix;
 	}
 
 
-	public void setPrefix(String prefix) {
-		this.prefix = prefix;
+	public void setGenePrefix(String genePrefix) {
+		this.genePrefix = genePrefix;
 	}
 
 
@@ -43,17 +43,18 @@ public class TreeModelGenerator extends Generator {
      */
     void writeTreeModel(XMLWriter writer) { // for species, partitionName.treeModel
 
-        final String treeModelName = prefix + TreeModel.TREE_MODEL;
+        final String treeModelName = genePrefix + TreeModel.TREE_MODEL;
 
+        writer.writeComment("Generate a tree model");
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
 
         final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
 
         if( options.startingTreeType == StartingTreeType.RANDOM ) {
             writer.writeTag(CoalescentSimulator.COALESCENT_TREE,
-                    new Attribute.Default<String>(XMLParser.IDREF, prefix + STARTING_TREE), true);
+                    new Attribute.Default<String>(XMLParser.IDREF, genePrefix + STARTING_TREE), true);
         } else {
-            writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, prefix + STARTING_TREE), true);
+            writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, genePrefix + STARTING_TREE), true);
         }
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
@@ -114,7 +115,7 @@ public class TreeModelGenerator extends Generator {
                                 new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, prefix + ClockType.LOCAL_CLOCK + "." + "rates"), true);
+                        new Attribute.Default<String>(XMLParser.ID, genePrefix + ClockType.LOCAL_CLOCK + "." + "rates"), true);
                 writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
                 writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
@@ -124,7 +125,7 @@ public class TreeModelGenerator extends Generator {
                                 new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                         });
                 writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, prefix + ClockType.LOCAL_CLOCK + "." + "changes"), true);
+                        new Attribute.Default<String>(XMLParser.ID, genePrefix + ClockType.LOCAL_CLOCK + "." + "changes"), true);
                 writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
                 break;
 

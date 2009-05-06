@@ -22,20 +22,20 @@ import dr.xml.XMLParser;
 public class InitialTreeGenerator extends Generator {
     final static public String STARTING_TREE = "startingTree";
 
-	private String prefix; // gene file name
+	private String genePrefix; // gene file name
 
     public InitialTreeGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        prefix = "";
+        genePrefix = "";
     }
 
-    public String getPrefix() {
-		return prefix;
+    public String getGenePrefix() {
+		return genePrefix;
 	}
 
 
-	public void setPrefix(String prefix) {
-		this.prefix = prefix;
+	public void setGenePrefix(String genePrefix) {
+		this.genePrefix = genePrefix;
 	}
 
     /**
@@ -59,7 +59,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE),
                                     new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
@@ -67,7 +67,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE)
                             }
                     );
                 }
@@ -93,7 +93,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE),
                                     new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
                                             "" + rootHeight.initial)
                             }
@@ -102,12 +102,12 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, prefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE)
                             }
                     );
                 }
 
-                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, prefix + TaxaParser.TAXA)};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TaxaParser.TAXA)};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);

@@ -94,6 +94,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
     boolean hasAlignment = false;
+    
+    SequenceErrorModelComponentOptions comp;
 
     public ModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
@@ -209,6 +211,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
         add(panel, BorderLayout.SOUTH);
+        
+        comp = new SequenceErrorModelComponentOptions ();
     }
 
     public void setOptions(BeautiOptions options) {
@@ -224,7 +228,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         //setModelOptions(currentModel);
 
         clockModelCombo.setSelectedItem(options.clockType);
-        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
 
         settingOptions = false;

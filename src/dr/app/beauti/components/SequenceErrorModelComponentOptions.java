@@ -46,5 +46,5 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
         }
     }
 
-    public SequenceErrorType errorModelType = SequenceErrorType.NO_ERROR;
+    public static SequenceErrorType errorModelType = SequenceErrorType.NO_ERROR;
 }

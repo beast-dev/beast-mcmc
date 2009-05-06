@@ -144,5 +144,9 @@ public class XMLWriter extends java.io.PrintWriter {
         }
         println(string);
     }
+
+    public void writeIDref(String tagName, String paramName) {
+       writeTag(tagName, new Attribute[]{new Attribute.Default<String>(dr.xml.XMLParser.IDREF, paramName)}, true);
+    }
 }
 

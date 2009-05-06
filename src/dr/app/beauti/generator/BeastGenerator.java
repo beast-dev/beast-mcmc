@@ -55,10 +55,7 @@ import dr.evomodel.tree.*;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
-import dr.evoxml.AlignmentParser;
-import dr.evoxml.MergePatternsParser;
-import dr.evoxml.SitePatternsParser;
-import dr.evoxml.TaxaParser;
+import dr.evoxml.*;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
@@ -118,7 +115,7 @@ public class BeastGenerator extends Generator {
         TaxonList taxonList = options.taxonList;
         Set<String> ids = new HashSet<String>();
 
-        ids.add("taxa");
+        ids.add(TaxaParser.TAXA);
         ids.add(AlignmentParser.ALIGNMENT);
 
         if (taxonList != null) {
@@ -371,7 +368,7 @@ public class BeastGenerator extends Generator {
 
     	writer.writeComment("The list of taxa analyse (can also include dates/ages).");
     	writer.writeComment("ntax=" + taxonList.getTaxonCount());
-	    writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "taxa")});
+	    writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
 
         boolean firstDate = true;
@@ -385,7 +382,7 @@ public class BeastGenerator extends Generator {
             }
 
 
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
 
 
             if (hasDate) {
@@ -400,7 +397,7 @@ public class BeastGenerator extends Generator {
                     }
                 }
 
-                Attribute[] attributes = new Attribute[]{
+                Attribute[] attributes = {
                         new Attribute.Default<Double>("value", date.getTimeValue()),
                         new Attribute.Default<String>("direction", date.isBackwards() ? "backwards" : "forwards"),
                         new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
@@ -409,13 +406,13 @@ public class BeastGenerator extends Generator {
                 };
 
                 writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
-                writer.writeCloseTag("taxon");
+                writer.writeCloseTag(TaxonParser.TAXON);
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
         }
 
-        writer.writeCloseTag("taxa");
+        writer.writeCloseTag(TaxaParser.TAXA);
     }
 
     /**
@@ -425,22 +422,20 @@ public class BeastGenerator extends Generator {
      * @param taxonSets a list of taxa to write
      */
     private void writeTaxonSets(XMLWriter writer, List<Taxa> taxonSets) {
-
         writer.writeText("");
+
         for (Taxa taxa : taxonSets) {
             writer.writeOpenTag(
-                    "taxa",
+                    TaxaParser.TAXA,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, taxa.getId())
                     }
             );
 
             for (int j = 0; j < taxa.getTaxonCount(); j++) {
-                Taxon taxon = taxa.getTaxon(j);
-
-                writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+                writer.writeIDref(TaxonParser.TAXON, taxa.getTaxon(j).getId());
             }
-            writer.writeCloseTag("taxa");
+            writer.writeCloseTag(TaxaParser.TAXA);
         }
     }
 
@@ -486,14 +481,14 @@ public class BeastGenerator extends Generator {
     	Alignment alignment = dataPartition.getAlignment();
 
     	writer.writeComment("gene name = " + gene + ", ntax= " + alignment.getTaxonCount());
-    	writer.writeOpenTag("taxa", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});
+    	writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});
 
     	for (int i = 0; i < alignment.getTaxonCount(); i++) {
-            Taxon taxon = alignment.getTaxon(i);
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+            final Taxon taxon = alignment.getTaxon(i);
+            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
     	}
 
-    	writer.writeCloseTag("taxa");
+    	writer.writeCloseTag(TaxaParser.TAXA);
     }
 
 
@@ -524,7 +519,7 @@ public class BeastGenerator extends Generator {
             Taxon taxon = alignment.getTaxon(i);
 
             writer.writeOpenTag("sequence");
-            writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
             if (!options.samplePriorOnly) {
                 writer.writeText(alignment.getAlignedSequenceString(i));
             } else {
@@ -575,7 +570,7 @@ public class BeastGenerator extends Generator {
         			sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
 
         			if (sp.equals(eachSp)) {
-        				writer.writeTag("taxon", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxon.getId())}, true);
+        				writer.writeIDref(TaxonParser.TAXON, taxon.getId());
         			}
 
         		}
@@ -602,8 +597,8 @@ public class BeastGenerator extends Generator {
 
     	// generate gene trees regarding each data partition
     	for (PartitionModel partitionModel : options.getActivePartitionModels()) {
-    		writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF,
-    				TreeModel.TREE_MODEL + "_" + partitionModel.getName())}, true);
+    		writer.writeIDref(TreeModel.TREE_MODEL,
+							  TreeModel.TREE_MODEL + "_" + partitionModel.getName());
         }
 
         writer.writeCloseTag("geneTrees");
@@ -743,7 +738,7 @@ public class BeastGenerator extends Generator {
         }
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
 
-        writer.writeTag(AlignmentParser.ALIGNMENT, new Attribute.Default<String>(XMLParser.IDREF, alignment.getId()), true);
+        writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
 
@@ -763,9 +758,9 @@ public class BeastGenerator extends Generator {
                     }
             );
             writer.writeOpenTag(TMRCAStatistic.MRCA);
-            writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxa.getId())}, true);
+            writer.writeIDref(TaxaParser.TAXA,  taxa.getId());
             writer.writeCloseTag(TMRCAStatistic.MRCA);
-            writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+            writer.writeIDref(TreeModel.TREE_MODEL, "treeModel");
             writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
 
             if (options.taxonSetsMono.get(taxa)) {
@@ -775,9 +770,9 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
                         });
                 writer.writeOpenTag(MonophylyStatistic.MRCA);
-                writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxa.getId())}, true);
+                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 writer.writeCloseTag(MonophylyStatistic.MRCA);
-                writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+                writer.writeIDref(TreeModel.TREE_MODEL, "treeModel");
                 writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
             }
         }
@@ -982,7 +977,7 @@ public class BeastGenerator extends Generator {
         } else {
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
             writeParameter1Ref(writer, operator);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, operator.parameter2.getName())}, true);
+            writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         }
 
@@ -1002,7 +997,7 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(UpDownOperator.UP);
 
         writer.writeOpenTag(UpDownOperator.DOWN);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, operator.parameter2.getName())}, true);
+        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
         writer.writeCloseTag(UpDownOperator.DOWN);
 
         writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
@@ -1087,7 +1082,7 @@ public class BeastGenerator extends Generator {
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
                         getWeightAttribute(operator.weight));
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
         writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
     }
 
@@ -1108,21 +1103,21 @@ public class BeastGenerator extends Generator {
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.NARROW_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
         writer.writeCloseTag(ExchangeOperator.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.WIDE_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
         writer.writeCloseTag(ExchangeOperator.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(WilsonBalding.WILSON_BALDING,
                 getWeightAttribute(operator.weight));
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
         // not supported anymore. probably never worked. (todo) get it out of GUI too
 //        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
 //            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
@@ -1157,8 +1152,7 @@ public class BeastGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
-                new Attribute.Default<String>(XMLParser.IDREF, "skyride"), true);
+        writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  "skyride");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperator.BLOCK_UPDATE_OPERATOR);
     }
 
@@ -1184,7 +1178,7 @@ public class BeastGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
         writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
     }
 
@@ -1203,7 +1197,7 @@ public class BeastGenerator extends Generator {
     public void writeTimerReport(XMLWriter writer) {
         writer.writeOpenTag("report");
         writer.writeOpenTag("property", new Attribute.Default<String>("name", "timer"));
-        writer.writeTag("object", new Attribute.Default<String>(XMLParser.IDREF, "mcmc"), true);
+        writer.writeIDref("object",  "mcmc");
         writer.writeCloseTag("property");
         writer.writeCloseTag("report");
     }
@@ -1250,30 +1244,24 @@ public class BeastGenerator extends Generator {
 
             case YULE:
             case BIRTH_DEATH:
-                writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
+                writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD,  "speciation");
                 break;
             case SKYLINE:
-                writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
-                writer.writeTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "eml1"), true);
+                writer.writeIDref(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,  "skyline");
+                writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL,  "eml1");
                 break;
             case GMRF_SKYRIDE:
-                writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, "skyride"), true);
+                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  "skyride");
                 break;
             case LOGISTIC:
-                writer.writeTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, "booleanLikelihood1"), true);
+                writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD,  "booleanLikelihood1");
             default:
             	if (traitsContainSpecies) { // species
             		for (PartitionModel model : models) {
-            			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
-            						(XMLParser.IDREF, model.getName() + "." + "coalescent"), true);
+            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + "coalescent");
             		}
             	} else { // no species
-            		writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>
-            						(XMLParser.IDREF, "coalescent"), true);
+            		writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  "coalescent");
             	}
         }
 
@@ -1281,23 +1269,19 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
-            writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
-                    new Attribute.Default<String>(XMLParser.IDREF, "demographic.populationMeanDist"), true);
+            writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,  "demographic.populationMeanDist");
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
 
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
-            writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
-                    new Attribute.Default<String>(XMLParser.IDREF, "demographic.populationMeanDist"), true);
+            writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,  "demographic.populationMeanDist");
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
 
             writer.writeOpenTag(MixedDistributionLikelihood.DATA);
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.IDREF, "demographic.popSize"), true);
+            writer.writeIDref(ParameterParser.PARAMETER,  "demographic.popSize");
             writer.writeCloseTag(MixedDistributionLikelihood.DATA);
 
             writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.IDREF, "demographic.indicators"), true);
+            writer.writeIDref(ParameterParser.PARAMETER,  "demographic.indicators");
             writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
 
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
@@ -1314,8 +1298,7 @@ public class BeastGenerator extends Generator {
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
-                writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
+                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
@@ -1326,7 +1309,7 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(CompoundLikelihood.POSTERIOR);
         }
 
-        writer.writeTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE, new Attribute.Default<String>(XMLParser.IDREF, "operators"), true);
+        writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE,  "operators");
 
         // write log to screen
         writer.writeOpenTag(LoggerParser.LOG,
@@ -1377,13 +1360,11 @@ public class BeastGenerator extends Generator {
 
     	if (traitsContainSpecies) { // species
     		for (PartitionModel model : models) {
-    			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
-    						(XMLParser.IDREF, model.getName() + "." + TreeModel.TREE_MODEL), true);
+    			writer.writeIDref(TreeModel.TREE_MODEL,  model.getName() + "." + TreeModel.TREE_MODEL);
 
     		}
     	} else { // no species
-			writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>
-						(XMLParser.IDREF, TreeModel.TREE_MODEL), true);
+			writer.writeIDref(TreeModel.TREE_MODEL,  TreeModel.TREE_MODEL);
     	}
 
 
@@ -1394,11 +1375,11 @@ public class BeastGenerator extends Generator {
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-                writer.writeTag(ACLikelihood.AC_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
                 break;
 
             default:
@@ -1411,7 +1392,7 @@ public class BeastGenerator extends Generator {
 
         if (options.hasData()) {
             // we have data...
-            writer.writeTag("posterior", new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+            writer.writeIDref("posterior",  "posterior");
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, writer);
@@ -1451,21 +1432,21 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.substTreeFileName),
                             new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                     });
-            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
+            writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
 
             switch (options.clockType) {
                 case STRICT_CLOCK:
-                    writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                    writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
                 case UNCORRELATED_LOGNORMAL:
                 case RANDOM_LOCAL_CLOCK:
-                    writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
                     break;
 
                 case AUTOCORRELATED_LOGNORMAL:
-                    writer.writeTag(ACLikelihood.AC_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                    writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
                     break;
 
                 default:
@@ -1495,8 +1476,7 @@ public class BeastGenerator extends Generator {
                     first = false;
                 }
                 final String taxaRef = "monophyly(" + taxa.getId() + ")";
-                final Attribute.Default attr = new Attribute.Default<String>(XMLParser.IDREF, taxaRef);
-                writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
+				writer.writeIDref(MonophylyStatistic.MONOPHYLY_STATISTIC, taxaRef);
             }
         }
         if (!first) {
@@ -1609,9 +1589,9 @@ public class BeastGenerator extends Generator {
 
     private void writeParameterIdref(XMLWriter writer, dr.app.beauti.options.Parameter parameter) {
         if (parameter.isStatistic) {
-            writer.writeTag("statistic", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, parameter.getName())}, true);
+            writer.writeIDref("statistic",  parameter.getName());
         } else {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, parameter.getName())}, true);
+            writer.writeIDref(ParameterParser.PARAMETER,  parameter.getName());
         }
     }
 
@@ -1629,7 +1609,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+            writer.writeIDref(CompoundLikelihood.POSTERIOR,  "posterior");
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -1640,7 +1620,7 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
+        writer.writeIDref(CompoundLikelihood.PRIOR,  "prior");
         writer.writeCloseTag(Columns.COLUMN);
 
         if (options.hasData()) {
@@ -1651,7 +1631,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
+            writer.writeIDref(CompoundLikelihood.LIKELIHOOD,  "likelihood");
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -1662,7 +1642,7 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
+        writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
         writer.writeCloseTag(Columns.COLUMN);
 
         writer.writeOpenTag(Columns.COLUMN,
@@ -1673,9 +1653,9 @@ public class BeastGenerator extends Generator {
                 }
         );
         if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "clock.rate"), true);
+            writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
         } else {
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
+            writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
         }
 
 
@@ -1693,23 +1673,23 @@ public class BeastGenerator extends Generator {
      */
     private void writeLog(XMLWriter writer) {
         if (options.hasData()) {
-            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+            writer.writeIDref(CompoundLikelihood.POSTERIOR,  "posterior");
         }
-        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
+        writer.writeIDref(CompoundLikelihood.PRIOR,  "prior");
         if (options.hasData()) {
-            writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
+            writer.writeIDref(CompoundLikelihood.LIKELIHOOD,  "likelihood");
         }
 
         if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "clock.rate"), true);
+            writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
         } else {
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
+            writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
         }
 
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
+        writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
 
         for (Taxa taxa : options.taxonSets) {
-            writer.writeTag("tmrcaStatistic", new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "tmrca(" + taxa.getId() + ")")}, true);
+            writer.writeIDref("tmrcaStatistic",  "tmrca(" + taxa.getId() + ")");
         }
 
         treePriorGenerator.writeParameterLog(writer);
@@ -1718,7 +1698,7 @@ public class BeastGenerator extends Generator {
             partitionModelGenerator.writeLog(writer, model);
         }
         if (hasCodonOrUserPartitions()) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "allMus"), true);
+            writer.writeIDref(ParameterParser.PARAMETER,  "allMus");
         }
 
         switch (options.clockType) {
@@ -1726,28 +1706,28 @@ public class BeastGenerator extends Generator {
                 break;
 
             case UNCORRELATED_EXPONENTIAL:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCED_MEAN), true);
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "coefficientOfVariation"), true);
-                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
+                writer.writeIDref(ParameterParser.PARAMETER,  ClockType.UCED_MEAN);
+                writer.writeIDref(RateStatistic.RATE_STATISTIC,  RateStatistic.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                 break;
             case UNCORRELATED_LOGNORMAL:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_MEAN), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_STDEV), true);
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "coefficientOfVariation"), true);
-                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
+                writer.writeIDref(ParameterParser.PARAMETER,  ClockType.UCLD_MEAN);
+                writer.writeIDref(ParameterParser.PARAMETER,  ClockType.UCLD_STDEV);
+                writer.writeIDref(RateStatistic.RATE_STATISTIC,  RateStatistic.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootRate"), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "branchRates.var"), true);
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "coefficientOfVariation"), true);
-                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
+                writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootRate");
+                writer.writeIDref(ParameterParser.PARAMETER,  "branchRates.var");
+                writer.writeIDref(RateStatistic.RATE_STATISTIC,  RateStatistic.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                 break;
 
             case RANDOM_LOCAL_CLOCK:
-                writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "coefficientOfVariation"), true);
-                writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
-                writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);
+                writer.writeIDref(RateStatistic.RATE_STATISTIC,  RateStatistic.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
+                writer.writeIDref("sumStatistic",  "rateChanges");
                 break;
 
             default:

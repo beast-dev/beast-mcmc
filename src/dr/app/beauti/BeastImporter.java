@@ -6,6 +6,8 @@ import dr.evolution.io.Importer;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.*;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.xml.XMLParser;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -56,7 +58,7 @@ public class BeastImporter {
         for (int i = 0; i < children.size(); i++) {
             Element child = (Element)children.get(i);
 
-            if (child.getName().equalsIgnoreCase("taxa")) {
+            if (child.getName().equalsIgnoreCase(TaxaParser.TAXA)) {
                 if (taxa == null) {
                     taxa = readTaxa(child);
                     taxonLists.add(taxa);
@@ -79,7 +81,7 @@ public class BeastImporter {
         for (int i = 0; i < children.size(); i++) {
             Element child = (Element)children.get(i);
 
-            if (child.getName().equalsIgnoreCase("taxon")) {
+            if (child.getName().equalsIgnoreCase(TaxonParser.TAXON)) {
                 taxa.addTaxon(readTaxon(child));
             }
         }
@@ -124,7 +126,7 @@ public class BeastImporter {
 
     private Sequence readSequence(Element e, TaxonList taxa) throws Importer.ImportException {
 
-        String taxonID = e.getChild("taxon").getAttributeValue(XMLParser.IDREF);
+        String taxonID = e.getChild(TaxonParser.TAXON).getAttributeValue(XMLParser.IDREF);
         int index = taxa.getTaxonIndex(taxonID);
         if (index < 0) {
             throw new Importer.ImportException("Unknown taxon, " + taxonID + ", in alignment");

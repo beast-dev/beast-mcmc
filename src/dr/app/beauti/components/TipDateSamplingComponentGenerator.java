@@ -2,16 +2,13 @@ package dr.app.beauti.components;
 
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evoxml.TaxonParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -52,7 +49,7 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
                         Taxon taxon = taxa.getTaxon(i);
                         writer.writeOpenTag("leafHeight",
                                 new Attribute[]{
-                                        new Attribute.Default<String>("taxon", taxon.getId()),
+                                        new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
                                 }
                         );
                         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);

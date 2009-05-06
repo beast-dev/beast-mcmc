@@ -29,6 +29,7 @@ import dr.evolution.coalescent.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evoxml.TaxaParser;
 import dr.inference.trace.LogFileTraces;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -221,7 +222,7 @@ public class CoalGenData {
         Element root = new Element("coalGen");
         root.setAttribute("version", version);
 
-        Element taxonListElement = new Element("taxa");
+        Element taxonListElement = new Element(TaxaParser.TAXA);
 
         root.addContent(taxonListElement);
 
@@ -263,7 +264,7 @@ public class CoalGenData {
             throw new dr.xml.XMLParseException("This document does not appear to be a CoalGen file");
         }
 
-        Element taxonListElement = root.getChild("taxa");
+        Element taxonListElement = root.getChild(TaxaParser.TAXA);
     }
 
     private String getStringChild(Element element, String childName) {

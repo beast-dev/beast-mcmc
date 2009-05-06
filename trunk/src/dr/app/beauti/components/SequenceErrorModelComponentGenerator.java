@@ -36,19 +36,23 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
     }
 
     protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
-        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        SequenceErrorModelComponentOptions component = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
         switch (point) {
             case AFTER_SITE_MODEL:
-                writeErrorModel(writer, comp);
+                writeErrorModel(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
                 writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,
                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "errorModel")}, true);
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.IDREF, comp.qualifiedErrTypeName()), true);
+                if (component.hasAgeDependentRate()) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER), true);
+                }
+                if (component.hasBaseRate()) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER), true);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -69,16 +73,16 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
         writer.writeOpenTag(
                 SequenceErrorModel.SEQUENCE_ERROR_MODEL,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, "errorModel"),
+                        new Attribute.Default<String>(XMLParser.ID, SequenceErrorModelComponentOptions.ERROR_MODEL),
                         new Attribute.Default<String>("type", errorType)
                 }
         );
 
-        final String name = component.qualifiedErrTypeName();
-        if( name != null ) {
-           writeParameter(SequenceErrorModel.AGE_RELATED_RATE, name, 1, writer);
-        } else {
-            throw new IllegalArgumentException("Unknown error type");
+        if (component.hasAgeDependentRate()) {
+            writeParameter(SequenceErrorModelComponentOptions.AGE_RATE, SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER, 1, writer);
+        }
+        if (component.hasBaseRate()) {
+            writeParameter(SequenceErrorModelComponentOptions.BASE_RATE, SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER, 1, writer);
         }
 
         writer.writeCloseTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL);

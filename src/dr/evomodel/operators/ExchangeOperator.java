@@ -106,7 +106,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
         }
         assert iUncle == getOtherChild(tree, iGrandParent, iParent);
 
-        assert tree.getNodeHeight(i) < tree.getNodeHeight(iGrandParent);
+        assert tree.getNodeHeight(i) <= tree.getNodeHeight(iGrandParent);
 
         if( tree.getNodeHeight(iUncle) < tree.getNodeHeight(iParent) ) {
             exchangeNodes(tree, i, iUncle, iParent, iGrandParent);

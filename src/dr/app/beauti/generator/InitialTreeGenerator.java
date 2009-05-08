@@ -68,6 +68,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeTag(AlignmentParser.ALIGNMENT,
                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
+                // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
                 writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
@@ -136,11 +137,11 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeInitialDemoModelRef(XMLWriter writer) {
         if (options.nodeHeightPrior == TreePrior.CONSTANT) {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
+            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "constant")}, true);
         } else if (options.nodeHeightPrior == TreePrior.EXPONENTIAL) {
-            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
+            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "exponential")}, true);
         } else {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "initialDemo")}, true);
+            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "initialDemo")}, true);
         }
     }
 

@@ -239,8 +239,15 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
         
-        // TODO: setGenePrefix
-        treePriorGenerator.writeTreePriorModel(writer);
+        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        	for (PartitionModel model : options.getActivePartitionModels()) {
+        		treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.constant
+        		treePriorGenerator.writeTreePriorModel(writer);
+         	}
+        } else { // no species
+        	treePriorGenerator.setGenePrefix("");
+        	treePriorGenerator.writeTreePriorModel(writer);
+        }
         writer.writeText("");
 
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species

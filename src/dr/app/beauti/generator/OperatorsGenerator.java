@@ -29,7 +29,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
- * @author Walter Xie
  */
 public class OperatorsGenerator extends Generator {
 

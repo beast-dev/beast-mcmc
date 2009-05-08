@@ -65,7 +65,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "constant"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "constant"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 					}
 			);
@@ -83,7 +83,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "exponential"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "exponential"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 					}
 			);
@@ -114,7 +114,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					LogisticGrowthModel.LOGISTIC_GROWTH_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "logistic"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "logistic"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 					}
 			);
@@ -153,7 +153,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					ExpansionModel.EXPANSION_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "expansion"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "expansion"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 					}
 			);
@@ -183,7 +183,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					YuleModel.YULE_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "yule"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "yule"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
 					}
 			);
@@ -196,7 +196,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					BirthDeathGernhard08Model.BIRTH_DEATH_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "birthDeath"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "birthDeath"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
 					}
 			);
@@ -217,7 +217,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "initialDemo"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "initialDemo"),
 							new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
 					}
 			);
@@ -226,7 +226,7 @@ public class TreePriorGenerator extends Generator {
 			if (initialPopSize != null) {
 				writer.writeTag(ParameterParser.PARAMETER,
 						new Attribute[]{
-								new Attribute.Default<String>(XMLParser.IDREF, initialPopSize),
+								new Attribute.Default<String>(XMLParser.IDREF, genePrefix + initialPopSize),
 						}, true);
 			} else {
 				writeParameter("initialDemo.popSize", 1, 100.0, Double.NaN, Double.NaN, writer);
@@ -251,7 +251,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					SpeciationLikelihood.SPECIATION_LIKELIHOOD,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "speciation")
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "speciation")
 					}
 			);
 
@@ -271,7 +271,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "skyline"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "skyline"),
 							new Attribute.Default<String>("linear",
 									options.skylineModel == ModelOptions.LINEAR_SKYLINE ? "true" : "false")
 					}
@@ -302,7 +302,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					tagName,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + VariableDemographicModel.demoElementName),
 							new Attribute.Default<String>(VariableDemographicModel.TYPE, options.extendedSkylineModel),
                             // use midpoint by default (todo) would be nice to have a user 'tickable' option
                             new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
@@ -331,28 +331,28 @@ public class TreePriorGenerator extends Generator {
 
 			writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, genePrefix + "coalescent"));
 			writer.writeOpenTag(CoalescentLikelihood.MODEL);
-			writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModel.demoElementName), true);
+			writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + VariableDemographicModel.demoElementName), true);
 			writer.writeCloseTag(CoalescentLikelihood.MODEL);
 			writer.writeComment("Take population Tree from demographic");
 			writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 
 			writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationSizeChanges"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + VariableDemographicModel.demoElementName + ".populationSizeChanges"),
 							new Attribute.Default<String>("elementwise", "true")
 					});
 			writer.writeTag(ParameterParser.PARAMETER,
-					new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModel.demoElementName + ".indicators"), true);
+					new Attribute.Default<String>(XMLParser.IDREF, genePrefix + VariableDemographicModel.demoElementName + ".indicators"), true);
 			writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 			writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMeanDist")
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + VariableDemographicModel.demoElementName + ".populationMeanDist")
 							//,new Attribute.Default<String>("elementwise", "true")
 					});
 			writer.writeOpenTag(ExponentialDistributionModel.MEAN);
 			writer.writeTag(ParameterParser.PARAMETER,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMean"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + VariableDemographicModel.demoElementName + ".populationMean"),
 							new Attribute.Default<String>("value", "1")}, true);
 			writer.writeCloseTag(ExponentialDistributionModel.MEAN);
 			writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -361,7 +361,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(
 					GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
 					new Attribute[]{
-							new Attribute.Default<String>(XMLParser.ID, "skyride"),
+							new Attribute.Default<String>(XMLParser.ID, genePrefix + "skyride"),
 							new Attribute.Default<String>(GMRFSkyrideLikelihood.TIME_AWARE_SMOOTHING,
 									options.skyrideSmoothing == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false"),
                             new Attribute.Default<String>(GMRFSkyrideLikelihood.RANDOMIZE_TREE,
@@ -412,35 +412,35 @@ public class TreePriorGenerator extends Generator {
 		switch (treePrior) {
 			case CONSTANT:
 				writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "constant")}, true);
 				break;
 			case EXPONENTIAL:
 				writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "exponential")}, true);
 				break;
 			case LOGISTIC:
 				writer.writeTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "logistic")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "logistic")}, true);
 				break;
 			case EXPANSION:
 				writer.writeTag(ExpansionModel.EXPANSION_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "expansion")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "expansion")}, true);
 				break;
 			case SKYLINE:
 				writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "skyline")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "skyline")}, true);
 				break;
 			case GMRF_SKYRIDE:
 				writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "skyride")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "skyride")}, true);
 				break;
 			case YULE:
 				writer.writeTag(YuleModel.YULE_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "yule")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "yule")}, true);
 				break;
 			case BIRTH_DEATH:
 				writer.writeTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL,
-						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "birthDeath")}, true);
+						new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "birthDeath")}, true);
 				break;
 			default:
 				throw new RuntimeException("No tree prior has been specified so cannot refer to it");
@@ -448,7 +448,6 @@ public class TreePriorGenerator extends Generator {
 	}
 
 	void writeParameterLog(XMLWriter writer) {
-		genePrefix = "";
 
 		switch (options.nodeHeightPrior) {
 
@@ -513,7 +512,7 @@ public class TreePriorGenerator extends Generator {
 
 		if (options.nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
 			writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
-					new Attribute.Default<String>(XMLParser.ID, "demographic.analysis"),
+					new Attribute.Default<String>(XMLParser.ID, genePrefix + "demographic.analysis"),
 					new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1)}
 			);
 
@@ -549,7 +548,7 @@ public class TreePriorGenerator extends Generator {
 					});
 			writer.writeOpenTag(CSVExporter.COLUMNS);
 			writer.writeTag(EBSPAnalysis.VD_ANALYSIS,
-					new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "demographic.analysis")}, true);
+					new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "demographic.analysis")}, true);
 			writer.writeCloseTag(CSVExporter.COLUMNS);
 			writer.writeCloseTag(CSVExporter.CSV_EXPORT);
 		}
@@ -558,11 +557,11 @@ public class TreePriorGenerator extends Generator {
 	private void writeExponentialMarkovLikelihood(XMLWriter writer) {
 		writer.writeOpenTag(
 				ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL,
-				new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "eml1"),
+				new Attribute[]{new Attribute.Default<String>(XMLParser.ID, genePrefix + "eml1"),
 						new Attribute.Default<String>("jeffreys", "true")}
 		);
 		writer.writeOpenTag(ExponentialMarkovModel.CHAIN_PARAMETER);
-		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "skyline.popSize"), true);
+		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "skyline.popSize"), true);
 		writer.writeCloseTag(ExponentialMarkovModel.CHAIN_PARAMETER);
 		writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
 	}
@@ -575,7 +574,7 @@ public class TreePriorGenerator extends Generator {
 	private void writeBooleanLikelihood(XMLWriter writer) {
 		writer.writeOpenTag(
 				BooleanLikelihood.BOOLEAN_LIKELIHOOD,
-				new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "booleanLikelihood1")}
+				new Attribute[]{new Attribute.Default<String>(XMLParser.ID, genePrefix + "booleanLikelihood1")}
 		);
 		writer.writeOpenTag(
 				TestStatistic.TEST_STATISTIC,
@@ -584,9 +583,9 @@ public class TreePriorGenerator extends Generator {
 						new Attribute.Default<String>("name", "test1")
 				}
 		);
-		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "logistic.t50"), true);
+		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "logistic.t50"), true);
 		writer.writeOpenTag("lessThan");
-		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
+		writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "treeModel.rootHeight"), true);
 		writer.writeCloseTag("lessThan");
 		writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
 		writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
@@ -594,14 +593,14 @@ public class TreePriorGenerator extends Generator {
 
 	public void writeLikelihoodLog(XMLWriter writer) {
 		if (options.nodeHeightPrior == TreePrior.YULE || options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-			writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
+			writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "speciation"), true);
 		} else if (options.nodeHeightPrior == TreePrior.SKYLINE) {
-			writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
+			writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "skyline"), true);
 		} else if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
 //	        writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"skyride"), true);
 			// Currently nothing additional needs logging
 		} else {
-			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "coalescent"), true);
+			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "coalescent"), true);
 		}
 
 	}

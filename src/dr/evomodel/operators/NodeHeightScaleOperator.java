@@ -18,11 +18,11 @@ import java.util.*;
 public class NodeHeightScaleOperator extends AbstractCoercableOperator {
 
     public static final String NODE_HEIGHT_SCALE_OPERATOR = "nodeHeightScaleOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String SCALE_ALL = "scaleAll";
+    public static final String SCALE_FACTOR = ScaleOperator.SCALE_FACTOR;
+    public static final String SCALE_ALL = ScaleOperator.SCALE_ALL;
 
-    private TreeModel tree;
-    private boolean scaleAll;
+    private final TreeModel tree;
+    private final boolean scaleAll;
     Set<Double> tipDates = new TreeSet<Double>();
     private final Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
     private Parameter nodeHeightParameter;
@@ -75,7 +75,7 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
         return logq;
     }
 
-    private final double getJacobian(NodeRef node) {
+    private double getJacobian(NodeRef node) {
 
         intervals.clear();
         for (Double date : tipDates) {
@@ -235,7 +235,7 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(SCALE_ALL, true),

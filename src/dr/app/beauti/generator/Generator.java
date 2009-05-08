@@ -7,11 +7,11 @@ import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.SumStatistic;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public abstract class Generator {
         }
         genePrefix = "";
     }
-    
+
     public String getGenePrefix() {
 		return genePrefix;
 	}
@@ -157,16 +157,16 @@ public abstract class Generator {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
         attributes.add(new Attribute.Default<String>(XMLParser.ID, genePrefix + id));
         if (dimension > 1) {
-            attributes.add(new Attribute.Default<String>("dimension", dimension + ""));
+            attributes.add(new Attribute.Default<String>(ParameterParser.DIMENSION, dimension + ""));
         }
         if (!Double.isNaN(value)) {
-            attributes.add(new Attribute.Default<String>("value", multiDimensionValue(dimension, value)));
+            attributes.add(new Attribute.Default<String>(ParameterParser.VALUE, multiDimensionValue(dimension, value)));
         }
         if (!Double.isNaN(lower)) {
-            attributes.add(new Attribute.Default<String>("lower", multiDimensionValue(dimension, lower)));
+            attributes.add(new Attribute.Default<String>(ParameterParser.LOWER, multiDimensionValue(dimension, lower)));
         }
         if (!Double.isNaN(upper)) {
-            attributes.add(new Attribute.Default<String>("upper", multiDimensionValue(dimension, upper)));
+            attributes.add(new Attribute.Default<String>(ParameterParser.UPPER, multiDimensionValue(dimension, upper)));
         }
 
         Attribute[] attrArray = new Attribute[attributes.size()];
@@ -202,7 +202,7 @@ public abstract class Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, genePrefix + name), true);
+        writer.writeIDref(SumStatistic.SUM_STATISTIC, name);
         writer.writeCloseTag(Columns.COLUMN);
     }
 

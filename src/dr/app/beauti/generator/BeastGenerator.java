@@ -29,6 +29,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
@@ -44,12 +45,6 @@ import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
-import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.operators.TreeBitMoveOperator;
-import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.tree.*;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
@@ -62,16 +57,13 @@ import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
 import dr.inference.model.*;
-import dr.inference.operators.*;
+import dr.inference.operators.SimpleOperatorSchedule;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
 
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -103,7 +95,7 @@ public class BeastGenerator extends Generator {
         initialTreeGenerator = new InitialTreeGenerator(options, components);
         treeModelGenerator = new TreeModelGenerator(options, components);
         branchRatesModelGenerator = new BranchRatesModelGenerator(options, components);
-        
+
         operatorsGenerator = new OperatorsGenerator(options, components);
     }
 
@@ -183,7 +175,7 @@ public class BeastGenerator extends Generator {
             writeTaxonSets(writer, taxonSets);
         }
 
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        if ( doingSpeciesAnalysis() ) { // species
         	writer.writeText("");
         	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
         	// write all taxa in each gene tree regarding each data partition,
@@ -238,7 +230,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
-        
+
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species
         	for (PartitionModel model : options.getActivePartitionModels()) {
         		treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.constant
@@ -250,7 +242,7 @@ public class BeastGenerator extends Generator {
         }
         writer.writeText("");
 
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        if ( doingSpeciesAnalysis() ) { // species
         	for (PartitionModel model : options.getActivePartitionModels()) {
 	        	initialTreeGenerator.setGenePrefix(model.getName() + "."); // partitionName.startingTree
 	        	initialTreeGenerator.writeStartingTree(writer);
@@ -262,7 +254,7 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
 //        treeModelGenerator = new TreeModelGenerator(options);
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        if ( doingSpeciesAnalysis() ) { // species
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
 	    	for (PartitionModel model : options.getActivePartitionModels()) {
 	    		treeModelGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
@@ -276,7 +268,7 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        if ( doingSpeciesAnalysis() ) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	// TODO: writeParameterLog
 	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
@@ -289,11 +281,11 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
-        
+
         if (options.traits.contains(options.TRAIT_SPECIES)) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	branchRatesModelGenerator.setGenePrefix(model.getName() + ".");
-	        	//TODO: fixParameters 
+	        	//TODO: fixParameters
 	        	branchRatesModelGenerator.writeBranchRatesModel(writer);
 	        }
         } else { // no species
@@ -301,7 +293,7 @@ public class BeastGenerator extends Generator {
         	branchRatesModelGenerator.writeBranchRatesModel(writer);
         }
         writer.writeText("");
-        
+
         for (PartitionModel partitionModel : options.getActivePartitionModels()) {
             partitionModelGenerator.writeSubstitutionModel(partitionModel, writer);
             writer.writeText("");
@@ -328,7 +320,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-        	if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        	if ( doingSpeciesAnalysis() ) { // species
         		treeLikelihoodGenerator.setGenePrefix(model.getName() + ".");
         	} else {
         		treeLikelihoodGenerator.setGenePrefix("");
@@ -361,7 +353,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
 
         // XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies
-        writeMCMC(options.getActivePartitionModels(), (options.traits.contains(options.TRAIT_SPECIES)), writer);
+        writeMCMC(options.getActivePartitionModels(), doingSpeciesAnalysis(), writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
@@ -377,6 +369,10 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("beast");
         writer.flush();
+    }
+
+    private boolean doingSpeciesAnalysis() {
+        return options.traits.contains(options.TRAIT_SPECIES);
     }
 
     /**
@@ -1331,7 +1327,7 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(CompoundLikelihood.POSTERIOR);
         }
 
-        writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE,  "operators");
+        writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen
         writer.writeOpenTag(LoggerParser.LOG,
@@ -1491,29 +1487,28 @@ public class BeastGenerator extends Generator {
      */
     private void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
-        for (Taxa taxa : options.taxonSetsMono.keySet()) {
-            if (options.taxonSetsMono.get(taxa)) {
-                if (first) {
+        for( Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet() ) {
+            if( taxaBooleanEntry.getValue() ) {
+                if( first ) {
                     writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
                     first = false;
                 }
-                final String taxaRef = "monophyly(" + taxa.getId() + ")";
-				writer.writeIDref(MonophylyStatistic.MONOPHYLY_STATISTIC, taxaRef);
+                final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
+                writer.writeIDref(MonophylyStatistic.MONOPHYLY_STATISTIC, taxaRef);
             }
         }
-        if (!first) {
+        if( !first ) {
             writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
         }
 
-        ArrayList<dr.app.beauti.options.Parameter> parameters = options.selectParameters();
-        for (dr.app.beauti.options.Parameter parameter : parameters) {
-            if (parameter.priorType != PriorType.NONE) {
-                if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+        ArrayList<Parameter> parameters = options.selectParameters();
+        for( Parameter parameter : parameters ) {
+            if( parameter.priorType != PriorType.NONE ) {
+                if( parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight ) {
                     writeParameterPrior(parameter, writer);
                 }
             }
         }
-
     }
 
     /**
@@ -1749,7 +1744,7 @@ public class BeastGenerator extends Generator {
             case RANDOM_LOCAL_CLOCK:
                 writer.writeIDref(RateStatistic.RATE_STATISTIC,  RateStatistic.COEFFICIENT_OF_VARIATION);
                 writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
-                writer.writeIDref("sumStatistic",  "rateChanges");
+                writer.writeIDref(SumStatistic.SUM_STATISTIC,  "rateChanges");
                 break;
 
             default:
@@ -1772,7 +1767,7 @@ public class BeastGenerator extends Generator {
      *         broken into codon positions.
      */
     private boolean hasCodonOrUserPartitions() {
-        return (options.getActivePartitionModels().size() > 1 || options.getActivePartitionModels().get(0).getCodonPartitionCount() > 1);
+        final List<PartitionModel> models = options.getActivePartitionModels();
+        return (models.size() > 1 || models.get(0).getCodonPartitionCount() > 1);
     }
-
 }

@@ -1,7 +1,5 @@
 package dr.app.beauti.generator;
 
-import java.util.List;
-
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
@@ -17,15 +15,11 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.BitFlipOperator;
-import dr.inference.operators.CenteredScaleOperator;
-import dr.inference.operators.DeltaExchangeOperator;
-import dr.inference.operators.ScaleOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.operators.SwapOperator;
-import dr.inference.operators.UpDownOperator;
+import dr.inference.operators.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -163,7 +157,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
@@ -174,28 +168,30 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight),
-                        new Attribute.Default<String>("scaleAllIndependently", indepedently ? "true" : "false")
+                        new Attribute.Default<String>(ScaleOperator.SCALE_ALL_IND, indepedently ? "true" : "false")
                 });
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
     private void writeRandomWalkOperator(Operator operator, XMLWriter writer) {
+        final String name = RandomWalkOperator.PARSER.getParserName();
         writer.writeOpenTag(
-                "randomWalkOperator",
+                name,
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag("randomWalkOperator");
+        writer.writeCloseTag(name);
     }
 
     private void writeRandomWalkOperator(Operator operator, boolean reflecting, XMLWriter writer) {
+        final String name = RandomWalkOperator.PARSER.getParserName();
         writer.writeOpenTag(
-                "randomWalkOperator",
+                name,
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         getWeightAttribute(operator.weight),
@@ -203,30 +199,30 @@ public class OperatorsGenerator extends Generator {
                                 (reflecting ? "reflecting" : "absorbing"))
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag("randomWalkOperator");
+        writer.writeCloseTag(name);
     }
 
     private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
 
         int windowSize = (int) Math.round(operator.tuning);
         if (windowSize < 1) windowSize = 1;
-
+        final String name = RandomWalkIntegerOperator.PARSER.getParserName();
         writer.writeOpenTag(
-                "randomWalkIntegerOperator",
+                name,
                 new Attribute[]{
                         new Attribute.Default<Integer>("windowSize", windowSize),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag("randomWalkIntegerOperator");
+        writer.writeCloseTag(name);
     }
 
     private void writeScaleAllOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<String>("scaleAll", "true"),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<String>(ScaleOperator.SCALE_ALL, "true"),
                         getWeightAttribute(operator.weight)
                 });
 
@@ -245,7 +241,7 @@ public class OperatorsGenerator extends Generator {
     private void writeUpDownOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
@@ -418,7 +414,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);

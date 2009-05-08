@@ -29,11 +29,8 @@ import dr.xml.XMLParser;
  */
 public class TreePriorGenerator extends Generator {
 
-	private String genePrefix;
-
 	public TreePriorGenerator(BeautiOptions options, ComponentFactory[] components) {
 		super(options, components);
-		genePrefix = "";
 	}
 
 	void writeTreePrior(XMLWriter writer) {	// for species, partitionName.treeModel
@@ -46,14 +43,6 @@ public class TreePriorGenerator extends Generator {
 			writer.writeText("");
 			writeExponentialMarkovLikelihood(writer);
 		}
-	}
-
-	public String getGenePrefix() {
-		return genePrefix;
-	}
-
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
 	}
 
 	/**

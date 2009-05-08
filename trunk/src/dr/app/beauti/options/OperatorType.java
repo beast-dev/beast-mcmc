@@ -1,5 +1,7 @@
 package dr.app.beauti.options;
 
+import dr.inference.operators.ScaleOperator;
+
 /**
  * @author Alexei Drummond
  */
@@ -11,7 +13,7 @@ public enum OperatorType {
     RANDOM_WALK_REFLECTING("randomWalkReflecting"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
-    SCALE_ALL("scaleAll"),
+    SCALE_ALL(ScaleOperator.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     CENTERED_SCALE("centeredScale"),
     DELTA_EXCHANGE("deltaExchange"),

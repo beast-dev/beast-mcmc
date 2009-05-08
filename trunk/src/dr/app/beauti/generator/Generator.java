@@ -20,10 +20,11 @@ import java.util.List;
 public abstract class Generator {
 
     protected final BeautiOptions options;
-
+    protected String genePrefix; // gene file name
 
     protected Generator(BeautiOptions options) {
         this.options = options;
+        genePrefix = "";
     }
 
     public Generator(BeautiOptions options, ComponentFactory[] components) {
@@ -33,7 +34,16 @@ public abstract class Generator {
                 this.components.add(component.getGenerator(options));
             }
         }
+        genePrefix = "";
     }
+    
+    public String getGenePrefix() {
+		return genePrefix;
+	}
+
+	public void setGenePrefix(String genePrefix) {
+		this.genePrefix = genePrefix;
+	}
 
     /**
      * fix a parameter
@@ -59,7 +69,7 @@ public abstract class Generator {
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, id), true);
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + id), true);
         writer.writeCloseTag(wrapperName);
     }
 
@@ -145,7 +155,7 @@ public abstract class Generator {
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
-        attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, genePrefix + id));
         if (dimension > 1) {
             attributes.add(new Attribute.Default<String>("dimension", dimension + ""));
         }
@@ -192,7 +202,7 @@ public abstract class Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, name), true);
+        writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, genePrefix + name), true);
         writer.writeCloseTag(Columns.COLUMN);
     }
 

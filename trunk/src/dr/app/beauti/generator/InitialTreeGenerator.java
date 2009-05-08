@@ -22,21 +22,9 @@ import dr.xml.XMLParser;
 public class InitialTreeGenerator extends Generator {
     final static public String STARTING_TREE = "startingTree";
 
-	private String genePrefix; // gene file name
-
     public InitialTreeGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        genePrefix = "";
     }
-
-    public String getGenePrefix() {
-		return genePrefix;
-	}
-
-
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
-	}
 
     /**
      * Generate XML for the starting tree

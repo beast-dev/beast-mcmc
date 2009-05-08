@@ -394,7 +394,8 @@ public class BeautiOptions extends ModelOptions {
         selectComponentStatistics(this, parameters);
 
         boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
-
+        
+        // add all Parameter (with prefix) into parameters list
         for (PartitionModel model : getActivePartitionModels()) {
             parameters.addAll(model.getParameters(multiplePartitions));
         }
@@ -519,7 +520,7 @@ public class BeautiOptions extends ModelOptions {
         // Change to a list to ensure that the order is kept the same as in the table.
         List<PartitionModel> activeModels = new ArrayList<PartitionModel>();
         for (PartitionModel model : getPartitionModels()) {
-            if (models.contains(model)) {
+            if (models.contains(model)) { // if linked model, only return one model, if unlinked, return a list
                 activeModels.add(model);
             }
         }

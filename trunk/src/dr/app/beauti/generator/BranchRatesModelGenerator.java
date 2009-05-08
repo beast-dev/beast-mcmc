@@ -24,21 +24,11 @@ import dr.xml.XMLParser;
  * @author Andrew Rambaut
  */
 public class BranchRatesModelGenerator extends Generator {
-	private String genePrefix; // gene file name
 
     public BranchRatesModelGenerator(BeautiOptions options, ComponentFactory[] components) {
-        super(options, components);
-        genePrefix = "";
+        super(options, components);       
     }
-    
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
-	}
-
-	public String getGenePrefix() {
-		return genePrefix;
-	}
-
+ 
     /**
      * Write the relaxed clock branch rates block.
      *

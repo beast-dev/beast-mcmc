@@ -25,19 +25,9 @@ import dr.xml.XMLParser;
  * @author Andrew Rambaut
  */
 public class TreeLikelihoodGenerator extends Generator {
-	private String genePrefix; // gene file name
-
-    public String getGenePrefix() {
-		return genePrefix;
-	}
-
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
-	}
 
 	public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        genePrefix = "";
     }
 
     /**

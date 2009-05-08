@@ -27,7 +27,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                          double weight) {
 
         if (!(prior instanceof GammaDistribution || prior instanceof GammaDistributionModel))
-            throw new RuntimeException("Mean prior must be Normal");
+            throw new RuntimeException("Precision prior must be Gamma");
 
         Distribution likelihood = inLikelihood.getDistribution();
         this.dataList = inLikelihood.getDataList();

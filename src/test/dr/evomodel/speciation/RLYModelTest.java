@@ -73,7 +73,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
 
         TreeBitRandomWalkOperator tbrw =
                 new TreeBitRandomWalkOperator(treeModel, birthRateIndicator, birthRate, 1.0, 4, true);
-        BitFlipOperator bfo = new BitFlipOperator(I, 1.0);
+        BitFlipOperator bfo = new BitFlipOperator(I, 1.0, true);
 
         schedule.addOperator(tbrw);
         schedule.addOperator(bfo);

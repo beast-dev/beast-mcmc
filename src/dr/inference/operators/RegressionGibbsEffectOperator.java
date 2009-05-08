@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -12,87 +13,78 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class RegressionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String GIBBS_OPERATOR = "regressionGibbsOperator";
-    //	private TreeModel treeModel;
-    //	private MatrixParameter precisionMatrixParameter;
-    private double[][] effectPrecisionParameter;
+    public static final String GIBBS_OPERATOR = "regressionGibbsEffectOperator";
+
     private LinearRegression linearModel;
     private Parameter effect;
-    private Parameter outcome;
+    private Parameter indicators;
+    private boolean hasNoIndicators = true;
     private MultivariateDistribution effectPrior;
     private int dim;
     private int effectNumber;
     private int N;
     private int numEffects;
     private double[][] X;
-//	private String traitName;
 
-//	private int numberObservations;
-//	private int weight;
-
-    public RegressionGibbsOperator(LinearRegression linearModel, Parameter effect, MultivariateDistributionLikelihood effectPrior) {
+    public RegressionGibbsEffectOperator(LinearRegression linearModel, Parameter effect, Parameter indicators,
+                                   MultivariateDistributionLikelihood effectPrior) {
         super();
         this.linearModel = linearModel;
         this.effect = effect;
+        this.indicators = indicators;
+        if (indicators != null) {
+            hasNoIndicators = false;
+            if (indicators.getDimension() != effect.getDimension())
+                throw new RuntimeException("Indicator and effect dimensions must match");
+        }
         effectNumber = linearModel.getEffectNumber(effect);
         this.effectPrior = effectPrior.getDistribution();
         dim = effect.getDimension();
-        outcome = linearModel.getDependentVariable();
-        N = outcome.getDimension();
+        N = linearModel.getDependentVariable().getDimension();
         numEffects = linearModel.getNumberOfEffects();
         X = linearModel.getX(effectNumber);
-
-//		effectPrecisionParameter = effectPrior.getScaleMatrix();
-//		numEffects = linearModel.getNumberOfEffects();
     }
-
 
     public int getStepCount() {
         return 1;
     }
 
-
     public double doOperation() throws OperatorFailedException {
 
-//		int effectNum = MathUtils.nextInt(numEffects);
-//	    Parameter effectParameter  = linearModel.getEffect(effectNum);
-//		Parameter outcomeParameter = linearModel.getDependentVariable();
-
-        double[] W = outcome.getParameterValues(); // outcome, fresh copy
+        double[] W = linearModel.getTransformedDependentParameter();
         double[] P = linearModel.getScale();  // outcome precision, fresh copy
-        double[] Beta = effect.getParameterValues(); // effect, fresh copy
-
-//		final int N = outcome.getDimension();
 
         for (int k = 0; k < numEffects; k++) {
             if (k != effectNumber) {
                 double[] thisXBeta = linearModel.getXBeta(k);
                 for (int i = 0; i < N; i++)
                     W[i] -= thisXBeta[i];
-
             }
         }
-
-//		double[][] X = linearModel.getX(effectNumber); // pointer only
-//		final int dim = X[0].length;
 
         double[] priorBetaMean = effectPrior.getMean();
         double[][] priorBetaScale = effectPrior.getScaleMatrix();
 
         double[][] XtP = new double[dim][N];
         for (int j = 0; j < dim; j++) {
-            for (int i = 0; i < N; i++)
-                XtP[j][i] = X[i][j] * P[i];
+            if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
+                 for (int i = 0; i < N; i++)
+                    XtP[j][i] = X[i][j] * P[i];
+            } // else already filled with zeros
         }
 
         double[][] XtPX = new double[dim][dim];
         for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) {// symmetric
-                for (int k = 0; k < N; k++)
-                    XtPX[i][j] += XtP[i][k] * X[k][j];
-                XtPX[j][i] = XtPX[i][j]; // symmetric
+            if (hasNoIndicators || indicators.getParameterValue(i) == 1) {
+                for (int j = i; j < dim; j++) {// symmetric
+                    if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
+                        for (int k = 0; k < N; k++)
+                            XtPX[i][j] += XtP[i][k] * X[k][j];
+                        XtPX[j][i] = XtPX[i][j]; // symmetric
+                    }
+                }
             }
         }
 
@@ -126,9 +118,6 @@ public class RegressionGibbsOperator extends SimpleMCMCOperator implements Gibbs
                 scaledMean[i] += variance[i][j] * unscaledMean[j];
         }
 
-//		System.err.println("Mean:\n"+new Vector(scaledMean));
-//		System.err.println("Var :\n"+new Matrix(variance));
-
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(
                 scaledMean, variance);
 
@@ -159,14 +148,17 @@ public class RegressionGibbsOperator extends SimpleMCMCOperator implements Gibbs
             LinearRegression linearModel = (LinearRegression) xo.getChild(LinearRegression.class);
             Parameter effect = (Parameter) xo.getChild(Parameter.class);
             MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-//			System.err.println("prior: "+prior.getId());
+
             if (prior.getDistribution().getType().compareTo(MultivariateNormalDistribution.TYPE) != 0)
                 throw new XMLParseException("Only a multivariate normal prior is conjugate");
-//			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-//			MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+            XMLObject cxo = (XMLObject) xo.getChild(GeneralizedLinearModel.INDICATOR);
+            Parameter indicators = null;
+            if (cxo != null) {
+                indicators = (Parameter) cxo.getChild(Parameter.class);
+            }
 
-            RegressionGibbsOperator operator = new RegressionGibbsOperator(linearModel, effect, prior);
+            RegressionGibbsEffectOperator operator = new RegressionGibbsEffectOperator(linearModel, effect, indicators, prior);
             operator.setWeight(weight);
             return operator;
         }
@@ -189,11 +181,13 @@ public class RegressionGibbsOperator extends SimpleMCMCOperator implements Gibbs
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-//				new ElementRule(TreeModel.class),
                 new ElementRule(Parameter.class),
-//				new ElementRule(MultivariateDiffusionModel.class)
                 new ElementRule(MultivariateDistributionLikelihood.class),
-                new ElementRule(LinearRegression.class)
+                new ElementRule(LinearRegression.class),
+                new ElementRule(GeneralizedLinearModel.INDICATOR,
+                        new XMLSyntaxRule[] {
+                                new ElementRule(Parameter.class)
+                        },true)
         };
 
     };

@@ -39,14 +39,16 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
     public static final String BIT_FLIP_OPERATOR = "bitFlipOperator";
     public static final String BITS = "bits";
+    public static final String USES_SUM_PRIOR = "usesPriorOnSum";
 
-    public BitFlipOperator(Parameter parameter, double weight) {
-       this(parameter,weight,1);
-    }
-
-    public BitFlipOperator(Parameter parameter, double weight, int bits) {
+    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum) {
+//       this(parameter,weight,1,usesPriorOnSum);
+//    }
+//
+//    public BitFlipOperator(Parameter parameter, double weight, int bits, boolean usesPriorOnSum) {
         this.parameter = parameter;
-        this.bits = bits;
+//        this.bits = bits;
+        this.usesPriorOnSum = usesPriorOnSum;
         setWeight(weight);
     }
 
@@ -61,29 +63,32 @@ public class BitFlipOperator extends SimpleMCMCOperator {
      * Change the parameter and return the hastings ratio.
      * Flip (Switch a 0 to 1 or 1 to 0) for a random bit in a bit vector.
      * Return the hastings ratio which makes all subsets of vectors with the same number of 1 bits
-     * equiprobable.
+     * equiprobable, unless usesPriorOnSum = false then all configurations are equiprobable
      */
     public final double doOperation() {
         final int dim = parameter.getDimension();
         double sum = 0.0;
 
-        for (int i = 0; i < dim; i++) {
-            sum += parameter.getParameterValue(i);
+        if(usesPriorOnSum) {
+            for (int i = 0; i < dim; i++) {
+                sum += parameter.getParameterValue(i);
+            }
         }
 
         final int pos = MathUtils.nextInt(dim);
 
         final int value = (int) parameter.getParameterValue(pos);
-        double logq;
+        double logq = 0.0;
         if (value == 0) {
             parameter.setParameterValue(pos, 1.0);
 
-            logq = -Math.log((dim - sum) / (sum + 1));
+            if(usesPriorOnSum)
+                logq = -Math.log((dim - sum) / (sum + 1));
 
         } else if (value == 1) {
             parameter.setParameterValue(pos, 0.0);
-
-            logq = -Math.log(sum / (dim - sum + 1));
+            if(usesPriorOnSum)
+                logq = -Math.log(sum / (dim - sum + 1));
 
         } else {
             throw new RuntimeException("expected 1 or 0");
@@ -118,7 +123,9 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            return new BitFlipOperator(parameter, weight);
+            boolean usesPriorOnSum = xo.getAttribute(USES_SUM_PRIOR,true);
+
+            return new BitFlipOperator(parameter, weight, usesPriorOnSum);
         }
 
         //************************************************************************
@@ -139,7 +146,8 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newIntegerRule(BITS,true),
+//                AttributeRule.newIntegerRule(BITS,true),
+                AttributeRule.newBooleanRule(USES_SUM_PRIOR,true),
                 new ElementRule(Parameter.class)
         };
 
@@ -147,5 +155,6 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     // Private instance variables
 
     private Parameter parameter = null;
-    private int bits;
+//    private int bits;
+    private boolean usesPriorOnSum = true;
 }

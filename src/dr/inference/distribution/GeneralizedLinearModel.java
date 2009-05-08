@@ -26,7 +26,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     public static final String INDICATOR = "indicator";
     public static final String LOGISTIC_REGRESSION = "logistic";
     public static final String NORMAL_REGRESSION = "normal";
+    public static final String LOG_NORMAL_REGRESSION = "logNormal";
     public static final String LOG_LINEAR = "logLinear";
+//    public static final String LOG_TRANSFORM = "logDependentTransform";
 //	public static final String RANDOM_EFFECTS = "randomEffects";
 
     protected Parameter dependentParam;
@@ -34,7 +36,8 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     protected List<Parameter> indParamDelta;
     protected List<double[][]> designMatrix; // fixed constants, access as double[][] to save overhead
 
-    protected double[][] scaleDesignMatrix;
+//    protected double[][] scaleDesignMatrix;
+    protected int[] scaleDesign;
     protected Parameter scaleParameter;
 
     protected int numIndependentVariables = 0;
@@ -42,7 +45,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     protected List<Parameter> randomEffects;
 
-    public GeneralizedLinearModel(Parameter dependentParam) { 
+    public GeneralizedLinearModel(Parameter dependentParam) {
         super(GLM_LIKELIHOOD);
         this.dependentParam = dependentParam;
 
@@ -52,6 +55,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         } else
             N = 0;
     }
+
+//    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
+    public int[] getScaleDesign() { return scaleDesign; }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
         if (designMatrix == null)
@@ -159,12 +165,14 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         double[] scale = new double[N];
 
-        final int K = scaleParameter.getDimension();
-        for (int k = 0; k < K; k++) {
-            final double scaleK = scaleParameter.getParameterValue(k);
-            for (int i = 0; i < N; i++)
-                scale[i] += scaleDesignMatrix[i][k] * scaleK;
-        }
+//        final int K = scaleParameter.getDimension();
+//        for (int k = 0; k < K; k++) {
+//            final double scaleK = scaleParameter.getParameterValue(k);
+//            for (int i = 0; i < N; i++)
+//                scale[i] += scaleDesignMatrix[i][k] * scaleK;
+//        }
+        for(int k=0; k<N; k++)
+            scale[k] = scaleParameter.getParameterValue(scaleDesign[k]);
 
         return scale;
     }
@@ -172,9 +180,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     public double[][] getScaleAsMatrix() {
 
-        double[][] scale = new double[N][N];
-
-        return scale;
+//        double[][] scale = new double[N][N];
+//
+//        return scale;
+        throw new RuntimeException("Not yet implemented: GeneralizedLinearModel.getScaleAsMatrix()");
     }
 
 //	protected abstract double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient);
@@ -187,9 +196,12 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     protected abstract boolean requiresScale();
 
-    private void addScaleParameter(Parameter scaleParameter, DesignMatrix matrix) {
+    private void addScaleParameter(Parameter scaleParameter, Parameter design) {
         this.scaleParameter = scaleParameter;
-        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
+//        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
+        scaleDesign = new int[design.getDimension()];
+        for(int i=0; i<scaleDesign.length; i++)
+            scaleDesign[i] = (int) design.getParameterValue(i);
         addParameter(scaleParameter);
     }
 
@@ -358,7 +370,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             if (family.compareTo(LOGISTIC_REGRESSION) == 0) {
                 glm = new LogisticRegression(dependentParam);
             } else if (family.compareTo(NORMAL_REGRESSION) == 0) {
-                glm = new LinearRegression(dependentParam);
+                glm = new LinearRegression(dependentParam,false);
+            } else if (family.compareTo(LOG_NORMAL_REGRESSION) == 0) {
+                glm = new LinearRegression(dependentParam,true);
             } else if (family.compareTo(LOG_LINEAR) == 0) {
                 glm = new LogLinearModel(dependentParam);
             } else
@@ -367,15 +381,32 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             if (glm.requiresScale()) {
                 cxo = (XMLObject) xo.getChild(SCALE_VARIABLES);
                 Parameter scaleParameter = null;
-                DesignMatrix designMatrix = null;
+//                DesignMatrix designMatrix = null;
+                Parameter scaleDesign = null;
                 if (cxo != null) {
                     scaleParameter = (Parameter) cxo.getChild(Parameter.class);
-                    designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
+                    XMLObject gxo = (XMLObject) cxo.getChild(INDICATOR);
+                    if (gxo != null)
+                        scaleDesign = (Parameter) gxo.getChild(Parameter.class);
+//                    designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
                 }
-                if (scaleParameter == null || designMatrix == null)
+                if (scaleParameter == null)
                     throw new XMLParseException("Family '" + family + "' requires scale parameters");
-                checkDimensions(scaleParameter, dependentParam, designMatrix);
-                glm.addScaleParameter(scaleParameter, designMatrix);
+                if (scaleDesign == null)
+                    scaleDesign = new Parameter.Default(dependentParam.getDimension(),0.0);
+                else {
+                    if (scaleDesign.getDimension() != dependentParam.getDimension())
+                            throw new XMLParseException("Scale and scaleDesign parameters must be the same dimension");
+                    for(int i=0; i<scaleDesign.getDimension(); i++) {
+                        double value = scaleDesign.getParameterValue(i);
+                        if (value < 1 || value > scaleParameter.getDimension())
+                            throw new XMLParseException("Invalid scaleDesign value");
+                        scaleDesign.setParameterValue(i,value-1);
+                    }
+                }
+
+//                checkDimensions(scaleParameter, dependentParam, designMatrix);
+                glm.addScaleParameter(scaleParameter, scaleDesign);
             }
 
             addIndependentParameters(xo, glm, dependentParam);

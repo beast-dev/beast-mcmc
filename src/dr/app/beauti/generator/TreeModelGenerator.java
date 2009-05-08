@@ -19,22 +19,9 @@ import dr.xml.XMLParser;
  */
 public class TreeModelGenerator extends Generator {
 
-	private String genePrefix; // gene file name
-
     public TreeModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        genePrefix = "";
     }
-
-    public String getGenePrefix() {
-		return genePrefix;
-	}
-
-
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
-	}
-
 
 	/**
      * Write tree model XML block.
@@ -42,8 +29,7 @@ public class TreeModelGenerator extends Generator {
      * @param writer the writer
      */
     void writeTreeModel(XMLWriter writer) { // for species, partitionName.treeModel
-
-        final String treeModelName = genePrefix + TreeModel.TREE_MODEL;
+    	final String treeModelName = genePrefix + TreeModel.TREE_MODEL;
 
         writer.writeComment("Generate a tree model");
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);

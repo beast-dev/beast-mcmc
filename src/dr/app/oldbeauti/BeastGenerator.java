@@ -1765,7 +1765,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
         writeParameter1Ref(writer, operator);
@@ -1798,8 +1798,8 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
-                        new Attribute.Default<String>("scaleAll", "true"),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<String>(ScaleOperator.SCALE_ALL, "true"),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
         writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
@@ -1812,7 +1812,7 @@ public class BeastGenerator extends BeautiOptions {
     private void writeUpDownOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(UpDownOperator.SCALE_FACTOR, operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight),
                 }
         );
@@ -1969,7 +1969,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(
                 ScaleOperator.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>("scaleFactor", operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
         writeParameter1Ref(writer, operator);
@@ -2388,7 +2388,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, name), true);
+        writer.writeTag(SumStatistic.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, name), true);
         writer.writeCloseTag(Columns.COLUMN);
     }
 
@@ -2700,7 +2700,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
 
             if (clockModel == RANDOM_LOCAL_CLOCK) {
-                writer.writeTag("sumStatistic", new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);
+                writer.writeTag(SumStatistic.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);
             }
         }
 

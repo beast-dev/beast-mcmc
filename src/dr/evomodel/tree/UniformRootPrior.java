@@ -144,6 +144,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
+        treePolynomialKnown = false;
         likelihoodKnown = false;
     }
 
@@ -170,6 +171,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
      * Restores the precalculated state: that is the intervals of the tree.
      */
     protected final void restoreState() {
+        // @todo store and restore the polynomial
+        treePolynomialKnown = false;
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
     }
@@ -197,6 +200,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     }
 
     public final void makeDirty() {
+        treePolynomialKnown = false;
         likelihoodKnown = false;
     }
 
@@ -230,7 +234,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
                 if (!treePolynomialKnown) {
                     treePolynomial = recursivelyComputePolynomial(tree,tree.getRoot());
-                    System.err.println("Final polynomial: "+treePolynomial);
+//                    System.err.println("Final polynomial: "+treePolynomial);
                     treePolynomialKnown = true; // TODO Hit flag when tree updated.
                 }
 

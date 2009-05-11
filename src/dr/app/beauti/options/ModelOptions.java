@@ -1,8 +1,8 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
-import dr.app.beauti.generator.ComponentGenerator;
 import dr.evolution.util.TaxonList;
+
 
 import java.util.*;
 
@@ -41,7 +41,6 @@ public class ModelOptions {
     public static final int UNITY_SCALE = 7;
     public static final int ROOT_RATE_SCALE = 8;
     public static final int LOG_VAR_SCALE = 9;
-
 
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);

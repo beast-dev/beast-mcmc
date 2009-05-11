@@ -717,9 +717,12 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        if (beautiOptions.traits.contains(beautiOptions.TRAIT_SPECIES)) { // species
+        if (beautiOptions.isSpeciesAnalysis()) { // species
         	dataPanel.selectAll();
         	dataPanel.unlinkModels();
+        	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
+        		model.initParametersAndOperatorsForEachPartitionModel();
+            } 
         }
     }
 

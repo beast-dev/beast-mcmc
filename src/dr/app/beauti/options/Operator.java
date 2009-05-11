@@ -64,6 +64,10 @@ public class Operator {
         this.prefix = prefix;
     }
 
+    public String getPrefix() {
+		return prefix;
+	}
+
     public String getName() {
         String name = baseName;
         if (prefix != null) {
@@ -75,7 +79,7 @@ public class Operator {
     private final String baseName;
     public String prefix = null;
 
-    public final String description;
+	public final String description;
 
     public final OperatorType type;
     public boolean tuningEdited;

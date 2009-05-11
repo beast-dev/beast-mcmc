@@ -175,7 +175,7 @@ public class BeastGenerator extends Generator {
             writeTaxonSets(writer, taxonSets);
         }
 
-        if ( doingSpeciesAnalysis() ) { // species
+        if ( options.isSpeciesAnalysis() ) { // species
         	writer.writeText("");
         	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
         	// write all taxa in each gene tree regarding each data partition,
@@ -242,7 +242,7 @@ public class BeastGenerator extends Generator {
         }
         writer.writeText("");
 
-        if ( doingSpeciesAnalysis() ) { // species
+        if ( options.isSpeciesAnalysis() ) { // species
         	for (PartitionModel model : options.getActivePartitionModels()) {
 	        	initialTreeGenerator.setGenePrefix(model.getName() + "."); // partitionName.startingTree
 	        	initialTreeGenerator.writeStartingTree(writer);
@@ -254,7 +254,7 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
 //        treeModelGenerator = new TreeModelGenerator(options);
-        if ( doingSpeciesAnalysis() ) { // species
+        if ( options.isSpeciesAnalysis() ) { // species
 	        // generate gene trees regarding each data partition, if no species, only create 1 tree
 	    	for (PartitionModel model : options.getActivePartitionModels()) {
 	    		treeModelGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
@@ -268,9 +268,8 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
-        if ( doingSpeciesAnalysis() ) { // species
+        if ( options.isSpeciesAnalysis() ) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
-	        	// TODO: writeParameterLog
 	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
 	        	treePriorGenerator.writeTreePrior(writer);
 	        }
@@ -282,7 +281,7 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
 
-        if (options.traits.contains(options.TRAIT_SPECIES)) { // species
+        if (options.isSpeciesAnalysis()) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	branchRatesModelGenerator.setGenePrefix(model.getName() + ".");
 	        	//TODO: fixParameters
@@ -320,7 +319,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-        	if ( doingSpeciesAnalysis() ) { // species
+        	if ( options.isSpeciesAnalysis() ) { // species
         		treeLikelihoodGenerator.setGenePrefix(model.getName() + ".");
         	} else {
         		treeLikelihoodGenerator.setGenePrefix("");
@@ -352,8 +351,8 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
 
-        // XMLWriter writer, List<PartitionModel> models, boolean traitsContainSpecies
-        writeMCMC(options.getActivePartitionModels(), doingSpeciesAnalysis(), writer);
+        // XMLWriter writer, List<PartitionModel> models,
+        writeMCMC(options.getActivePartitionModels(), writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
@@ -369,10 +368,6 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("beast");
         writer.flush();
-    }
-
-    private boolean doingSpeciesAnalysis() {
-        return options.traits.contains(options.TRAIT_SPECIES);
     }
 
     /**
@@ -1240,7 +1235,7 @@ public class BeastGenerator extends Generator {
      *
      * @param writer the writer
      */
-    public void writeMCMC(List<PartitionModel> models, boolean traitsContainSpecies, XMLWriter writer) {
+    public void writeMCMC(List<PartitionModel> models, XMLWriter writer) {
     	writer.writeOpenTag(
                 "mcmc",
                 new Attribute[]{
@@ -1259,7 +1254,7 @@ public class BeastGenerator extends Generator {
         writeParameterPriors(writer);
 
         switch (options.nodeHeightPrior) {
-
+//TODO: suit for multi-gene-tree
             case YULE:
             case BIRTH_DEATH:
                 writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD,  "speciation");
@@ -1274,7 +1269,7 @@ public class BeastGenerator extends Generator {
             case LOGISTIC:
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD,  "booleanLikelihood1");
             default:
-            	if (traitsContainSpecies) { // species
+            	if (options.isSpeciesAnalysis()) { // species
             		for (PartitionModel model : models) {
             			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + "coalescent");
             		}
@@ -1357,65 +1352,119 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag(LoggerParser.LOG);
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);        
 
         // write tree log to file
-        if (options.treeFileName == null) {
-            if (options.substTreeLog) {
-                options.treeFileName = options.fileNameStem + "(time).trees";
-            } else {
-                options.treeFileName = options.fileNameStem + ".trees";
-            }
-        }
-        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, "treeFileLog"),
-                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
-                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
-                });
-
-    	if (traitsContainSpecies) { // species
-    		for (PartitionModel model : models) {
+        if (options.isSpeciesAnalysis()) { // species
+        	// species tree log
+	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+	                new Attribute[]{
+	                        new Attribute.Default<String>(XMLParser.ID, TreeModel.SPECIES_TREE_MODEL + "FileLog"), // speciesTreeFileLog
+	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, TreeModel.SPECIES_TREE_FILE_NAME),
+	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
+	                });
+			    	   		
+			writer.writeIDref(TreeModel.SPECIES_TREE_MODEL,  TreeModel.SPECIES_TREE_MODEL);
+			
+	        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+        	
+        	// gene tree log
+        	for (PartitionModel model : models) {
+		        if (options.treeFileName == null) {
+		            if (options.substTreeLog) {
+		                options.treeFileName = model.getName() + "(time).trees";
+		            } else {
+		                options.treeFileName = model.getName() + ".trees";
+		            }
+		        }
+		        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+		                new Attribute[]{
+		                        new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + "treeFileLog"), // partionName.treeFileLog
+		                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+		                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+		                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
+		                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
+		                });
+				    	   		
     			writer.writeIDref(TreeModel.TREE_MODEL,  model.getName() + "." + TreeModel.TREE_MODEL);
+    			
+    	        switch (options.clockType) {
+    	            case STRICT_CLOCK:
+    	                break;
 
-    		}
+    	            case UNCORRELATED_EXPONENTIAL:
+    	            case UNCORRELATED_LOGNORMAL:
+    	            case RANDOM_LOCAL_CLOCK:
+    	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+    	                break;
+
+    	            case AUTOCORRELATED_LOGNORMAL:
+    	                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+    	                break;
+
+    	            default:
+    	                throw new IllegalArgumentException("Unknown clock model");
+    	        }
+  	       
+    	        if (options.hasData()) {
+    	            // we have data...
+    	            writer.writeIDref("posterior",  "posterior");
+    	        }
+
+    	        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+    		} // end For loop
     	} else { // no species
+	        if (options.treeFileName == null) {
+	            if (options.substTreeLog) {
+	                options.treeFileName = options.fileNameStem + "(time).trees";
+	            } else {
+	                options.treeFileName = options.fileNameStem + ".trees";
+	            }
+	        }
+	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+	                new Attribute[]{
+	                        new Attribute.Default<String>(XMLParser.ID, "treeFileLog"),
+	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
+	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
+	                });
 			writer.writeIDref(TreeModel.TREE_MODEL,  TreeModel.TREE_MODEL);
+
+	        switch (options.clockType) {
+	            case STRICT_CLOCK:
+	                break;
+
+	            case UNCORRELATED_EXPONENTIAL:
+	            case UNCORRELATED_LOGNORMAL:
+	            case RANDOM_LOCAL_CLOCK:
+	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
+	                break;
+
+	            case AUTOCORRELATED_LOGNORMAL:
+	                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
+	                break;
+
+	            default:
+	                throw new IllegalArgumentException("Unknown clock model");
+	        }
+
+	        /*if (options.clockType != ClockType.STRICT_CLOCK) {
+	            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+	        }*/
+
+	        if (options.hasData()) {
+	            // we have data...
+	            writer.writeIDref("posterior",  "posterior");
+	        }
+
+	        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
     	}
-
-
-        switch (options.clockType) {
-            case STRICT_CLOCK:
-                break;
-
-            case UNCORRELATED_EXPONENTIAL:
-            case UNCORRELATED_LOGNORMAL:
-            case RANDOM_LOCAL_CLOCK:
-                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
-                break;
-
-            case AUTOCORRELATED_LOGNORMAL:
-                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
-
-        /*if (options.clockType != ClockType.STRICT_CLOCK) {
-            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
-        }*/
-
-        if (options.hasData()) {
-            // we have data...
-            writer.writeIDref("posterior",  "posterior");
-        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, writer);
 
-        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
 
 //        if (mapTreeLog) {
 //            // write tree log to file
@@ -1436,43 +1485,81 @@ public class BeastGenerator extends Generator {
 //            writer.writeCloseTag("column");
 //            writer.writeCloseTag("logML");
 //        }
-
         if (options.substTreeLog) {
-            // write tree log to file
-            if (options.substTreeFileName == null) {
-                options.substTreeFileName = options.fileNameStem + "(subst).trees";
-            }
-            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "substTreeFileLog"),
-                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.substTreeFileName),
-                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
-                    });
-            writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
-
-            switch (options.clockType) {
-                case STRICT_CLOCK:
-                    writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
-                    break;
-
-                case UNCORRELATED_EXPONENTIAL:
-                case UNCORRELATED_LOGNORMAL:
-                case RANDOM_LOCAL_CLOCK:
-                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
-                    break;
-
-                case AUTOCORRELATED_LOGNORMAL:
-                    writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
-            }
-
-
-            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+	        if (options.isSpeciesAnalysis()) { // species
+	        	for (PartitionModel model : models) {
+		            // write tree log to file
+		            
+		            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+		                    new Attribute[]{
+		                            new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + "substTreeFileLog"),
+		                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+		                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+		                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, model.getName() +  "(subst).trees"),
+		                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
+		                    });
+		            writer.writeIDref(TreeModel.TREE_MODEL,  model.getName() + "." + "treeModel");
+		
+		            switch (options.clockType) {
+		                case STRICT_CLOCK:
+		                    writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+		                    break;
+		
+		                case UNCORRELATED_EXPONENTIAL:
+		                case UNCORRELATED_LOGNORMAL:
+		                case RANDOM_LOCAL_CLOCK:
+		                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+		                    break;
+		
+		                case AUTOCORRELATED_LOGNORMAL:
+		                    writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+		                    break;
+		
+		                default:
+		                    throw new IllegalArgumentException("Unknown clock model");
+		            }
+		
+		
+		            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+	        	}
+	        } else { // no species
+	        
+	            // write tree log to file
+	            if (options.substTreeFileName == null) {
+	                options.substTreeFileName = options.fileNameStem + "(subst).trees";
+	            }
+	            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+	                    new Attribute[]{
+	                            new Attribute.Default<String>(XMLParser.ID, "substTreeFileLog"),
+	                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+	                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+	                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.substTreeFileName),
+	                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
+	                    });
+	            writer.writeIDref(TreeModel.TREE_MODEL,  "treeModel");
+	
+	            switch (options.clockType) {
+	                case STRICT_CLOCK:
+	                    writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
+	                    break;
+	
+	                case UNCORRELATED_EXPONENTIAL:
+	                case UNCORRELATED_LOGNORMAL:
+	                case RANDOM_LOCAL_CLOCK:
+	                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  BranchRateModel.BRANCH_RATES);
+	                    break;
+	
+	                case AUTOCORRELATED_LOGNORMAL:
+	                    writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
+	                    break;
+	
+	                default:
+	                    throw new IllegalArgumentException("Unknown clock model");
+	            }
+	
+	
+	            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+	        }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
@@ -1659,7 +1746,14 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
+        
+        if ( options.isSpeciesAnalysis() ) { // species
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".treeModel.rootHeight");
+	        }
+        } else { // no species
+        	writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
+        }
         writer.writeCloseTag(Columns.COLUMN);
 
         writer.writeOpenTag(Columns.COLUMN,
@@ -1669,12 +1763,24 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
+        
         if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
+        	if ( options.isSpeciesAnalysis() ) { // species
+    	        for (PartitionModel model : options.getActivePartitionModels()) {
+    	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".clock.rate");
+    	        }
+        	} else { // no species
+        		writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
+        	}
         } else {
-            writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
+        	if ( options.isSpeciesAnalysis() ) { // species
+    	        for (PartitionModel model : options.getActivePartitionModels()) {
+    	        	writer.writeIDref(RateStatistic.RATE_STATISTIC,  model.getName() + ".meanRate");
+    	        }
+        	} else { // no species
+        		writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
+        	}
         }
-
 
         writer.writeCloseTag(Columns.COLUMN);
 
@@ -1696,20 +1802,46 @@ public class BeastGenerator extends Generator {
         if (options.hasData()) {
             writer.writeIDref(CompoundLikelihood.LIKELIHOOD,  "likelihood");
         }
-
-        if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
-        } else {
-            writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
+        
+        if ( options.isSpeciesAnalysis() ) { // species
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".treeModel.rootHeight");
+	        }
+        } else { // no species
+        	writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
         }
-
-        writer.writeIDref(ParameterParser.PARAMETER,  "treeModel.rootHeight");
+        
+        if (options.clockType == ClockType.STRICT_CLOCK) {
+        	if ( options.isSpeciesAnalysis() ) { // species
+    	        for (PartitionModel model : options.getActivePartitionModels()) {
+    	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".clock.rate");
+    	        }
+        	} else { // no species
+        		writer.writeIDref(ParameterParser.PARAMETER,  "clock.rate");
+        	}
+        } else {
+        	if ( options.isSpeciesAnalysis() ) { // species
+    	        for (PartitionModel model : options.getActivePartitionModels()) {
+    	        	writer.writeIDref(RateStatistic.RATE_STATISTIC,  model.getName() + ".meanRate");
+    	        }
+        	} else { // no species
+        		writer.writeIDref(RateStatistic.RATE_STATISTIC,  "meanRate");
+        	}
+        }      
 
         for (Taxa taxa : options.taxonSets) {
             writer.writeIDref("tmrcaStatistic",  "tmrca(" + taxa.getId() + ")");
         }
-
-        treePriorGenerator.writeParameterLog(writer);
+        
+        if ( options.isSpeciesAnalysis() ) { // species
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
+	        	treePriorGenerator.writeParameterLog(writer);
+	        }
+        } else { // no species
+        	treePriorGenerator.setGenePrefix("");
+        	treePriorGenerator.writeParameterLog(writer);
+	    }        
 
         for (PartitionModel model : options.getActivePartitionModels()) {
             partitionModelGenerator.writeLog(writer, model);
@@ -1759,7 +1891,15 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
-        treePriorGenerator.writeLikelihoodLog(writer);
+        if ( options.isSpeciesAnalysis() ) { // species
+	        for (PartitionModel model : options.getActivePartitionModels()) {
+	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
+	        	treePriorGenerator.writeLikelihoodLog(writer);
+	        }
+        } else { // no species
+        	treePriorGenerator.setGenePrefix("");
+        	treePriorGenerator.writeLikelihoodLog(writer);
+        }       
     }
 
     /**

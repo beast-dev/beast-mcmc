@@ -59,7 +59,19 @@ public class BeautiOptions extends ModelOptions {
     }
     
     public BeautiOptions(ComponentFactory[] components) {
-
+    	
+    	initParametersAndOperators ();
+    	
+        // Install all the component's options from the given list of factories:
+        for (ComponentFactory component : components) {
+            addComponent(component.getOptions(this));
+        }
+    }
+    
+    /**
+     * Initialise parameters and operators in BeautiOptions, which may be used again in PartitionModel where can add prefix of each data partition.
+     */
+    private void initParametersAndOperators () {
         double demoWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
@@ -242,11 +254,6 @@ public class BeautiOptions extends ModelOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
-
-        // Install all the component's options from the given list of factories:
-        for (ComponentFactory component : components) {
-            addComponent(component.getOptions(this));
-        }
     }
 
     /**
@@ -384,8 +391,10 @@ public class BeautiOptions extends ModelOptions {
     public ArrayList<Parameter> selectParameters() {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-
-        selectParameters(parameters);
+        
+        if (!isSpeciesAnalysis()) { // not species
+        	selectParameters(parameters);
+        }
 
         selectComponentParameters(this, parameters);
 
@@ -397,6 +406,10 @@ public class BeautiOptions extends ModelOptions {
         
         // add all Parameter (with prefix) into parameters list
         for (PartitionModel model : getActivePartitionModels()) {
+        	// use override method getParameter(String name) in PartitionModel containing prefix
+        	if (isSpeciesAnalysis()) { // species
+        		model.selectParameters(parameters);
+        	}
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -589,14 +602,20 @@ public class BeautiOptions extends ModelOptions {
     public List<Operator> selectOperators() {
 
         ArrayList<Operator> ops = new ArrayList<Operator>();
-
-        selectOperators(ops);
+        
+        if (!isSpeciesAnalysis()) { // not species
+        	selectOperators(ops);
+        }
 
         selectComponentOperators(this, ops);
 
         boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
 
         for (PartitionModel model : getActivePartitionModels()) {
+        	// use override method getOperator(String name) in PartitionModel containing prefix
+        	if (isSpeciesAnalysis()) { // species
+        		model.selectOperators(ops);
+        	}
             ops.addAll(model.getOperators());
         }
 
@@ -1305,6 +1324,10 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+    
+    public boolean isSpeciesAnalysis() {
+        return traits.contains(TRAIT_SPECIES);
     }
 
     public static enum TraitType {

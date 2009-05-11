@@ -2,6 +2,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodelxml.BirthDeathModelParser;
 import dr.inference.model.Parameter;
 import static org.apache.commons.math.special.Gamma.logGamma;
 
@@ -24,7 +25,7 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  */
 public class BirthDeathGernhard08Model extends SpeciationModel {
 
-    public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
+    public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
     Parameter relativeDeathRateParameter; /** mu/lambda **/
     Parameter birthDiffRateParameter; /** lambda - mu **/

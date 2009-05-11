@@ -49,9 +49,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     //
 
     public static final String TREE_MODEL = "treeModel";
-    public static final String SPECIES_TREE_MODEL = "speciesTree";
-    public static final String SPECIES_TREE_FILE_NAME = "species.tree";
-
+    
     public TreeModel(Tree tree) {
         this(tree, false);
     }

@@ -28,12 +28,12 @@ import java.util.*;
 public class SpeciesTreeModel extends AbstractModel implements MutableTree, NodeAttributeProvider, TreeLogger.LogUpon, Scalable {
     public static final String SPECIES_TREE = "speciesTree";
 
-    private static final String SPP_SPLIT_POPULATIONS = "sppSplitPopulations";
-    private static final String COALESCENT_POINTS_POPULATIONS = "coalescentPointsPopulations";
-    private static final String COALESCENT_POINTS_INDICATORS = "coalescentPointsIndicators";
+    public static final String SPP_SPLIT_POPULATIONS = "sppSplitPopulations";
+    public static final String COALESCENT_POINTS_POPULATIONS = "coalescentPointsPopulations";
+    public static final String COALESCENT_POINTS_INDICATORS = "coalescentPointsIndicators";
 
-    private static final String BMPRIOR = "bmPrior";
-    private static final String CONST_ROOT_POPULATION = "constantRoot";
+    public static final String BMPRIOR = "bmPrior";
+    public static final String CONST_ROOT_POPULATION = "constantRoot";
 
     private final SimpleTree spTree;
     private final SpeciesBindings species;

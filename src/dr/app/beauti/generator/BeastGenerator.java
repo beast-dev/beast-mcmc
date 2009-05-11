@@ -46,6 +46,8 @@ import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihood;
+import dr.evomodel.speciation.SpeciesBindings;
+import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.*;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
@@ -75,7 +77,8 @@ import java.util.*;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-//    private final String mulitTaxaTagName = "gene";
+   
+    private final String SPECIES_TREE_FILE_NAME = "species.tree";
 
     private final TreePriorGenerator treePriorGenerator;
     private final TreeLikelihoodGenerator treeLikelihoodGenerator;
@@ -339,10 +342,11 @@ public class BeastGenerator extends Generator {
         		writeTraits(writer, trait, traiType.toString(), options.taxonList);
         	}
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
-        }
+        }        
 
         if (taxonSets != null && taxonSets.size() > 0) {
-            writeTMRCAStatistics(writer);
+            //TODO: need to suit for multi-gene-tree
+        	writeTMRCAStatistics(writer);
         }
 
         List<Operator> operators = options.selectOperators();
@@ -553,7 +557,7 @@ public class BeastGenerator extends Generator {
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
 
     	writer.writeText("");
-        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
+        if (options.isSpeciesAnalysis()) { // hard code
         	writer.writeComment("Species definition: binds taxa, species and gene trees");
         }
         writer.writeComment("trait = " + trait + " trait_type = " + traitType);
@@ -562,7 +566,7 @@ public class BeastGenerator extends Generator {
         		//new Attribute.Default<String>("traitType", traitType)});
 
         // write sub-tags for species
-        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
+        if (options.isSpeciesAnalysis()) { // hard code
         	List<String> species = new ArrayList<String>(); // hard code
         	String sp;
 
@@ -595,7 +599,7 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag(trait);
 
-        if (trait.equals(options.TRAIT_SPECIES)) { // hard code
+        if (options.isSpeciesAnalysis()) { // hard code
         	writeSpeciesTree (writer);
 
         }
@@ -606,7 +610,7 @@ public class BeastGenerator extends Generator {
     private void writeGeneTrees(XMLWriter writer) {
     	writer.writeComment("Collection of Gene Trees");
 
-        writer.writeOpenTag("geneTrees", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "geneTrees")});
+        writer.writeOpenTag(SpeciesBindings.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindings.GENE_TREES)});
 
     	// generate gene trees regarding each data partition
     	for (PartitionModel partitionModel : options.getActivePartitionModels()) {
@@ -614,19 +618,19 @@ public class BeastGenerator extends Generator {
 							  TreeModel.TREE_MODEL + "_" + partitionModel.getName());
         }
 
-        writer.writeCloseTag("geneTrees");
+        writer.writeCloseTag(SpeciesBindings.GENE_TREES);
     }
 
 
     private void writeSpeciesTree(XMLWriter writer) {
     	writer.writeComment("Species Tree: Provides Per branch demographic function");
 
-//        writer.writeOpenTag("speciesTree", new Attribute[]{new Attribute.Default<String>(XMLParser.ID, ),
-//				new Attribute.Default<String>("bmPrior", "true")});
-//        writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, options.TRAIT_SPECIES)}, true);
+        writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE),
+				new Attribute.Default<String>("bmPrior", "true")});
+        writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, options.TRAIT_SPECIES)}, true);
 
 
-//        writer.writeCloseTag("speciesTree");
+        writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE);
 
     }
 
@@ -1359,14 +1363,14 @@ public class BeastGenerator extends Generator {
         	// species tree log
 	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, TreeModel.SPECIES_TREE_MODEL + "FileLog"), // speciesTreeFileLog
+	                        new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "FileLog"), // speciesTreeFileLog
 	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, TreeModel.SPECIES_TREE_FILE_NAME),
+	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, SPECIES_TREE_FILE_NAME),
 	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
 	                });
 			    	   		
-			writer.writeIDref(TreeModel.SPECIES_TREE_MODEL,  TreeModel.SPECIES_TREE_MODEL);
+			writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  SpeciesTreeModel.SPECIES_TREE);
 			
 	        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         	
@@ -1803,6 +1807,11 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(CompoundLikelihood.LIKELIHOOD,  "likelihood");
         }
         
+        if ( options.isSpeciesAnalysis() ) { // species
+        	//TODO: add species tree reference      
+        	
+        }
+                
         if ( options.isSpeciesAnalysis() ) { // species
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".treeModel.rootHeight");

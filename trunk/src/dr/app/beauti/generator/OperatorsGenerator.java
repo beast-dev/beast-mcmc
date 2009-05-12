@@ -49,7 +49,8 @@ public class OperatorsGenerator extends Generator {
             operatorAttributes = new Attribute[1];
         }
         operatorAttributes[0] = new Attribute.Default<String>(XMLParser.ID, "operators");
-
+        
+        writer.writeComment("Define operators");
         writer.writeOpenTag(
                 SimpleOperatorSchedule.OPERATOR_SCHEDULE,
                 operatorAttributes

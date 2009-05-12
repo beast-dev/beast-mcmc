@@ -137,11 +137,11 @@ public class SpeciesTreeBMPrior extends Likelihood.Abstract {
 		return false;
 	}
 
-    private static final String STPRIOR = "STPopulationPrior";
+    public static final String STPRIOR = "STPopulationPrior";
 
-    private static final String LOG_ROOT = "log_root";
-    private static final String STSIGMA = "STsigma";
-    private static final String SIGMA = "sigma";
+    public static final String LOG_ROOT = "log_root";
+    public static final String STSIGMA = "STsigma";
+    public static final String SIGMA = "sigma";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

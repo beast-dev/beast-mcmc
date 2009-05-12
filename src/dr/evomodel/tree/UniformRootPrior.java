@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.*;
 import dr.xml.*;
+import dr.math.Polynomial;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -110,7 +111,13 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                 reversedTipDateList.remove(date);         
         }
 
-        intervalCountsKnown = false;
+        // Leading coefficient on tree polynomial is X = (# internal nodes)!
+        // To keep X > 10E-40, should use log-space polynomials for more than ~30 tips
+        if (tree.getExternalNodeCount() < 30) {
+            polynomialType = Polynomial.Type.DOUBLE; // Much faster
+        } else {
+            polynomialType = Polynomial.Type.LOG_DOUBLE;
+        }
 
     }
 
@@ -144,8 +151,43 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
-        treePolynomialKnown = false;
-        likelihoodKnown = false;
+//        likelihoodKnown = false;
+//        treePolynomialKnown = false;
+//        return;
+
+        // Only set treePolynomialKnown = false when a topology change occurs
+        // Only set likelihoodKnown = false when a topology change occurs or the rootHeight is changed
+
+        if (model == tree) {
+            if (object instanceof TreeModel.TreeChangedEvent) {
+                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
+                if (event.isHeightChanged()) {
+                    if (event.getNode() == tree.getRoot()) {
+                        likelihoodKnown = false;
+                        return;
+                    } // else
+                    return;
+                }
+                if (event.isNodeParameterChanged())
+                    return;
+                // All others are probably tree structure changes
+                likelihoodKnown = false;
+                treePolynomialKnown = false;
+                return;
+            }
+            // TODO Why are not all node height changes invoking TreeChangedEvents?
+            if (object instanceof Parameter.Default) {
+                Parameter parameter = (Parameter) object;
+                if (tree.getNodeHeight(tree.getRoot()) == parameter.getParameterValue(index)) {
+                    likelihoodKnown = false;
+                    treePolynomialKnown = false;
+                    return;
+                }
+                return;
+            }
+        }
+
+        throw new RuntimeException("Unexpected event!");
     }
 
     // **************************************************************
@@ -165,16 +207,18 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     protected final void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+        storedTreePolynomialKnown = treePolynomialKnown;
+        storedTreePolynomial = treePolynomial.copy(); // TODO Swap pointers
     }
 
     /**
      * Restores the precalculated state: that is the intervals of the tree.
      */
     protected final void restoreState() {
-        // @todo store and restore the polynomial
-        treePolynomialKnown = false;
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+        treePolynomialKnown = storedTreePolynomialKnown;
+        treePolynomial = storedTreePolynomial;
     }
 
     protected final void acceptState() {
@@ -190,18 +234,18 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
 
-        return calculateLogLikelihood();
+//        return calculateLogLikelihood();
 
-        //if (!likelihoodKnown) {
-        //	logLikelihood = calculateLogLikelihood();
-        //	likelihoodKnown = true;
-        //}
-        //return logLikelihood;
+        if (!likelihoodKnown) {
+        	logLikelihood = calculateLogLikelihood();
+        	likelihoodKnown = true;
+        }
+        return logLikelihood;
     }
 
     public final void makeDirty() {
-        treePolynomialKnown = false;
         likelihoodKnown = false;
+        treePolynomialKnown = false;
     }
 
     public double calculateLogLikelihood() {
@@ -230,104 +274,22 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                 logLike = logFactorialK - (double) k * Math.log(rootHeight);
 
             } else {
-
-
+                // TODO Rewrite description above to discuss this new prior
                 if (!treePolynomialKnown) {
-                    treePolynomial = recursivelyComputePolynomial(tree,tree.getRoot());
-//                    System.err.println("Final polynomial: "+treePolynomial);
-                    treePolynomialKnown = true; // TODO Hit flag when tree updated.
+                    polynomialType = Polynomial.Type.DOUBLE;
+                    treePolynomial  = recursivelyComputePolynomial(tree,tree.getRoot(),polynomialType).getPolynomial();
+                    treePolynomialKnown = true;
                 }
 
-//                System.err.println("treePolynomial = "+treePolynomial);
-//                System.exit(-1);
-                logLike = -Math.log(treePolynomial.evaluate(rootHeight));
+                logLike  = -treePolynomial .logEvaluate(rootHeight);
 
-//                // TODO Recalculate only when a tip sampling time changes
-//                if (!intervalCountsKnown) {
-//
-//                    intervals.clear();
-//                    for (Double date : reversedTipDateList) {
-//                        intervals.put(date, 0);
-//                    }
-////
-////                    traverse(tree, tree.getRoot());
-//
-//                    for(int i=0; i<tree.getExternalNodeCount(); i++) {
-//                        double tipDate = tree.getNodeHeight(tree.getExternalNode(i));
-//                        if (!intervals.keySet().contains(tipDate)) {
-//                            // Find closest within tolerance
-//                            boolean found = false;
-//                            for(Double prunedDate : reversedTipDateList) {
-//                                if (Math.abs(tipDate - prunedDate) < tolerance) {
-//                                    tipDate = prunedDate;
-//                                    found = true;
-//                                    break;
-//                                }
-//                            }
-//                            if (!found)
-//                                throw new RuntimeException("Tip date not found");
-//                        }
-//                        intervals.put(tipDate, intervals.get(tipDate)+1);
-//                    }
-//                    intervalCountsKnown = true;
-//                }
-//
-//                logLike = 0.0;
-//                for (Double date : reversedTipDateList) {
-//                    double s = rootHeight - date;
-//                    int k = intervals.get(date);  // There was a bug here, was +=
-//
-////                    System.err.println("date = "+date+" ("+k+")");
-//
-//                    k--; // ONLY FOR ABOVE INTERVALS, NOT TRAVERSE
-//                    if (k > 0)
-//                        logLike += logFactorial(k) - (double) k * Math.log(s);
-//
-//                }
-
-
-
-//                System.exit(-1);
-
-//                Polynomial a = new LabeledPolynomial(new double[] {1,2,3});
-//                Polynomial b = new LabeledPolynomial(new double[] {1,0,0,1});
-//
-//                System.err.println("a = "+a);
-//                System.err.println("b = "+b);
-//                System.err.println("a * b = "+a.multiply(b));
-//                System.err.println("integral a = "+a.integrateWRTX(9));
-//                System.exit(-1);
-
-
-                // Does not work
-//                tmpLogLikelihood = 0;
-//                recursivelyComputeConditionalUniform(tree, tree.getRoot(), 0.0);
-//                logLike = tmpLogLikelihood;
-
-                // New Idea
-
-//                intervals.clear();
-//                for (Double date : reversedTipDateList) {
-//                    intervals.put(date, 0);
-//                }
-//                for(int i=0; i<tree.getInternalNodeCount(); i++) {
-//                    NodeRef node = tree.getInternalNode(i);
-//                    if( !tree.isRoot(node)) {
-//                        Double date = inInterval(tree.getNodeHeight(node));
-//                        intervals.put(date, intervals.get(date) + 1);
-//                    }
-//                }
-//                logLike = 0.0;
-//                double startInterval = rootHeight;
-//                for(Double endInterval : reversedTipDateList) {
-//                    double length = startInterval - endInterval;
-//                    int k = intervals.get(endInterval);
-//                    if (k > 0)
-//                        logLike += logFactorial(k) - k*Math.log(length) +
-//                                   k*(Math.log(length) - Math.log(rootHeight)) -
-//                                   logFactorial(k);
-//                    startInterval = endInterval;
-//                }
+                if (Double.isNaN(logLike)) {
+                    // Try using Horner's method
+                    logLike = -treePolynomial.logEvaluateHorner(rootHeight);
+                    if (Double.isNaN(logLike)) {
+                        logLike = Double.NEGATIVE_INFINITY;
+                    }
+                }
             }
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
@@ -335,144 +297,142 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
     }
 
+    private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
 
-    private LabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node) {
         if (tree.isExternal(node)) {
-            return new LabeledPolynomial(new double[] {1.0}, tree.getNodeHeight(node));
+            double[] value = new double[] {1.0};
+            return new TipLabeledPolynomial(value, tree.getNodeHeight(node), type);
         }
-        LabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node,0));
-        LabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node,1));
-        LabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
+
+        TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node,0),type);
+        TipLabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node,1),type);
+        TipLabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
+
         if (!tree.isRoot(node)) {
             polynomial = polynomial.integrateWithLowerBound(polynomial.label);
         }
+
         return polynomial;
     }
 
-    class Polynomial {
+//    private void test() {
+//
+//        double[] value = new double[]{2, 0, 2};
+//        Polynomial a = new Polynomial.Double(value);
+//        Polynomial a2 = a.multiply(a);
+//        System.err.println("a  :" + a);
+//        System.err.println("a*a: " + a2);
+//        System.err.println("eval :" + a2.evaluate(2));
+//        Polynomial intA = a.integrate();
+//        System.err.println("intA: " + intA);
+//        Polynomial intA2 = a.integrateWithLowerBound(2.0);
+//        System.err.println("intA2: " + intA2);
+//        System.err.println("");
+//
+//        Polynomial b = new Polynomial.APDouble(value);
+//        System.err.println("b : " + b);
+//        Polynomial b2 = b.multiply(b);
+//        System.err.println("b2 : " + b2);
+//        System.err.println("eval : " + b2.evaluate(2));
+//        Polynomial intB = b.integrate();
+//        System.err.println("intB: " + intB);
+//        Polynomial intB2 = b.integrateWithLowerBound(2.0);
+//        System.err.println("intB2: " + intB2);
+//        System.err.println("");
+//
+//        Polynomial c = new Polynomial.LogDouble(value);
+//        System.err.println("c : " + c);
+//        Polynomial c2 = c.multiply(c);
+//        System.err.println("c2 : " + c2);
+//        System.err.println("eval : " + c2.evaluate(2));
+//        Polynomial intC = c.integrate();
+//        System.err.println("intC: " + intC);
+//        Polynomial intC2 = c.integrateWithLowerBound(2.0);
+//        System.err.println("intC2: " + intC2);
+//        System.exit(-1);
+//    }
 
-        private static final String X = " x^";
+    class TipLabeledPolynomial extends Polynomial.Abstract {
 
-        Polynomial(double[] coefficient) {
-            this.coefficient = coefficient;
+        TipLabeledPolynomial(double[] coefficients, double label, Polynomial.Type type) {
+            switch (type) {
+                case DOUBLE:        polynomial = new Polynomial.Double(coefficients);
+                                    break;
+                case LOG_DOUBLE:    polynomial = new Polynomial.LogDouble(coefficients);
+                                    break;
+                case BIG_DOUBLE:    polynomial = new Polynomial.BigDouble(coefficients);
+                                    break;
+                case APDOUBLE:      polynomial = new Polynomial.APDouble(coefficients);
+                                    break;
+                default: throw new RuntimeException("Unknown polynomial type");
+            }
+            this.label = label;
         }
 
-        Polynomial(Polynomial polynomial) {
-            this.coefficient = polynomial.coefficient;
+        TipLabeledPolynomial(Polynomial polynomial, double label) {
+            this.polynomial = polynomial;
+            this.label = label;
+        }
+
+        public TipLabeledPolynomial copy() {
+            Polynomial copyPolynomial = polynomial.copy();
+            return new TipLabeledPolynomial(copyPolynomial,this.label);
+        }
+
+        public Polynomial getPolynomial() { return polynomial; }
+
+        public TipLabeledPolynomial multiply(TipLabeledPolynomial b) {
+            double maxLabel = Math.max(label,b.label);
+            return new TipLabeledPolynomial(polynomial.multiply(b),maxLabel);
         }
 
         public int getDegree() {
-            return coefficient.length - 1;
+            return polynomial.getDegree();
         }
 
         public Polynomial multiply(Polynomial b) {
-            double[] newCoefficient = new double[getDegree() + b.getDegree()+1];
-            for(int n=0; n<=getDegree(); n++) {
-                for(int m=0; m<=b.getDegree(); m++) {
-                    newCoefficient[n+m] += coefficient[n] * b.coefficient[m];
-                }
-            }
-            return new Polynomial(newCoefficient);
+            return polynomial.multiply(b);
         }
 
         public Polynomial integrate() {
-            double[] newCoefficient = new double[getDegree()+2];
-            for(int n=0; n<=getDegree(); n++) {
-                newCoefficient[n+1] = coefficient[n] / (n+1);
-            }
-            return new Polynomial(newCoefficient);
+            return polynomial.integrate();
         }
 
         public double evaluate(double x) {
-            double result = 0;
-            double xn = 1;
-            for(int n=0; n<=getDegree(); n++) {
-                result += xn * coefficient[n];
-                xn *= x;
-            }
-            return result;
+            return polynomial.evaluate(x);
         }
 
-        public Polynomial integrateWithLowerBound(double bound) {
-            Polynomial integrand = integrate();
-            integrand.coefficient[0] = -integrand.evaluate(bound);
-            return integrand;
+        public double logEvaluate(double x) {
+            return polynomial.logEvaluate(x);
         }
 
-        public String toString() {
-            StringBuffer bf = new StringBuffer();
-            for(int n=getDegree(); n>=0; n--) {
-                bf.append(coefficient[n]);
-                bf.append(X);
-                bf.append(n);
-                if (n > 0)
-                    bf.append(" + ");
-            }
-            return bf.toString();
+        public double logEvaluateHorner(double x) {
+            return polynomial.logEvaluateHorner(x);
         }
 
-        double[] coefficient;
-    }
-
-    class LabeledPolynomial extends Polynomial {
-
-        LabeledPolynomial(double[] coefficients, double label) {
-            super(coefficients);
-            this.label = label;
+        public void setCoefficient(int n, double x) {
+            polynomial.setCoefficient(n,x);
         }
 
-        LabeledPolynomial(double[] coefficients) {
-            this(coefficients,0.0);
+        public TipLabeledPolynomial integrateWithLowerBound(double bound) {
+            return new TipLabeledPolynomial(polynomial.integrateWithLowerBound(bound),label);
         }
 
-        LabeledPolynomial(Polynomial polynomial, double label) {
-            super(polynomial);
-            this.label = label;
-        }
-
-        public LabeledPolynomial multiply(LabeledPolynomial b) {
-            double maxLabel = Math.max(label,b.label);
-            return new LabeledPolynomial(super.multiply(b),maxLabel);
-        }
-
-        public LabeledPolynomial integrateWithLowerBound(double bound) {
-            return new LabeledPolynomial(super.integrateWithLowerBound(bound),label);
+        public double getCoefficient(int n) {
+            return polynomial.getCoefficient(n);
         }
 
         public String toString() {
             return super.toString() + " {"+label+"}";
         }
 
-        double label;
-    }
-
-    private Double inInterval(double date) {
-        double startInterval = tree.getNodeHeight(tree.getRoot());
-        for(Double endInterval : reversedTipDateList) {
-            if (date > endInterval)
-                return endInterval;
-        }
-        throw new RuntimeException("Date in no interval???");
-    }
-
-    private double recursivelyComputeConditionalUniform(Tree tree, NodeRef node, double parentHeight) {
-
-        if(tree.isExternal(node))
-            return tree.getNodeHeight(node);
-
-        double thisNodeHeight = tree.getNodeHeight(node);
-        double childHeight1 = recursivelyComputeConditionalUniform(tree, tree.getChild(node,0), thisNodeHeight);
-        double childHeight2 = recursivelyComputeConditionalUniform(tree, tree.getChild(node,1), thisNodeHeight);
-
-
-        if (!tree.isRoot(node)) {
-            double maxChildHeight = (childHeight1 > childHeight2 ? childHeight1 : childHeight2);
-            tmpLogLikelihood -= Math.log(parentHeight - maxChildHeight);
+        public String getCoefficientString(int n) {
+            return polynomial.getCoefficientString(n);
         }
 
-        return thisNodeHeight;
+        private double label;
+        private Polynomial polynomial;
     }
-
 
     private double logFactorial(int n) {
         if (n == 0 || n == 1) {
@@ -485,46 +445,6 @@ public class UniformRootPrior extends AbstractModelLikelihood {
             rValue += Math.log(i);
         }
         return rValue;
-    }
-
-//    private void addCountToInterval(double date) {
-//        for(Double prunedDate : reversedTipDateList) {
-//            if( date > prunedDate) {
-//                intervals.put(prunedDate, intervals.get(prunedDate) + 1);
-//                break;
-//            }
-//        }
-//    }
-
-    private Double traverse(Tree tree, NodeRef node) {
-        Double date;
-        if (tree.isExternal(node)) {
-            date = tree.getNodeHeight(node);
-            if (!intervals.keySet().contains(date)) {
-                // Find closest within tolerance
-                boolean found = false;
-                for(Double prunedDate : reversedTipDateList) {
-                    if (Math.abs(date - prunedDate) < tolerance) {
-                        date = prunedDate;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    throw new RuntimeException("Tip date not found");
-            }
-
-        } else {
-            Double date1 = traverse(tree, tree.getChild(node, 0));
-            Double date2 = traverse(tree, tree.getChild(node, 1));
-            date = (date1 > date2 ? date1 : date2);
-            if (!tree.isRoot(node)) {
-                // Only increases counts for internal nodes
-                intervals.put(date, intervals.get(date) + 1);
-            }
-        }
-
-        return date;
     }
 
     // **************************************************************
@@ -546,7 +466,6 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             if (xo.hasAttribute(MAX_ROOT_HEIGHT)) {
@@ -590,8 +509,13 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private double storedLogLikelihood;
     boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
-    private boolean intervalCountsKnown = false;
     private boolean treePolynomialKnown = false;
-    private double tmpLogLikelihood;
-    private LabeledPolynomial treePolynomial;
+    private boolean storedTreePolynomialKnown = false;
+    private Polynomial treePolynomial;
+    private Polynomial storedTreePolynomial;
+
+//    private Iterator<Polynomial.Type> typeIterator = EnumSet.allOf(Polynomial.Type.class).iterator();
+//    private Polynomial.Type polynomialType = typeIterator.next();
+    private Polynomial.Type polynomialType;
+
 }

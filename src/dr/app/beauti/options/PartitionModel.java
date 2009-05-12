@@ -16,7 +16,7 @@ public class PartitionModel extends ModelOptions {
 
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
-
+    
     public PartitionModel(BeautiOptions options, DataPartition partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
     }
@@ -113,11 +113,11 @@ public class PartitionModel extends ModelOptions {
         createParameter("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("CP3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createScaleOperator("kappa", substWeights);
-        createScaleOperator("CP1.kappa", substWeights);
-        createScaleOperator("CP2.kappa", substWeights);
-        createScaleOperator("CP1+2.kappa", substWeights);
-        createScaleOperator("CP3.kappa", substWeights);
+        createScaleOperator("kappa", demoTuning, substWeights);
+        createScaleOperator("CP1.kappa", demoTuning, substWeights);
+        createScaleOperator("CP2.kappa", demoTuning, substWeights);
+        createScaleOperator("CP1+2.kappa", demoTuning, substWeights);
+        createScaleOperator("CP3.kappa", demoTuning, substWeights);
 
         createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("CP1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
@@ -126,27 +126,27 @@ public class PartitionModel extends ModelOptions {
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         for (String rateName : GTR_RATE_NAMES) {
-            createScaleOperator(rateName, substWeights);
+            createScaleOperator(rateName, demoTuning, substWeights);
             for (int j = 1; j <= 3; j++) {
-                createScaleOperator("CP" + j + "." + rateName, substWeights);
+                createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
             }
-            createScaleOperator("CP1+2." + rateName, substWeights);
+            createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
         }
 
-        createScaleOperator("alpha", substWeights);
+        createScaleOperator("alpha", demoTuning, substWeights);
         for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".alpha", substWeights);
+            createScaleOperator("CP" + i + ".alpha", demoTuning, substWeights);
         }
-        createScaleOperator("CP1+2.alpha", substWeights);
+        createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
-        createScaleOperator("pInv", substWeights);
+        createScaleOperator("pInv", demoTuning, substWeights);
         for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".pInv", substWeights);
+            createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
         }
-        createScaleOperator("CP1+2.pInv", substWeights);
+        createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
 
-        createScaleOperator("bcov.alpha", substWeights);
-        createScaleOperator("bcov.s", substWeights);
+        createScaleOperator("bcov.alpha", demoTuning, substWeights);
+        createScaleOperator("bcov.s", demoTuning, substWeights);
         //createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         
@@ -229,19 +229,19 @@ public class PartitionModel extends ModelOptions {
         createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
-        createScaleOperator("constant.popSize", demoWeights);
-        createScaleOperator("exponential.popSize", demoWeights);
+        createScaleOperator("constant.popSize", demoTuning, demoWeights);
+        createScaleOperator("exponential.popSize", demoTuning, demoWeights);
         createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
-        createScaleOperator("exponential.doublingTime", demoWeights);
-        createScaleOperator("logistic.popSize", demoWeights);
-        createScaleOperator("logistic.growthRate", demoWeights);
-        createScaleOperator("logistic.doublingTime", demoWeights);
-        createScaleOperator("logistic.t50", demoWeights);
-        createScaleOperator("expansion.popSize", demoWeights);
-        createScaleOperator("expansion.growthRate", demoWeights);
-        createScaleOperator("expansion.doublingTime", demoWeights);
-        createScaleOperator("expansion.ancestralProportion", demoWeights);
-        createScaleOperator("skyline.popSize", demoWeights * 5);
+        createScaleOperator("exponential.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.popSize", demoTuning, demoWeights);
+        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
+        createScaleOperator("logistic.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.t50", demoTuning, demoWeights);
+        createScaleOperator("expansion.popSize", demoTuning, demoWeights);
+        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
+        createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
         createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
@@ -255,10 +255,10 @@ public class PartitionModel extends ModelOptions {
         createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
-        createScaleOperator("yule.birthRate", demoWeights);
+        createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
-        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoWeights);
-        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoWeights);
+        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
@@ -276,10 +276,10 @@ public class PartitionModel extends ModelOptions {
                 "Changes partition relative rates relative to each other maintaining their mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
 
-        createScaleOperator("clock.rate", rateWeights);
-        createScaleOperator(ClockType.UCED_MEAN, rateWeights);
-        createScaleOperator(ClockType.UCLD_MEAN, rateWeights);
-        createScaleOperator(ClockType.UCLD_STDEV, rateWeights);
+        createScaleOperator("clock.rate", demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
 
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
@@ -297,7 +297,7 @@ public class PartitionModel extends ModelOptions {
         createOperator("upDownAllRatesHeights", "All rates and heights",
                 "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
-        createScaleOperator("branchRates.var", rateWeights);
+        createScaleOperator("branchRates.var", demoTuning, rateWeights);
 
         createOperator("swapBranchRateCategories", "branchRates.categories",
                 "Performs a swap of branch rate categories", "branchRates.categories",
@@ -309,12 +309,12 @@ public class PartitionModel extends ModelOptions {
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", treeWeights);
+        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
-        createScaleOperator("treeModel.rootHeight", demoWeights);
+        createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
@@ -439,6 +439,7 @@ public class PartitionModel extends ModelOptions {
         }
 
         params.add(getParameter("treeModel.rootHeight"));
+        
     }
     
     // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix	

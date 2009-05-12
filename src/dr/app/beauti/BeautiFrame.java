@@ -722,7 +722,8 @@ public class BeautiFrame extends DocumentFrame {
         	dataPanel.unlinkModels();
         	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
         		model.initParametersAndOperatorsForEachPartitionModel();
-            } 
+            }
+        	beautiOptions.initSpeciesParametersAndOperators();
         }
     }
 

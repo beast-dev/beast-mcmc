@@ -388,147 +388,147 @@ public interface Polynomial extends Cloneable {
         BigDecimal[] coefficient;
     }
 
-    public class APDouble extends Abstract {
-
-        public String getCoefficientString(int n) {
-            return coefficient[n].toString();
-        }
-
-        public APDouble copy() {
-            return new APDouble(coefficient.clone());
-        }
-
-         public APDouble(double[] doubleCoefficient) {
-             this.coefficient = new Apfloat[doubleCoefficient.length];
-             for(int i=0; i<doubleCoefficient.length; i++)
-                 coefficient[i] = new Apfloat(doubleCoefficient[i]);
-         }
-
-         public APDouble(Apfloat[] coefficient) {
-             this.coefficient = coefficient;
-         }
-
-         public int getDegree() {
-              return coefficient.length - 1;
-         }
-
-         public APDouble multiply(Polynomial b) {
-             if (!(b.getPolynomial() instanceof APDouble))
-                 throw new RuntimeException("Incompatiable polynomial types");
-             APDouble bd = (APDouble) b.getPolynomial();
-             Apfloat[] newCoefficient = new Apfloat[getDegree() + bd.getDegree()+1];
-             for(int i=0; i<newCoefficient.length; i++)
-                 newCoefficient[i] = new Apfloat(0.0);
-             for(int n=0; n<=getDegree(); n++) {
-                 for(int m=0; m<=bd.getDegree(); m++)
-                    newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));
-             }
-             return new APDouble(newCoefficient);
-         }
-
-         public APDouble integrate() {
-             Apfloat[] newCoefficient = new Apfloat[getDegree()+2];
-             for(int n=0; n<=getDegree(); n++) {
-                 newCoefficient[n+1] = coefficient[n].divide(new Apfloat(n+1));
-             }
-             newCoefficient[0] = new Apfloat(0.0);
-             return new APDouble(newCoefficient);
-         }
-
-         public double evaluate(double x) {
-             return evaluateAPDouble(new Apfloat(x)).doubleValue();
-         }
-
-         public double logEvaluate(double x) {
-             Apfloat result = evaluateAPDouble(new Apfloat((x)));
-             if (result.doubleValue() == 0)
-                return java.lang.Double.NEGATIVE_INFINITY;
-             return ApfloatMath.log(result).doubleValue();
-         }
-
-         public double logEvaluateHorner(double x) {
-             return logEvaluateInLogSpace(x);
-         }
-
-         private static double log(Apfloat x) {
-             double log = ApfloatMath.log(x).doubleValue();
-             if (java.lang.Double.isInfinite(log))
-                 throw new RuntimeException("Still infinite");
-             return log;
-         }
-
-        private static boolean positive(Apfloat x) {
-            return x.signum() != -1;
-        }
-
-         public double logEvaluateInLogSpace(double x) {
-             // Using Horner's Rule
-             final double logX = Math.log(x);
-             final int degree = getDegree();
-             boolean positive = positive(coefficient[degree]);
-             double logResult;
-             if (positive)
-                logResult = log(coefficient[degree]);
-             else
-                logResult = log(coefficient[degree].negate());
-             for(int n=degree-1; n>=0; n--) {
-                 logResult += logX;
-                 if (coefficient[n].signum() != 0) {
-                 final boolean nextPositive = positive(coefficient[n]);
-                 double logNextValue;
-                 if (nextPositive)
-                    logNextValue = log(coefficient[n]);
-                 else
-                    logNextValue = log(coefficient[n].negate());
-                 if(!(nextPositive ^ positive)) // Same sign
-                    logResult = LogTricks.logSum(logResult,logNextValue);
-                 else { // Different signs
-                     if (logResult > logNextValue)
-                         logResult = LogTricks.logDiff(logResult,logNextValue);
-                     else {
-                         logResult = LogTricks.logDiff(logNextValue,logResult);
-                         positive = !positive;
-                     }
-                 }
-                 }
-             }
-             if (!positive)
-                logResult = -logResult;
-             return logResult;
-         }
-
-         protected Apfloat evaluateAPDouble(Apfloat x) {
-             Apfloat result = new Apfloat(0.0);
-             Apfloat xn = new Apfloat(1.0);
-             for(int n=0; n<=getDegree(); n++) {
-                 result = result.add(coefficient[n].multiply(xn));
-                 xn = xn.multiply(x);
-             }
-             // TODO Rewrite using Horner's Rule
-             return result;
-         }
-
-         public double getCoefficient(int n) {
-             return coefficient[n].doubleValue();
-         }
-
-         public void setCoefficient(int n, double x) {
-             coefficient[n] = new Apfloat(x);
-         }
-
-         public Polynomial integrateWithLowerBound(double bound) {
-             APDouble integrand = integrate();
-             final Apfloat x0 = integrand.evaluateAPDouble(new Apfloat(bound));
-             integrand.coefficient[0] = x0.multiply(new Apfloat(-1.0));
-             return integrand;
-         }
-
-         public void setCoefficient(int n, Apfloat x) {
-             coefficient[n] = x;
-         }
-
-         Apfloat[] coefficient;
-     }
+//    public class APDouble extends Abstract {
+//
+//        public String getCoefficientString(int n) {
+//            return coefficient[n].toString();
+//        }
+//
+//        public APDouble copy() {
+//            return new APDouble(coefficient.clone());
+//        }
+//
+//         public APDouble(double[] doubleCoefficient) {
+//             this.coefficient = new Apfloat[doubleCoefficient.length];
+//             for(int i=0; i<doubleCoefficient.length; i++)
+//                 coefficient[i] = new Apfloat(doubleCoefficient[i]);
+//         }
+//
+//         public APDouble(Apfloat[] coefficient) {
+//             this.coefficient = coefficient;
+//         }
+//
+//         public int getDegree() {
+//              return coefficient.length - 1;
+//         }
+//
+//         public APDouble multiply(Polynomial b) {
+//             if (!(b.getPolynomial() instanceof APDouble))
+//                 throw new RuntimeException("Incompatiable polynomial types");
+//             APDouble bd = (APDouble) b.getPolynomial();
+//             Apfloat[] newCoefficient = new Apfloat[getDegree() + bd.getDegree()+1];
+//             for(int i=0; i<newCoefficient.length; i++)
+//                 newCoefficient[i] = new Apfloat(0.0);
+//             for(int n=0; n<=getDegree(); n++) {
+//                 for(int m=0; m<=bd.getDegree(); m++)
+//                    newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));
+//             }
+//             return new APDouble(newCoefficient);
+//         }
+//
+//         public APDouble integrate() {
+//             Apfloat[] newCoefficient = new Apfloat[getDegree()+2];
+//             for(int n=0; n<=getDegree(); n++) {
+//                 newCoefficient[n+1] = coefficient[n].divide(new Apfloat(n+1));
+//             }
+//             newCoefficient[0] = new Apfloat(0.0);
+//             return new APDouble(newCoefficient);
+//         }
+//
+//         public double evaluate(double x) {
+//             return evaluateAPDouble(new Apfloat(x)).doubleValue();
+//         }
+//
+//         public double logEvaluate(double x) {
+//             Apfloat result = evaluateAPDouble(new Apfloat((x)));
+//             if (result.doubleValue() == 0)
+//                return java.lang.Double.NEGATIVE_INFINITY;
+//             return ApfloatMath.log(result).doubleValue();
+//         }
+//
+//         public double logEvaluateHorner(double x) {
+//             return logEvaluateInLogSpace(x);
+//         }
+//
+//         private static double log(Apfloat x) {
+//             double log = ApfloatMath.log(x).doubleValue();
+//             if (java.lang.Double.isInfinite(log))
+//                 throw new RuntimeException("Still infinite");
+//             return log;
+//         }
+//
+//        private static boolean positive(Apfloat x) {
+//            return x.signum() != -1;
+//        }
+//
+//         public double logEvaluateInLogSpace(double x) {
+//             // Using Horner's Rule
+//             final double logX = Math.log(x);
+//             final int degree = getDegree();
+//             boolean positive = positive(coefficient[degree]);
+//             double logResult;
+//             if (positive)
+//                logResult = log(coefficient[degree]);
+//             else
+//                logResult = log(coefficient[degree].negate());
+//             for(int n=degree-1; n>=0; n--) {
+//                 logResult += logX;
+//                 if (coefficient[n].signum() != 0) {
+//                 final boolean nextPositive = positive(coefficient[n]);
+//                 double logNextValue;
+//                 if (nextPositive)
+//                    logNextValue = log(coefficient[n]);
+//                 else
+//                    logNextValue = log(coefficient[n].negate());
+//                 if(!(nextPositive ^ positive)) // Same sign
+//                    logResult = LogTricks.logSum(logResult,logNextValue);
+//                 else { // Different signs
+//                     if (logResult > logNextValue)
+//                         logResult = LogTricks.logDiff(logResult,logNextValue);
+//                     else {
+//                         logResult = LogTricks.logDiff(logNextValue,logResult);
+//                         positive = !positive;
+//                     }
+//                 }
+//                 }
+//             }
+//             if (!positive)
+//                logResult = -logResult;
+//             return logResult;
+//         }
+//
+//         protected Apfloat evaluateAPDouble(Apfloat x) {
+//             Apfloat result = new Apfloat(0.0);
+//             Apfloat xn = new Apfloat(1.0);
+//             for(int n=0; n<=getDegree(); n++) {
+//                 result = result.add(coefficient[n].multiply(xn));
+//                 xn = xn.multiply(x);
+//             }
+//             // TODO Rewrite using Horner's Rule
+//             return result;
+//         }
+//
+//         public double getCoefficient(int n) {
+//             return coefficient[n].doubleValue();
+//         }
+//
+//         public void setCoefficient(int n, double x) {
+//             coefficient[n] = new Apfloat(x);
+//         }
+//
+//         public Polynomial integrateWithLowerBound(double bound) {
+//             APDouble integrand = integrate();
+//             final Apfloat x0 = integrand.evaluateAPDouble(new Apfloat(bound));
+//             integrand.coefficient[0] = x0.multiply(new Apfloat(-1.0));
+//             return integrand;
+//         }
+//
+//         public void setCoefficient(int n, Apfloat x) {
+//             coefficient[n] = x;
+//         }
+//
+//         Apfloat[] coefficient;
+//     }
 
 
     public class Double extends Abstract {

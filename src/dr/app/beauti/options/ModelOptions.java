@@ -41,6 +41,9 @@ public class ModelOptions {
     public static final int UNITY_SCALE = 7;
     public static final int ROOT_RATE_SCALE = 8;
     public static final int LOG_VAR_SCALE = 9;
+    
+    public static final double demoTuning = 0.75;
+    
 
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
@@ -58,9 +61,9 @@ public class ModelOptions {
         operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
 
-    public void createScaleOperator(String parameterName, double weight) {
+    public void createScaleOperator(String parameterName, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, 0.75, weight));
+        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, tuning, weight));
     }
 
     public void createScaleAllOperator(String parameterName, double weight) {

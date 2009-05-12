@@ -28,7 +28,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
     public void createParameters(final ModelOptions modelOptions) {
         modelOptions.createParameter("treeModel.tipDates", "date of specified tips", ModelOptions.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        modelOptions.createScaleOperator("treeModel.tipDates", 3.0);
+        modelOptions.createScaleOperator("treeModel.tipDates", modelOptions.demoTuning, 3.0);
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {

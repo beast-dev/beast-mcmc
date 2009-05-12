@@ -87,7 +87,6 @@ public class BeastGenerator extends Generator {
     private final String SPECIATION_LIKE = "speciationlike";
     private final String SPLIT_POPS = "splitPops"; 
     private final String PDIST = "pdist";
-    private final String POP_MEAN = "popMean";
     private final String STP = "stp";
     
     private final TreePriorGenerator treePriorGenerator;
@@ -730,8 +729,8 @@ public class BeastGenerator extends Generator {
     	writer.writeOpenTag(ExponentialDistributionModel.MEAN); 
     	
     	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.ID, POP_MEAN),
-        		new Attribute.Default<String>(AttributeParser.VALUE, "0.01")}, true);
+        		new Attribute.Default<String>(XMLParser.ID, options.POP_MEAN),
+        		new Attribute.Default<String>(AttributeParser.VALUE, "0.001")}, true);
     	
     	writer.writeCloseTag(ExponentialDistributionModel.MEAN); 
     	

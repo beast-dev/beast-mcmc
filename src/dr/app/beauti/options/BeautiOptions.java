@@ -69,7 +69,7 @@ public class BeautiOptions extends ModelOptions {
     }
     
     /**
-     * Initialise parameters and operators in BeautiOptions, which may be used again in PartitionModel where can add prefix of each data partition.
+     * Initialise parameters and operators in BeautiOptions, which is copied in PartitionModel where can add prefix of each data partition.
      */
     private void initParametersAndOperators () {
         double demoWeights = 3.0;
@@ -147,19 +147,19 @@ public class BeautiOptions extends ModelOptions {
         createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
-        createScaleOperator("constant.popSize", demoWeights);
-        createScaleOperator("exponential.popSize", demoWeights);
+        createScaleOperator("constant.popSize", demoTuning, demoWeights);
+        createScaleOperator("exponential.popSize", demoTuning, demoWeights);
         createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
-        createScaleOperator("exponential.doublingTime", demoWeights);
-        createScaleOperator("logistic.popSize", demoWeights);
-        createScaleOperator("logistic.growthRate", demoWeights);
-        createScaleOperator("logistic.doublingTime", demoWeights);
-        createScaleOperator("logistic.t50", demoWeights);
-        createScaleOperator("expansion.popSize", demoWeights);
-        createScaleOperator("expansion.growthRate", demoWeights);
-        createScaleOperator("expansion.doublingTime", demoWeights);
-        createScaleOperator("expansion.ancestralProportion", demoWeights);
-        createScaleOperator("skyline.popSize", demoWeights * 5);
+        createScaleOperator("exponential.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.popSize", demoTuning, demoWeights);
+        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
+        createScaleOperator("logistic.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.t50", demoTuning, demoWeights);
+        createScaleOperator("expansion.popSize", demoTuning, demoWeights);
+        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
+        createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
         createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
 
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
@@ -173,10 +173,10 @@ public class BeautiOptions extends ModelOptions {
         createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
-        createScaleOperator("yule.birthRate", demoWeights);
+        createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
-        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoWeights);
-        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoWeights);
+        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
@@ -194,10 +194,10 @@ public class BeautiOptions extends ModelOptions {
                 "Changes partition relative rates relative to each other maintaining their mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
 
-        createScaleOperator("clock.rate", rateWeights);
-        createScaleOperator(ClockType.UCED_MEAN, rateWeights);
-        createScaleOperator(ClockType.UCLD_MEAN, rateWeights);
-        createScaleOperator(ClockType.UCLD_STDEV, rateWeights);
+        createScaleOperator("clock.rate", demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
 
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
@@ -215,7 +215,7 @@ public class BeautiOptions extends ModelOptions {
         createOperator("upDownAllRatesHeights", "All rates and heights",
                 "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
                 "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
-        createScaleOperator("branchRates.var", rateWeights);
+        createScaleOperator("branchRates.var", demoTuning, rateWeights);
 
         createOperator("swapBranchRateCategories", "branchRates.categories",
                 "Performs a swap of branch rate categories", "branchRates.categories",
@@ -227,12 +227,12 @@ public class BeautiOptions extends ModelOptions {
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", treeWeights);
+        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
-        createScaleOperator("treeModel.rootHeight", demoWeights);
+        createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
@@ -254,6 +254,18 @@ public class BeautiOptions extends ModelOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
+    }
+    
+    public void initSpeciesParametersAndOperators () {
+    	double spWeights = 5.0;
+    	double spTuning = 0.9;
+    	
+    	createScaleParameter(POP_MEAN, "population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	
+    	
+    	
+    	createScaleOperator(POP_MEAN, spTuning, spWeights);
+    	//TODO: more
     }
 
     /**
@@ -392,7 +404,9 @@ public class BeautiOptions extends ModelOptions {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         
-        if (!isSpeciesAnalysis()) { // not species
+        if (isSpeciesAnalysis()) { // species
+        	selectParametersForSpecies(parameters);
+        } else { // not species
         	selectParameters(parameters);
         }
 
@@ -408,7 +422,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionModel model : getActivePartitionModels()) {
         	// use override method getParameter(String name) in PartitionModel containing prefix
         	if (isSpeciesAnalysis()) { // species
-        		model.selectParameters(parameters);
+        		model.selectParameters(parameters);        		
         	}
             parameters.addAll(model.getParameters(multiplePartitions));
         }
@@ -603,7 +617,9 @@ public class BeautiOptions extends ModelOptions {
 
         ArrayList<Operator> ops = new ArrayList<Operator>();
         
-        if (!isSpeciesAnalysis()) { // not species
+        if (isSpeciesAnalysis()) { // species
+        	selectOperatorsForSpecies(ops);
+        } else { // not species
         	selectOperators(ops);
         }
 
@@ -614,7 +630,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionModel model : getActivePartitionModels()) {
         	// use override method getOperator(String name) in PartitionModel containing prefix
         	if (isSpeciesAnalysis()) { // species
-        		model.selectOperators(ops);
+        		model.selectOperators(ops);        		
         	}
             ops.addAll(model.getOperators());
         }
@@ -763,6 +779,14 @@ public class BeautiOptions extends ModelOptions {
         params.add(getParameter("treeModel.rootHeight"));
     }
 
+    
+    private void selectParametersForSpecies(List<Parameter> params) {
+    	//TODO: more
+    	params.add(getParameter(POP_MEAN));
+    	
+    }
+    
+    
     private void selectStatistics(List<Parameter> params) {
 
         if (taxonSets != null) {
@@ -947,6 +971,11 @@ public class BeautiOptions extends ModelOptions {
             ops.add(getOperator("wilsonBalding"));
         }
 
+    }
+    
+    private void selectOperatorsForSpecies(List<Operator> ops) {
+    	//TODO: more
+    	ops.add(getOperator(POP_MEAN));
     }
 
     /**
@@ -1357,7 +1386,8 @@ public class BeautiOptions extends ModelOptions {
     public List<String> traits = new ArrayList<String>();
     public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
     public final String TRAIT_SPECIES = "species";
-
+    public final String POP_MEAN = "popMean";
+    
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();

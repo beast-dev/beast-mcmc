@@ -19,6 +19,8 @@ import java.util.List;
  */
 public abstract class Generator {
 
+	protected final String COALESCENT = "coalescent";
+	
     protected final BeautiOptions options;
     protected String genePrefix; // gene file name
 

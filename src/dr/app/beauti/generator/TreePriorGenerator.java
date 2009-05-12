@@ -329,7 +329,7 @@ public class TreePriorGenerator extends Generator {
 
 			writer.writeCloseTag(tagName);
 
-			writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, genePrefix + "coalescent"));
+			writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, genePrefix + COALESCENT));
 			writer.writeOpenTag(CoalescentLikelihood.MODEL);
 			writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + VariableDemographicModel.demoElementName), true);
 			writer.writeCloseTag(CoalescentLikelihood.MODEL);
@@ -393,7 +393,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeComment("Generate a coalescent process");
 			writer.writeOpenTag(
 					CoalescentLikelihood.COALESCENT_LIKELIHOOD,
-					new Attribute[]{new Attribute.Default<String>(XMLParser.ID, genePrefix + "coalescent")}
+					new Attribute[]{new Attribute.Default<String>(XMLParser.ID, genePrefix + COALESCENT)}
 			);
 			writer.writeOpenTag(CoalescentLikelihood.MODEL);
 			writeNodeHeightPriorModelRef(writer);
@@ -600,7 +600,7 @@ public class TreePriorGenerator extends Generator {
 //	        writer.writeTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"skyride"), true);
 			// Currently nothing additional needs logging
 		} else {
-			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "coalescent"), true);
+			writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + COALESCENT), true);
 		}
 
 	}

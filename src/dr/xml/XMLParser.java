@@ -380,12 +380,12 @@ public class XMLParser {
         final static String DAYS = "days";
         final static String MONTHS = "months";
         final static String YEARS = "years";
-        final static String SUBSTITUTIONS = "substitutions";
+        public final static String SUBSTITUTIONS = "substitutions";
         // Mutations has been replaced with substitutions...
         final static String MUTATIONS = "mutations";
         final static String UNKNOWN = "unknown";
 
-        final static String UNITS = "units";
+        public final static String UNITS = "units";
 
         /**
          * Converts a unit integer into a human-readable name.

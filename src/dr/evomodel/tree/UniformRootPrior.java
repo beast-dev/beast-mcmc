@@ -362,8 +362,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                                     break;
                 case BIG_DOUBLE:    polynomial = new Polynomial.BigDouble(coefficients);
                                     break;
-                case APDOUBLE:      polynomial = new Polynomial.APDouble(coefficients);
-                                    break;
+//                case APDOUBLE:      polynomial = new Polynomial.APDouble(coefficients);
+//                                    break;
                 default: throw new RuntimeException("Unknown polynomial type");
             }
             this.label = label;

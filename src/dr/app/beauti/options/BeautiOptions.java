@@ -26,6 +26,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
@@ -34,6 +35,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.operators.TreeNodeSlide;
+import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evoxml.TaxaParser;
@@ -72,7 +75,6 @@ public class BeautiOptions extends ModelOptions {
      * Initialise parameters and operators in BeautiOptions, which is copied in PartitionModel where can add prefix of each data partition.
      */
     private void initParametersAndOperators () {
-        double demoWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
         double rateWeights = 3.0;
@@ -262,9 +264,24 @@ public class BeautiOptions extends ModelOptions {
     	
     	createScaleParameter(POP_MEAN, "population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
+    	createScaleParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth Death Model BminusD Rate operator", 
+    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	createScaleParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth Death Model DoverB operator", 
+    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
+    	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "speices tree population size operator", 
+    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	
+    	createParameter(TreeNodeSlide.TREE_NODE_REHEIGHT, "species tree operator");
     	
     	createScaleOperator(POP_MEAN, spTuning, spWeights);
+    	
+    	createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	
+    	createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
+    	
+    	createOperator(TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
     	//TODO: more
     }
 
@@ -781,8 +798,16 @@ public class BeautiOptions extends ModelOptions {
 
     
     private void selectParametersForSpecies(List<Parameter> params) {
-    	//TODO: more
+    	
     	params.add(getParameter(POP_MEAN));
+    	
+    	//TODO: if choose diff species tree model 
+    	params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+    	params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+    	
+//    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
+    	
+    	//TODO: more
     	
     }
     
@@ -974,8 +999,16 @@ public class BeautiOptions extends ModelOptions {
     }
     
     private void selectOperatorsForSpecies(List<Operator> ops) {
-    	//TODO: more
+    	
     	ops.add(getOperator(POP_MEAN));
+    	
+    	ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+    	ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+    	
+    	ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
+    	
+    	ops.add(getOperator(TreeNodeSlide.TREE_NODE_REHEIGHT));
+    	//TODO: more
     }
 
     /**

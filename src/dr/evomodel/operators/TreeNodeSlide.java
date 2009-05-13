@@ -23,7 +23,7 @@ import java.util.Arrays;
  *         Date: 29/05/2008
  */
 public class TreeNodeSlide extends SimpleMCMCOperator {
-    private static final String TREE_NODE_REHEIGHT = "nodeReHeight";
+    public static final String TREE_NODE_REHEIGHT = "nodeReHeight";
 
     private final SpeciesTreeModel tree;
     private final SpeciesBindings species;

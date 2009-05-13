@@ -553,7 +553,7 @@ public class BeastGenerator extends Generator {
     }
 
     /**
-     * Generate traits block regarding specific trait name (e.g. <species>) from these beast options
+     * Generate traits block regarding specific trait name (currently only <species>) from options
      * @param writer
      * @param trait
      * @param traitType
@@ -562,7 +562,7 @@ public class BeastGenerator extends Generator {
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
 
     	writer.writeText("");
-        if (options.isSpeciesAnalysis()) { // hard code
+        if (options.isSpeciesAnalysis()) { // species
         	writer.writeComment("Species definition: binds taxa, species and gene trees");
         }
         writer.writeComment("trait = " + trait + " trait_type = " + traitType);
@@ -571,13 +571,13 @@ public class BeastGenerator extends Generator {
         		//new Attribute.Default<String>("traitType", traitType)});
 
         // write sub-tags for species
-        if (options.isSpeciesAnalysis()) { // hard code
+        if (options.isSpeciesAnalysis()) { // species
         	multiSpeciesCoalescentGenerator.writeMultiSpecies(taxonList, writer);
         } // end write sub-tags for species
 
         writer.writeCloseTag(trait);
 
-        if (options.isSpeciesAnalysis()) { // hard code
+        if (options.isSpeciesAnalysis()) { // species
         	multiSpeciesCoalescentGenerator.writeMultiSpeciesCoalescent(writer);
         }
 

@@ -49,7 +49,6 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
     private MultivariateTraitLikelihood traitModel;
     private int dim;
     private String traitName;
-//	private String traitName;
 
     public InternalTraitGibbsOperator(MultivariateTraitLikelihood traitModel
 //		    TreeModel treeModel, MultivariateDiffusionModel diffusionModel, boolean inSubstitutionTime
@@ -59,11 +58,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
         this.treeModel = traitModel.getTreeModel();
         precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
         this.traitName = traitModel.getTraitName();
-//	    System.err.println("traitName = "+traitName);
-//	    System.exit(-1);
         dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
-//        this.inSubstitutionTime = inSubstitutionTime;
-
     }
 
 
@@ -76,12 +71,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
         double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
 
-////        double treeLength = Tree.Utils.getTreeLength(treeModel,treeModel.getRoot());
-//        double treeLength = treeModel.getNodeHeight(treeModel.getRoot());
-
-
         NodeRef node = treeModel.getRoot();
-//		System.err.println("CNT: "+treeModel.getInternalNodeCount());
         while (node == treeModel.getRoot()) {
             node = treeModel.getInternalNode(MathUtils.nextInt(
                     treeModel.getInternalNodeCount()));
@@ -91,30 +81,22 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
         double[] weightedAverage = new double[dim];
 
-//        double weight = 1.0 / treeModel.getBranchLength(node);
-//        weight *= treeLength;
         double weight = 1.0 / traitModel.getRescaledBranchLength(node);
 
-//        if (inSubstitutionTime)
-//            weight /= treeModel.getNodeRate(node);
         double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
         for (int i = 0; i < dim; i++)
             weightedAverage[i] = trait[i] * weight;
-//		weightedAverage[i] = i;
 
         double weightTotal = weight;
         for (int j = 0; j < treeModel.getChildCount(node); j++) {
             NodeRef child = treeModel.getChild(node, j);
             trait = treeModel.getMultivariateNodeTrait(child, traitName);
-//            weight = 1.0 / treeModel.getBranchLength(child);
-//            weight *= treeLength;
             weight = 1.0 / traitModel.getRescaledBranchLength(child);
 
-//            if (inSubstitutionTime)
-//                weight /= treeModel.getNodeRate(child);
             for (int i = 0; i < dim; i++)
                 weightedAverage[i] += trait[i] * weight;
+
             weightTotal += weight;
         }
 
@@ -128,7 +110,6 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
                 weightedAverage, precision);
 
         treeModel.setMultivariateTrait(node, traitName, draw);
-//		for(int i=0; i<dim; i++)
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
 

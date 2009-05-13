@@ -18,6 +18,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+import java.util.Arrays;
 
 /**
  * <b>A general irreversible class for any
@@ -136,6 +137,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             if (updateMatrix) {
                 setupMatrix();
             }
+        }
+
+        if (!wellConditioned) {
+            Arrays.fill(matrix,0.0);
+            return;
         }
 
 

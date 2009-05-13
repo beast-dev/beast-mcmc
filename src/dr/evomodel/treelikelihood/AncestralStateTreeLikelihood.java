@@ -90,22 +90,22 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
     protected double calculateLogLikelihood() {
 
-        if (checkConditioning) {
-            final int len = stateCount * stateCount;
-            double[] test = new double[len];
-            try {
-                siteModel.getSubstitutionModel().getTransitionProbabilities(1.0, test);
-            } catch (ArithmeticException exception) { // AbstractSubstitutionModel throws numerical errors
-                return Double.NEGATIVE_INFINITY;
-            }
-            for (double d : test) {
-                if (d > 1.05) { // ill-conditioned
-                    return Double.NEGATIVE_INFINITY;
-                }
-
-            }
-            checkConditioning = false;
-        }
+//        if (checkConditioning) {
+//            final int len = stateCount * stateCount;
+//            double[] test = new double[len];
+//            try {
+//                siteModel.getSubstitutionModel().getTransitionProbabilities(1.0, test);
+//            } catch (ArithmeticException exception) { // AbstractSubstitutionModel throws numerical errors
+//                return Double.NEGATIVE_INFINITY;
+//            }
+//            for (double d : test) {
+//                if (d > 1.05) { // ill-conditioned
+//                    return Double.NEGATIVE_INFINITY;
+//                }
+//
+//            }
+//            checkConditioning = false;
+//        }
 
         areStatesRedrawn = false;
 

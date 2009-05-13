@@ -1,5 +1,6 @@
 package dr.app.beauti.options;
 
+import dr.evomodel.operators.TreeNodeSlide;
 import dr.inference.operators.ScaleOperator;
 
 /**
@@ -29,7 +30,8 @@ public enum OperatorType {
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
-    WILSON_BALDING("wilsonBalding");
+    WILSON_BALDING("wilsonBalding"),
+    NODE_REHIGHT(TreeNodeSlide.TREE_NODE_REHEIGHT);
 
     OperatorType(String displayName) {
         this.displayName = displayName;

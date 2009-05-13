@@ -100,7 +100,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_TREE),
 				new Attribute.Default<String>(SpeciesTreeModel.BMPRIOR, "true")});        
-        writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, options.TRAIT_SPECIES)}, true);
+        writer.writeIDref(options.TRAIT_SPECIES, options.TRAIT_SPECIES);
         
         //TODO: take the value (0.001) for constant.popSize
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, "0.001")});
@@ -156,13 +156,11 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     			new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});      
     	
     	writer.writeOpenTag(SpeciationLikelihood.MODEL); 
-    	writer.writeTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, BirthDeathModelParser.BIRTH_DEATH)}, true);    	
+    	writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);    	
     	writer.writeCloseTag(SpeciationLikelihood.MODEL); 
     	
     	writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE); 
-    	writer.writeTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, SP_TREE)}, true);    	
+    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);    	
     	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
     	
     	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD); 
@@ -176,10 +174,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeOpenTag(TreePartitionCoalescent.SPECIES_COALESCENT, new Attribute[]{
     			new Attribute.Default<String>(XMLParser.ID, COALESCENT)});   
     	
-    	writer.writeTag(options.TRAIT_SPECIES, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, options.TRAIT_SPECIES)}, true); 
-    	writer.writeTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, SP_TREE)}, true); 
+    	writer.writeIDref(options.TRAIT_SPECIES, options.TRAIT_SPECIES); 
+    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); 
     	
     	writer.writeCloseTag(TreePartitionCoalescent.SPECIES_COALESCENT); 
     	
@@ -201,13 +197,11 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeOpenTag(SpeciesTreeBMPrior.STPRIOR, new Attribute[]{
     			new Attribute.Default<String>(XMLParser.ID, STP),
     			new Attribute.Default<String>(SpeciesTreeBMPrior.LOG_ROOT, "true")});  
-    	writer.writeTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, SP_TREE)}, true); 
+    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); 
     	
     	writer.writeOpenTag(SpeciesTreeBMPrior.TIPS);     	
     	
-    	writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.IDREF, PDIST)}, true);
+    	writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);
     	
     	writer.writeCloseTag(SpeciesTreeBMPrior.TIPS); 
     	

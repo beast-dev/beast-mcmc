@@ -1204,6 +1204,16 @@ public class BeastGenerator extends Generator {
 
         // write prior block
         writer.writeOpenTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
+        
+        //TODO: this is hard code for species tree
+        if (options.isSpeciesAnalysis()) { // species
+        	// coalescent prior
+        	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
+        	// prior on population sizes
+        	writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
+        	// prior on species tree
+        	writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
+        }
 
         writeParameterPriors(writer);
 

@@ -154,7 +154,6 @@ public class PartitionModel extends ModelOptions {
     
     // use override method getOperator(String name) in PartitionModel containing prefix
     public void initParametersAndOperatorsForEachPartitionModel () {
-        double demoWeights = 3.0;
         double branchWeights = 30.0;
         double treeWeights = 15.0;
         double rateWeights = 3.0;

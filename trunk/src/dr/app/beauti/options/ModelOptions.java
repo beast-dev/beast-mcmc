@@ -43,7 +43,8 @@ public class ModelOptions {
     public static final int LOG_VAR_SCALE = 9;
     
     public static final double demoTuning = 0.75;
-    
+    public static final double demoWeights = 3.0;
+       
 
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);

@@ -11,7 +11,9 @@ import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
+import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
@@ -143,6 +145,9 @@ public class OperatorsGenerator extends Generator {
             case GMRF_GIBBS_OPERATOR:
                 writeGMRFGibbsOperator(operator, writer);
                 break;
+            case NODE_REHIGHT:
+            	writeSpeciesTreeOperator(operator, writer);
+            	break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
         }
@@ -441,6 +446,15 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
+    }
+    
+    private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(TreeNodeSlide.TREE_NODE_REHEIGHT,
+                new Attribute[]{ getWeightAttribute(operator.weight) }
+        );
+        writer.writeIDref(options.TRAIT_SPECIES,  options.TRAIT_SPECIES);
+        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  Generator.SP_TREE);
+        writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
     }
 
     private Attribute getWeightAttribute(double weight) {

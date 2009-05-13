@@ -36,12 +36,14 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -52,6 +54,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     public static final String INTERNAL_ONLY = "onlyInternalNodes";
     public static final String NODE_PRIOR = "nodePrior";
     public static final String NODE_LABEL = "taxon";
+    public static final String ROOT_PRIOR = "rootPrior";
 
     private final TreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
@@ -61,6 +64,9 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
     private Map<NodeRef, GeoSpatialDistribution> nodePrior;
     private boolean onlyInternalNodes = true;
+    private boolean sampleRoot = false;
+    private double[] rootPriorMean;
+    private double[][] rootPriorPrecision;
 
     public TraitGibbsOperator(MultivariateTraitLikelihood traitModel, boolean onlyInternalNodes) {
         super();
@@ -70,6 +76,13 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         this.traitName = traitModel.getTraitName();
         this.onlyInternalNodes = onlyInternalNodes;
         this.dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
+        Logger.getLogger("dr.evomodel").info("Using *NEW* trait Gibbs operator");
+    }
+
+    public void setRootPrior(MultivariateNormalDistribution rootPrior) {
+        rootPriorMean = rootPrior.getMean();
+        rootPriorPrecision = rootPrior.getScaleMatrix();
+        sampleRoot = true;
     }
 
     public void setNodePrior(NodeRef node, GeoSpatialDistribution distribution) {
@@ -79,7 +92,6 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         nodePrior.put(node, distribution);
     }
 
-
     public int getStepCount() {
         return 1;
     }
@@ -87,55 +99,34 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
     public double doOperation() throws OperatorFailedException {
 
-        double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
+        NodeRef node = null;
+        final NodeRef root = treeModel.getRoot();
 
-        NodeRef node = treeModel.getRoot();
-        while (node == treeModel.getRoot()) {
+        while (node == null) {
             if (onlyInternalNodes)
                 node = treeModel.getInternalNode(MathUtils.nextInt(
                         treeModel.getInternalNodeCount()));
             else
                 node = treeModel.getNode(MathUtils.nextInt(
                         treeModel.getNodeCount()));
-        } // select any internal (or internal/external) node but the root.
-        // TODO Should use Gibbs update on root given MVN prior
+            if (!sampleRoot && node == root)
+                node = null;
+        } // select any internal (or internal/external) node
 
-        NodeRef parent = treeModel.getParent(node);
+        MeanPrecision mp;
 
-        double[] weightedAverage = new double[dim];
+        if (node != root)
+            mp = operateNotRoot(node);
+        else
+            mp = operateRoot(node);
 
-        double weight = 1.0 / traitModel.getRescaledBranchLength(node);
-
-        double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
-
-        for (int i = 0; i < dim; i++)
-            weightedAverage[i] = trait[i] * weight;
-
-        double weightTotal = weight;
-        for (int j = 0; j < treeModel.getChildCount(node); j++) {
-            NodeRef child = treeModel.getChild(node, j);
-            trait = treeModel.getMultivariateNodeTrait(child, traitName);
-            weight = 1.0 / traitModel.getRescaledBranchLength(child);
-
-            for (int i = 0; i < dim; i++)
-                weightedAverage[i] += trait[i] * weight;
-
-            weightTotal += weight;
-        }
-
-        for (int i = 0; i < dim; i++) {
-            weightedAverage[i] /= weightTotal;
-            for (int j = i; j < dim; j++)
-                precision[j][i] = precision[i][j] *= weightTotal;
-        }
-
-        boolean priorExists = nodePrior != null && nodePrior.containsKey(node);
+        final boolean priorExists = nodePrior != null && nodePrior.containsKey(node);
 
         double[] draw;
 
         do {
             draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(
-                    weightedAverage, precision);
+                    mp.mean, mp.precision);
         } while (priorExists &&  // There is a prior for this node
                 (nodePrior.get(node)).logPdf(draw) == Double.NEGATIVE_INFINITY); // And draw is invalid under prior
         // TODO Currently only works for flat/truncated priors, make work for MVN
@@ -144,6 +135,91 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
 
+    }
+
+    private MeanPrecision operateNotRoot(NodeRef node) {
+
+        double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
+
+        NodeRef parent = treeModel.getParent(node);
+
+        double[] mean = new double[dim];
+
+        double weight = 1.0 / traitModel.getRescaledBranchLength(node);
+
+        double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
+
+        for (int i = 0; i < dim; i++)
+            mean[i] = trait[i] * weight;
+
+        double weightTotal = weight;
+        for (int j = 0; j < treeModel.getChildCount(node); j++) {
+            NodeRef child = treeModel.getChild(node, j);
+            trait = treeModel.getMultivariateNodeTrait(child, traitName);
+            weight = 1.0 / traitModel.getRescaledBranchLength(child);
+
+            for (int i = 0; i < dim; i++)
+                mean[i] += trait[i] * weight;
+
+            weightTotal += weight;
+        }
+
+        for (int i = 0; i < dim; i++) {
+            mean[i] /= weightTotal;
+            for (int j = i; j < dim; j++)
+                precision[j][i] = precision[i][j] *= weightTotal;
+        }
+        return new MeanPrecision(mean,precision);
+    }
+
+    class MeanPrecision {
+        double[] mean;
+        double[][] precision;
+
+        MeanPrecision(double[] mean, double[][] precision) {
+            this.mean = mean;
+            this.precision = precision;
+        }
+    }
+
+    private MeanPrecision operateRoot(NodeRef node) {
+
+        double[] trait = null;
+        double weightTotal = 0.0;
+
+        double[] weightedAverage = new double[dim];
+
+        double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
+        
+        for (int k = 0; k < treeModel.getChildCount(node); k++) {
+            NodeRef child = treeModel.getChild(node, k);
+            trait = treeModel.getMultivariateNodeTrait(child, traitName);
+            final double weight = 1.0 / traitModel.getRescaledBranchLength(child);
+
+            for (int i = 0; i < dim; i++) {
+                for (int j=0; j<dim; j++)
+                    weightedAverage[i] += precision[i][j] * weight * trait[j];
+            }
+
+            weightTotal += weight;
+        }
+
+        for (int i=0; i<dim; i++) {
+            for (int j=0; j<dim; j++) {
+                weightedAverage[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
+                precision[i][j]  = precision[i][j] * weightTotal + rootPriorPrecision[i][j];
+            }
+        }
+
+        double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
+
+        for (int i=0; i<dim; i++) {
+            trait[i] = 0;
+            for (int j=0; j<dim; j++)
+                trait[i] += variance[i][j] * weightedAverage[j];
+        }
+
+        return new MeanPrecision(trait,precision);
     }
 
     public String getPerformanceSuggestion() {
@@ -160,14 +236,30 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             return GIBBS_OPERATOR;
         }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        private final String[] names = new String[] { GIBBS_OPERATOR, "internalTraitGibbsOperator" };
 
+        public String[] getParserNames() { return names; }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);
             MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
 
             TraitGibbsOperator operator = new TraitGibbsOperator(traitModel, onlyInternalNodes);
             operator.setWeight(weight);
+
+            // Get root prior
+
+            XMLObject cxo = (XMLObject) xo.getChild(ROOT_PRIOR);
+            if (cxo != null) {
+
+                MultivariateDistributionLikelihood rootPrior = (MultivariateDistributionLikelihood) cxo.getChild(MultivariateDistributionLikelihood.class);
+                if( !(rootPrior.getDistribution() instanceof MultivariateDistribution))
+                    throw new XMLParseException("Only multivariate normal priors allowed for Gibbs sampling the root trait");
+               operator.setRootPrior((MultivariateNormalDistribution)rootPrior.getDistribution());
+            }
+
 
             // Get node priors
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -217,6 +309,10 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 //                        new ElementRule(MultivariateDistributionLikelihood.class),
 //                }),
                 new ElementRule(MultivariateDistributionLikelihood.class, 0, Integer.MAX_VALUE),
+                new ElementRule(ROOT_PRIOR,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(MultivariateDistributionLikelihood.class)
+                        }, true),
         };
 
     };

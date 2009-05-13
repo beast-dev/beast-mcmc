@@ -16,13 +16,13 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
 
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
-    public static String BIRTHDIFF_RATE = "birthMinusDeathRate";
-    public static String RELATIVE_DEATH_RATE = "relativeDeathRate";   
-    public static String SAMPLE_RATE = "sampleRate";
+    public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
+    public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";   
+    public static final String SAMPLE_RATE = "sampleRate";
 
-    public static String BIRTH_DEATH = "birthDeath";
-    public static String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".BminusDRate";
-    public static String RELATIVE_DEATH_RATE_PARAM_NAME = BIRTH_DEATH + ".DoverB";
+    public static final String BIRTH_DEATH = "birthDeath";
+    public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".BminusDRate";
+    public static final String RELATIVE_DEATH_RATE_PARAM_NAME = BIRTH_DEATH + ".DoverB";
 
     public String getParserName() {
         return BIRTH_DEATH_MODEL;

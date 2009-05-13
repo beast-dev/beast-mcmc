@@ -3,18 +3,9 @@ package dr.app.beauti.generator;
 import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.PartitionModel;
-import dr.app.beauti.options.TreePrior;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
-import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.operators.TreeBitMoveOperator;
-import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeBMPrior;
@@ -24,9 +15,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evoxml.TaxonParser;
 import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.*;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -44,6 +33,11 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         super(options, components);
     }
     
+    /**
+     * write tag <sp>
+     * @param taxonList
+     * @param writer
+     */
     public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
     	List<String> species = new ArrayList<String>(); // hard code
     	String sp;
@@ -75,6 +69,10 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writeGeneTrees (writer);
     }
     
+    /**
+     * write the species tree, species tree model, likelihood, etc.
+     * @param writer
+     */
     public void writeMultiSpeciesCoalescent(XMLWriter writer) {
     	writeSpeciesTree(writer);
     	writeSpeciesTreeModel(writer);

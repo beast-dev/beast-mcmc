@@ -20,10 +20,10 @@ import java.util.List;
 public abstract class Generator {
 
 	protected static final String COALESCENT = "coalescent";
-	protected static final String SP_TREE = "sptree";
+	public static final String SP_TREE = "sptree";
 	protected static final String SPECIES_TREE_FILE_NAME = "species.tree";
 	protected static final String SPECIATION_LIKE = "speciationlike";
-	protected static final String SPLIT_POPS = "splitPops"; 
+	public static final String SPLIT_POPS = "splitPops"; 
 	protected static final String PDIST = "pdist";
 	protected static final String STP = "stp";
 	

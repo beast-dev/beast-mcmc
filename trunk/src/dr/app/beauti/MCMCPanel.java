@@ -26,6 +26,9 @@
 package dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionModel;
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
+
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -159,7 +162,7 @@ public class MCMCPanel extends BeautiPanel {
                 logFileNameField.setText(options.logFileName);
             }
             if (options.treeFileName == null) {
-                treeFileNameField.setText(options.fileNameStem + ".trees");
+                treeFileNameField.setText(options.fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
             } else {
                 treeFileNameField.setText(options.treeFileName);
             }
@@ -169,10 +172,28 @@ public class MCMCPanel extends BeautiPanel {
 //                mapTreeFileNameField.setText(options.mapTreeFileName);
 //            }
             if (options.substTreeFileName == null) {
-                substTreeFileNameField.setText(options.fileNameStem + "(subst).trees");
+                substTreeFileNameField.setText(options.fileNameStem + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
             } else {
                 substTreeFileNameField.setText(options.substTreeFileName);
             }
+            
+            if (options.isSpeciesAnalysis()) {
+            	String nameList = options.SPECIES_TREE_FILE_NAME;            	
+            	for (PartitionModel model : options.getActivePartitionModels()) {
+            		nameList = nameList + "; " + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+            	}
+            	treeFileNameField.setText(nameList);
+            	
+            	// SPECIES_TREE_FILE_NAME = TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+//            	nameList = options.TRAIT_SPECIES + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+            	//TODO: species sub tree
+            	nameList = "";
+            	for (PartitionModel model : options.getActivePartitionModels()) {
+            		nameList = nameList + "; " + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+            	}
+            	substTreeFileNameField.setText(nameList);
+            }
+            
             logFileNameField.setEnabled(true);
             treeFileNameField.setEnabled(true);
 

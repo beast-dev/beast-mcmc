@@ -142,6 +142,8 @@ public final class MarkovChain {
         double[] logr = {0.0};
 
         boolean usingFullEvaluation = true;
+        if (fullEvaluationCount == 0) // Temporary solution until full code review
+        	usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
         while( !pleaseStop && (currentState < (currentLength + length)) ) {

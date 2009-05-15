@@ -44,6 +44,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
@@ -83,8 +84,9 @@ public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
     
-    private static final String SPECIES_TREE_FILE_NAME = "species.trees";
-	
+    private final static String TREE_FILE_LOG = "treeFileLog";
+    private final static String SUB_TREE_FILE_LOG = "substTreeFileLog";
+    
     private final TreePriorGenerator treePriorGenerator;
     private final TreeLikelihoodGenerator treeLikelihoodGenerator;
     private final PartitionModelGenerator partitionModelGenerator;
@@ -1574,10 +1576,10 @@ public class BeastGenerator extends Generator {
         	// species tree log
 	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "FileLog"), // speciesTreeFileLog
+	                        new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
 	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, SPECIES_TREE_FILE_NAME),
+	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.SPECIES_TREE_FILE_NAME),
 	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
 	                });
 			    	   		
@@ -1593,14 +1595,14 @@ public class BeastGenerator extends Generator {
         	for (PartitionModel model : models) {
 		        if (options.treeFileName == null) {
 		            if (options.substTreeLog) {
-		                options.treeFileName = model.getName() + "(time).trees";
+		                options.treeFileName = model.getName() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 		            } else {
-		                options.treeFileName = model.getName() + ".trees";
+		                options.treeFileName = model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // partitionName.tree
 		            }
 		        }
 		        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 		                new Attribute[]{
-		                        new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + "treeFileLog"), // partionName.treeFileLog
+		                        new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + TREE_FILE_LOG), // partionName.treeFileLog
 		                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 		                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
 		                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
@@ -1637,14 +1639,14 @@ public class BeastGenerator extends Generator {
     	} else { // no species
 	        if (options.treeFileName == null) {
 	            if (options.substTreeLog) {
-	                options.treeFileName = options.fileNameStem + "(time).trees";
+	                options.treeFileName = options.fileNameStem + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 	            } else {
-	                options.treeFileName = options.fileNameStem + ".trees";
+	                options.treeFileName = options.fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 	            }
 	        }
 	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, "treeFileLog"),
+	                        new Attribute.Default<String>(XMLParser.ID, TREE_FILE_LOG),
 	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
 	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
@@ -1706,15 +1708,50 @@ public class BeastGenerator extends Generator {
 //        }
         if (options.substTreeLog) {
 	        if (options.isSpeciesAnalysis()) { // species
+	        	//TODO: species sub tree
+	        	// species tree
+//	            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+//	                    new Attribute[]{
+//	                            new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + SUB_TREE_FILE_LOG),
+//	                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+//	                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+//	                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.TRAIT_SPECIES +  
+//	                            		"(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME),
+//	                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
+//	                    });
+//	            writer.writeIDref(TreeModel.TREE_MODEL,  options.TRAIT_SPECIES + "." + TreeModel.TREE_MODEL);
+//	
+//	            switch (options.clockType) {
+//	                case STRICT_CLOCK:
+//	                    writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,  options.TRAIT_SPECIES + "." + BranchRateModel.BRANCH_RATES);
+//	                    break;
+//	
+//	                case UNCORRELATED_EXPONENTIAL:
+//	                case UNCORRELATED_LOGNORMAL:
+//	                case RANDOM_LOCAL_CLOCK:
+//	                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,  options.TRAIT_SPECIES + "." + BranchRateModel.BRANCH_RATES);
+//	                    break;
+//	
+//	                case AUTOCORRELATED_LOGNORMAL:
+//	                    writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  options.TRAIT_SPECIES + "." + BranchRateModel.BRANCH_RATES);
+//	                    break;
+//	
+//	                default:
+//	                    throw new IllegalArgumentException("Unknown clock model");
+//	            }	
+//	            writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+	        	
+	            // gene tree
 	        	for (PartitionModel model : models) {
 		            // write tree log to file
 		            
 		            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 		                    new Attribute[]{
-		                            new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + "substTreeFileLog"),
+		                            new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + SUB_TREE_FILE_LOG),
 		                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 		                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-		                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, model.getName() +  "(subst).trees"),
+		                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, model.getName() +  
+		                            		"(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME),
 		                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
 		                    });
 		            writer.writeIDref(TreeModel.TREE_MODEL,  model.getName() + "." + TreeModel.TREE_MODEL);
@@ -1745,11 +1782,11 @@ public class BeastGenerator extends Generator {
 	        
 	            // write tree log to file
 	            if (options.substTreeFileName == null) {
-	                options.substTreeFileName = options.fileNameStem + "(subst).trees";
+	                options.substTreeFileName = options.fileNameStem + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 	            }
 	            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 	                    new Attribute[]{
-	                            new Attribute.Default<String>(XMLParser.ID, "substTreeFileLog"),
+	                            new Attribute.Default<String>(XMLParser.ID, SUB_TREE_FILE_LOG),
 	                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
 	                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.substTreeFileName),

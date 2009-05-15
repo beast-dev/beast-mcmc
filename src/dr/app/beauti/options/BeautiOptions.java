@@ -34,6 +34,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.speciation.SpeciesTreeModel;
@@ -1406,6 +1407,10 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public String substTreeFileName = null;
 
+    public final String TRAIT_SPECIES = "species";
+    public final String SPECIES_TREE_FILE_NAME = TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
+    public final String POP_MEAN = "popMean";
+    
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
@@ -1418,8 +1423,6 @@ public class BeautiOptions extends ModelOptions {
 
     public List<String> traits = new ArrayList<String>();
     public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
-    public final String TRAIT_SPECIES = "species";
-    public final String POP_MEAN = "popMean";
     
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

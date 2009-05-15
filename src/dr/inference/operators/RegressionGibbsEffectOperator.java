@@ -28,6 +28,10 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
     private int numEffects;
     private double[][] X;
 
+    private double[] mean = null;
+    private double[][] variance = null;
+    private double[][] precision = null;
+
     public RegressionGibbsEffectOperator(LinearRegression linearModel, Parameter effect, Parameter indicators,
                                    MultivariateDistributionLikelihood effectPrior) {
         super();
@@ -51,75 +55,99 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
         return 1;
     }
 
+    public void computeForwardDensity(double[] outMean, double[][] outVariance, double[][] outPrecision) {
+
+         double[] W = linearModel.getTransformedDependentParameter();
+         double[] P = linearModel.getScale();  // outcome precision, fresh copy
+
+         for (int k = 0; k < numEffects; k++) {
+             if (k != effectNumber) {
+                 double[] thisXBeta = linearModel.getXBeta(k);
+                 for (int i = 0; i < N; i++)
+                     W[i] -= thisXBeta[i];
+             }
+         }
+
+         double[] priorBetaMean = effectPrior.getMean();
+         double[][] priorBetaScale = effectPrior.getScaleMatrix();
+
+         double[][] XtP = new double[dim][N];
+         for (int j = 0; j < dim; j++) {
+             if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
+                  for (int i = 0; i < N; i++)
+                     XtP[j][i] = X[i][j] * P[i];
+             } // else already filled with zeros
+         }
+
+         double[][] XtPX = new double[dim][dim];
+         for (int i = 0; i < dim; i++) {
+             if (hasNoIndicators || indicators.getParameterValue(i) == 1) {
+                 for (int j = i; j < dim; j++) {// symmetric
+                     if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
+                         for (int k = 0; k < N; k++)
+                             XtPX[i][j] += XtP[i][k] * X[k][j];
+                         XtPX[j][i] = XtPX[i][j]; // symmetric
+                     }
+                 }
+             }
+         }
+
+         double[][] XtPX_plus_P0 = new double[dim][dim];
+         for (int i = 0; i < dim; i++) {
+             for (int j = i; j < dim; j++) // symmetric
+                 XtPX_plus_P0[j][i] = XtPX_plus_P0[i][j] = XtPX[i][j] + priorBetaScale[i][j];
+         }
+
+         double[] XtPW = new double[dim];
+         for (int i = 0; i < dim; i++) {
+             for (int j = 0; j < N; j++)
+                 XtPW[i] += XtP[i][j] * W[j];
+         }
+
+         double[] P0Mean0 = new double[dim];
+         for (int i = 0; i < dim; i++) {
+             for (int j = 0; j < dim; j++)
+                 P0Mean0[i] += priorBetaScale[i][j] * priorBetaMean[j];
+         }
+
+         double[] unscaledMean = new double[dim];
+         for (int i = 0; i < dim; i++)
+             unscaledMean[i] = P0Mean0[i] + XtPW[i];
+
+         double[][] variance = new SymmetricMatrix(XtPX_plus_P0).inverse().toComponents();
+
+         for (int i = 0; i < dim; i++) {
+             outMean[i] = 0.0;
+             for (int j = 0; j < dim; j++) {
+                 outMean[i] += variance[i][j] * unscaledMean[j];
+                 outVariance[i][j] = variance[i][j];
+                 outPrecision[i][j] = XtPX_plus_P0[i][j];
+             }
+         }
+    }
+
+    public double[] getLastMean() { return mean; }
+
+    public double[][] getLastVariance() { return variance; }
+
+    public double[][] getLastPrecision() { return precision; }
+
     public double doOperation() throws OperatorFailedException {
 
-        double[] W = linearModel.getTransformedDependentParameter();
-        double[] P = linearModel.getScale();  // outcome precision, fresh copy
+        if (mean == null)
+            mean = new double[dim];
 
-        for (int k = 0; k < numEffects; k++) {
-            if (k != effectNumber) {
-                double[] thisXBeta = linearModel.getXBeta(k);
-                for (int i = 0; i < N; i++)
-                    W[i] -= thisXBeta[i];
-            }
-        }
+        if (variance == null)
+            variance = new double[dim][dim];
 
-        double[] priorBetaMean = effectPrior.getMean();
-        double[][] priorBetaScale = effectPrior.getScaleMatrix();
+        if (precision == null)
+            precision = new double[dim][dim];
 
-        double[][] XtP = new double[dim][N];
-        for (int j = 0; j < dim; j++) {
-            if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
-                 for (int i = 0; i < N; i++)
-                    XtP[j][i] = X[i][j] * P[i];
-            } // else already filled with zeros
-        }
 
-        double[][] XtPX = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            if (hasNoIndicators || indicators.getParameterValue(i) == 1) {
-                for (int j = i; j < dim; j++) {// symmetric
-                    if (hasNoIndicators || indicators.getParameterValue(j) == 1) {
-                        for (int k = 0; k < N; k++)
-                            XtPX[i][j] += XtP[i][k] * X[k][j];
-                        XtPX[j][i] = XtPX[i][j]; // symmetric
-                    }
-                }
-            }
-        }
-
-        double[][] XtPX_plus_P0 = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) // symmetric
-                XtPX_plus_P0[j][i] = XtPX_plus_P0[i][j] = XtPX[i][j] + priorBetaScale[i][j];
-        }
-
-        double[] XtPW = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < N; j++)
-                XtPW[i] += XtP[i][j] * W[j];
-        }
-
-        double[] P0Mean0 = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++)
-                P0Mean0[i] += priorBetaScale[i][j] * priorBetaMean[j];
-        }
-
-        double[] unscaledMean = new double[dim];
-        for (int i = 0; i < dim; i++)
-            unscaledMean[i] = P0Mean0[i] + XtPW[i];
-
-        double[][] variance = new SymmetricMatrix(XtPX_plus_P0).inverse().toComponents();
-
-        double[] scaledMean = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++)
-                scaledMean[i] += variance[i][j] * unscaledMean[j];
-        }
+        computeForwardDensity(mean,variance,precision);
 
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(
-                scaledMean, variance);
+                mean, variance);
 
         for (int i = 0; i < dim; i++)
             effect.setParameterValue(i, draw[i]);

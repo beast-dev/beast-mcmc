@@ -62,11 +62,11 @@ public final class MarkovChain {
     private boolean useCoercion = true;
 
     private final int fullEvaluationCount;
-    private final int minOperatorCountForFullEvaluation = 1;
+    private final int minOperatorCountForFullEvaluation;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
-                       int fullEvaluationCount, boolean useCoercion) {
+                       int fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean useCoercion) {
         currentLength = 0;
         this.prior = prior;
         this.likelihood = likelihood;
@@ -75,6 +75,7 @@ public final class MarkovChain {
         this.useCoercion = useCoercion;
 
         this.fullEvaluationCount = fullEvaluationCount;
+        this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
 
         currentScore = evaluate(likelihood, prior);
     }
@@ -142,8 +143,9 @@ public final class MarkovChain {
         double[] logr = {0.0};
 
         boolean usingFullEvaluation = true;
-        if (fullEvaluationCount == 0) // Temporary solution until full code review
-        	usingFullEvaluation = false;
+        // set ops count in mcmc element instead
+//        if (fullEvaluationCount == 0) // Temporary solution until full code review
+//        	usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
         while( !pleaseStop && (currentState < (currentLength + length)) ) {

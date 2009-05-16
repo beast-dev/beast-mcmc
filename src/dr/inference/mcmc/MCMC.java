@@ -74,7 +74,8 @@ public class MCMC implements Runnable, Identifiable {
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
 
-        mc = new MarkovChain(prior, likelihood, schedule, criterion, options.fullEvaluationCount(), options.useCoercion());
+        mc = new MarkovChain(prior, likelihood, schedule, criterion,
+                options.fullEvaluationCount(), options.minOperatorCountForFullEvaluation(), options.useCoercion());
 
         this.options = options;
         this.loggers = loggers;
@@ -453,6 +454,7 @@ public class MCMC implements Runnable, Identifiable {
             options.setPreBurnin(xo.getAttribute(PRE_BURNIN, options.getChainLength() / 100));
             options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
             options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
+            options.setminOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
@@ -513,6 +515,7 @@ public class MCMC implements Runnable, Identifiable {
                 AttributeRule.newIntegerRule(PRE_BURNIN, true),
                 AttributeRule.newDoubleRule(TEMPERATURE, true),
                 AttributeRule.newIntegerRule(FULL_EVALUATION, true),
+                 AttributeRule.newIntegerRule(MIN_OPS_EVALUATIONS, true),
 		        AttributeRule.newBooleanRule(SPAWN,true),
                 new ElementRule(OperatorSchedule.class),
                 new ElementRule(Likelihood.class),
@@ -560,6 +563,7 @@ public class MCMC implements Runnable, Identifiable {
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";
+    public static final String MIN_OPS_EVALUATIONS = "minOpsFullEvaluations";
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
 	public static final String SPAWN ="spawn";

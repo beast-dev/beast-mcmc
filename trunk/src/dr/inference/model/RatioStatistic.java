@@ -27,8 +27,6 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-import java.util.Vector;
-
 /**
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
@@ -104,7 +102,7 @@ public class RatioStatistic extends Statistic.Abstract {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
 		};
 	};

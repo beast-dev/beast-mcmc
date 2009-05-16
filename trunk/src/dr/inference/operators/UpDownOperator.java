@@ -37,6 +37,10 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
     public static final String SCALE_FACTOR = "scaleFactor";
 
+    private Scalable[] upParameter = null;
+    private Scalable[] downParameter = null;
+    private double scaleFactor;
+
     public UpDownOperator(Scalable[] upParameter, Scalable[] downParameter,
                           double scale, double weight, CoercionMode mode) {
 
@@ -48,23 +52,16 @@ public class UpDownOperator extends AbstractCoercableOperator {
         this.scaleFactor = scale;
     }
 
-//    public final int getPriorType() {
-//        return prior.getPriorType();
-//    }
-
     public final double getScaleFactor() {
         return scaleFactor;
     }
 
-//    public final void setPriorType(int type) {
-//        prior.setPriorType(type);
-//    }
-
     public final void setScaleFactor(double sf) {
-        if ((sf > 0.0) && (sf < 1.0))
+        if( (sf > 0.0) && (sf < 1.0) ) {
             scaleFactor = sf;
-        else
+        } else {
             throw new IllegalArgumentException("scale must be between 0 and 1");
+        }
     }
 
     /**
@@ -103,7 +100,6 @@ public class UpDownOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-    //MCMCOperator INTERFACE
     public final String getOperatorName() {
         String name = "";
         if( upParameter != null ) {
@@ -234,20 +230,12 @@ public class UpDownOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                AttributeRule.newIntegerArrayRule("count", true),
 
                 // Allow an arbitrary number of Parameters or Scalables in up or down
                 new ElementRule(UP, ee, 1, Integer.MAX_VALUE),
                 new ElementRule(DOWN, ee, 1, Integer.MAX_VALUE),
         };
     };
-
-    //PRIVATE STUFF
-
-    private Scalable[] upParameter = null;
-    private Scalable[] downParameter = null;
-    //private final ContinuousVariablePrior prior = new ContinuousVariablePrior();
-    private double scaleFactor;
 }
 
 // The old implementation for reference and until the new one is tested :)

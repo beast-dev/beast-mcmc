@@ -74,11 +74,11 @@ public class TaxonParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private final XMLSyntaxRule[] rules = {
             new StringAttributeRule(Identifiable.ID, "A unique identifier for this taxon"),
-            new ElementRule(dr.util.Attribute.Default.class, true),
-            new ElementRule(dr.evolution.util.Date.class, true),
-            new ElementRule(dr.evolution.util.Location.class, true)
+            new ElementRule(Attribute.Default.class, true),
+            new ElementRule(Date.class, true),
+            new ElementRule(Location.class, true)
     };
 
 }

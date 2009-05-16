@@ -43,8 +43,8 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
     public static final String VARIANCE_MATRIX = "varMatrix";
 
     private double scaleFactor;
-    private Parameter parameter;
-    private int dim;
+    private final Parameter parameter;
+    private final int dim;
 
     private double[][] cholesky;
 
@@ -192,7 +192,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),

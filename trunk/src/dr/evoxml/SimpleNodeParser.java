@@ -67,7 +67,7 @@ public class SimpleNodeParser extends AbstractXMLObjectParser {
             } else if (child instanceof Taxon) {
                 taxon = (Taxon)child;
             } else if (child instanceof Date) {
-                node.setAttribute("date", (Date)child);
+                node.setAttribute("date", child);
             } else if (child instanceof Attribute) {
                 Attribute attr = (Attribute)child;
                 String name = attr.getAttributeName();
@@ -107,7 +107,7 @@ public class SimpleNodeParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private final XMLSyntaxRule[] rules = {
         AttributeRule.newDoubleRule(HEIGHT, true, "the age of the node"),
         AttributeRule.newDoubleRule(RATE, true, "the relative rate of evolution at this node - default is 1.0"),
         new XORRule(

@@ -253,7 +253,7 @@ public class TreeIntervals implements IntervalList {
 		
 		HeapSort.sort(times, indices);
 		
-		if (intervals == null || intervals.length != nodeCount) {
+		if( intervals == null || intervals.length != nodeCount ) {
 			intervals = new double[nodeCount];
 			lineageCounts = new int[nodeCount];
             lineagesAdded = new List[nodeCount];
@@ -356,17 +356,16 @@ public class TreeIntervals implements IntervalList {
 	/**
 	 * extract coalescent times and tip information into array times from tree.
 	 */
-	private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
+    private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
 
-		for (int i = 0; i < tree.getNodeCount(); i++) {
-		
-			NodeRef node = tree.getNode(i);
+        for(int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
             times[i] = tree.getNodeHeight(node);
             childCounts[i] = tree.getChildCount(node);
-		}
+        }
     }
-	
-	/**
+
+    /**
 	 * Return the units that this tree is expressed in.
 	 */
 	public final Type getUnits() {

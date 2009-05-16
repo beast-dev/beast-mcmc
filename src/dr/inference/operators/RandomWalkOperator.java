@@ -226,7 +226,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
@@ -245,5 +245,5 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
-    private BoundaryCondition condition;
+    private final BoundaryCondition condition;
 }

@@ -36,14 +36,14 @@ public class AttributeParser extends AbstractXMLObjectParser {
 	public String getParserName() { return ATTRIBUTE; }
 		
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
-		String name = xo.getStringAttribute(NAME);
-		if (xo.hasAttribute(VALUE)) {
-			return new Attribute.Default(name, xo.getAttribute(VALUE));
-		}
-		Object value = xo.getChild(0);
-		
-		return new Attribute.Default(name, value);
+
+        final String name = xo.getStringAttribute(NAME);
+        if( xo.hasAttribute(VALUE) ) {
+            return new Attribute.Default(name, xo.getAttribute(VALUE));
+        }
+        final Object value = xo.getChild(0);
+
+        return new Attribute.Default(name, value);
 	}
 	
 	//************************************************************************
@@ -58,9 +58,8 @@ public class AttributeParser extends AbstractXMLObjectParser {
 
 	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+	private final XMLSyntaxRule[] rules = {
 		new StringAttributeRule("name", "The name to give to this attribute"),
 		new ElementRule(Object.class )
 	};
-	
 }

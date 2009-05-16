@@ -114,7 +114,7 @@ public class RateCovarianceStatistic extends Statistic.Abstract implements TreeS
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),
                 new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
@@ -125,5 +125,4 @@ public class RateCovarianceStatistic extends Statistic.Abstract implements TreeS
     private BranchRateModel branchRateModel = null;
     private double[] childRate = null;
     private double[] parentRate = null;
-
 }

@@ -40,7 +40,7 @@ public class ProductStatistic extends Statistic.Abstract {
     public static String PRODUCT_STATISTIC = "productStatistic";
 
     private int dimension = 0;
-    private boolean elementwise;
+    private final boolean elementwise;
 
     public ProductStatistic(String name, boolean elementwise) {
         super(name);
@@ -133,7 +133,7 @@ public class ProductStatistic extends Statistic.Abstract {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule("elementwise", true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
@@ -143,5 +143,5 @@ public class ProductStatistic extends Statistic.Abstract {
     // Private and protected stuff
     // ****************************************************************
 
-    private List<Statistic> statistics = new ArrayList<Statistic>();
+    private final List<Statistic> statistics = new ArrayList<Statistic>();
 }

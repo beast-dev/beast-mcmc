@@ -37,7 +37,7 @@ public class DifferenceStatistic extends Statistic.Abstract {
     public static String DIFFERENCE_STATISTIC = "differenceStatistic";
     public static String ABSOLUTE = "absolute";
 
-    private boolean absolute;
+    private final boolean absolute;
 
     public DifferenceStatistic(String name, Statistic term1, Statistic term2, boolean absolute) {
         super(name);
@@ -126,7 +126,7 @@ public class DifferenceStatistic extends Statistic.Abstract {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(ABSOLUTE, true),
                 new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
         };

@@ -36,6 +36,7 @@ public class MCMCOptions {
 
     private int chainLength;
     private int fullEvaluationCount = 2000;
+    private int minOperatorCountForFullEvaluation = 1;
     private boolean coercion = true;
     private int preBurnin = 0;
     private double temperature = 1.0;
@@ -88,4 +89,11 @@ public class MCMCOptions {
         this.preBurnin = preBurnin;
     }
 
+    public int minOperatorCountForFullEvaluation() {
+        return minOperatorCountForFullEvaluation;
+    }
+
+    public final void setminOperatorCountForFullEvaluation(int count) {
+        this.minOperatorCountForFullEvaluation = count;
+    }
 }

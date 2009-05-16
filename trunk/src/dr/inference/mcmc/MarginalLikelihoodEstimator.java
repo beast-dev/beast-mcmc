@@ -66,7 +66,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.pathLikelihood = pathLikelihood;
         pathLikelihood.setPathParameter(pathParameter);
 
-        mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, false);
+        mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, 0, false);
 
         this.logger = logger;
     }
@@ -120,7 +120,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     }
 
     public void geometricShoeLacing() {
-        int logCount = chainLength / logger.getLogEvery();
+        //int logCount = chainLength / logger.getLogEvery();
         mc.setCurrentLength(0);
         if (pathSteps % 2 == 0) //Works only for odd number of steps
             pathSteps += 1;
@@ -162,7 +162,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     }
 
     public void geometricIntegration() {
-        int logCount = chainLength / logger.getLogEvery();
+        //int logCount = chainLength / logger.getLogEvery();
         mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             double p = 1.0 - (((double) step) / pathSteps);
@@ -210,7 +210,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         mc.removeMarkovChainListener(chainListener);
     }
 
-    private MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -329,7 +329,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
                 AttributeRule.newIntegerRule(PATH_STEPS),
                 AttributeRule.newIntegerRule(BURNIN, true),
@@ -356,24 +356,24 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     /**
      * this markov chain does most of the work.
      */
-    private MarkovChain mc;
+    private final MarkovChain mc;
 
     private String id = null;
 
     private int currentState;
-    private int chainLength;
+    private final int chainLength;
 
     private int burnin;
-    private int burninLength;
+    private final int burninLength;
     private int pathSteps;
-    private boolean linear;
-    private boolean lacing;
-    private double pathDelta;
+    private final boolean linear;
+    private final boolean lacing;
+    private final double pathDelta;
     private double pathParameter;
 
-    private MCLogger logger;
+    private final MCLogger logger;
 
-    private PathLikelihood pathLikelihood;
+    private final PathLikelihood pathLikelihood;
 
     public static final String MARGINAL_LIKELIHOOD_ESTIMATOR = "marginalLikelihoodEstimator";
     public static final String CHAIN_LENGTH = "chainLength";

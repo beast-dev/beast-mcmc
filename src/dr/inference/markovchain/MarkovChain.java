@@ -64,6 +64,8 @@ public final class MarkovChain {
     private final int fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
 
+    private static final double EVALUATION_TEST_THRESHOLD = 1e-6;
+
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        int fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean useCoercion) {
@@ -224,7 +226,7 @@ public final class MarkovChain {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
-                    if( Math.abs(testScore - score) > 1e-6 ) {
+                    if( Math.abs(testScore - score) > EVALUATION_TEST_THRESHOLD ) {
                         Logger.getLogger("error").severe(
                                 "State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
@@ -286,7 +288,7 @@ public final class MarkovChain {
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
-                if( Math.abs(testScore - oldScore) > 1e-6 ) {
+                if( Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD ) {
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"
                             + "Likelihood before: " + oldScore

@@ -41,5 +41,5 @@ public enum OperatorType {
         return displayName;
     }
 
-    private String displayName;
+    private final String displayName;
 }

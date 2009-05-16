@@ -39,118 +39,122 @@ import dr.xml.XMLSyntaxRule;
  * @version $Id: ParameterParser.java,v 1.12 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
-	
-	public static final String UPPER = "upper";
-	public static final String LOWER = "lower";
-	public static final String DIMENSION = "dimension";
-	public static final String VALUE = "value";	
-	public static final String PARAMETER = "parameter";	
-		
-	public String getParserName() { return PARAMETER; }
-	
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
-		double[] values = null;
-		double[] uppers;
-		double[] lowers;
-		
-		if (xo.hasAttribute(DIMENSION)) {
-				values = new double[xo.getIntegerAttribute(DIMENSION)];
-		} 
-		
-		if (xo.hasAttribute(VALUE)) {
-			if (values == null) {
-				values = xo.getDoubleArrayAttribute(VALUE);
-			} else {
-				double[] v = xo.getDoubleArrayAttribute(VALUE);
-				if (v.length == values.length) {
-					System.arraycopy(v, 0, values, 0, v.length);
-				} else if (v.length == 1) {
-					for (int i = 0; i < values.length; i++) {
-						values[i] = v[0];
-					}
-				} else {
-					throw new XMLParseException("value string must have 1 value or dimension values");
-				}
-			}
-		} else {
-			if (xo.hasAttribute(DIMENSION)) {
-				values = new double[xo.getIntegerAttribute(DIMENSION)];
-			} else {
-				// parameter dimension will get set correctly by TreeModel presumably.
-				return new Parameter.Default(1);
-			}
-		}
+
+    public static final String UPPER = "upper";
+    public static final String LOWER = "lower";
+    public static final String DIMENSION = "dimension";
+    public static final String VALUE = "value";
+    public static final String PARAMETER = "parameter";
+
+    public String getParserName() {
+        return PARAMETER;
+    }
+
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        double[] values = null;
+        double[] uppers;
+        double[] lowers;
+
+        if( xo.hasAttribute(DIMENSION) ) {
+            values = new double[xo.getIntegerAttribute(DIMENSION)];
+        }
+
+        if( xo.hasAttribute(VALUE) ) {
+            if( values == null ) {
+                values = xo.getDoubleArrayAttribute(VALUE);
+            } else {
+                double[] v = xo.getDoubleArrayAttribute(VALUE);
+                if( v.length == values.length ) {
+                    System.arraycopy(v, 0, values, 0, v.length);
+                } else if( v.length == 1 ) {
+                    for(int i = 0; i < values.length; i++) {
+                        values[i] = v[0];
+                    }
+                } else {
+                    throw new XMLParseException("value string must have 1 value or dimension values");
+                }
+            }
+        } else {
+            if( xo.hasAttribute(DIMENSION) ) {
+                values = new double[xo.getIntegerAttribute(DIMENSION)];
+            } else {
+                // parameter dimension will get set correctly by TreeModel presumably.
+                return new Parameter.Default(1);
+            }
+        }
 
         uppers = new double[values.length];
-        for (int i =0; i < values.length; i++) {
+        for(int i = 0; i < values.length; i++) {
             uppers[i] = Double.POSITIVE_INFINITY;
-		}
-		
+        }
+
         lowers = new double[values.length];
-        for (int i =0; i < values.length; i++) {
+        for(int i = 0; i < values.length; i++) {
             lowers[i] = Double.NEGATIVE_INFINITY;
         }
 
-		if (xo.hasAttribute(UPPER)) {
+        if( xo.hasAttribute(UPPER) ) {
             double[] v = xo.getDoubleArrayAttribute(UPPER);
-            if (v.length == uppers.length) {
+            if( v.length == uppers.length ) {
                 System.arraycopy(v, 0, uppers, 0, v.length);
-            } else if (v.length == 1) {
-                for (int i = 0; i < uppers.length; i++) {
+            } else if( v.length == 1 ) {
+                for(int i = 0; i < uppers.length; i++) {
                     uppers[i] = v[0];
                 }
             } else {
                 throw new XMLParseException("uppers string must have 1 value or dimension values");
             }
-		}
-		
-		if (xo.hasAttribute(LOWER)) {
+        }
+
+        if( xo.hasAttribute(LOWER) ) {
             double[] v = xo.getDoubleArrayAttribute(LOWER);
-            if (v.length == lowers.length) {
+            if( v.length == lowers.length ) {
                 System.arraycopy(v, 0, lowers, 0, v.length);
-            } else if (v.length == 1) {
-                for (int i = 0; i < lowers.length; i++) {
+            } else if( v.length == 1 ) {
+                for(int i = 0; i < lowers.length; i++) {
                     lowers[i] = v[0];
                 }
             } else {
                 throw new XMLParseException("lowers string must have 1 value or dimension values");
             }
-		}
+        }
 
-       //  assert uppers != null && lowers != null;
+        //  assert uppers != null && lowers != null;
 
-        if ( (uppers.length != values.length) ) {
-			throw new XMLParseException("value and upper limit strings have different dimension, in parameter");
-		}
+        if( (uppers.length != values.length) ) {
+            throw new XMLParseException("value and upper limit strings have different dimension, in parameter");
+        }
 
-		if ( (lowers.length != values.length) ) {
-			throw new XMLParseException("value and lower limit strings have different dimension, in parameter");
-		}
-		
-		// check if uppers and lowers are consistent
-		for (int i =0; i < values.length; i++) {
-			if (uppers[i] < lowers[i]) {
-				throw new XMLParseException("upper is lower than lower, in parameter");
-			}
-		}
-		
+        if( (lowers.length != values.length) ) {
+            throw new XMLParseException("value and lower limit strings have different dimension, in parameter");
+        }
+
+        // check if uppers and lowers are consistent
+        for(int i = 0; i < values.length; i++) {
+            if( uppers[i] < lowers[i] ) {
+                throw new XMLParseException("upper is lower than lower, in parameter");
+            }
+        }
+
         // make values consistent with bounds
-		for (int i =0; i < values.length; i++) {
-			if (uppers[i] < values[i]) values[i] = uppers[i];
-		}
-					
-		Parameter param = new Parameter.Default(values.length);
-		for (int i =0; i < values.length; i++) {
-			param.setParameterValue(i, values[i]); 
-		}
-		param.addBounds(new Parameter.DefaultBounds(uppers, lowers));
-		return param;
-	}
+        for(int i = 0; i < values.length; i++) {
+            if( uppers[i] < values[i] ) values[i] = uppers[i];
+        }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        Parameter param = new Parameter.Default(values.length);
+        for(int i = 0; i < values.length; i++) {
+            param.setParameterValue(i, values[i]);
+        }
+        param.addBounds(new Parameter.DefaultBounds(uppers, lowers));
+        return param;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleArrayRule(VALUE, true),
             AttributeRule.newIntegerRule(DIMENSION, true),
             AttributeRule.newDoubleArrayRule(UPPER, true),
@@ -161,6 +165,8 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
     public String getParserDescription() {
         return "A real-valued parameter of one or more dimensions.";
     }
-	
-	public Class getReturnType() { return Parameter.class; }
+
+    public Class getReturnType() {
+        return Parameter.class;
+    }
 }

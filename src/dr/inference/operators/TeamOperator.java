@@ -4,7 +4,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
- * * Combines N oprators - each time a random subset of k out of the N are run. If operators have weight then the
+ * Combines N oprators - each time a random subset of k out of the N are run. If operators have weight then the
  * probability of any subset is proportional to the sum of it's members weights.
  *
  * Currently very basic as no Coercible operators are handled correctly. Getting coercion to work is non trivial.

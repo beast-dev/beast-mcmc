@@ -243,7 +243,7 @@ public class OperatorsGenerator extends Generator {
         } else {
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
             writeParameter1Ref(writer, operator);
-            writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
+            writer.writeIDref(ParameterParser.PARAMETER, operator.parameter2.getName());
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         }
 
@@ -281,7 +281,6 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
-
 
         if (operator.getName().equals("Relative rates")) {
 

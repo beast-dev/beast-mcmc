@@ -102,8 +102,11 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 				new Attribute.Default<String>(SpeciesTreeModel.BMPRIOR, "true")});        
         writer.writeIDref(options.TRAIT_SPECIES, options.TRAIT_SPECIES);
         
-        //TODO: take the value (0.001) for constant.popSize
-        writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, "0.001")});
+        //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
+        // hard code get(0)
+        double popSizeValue = options.getParameter("constant.popSize", options.getActivePartitionModels().get(0)).initial; // "initial" is "value"
+        writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
+        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(popSizeValue))});
         
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
         		new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS)}, true);

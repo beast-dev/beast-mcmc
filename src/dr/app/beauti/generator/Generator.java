@@ -76,7 +76,7 @@ public abstract class Generator {
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, genePrefix + id), true);
+        writer.writeIDref(ParameterParser.PARAMETER, genePrefix + id);
         writer.writeCloseTag(wrapperName);
     }
 

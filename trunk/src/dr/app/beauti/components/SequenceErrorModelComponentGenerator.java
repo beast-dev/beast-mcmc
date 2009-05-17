@@ -43,15 +43,14 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 writeErrorModel(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
-                writer.writeTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "errorModel")}, true);
+            	writer.writeIDref(SequenceErrorModel.SEQUENCE_ERROR_MODEL, "errorModel");
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 if (component.hasAgeDependentRate()) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER), true);
+                	writer.writeIDref(ParameterParser.PARAMETER, SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER);
                 }
                 if (component.hasBaseRate()) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER), true);
+                	writer.writeIDref(ParameterParser.PARAMETER, SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER);
                 }
                 break;
             default:

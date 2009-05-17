@@ -137,11 +137,11 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeInitialDemoModelRef(XMLWriter writer) {
         if (options.nodeHeightPrior == TreePrior.CONSTANT) {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "constant")}, true);
+        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
         } else if (options.nodeHeightPrior == TreePrior.EXPONENTIAL) {
-            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "exponential")}, true);
+        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, genePrefix + "exponential");
         } else {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + "initialDemo")}, true);
+        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "initialDemo");
         }
     }
 

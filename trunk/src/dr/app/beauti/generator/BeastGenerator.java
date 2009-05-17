@@ -1673,7 +1673,7 @@ public class BeastGenerator extends Generator {
 	        }
 
 	        /*if (options.clockType != ClockType.STRICT_CLOCK) {
-	            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+	            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
 	        }*/
 
 	        if (options.hasData()) {
@@ -1697,12 +1697,12 @@ public class BeastGenerator extends Generator {
 //                        new Attribute.Default<String>(TreeLogger.FILE_NAME, mapTreeFileName)
 //                    });
 //            writer.writeOpenTag("ml");
-//            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+//            writer.writeIDref(CompoundLikelihood.POSTERIOR, "posterior");
 //            writer.writeCloseTag("ml");
 //            writer.writeOpenTag("column", new Attribute[] {
 //                        new Attribute.Default<String>("label", "MAP tree")
 //                    });
-//            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
+//            writer.writeIDref(TreeModel.TREE_MODEL, "treeModel");
 //            writer.writeCloseTag("column");
 //            writer.writeCloseTag("logML");
 //        }

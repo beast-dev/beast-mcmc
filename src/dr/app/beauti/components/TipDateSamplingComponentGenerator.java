@@ -77,10 +77,10 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
                     TaxonList taxa = comp.getTaxonSet();
                     for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "age(" + taxon.getId() + ")"), true);
+                        writer.writeIDref(ParameterParser.PARAMETER, "age(" + taxon.getId() + ")");
                     }
                 } else if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.tipDates"), true);
+                	writer.writeIDref(ParameterParser.PARAMETER, "treeModel.tipDates");
                 }
                 break;
             default:

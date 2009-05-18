@@ -1094,8 +1094,13 @@ public class TreeAnnotator {
             processBivariateAttributes = true;
             System.err.println("JRI loaded. Will process bivariate attributes");
         } catch (UnsatisfiedLinkError e) {
-
-            System.err.println("JRI not available. Will not process bivariate attributes");
+            System.err.print("JRI not available. ");
+            if (!USE_R) {
+                processBivariateAttributes = true;
+                System.err.println("Using Java bivariate attributes");
+            } else {
+                System.err.println("Will not process bivariate attributes");
+            }
         }
     }
 

@@ -77,6 +77,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             String label = xo.getAttribute(NODE_LABEL,"");
 
             boolean inside = xo.getAttribute(INSIDE,true);
+            boolean readFromFile = false;
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
 
@@ -86,6 +87,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 List<Polygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
                 for(Polygon2D region : polygons)
                     geoSpatialDistributions.add(new GeoSpatialDistribution(label,region,inside));
+                readFromFile = true;
             } else {
 
               for(int i=0; i<xo.getChildCount(); i++) {
@@ -105,7 +107,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 parameters.add(spatialParameter);
             }
 
-            if (geoSpatialDistributions.size() == 1) {
+            if (geoSpatialDistributions.size() == 1 && !readFromFile) {
                 MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
                 for(Parameter spatialParameter : parameters) {
                     if (spatialParameter.getDimension() != dimPoint)

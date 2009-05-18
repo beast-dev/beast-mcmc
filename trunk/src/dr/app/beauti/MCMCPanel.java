@@ -55,16 +55,21 @@ public class MCMCPanel extends BeautiPanel {
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
-
-    JTextField logFileNameField = new JTextField("untitled.log");
-    JTextField treeFileNameField = new JTextField("untitled.trees");
+    
+    public static final String fileNameStem = "untitled";
+    JTextField fileNameStemField = new JTextField(fileNameStem);
+    
+    JTextField logFileNameField = new JTextField(fileNameStem + ".log");
+    JTextField treeFileNameField = new JTextField(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
+    
     JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
     JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
     BeautiFrame frame = null;
-    private final OptionsPanel optionsPanel;
+    private final OptionsPanel optionsPanel; 
+    private BeautiOptions options;
 
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
@@ -89,14 +94,29 @@ public class MCMCPanel extends BeautiPanel {
         logEveryField.setValue(100);
         logEveryField.setColumns(10);
         optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
-
+        
+        optionsPanel.addSeparator();
+        
+        fileNameStemField.setColumns(32);
+        optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
+        fileNameStemField.setEditable(true);
+        fileNameStemField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	options.fileNameStem = fileNameStemField.getText();
+            	setOptions(options);
+                frame.setDirty();
+            }
+        });
+        
         optionsPanel.addSeparator();
 
         logFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
+        logFileNameField.setEnabled(false);
         treeFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
-
+        treeFileNameField.setEnabled(false);
+        
 //        addComponent(mapTreeLogCheck);
 //        mapTreeLogCheck.setOpaque(false);
 //        mapTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
@@ -113,6 +133,22 @@ public class MCMCPanel extends BeautiPanel {
         substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
+                
+                if (substTreeLogCheck.isSelected()) {
+	                if (options.isSpeciesAnalysis()) {
+	            		String nameList = "";
+		            	for (PartitionModel model : options.getActivePartitionModels()) {
+		            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+		            	}
+		            	substTreeFileNameField.setText(nameList);
+	                } else {
+	                	options.substTreeFileName = options.fileNameStem + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;            
+	                    substTreeFileNameField.setText(options.substTreeFileName);  
+	                }
+                } else {
+                	substTreeFileNameField.setText(""); 
+                }
+                
                 frame.setDirty();
             }
         });
@@ -139,8 +175,9 @@ public class MCMCPanel extends BeautiPanel {
         chainLengthField.addKeyListener(listener);
         echoEveryField.addKeyListener(listener);
         logEveryField.addKeyListener(listener);
-        logFileNameField.addKeyListener(listener);
-        treeFileNameField.addKeyListener(listener);
+        fileNameStemField.addKeyListener(listener);
+//        logFileNameField.addKeyListener(listener);
+//        treeFileNameField.addKeyListener(listener);
         //mapTreeFileNameField.addKeyListener(listener);
         substTreeFileNameField.addKeyListener(listener);
 
@@ -149,54 +186,55 @@ public class MCMCPanel extends BeautiPanel {
     }
 
     public void setOptions(BeautiOptions options) {
+    	this.options = options;
 
         chainLengthField.setValue(options.chainLength);
 
         echoEveryField.setValue(options.echoEvery);
         logEveryField.setValue(options.logEvery);
 
-        if (options.fileNameStem != null) {
-            if (options.logFileName == null) {
-                logFileNameField.setText(options.fileNameStem + ".log");
-            } else {
-                logFileNameField.setText(options.logFileName);
-            }
-            if (options.treeFileName == null) {
-                treeFileNameField.setText(options.fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
-            } else {
-                treeFileNameField.setText(options.treeFileName);
-            }
+        if (options.fileNameStem != null) {        	
+        	fileNameStemField.setText(options.fileNameStem);
+        	
+        	options.logFileName = options.fileNameStem + ".log";
+        	logFileNameField.setText(options.logFileName);
+            
+            options.treeFileName = options.fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;   
+            treeFileNameField.setText(options.treeFileName);
+            
 //            if (options.mapTreeFileName == null) {
 //			    mapTreeFileNameField.setText(options.fileNameStem + ".MAP.tree");
 //            } else {
 //                mapTreeFileNameField.setText(options.mapTreeFileName);
 //            }
-            if (options.substTreeFileName == null) {
-                substTreeFileNameField.setText(options.fileNameStem + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
+            if (options.substTreeLog) {
+            	options.substTreeFileName = options.fileNameStem + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;            
+                substTreeFileNameField.setText(options.substTreeFileName);           
             } else {
-                substTreeFileNameField.setText(options.substTreeFileName);
+            	substTreeFileNameField.setText("");
             }
             
             if (options.isSpeciesAnalysis()) {
-            	String nameList = options.SPECIES_TREE_FILE_NAME;            	
+            	String nameList = options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME;            	
             	for (PartitionModel model : options.getActivePartitionModels()) {
-            		nameList = nameList + "; " + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	}
             	treeFileNameField.setText(nameList);
             	
             	// SPECIES_TREE_FILE_NAME = TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 //            	nameList = options.TRAIT_SPECIES + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	//TODO: species sub tree
-            	nameList = "";
-            	for (PartitionModel model : options.getActivePartitionModels()) {
-            		nameList = nameList + "; " + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
-            	}
-            	substTreeFileNameField.setText(nameList);
+            	if (options.substTreeLog) {
+            		nameList = "";
+	            	for (PartitionModel model : options.getActivePartitionModels()) {
+	            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+	            	}
+	            	substTreeFileNameField.setText(nameList);
+            	} else {
+                	substTreeFileNameField.setText("");
+                }
             }
             
-            logFileNameField.setEnabled(true);
-            treeFileNameField.setEnabled(true);
-
 //            mapTreeLogCheck.setEnabled(true);
 //            mapTreeLogCheck.setSelected(options.mapTreeLog);
 //            mapTreeFileNameField.setEnabled(options.mapTreeLog);
@@ -205,10 +243,10 @@ public class MCMCPanel extends BeautiPanel {
             substTreeLogCheck.setSelected(options.substTreeLog);
             substTreeFileNameField.setEnabled(options.substTreeLog);
         } else {
-            logFileNameField.setText("untitled");
-            logFileNameField.setEnabled(false);
-            treeFileNameField.setText("untitled");
-            treeFileNameField.setEnabled(false);
+        	fileNameStemField.setText(fileNameStem);
+        	fileNameStemField.setEnabled(false);
+        	logFileNameField.setText(fileNameStem + ".log");
+            treeFileNameField.setText(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");
@@ -228,7 +266,8 @@ public class MCMCPanel extends BeautiPanel {
 
         options.echoEvery = echoEveryField.getValue();
         options.logEvery = logEveryField.getValue();
-
+        
+        options.fileNameStem = fileNameStemField.getText();
         options.logFileName = logFileNameField.getText();
         options.treeFileName = treeFileNameField.getText();
 

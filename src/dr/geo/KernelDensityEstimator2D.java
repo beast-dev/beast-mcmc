@@ -7,6 +7,8 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.stats.DiscreteStatistics;
 
+import java.util.Arrays;
+
 /**
  * KernelDensityEstimator2D creates a bi-variate kernel density smoother for data
  * @author Marc A. Suchard
@@ -95,6 +97,33 @@ public class KernelDensityEstimator2D {
                 z[i][j] = value / scale;
             }
         }
+    }
+
+    public double findLevelCorrespondingToMass(double probabilityMass) {
+        double level = 0;
+        double[] sz = new double[n*n];
+        double[] c1 = new double[n*n];
+        for(int i=0; i<n; i++)
+            System.arraycopy(z[i],0,sz,i*n,n);
+        Arrays.sort(sz);
+        final double dx = gx[1] - gx[0];
+        final double dy = gy[1] - gy[0];
+        final double dxdy = dx * dy;
+        c1[0] = sz[0] * dxdy;
+        final double criticalValue = 1.0 - probabilityMass;
+        if (criticalValue < c1[0] || criticalValue >= 1.0)
+                throw new RuntimeException();
+        // do linearInterpolation on density (y) as function of cummulative sum (x)
+        for(int i=1; i<n*n; i++) {
+            c1[i] = sz[i] * dxdy + c1[i-1];
+            if (c1[i] > criticalValue) { // first largest point
+                final double diffC1 = c1[i] - c1[i-1];
+                final double diffSz = sz[i] - sz[i-1];
+                level = sz[i] - (c1[i]-criticalValue) / diffC1 * diffSz;
+                break;
+            }
+        }
+        return level;
     }
 
     public double[][] getKDE() {

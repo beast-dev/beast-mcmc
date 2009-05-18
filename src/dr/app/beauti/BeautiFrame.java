@@ -724,6 +724,7 @@ public class BeautiFrame extends DocumentFrame {
         		model.initParametersAndOperatorsForEachPartitionModel();
             }
         	beautiOptions.initSpeciesParametersAndOperators();
+        	beautiOptions.fileNameStem = "LogStem";
         }
     }
 

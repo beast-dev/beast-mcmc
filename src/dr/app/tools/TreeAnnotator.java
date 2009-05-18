@@ -39,6 +39,10 @@ import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
+import dr.geo.KernelDensityEstimator2D;
+import dr.geo.contouring.ContourAttrib;
+import dr.geo.contouring.ContourGenerator;
+import dr.geo.contouring.ContourPath;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
@@ -54,6 +58,8 @@ import java.util.*;
 public class TreeAnnotator {
 
     private final static Version version = new BeastVersion();
+
+    private final static boolean USE_R = true;
 
     enum Target {
         MAX_CLADE_CREDIBILITY( "Maximum clade credibility tree"),
@@ -849,7 +855,7 @@ public class TreeAnnotator {
         private final String[] rBootCommands = {
                 "library(MASS)",
                 "makeContour = function(var1, var2, prob=0.95, n=50, h=c(1,1)) {" +
-                        "post1 = kde2d(var1, var2, n = n, h = h); " +
+                        "post1 = kde2d(var1, var2, n = n); " +    // This had h=h in argument
                         "dx = diff(post1$x[1:2]); " +
                         "dy = diff(post1$y[1:2]); " +
                         "sz = sort(post1$z); " +
@@ -862,8 +868,10 @@ public class TreeAnnotator {
         private String makeRString(double[] values) {
             StringBuffer sb = new StringBuffer("c(");
             sb.append(values[0]);
-            for (int i = 1; i < values.length; i++)
-                sb.append(",").append(values[i]);
+            for (int i = 1; i < values.length; i++) {
+                sb.append(",");
+                sb.append(values[i]);
+            }
             sb.append(")");
             return sb.toString();
         }
@@ -903,69 +911,79 @@ public class TreeAnnotator {
             // todo Need a good method to pick grid size
             int N = 25;
 
-            REXP x = rEngine.eval("makeContour(" +
-                    makeRString(values[0]) + "," +
-                    makeRString(values[1]) + "," +
-                    hpd + "," +
-                    N + ")");
+            if (USE_R) {
 
-            RVector contourList = x.asVector();
-            int numberContours = contourList.size();
+                REXP x = rEngine.eval("makeContour(" +
+                        makeRString(values[0]) + "," +
+                        makeRString(values[1]) + "," +
+                        hpd + "," +
+                        N + ")");
 
-            tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
+                RVector contourList = x.asVector();
+                int numberContours = contourList.size();
 
-            StringBuffer output = new StringBuffer();
-            for (int i = 0; i < numberContours; i++) {
-                output.append("\n<" + CORDINATE + ">\n");
-                RVector oneContour = contourList.at(i).asVector();
-                double[] xList = oneContour.at(1).asDoubleArray();
-                double[] yList = oneContour.at(2).asDoubleArray();
-                StringBuffer xString = new StringBuffer("{");
-                StringBuffer yString = new StringBuffer("{");
-                for (int k = 0; k < xList.length; k++) {
-//					output.append(formattedLocation(xList[k], yList[k]) + "\n");
-                    xString.append(formattedLocation(xList[k])).append(",");
-                    yString.append(formattedLocation(yList[k])).append(",");
+                tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
+
+                StringBuffer output = new StringBuffer();
+                for (int i = 0; i < numberContours; i++) {
+                    output.append("\n<" + CORDINATE + ">\n");
+                    RVector oneContour = contourList.at(i).asVector();
+                    double[] xList = oneContour.at(1).asDoubleArray();
+                    double[] yList = oneContour.at(2).asDoubleArray();
+                    StringBuffer xString = new StringBuffer("{");
+                    StringBuffer yString = new StringBuffer("{");
+                    for (int k = 0; k < xList.length; k++) {
+                        xString.append(formattedLocation(xList[k])).append(",");
+                        yString.append(formattedLocation(yList[k])).append(",");
+                    }
+                    xString.append(formattedLocation(xList[0])).append("}");
+                    yString.append(formattedLocation(yList[0])).append("}");
+
+                    tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
+                    tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
                 }
-//				output.append(formattedLocation(xList[0], yList[0]) + "\n</" + CORDINATE + ">\n");
-                xString.append(formattedLocation(xList[0])).append("}");
-                yString.append(formattedLocation(yList[0])).append("}");
 
-                tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
-                tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
+
+
+            } else { // do not use R
+
+
+                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
+                double thresholdDensity = kde.findLevelCorrespondingToMass(0.95);
+                ContourGenerator contour = new ContourGenerator(kde.getXGrid(), kde.getYGrid(), kde.getKDE(),
+                        new ContourAttrib[]{new ContourAttrib(thresholdDensity)});
+
+                ContourPath[] paths = null;
+                try {
+                    paths = contour.getContours();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+    
+                tree.setNodeAttribute(node, preLabel + postLabel + "_modality", paths.length);
+
+                StringBuffer output = new StringBuffer();
+                int i=0;
+                for (ContourPath p : paths) {
+                    output.append("\n<" + CORDINATE + ">\n");
+                    double[] xList = p.getAllX();
+                    double[] yList = p.getAllY();
+                    StringBuffer xString = new StringBuffer("{");
+                    StringBuffer yString = new StringBuffer("{");
+                    for (int k = 0; k < xList.length; k++) {
+                        xString.append(formattedLocation(xList[k])).append(",");
+                        yString.append(formattedLocation(yList[k])).append(",");
+                    }
+                    xString.append(formattedLocation(xList[0])).append("}");
+                    yString.append(formattedLocation(yList[0])).append("}");
+
+                    tree.setNodeAttribute(node, preLabel + "1" + postLabel + "_" + (i + 1), xString);
+                    tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
+                    i++;
+
+                    System.err.println("xstringpp: "+xString);
+                }
             }
-
-//			tree.setNodeAttribute(node, label, output.toString());
-
-//          // Uses some crap that Marc was trying to write
-//		    int gridPoints = 10;
-//		    DensityMap densityMap = new DensityMap(gridPoints,gridPoints,values[0],values[1]);
-//		    densityMap.writeAsTIFF("Node"+node.getNumber()+"-density.tiff");
-//
-//		    double criticalValue = 1.0 / values.length;     // Throw away all points with mass less than epsilon
-//
-//		    ContourGenerator contour = new ContourGenerator(densityMap.getXMidPoints(),
-//				                                            densityMap.getYMidPoints(),
-//				                                            densityMap.getNormalizedDensity(1.0),
-//				                                            new ContourAttrib[]{ new ContourAttrib(criticalValue)});
-//		    ContourPath[] paths = null;
-//		    try {
-//			    paths = contour.getContours();
-//		    } catch (InterruptedException e) {
-//			    e.printStackTrace();
-//		    }
-//
-//		    System.err.println("Found "+paths.length+" paths.");
-//		    for(ContourPath p : paths) {
-//			    StringBuffer sb = new StringBuffer("Path =");
-//			    double[] pathX = p.getAllX();
-//			    double[] pathY = p.getAllY();
-//			    for(int i=0; i<pathX.length; i++)
-//			        sb.append(" {"+pathX[i]+","+pathY[i]+"}");
-//			    sb.append((p.isClosed() ? " closed" : " open"));
-//			    System.err.println(sb.toString());
-//		    }
-
         }
 
         public BitSet removeClades(Tree tree, NodeRef node, boolean includeTips) {

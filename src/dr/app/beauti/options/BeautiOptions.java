@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.MCMCPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.priorsPanel.PriorType;
@@ -1399,7 +1400,7 @@ public class BeautiOptions extends ModelOptions {
         CONTINUOUS
     }
 
-    public String fileNameStem = "untitled";
+    public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
     public String treeFileName = null;
     public boolean mapTreeLog = false;

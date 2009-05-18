@@ -1579,7 +1579,7 @@ public class BeastGenerator extends Generator {
 	                        new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
 	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.SPECIES_TREE_FILE_NAME),
+	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME),
 	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
 	                });
 			    	   		
@@ -1593,19 +1593,19 @@ public class BeastGenerator extends Generator {
         	
         	// gene tree log
         	for (PartitionModel model : models) {
-		        if (options.treeFileName == null) {
-		            if (options.substTreeLog) {
-		                options.treeFileName = model.getName() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
-		            } else {
-		                options.treeFileName = model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // partitionName.tree
-		            }
-		        }
+        		String treeFileName;
+	            if (options.substTreeLog) {
+	                treeFileName = options.fileNameStem + "." + model.getName() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+	            } else {
+	            	treeFileName = options.fileNameStem + "." + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
+	            }
+		        
 		        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 		                new Attribute[]{
 		                        new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + TREE_FILE_LOG), // partionName.treeFileLog
 		                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 		                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-		                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.treeFileName),
+		                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName),
 		                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
 		                });
 				    	   		
@@ -1750,7 +1750,7 @@ public class BeastGenerator extends Generator {
 		                            new Attribute.Default<String>(XMLParser.ID, model.getName() + "." + SUB_TREE_FILE_LOG),
 		                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 		                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-		                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, model.getName() +  
+		                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + model.getName() +  
 		                            		"(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME),
 		                            new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
 		                    });

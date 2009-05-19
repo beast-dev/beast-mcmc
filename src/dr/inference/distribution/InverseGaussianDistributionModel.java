@@ -49,7 +49,7 @@ import org.w3c.dom.Document;
 public class InverseGaussianDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
 
-    public static final String INVERSEGAUSSIAN_DISTRIBUTION_MODEL = "InverseGaussianDistributionModel";
+    public static final String INVERSEGAUSSIAN_DISTRIBUTION_MODEL = "inverseGaussianDistributionModel";
     public static final String MEAN = "mean";
     public static final String SHAPE = "shape";
     public static final String OFFSET = "offset";

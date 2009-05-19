@@ -111,6 +111,8 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
             validPointLogLikelihood[i] = false;
     }
 
+    public Parameter getParameter() { return points; }
+
     private Parameter points;
     private List<GeoSpatialDistribution> geoSpatialDistributions;
     private int dim;

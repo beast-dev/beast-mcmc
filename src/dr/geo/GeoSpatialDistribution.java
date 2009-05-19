@@ -35,12 +35,12 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public GeoSpatialDistribution(String label, Polygon2D region, boolean inside) {
         this.label = label;
         this.region = region;
-        this.inside = !inside;
+        this.outside = !inside;
     }
 
     public double logPdf(double[] x) {
         final boolean contains = region.containsPoint2D(new Point2D.Double(x[0],x[1]));
-        if (inside ^ contains)
+        if (outside ^ contains)
             return 0;
         return Double.NEGATIVE_INFINITY;
     }
@@ -63,7 +63,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
     protected Polygon2D region;
     protected String label = null;
-    private boolean inside = true;
+    private boolean outside = false;
 
 
     public static XMLObjectParser FLAT_GEOSPATIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {

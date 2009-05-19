@@ -51,7 +51,7 @@
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
-	    <include name="dr/geo/**"/>
+	        <include name="dr/geo/**"/>
             <include name="org/virion/jam/**"/>
         </javac>
     </target>
@@ -86,7 +86,7 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
-		<include name="dr/geo/**/*.class"/>
+		        <include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="">
@@ -102,8 +102,7 @@
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-            <zipgroupfileset dir="${lib}"
-                             includes="JRI.jar"/>
+            <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
         </jar>
 
@@ -149,7 +148,7 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
-		<include name="dr/geo/**/*.class"/>
+		        <include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
             </fileset>
             <fileset dir="">

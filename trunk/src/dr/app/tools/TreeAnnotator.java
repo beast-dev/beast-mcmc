@@ -94,7 +94,7 @@ public class TreeAnnotator {
     }
 
     // Messages to stderr, output to stdout
-    private static final PrintStream  progressStream = System.err;
+    private static PrintStream progressStream = System.err;
 
     private final String location1Attribute = "longLat1";
     private final String location2Attribute = "longLat2";
@@ -1185,9 +1185,12 @@ public class TreeAnnotator {
                     "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "</center></html>";
 
-            /*ConsoleApplication consoleApp = */
             new ConsoleApplication(nameString, aboutString, icon, true);
 
+            // The ConsoleApplication will have overridden System.out so set progressStream
+            // to capture the output to the window:
+            progressStream = System.out;
+            
             printTitle();
 
             TreeAnnotatorDialog dialog = new TreeAnnotatorDialog(new JFrame());

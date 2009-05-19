@@ -60,6 +60,8 @@ public class TreeAnnotator {
     private final static Version version = new BeastVersion();
 
     private final static boolean USE_R = true;
+    private final static String HPD_2D_STRING = "80";
+    private final static double HPD_2D = 0.80;
 
     enum Target {
         MAX_CLADE_CREDIBILITY( "Maximum clade credibility tree"),
@@ -752,7 +754,7 @@ public class TreeAnnotator {
                                         annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
                                     if (variationInFirst && variationInSecond)
-                                        annotate2DHPDAttribute(tree, node, name, "_95%HPD", 0.95, valuesArray);
+                                        annotate2DHPDAttribute(tree, node, name, "_"+HPD_2D_STRING+"%HPD", HPD_2D, valuesArray);
                                 }
                             }
                         }
@@ -855,7 +857,7 @@ public class TreeAnnotator {
         private final String[] rBootCommands = {
                 "library(MASS)",
                 "makeContour = function(var1, var2, prob=0.95, n=50, h=c(1,1)) {" +
-                        "post1 = kde2d(var1, var2, n = n); " +    // This had h=h in argument
+                        "post1 = kde2d(var1, var2, n = n, h=h); " +    // This had h=h in argument
                         "dx = diff(post1$x[1:2]); " +
                         "dy = diff(post1$y[1:2]); " +
                         "sz = sort(post1$z); " +
@@ -909,7 +911,7 @@ public class TreeAnnotator {
             }
 
             // todo Need a good method to pick grid size
-            int N = 25;
+            int N = 50;
 
             if (USE_R) {
 
@@ -921,6 +923,12 @@ public class TreeAnnotator {
 
                 RVector contourList = x.asVector();
                 int numberContours = contourList.size();
+
+                if (numberContours > 1) {
+                      System.err.println("Warning: a node has a disjoint "+100*hpd+"% HPD region.  This may be an artifact!");
+                      System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
+                  }
+
 
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
 
@@ -944,12 +952,11 @@ public class TreeAnnotator {
                 }
 
 
-
             } else { // do not use R
 
 
                 KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-                double thresholdDensity = kde.findLevelCorrespondingToMass(0.95);
+                double thresholdDensity = kde.findLevelCorrespondingToMass(hpd);
                 ContourGenerator contour = new ContourGenerator(kde.getXGrid(), kde.getYGrid(), kde.getKDE(),
                         new ContourAttrib[]{new ContourAttrib(thresholdDensity)});
 
@@ -961,6 +968,11 @@ public class TreeAnnotator {
                 }
     
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", paths.length);
+
+                if (paths.length > 1) {
+                    System.err.println("Warning: a node has a disjoint "+100*hpd+"% HPD region.  This may be an artifact!");
+                    System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
+                }
 
                 StringBuffer output = new StringBuffer();
                 int i=0;
@@ -981,8 +993,7 @@ public class TreeAnnotator {
                     tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
                     i++;
 
-                    System.err.println("xstringpp: "+xString);
-                }
+               }
             }
         }
 

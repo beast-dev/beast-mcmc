@@ -186,7 +186,7 @@ public class InverseGaussianDistribution implements Distribution {
      */
     public static double quantile(double z, double m, double shape) {
         double x=0;
-
+        //return x;
         throw new RuntimeException("Quantile function for Inverse Gaussian Distribution is not yet implemented");
     }
 

@@ -119,7 +119,7 @@ public class BeastGenerator extends Generator {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws IllegalArgumentException {
-
+    	//++++++++++++++++ Taxon List ++++++++++++++++++
         TaxonList taxonList = options.taxonList;
         Set<String> ids = new HashSet<String>();
 
@@ -140,7 +140,8 @@ public class BeastGenerator extends Generator {
                 ids.add(taxon.getId());
             }
         }
-
+        
+        //++++++++++++++++ Taxon Sets ++++++++++++++++++
         for (Taxa taxa : options.taxonSets) {
             if (taxa.getTaxonCount() < 2) {
                 throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
@@ -152,7 +153,14 @@ public class BeastGenerator extends Generator {
             }
             ids.add(taxa.getId());
         }
-
+        
+        //++++++++++++++++ Species tree ++++++++++++++++++
+        if (options.isSpeciesAnalysis()) {
+        	if (options.nodeHeightPrior != TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior != TreePrior.SPECIES_YULE) {
+        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
+        	}
+        }
+        
         // add other tests and warnings here
         // Speciation model with dated tips
         // Sampling rates without dated tips or priors on rate or nodes

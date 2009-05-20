@@ -132,7 +132,7 @@ public class MCMCPanel extends BeautiPanel {
         substTreeLogCheck.setOpaque(false);
         substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
+//                substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
                 
                 if (substTreeLogCheck.isSelected()) {
 	                if (options.isSpeciesAnalysis()) {

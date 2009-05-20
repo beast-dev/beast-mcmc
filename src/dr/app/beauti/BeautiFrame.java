@@ -15,6 +15,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.PartitionTree;
+import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
@@ -723,6 +724,13 @@ public class BeautiFrame extends DocumentFrame {
         	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
         		model.initParametersAndOperatorsForEachPartitionModel();
             }
+            if (DataPanel.ALLOW_UNLINKED_TREES) {
+            	treesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
+                treesPanel.getOptions(beautiOptions);
+            } else {
+            	oldTreesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
+                oldTreesPanel.getOptions(beautiOptions);
+            }        	
         	beautiOptions.initSpeciesParametersAndOperators();
         	beautiOptions.fileNameStem = "LogStem";
         }

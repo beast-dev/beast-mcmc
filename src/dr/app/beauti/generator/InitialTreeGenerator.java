@@ -140,6 +140,8 @@ public class InitialTreeGenerator extends Generator {
         	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
         } else if (options.nodeHeightPrior == TreePrior.EXPONENTIAL) {
         	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, genePrefix + "exponential");
+        } else if (options.isSpeciesAnalysis()) {
+        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
         } else {
         	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "initialDemo");
         }

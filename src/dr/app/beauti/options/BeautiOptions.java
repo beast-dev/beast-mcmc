@@ -264,26 +264,26 @@ public class BeautiOptions extends ModelOptions {
     	double spWeights = 5.0;
     	double spTuning = 0.9;
     	
-    	createScaleParameter(POP_MEAN, "population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	createScaleParameter(TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createScaleParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth Death Model BminusD Rate operator", 
+    	createScaleParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Speices tree: Birth Death Model BminusD Rate operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	createScaleParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth Death Model DoverB operator", 
-    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	
-    	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "speices tree population size operator", 
+    	createScaleParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Speices tree: Birth Death Model DoverB operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createParameter(TreeNodeSlide.TREE_NODE_REHEIGHT, "species tree operator");
+    	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator", 
+    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createScaleOperator(POP_MEAN, spTuning, spWeights);
+    	createParameter(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
     	
-    	createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
-    	createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	createScaleOperator(TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
+    	
+    	createScaleOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	createScaleOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
     	
     	createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
     	
-    	createOperator(TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
+    	createOperator(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
     	//TODO: more
     }
 
@@ -801,11 +801,14 @@ public class BeautiOptions extends ModelOptions {
     
     private void selectParametersForSpecies(List<Parameter> params) {
     	
-    	params.add(getParameter(POP_MEAN));
+    	params.add(getParameter(TRAIT_SPECIES + "." + POP_MEAN));
     	
-    	//TODO: if choose diff species tree model 
-    	params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-    	params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+    	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		//TODO: YULE model.
+    	}
     	
 //    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
     	
@@ -1002,14 +1005,18 @@ public class BeautiOptions extends ModelOptions {
     
     private void selectOperatorsForSpecies(List<Operator> ops) {
     	
-    	ops.add(getOperator(POP_MEAN));
+    	ops.add(getOperator(TRAIT_SPECIES + "." + POP_MEAN));
     	
-    	ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-    	ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+       	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		//TODO: YULE model.
+    	}
     	
     	ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
     	
-    	ops.add(getOperator(TreeNodeSlide.TREE_NODE_REHEIGHT));
+    	ops.add(getOperator(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
     	//TODO: more
     }
 

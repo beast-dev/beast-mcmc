@@ -62,7 +62,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = 2778103564318492601L;
 
     private OptionsPanel treePriorPanel = new OptionsPanel();
-    private JComboBox treePriorCombo;
+    public JComboBox treePriorCombo;
     private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
     private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
@@ -241,6 +241,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ||
+                treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
+        	
         }
 
         treePriorPanel.addSeparator();

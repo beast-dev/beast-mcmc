@@ -13,7 +13,9 @@ public enum TreePrior {
 	EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline"),
 	GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
 	YULE("Speciation: Yule Process"),
-	BIRTH_DEATH("Speciation: Birth-Death Process");
+	BIRTH_DEATH("Speciation: Birth-Death Process"),
+	SPECIES_YULE("Species Tree: Yule Process"),
+	SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
 
 	TreePrior(String name) {
 		this.name = name;

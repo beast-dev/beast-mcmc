@@ -4,6 +4,7 @@ import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.TreePrior;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
@@ -117,56 +118,65 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
     }
     
-    private void writeSpeciesTreeModel(XMLWriter writer) {
+    private void writeSpeciesTreeModel(XMLWriter writer) {    	    	
+    	writer.writeComment("Species Tree: tree prior");
     	
-    	//TODO: let user choose different model.
-    	writer.writeComment("Species Tree: Generic Birth Death model");
+    	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+    		writer.writeComment("Birth Death Model");
+    		
+	    	writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.BIRTH_DEATH),
+					new Attribute.Default<String>(XMLParser.Utils.UNITS, XMLParser.Utils.SUBSTITUTIONS)});      
+	    	
+	    	writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
+	    	
+	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+	        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+	        		new Attribute.Default<String>(AttributeParser.VALUE, "1"),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, "1000000")}, true);
+	    	
+	    	writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
+	    	    	
+	    	writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
+	    	
+	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+	        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
+	        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
+	    	
+	    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
+	    	    	
+	    	writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL); 
+    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		//TODO: YULE model.
+    	}
     	
-    	writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
-    			new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.BIRTH_DEATH),
-				new Attribute.Default<String>(XMLParser.Utils.UNITS, XMLParser.Utils.SUBSTITUTIONS)});      
-    	
-    	writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-    	
-    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-        		new Attribute.Default<String>(AttributeParser.VALUE, "1"),
-        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
-        		new Attribute.Default<String>(ParameterParser.UPPER, "1000000")}, true);
-    	
-    	writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-    	    	
-    	writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
-    	
-    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
-        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
-        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
-        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
-    	
-    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
-    	    	
-    	writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);    	
     }
     
     
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
-    	
-    	//TODO: let user choose different model.
     	writer.writeComment("Species Tree: Likelihood of species tree");
-    	
-    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
-    			new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});      
-    	
-    	writer.writeOpenTag(SpeciationLikelihood.MODEL); 
-    	writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);    	
-    	writer.writeCloseTag(SpeciationLikelihood.MODEL); 
-    	
-    	writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE); 
-    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);    	
-    	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
-    	
-    	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD); 
+	    	
+    	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+    		writer.writeComment("Birth Death Model");
+    		
+	    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});      
+	    	
+	    	writer.writeOpenTag(SpeciationLikelihood.MODEL); 
+	    	writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);    	
+	    	writer.writeCloseTag(SpeciationLikelihood.MODEL); 
+	    	
+	    	writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE); 
+	    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);    	
+	    	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
+	    	
+	    	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD); 
+    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		//TODO: YULE model.
+    	}
     }
     
     private void writeGeneUnderSpecies(XMLWriter writer) {
@@ -189,7 +199,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeOpenTag(ExponentialDistributionModel.MEAN); 
     	
     	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.ID, options.POP_MEAN),
+        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + options.POP_MEAN),
         		new Attribute.Default<String>(AttributeParser.VALUE, "0.001")}, true);
     	
     	writer.writeCloseTag(ExponentialDistributionModel.MEAN); 

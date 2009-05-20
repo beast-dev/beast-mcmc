@@ -64,6 +64,7 @@ public class MCMCPanel extends BeautiPanel {
     
     JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
     JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
+    
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
@@ -112,10 +113,10 @@ public class MCMCPanel extends BeautiPanel {
 
         logFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
-        logFileNameField.setEnabled(false);
+        logFileNameField.setEditable(false);
         treeFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
-        treeFileNameField.setEnabled(false);
+        treeFileNameField.setEditable(false);
         
 //        addComponent(mapTreeLogCheck);
 //        mapTreeLogCheck.setOpaque(false);
@@ -154,6 +155,7 @@ public class MCMCPanel extends BeautiPanel {
         });
 
         substTreeFileNameField.setColumns(32);
+        substTreeFileNameField.setEditable(false);
         optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
 
         java.awt.event.KeyListener listener = new java.awt.event.KeyAdapter() {
@@ -241,7 +243,7 @@ public class MCMCPanel extends BeautiPanel {
 
             substTreeLogCheck.setEnabled(true);
             substTreeLogCheck.setSelected(options.substTreeLog);
-            substTreeFileNameField.setEnabled(options.substTreeLog);
+            substTreeFileNameField.setEditable(options.substTreeLog);
         } else {
         	fileNameStemField.setText(fileNameStem);
         	fileNameStemField.setEnabled(false);

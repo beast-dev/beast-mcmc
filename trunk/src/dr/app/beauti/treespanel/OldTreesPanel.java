@@ -61,7 +61,7 @@ import java.awt.event.*;
 public class OldTreesPanel extends BeautiPanel {
 
     private OptionsPanel treePriorPanel = new OptionsPanel();
-    private JComboBox treePriorCombo;
+    public JComboBox treePriorCombo;
     private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
     private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
@@ -78,7 +78,8 @@ public class OldTreesPanel extends BeautiPanel {
 
     private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
     private JComboBox userTreeCombo = new JComboBox();
-
+    private JButton button;
+    
     private CreateTreeAction createTreeAction = new CreateTreeAction();
     private TreeDisplayPanel treeDisplayPanel;
 
@@ -123,7 +124,7 @@ public class OldTreesPanel extends BeautiPanel {
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
         toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        JButton button = new JButton(createTreeAction);
+        button = new JButton(createTreeAction);
         createTreeAction.setEnabled(true);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
@@ -303,17 +304,27 @@ public class OldTreesPanel extends BeautiPanel {
                 treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
                 treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
             treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+            button.setEnabled(true);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
             groupCountField.setColumns(6);
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+            button.setEnabled(true);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
+        	button.setEnabled(true);
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
             treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
+            button.setEnabled(true);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+            button.setEnabled(true);
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ||
+                treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
+        	button.setEnabled(false);
+        } else {
+        	button.setEnabled(true);
         }
 
         treePriorPanel.addSeparator();

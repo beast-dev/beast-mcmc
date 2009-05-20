@@ -1210,7 +1210,6 @@ public class BeastGenerator extends Generator {
         // write prior block
         writer.writeOpenTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
         
-        //TODO: this is hard code for species tree
         if (options.isSpeciesAnalysis()) { // species
         	// coalescent prior
         	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
@@ -1355,12 +1354,12 @@ public class BeastGenerator extends Generator {
         if ( options.isSpeciesAnalysis() ) { // species
             writer.writeOpenTag(Columns.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, options.POP_MEAN),
+                            new Attribute.Default<String>(Columns.LABEL, "PopMean"),
                             new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER,  options.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + options.POP_MEAN);
             writer.writeCloseTag(Columns.COLUMN);
         }
         
@@ -1452,15 +1451,16 @@ public class BeastGenerator extends Generator {
         	// prior on species tree
         	writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         	
-        	writer.writeIDref(ParameterParser.PARAMETER,  options.POP_MEAN);
+        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + options.POP_MEAN);
         	writer.writeIDref(ParameterParser.PARAMETER,  SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
         	
-        	//TODO: let user select species tree model
-        	writer.writeIDref(ParameterParser.PARAMETER,  BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
-        	writer.writeIDref(ParameterParser.PARAMETER,  BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-        	
-        	//TODO: add more species tree reference      
-        	
+        	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) { 
+	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
+        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        		//TODO: YULE model.
+        	}
+        	        	
 	        for (PartitionModel model : options.getActivePartitionModels()) {
 	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + "." + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
 	        }

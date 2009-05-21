@@ -59,7 +59,7 @@ public class TreeAnnotator {
 
     private final static Version version = new BeastVersion();
 
-    private final static boolean USE_R = true;
+    private final static boolean USE_R = false;
     private final static String HPD_2D_STRING = "80";
     private final static double HPD_2D = 0.80;
 
@@ -890,6 +890,8 @@ public class TreeAnnotator {
 
         private void annotate2DHPDAttribute(MutableTree tree, NodeRef node, String preLabel, String postLabel,
                                             double hpd, double[][] values) {
+            int N = 50;
+            if (USE_R) {
 
             // Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
 
@@ -911,9 +913,8 @@ public class TreeAnnotator {
             }
 
             // todo Need a good method to pick grid size
-            int N = 50;
 
-            if (USE_R) {
+
 
                 REXP x = rEngine.eval("makeContour(" +
                         makeRString(values[0]) + "," +

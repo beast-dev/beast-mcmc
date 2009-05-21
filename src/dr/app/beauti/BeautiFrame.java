@@ -695,6 +695,7 @@ public class BeautiFrame extends DocumentFrame {
 	            final File file = new File(dialog.getDirectory(), dialog.getFile());
 
 		        importTraitsFromFile(file);
+//		        setStatusMessage();
 		        setAllOptions();
 	        }
     	} else {
@@ -733,6 +734,8 @@ public class BeautiFrame extends DocumentFrame {
             }        	
         	beautiOptions.initSpeciesParametersAndOperators();
         	beautiOptions.fileNameStem = "LogStem";
+        	
+        	setStatusMessage();
         }
     }
 
@@ -791,9 +794,19 @@ public class BeautiFrame extends DocumentFrame {
             message += "Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                     beautiOptions.dataPartitions.size() +
                     (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
+            
+            if (beautiOptions.isSpeciesAnalysis()) {  
+            	int num = beautiOptions.getSpeciesList().size();
+            	message += ", " + num + " species"; // species is both singular and plural            	
+            }
+            
             if (beautiOptions.userTrees.size() > 0) {
                 message += ", " + beautiOptions.userTrees.size() +
                         (beautiOptions.userTrees.size() > 1 ? " trees" : " tree");
+            }
+            
+            if (beautiOptions.isSpeciesAnalysis()) {  
+            	message += ";    You are doing Multispecies Coalescent analysis";
             }
         } else if (beautiOptions.userTrees.size() > 0) {
             message += "Trees only : " + beautiOptions.userTrees.size() +
@@ -802,6 +815,7 @@ public class BeautiFrame extends DocumentFrame {
         } else {
             message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";
         }
+        
         statusLabel.setText(message);
     }
 

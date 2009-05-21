@@ -581,6 +581,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             boolean storePartials = xo.getAttribute(STORE_PARTIALS, true);
             boolean forceJavaCore = xo.getAttribute(FORCE_JAVA_CORE, false);
 
+            if (Boolean.valueOf(System.getProperty("java_only"))) {
+                forceJavaCore = true;
+            }
+
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);

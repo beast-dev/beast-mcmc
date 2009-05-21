@@ -253,7 +253,7 @@ public class BeastMain {
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
                         new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
                                 "in number of states."),
-                        new Arguments.Option("vector", "use vector processing hardware if available."),
+                        new Arguments.Option("java", "use Java only, no native implementations."),
                         new Arguments.Option("beagle", "use beagle library if available."),
                         new Arguments.Option("help", "option to print this message"),
                 });
@@ -282,8 +282,8 @@ public class BeastMain {
         final boolean window = arguments.hasOption("window");
         final boolean working = arguments.hasOption("working");
 
-        if (arguments.hasOption("vector")) {
-            additionalParsers.add("vector");
+        if (arguments.hasOption("java")) {
+            System.setProperty("java_only", "true");
         }
 
         if (arguments.hasOption("beagle")) {

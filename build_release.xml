@@ -1,4 +1,4 @@
-<project name="BEAST_RELEASE" default="all" basedir=".">
+<project name="BEAST_RELEASE" default="dist" basedir=".">
     <description>
         Build file for BEAST release versions
         $Id: build_release.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
@@ -18,6 +18,8 @@
         <mkdir dir="${build}"/>
         <mkdir dir="${dist}"/>
     </target>
+
+
 
     <target name="all"
             depends="compile-all"
@@ -53,6 +55,7 @@
             <include name="dr/xml/**"/>
 	        <include name="dr/geo/**"/>
             <include name="org/virion/jam/**"/>
+		<include name="dr/java16compat/**/"/>
         </javac>
     </target>
 
@@ -88,6 +91,7 @@
                 <include name="dr/xml/**/*.class"/>
 		        <include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
+			<include name="dr/java16compat/**/*.class"/>
             </fileset>
             <fileset dir="">
                 <include name="images/*.png"/>
@@ -150,6 +154,7 @@
                 <include name="dr/xml/**/*.class"/>
 		        <include name="dr/geo/**/*.class"/>
                 <include name="org/virion/jam/**/*.class"/>
+			<include name="dr/java16compat/**/*.class"/>
             </fileset>
             <fileset dir="">
                 <include name="images/*.png"/>

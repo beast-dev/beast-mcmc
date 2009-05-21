@@ -1400,6 +1400,25 @@ public class BeautiOptions extends ModelOptions {
     public boolean isSpeciesAnalysis() {
         return traits.contains(TRAIT_SPECIES);
     }
+    
+    public List<String> getSpeciesList() {
+    	List<String> species = new ArrayList<String>(); 
+    	String sp;
+
+    	if (taxonList != null) {
+	    	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+	    		Taxon taxon = taxonList.getTaxon(i);
+	        	sp = taxon.getAttribute(TRAIT_SPECIES).toString();
+	
+	        	if (!species.contains(sp)) {
+	        		species.add(sp);
+	        	}
+	    	}	     
+	    	return species;
+    	} else {
+    		return null;
+    	}
+    }
 
     public static enum TraitType {
         DISCRETE,
@@ -1425,7 +1444,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean dataReset = true;
 
     public Taxa taxonList = null;
-    public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
+//    public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
 
     public DateGuesser dateGuesser = new DateGuesser();
 

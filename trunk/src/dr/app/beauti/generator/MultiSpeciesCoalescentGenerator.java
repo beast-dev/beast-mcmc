@@ -40,18 +40,9 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
      * @param writer
      */
     public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
-    	List<String> species = new ArrayList<String>(); // hard code
+    	List<String> species = options.getSpeciesList();
     	String sp;
-
-    	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-    		Taxon taxon = taxonList.getTaxon(i);
-        	sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
-
-        	if (!species.contains(sp)) {
-        		species.add(sp);
-        	}
-    	}
-
+    	
     	for (String eachSp : species) {
     		writer.writeOpenTag(SpeciesBindings.SP, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, eachSp)});
 

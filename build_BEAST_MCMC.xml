@@ -222,6 +222,7 @@
                 	<include name="test/dr/evomodel/substmodel/**/HKYTest.java" />
                 	<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
                 	<include name="test/dr/inference/**/*Test.java"/>
+                	<include name="test/dr/distibutions/**/*Test.java"/>
                </fileset>
             </batchtest>
         </junit>

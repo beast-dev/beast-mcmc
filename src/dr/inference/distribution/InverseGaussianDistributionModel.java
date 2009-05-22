@@ -3,8 +3,6 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Model;
-import dr.inference.distribution.ParametricDistributionModel;
-import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.InverseGaussianDistribution;
 import dr.math.UnivariateFunction;
 import dr.xml.*;
@@ -42,7 +40,6 @@ import org.w3c.dom.Document;
  *
  *
  * @author Wai Lok Sibon Li
- * @author Alexei Drummond
  * @version $Id: InverseGaussianDistributionModel.java,v 1.8 2009/03/30 20:25:59 rambaut Exp $
  */
 
@@ -56,7 +53,10 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
 
     /**
-     * Constructor.
+     * @param meanParameter the mean, mu
+     * @param shapeParameter the shape parameter, lambda
+     * @param offset offset of the distribution
+     *
      */
     public InverseGaussianDistributionModel(Parameter meanParameter, Parameter shapeParameter, double offset) {
 
@@ -265,4 +265,4 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
     private final Parameter shapeParameter;
     private final double offset;
 
-}
+}   

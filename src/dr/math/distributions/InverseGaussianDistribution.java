@@ -2,6 +2,9 @@ package dr.math.distributions;
 
 import dr.math.UnivariateFunction;
 import dr.math.ErrorFunction;
+import dr.math.interfaces.OneVariableFunction;
+import dr.math.iterations.BisectionZeroFinder;
+import dr.math.iterations.NewtonZeroFinder;
 
 /*
  * InverseGaussianDistribution.java
@@ -185,9 +188,81 @@ public class InverseGaussianDistribution implements Distribution {
      * @return icdf at z
      */
     public static double quantile(double z, double m, double shape) {
-        double x=0;
+        //System.out.println("rawr! " + z + "\t" + m + "\t" + shape);
+
+//        double a=Math.sqrt(shape/z);
+//        double b=z/m;
+//        double q = NormalDistribution.cdf(a*(b-1.0),0,1);
+//        double p = NormalDistribution.cdf(-a*(b+1.0),0,1);
+        //double q=1.0-pnorm(a*(b-1.0),0,1,true,false);
+        //double p=pnorm(-a*(b+1.0),0,1,true,false);
+
+//        if (z<=0 || m<=0 || shape<=0)
+            //return NA_REAL;
+//            return Double.NaN;
+
+//        if (p==0.0) {
+            //System.out.println("stats\t" + z+"\t"+m+"\t"+shape+"\t"+q);
+//            return q;
+//        }
+//        else {
+//            double c=2.0*shape/m;
+            //if (c>=MAXEXP)
+            //    return NA_REAL;
+//            if (c>=Double.MAX_VALUE || c>=Double.POSITIVE_INFINITY)
+//                return Double.NaN;
+
+            //double returnValue = q-Math.exp(c)*p; //temp variable. delete
+            //System.out.println(z+"\t"+m+"\t"+shape+"\t"+returnValue);
+//            return q-Math.exp(c)*p;
+//        }
+
+        //double x=0;
         //return x;
-        throw new RuntimeException("Quantile function for Inverse Gaussian Distribution is not yet implemented");
+        //throw new RuntimeException("Quantile function for Inverse Gaussian Distribution is not yet implemented");
+
+
+        final InverseGaussianDistribution f = new InverseGaussianDistribution(m, shape);
+        final double y = z;
+
+
+        //double initialGuess = 0;
+        //if(shape/m > 2.0) {
+        //    initialGuess = (NormalDistribution.quantile(z, 0,1)-0.5*Math.sqrt(m/shape))/Math.sqrt(shape/m);
+        //    initialGuess = m*Math.exp(initialGuess);
+        //    //System.out.println("1");
+        //}
+        //else {
+        //    initialGuess=shape/(GammaDistribution.quantile(1.0-z,0.5,1.0)*2.0);
+        //    //System.out.println("2");
+        //    if(initialGuess > m/2.0) {
+        //        initialGuess=m*Math.exp(GammaDistribution.quantile(z,0.5,1.0)*0.1);
+        //        //System.out.println("3");
+        //        initialGuess = 3.0;
+        //    }
+        //}
+
+
+        /* The NewtonZeroFinder is epic fail */
+        //NewtonZeroFinder zeroFinder = new NewtonZeroFinder(new OneVariableFunction() {
+        //    public double value (double x) {
+        //        return f.cdf(x) - y;
+        //    }
+        //}, initialGuess);
+
+        //if(zeroFinder.getResult()==Double.NaN) {
+
+        //}
+
+        BisectionZeroFinder zeroFinder = new BisectionZeroFinder(new OneVariableFunction() {
+            public double value(double x) {
+                return f.cdf(x) - y;
+            }
+        //}, 0.001, 100);
+        }, 0.0001, 100000);
+
+        zeroFinder.evaluate();
+        return zeroFinder.getResult();
     }
 
     /**

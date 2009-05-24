@@ -45,6 +45,7 @@ import java.util.ArrayList;
  * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class NewickImporter extends Importer implements TreeImporter {
+    public static final String COMMENT = "comment";
 
     public class BranchMissingException extends ImportException {
         /**
@@ -80,25 +81,25 @@ public class NewickImporter extends Importer implements TreeImporter {
      * importTree.
      */
     public Tree importTree(TaxonList taxonList) throws IOException, ImportException {
-        FlexibleTree tree = null;
+        setCommentDelimiters('[', ']', '\0', '\0', '&');
 
         try {
             skipUntil("(");
             unreadCharacter('(');
 
-            FlexibleNode root = readInternalNode(taxonList);
-
+            final FlexibleNode root = readInternalNode(taxonList);
+            if( getLastMetaComment() != null ) {
+               root.setAttribute(COMMENT, getLastMetaComment());
+            }
 //			if (getLastDelimiter() != ';') {
 //				throw new BadFormatException("Expecting ';' after tree");
 //			}
 
-            tree = new FlexibleTree(root, false, true);
+            return new FlexibleTree(root, false, true);
 
         } catch (EOFException e) {
             throw new ImportException("incomplete tree");
         }
-
-        return tree;
     }
 
     /**
@@ -171,6 +172,7 @@ public class NewickImporter extends Importer implements TreeImporter {
             tree = new FlexibleTree(root, false, true);
 
         } catch (EOFException e) {
+            //
         }
 
         lastTree = tree;
@@ -196,6 +198,12 @@ public class NewickImporter extends Importer implements TreeImporter {
             branch = readExternalNode(taxonList);
         }
 
+        final String comment = getLastMetaComment();
+        if( comment != null ) {
+            branch.setAttribute(COMMENT, comment);
+            clearLastMetaComment();
+        }
+
         if (getLastDelimiter() == ':') {
             length = readDouble(",():;");
         }
@@ -213,7 +221,7 @@ public class NewickImporter extends Importer implements TreeImporter {
         FlexibleNode node = new FlexibleNode();
 
         // read the opening '('
-        readCharacter();
+        final char ch = readCharacter();                  assert ch == '(';
 
         // read the first child
         node.addChild(readBranch(taxonList));
@@ -256,7 +264,7 @@ public class NewickImporter extends Importer implements TreeImporter {
 
         String label = readToken(":(),;");
 
-        Taxon taxon = null;
+        Taxon taxon;
 
         if (taxonList != null) {
             // if a taxon list is given then the taxon must be in it...

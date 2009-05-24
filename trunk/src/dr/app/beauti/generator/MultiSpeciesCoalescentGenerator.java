@@ -140,7 +140,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	    	
 	    	writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL); 
-    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+//    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
     	
@@ -165,7 +165,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
 	    	
 	    	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD); 
-    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+//    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
     }

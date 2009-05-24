@@ -320,8 +320,8 @@ public class OldTreesPanel extends BeautiPanel {
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
             button.setEnabled(true);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ||
-                treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ){
+//               || treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
         	button.setEnabled(false);
         } else {
         	button.setEnabled(true);

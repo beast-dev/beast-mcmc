@@ -156,7 +156,9 @@ public class BeastGenerator extends Generator {
         
         //++++++++++++++++ Species tree ++++++++++++++++++
         if (options.isSpeciesAnalysis()) {
-        	if (options.nodeHeightPrior != TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior != TreePrior.SPECIES_YULE) {
+        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH )){
+//        			|| options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
+        		//TODO: YULE
         		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
         	}
         }
@@ -1465,7 +1467,7 @@ public class BeastGenerator extends Generator {
         	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) { 
 	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
 	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+//        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
         		//TODO: YULE model.
         	}
         	        	

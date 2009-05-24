@@ -241,8 +241,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ||
-                treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ){
+//        		|| treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
         	
         }
 

@@ -806,7 +806,7 @@ public class BeautiOptions extends ModelOptions {
     	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+//       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
     	
@@ -1010,7 +1010,7 @@ public class BeautiOptions extends ModelOptions {
        	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+//       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
     	

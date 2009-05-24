@@ -47,6 +47,16 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String RESCALE_HEIGHT = "rescaleHeight";
     public static final String RESCALE_LENGTH = "rescaleLength";
 
+    public NewickParser() {
+        rules = new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
+                AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
+                AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
+                new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
+                new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
+        };
+    }
+
     public String getParserName() {
         return NEWICK;
     }
@@ -79,7 +89,7 @@ public class NewickParser extends AbstractXMLObjectParser {
         } catch (NewickImporter.BranchMissingException bme) {
             throw new XMLParseException("branch missing in tree in newick element");
         } catch (Importer.ImportException ime) {
-            throw new XMLParseException("error parsing tree in newick element");
+            throw new XMLParseException("error parsing tree in newick element - " + ime.getMessage());
         }
 
         if (tree == null) {
@@ -226,13 +236,7 @@ public class NewickParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
-            AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
-            AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
-            new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
-            new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
-    };
+    private final XMLSyntaxRule[] rules;
 
     public Class getReturnType() {
         return Tree.class;

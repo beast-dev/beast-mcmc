@@ -4,6 +4,7 @@ import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -48,7 +49,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
     		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
     			Taxon taxon = taxonList.getTaxon(i);
-    			sp = taxon.getAttribute(options.TRAIT_SPECIES).toString();
+    			sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
 
     			if (sp.equals(eachSp)) {
     				writer.writeIDref(TaxonParser.TAXON, taxon.getId());
@@ -92,7 +93,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_TREE),
 				new Attribute.Default<String>(SpeciesTreeModel.BMPRIOR, "true")});        
-        writer.writeIDref(options.TRAIT_SPECIES, options.TRAIT_SPECIES);
+        writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
         
         //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
         // hard code get(0)
@@ -122,7 +123,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 	    	
 	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-	        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
 	        		new Attribute.Default<String>(AttributeParser.VALUE, "1"),
 	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
 	        		new Attribute.Default<String>(ParameterParser.UPPER, "1000000")}, true);
@@ -132,7 +133,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	
 	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-	        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
+	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
 	        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
 	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
 	        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
@@ -178,7 +179,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeOpenTag(TreePartitionCoalescent.SPECIES_COALESCENT, new Attribute[]{
     			new Attribute.Default<String>(XMLParser.ID, COALESCENT)});   
     	
-    	writer.writeIDref(options.TRAIT_SPECIES, options.TRAIT_SPECIES); 
+    	writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString()); 
     	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); 
     	
     	writer.writeCloseTag(TreePartitionCoalescent.SPECIES_COALESCENT); 
@@ -190,7 +191,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeOpenTag(ExponentialDistributionModel.MEAN); 
     	
     	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-        		new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + options.POP_MEAN),
+        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
         		new Attribute.Default<String>(AttributeParser.VALUE, "0.001")}, true);
     	
     	writer.writeCloseTag(ExponentialDistributionModel.MEAN); 

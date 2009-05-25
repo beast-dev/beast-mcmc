@@ -15,6 +15,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.PartitionTree;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
@@ -771,8 +772,8 @@ public class BeautiFrame extends DocumentFrame {
                 }
 
                 beautiOptions.selecetedTraits.add(label);
-                BeautiOptions.TraitType t = (c == Boolean.class || c == String.class) ?  BeautiOptions.TraitType.DISCRETE :
-                        (c == Integer.class) ? BeautiOptions.TraitType.INTEGER : BeautiOptions.TraitType.CONTINUOUS;
+                TraitGuesser.TraitType t = (c == Boolean.class || c == String.class) ?  TraitGuesser.TraitType.DISCRETE :
+                        (c == Integer.class) ? TraitGuesser.TraitType.INTEGER : TraitGuesser.TraitType.CONTINUOUS;
 
                 beautiOptions.traitTypes.put(label, t);
 

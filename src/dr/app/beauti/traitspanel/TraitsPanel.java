@@ -282,7 +282,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int result = createTraitDialog.showDialog(options);
         if (result != JOptionPane.CANCEL_OPTION) {
             String name = createTraitDialog.getName();
-            BeautiOptions.TraitType type = createTraitDialog.getType();
+            TraitGuesser.TraitType type = createTraitDialog.getType();
 
             if (!options.selecetedTraits.contains(name)) {
                 // The createTraitDialog will have already checked if the
@@ -299,7 +299,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     }
     
-    private void addTrait(String traitName, BeautiOptions.TraitType traitType) {
+    private void addTrait(String traitName, TraitGuesser.TraitType traitType) {
     	
         if (!options.selecetedTraits.contains(traitName)) {
         	options.selecetedTraits.add(traitName);
@@ -402,7 +402,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             if (col == 0) {
                 options.selecetedTraits.set(row, aValue.toString());
             } else if (col == 1) {
-                options.traitTypes.put(options.selecetedTraits.get(row), (BeautiOptions.TraitType)aValue);
+                options.traitTypes.put(options.selecetedTraits.get(row), (TraitGuesser.TraitType)aValue);
             }
         }
 

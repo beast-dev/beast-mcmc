@@ -357,7 +357,7 @@ public class BeastGenerator extends Generator {
         // traits tag
         if (options.selecetedTraits.size() > 0) {
         	for (String trait : options.selecetedTraits) {
-        		BeautiOptions.TraitType traiType = options.traitTypes.get(trait);
+        		TraitGuesser.TraitType traiType = options.traitTypes.get(trait);
 
         		writeTraits(writer, trait, traiType.toString(), options.taxonList);
         	}

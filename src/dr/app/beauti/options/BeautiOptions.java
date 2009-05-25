@@ -1398,7 +1398,7 @@ public class BeautiOptions extends ModelOptions {
     }
     
     public boolean isSpeciesAnalysis() {
-        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES);
+        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES.toString());
     }
     
     public List<String> getSpeciesList() {
@@ -1419,13 +1419,7 @@ public class BeautiOptions extends ModelOptions {
     		return null;
     	}
     }
-
-    public static enum TraitType {
-        DISCRETE,
-        INTEGER,
-        CONTINUOUS
-    }
-    
+   
     public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
     public String treeFileName = null;
@@ -1450,7 +1444,7 @@ public class BeautiOptions extends ModelOptions {
     public TraitGuesser traitGuesser = new TraitGuesser();
 
     public List<String> selecetedTraits = new ArrayList<String>();
-    public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
+    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
     
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

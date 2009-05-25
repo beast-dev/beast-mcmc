@@ -26,6 +26,7 @@
 package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.options.*;
+
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class CreateTraitDialog {
         nameField = new JTextField();
         nameField.setColumns(20);
 
-        typeCombo = new JComboBox(BeautiOptions.TraitType.values());
+        typeCombo = new JComboBox(TraitGuesser.TraitType.values());
 
         optionPanel = new OptionsPanel(12, 12);
         optionPanel.addComponentWithLabel("Name:", nameField);
@@ -134,7 +135,7 @@ public class CreateTraitDialog {
         return nameField.getText();
     }
 
-    public BeautiOptions.TraitType getType() {
-        return (BeautiOptions.TraitType) typeCombo.getSelectedItem();
+    public TraitGuesser.TraitType getType() {
+        return (TraitGuesser.TraitType) typeCombo.getSelectedItem();
     }
 }

@@ -95,8 +95,8 @@ public interface Polynomial extends Cloneable {
         }
 
         public String getCoefficientString(int n) {
-                 return String.format(FORMAT, getCoefficient(n));
-             }
+            return String.format(FORMAT, getCoefficient(n));
+        }
 
 
         public LogDouble(double[] logCoefficient, boolean[] positiveCoefficient) {
@@ -191,7 +191,7 @@ public interface Polynomial extends Cloneable {
 
         public double logEvaluate(double x) {
             if (x < 0)
-                    throw new RuntimeException("Negative arguments not yet implemented in Polynomial.LogDouble");
+                throw new RuntimeException("Negative arguments not yet implemented in Polynomial.LogDouble");
             SignedLogDouble result = signedLogEvaluate(x);
             if (result.positive)
                 return result.value;
@@ -200,14 +200,14 @@ public interface Polynomial extends Cloneable {
         }
 
         public double logEvaluateHorner(double x) {
-                   if (x < 0)
-                           throw new RuntimeException("Negative arguments not yet implemented in Polynomial.LogDouble");
-                   SignedLogDouble result = signedLogEvaluateHorners(x);
+            if (x < 0)
+                throw new RuntimeException("Negative arguments not yet implemented in Polynomial.LogDouble");
+            SignedLogDouble result = signedLogEvaluateHorners(x);
             if (result.positive)
-                       return result.value;
+                return result.value;
             return java.lang.Double.NaN;
 //            return -result.value;
-               }
+        }
 
 
         public SignedLogDouble signedLogEvaluateHorners(double x) {
@@ -258,7 +258,7 @@ public interface Polynomial extends Cloneable {
             double coef = Math.exp(logCoefficient[n]);
             if (!positiveCoefficient[n])
                 coef *= -1;
-            return coef; 
+            return coef;
         }
 
         public void setCoefficient(int n, double x) {
@@ -310,7 +310,7 @@ public interface Polynomial extends Cloneable {
         public String getCoefficientString(int n) {
             return coefficient[n].toString();
 
-             }
+        }
 
 
         public BigDouble(BigDecimal[] coefficient) {
@@ -318,7 +318,7 @@ public interface Polynomial extends Cloneable {
         }
 
         public int getDegree() {
-             return coefficient.length - 1;
+            return coefficient.length - 1;
         }
 
         public BigDouble multiply(Polynomial b) {
@@ -330,7 +330,7 @@ public interface Polynomial extends Cloneable {
                 newCoefficient[i] = new BigDecimal(0.0);
             for(int n=0; n<=getDegree(); n++) {
                 for(int m=0; m<=bd.getDegree(); m++)
-                   newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));                                   
+                    newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));
             }
             return new BigDouble(newCoefficient);
         }
@@ -548,9 +548,9 @@ public interface Polynomial extends Cloneable {
         }
 
         public String getCoefficientString(int n) {
-                 return String.format(FORMAT, getCoefficient(n));
-             }
-        
+            return String.format(FORMAT, getCoefficient(n));
+        }
+
 
         public int getDegree() {
             return coefficient.length - 1;
@@ -574,13 +574,13 @@ public interface Polynomial extends Cloneable {
                 logResult = Math.log(coefficient[degree]);
             else
                 logResult = Math.log(-coefficient[degree]);
-             for(int n=degree-1; n>=0; n--) {
+            for(int n=degree-1; n>=0; n--) {
                 logResult += logX;
-                 boolean positiveCoefficient = coefficient[n] > 0;
-                 double logCoefficient;
-                 if (positiveCoefficient)
+                boolean positiveCoefficient = coefficient[n] > 0;
+                double logCoefficient;
+                if (positiveCoefficient)
                     logCoefficient = Math.log(coefficient[n]);
-                 else
+                else
                     logCoefficient = Math.log(-coefficient[n]);
                 if (!(positiveCoefficient ^ positive)) // Same sign
                     logResult = LogTricks.logSum(logResult,logCoefficient);

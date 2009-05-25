@@ -23,6 +23,12 @@ public class TraitGuesser {
         REGEX
     }
     
+    public static enum TraitType {
+        DISCRETE,
+        INTEGER,
+        CONTINUOUS
+    }
+    
     public enum TraitAnalysisType {
 
     	SPECIES_ANALYSIS ("Species Analysis");
@@ -57,7 +63,7 @@ public class TraitGuesser {
     public boolean guessTrait = false;
     public GuessType guessType = GuessType.ORDER;
     public TraitAnalysisType traitAnalysisType = TraitAnalysisType.SPECIES_ANALYSIS;
-    public TraitType traitType = BeautiOptions.TraitType.DISCRETE;
+    public TraitType traitType = TraitType.DISCRETE;
     public boolean fromLast = false;
     public int order = 0;
     public String prefix;

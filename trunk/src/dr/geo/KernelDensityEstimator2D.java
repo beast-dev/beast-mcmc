@@ -76,7 +76,7 @@ public class KernelDensityEstimator2D {
     }
 
     public KernelDensityEstimator2D(double[] x, double[] y, int n) {
-        this(x,y,null,n,null);
+        this(x,y,new double[]{1.0,1.0},n,null);
     }
 
     public void doKDE2D() {

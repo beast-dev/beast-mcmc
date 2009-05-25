@@ -45,6 +45,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     public static final String TO = "to";
     public static final String EVERY = "every";
     public static final String TAXON_LIST = "taxonList";
+    public static final String STRIP = "strip";
 
     public String getParserName() {
         return PATTERNS;
@@ -58,6 +59,8 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         int from = 0;
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
+
+        boolean strip = xo.getAttribute(STRIP,true);
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -83,7 +86,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         if (to > alignment.getSiteCount())
             throw new XMLParseException("illegal 'to' attribute in patterns element");
 
-        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every);
+        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip);
 
         int f = from + 1;
         int t = to + 1; // fixed a *display* error by adding + 1 for consistency with f = from + 1

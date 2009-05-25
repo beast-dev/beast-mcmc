@@ -87,6 +87,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     protected int from, to, every;
 
+    protected boolean strip = true;
+
     /**
      * Constructor
      */
@@ -111,7 +113,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     /**
      * Constructor
      */
+
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every) {
+        this(alignment,taxa,from,to,every,true);
+    }
+
+    public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip) {
         if (taxa != null) {
             SimpleAlignment a = new SimpleAlignment();
 
@@ -123,7 +130,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
             alignment = a;
         }
-
+        this.strip = strip;
+        
         setPatterns(alignment, from, to, every);
     }
 
@@ -209,7 +217,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         for (int i = from; i <= to; i += every) {
             pattern = siteList.getSitePattern(i);
 
-            if (!isInvariant(pattern) ||
+            if (!strip || !isInvariant(pattern) ||
                     (!isGapped(pattern) &&
                             !isAmbiguous(pattern) &&
                             !isUnknown(pattern))) {

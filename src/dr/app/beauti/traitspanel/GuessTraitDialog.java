@@ -180,7 +180,7 @@ public class GuessTraitDialog {
 		switch (selectedTrait) {
 			case SPECIES_ANALYSIS:
 				guesser.traitAnalysisType = TraitGuesser.TraitAnalysisType.SPECIES_ANALYSIS;
-	    		guesser.traitType = BeautiOptions.TraitType.DISCRETE;
+	    		guesser.traitType = TraitGuesser.TraitType.DISCRETE;
 				break;
 			default:
 				throw new IllegalArgumentException("unknown trait selected");

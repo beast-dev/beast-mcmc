@@ -264,26 +264,26 @@ public class BeautiOptions extends ModelOptions {
     	double spWeights = 5.0;
     	double spTuning = 0.9;
     	
-    	createScaleParameter(TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createScaleParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Speices tree: Birth Death Model BminusD Rate operator", 
+    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Speices tree: Birth Death Model BminusD Rate operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	createScaleParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Speices tree: Birth Death Model DoverB operator", 
+    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Speices tree: Birth Death Model DoverB operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
     	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createParameter(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
+    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
     	
-    	createScaleOperator(TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
+    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
     	
-    	createScaleOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
-    	createScaleOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
     	
     	createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
     	
-    	createOperator(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
+    	createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
     	//TODO: more
     }
 
@@ -306,7 +306,7 @@ public class BeautiOptions extends ModelOptions {
 
         taxonList = null;
 
-        traits.clear();
+        selecetedTraits.clear();
 
         taxonSets.clear();
         taxonSetsMono.clear();
@@ -801,11 +801,11 @@ public class BeautiOptions extends ModelOptions {
     
     private void selectParametersForSpecies(List<Parameter> params) {
     	
-    	params.add(getParameter(TRAIT_SPECIES + "." + POP_MEAN));
+    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
     	
     	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
-	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-	    	params.add(getParameter(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
 //       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
@@ -1005,18 +1005,18 @@ public class BeautiOptions extends ModelOptions {
     
     private void selectOperatorsForSpecies(List<Operator> ops) {
     	
-    	ops.add(getOperator(TRAIT_SPECIES + "." + POP_MEAN));
+    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
     	
        	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
-	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-	    	ops.add(getOperator(TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
 //       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
     		//TODO: YULE model.
     	}
     	
     	ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
     	
-    	ops.add(getOperator(TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
+    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
     	//TODO: more
     }
 
@@ -1398,7 +1398,7 @@ public class BeautiOptions extends ModelOptions {
     }
     
     public boolean isSpeciesAnalysis() {
-        return traits.contains(TRAIT_SPECIES);
+        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES);
     }
     
     public List<String> getSpeciesList() {
@@ -1408,7 +1408,7 @@ public class BeautiOptions extends ModelOptions {
     	if (taxonList != null) {
 	    	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
 	    		Taxon taxon = taxonList.getTaxon(i);
-	        	sp = taxon.getAttribute(TRAIT_SPECIES).toString();
+	        	sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
 	
 	        	if (!species.contains(sp)) {
 	        		species.add(sp);
@@ -1425,7 +1425,7 @@ public class BeautiOptions extends ModelOptions {
         INTEGER,
         CONTINUOUS
     }
-
+    
     public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
     public String treeFileName = null;
@@ -1434,8 +1434,8 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public String substTreeFileName = null;
 
-    public final String TRAIT_SPECIES = "species";
-    public final String SPECIES_TREE_FILE_NAME = TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
+//    public final String TRAIT_SPECIES = "species"; // move to TraitGuesser.Traits.TRAIT_SPECIES
+    public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
     public final String POP_MEAN = "popMean";
     
     // Data options
@@ -1447,8 +1447,9 @@ public class BeautiOptions extends ModelOptions {
 //    public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
 
     public DateGuesser dateGuesser = new DateGuesser();
+    public TraitGuesser traitGuesser = new TraitGuesser();
 
-    public List<String> traits = new ArrayList<String>();
+    public List<String> selecetedTraits = new ArrayList<String>();
     public Map<String, TraitType> traitTypes = new HashMap<String, TraitType>();
     
     public List<Taxa> taxonSets = new ArrayList<Taxa>();

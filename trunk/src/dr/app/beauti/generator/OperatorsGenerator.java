@@ -4,6 +4,7 @@ import dr.app.beauti.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
@@ -451,7 +452,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(TreeNodeSlide.TREE_NODE_REHEIGHT,
                 new Attribute[]{ getWeightAttribute(operator.weight) }
         );
-        writer.writeIDref(options.TRAIT_SPECIES,  options.TRAIT_SPECIES);
+        writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(),  TraitGuesser.Traits.TRAIT_SPECIES.toString());
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  Generator.SP_TREE);
         writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
     }

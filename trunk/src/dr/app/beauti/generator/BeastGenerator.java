@@ -355,8 +355,8 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
 
         // traits tag
-        if (options.traits.size() > 0) {
-        	for (String trait : options.traits) {
+        if (options.selecetedTraits.size() > 0) {
+        	for (String trait : options.selecetedTraits) {
         		BeautiOptions.TraitType traiType = options.traitTypes.get(trait);
 
         		writeTraits(writer, trait, traiType.toString(), options.taxonList);
@@ -1369,7 +1369,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + options.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
             writer.writeCloseTag(Columns.COLUMN);
         }
         
@@ -1461,12 +1461,12 @@ public class BeastGenerator extends Generator {
         	// prior on species tree
         	writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         	
-        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + options.POP_MEAN);
+        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
         	writer.writeIDref(ParameterParser.PARAMETER,  SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
         	
         	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) { 
-	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
-	        	writer.writeIDref(ParameterParser.PARAMETER,  options.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
+	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
 //        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
         		//TODO: YULE model.
         	}
@@ -1586,7 +1586,7 @@ public class BeastGenerator extends Generator {
         	// species tree log
 	        writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, options.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
+	                        new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
 	                        new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
 	                        new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
 	                        new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME),

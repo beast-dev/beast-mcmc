@@ -26,6 +26,7 @@
 package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.*;
 import dr.evolution.util.*;
 import dr.gui.table.TableSorter;
@@ -71,7 +72,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private String selectedTrait = null;
 
     private CreateTraitDialog createTraitDialog = null;
-    private GuessDatesDialog guessDatesDialog = null;
+    private GuessTraitDialog guessTraitDialog = null;
 
     public TraitsPanel(BeautiFrame parent, Action importTraitsAction) {
 
@@ -209,7 +210,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private void traitSelectionChanged() {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
-            selectedTrait = options.traits.get(selRow);
+            selectedTrait = options.selecetedTraits.get(selRow);
             removeTraitAction.setEnabled(true);
         } else {
             selectedTrait = null;
@@ -236,36 +237,41 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void guessTrait() {
+    	TraitGuesser guesser = options.traitGuesser;
+    	
+        if (guessTraitDialog == null) {
+        	guessTraitDialog = new GuessTraitDialog(frame, guesser);
+        }
 
-//        if (guessDatesDialog == null) {
-//            guessDatesDialog = new GuessDatesDialog(frame);
-//        }
-//
-//        int result = guessDatesDialog.showDialog();
-//
-//        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-//            return;
-//        }
-//
-//        DateGuesser guesser = options.dateGuesser;
-//
-//        guesser.guessDates = true;
-//        guessDatesDialog.setupGuesser(guesser);
-//
-//        String warningMessage = null;
-//
-//        guesser.guessDates(options.taxonList);
-//
-//        if (warningMessage != null) {
-//            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-//                    "Error guessing dates",
-//                    JOptionPane.WARNING_MESSAGE);
-//        }
-//
-//        // adjust the dates to the current timescale...
-//        timeScaleChanged();
+        int result = guessTraitDialog.showDialog();
+
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        guesser.guessTrait = true; // ?? no use?
+        guessTraitDialog.setupGuesser();
+
+        String warningMessage = null; // ?? no use?
+
+        guesser.guessTrait(options);
+
+        if (warningMessage != null) { // ?? no use?
+            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+                    "Error guessing trait",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+        
+		switch (guesser.traitAnalysisType) {
+			case SPECIES_ANALYSIS :
+				addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
+				break;
+			default:
+				throw new IllegalArgumentException("unknown trait selected");       	
+        }
 
         dataTableModel.fireTableDataChanged();
+        frame.setDirty();
     }
 
     private void addTrait() {
@@ -278,25 +284,37 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             String name = createTraitDialog.getName();
             BeautiOptions.TraitType type = createTraitDialog.getType();
 
-            if (!options.traits.contains(name)) {
+            if (!options.selecetedTraits.contains(name)) {
                 // The createTraitDialog will have already checked if the
                 // user is overwriting an existing trait
-                options.traits.add(name);
+                options.selecetedTraits.add(name);
             }
             options.traitTypes.put(name, type);
             traitsTableModel.fireTableDataChanged();
-            int row = options.traits.size() - 1;
+            int row = options.selecetedTraits.size() - 1;
             traitsTable.getSelectionModel().setSelectionInterval(row, row);
         }
 
         fireTraitsChanged();
 
     }
+    
+    private void addTrait(String traitName, BeautiOptions.TraitType traitType) {
+    	
+        if (!options.selecetedTraits.contains(traitName)) {
+        	options.selecetedTraits.add(traitName);
+        }
+	    options.traitTypes.put(traitName, traitType);
+	    
+	    traitsTableModel.fireTableDataChanged();
+	    int row = options.selecetedTraits.size() - 1;
+	    traitsTable.getSelectionModel().setSelectionInterval(row, row);    	
+    }
 
     private void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
-        String trait = options.traits.get(selRow);
-        options.traits.remove(trait);
+        String trait = options.selecetedTraits.get(selRow);
+        options.selecetedTraits.remove(trait);
         options.traitTypes.remove(trait);
         traitsTableModel.fireTableDataChanged();
         fireTraitsChanged();
@@ -365,26 +383,26 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            if (options.traits == null) return 0;
+            if (options.selecetedTraits == null) return 0;
 
-            return options.traits.size();
+            return options.selecetedTraits.size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.traits.get(row);
+                    return options.selecetedTraits.get(row);
                 case 1:
-                    return options.traitTypes.get(options.traits.get(row));
+                    return options.traitTypes.get(options.selecetedTraits.get(row));
             }
             return null;
         }
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 0) {
-                options.traits.set(row, aValue.toString());
+                options.selecetedTraits.set(row, aValue.toString());
             } else if (col == 1) {
-                options.traitTypes.put(options.traits.get(row), (BeautiOptions.TraitType)aValue);
+                options.traitTypes.put(options.selecetedTraits.get(row), (BeautiOptions.TraitType)aValue);
             }
         }
 

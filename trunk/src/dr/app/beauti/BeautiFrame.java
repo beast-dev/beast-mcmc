@@ -720,23 +720,27 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         if (beautiOptions.isSpeciesAnalysis()) { // species
-        	dataPanel.selectAll();
-        	dataPanel.unlinkModels();
-        	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
-        		model.initParametersAndOperatorsForEachPartitionModel();
-            }
-            if (DataPanel.ALLOW_UNLINKED_TREES) {
-            	treesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
-                treesPanel.getOptions(beautiOptions);
-            } else {
-            	oldTreesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
-                oldTreesPanel.getOptions(beautiOptions);
-            }        	
-        	beautiOptions.initSpeciesParametersAndOperators();
-        	beautiOptions.fileNameStem = "LogStem";
-        	
-        	setStatusMessage();
+        	setupSpeciesAnalysis();
         }
+    }
+    
+    public void setupSpeciesAnalysis() {
+    	dataPanel.selectAll();
+    	dataPanel.unlinkModels();
+    	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
+    		model.initParametersAndOperatorsForEachPartitionModel();
+        }
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+        	treesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
+            treesPanel.getOptions(beautiOptions);
+        } else {
+        	oldTreesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
+            oldTreesPanel.getOptions(beautiOptions);
+        }        	
+    	beautiOptions.initSpeciesParametersAndOperators();
+    	beautiOptions.fileNameStem = "LogStem";
+    	
+    	setStatusMessage();
     }
 
 
@@ -762,11 +766,11 @@ public class BeautiFrame extends DocumentFrame {
                         JOptionPane.showMessageDialog(this, "Not all values of same type in column" + label,
                                 "Incompatible values", JOptionPane.WARNING_MESSAGE);
                         warningGiven = true;
-                        // Error - not all values of same type
+                        // TODO Error - not all values of same type
                     }
                 }
 
-                beautiOptions.traits.add(label);
+                beautiOptions.selecetedTraits.add(label);
                 BeautiOptions.TraitType t = (c == Boolean.class || c == String.class) ?  BeautiOptions.TraitType.DISCRETE :
                         (c == Integer.class) ? BeautiOptions.TraitType.INTEGER : BeautiOptions.TraitType.CONTINUOUS;
 
@@ -776,7 +780,7 @@ public class BeautiFrame extends DocumentFrame {
                     final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
                     if (index >= 0) {
                         // if the taxon isn't in the list then ignore it.
-                        // @todo provide a warning of unmatched taxa
+                        // TODO provide a warning of unmatched taxa
                         final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
                         taxon.setAttribute(label, Utils.constructFromString(c, v[1]));
                     }

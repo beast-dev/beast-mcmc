@@ -112,7 +112,7 @@ public class CreateTraitDialog {
         }
 
         // check that the trait name doesn't exist
-        if (options.traits.contains(getName())) {
+        if (options.selecetedTraits.contains(getName())) {
             int option = JOptionPane.showConfirmDialog(frame,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +

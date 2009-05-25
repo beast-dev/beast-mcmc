@@ -72,7 +72,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     private boolean sampleRoot = false;
     private double[] rootPriorMean;
     private double[][] rootPriorPrecision;
-    private final int maxTries = 1000;
+    private final int maxTries = 10000;
 
     public TraitGibbsOperator(MultivariateTraitLikelihood traitModel, boolean onlyInternalNodes) {
         super();
@@ -123,6 +123,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                 node = null;
         } // select any internal (or internal/external) node
 
+        final double[] initialValue = treeModel.getMultivariateNodeTrait(node,traitName);
+
         MeanPrecision mp;
 
         if (node != root)
@@ -149,8 +151,10 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         do {
             do {
-                if (count > maxTries)
+                if (count > maxTries)  {
+                    treeModel.setMultivariateTrait(node,traitName,initialValue);
                     throw new OperatorFailedException("Truncated Gibbs is stuck!");
+                }
 
                 draw = MultivariateNormalDistribution.nextMultivariateNormalPrecision(
                         mp.mean, mp.precision);

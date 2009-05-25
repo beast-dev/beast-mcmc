@@ -34,6 +34,8 @@ import dr.math.Polynomial;
 import java.util.*;
 import java.util.logging.Logger;
 
+//import org.jscience.mathematics.number.Rational;
+
 /**
  * Two priors for the tree that are relatively non-informative on the internal node heights given the root height.
  * The first further assumes that the root height is truncated uniform, see Nicholls, G. & R.D. Gray (2004) for details.
@@ -108,7 +110,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
             }
 
             for (Double date : pruneDates)
-                reversedTipDateList.remove(date);         
+                reversedTipDateList.remove(date);
         }
 
         // Leading coefficient on tree polynomial is X = (# internal nodes)!
@@ -151,43 +153,43 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
-//        likelihoodKnown = false;
-//        treePolynomialKnown = false;
-//        return;
+        likelihoodKnown = false;
+        treePolynomialKnown = false;
+        return;
 
         // Only set treePolynomialKnown = false when a topology change occurs
         // Only set likelihoodKnown = false when a topology change occurs or the rootHeight is changed
 
-        if (model == tree) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
-                if (event.isHeightChanged()) {
-                    if (event.getNode() == tree.getRoot()) {
-                        likelihoodKnown = false;
-                        return;
-                    } // else
-                    return;
-                }
-                if (event.isNodeParameterChanged())
-                    return;
-                // All others are probably tree structure changes
-                likelihoodKnown = false;
-                treePolynomialKnown = false;
-                return;
-            }
-            // TODO Why are not all node height changes invoking TreeChangedEvents?
-            if (object instanceof Parameter.Default) {
-                Parameter parameter = (Parameter) object;
-                if (tree.getNodeHeight(tree.getRoot()) == parameter.getParameterValue(index)) {
-                    likelihoodKnown = false;
-                    treePolynomialKnown = false;
-                    return;
-                }
-                return;
-            }
-        }
-
-        throw new RuntimeException("Unexpected event!");
+//        if (model == tree) {
+//            if (object instanceof TreeModel.TreeChangedEvent) {
+//                TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
+//                if (event.isHeightChanged()) {
+//                    if (event.getNode() == tree.getRoot()) {
+//                        likelihoodKnown = false;
+//                        return;
+//                    } // else
+//                    return;
+//                }
+//                if (event.isNodeParameterChanged())
+//                    return;
+//                // All others are probably tree structure changes
+//                likelihoodKnown = false;
+//                treePolynomialKnown = false;
+//                return;
+//            }
+//            // TODO Why are not all node height changes invoking TreeChangedEvents?
+//            if (object instanceof Parameter.Default) {
+//                Parameter parameter = (Parameter) object;
+//                if (tree.getNodeHeight(tree.getRoot()) == parameter.getParameterValue(index)) {
+//                    likelihoodKnown = false;
+//                    treePolynomialKnown = false;
+//                    return;
+//                }
+//                return;
+//            }
+//        }
+//
+//        throw new RuntimeException("Unexpected event!");
     }
 
     // **************************************************************
@@ -207,8 +209,9 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     protected final void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
-        storedTreePolynomialKnown = treePolynomialKnown;
-        storedTreePolynomial = treePolynomial.copy(); // TODO Swap pointers
+//        storedTreePolynomialKnown = treePolynomialKnown;
+//        if (treePolynomial != null)
+//            storedTreePolynomial = treePolynomial.copy(); // TODO Swap pointers
     }
 
     /**
@@ -217,8 +220,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     protected final void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
-        treePolynomialKnown = storedTreePolynomialKnown;
-        treePolynomial = storedTreePolynomial;
+//        treePolynomialKnown = storedTreePolynomialKnown;
+//        treePolynomial = storedTreePolynomial;
     }
 
     protected final void acceptState() {
@@ -234,13 +237,13 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
 
-//        return calculateLogLikelihood();
+        return calculateLogLikelihood();
 
-        if (!likelihoodKnown) {
-        	logLikelihood = calculateLogLikelihood();
-        	likelihoodKnown = true;
-        }
-        return logLikelihood;
+//        if (!likelihoodKnown) {
+//        	logLikelihood = calculateLogLikelihood();
+//        	likelihoodKnown = true;
+//        }
+//        return logLikelihood;
     }
 
     public final void makeDirty() {
@@ -271,25 +274,43 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
             if (k > 0) {
                 // the tips are contemporaneous
-                logLike = logFactorialK - (double) k * Math.log(rootHeight);
+//                logLike = logFactorialK - (double) k * Math.log(rootHeight);
+                // Try new prior.... should behave the same.
+                tmpLogLikelihood = 0;
+                recursivelyComputeDensity(tree,tree.getRoot(),0);
+                logLike = tmpLogLikelihood;
 
             } else {
                 // TODO Rewrite description above to discuss this new prior
-                if (!treePolynomialKnown) {
-                    polynomialType = Polynomial.Type.DOUBLE;
-                    treePolynomial  = recursivelyComputePolynomial(tree,tree.getRoot(),polynomialType).getPolynomial();
-                    treePolynomialKnown = true;
-                }
+//                if (!treePolynomialKnown) {
+//                    polynomialType = Polynomial.Type.MARCRATIONAL;
+//                    treePolynomial  = recursivelyComputePolynomial(tree,tree.getRoot(),polynomialType).getPolynomial();
+//                    System.err.println("poly1: "+treePolynomial);
+//                    System.err.println("eval = "+treePolynomial.logEvaluate(rootHeight));
+//                    System.err.println("last: "+treePolynomial.getCoefficientString(0));
+//                   Polynomial test = recursivelyComputePolynomial(tree,tree.getRoot(),Polynomial.Type.RATIONAL).getPolynomial();
+//                    System.err.println("poly2: "+test);
+//                    System.err.println("eval = "+test.logEvaluate(rootHeight));
+//                    System.err.println("last: "+test.getCoefficientString(0));
+//
+//                    System.exit(-1);
+//                    treePolynomialKnown = true;
+//                }
+//
+//                logLike  = -treePolynomial .logEvaluate(rootHeight);
+//
+//                if (Double.isNaN(logLike)) {
+//                    // Try using Horner's method
+//                    logLike = -treePolynomial.logEvaluateHorner(rootHeight);
+//                    if (Double.isNaN(logLike)) {
+//                        logLike = Double.NEGATIVE_INFINITY;
+//                    }
+//                }
 
-                logLike  = -treePolynomial .logEvaluate(rootHeight);
-
-                if (Double.isNaN(logLike)) {
-                    // Try using Horner's method
-                    logLike = -treePolynomial.logEvaluateHorner(rootHeight);
-                    if (Double.isNaN(logLike)) {
-                        logLike = Double.NEGATIVE_INFINITY;
-                    }
-                }
+                // Try new prior!
+                tmpLogLikelihood = 0;
+                recursivelyComputeDensity(tree,tree.getRoot(),0);
+                logLike = tmpLogLikelihood;
             }
 
             assert !Double.isInfinite(logLike) && !Double.isNaN(logLike);
@@ -297,23 +318,51 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
     }
 
-    private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
 
-        if (tree.isExternal(node)) {
-            double[] value = new double[] {1.0};
-            return new TipLabeledPolynomial(value, tree.getNodeHeight(node), type);
-        }
+    private double recursivelyComputeDensity(Tree tree, NodeRef node, double parentHeight) {
+        if (tree.isExternal(node))
+            return tree.getNodeHeight(node);
 
-        TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node,0),type);
-        TipLabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node,1),type);
-        TipLabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
+        double thisHeight = tree.getNodeHeight(node);
+        double heightChild1 = recursivelyComputeDensity(tree,tree.getChild(node,0),thisHeight);
+        double heightChild2 = recursivelyComputeDensity(tree,tree.getChild(node,1),thisHeight);
+        double minHeight = (heightChild1 > heightChild2) ? heightChild1 : heightChild2;
 
         if (!tree.isRoot(node)) {
-            polynomial = polynomial.integrateWithLowerBound(polynomial.label);
+            double diff = parentHeight - minHeight;
+            if (diff <= 0)
+            	tmpLogLikelihood = Double.NEGATIVE_INFINITY;
+            else
+	            tmpLogLikelihood -= Math.log(diff);
+            //tmpLogLikelihood -= Math.log(parentHeight-minHeight);
+        } else {
+            // Do nothing
         }
-
-        return polynomial;
+        return minHeight;
     }
+
+//    private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
+//
+//        if (tree.isExternal(node)) {
+//            double[] value = new double[] {1.0};
+//            return new TipLabeledPolynomial(value, tree.getNodeHeight(node), type, true);
+//        }
+//
+//        TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node,0),type);
+//        TipLabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node,1),type);
+//        // TODO The partialPolynomial below *should* be cached in an efficient reuse scheme (at least for arbitrary precision)
+//        TipLabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
+//        // See AbstractTreeLikelihood for an example of how to flag cached polynomials for re-evaluation
+//        System.err.println("B> "+polynomial);
+//        if (!tree.isRoot(node)) {
+//            polynomial = polynomial.integrateWithLowerBound(polynomial.label);
+//            System.err.println("<A "+polynomial);
+//        } else {
+//            System.err.println("<= ROOT");
+//        }
+//
+//        return polynomial;
+//    }
 
 //    private void test() {
 //
@@ -352,87 +401,99 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 //        System.exit(-1);
 //    }
 
-    class TipLabeledPolynomial extends Polynomial.Abstract {
-
-        TipLabeledPolynomial(double[] coefficients, double label, Polynomial.Type type) {
-            switch (type) {
-                case DOUBLE:        polynomial = new Polynomial.Double(coefficients);
-                                    break;
-                case LOG_DOUBLE:    polynomial = new Polynomial.LogDouble(coefficients);
-                                    break;
-                case BIG_DOUBLE:    polynomial = new Polynomial.BigDouble(coefficients);
-                                    break;
+//    class TipLabeledPolynomial extends Polynomial.Abstract {
+//
+//        TipLabeledPolynomial(double[] coefficients, double label, Polynomial.Type type, boolean isTip) {
+//            switch (type) {
+//                case DOUBLE:        polynomial = new Polynomial.Double(coefficients);
+//                                    break;
+//                case LOG_DOUBLE:    polynomial = new Polynomial.LogDouble(coefficients);
+//                                    break;
+//                case BIG_DOUBLE:    polynomial = new Polynomial.BigDouble(coefficients);
+//                                    break;
 //                case APDOUBLE:      polynomial = new Polynomial.APDouble(coefficients);
 //                                    break;
-                default: throw new RuntimeException("Unknown polynomial type");
-            }
-            this.label = label;
-        }
-
-        TipLabeledPolynomial(Polynomial polynomial, double label) {
-            this.polynomial = polynomial;
-            this.label = label;
-        }
-
-        public TipLabeledPolynomial copy() {
-            Polynomial copyPolynomial = polynomial.copy();
-            return new TipLabeledPolynomial(copyPolynomial,this.label);
-        }
-
-        public Polynomial getPolynomial() { return polynomial; }
-
-        public TipLabeledPolynomial multiply(TipLabeledPolynomial b) {
-            double maxLabel = Math.max(label,b.label);
-            return new TipLabeledPolynomial(polynomial.multiply(b),maxLabel);
-        }
-
-        public int getDegree() {
-            return polynomial.getDegree();
-        }
-
-        public Polynomial multiply(Polynomial b) {
-            return polynomial.multiply(b);
-        }
-
-        public Polynomial integrate() {
-            return polynomial.integrate();
-        }
-
-        public double evaluate(double x) {
-            return polynomial.evaluate(x);
-        }
-
-        public double logEvaluate(double x) {
-            return polynomial.logEvaluate(x);
-        }
-
-        public double logEvaluateHorner(double x) {
-            return polynomial.logEvaluateHorner(x);
-        }
-
-        public void setCoefficient(int n, double x) {
-            polynomial.setCoefficient(n,x);
-        }
-
-        public TipLabeledPolynomial integrateWithLowerBound(double bound) {
-            return new TipLabeledPolynomial(polynomial.integrateWithLowerBound(bound),label);
-        }
-
-        public double getCoefficient(int n) {
-            return polynomial.getCoefficient(n);
-        }
-
-        public String toString() {
-            return super.toString() + " {"+label+"}";
-        }
-
-        public String getCoefficientString(int n) {
-            return polynomial.getCoefficientString(n);
-        }
-
-        private double label;
-        private Polynomial polynomial;
-    }
+//                case RATIONAL:      polynomial = new Polynomial.RationalDouble(coefficients);
+//                                    break;
+//                case MARCRATIONAL:  polynomial = new Polynomial.MarcRational(coefficients);
+//                                    break;
+//
+//                default: throw new RuntimeException("Unknown polynomial type");
+//            }
+//            this.label = label;
+//            this.isTip = isTip;
+//        }
+//
+//        TipLabeledPolynomial(Polynomial polynomial, double label, boolean isTip) {
+//            this.polynomial = polynomial;
+//            this.label = label;
+//            this.isTip = isTip;
+//        }
+//
+//        public TipLabeledPolynomial copy() {
+//            Polynomial copyPolynomial = polynomial.copy();
+//            return new TipLabeledPolynomial(copyPolynomial,this.label,this.isTip);
+//        }
+//
+//        public Polynomial getPolynomial() { return polynomial; }
+//
+//        public TipLabeledPolynomial multiply(TipLabeledPolynomial b) {
+//            double maxLabel = Math.max(label,b.label);
+//            return new TipLabeledPolynomial(polynomial.multiply(b),maxLabel,false);
+//        }
+//
+//        public int getDegree() {
+//            return polynomial.getDegree();
+//        }
+//
+//        public Polynomial multiply(Polynomial b) {
+//            return polynomial.multiply(b);
+//        }
+//
+//        public Polynomial integrate() {
+//            return polynomial.integrate();
+//        }
+//
+//        public void expand(double x) {
+//            polynomial.expand(x);
+//        }
+//
+//        public double evaluate(double x) {
+//            return polynomial.evaluate(x);
+//        }
+//
+//        public double logEvaluate(double x) {
+//            return polynomial.logEvaluate(x);
+//        }
+//
+//        public double logEvaluateHorner(double x) {
+//            return polynomial.logEvaluateHorner(x);
+//        }
+//
+//        public void setCoefficient(int n, double x) {
+//            polynomial.setCoefficient(n,x);
+//        }
+//
+//        public TipLabeledPolynomial integrateWithLowerBound(double bound) {
+//            return new TipLabeledPolynomial(polynomial.integrateWithLowerBound(bound),label,isTip);
+//        }
+//
+//        public double getCoefficient(int n) {
+//            return polynomial.getCoefficient(n);
+//        }
+//
+//        public String toString() {
+//            return polynomial.toString() + " {"+label+"}";
+//        }
+//
+//        public String getCoefficientString(int n) {
+//            return polynomial.getCoefficientString(n);
+//        }
+//
+//        private double label;
+//        private Polynomial polynomial;
+//        private boolean isTip;
+//    }
 
     private double logFactorial(int n) {
         if (n == 0 || n == 1) {
@@ -514,6 +575,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private Polynomial treePolynomial;
     private Polynomial storedTreePolynomial;
 
+    private double tmpLogLikelihood;
 //    private Iterator<Polynomial.Type> typeIterator = EnumSet.allOf(Polynomial.Type.class).iterator();
 //    private Polynomial.Type polynomialType = typeIterator.next();
     private Polynomial.Type polynomialType;

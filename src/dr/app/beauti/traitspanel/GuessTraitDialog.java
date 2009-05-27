@@ -72,12 +72,13 @@ public class GuessTraitDialog {
 
     private final JComboBox traitSelectionCombo;
     
-    private final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
-    private final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
-            "fourth", "fourth from last", "third from last", "second from last", "last"});
+    private final JRadioButton suffixRadio = new JRadioButton("Defined by a suffix, after the", true);
+    private final JComboBox suffixOrderCombo = new JComboBox(new String[]{"last", "second from last", "third from last", "fourth from last"});
+    private final JTextField suffixText = new JTextField(6);
 
-    private final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix", false);
-    private final JTextField prefixText = new JTextField(16);
+    private final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix, before the", false);
+    private final JComboBox prefixOrderCombo = new JComboBox(new String[]{"first", "second", "third", "fourth"});
+    private final JTextField prefixText = new JTextField(6);
 
     private final JRadioButton regexRadio = new JRadioButton("Defined by regular expression (REGEX)", false);
     private final JTextField regexText = new JTextField(16);
@@ -87,42 +88,47 @@ public class GuessTraitDialog {
         this.guesser = guesser;
 
         optionPanel = new OptionsPanel(12, 12);
-
-        traitSelectionCombo = new JComboBox(TraitGuesser.TraitAnalysisType.values());
+        
+        traitSelectionCombo = new JComboBox(TraitGuesser.Traits.values());
         optionPanel.addComponentWithLabel("The selected trait is: ", traitSelectionCombo);
         traitSelectionCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-                    	setTrait((TraitGuesser.TraitAnalysisType) traitSelectionCombo.getSelectedItem());
+                    	setTrait((TraitGuesser.Traits) traitSelectionCombo.getSelectedItem());
                     }
                 }
         );
         optionPanel.addSeparator();
         
-        optionPanel.addLabel("The trait is given by a part of string in the taxon label that is:");
-
-        optionPanel.addComponents(orderRadio, orderCombo);
+        optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
+        
+        optionPanel.addComponents(suffixRadio, suffixOrderCombo);
+        optionPanel.addComponentWithLabel("seperator ", suffixText);
+        suffixText.setEnabled(true);
         optionPanel.addSeparator();
 
+        optionPanel.addComponents(prefixRadio, prefixOrderCombo);
+        optionPanel.addComponentWithLabel("seperator", prefixText);
         prefixText.setEnabled(false);
-        optionPanel.addComponents(prefixRadio, prefixText);
         optionPanel.addSeparator();
 
         regexText.setEnabled(false);
         optionPanel.addComponents(regexRadio, regexText);
  
         ButtonGroup group = new ButtonGroup();
-        group.add(orderRadio);
+        group.add(suffixRadio);
         group.add(prefixRadio);
         group.add(regexRadio);
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                orderCombo.setEnabled(orderRadio.isSelected());
+            	suffixText.setEditable(suffixRadio.isSelected());
+            	suffixOrderCombo.setEnabled(suffixRadio.isSelected());
+            	prefixOrderCombo.setEnabled(prefixRadio.isSelected());
                 prefixText.setEnabled(prefixRadio.isSelected());
                 regexText.setEnabled(regexRadio.isSelected());
             }
         };
-        orderRadio.addItemListener(listener);
+        suffixRadio.addItemListener(listener);
         prefixRadio.addItemListener(listener);
         regexRadio.addItemListener(listener);
     }
@@ -137,7 +143,7 @@ public class GuessTraitDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Guess Trait for Taxa");
+        final JDialog dialog = optionPane.createDialog(frame, "Guess Trait Value for Taxa");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -153,20 +159,16 @@ public class GuessTraitDialog {
 
     public void setupGuesser() {
     	
-    	setTrait((TraitGuesser.TraitAnalysisType) traitSelectionCombo.getSelectedItem());   	
+    	setTrait((TraitGuesser.Traits) traitSelectionCombo.getSelectedItem());   	
     	
-        if (orderRadio.isSelected()) {
-            guesser.guessType = TraitGuesser.GuessType.ORDER;
-            guesser.order = orderCombo.getSelectedIndex();
-            guesser.fromLast = false;
-            if (guesser.order > 3) {
-                guesser.fromLast = true;
-                guesser.order = 8 - guesser.order - 1;
-            }
-
+        if (suffixRadio.isSelected()) {
+            guesser.guessType = TraitGuesser.GuessType.SUFFIX;
+            guesser.index = suffixOrderCombo.getSelectedIndex();
+            guesser.separator = suffixText.getText();
         } else if (prefixRadio.isSelected()) {
             guesser.guessType = TraitGuesser.GuessType.PREFIX;
-            guesser.prefix = prefixText.getText();
+            guesser.index = prefixOrderCombo.getSelectedIndex();
+            guesser.separator = prefixText.getText();
         } else if (regexRadio.isSelected()) {
             guesser.guessType = TraitGuesser.GuessType.REGEX;
             guesser.regex = regexText.getText();
@@ -175,11 +177,11 @@ public class GuessTraitDialog {
         }
     }
     
-    private void setTrait(TraitGuesser.TraitAnalysisType selectedTrait) {
+    private void setTrait(TraitGuesser.Traits selectedTrait) {
     	
 		switch (selectedTrait) {
-			case SPECIES_ANALYSIS:
-				guesser.traitAnalysisType = TraitGuesser.TraitAnalysisType.SPECIES_ANALYSIS;
+			case TRAIT_SPECIES:
+				guesser.traitAnalysisType = TraitGuesser.Traits.TRAIT_SPECIES;
 	    		guesser.traitType = TraitGuesser.TraitType.DISCRETE;
 				break;
 			default:

@@ -237,41 +237,50 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void guessTrait() {
-    	TraitGuesser guesser = options.traitGuesser;
-    	
-        if (guessTraitDialog == null) {
-        	guessTraitDialog = new GuessTraitDialog(frame, guesser);
-        }
-
-        int result = guessTraitDialog.showDialog();
-
-        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
-
-        guesser.guessTrait = true; // ?? no use?
-        guessTraitDialog.setupGuesser();
-
-        String warningMessage = null; // ?? no use?
-
-        guesser.guessTrait(options);
-
-        if (warningMessage != null) { // ?? no use?
-            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing trait",
-                    JOptionPane.WARNING_MESSAGE);
-        }
-        
-		switch (guesser.traitAnalysisType) {
-			case SPECIES_ANALYSIS :
-				addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
-				break;
-			default:
-				throw new IllegalArgumentException("unknown trait selected");       	
-        }
-
-        dataTableModel.fireTableDataChanged();
-        frame.setDirty();
+    	if( options.taxonList != null ) { // validation of check empty taxonList
+	    	TraitGuesser guesser = options.traitGuesser;
+	    	
+	        if (guessTraitDialog == null) {
+	        	guessTraitDialog = new GuessTraitDialog(frame, guesser);
+	        }
+	
+	        int result = guessTraitDialog.showDialog();
+	
+	        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+	            return;
+	        }
+	
+	        guesser.guessTrait = true; // ?? no use?
+	        guessTraitDialog.setupGuesser();
+	
+	        String warningMessage = null; // ?? no use?
+	        
+	        try {
+	        	guesser.guessTrait(options);
+	        } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);                
+            }
+	        
+	        if (warningMessage != null) { // ?? no use?
+	            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+	                    "Error guessing trait",
+	                    JOptionPane.WARNING_MESSAGE);
+	        }
+	        
+			switch (guesser.traitAnalysisType) {
+				case TRAIT_SPECIES :
+					addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
+					break;
+				default:
+					throw new IllegalArgumentException("unknown trait selected");       	
+	        }
+	
+	        dataTableModel.fireTableDataChanged();
+	        frame.setDirty();
+    	} else {
+    		JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+                  "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+    	}
     }
 
     private void addTrait() {
@@ -347,8 +356,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             setToolTipText("Use this tool to guess the trait values from the taxon labels");
         }
 
-        public void actionPerformed(ActionEvent ae) {
-            guessTrait();
+        public void actionPerformed(ActionEvent ae) {        	
+        	guessTrait();        	
         }
     }
 

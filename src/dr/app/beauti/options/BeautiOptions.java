@@ -1428,7 +1428,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public String substTreeFileName = null;
 
-//    public final String TRAIT_SPECIES = "species"; // move to TraitGuesser.Traits.TRAIT_SPECIES
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
     public final String POP_MEAN = "popMean";
     

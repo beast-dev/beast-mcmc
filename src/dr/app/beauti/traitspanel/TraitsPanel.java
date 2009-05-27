@@ -252,28 +252,20 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 	
 	        guesser.guessTrait = true; // ?? no use?
 	        guessTraitDialog.setupGuesser();
-	
-	        String warningMessage = null; // ?? no use?
-	        
+		        
 	        try {
-	        	guesser.guessTrait(options);
+	        	guesser.guessTrait(options);	               
+	        	        
+				switch (guesser.traitAnalysisType) {
+					case TRAIT_SPECIES :
+						addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
+						break;
+					default:
+						throw new IllegalArgumentException("unknown trait selected");       	
+		        }
 	        } catch (IllegalArgumentException iae) {
                 JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);                
-            }
-	        
-	        if (warningMessage != null) { // ?? no use?
-	            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-	                    "Error guessing trait",
-	                    JOptionPane.WARNING_MESSAGE);
-	        }
-	        
-			switch (guesser.traitAnalysisType) {
-				case TRAIT_SPECIES :
-					addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
-					break;
-				default:
-					throw new IllegalArgumentException("unknown trait selected");       	
-	        }
+            } 
 	
 	        dataTableModel.fireTableDataChanged();
 	        frame.setDirty();

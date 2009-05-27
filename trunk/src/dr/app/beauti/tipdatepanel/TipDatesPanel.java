@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.tipdatepanel;
 
+import dr.app.beauti.*;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.components.*;

@@ -216,6 +216,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
+            frame.statusLabel.setText("");
         }
         dataTableModel.fireTableDataChanged();
 

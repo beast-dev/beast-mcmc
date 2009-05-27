@@ -27,11 +27,10 @@ public abstract class Generator {
 	protected static final String STP = "stp";
 	
     protected final BeautiOptions options;
-    protected String genePrefix; // gene file name
+    protected String genePrefix = ""; // gene file name
 
     protected Generator(BeautiOptions options) {
-        this.options = options;
-        genePrefix = "";
+        this.options = options;        
     }
 
     public Generator(BeautiOptions options, ComponentFactory[] components) {
@@ -40,8 +39,7 @@ public abstract class Generator {
             for (ComponentFactory component : components) {
                 this.components.add(component.getGenerator(options));
             }
-        }
-        genePrefix = "";
+        }        
     }
 
     public String getGenePrefix() {

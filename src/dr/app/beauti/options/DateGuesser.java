@@ -1,6 +1,6 @@
 package dr.app.beauti.options;
 
-import dr.app.beauti.GuessDatesException;
+import dr.app.beauti.tipdatepanel.GuessDatesException;
 import dr.evolution.util.Date;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;

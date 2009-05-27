@@ -18,6 +18,7 @@ import dr.app.beauti.options.PartitionTree;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;

@@ -1,4 +1,4 @@
-package dr.app.beauti;
+package dr.app.beauti.tipdatepanel;
 
 /**
  * @author Andrew Rambaut

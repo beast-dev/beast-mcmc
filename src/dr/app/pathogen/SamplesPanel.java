@@ -26,7 +26,7 @@
 package dr.app.pathogen;
 
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.GuessDatesDialog;
+import dr.app.beauti.tipdatepanel.GuessDatesDialog;
 import dr.app.beauti.PanelUtils;
 import dr.evolution.util.Date;
 import dr.evolution.util.TimeScale;

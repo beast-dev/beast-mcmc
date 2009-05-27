@@ -109,7 +109,7 @@ public class TraitGuesser {
     		throw new IllegalArgumentException("Invalid seperator");
     	}
     	        
-    	int id;
+    	int id = -1;
     	int idSum = 0;
     	String t = label;
     	for (int i = 0; i <= index; i++) { // i <= index

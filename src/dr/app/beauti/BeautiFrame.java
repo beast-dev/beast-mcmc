@@ -68,7 +68,7 @@ public class BeautiFrame extends DocumentFrame {
     private final BeastGenerator generator;
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
-    private final JLabel statusLabel = new JLabel("No data loaded");
+    public final JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
@@ -697,7 +697,6 @@ public class BeautiFrame extends DocumentFrame {
 	            final File file = new File(dialog.getDirectory(), dialog.getFile());
 
 		        importTraitsFromFile(file);
-//		        setStatusMessage();
 		        setAllOptions();
 	        }
     	} else {

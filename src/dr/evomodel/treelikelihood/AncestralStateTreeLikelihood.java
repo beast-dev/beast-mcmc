@@ -2,6 +2,7 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -115,8 +116,22 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
     private static String formattedState(int[] state, DataType dataType) {
         StringBuffer sb = new StringBuffer();
         sb.append("\"");
-        for (int i : state) {
-            sb.append(dataType.getChar(i));
+        if (dataType instanceof GeneralDataType) {
+            boolean first = true;
+            for (int i : state) {
+                if (!first) {
+                    sb.append(" ");
+                } else {
+                    first = false;
+                }
+
+                sb.append(dataType.getCode(i));
+            }
+
+        } else {
+            for (int i : state) {
+                sb.append(dataType.getChar(i));
+            }
         }
         sb.append("\"");
         return sb.toString();

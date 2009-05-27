@@ -230,6 +230,18 @@ public abstract class DataType
     }
 
     /**
+     * Get a string code corresponding to a given state. By default this
+     * calls getChar but overriding classes may return multicharacter codes.
+     *
+     * @param state state
+     *
+     * return corresponding code
+     */
+    public String getCode(int state) {
+        return String.valueOf(getChar(state));
+    }
+
+    /**
      * Get triplet string corresponding to a given state
      *
      * @param state state

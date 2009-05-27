@@ -129,6 +129,9 @@ public class GeneralDataType extends DataType implements Identifiable {
      * @return state
      */
     public int getState(String code) {
+        if (code.equals("?")) {
+            return getUnknownState();
+        }
         if (!stateMap.containsKey(code)) {
             return -1;
         }

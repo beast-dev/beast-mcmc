@@ -11,6 +11,8 @@ import dr.evolution.util.Units;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import javax.swing.JOptionPane;
+
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
@@ -18,7 +20,7 @@ import java.util.regex.Matcher;
 public class TraitGuesser {
 
     public enum GuessType {
-        ORDER,
+        SUFFIX,
         PREFIX,
         REGEX
     }
@@ -27,21 +29,6 @@ public class TraitGuesser {
         DISCRETE,
         INTEGER,
         CONTINUOUS
-    }
-    
-    public enum TraitAnalysisType {
-
-    	SPECIES_ANALYSIS ("Species Analysis");
-
-    	TraitAnalysisType(String name) {
-    		this.name = name;
-    	}
-
-    	public String toString() {
-    		return name;
-    	}
-
-    	private final String name;
     }
     
     public enum Traits {
@@ -59,35 +46,31 @@ public class TraitGuesser {
     	private final String name;
     }
 
-
-    public boolean guessTrait = false;
-    public GuessType guessType = GuessType.ORDER;
-    public TraitAnalysisType traitAnalysisType = TraitAnalysisType.SPECIES_ANALYSIS;
+    public boolean guessTrait = false; // no use ??
+    public GuessType guessType = GuessType.SUFFIX;
+    public Traits traitAnalysisType = Traits.TRAIT_SPECIES;
     public TraitType traitType = TraitType.DISCRETE;
-    public boolean fromLast = false;
-    public int order = 0;
-    public String prefix;
-    public String regex;
-    public double offset = 0.0;
-    public double unlessLessThan = 0.0;
-    public double offset2 = 0.0;
+    
+    public int index = 0;
+    public String separator;
+    public String regex;    
 
     public void guessTrait(BeautiOptions options) {
-
+ 
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             
-            double d = 0.0;
-
+            String value = null;            
+            
             try {
                 switch (guessType) {
-                    case ORDER:
-                        d = guessTraitFromOrder(options.taxonList.getTaxonId(i), order, fromLast);
+                    case SUFFIX:
+                    	value = guessTraitFromSuffix(options.taxonList.getTaxonId(i), separator);
                         break;
                     case PREFIX:
-                        d = guessTraitFromPrefix(options.taxonList.getTaxonId(i), prefix);
+                    	value = guessTraitFromPrefix(options.taxonList.getTaxonId(i), separator);
                         break;
                     case REGEX:
-                        d = guessTraitFromRegex(options.taxonList.getTaxonId(i), regex);
+                    	value = guessTraitFromRegex(options.taxonList.getTaxonId(i), regex);
                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
@@ -95,114 +78,60 @@ public class TraitGuesser {
 
             } catch (GuessTraitException gfe) {
                 //
-            }
+            } 
             
-            options.taxonList.getTaxon(i).setAttribute(Traits.TRAIT_SPECIES.toString(), d);
+            options.taxonList.getTaxon(i).setAttribute(Traits.TRAIT_SPECIES.toString(), value);
         }
     }
 
-    public double guessTraitFromOrder(String label, int order, boolean fromLast) throws GuessTraitException {
-
-        String field;
-
-        if (fromLast) {
-            int count = 0;
-            int i = label.length() - 1;
-
-            char c = label.charAt(i);
-
-            do {
-                // first find a part of a number
-                while (!Character.isDigit(c) && c != '.') {
-                    i--;
-                    if (i < 0) break;
-                    c = label.charAt(i);
-                }
-
-                if (i < 0) throw new GuessTraitException("Missing number field in taxon label, " + label);
-
-                int j = i + 1;
-
-                // now find the beginning of the number
-                while (Character.isDigit(c) || c == '.') {
-                    i--;
-                    if (i < 0) break;
-                    c = label.charAt(i);
-                }
-
-                field = label.substring(i + 1, j);
-
-                count++;
-
-            } while (count <= order);
-
-        } else {
-            int count = 0;
-            int i = 0;
-
-            char c = label.charAt(i);
-
-            do {
-                // first find a part of a number
-                while (!Character.isDigit(c)) {
-                    i++;
-                    if (i == label.length()) break;
-                    c = label.charAt(i);
-                }
-                int j = i;
-
-                if (i == label.length()) throw new GuessTraitException("Missing number field in taxon label, " + label);
-
-                // now find the beginning of the number
-                while (Character.isDigit(c) || c == '.') {
-                    i++;
-                    if (i == label.length()) break;
-                    c = label.charAt(i);
-                }
-
-                field = label.substring(j, i);
-
-                count++;
-
-            } while (count <= order);
-        }
-
-        return Double.parseDouble(field);
+    public String guessTraitFromSuffix(String label, String seperator) throws GuessTraitException {
+    	if (seperator.length() < 1 || index < 0) {
+    		throw new IllegalArgumentException("Invalid seperator");
+    	}
+    	    		
+    	int id = -1;    	
+    	String t = label;
+    	for (int i = 0; i <= index; i++) { // i <= index
+			id = t.lastIndexOf(seperator);
+			
+			if (id < 0) {
+				throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+			}
+			
+    		t = t.substring(0, id);    		
+		}    	    	
+		
+        return label.substring(id+1); // exclude ith separator
     }
 
-    public double guessTraitFromPrefix(String label, String prefix) throws GuessTraitException {
+    public String guessTraitFromPrefix(String label, String seperator) throws GuessTraitException {
+    	if (seperator.length() < 1 || index < 0) {
+    		throw new IllegalArgumentException("Invalid seperator");
+    	}
+    	        
+    	int id;
+    	int idSum = 0;
+    	String t = label;
+    	for (int i = 0; i <= index; i++) { // i <= index
+			id = t.indexOf(seperator);
+			
+			if (id < 0) {
+				throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+			}
+			
+			t = t.substring(id + 1);
+			if (i == 0) {
+				idSum = idSum + id;
+			} else {
+				idSum = idSum + id + 1;
+			}
+		}	
 
-        int i = label.indexOf(prefix);
-
-        if (i == -1) throw new GuessTraitException("Missing prefix in taxon label, " + label);
-
-        i += prefix.length();
-        int j = i;
-
-        // now find the beginning of the number
-        char c = label.charAt(i);
-        while (i < label.length() - 1 && (Character.isDigit(c) || c == '.')) {
-            i++;
-            c = label.charAt(i);
-        }
-
-        if (i == j) throw new GuessTraitException("Missing field after prefix in taxon label, " + label);
-
-        String field = label.substring(j, i + 1);
-
-        double d;
-
-        try {
-            d = Double.parseDouble(field);
-        } catch (NumberFormatException nfe) {
-            throw new GuessTraitException("Badly formated date in taxon label, " + label);
-        }
-
-        return d;
+        return label.substring(0, idSum); // exclude ith separator
     }
 
-    public double guessTraitFromRegex(String label, String regex) throws GuessTraitException {
-        double d;
+    public String guessTraitFromRegex(String label, String regex) throws GuessTraitException {
+        String t;
 
         try {
             Pattern pattern = Pattern.compile(regex);
@@ -212,14 +141,14 @@ public class TraitGuesser {
             }
 
             if (matcher.groupCount() < 1) {
-                throw new GuessTraitException("Date group not defined in regular expression: use parentheses to surround the character group that gives the date");
+                throw new GuessTraitException("Trait value group not defined in regular expression");
             }
 
-            d = Double.parseDouble(matcher.group(0));
+            t = matcher.group(0); // TODO: not working?
         } catch (NumberFormatException nfe) {
-            throw new GuessTraitException("Badly formated date in taxon label, " + label);
+            throw new GuessTraitException("Badly formated trait value in taxon label, " + label);
         }
 
-        return d;
+        return t;
     }
 }

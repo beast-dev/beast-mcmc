@@ -2,6 +2,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxa;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
 
@@ -581,6 +582,47 @@ public class PartitionModel extends ModelOptions {
 
     }
     
+    // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix
+/*    public void selectStatistics(List<Parameter> params) {
+
+        if (options.taxonSets != null) {
+            for (Taxa taxonSet : options.taxonSets) {
+                Parameter statistic = statistics.get(taxonSet);
+                if (statistic == null) {
+                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistics.put(taxonSet, statistic);
+                }
+                params.add(statistic);
+            }
+        } else {
+            System.err.println("TaxonSets are null");
+        }
+
+        if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
+            if (options.localClockRateChangesStatistic == null) {
+            	options.localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
+            	options.localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
+            	options.localClockRateChangesStatistic.poissonMean = 1.0;
+            	options.localClockRateChangesStatistic.poissonOffset = 0.0;
+            }
+            if (options.localClockRatesStatistic == null) {
+            	options.localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
+
+            	options.localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
+            	options.localClockRatesStatistic.gammaAlpha = 0.5;
+            	options.localClockRatesStatistic.gammaBeta = 2.0;
+            }
+            params.add(options.localClockRatesStatistic);
+            params.add(options.localClockRateChangesStatistic);
+        }
+
+        if (options.clockType != ClockType.STRICT_CLOCK) {
+            params.add(getParameter("meanRate"));
+            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+            params.add(getParameter("covariance"));
+        }
+
+    }*/
     
     public String getName() {
         return name;
@@ -1075,8 +1117,8 @@ public class PartitionModel extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionModels().size() > 1) {
-            // There is more than one active partition model
+        if (options.getActivePartitionModels().size() > 1 || options.isSpeciesAnalysis()) {
+            // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
         return prefix;
@@ -1084,8 +1126,8 @@ public class PartitionModel extends ModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getActivePartitionModels().size() > 1) {
-            // There is more than one active partition model
+        if (options.getActivePartitionModels().size() > 1 || options.isSpeciesAnalysis()) {
+            // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
         if (getCodonPartitionCount() > 1 && codonPartitionNumber > 0) {

@@ -424,25 +424,30 @@ public class BeautiOptions extends ModelOptions {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         
         if (isSpeciesAnalysis()) { // species
-        	selectParametersForSpecies(parameters);
+        	selectParametersForSpecies(parameters);        	       
+        	for (PartitionModel model : getActivePartitionModels()) {
+        		// use override method getParameter(String name) in PartitionModel containing prefix
+            	model.selectParameters(parameters);    
+        	}
         } else { // not species
         	selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
-
-        selectStatistics(parameters);
+        
+//        if (isSpeciesAnalysis()) { // species
+//        	for (PartitionModel model : getActivePartitionModels()) {
+//        		model.selectStatistics(parameters);
+//        	}
+//        } else {
+        	selectStatistics(parameters);
+//        }
 
         selectComponentStatistics(this, parameters);
 
         boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
-        
-        // add all Parameter (with prefix) into parameters list
-        for (PartitionModel model : getActivePartitionModels()) {
-        	// use override method getParameter(String name) in PartitionModel containing prefix
-        	if (isSpeciesAnalysis()) { // species
-        		model.selectParameters(parameters);        		
-        	}
+        // add all Parameter (with prefix) into parameters list     
+        for (PartitionModel model : getActivePartitionModels()) {        	
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -638,6 +643,10 @@ public class BeautiOptions extends ModelOptions {
         
         if (isSpeciesAnalysis()) { // species
         	selectOperatorsForSpecies(ops);
+        	// use override method getOperator(String name) in PartitionModel containing prefix
+        	for (PartitionModel model : getActivePartitionModels()) {            	
+            	model.selectOperators(ops); 
+            }
         } else { // not species
         	selectOperators(ops);
         }
@@ -647,10 +656,6 @@ public class BeautiOptions extends ModelOptions {
         boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
 
         for (PartitionModel model : getActivePartitionModels()) {
-        	// use override method getOperator(String name) in PartitionModel containing prefix
-        	if (isSpeciesAnalysis()) { // species
-        		model.selectOperators(ops);        		
-        	}
             ops.addAll(model.getOperators());
         }
 

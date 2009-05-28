@@ -259,6 +259,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 				switch (guesser.traitAnalysisType) {
 					case TRAIT_SPECIES :
 						addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
+						frame.setupSpeciesAnalysis();						
 						break;
 					default:
 						throw new IllegalArgumentException("unknown trait selected");       	

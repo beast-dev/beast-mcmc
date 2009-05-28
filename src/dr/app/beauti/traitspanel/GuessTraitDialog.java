@@ -25,37 +25,13 @@
 
 package dr.app.beauti.traitspanel;
 
-import dr.app.beauti.PanelUtils;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TreePrior;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
-import dr.evomodel.coalescent.ConstantPopulationModel;
-import dr.evomodel.coalescent.ExpansionModel;
-import dr.evomodel.coalescent.ExponentialGrowthModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.LogisticGrowthModel;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.YuleModel;
-
-import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.*;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+
 
 /**
  * @author Andrew Rambaut
@@ -103,12 +79,12 @@ public class GuessTraitDialog {
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
         
         optionPanel.addComponents(suffixRadio, suffixOrderCombo);
-        optionPanel.addComponentWithLabel("seperator ", suffixText);
+        optionPanel.addComponentWithLabel("separator ", suffixText);
         suffixText.setEnabled(true);
         optionPanel.addSeparator();
 
         optionPanel.addComponents(prefixRadio, prefixOrderCombo);
-        optionPanel.addComponentWithLabel("seperator", prefixText);
+        optionPanel.addComponentWithLabel("separator", prefixText);
         prefixText.setEnabled(false);
         optionPanel.addSeparator();
 

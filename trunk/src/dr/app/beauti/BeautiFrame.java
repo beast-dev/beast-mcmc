@@ -696,8 +696,7 @@ public class BeautiFrame extends DocumentFrame {
 	        if (dialog.getFile() != null) {
 	            final File file = new File(dialog.getDirectory(), dialog.getFile());
 
-		        importTraitsFromFile(file);
-		        setAllOptions();
+		        importTraitsFromFile(file);		        
 	        }
     	} else {
     		JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
@@ -723,6 +722,8 @@ public class BeautiFrame extends DocumentFrame {
         if (beautiOptions.isSpeciesAnalysis()) { // species
         	setupSpeciesAnalysis();
         }
+        
+        setAllOptions();
     }
     
     public void setupSpeciesAnalysis() {

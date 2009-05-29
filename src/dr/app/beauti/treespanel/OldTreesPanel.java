@@ -52,6 +52,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -148,7 +149,7 @@ public class OldTreesPanel extends BeautiPanel {
             }
         };
 
-        treePriorCombo = new JComboBox(TreePrior.values());
+        treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(
@@ -319,10 +320,7 @@ public class OldTreesPanel extends BeautiPanel {
             button.setEnabled(true);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-            button.setEnabled(true);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ){
-//               || treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
-        	button.setEnabled(false);
+            button.setEnabled(true);        
         } else {
         	button.setEnabled(true);
         }

@@ -214,6 +214,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         // @todo would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
         if (options.dataPartitions.size() == 0) {
+        	if (options.isSpeciesAnalysis()) {
+        		frame.reverseSetupSepciesAnalysis();
+        	}
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");

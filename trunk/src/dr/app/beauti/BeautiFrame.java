@@ -21,6 +21,7 @@ import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
+import dr.app.beauti.treespanel.SpeciesTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.components.*;
 import dr.app.util.Arguments;
@@ -76,6 +77,7 @@ public class BeautiFrame extends DocumentFrame {
     private TaxaPanel taxaPanel;
     private ModelsPanel modelsPanel;
     private OldTreesPanel oldTreesPanel;
+    private SpeciesTreesPanel speciesTreesPanel; 
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -121,6 +123,7 @@ public class BeautiFrame extends DocumentFrame {
         modelsPanel = new ModelsPanel(this, getDeleteAction());
         oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
+        speciesTreesPanel = new SpeciesTreesPanel(this);
         priorsPanel = new PriorsPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
@@ -188,7 +191,9 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
         modelsPanel.setOptions(beautiOptions);
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
+        if (beautiOptions.isSpeciesAnalysis()) {
+        	speciesTreesPanel.setOptions(beautiOptions);
+        } else if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.setOptions(beautiOptions);
         } else {
             oldTreesPanel.setOptions(beautiOptions);
@@ -207,7 +212,9 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
         modelsPanel.getOptions(beautiOptions);
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
+        if (beautiOptions.isSpeciesAnalysis()) {
+        	speciesTreesPanel.getOptions(beautiOptions);
+        } else if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.getOptions(beautiOptions);
         } else {
             oldTreesPanel.getOptions(beautiOptions);
@@ -732,17 +739,27 @@ public class BeautiFrame extends DocumentFrame {
     	for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
     		model.initParametersAndOperatorsForEachPartitionModel();
         }
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
-        	treesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
-            treesPanel.getOptions(beautiOptions);
-        } else {
-        	oldTreesPanel.treePriorCombo.setSelectedItem(TreePrior.SPECIES_BIRTH_DEATH);
-            oldTreesPanel.getOptions(beautiOptions);
-        }        	
+    	
+    	int i = tabbedPane.indexOfTab("Trees");
+    	tabbedPane.removeTabAt(i);       	
+        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
+        speciesTreesPanel.getOptions(beautiOptions);
+               	
     	beautiOptions.initSpeciesParametersAndOperators();
     	beautiOptions.fileNameStem = "LogStem";
     	
     	setStatusMessage();
+    }
+    
+    public void reverseSetupSepciesAnalysis() {
+    	int i = tabbedPane.indexOfTab("Trees");
+    	tabbedPane.removeTabAt(i);
+		if (DataPanel.ALLOW_UNLINKED_TREES) {
+			tabbedPane.insertTab("Trees", null, treesPanel, "", i);
+        } else {
+        	tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
+        }
+		
     }
 
 

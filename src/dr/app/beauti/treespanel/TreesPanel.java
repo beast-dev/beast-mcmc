@@ -47,6 +47,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -146,7 +147,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             }
         };
 
-        treePriorCombo = new JComboBox(TreePrior.values());
+        treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(
@@ -240,10 +241,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
             treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
-            treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SPECIES_BIRTH_DEATH ){
-//        		|| treePriorCombo.getSelectedItem() == TreePrior.SPECIES_YULE) {
-        	
+            treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);        
         }
 
         treePriorPanel.addSeparator();

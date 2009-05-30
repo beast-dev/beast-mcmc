@@ -457,8 +457,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    protected int[][] eigenIndicators;
-    protected int[][] eigenIndicators;
+//    protected int[][] eigenIndicators;
+//    protected int[][] eigenIndicators;
 
     /**
      * the branch-site model for these sites

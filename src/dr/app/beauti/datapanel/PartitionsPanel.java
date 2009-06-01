@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.datapanel;
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;
 import dr.gui.table.DateCellEditor;
@@ -45,7 +46,8 @@ import java.awt.*;
  * @author Alexei Drummond
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class PartitionsPanel extends JPanel implements Exportable {
+//not use now, use Data panel at moment
+public class PartitionsPanel extends JPanel implements Exportable { 
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;

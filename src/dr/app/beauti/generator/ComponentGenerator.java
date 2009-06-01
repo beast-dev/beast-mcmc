@@ -1,6 +1,6 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.XMLWriter;
+import dr.app.beauti.util.XMLWriter;
 
 /**
  * This interface is for generators of model components that need to insert XML

@@ -26,7 +26,7 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.PanelUtils;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.alignment.Patterns;

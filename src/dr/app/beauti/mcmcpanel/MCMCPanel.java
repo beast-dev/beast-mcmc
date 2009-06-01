@@ -23,8 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.mcmcpanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionModel;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;

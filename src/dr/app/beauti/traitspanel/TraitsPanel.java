@@ -27,6 +27,7 @@ package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.*;
 import dr.evolution.util.*;
 import dr.gui.table.TableSorter;

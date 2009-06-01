@@ -1,6 +1,6 @@
 package dr.app.beauti.modelsPanel;
 
-import dr.app.beauti.PanelUtils;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.options.AminoAcidModelType;
 import dr.app.beauti.options.FrequencyPolicy;

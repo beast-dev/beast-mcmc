@@ -1,6 +1,6 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.XMLWriter;
+import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;

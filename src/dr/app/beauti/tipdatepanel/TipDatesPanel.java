@@ -28,6 +28,7 @@ package dr.app.beauti.tipdatepanel;
 import dr.app.beauti.*;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.components.*;
 import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;

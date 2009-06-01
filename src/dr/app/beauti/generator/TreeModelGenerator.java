@@ -1,6 +1,6 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.XMLWriter;
+import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;

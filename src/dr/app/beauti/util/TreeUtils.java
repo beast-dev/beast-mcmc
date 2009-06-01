@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti;
+package dr.app.beauti.util;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;

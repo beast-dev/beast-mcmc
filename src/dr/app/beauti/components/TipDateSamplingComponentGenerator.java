@@ -1,6 +1,6 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.XMLWriter;
+import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.util.Taxon;

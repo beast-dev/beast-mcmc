@@ -25,6 +25,7 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.modelsPanel.CreateModelDialog;
 import dr.app.beauti.*;
 import dr.app.beauti.options.*;

@@ -25,6 +25,7 @@
 
 package dr.app.beauti.datapanel;
 
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
 import dr.app.beauti.*;
 import dr.evolution.datatype.DataType;

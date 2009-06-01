@@ -1,4 +1,4 @@
-package dr.app.beauti;
+package dr.app.beauti.util;
 
 import javax.swing.*;
 import java.awt.*;

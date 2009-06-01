@@ -25,7 +25,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.MCMCPanel;
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.priorsPanel.PriorType;

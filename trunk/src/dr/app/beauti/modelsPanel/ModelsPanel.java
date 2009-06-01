@@ -27,7 +27,7 @@ package dr.app.beauti.modelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.modelsPanel.CreateModelDialog;
-import dr.app.beauti.PanelUtils;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
 import dr.app.beauti.components.SequenceErrorType;

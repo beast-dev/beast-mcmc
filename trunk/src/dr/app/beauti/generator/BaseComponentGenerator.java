@@ -1,7 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.XMLWriter;
+import dr.app.beauti.util.XMLWriter;
 
 /**
  * This is an abstract base class for component generators. Currently it simply

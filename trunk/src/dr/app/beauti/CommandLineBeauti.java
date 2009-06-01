@@ -24,6 +24,7 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.util.NexusApplicationImporter;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DataPartition;

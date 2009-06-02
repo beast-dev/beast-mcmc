@@ -25,8 +25,7 @@
 
 package dr.app.beauti.taxonsetspanel;
 
-import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.*;
 import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -97,8 +96,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         Icon includeIcon = null, excludeIcon = null;
         try {
-            includeIcon = new ImageIcon(IconUtils.getImage(this.getClass(), "images/include.png"));
-            excludeIcon = new ImageIcon(IconUtils.getImage(this.getClass(), "images/exclude.png"));
+            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
+            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
         } catch (Exception e) {
             // do nothing
         }
@@ -668,7 +667,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             addButton.setText(null);
         }
         addButton.setToolTipText(addToolTip);
-        addButton.putClientProperty("JButton.buttonType", "toolbar");
+        addButton.putClientProperty("JButton.buttonType", "roundRect");
+        // addButton.putClientProperty("JButton.buttonType", "toolbar");
         addButton.setOpaque(false);
         addAction.setEnabled(false);
 
@@ -678,14 +678,15 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             removeButton.setText(null);
         }
         removeButton.setToolTipText(removeToolTip);
-        removeButton.putClientProperty("JButton.buttonType", "toolbar");
+        removeButton.putClientProperty("JButton.buttonType", "roundRect");
+//        removeButton.putClientProperty("JButton.buttonType", "toolbar");
         removeButton.setOpaque(false);
         removeAction.setEnabled(false);
 
         buttonPanel.add(addButton);
         buttonPanel.add(new JToolBar.Separator(new Dimension(6, 6)));
         buttonPanel.add(removeButton);
-
+        
         return buttonPanel;
     }
 

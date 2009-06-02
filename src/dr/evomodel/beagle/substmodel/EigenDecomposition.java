@@ -8,21 +8,16 @@ package dr.evomodel.beagle.substmodel;
  */
 public class EigenDecomposition {
 
-    public EigenDecomposition(double[][] evec, double[][] ievc, double[] eval) {
+    public EigenDecomposition(double[] evec, double[] ievc, double[] eval) {
         Evec = evec;
         Ievc = ievc;
         Eval = eval;
     }
 
     public EigenDecomposition copy() {
-        double[][] evec = Evec.clone();
-        double[][] ievc = Ievc.clone();
+        double[] evec = Evec.clone();
+        double[] ievc = Ievc.clone();
         double[] eval = Eval.clone();
-
-        for (int i = 0; i < evec.length; i++) {
-            evec[i] = Evec[i].clone();
-            ievc[i] = Ievc[i].clone();
-        }
 
         return new EigenDecomposition(evec, ievc, eval);
     }
@@ -31,7 +26,7 @@ public class EigenDecomposition {
      * This function returns the Eigen vectors.
      * @return the array
      */
-    public final double[][] getEigenVectors() {
+    public final double[] getEigenVectors() {
         return Evec;
     }
 
@@ -39,7 +34,7 @@ public class EigenDecomposition {
      * This function returns the inverse Eigen vectors.
      * @return the array
      */
-    public final double[][] getInverseEigenVectors() {
+    public final double[] getInverseEigenVectors() {
         return Ievc;
     }
 
@@ -52,8 +47,8 @@ public class EigenDecomposition {
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
-    private final double[][] Evec;
-    private final double[][] Ievc;
+    private final double[] Evec;
+    private final double[] Ievc;
     private final double[] Eval;
 
 }

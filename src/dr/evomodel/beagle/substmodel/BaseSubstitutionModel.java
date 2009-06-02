@@ -179,9 +179,9 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         EigenDecomposition eigen = getEigenDecomposition();
 
-        double[][] Evec = eigen.getEigenVectors();
+        double[] Evec = eigen.getEigenVectors();
 //        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Evec[0]));
-        double[][] Ievc = eigen.getInverseEigenVectors();
+        double[] Ievc = eigen.getInverseEigenVectors();
 //        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Ievc[0]));
         double[] Eval = eigen.getEigenValues();
 
@@ -191,7 +191,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         for (int i = 0; i < stateCount; i++) {
             temp = Math.exp(distance * Eval[i]);
             for (int j = 0; j < stateCount; j++) {
-                iexp[i][j] = Ievc[i][j] * temp;
+                iexp[i][j] = Ievc[i * stateCount + j] * temp;
             }
         }
 
@@ -200,7 +200,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             for (int j = 0; j < stateCount; j++) {
                 temp = 0.0;
                 for (int k = 0; k < stateCount; k++) {
-                    temp += Evec[i][k] * iexp[k][j];
+                    temp += Evec[i * stateCount + k] * iexp[k][j];
                 }
 
                 matrix[u] = Math.abs(temp);
@@ -256,7 +256,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     }
 
     static String format = "%2.1e";
-        
+
     public String printQ() {
 
          StringBuffer sb = new StringBuffer();
@@ -352,7 +352,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     protected double getMINFDIFF() { return 1.0E-10; }
 
     protected double getMINFREQ()  { return 1.0E-10; }
-           
+
     public double[][] getQ() { return savedQ; }
 
     private final double q[][];

@@ -204,8 +204,7 @@ public class TreePriorGenerator extends Generator {
 			writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, genePrefix + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, options, writer);
 			writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, genePrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, options, writer);
 			writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
-		} else if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH ){
-//				|| nodeHeightPrior == TreePrior.SPECIES_YULE) {
+		} else if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || nodeHeightPrior == TreePrior.SPECIES_YULE) {
 			
 				writer.writeComment("A prior assumption that the population size has remained constant");
 				writer.writeComment("throughout the time spanned by the genealogy.");
@@ -428,7 +427,7 @@ public class TreePriorGenerator extends Generator {
 
 		switch (treePrior) {
 			case CONSTANT:
-//			case SPECIES_YULE:
+			case SPECIES_YULE:
 			case SPECIES_BIRTH_DEATH:
 				writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
 				break;
@@ -463,7 +462,7 @@ public class TreePriorGenerator extends Generator {
 		switch (options.nodeHeightPrior) {
 
 			case CONSTANT:
-//			case SPECIES_YULE:
+			case SPECIES_YULE:
 			case SPECIES_BIRTH_DEATH:
 				writer.writeIDref(ParameterParser.PARAMETER, genePrefix + "constant.popSize");
 				break;

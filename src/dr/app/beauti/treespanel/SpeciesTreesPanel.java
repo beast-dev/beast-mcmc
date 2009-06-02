@@ -52,18 +52,18 @@ public class SpeciesTreesPanel extends BeautiPanel {
     private BeautiOptions options = null;
 
     public SpeciesTreesPanel(BeautiFrame parent) {
-    	
+
         this.frame = parent;
 
         setOpaque(false);
         optionsPanel.setOpaque(false);
         setLayout(new BorderLayout());
     	setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-    	
+
 
     	treePriorCombo = new JComboBox(EnumSet.range(TreePrior.SPECIES_YULE, TreePrior.SPECIES_BIRTH_DEATH).toArray());
         optionsPanel.addComponentWithLabel("Species Tree Prior:", treePriorCombo);
-        
+
         treePriorCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
@@ -75,7 +75,7 @@ public class SpeciesTreesPanel extends BeautiPanel {
         optionsPanel.addSeparator();
 
         optionsPanel.addLabel("Note: the Multispecies Coalescent analysis only needs to select the prior for species tree.");
-        
+
         add(optionsPanel, BorderLayout.NORTH);
 
     }
@@ -85,7 +85,7 @@ public class SpeciesTreesPanel extends BeautiPanel {
             frame.setDirty();
         }
     }
- 
+
     private boolean settingOptions = false;
 
     public void setOptions(BeautiOptions options) {
@@ -105,19 +105,19 @@ public class SpeciesTreesPanel extends BeautiPanel {
         options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
 
 //        if (options.nodeHeightPrior == ) {
-// 
+//
 //        } else if (options.nodeHeightPrior == ) {
 //
 //        }
     }
 
-	@Override
+	// @Override
 	public JComponent getExportableComponent() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
- 
+
 
 
 }

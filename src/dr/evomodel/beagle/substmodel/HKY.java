@@ -135,57 +135,57 @@ public class HKY extends BaseSubstitutionModel {
     public EigenDecomposition getEigenDecomposition() {
 
         if (eigenDecomposition == null) {
-            double[][] evec = new double[4][4];
-            double[][] ivec = new double[4][4];
-            double[] eval = new double[4];
+            double[] evec = new double[stateCount * stateCount];
+            double[] ivec = new double[stateCount * stateCount];
+            double[] eval = new double[stateCount];
             eigenDecomposition = new EigenDecomposition(evec, ivec, eval);
 
-            ivec[2][1] =  1; // left eigenvectors 3 = (0,1,0,-1); 4 = (1,0,-1,0)
-            ivec[2][3] = -1;
+            ivec[2 * stateCount + 1] =  1; // left eigenvectors 3 = (0,1,0,-1); 4 = (1,0,-1,0)
+            ivec[2 * stateCount + 3] = -1;
 
-            ivec[3][0] =  1;
-            ivec[3][2] = -1;
+            ivec[3 * stateCount + 0] =  1;
+            ivec[3 * stateCount + 2] = -1;
 
-            evec[0][0] =  1; // right eigenvector 1 = (1,1,1,1)'
-            evec[1][0] =  1;
-            evec[2][0] =  1;
-            evec[3][0] =  1;
+            evec[0 * stateCount + 0] =  1; // right eigenvector 1 = (1,1,1,1)'
+            evec[1 * stateCount + 0] =  1;
+            evec[2 * stateCount + 0] =  1;
+            evec[3 * stateCount + 0] =  1;
 
         }
 
         if (updateMatrix) {
 
-            double[][] evec = eigenDecomposition.getEigenVectors();
-            double[][] ivec = eigenDecomposition.getInverseEigenVectors();
+            double[] evec = eigenDecomposition.getEigenVectors();
+            double[] ivec = eigenDecomposition.getInverseEigenVectors();
             double[] pi = freqModel.getFrequencies();
             double piR = pi[0] + pi[2];
             double piY = pi[1] + pi[3];
 
             // left eigenvector #1
-            ivec[0][0] = pi[0]; // or, evec[0] = pi;
-            ivec[0][1] = pi[1];
-            ivec[0][2] = pi[2];
-            ivec[0][3] = pi[3];
+            ivec[0 * stateCount + 0] = pi[0]; // or, evec[0] = pi;
+            ivec[0 * stateCount + 1] = pi[1];
+            ivec[0 * stateCount + 2] = pi[2];
+            ivec[0 * stateCount + 3] = pi[3];
 
             // left eigenvector #2
-            ivec[1][0] =  pi[0]*piY;
-            ivec[1][1] = -pi[1]*piR;
-            ivec[1][2] =  pi[2]*piY;
-            ivec[1][3] = -pi[3]*piR;
+            ivec[1 * stateCount + 0] =  pi[0]*piY;
+            ivec[1 * stateCount + 1] = -pi[1]*piR;
+            ivec[1 * stateCount + 2] =  pi[2]*piY;
+            ivec[1 * stateCount + 3] = -pi[3]*piR;
 
             // right eigenvector #2
-            evec[0][1] =  1.0/piR;
-            evec[1][1] = -1.0/piY;
-            evec[2][1] =  1.0/piR;
-            evec[3][1] = -1.0/piY;
+            evec[0 * stateCount + 1] =  1.0/piR;
+            evec[1 * stateCount + 1] = -1.0/piY;
+            evec[2 * stateCount + 1] =  1.0/piR;
+            evec[3 * stateCount + 1] = -1.0/piY;
 
             // right eigenvector #3
-            evec[1][2] =  pi[3]/piY;
-            evec[3][2] = -pi[1]/piY;
+            evec[1 * stateCount + 2] =  pi[3]/piY;
+            evec[3 * stateCount + 2] = -pi[1]/piY;
 
             // right eigenvector #4
-            evec[0][3] =  pi[2]/piR;
-            evec[2][3] = -pi[0]/piR;
+            evec[0 * stateCount + 3] =  pi[2]/piR;
+            evec[2 * stateCount + 3] = -pi[0]/piR;
 
             // eigenvectors
             double[] eval = eigenDecomposition.getEigenValues();
@@ -239,10 +239,10 @@ public class HKY extends BaseSubstitutionModel {
         HKY hky = new HKY(kappa,freqModel);
 
         EigenDecomposition decomp = hky.getEigenDecomposition();
-        Matrix evec = new Matrix(decomp.getEigenVectors());
-        Matrix ivec = new Matrix(decomp.getInverseEigenVectors());
-        System.out.println("Evec =\n"+evec);
-        System.out.println("Ivec =\n"+ivec);
+//        Matrix evec = new Matrix(decomp.getEigenVectors());
+//        Matrix ivec = new Matrix(decomp.getInverseEigenVectors());
+//        System.out.println("Evec =\n"+evec);
+//        System.out.println("Ivec =\n"+ivec);
 
         Vector eval = new Vector(decomp.getEigenValues());
         System.out.println("Eval = "+eval);

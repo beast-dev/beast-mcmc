@@ -13,8 +13,10 @@ import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeBMPrior;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.speciation.TreePartitionCoalescent;
+import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxonParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
@@ -114,7 +116,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeComment("Species Tree: tree prior");
     	
     	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
-    		writer.writeComment("Birth Death Model");
+    		writer.writeComment("Species Tree: Birth Death Model");
     		
 	    	writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
 	    			new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.BIRTH_DEATH),
@@ -141,8 +143,24 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	    	
 	    	writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL); 
-//    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
-    		//TODO: YULE model.
+    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		writer.writeComment("Species Tree: Yule Model");
+    		
+    		writer.writeOpenTag(YuleModel.YULE_MODEL, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, YuleModelParser.YULE),
+					new Attribute.Default<String>(XMLParser.Utils.UNITS, XMLParser.Utils.SUBSTITUTIONS)}); 
+    		
+    		writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
+    		
+    		writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+	        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
+    		
+    		writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
+    		
+    		writer.writeCloseTag(YuleModel.YULE_MODEL); 
     	}
     	
     }
@@ -152,23 +170,32 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	writer.writeComment("Species Tree: Likelihood of species tree");
 	    	
     	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
-    		writer.writeComment("Birth Death Model");
+    		writer.writeComment("Species Tree: Birth Death Model");
     		
 	    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
 	    			new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});      
 	    	
 	    	writer.writeOpenTag(SpeciationLikelihood.MODEL); 
 	    	writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);    	
-	    	writer.writeCloseTag(SpeciationLikelihood.MODEL); 
+	    	writer.writeCloseTag(SpeciationLikelihood.MODEL);    	
+	    	 
+    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		writer.writeComment("Species Tree: Yule Model");
+    		
+	    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});      
 	    	
-	    	writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE); 
-	    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);    	
-	    	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
-	    	
-	    	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD); 
-//    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
-    		//TODO: YULE model.
+	    	writer.writeOpenTag(SpeciationLikelihood.MODEL); 
+	    	writer.writeIDref(YuleModel.YULE_MODEL, YuleModelParser.YULE);    	
+	    	writer.writeCloseTag(SpeciationLikelihood.MODEL); 	    		    	
     	}
+    	
+    	// <sp> tree
+    	writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE); 
+    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);    	
+    	writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE); 
+    	
+    	writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
     }
     
     private void writeGeneUnderSpecies(XMLWriter writer) {

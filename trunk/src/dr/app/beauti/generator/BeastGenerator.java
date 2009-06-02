@@ -57,6 +57,7 @@ import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.LoggerParser;
 import dr.evomodelxml.TreeLoggerParser;
 import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.*;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -156,9 +157,8 @@ public class BeastGenerator extends Generator {
         
         //++++++++++++++++ Species tree ++++++++++++++++++
         if (options.isSpeciesAnalysis()) {
-        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH )){
-//        			|| options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
-        		//TODO: YULE
+        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
+        		//TODO: more species tree model
         		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
         	}
         }
@@ -1232,7 +1232,7 @@ public class BeastGenerator extends Generator {
         writeParameterPriors(writer);
 
         switch (options.nodeHeightPrior) {
-//TODO: suit for multi-gene-tree
+
             case YULE:
             case BIRTH_DEATH:
                 writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD,  "speciation");
@@ -1467,8 +1467,8 @@ public class BeastGenerator extends Generator {
         	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) { 
 	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
 	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-//        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
-        		//TODO: YULE model.
+        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        		writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
         	}
         	        	
 	        for (PartitionModel model : options.getActivePartitionModels()) {
@@ -1511,8 +1511,9 @@ public class BeastGenerator extends Generator {
 	    }        
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-            partitionModelGenerator.writeLog(writer, model);
+//            partitionModelGenerator.writeLog(writer, model);
         }
+        
         if (hasCodonOrUserPartitions()) {
             writer.writeIDref(ParameterParser.PARAMETER,  "allMus");
         }

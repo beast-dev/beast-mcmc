@@ -61,7 +61,15 @@ public class DefaultEigenSystem implements EigenSystem {
         hqr2(stateCount, 1, stateCount, qMatrix, Evec, Eval, evali);
         luinverse(Evec, Ievc, stateCount);
 
-        return new EigenDecomposition(Evec, Ievc, Eval);
+        double[] flatEvec = new double[stateCount * stateCount];
+        double[] flatIevc = new double[stateCount * stateCount];
+
+        for (int i = 0; i < stateCount; i++) {
+            System.arraycopy(Evec[i], 0, flatEvec, i * stateCount, stateCount);
+            System.arraycopy(Ievc[i], 0, flatIevc, i * stateCount, stateCount);
+        }
+
+        return new EigenDecomposition(flatEvec, flatIevc, Eval);
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors

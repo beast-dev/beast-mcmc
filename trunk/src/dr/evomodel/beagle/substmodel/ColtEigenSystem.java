@@ -11,7 +11,7 @@ import cern.colt.matrix.DoubleMatrix1D;
  * @author Marc Suchard
  */
 public class ColtEigenSystem implements EigenSystem {
-       
+
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
 //        System.err.println("length = "+matrix.length + ","+matrix[0].length);
@@ -33,12 +33,19 @@ public class ColtEigenSystem implements EigenSystem {
             return null;
         }
 
-        double[][] Ievc = eigenVInv.toArray();
         double[][] Evec = eigenV.toArray();
-        double[]   Eval = eigenVReal.toArray();
-//        double[]   EvalImag = eigenVImag.toArray();
+        double[][] Ievc = eigenVInv.toArray();
+        double[] Eval = eigenVReal.toArray();
 
-        return new EigenDecomposition(Evec,Ievc,Eval);
+        double[] flatEvec = new double[Evec.length * Evec.length];
+        double[] flatIevc = new double[Ievc.length * Ievc.length];
+
+        for (int i = 0; i < Evec.length; i++) {
+            System.arraycopy(Evec[i], 0, flatEvec, i * Evec.length, Evec.length);
+            System.arraycopy(Ievc[i], 0, flatIevc, i * Ievc.length, Ievc.length);
+        }
+
+        return new EigenDecomposition(flatEvec, flatIevc, Eval);
     }
 
     private static final double minProb = Property.DEFAULT.tolerance();

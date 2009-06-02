@@ -82,17 +82,38 @@ public class BeautiApp extends MultiDocApplication {
                 advanced = true;
             }
 
-	        if (Utils.isMacOSX()) {
-		        System.setProperty("apple.laf.useScreenMenuBar","true");
-		        System.setProperty("apple.awt.showGrowBox","true");
-		        System.setProperty("apple.awt.graphics.UseQuartz","true");
-		        UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-		        UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
-	        }
+            boolean lafLoaded = false;
+
+            if (Utils.isMacOSX()) {
+                System.setProperty("apple.awt.graphics.UseQuartz", "true");
+                System.setProperty("apple.awt.antialiasing","true");
+                System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");
+
+                System.setProperty("apple.laf.useScreenMenuBar","true");
+                System.setProperty("apple.awt.draggableWindowBackground","true");
+                System.setProperty("apple.awt.showGrowBox","true");
+
+                // set the Quaqua Look and Feel in the UIManager
+                try {
+                    UIManager.setLookAndFeel(
+                            "ch.randelshofer.quaqua.QuaquaLookAndFeel"
+                    );
+                    lafLoaded = true;
+
+
+                } catch (Exception e) {
+
+                }
+
+                UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+                UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+            }
 
             try {
 
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                if (!lafLoaded) {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                }
 
                 java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
                 Icon icon = null;

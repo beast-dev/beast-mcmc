@@ -41,6 +41,7 @@ import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.inference.operators.OperatorSchedule;
@@ -264,12 +265,17 @@ public class BeautiOptions extends ModelOptions {
     	double spWeights = 5.0;
     	double spTuning = 0.9;
     	
-    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", 
+    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	// species tree Yule
+    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, 
+    			"Speices tree: Yule process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
-    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Speices tree: Birth Death Model BminusD Rate operator", 
-    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Speices tree: Birth Death Model DoverB operator", 
-    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	// species tree Birth Death
+    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, 
+    			"Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, 
+    			"Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
     	
     	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator", 
     			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -278,6 +284,7 @@ public class BeautiOptions extends ModelOptions {
     	
     	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
     	
+    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
     	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
     	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
     	
@@ -811,8 +818,8 @@ public class BeautiOptions extends ModelOptions {
     	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-//       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
-    		//TODO: YULE model.
+       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+       		params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
     	}
     	
 //    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
@@ -1015,8 +1022,8 @@ public class BeautiOptions extends ModelOptions {
        	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-//       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
-    		//TODO: YULE model.
+       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+       		ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
     	}
     	
     	ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));

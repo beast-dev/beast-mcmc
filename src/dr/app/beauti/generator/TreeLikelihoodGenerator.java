@@ -140,12 +140,10 @@ public class TreeLikelihoodGenerator extends Generator {
         for (PartitionModel model : options.getActivePartitionModels()) {
             if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                            new Attribute.Default<String>(XMLParser.IDREF, model.getPrefix(i) + TreeLikelihood.TREE_LIKELIHOOD), true);
+                    writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix(i) + TreeLikelihood.TREE_LIKELIHOOD);
                 }
             } else {
-                writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD,
-                        new Attribute.Default<String>(XMLParser.IDREF, model.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD), true);
+            	writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
             }
         }
     }

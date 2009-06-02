@@ -13,7 +13,8 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  */
 public class YuleModelParser extends AbstractXMLObjectParser {
-
+	
+	public static String YULE = "yule";
     public static String BIRTH_RATE = "birthRate";
 
     public String getParserName() {

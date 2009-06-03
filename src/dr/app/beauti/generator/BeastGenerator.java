@@ -1246,14 +1246,16 @@ public class BeastGenerator extends Generator {
                 break;
             case LOGISTIC:
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD,  "booleanLikelihood1");
-            default:
-            	if (options.isSpeciesAnalysis()) { // species
-            		for (PartitionModel model : models) {
-            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + COALESCENT);
-            		}
-            	} else { // no species
-            		writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, COALESCENT);
-            	}
+                break;
+			case SPECIES_YULE:
+			case SPECIES_BIRTH_DEATH:
+				// do not need
+//				for (PartitionModel model : models) {
+//            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + COALESCENT);
+//            	}
+				break;
+            default:            	
+            	writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, COALESCENT);            	
         }
 
         if (options.nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
@@ -1594,7 +1596,7 @@ public class BeastGenerator extends Generator {
 	                        new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
 	                });
 			    	   		
-			writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  SpeciesTreeModel.SPECIES_TREE);
+			writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  SP_TREE);
 			
 	        if (options.hasData()) {
 	            // we have data...

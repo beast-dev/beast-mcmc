@@ -3,9 +3,11 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
@@ -19,6 +21,8 @@ import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxonParser;
 import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
@@ -32,7 +36,9 @@ import java.util.List;
  * @author Walter Xie
  */
 public class MultiSpeciesCoalescentGenerator extends Generator {
-
+	
+	private int numOfSpecies; // used in private String getIndicatorsParaValue()
+		
     public MultiSpeciesCoalescentGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
@@ -45,6 +51,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
     	List<String> species = options.getSpeciesList();
     	String sp;
+    	
+    	numOfSpecies = species.size(); // used in private String getIndicatorsParaValue()
     	
     	for (String eachSp : species) {
     		writer.writeOpenTag(SpeciesBindings.SP, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, eachSp)});
@@ -217,35 +225,103 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	
     	writer.writeOpenTag(ExponentialDistributionModel.MEAN); 
     	
+    	double valueSpeciesPopMean = 1.0;
+        ArrayList<Parameter> parameters = options.selectParameters();
+        for( Parameter parameter : parameters ) {
+            if( parameter.getName().equals(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN)) { // species.popMean
+            	valueSpeciesPopMean = parameter.initial; // initial is value
+            }
+        }    	
     	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
         		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
-        		new Attribute.Default<String>(AttributeParser.VALUE, "0.001")}, true);
+        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(valueSpeciesPopMean))}, true);
     	
     	writer.writeCloseTag(ExponentialDistributionModel.MEAN); 
     	
     	writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL); 
     	
-    	// STPopulationPrior id="stp" log_root="true"
-    	writer.writeOpenTag(SpeciesTreeBMPrior.STPRIOR, new Attribute[]{
-    			new Attribute.Default<String>(XMLParser.ID, STP),
-    			new Attribute.Default<String>(SpeciesTreeBMPrior.LOG_ROOT, "true")});  
-    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); 
-    	
-    	writer.writeOpenTag(SpeciesTreeBMPrior.TIPS);     	
-    	
-    	writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);
-    	
-    	writer.writeCloseTag(SpeciesTreeBMPrior.TIPS); 
-    	
-    	writer.writeOpenTag(SpeciesTreeBMPrior.STSIGMA);     	
-    	
-    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-    			// <parameter id="stsigma" value="1" /> 
-        		new Attribute.Default<String>(XMLParser.ID, SpeciesTreeBMPrior.STSIGMA.toLowerCase()),
-        		new Attribute.Default<String>(AttributeParser.VALUE, "1")}, true);
-    	
-    	writer.writeCloseTag(SpeciesTreeBMPrior.STSIGMA); 
-    	
-    	writer.writeCloseTag(SpeciesTreeBMPrior.STPRIOR); 
+    	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    		// new part
+	    	writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, SPOPS)}); 
+	    	
+	    	// <distribution0>
+	    	writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0); 
+	    	
+	    	writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);    	
+	    	
+	    	writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0); 
+	    	
+	    	// <distribution1>
+	    	writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1); 	    	
+	    	writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL); 
+	    	
+	    	writer.writeOpenTag(GammaDistributionModel.SHAPE);
+	    	writer.writeText("2");
+	    	writer.writeCloseTag(GammaDistributionModel.SHAPE); 
+	    	
+	    	writer.writeOpenTag(GammaDistributionModel.SCALE);
+	    	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);   
+	    	writer.writeCloseTag(GammaDistributionModel.SCALE); 
+	    		    	 	
+	    	writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL); 	    		    	
+	    	writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1); 
+	    	
+	    	// <data>
+	    	writer.writeOpenTag(MixedDistributionLikelihood.DATA);
+	    	
+	    	writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);  
+	    	
+	    	writer.writeCloseTag(MixedDistributionLikelihood.DATA); 
+	    	
+	    	// <indicators>
+	    	writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
+	    	//TODO: Needs special treatment - you have to generate "NS" ones and 2(N-1) zeros, where N is the number of species.
+	    	// N "1", 2(N-1) "0"
+	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, "1 1 1 1 0 0 0 0 0 0")}, true);  
+	    	
+	    	writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS); 
+	    		    	
+	    	writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+	    	
+    	} else {
+    		// STPopulationPrior id="stp" log_root="true"
+	    	writer.writeOpenTag(SpeciesTreeBMPrior.STPRIOR, new Attribute[]{
+	    			new Attribute.Default<String>(XMLParser.ID, STP),
+	    			new Attribute.Default<String>(SpeciesTreeBMPrior.LOG_ROOT, "true")});  
+	    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); 
+	    	
+	    	writer.writeOpenTag(SpeciesTreeBMPrior.TIPS);     	
+	    	
+	    	writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);
+	    	
+	    	writer.writeCloseTag(SpeciesTreeBMPrior.TIPS); 
+	    	
+	    	writer.writeOpenTag(SpeciesTreeBMPrior.STSIGMA);     	
+	    	
+	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+	    			// <parameter id="stsigma" value="1" /> 
+	        		new Attribute.Default<String>(XMLParser.ID, SpeciesTreeBMPrior.STSIGMA.toLowerCase()),
+	        		new Attribute.Default<String>(AttributeParser.VALUE, "1")}, true);
+	    	
+	    	writer.writeCloseTag(SpeciesTreeBMPrior.STSIGMA); 
+	    	
+	    	writer.writeCloseTag(SpeciesTreeBMPrior.STPRIOR); 
+    	}
     }
+    
+    private String getIndicatorsParaValue() {
+    	String v = "";
+    	
+    	for (int i = 0; i < numOfSpecies; i++) {
+			v = v + "1 ";
+		}
+    	//TODO
+    	for (int i = 0; i < numOfSpecies; i++) {
+			v = v + "0";
+		}
+    	
+    	return v;
+    }
+    
 }

@@ -1224,7 +1224,11 @@ public class BeastGenerator extends Generator {
         	// coalescent prior
         	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
         	// prior on population sizes
-        	writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
+        	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        		writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
+        	} else {
+        		writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
+        	}
         	// prior on species tree
         	writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         }
@@ -1459,7 +1463,11 @@ public class BeastGenerator extends Generator {
         	// coalescent prior
         	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
         	// prior on population sizes
-        	writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
+        	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        		writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
+        	} else {
+        		writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
+        	}
         	// prior on species tree
         	writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         	

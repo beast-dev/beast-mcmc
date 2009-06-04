@@ -25,6 +25,7 @@ public abstract class Generator {
 	public static final String SPLIT_POPS = "splitPops"; 
 	protected static final String PDIST = "pdist";
 	protected static final String STP = "stp";
+	protected static final String SPOPS = "spops";
 	
     protected final BeautiOptions options;
     protected String genePrefix = ""; // gene file name

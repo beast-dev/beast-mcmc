@@ -321,12 +321,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 			}
 		}
     	
-    	for (int i = 0; i < (numOfSpecies - 1); i++) {
-    		if (i == (numOfSpecies - 2)) {
-    			v = v + "0 0"; // 2(N-1) 0
-    		} else {
-    			v = v + "0 0 "; // 2(N-1) 0
-    		}
+    	for (int i = 0; i < (numOfSpecies - 1); i++) {    		
+    		v = v + " 0 0"; // 2(N-1) 0    		
 		}
     	
     	return v;

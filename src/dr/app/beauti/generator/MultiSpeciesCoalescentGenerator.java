@@ -276,9 +276,9 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	
 	    	// <indicators>
 	    	writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
-	    	//TODO: Needs special treatment - you have to generate "NS" ones and 2(N-1) zeros, where N is the number of species.
+	    	// Needs special treatment - you have to generate "NS" ones and 2(N-1) zeros, where N is the number of species.
 	    	// N "1", 2(N-1) "0"
-	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, "1 1 1 1 0 0 0 0 0 0")}, true);  
+	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, getIndicatorsParaValue())}, true);  
 	    	
 	    	writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS); 
 	    		    	
@@ -314,11 +314,19 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	String v = "";
     	
     	for (int i = 0; i < numOfSpecies; i++) {
-			v = v + "1 ";
+			if (i == (numOfSpecies - 1)) {
+				v = v + "1"; // N 1
+			} else {
+				v = v + "1 "; // N 1
+			}
 		}
-    	//TODO
-    	for (int i = 0; i < numOfSpecies; i++) {
-			v = v + "0";
+    	
+    	for (int i = 0; i < (numOfSpecies - 1); i++) {
+    		if (i == (numOfSpecies - 2)) {
+    			v = v + "0 0"; // 2(N-1) 0
+    		} else {
+    			v = v + "0 0 "; // 2(N-1) 0
+    		}
 		}
     	
     	return v;

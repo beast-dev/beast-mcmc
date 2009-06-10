@@ -38,9 +38,11 @@ import java.util.List;
 public class MultiSpeciesCoalescentGenerator extends Generator {
 	
 	private int numOfSpecies; // used in private String getIndicatorsParaValue()
+	BeautiOptions options;
 		
     public MultiSpeciesCoalescentGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+        this.options = options;
     }
     
     /**
@@ -121,6 +123,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     }
     
     private void writeSpeciesTreeModel(XMLWriter writer) {    	    	
+    	Parameter para;
+    	
     	writer.writeComment("Species Tree: tree prior");
     	
     	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
@@ -132,21 +136,23 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	
 	    	writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 	    	
+	    	para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);	    	
 	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
 	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-	        		new Attribute.Default<String>(AttributeParser.VALUE, "1"),
-	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
-	        		new Attribute.Default<String>(ParameterParser.UPPER, "1000000")}, true);
+	        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
 	    	
 	    	writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 	    	    	
 	    	writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	
+	    	para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
 	    	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
 	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
-	        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
-	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
-	        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
+	        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
 	    	
 	    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	    	
@@ -160,11 +166,12 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     		
     		writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
     		
+    		para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
     		writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
 	        		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-	        		new Attribute.Default<String>(AttributeParser.VALUE, "0.5"),
-	        		new Attribute.Default<String>(ParameterParser.LOWER, "0"),
-	        		new Attribute.Default<String>(ParameterParser.UPPER, "1")}, true);
+	        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+	        		new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+	        		new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
     		
     		writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
     		
@@ -225,16 +232,11 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	
     	writer.writeOpenTag(ExponentialDistributionModel.MEAN); 
     	
-    	double valueSpeciesPopMean = 1.0;
-        ArrayList<Parameter> parameters = options.selectParameters();
-        for( Parameter parameter : parameters ) {
-            if( parameter.getName().equals(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN)) { // species.popMean
-            	valueSpeciesPopMean = parameter.initial; // initial is value
-            }
-        }    	
+    	Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN); 
+        
     	writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
         		new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
-        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(valueSpeciesPopMean))}, true);
+        		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial))}, true);
     	
     	writer.writeCloseTag(ExponentialDistributionModel.MEAN); 
     	

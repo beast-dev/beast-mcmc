@@ -47,10 +47,16 @@ import java.util.ArrayList;
  */
 public class BeautiTesterConfig {
 
-    PrintWriter scriptWriter;
+    private PrintWriter scriptWriter;
 	BeastGenerator generator;
+	
+	private String COMMEND = "beast "; 
 
-    public BeautiTesterConfig() {        
+    public void setCOMMEND(String commend) {
+		COMMEND = commend;
+	}
+
+	public BeautiTesterConfig() {        
     }
 
     public BeautiOptions createOptions() {
@@ -101,6 +107,10 @@ public class BeautiTesterConfig {
         } catch (IOException e) {
             e.printStackTrace();
         }
+	}
+	
+	public void printlnScriptWriter(String line) { 
+		scriptWriter.println(line);
 	}
 
 
@@ -246,7 +256,8 @@ public class BeautiTesterConfig {
             e.printStackTrace();
         }
 
-        scriptWriter.println("beast " + fileName);
+//        scriptWriter.println("beast " + fileName);
+        printlnScriptWriter(COMMEND + fileName);
     }
 
     public void importFromFile(String fileName, BeautiOptions beautiOptions, boolean translate) {

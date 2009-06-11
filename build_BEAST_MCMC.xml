@@ -48,7 +48,7 @@
 		<mkdir dir="${build}" />
 		
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac srcdir="${src}" destdir="${build}" classpathref="classpath">
+		<javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
 			<include name="dr/app/beast/**" />
 			<include name="dr/app/beauti/**" />
 			<include name="dr/app/oldbeauti/**" />

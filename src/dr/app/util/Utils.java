@@ -116,7 +116,7 @@ public class Utils {
 
     // skip over comment and empty lines
 
-	private static String nextNonCommentLine(BufferedReader reader) throws IOException {
+	public static String nextNonCommentLine(BufferedReader reader) throws IOException {
         String line;
         do {
             line = reader.readLine();

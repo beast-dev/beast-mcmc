@@ -1,15 +1,9 @@
 package test.dr.integration;
 
 import java.io.*;
-import java.util.Arrays;
-
-import jebl.math.Random;
-
-
-
+import java.util.Random;
 import test.dr.beauti.BeautiTesterConfig;
 import dr.app.beauti.options.*;
-import dr.app.util.Arguments;
 import dr.app.util.Utils;
 
 
@@ -76,7 +70,7 @@ public class GTRParameterEstimationTest {
                 cg = getRandomNum(0.05, 0.5);
                 gt = getRandomNum(0.05, 0.5);
         		
-        		btc.printlnScriptWriter("C:\\Users\\dxie004\\Documents\\Seq-Gen.v1.3.2\\seq-Gen.v1.3.2\\seq-gen -mGTR -fe -on -l1000 -r" + 
+        		btc.printlnScriptWriter("C:\\Users\\dxie004\\Documents\\Seq-Gen.v1.3.2\\seq-gen -mGTR -fe -on -l1000 -r" + 
         				Double.toString(ac) + "," + Double.toString(ag) + "," + Double.toString(at) + "," + 
         				Double.toString(cg) + "," + Double.toString(ct) + "," + Double.toString(gt) + 
         				" < " + values[1] + ".tree > " + values[1] + ".nex");
@@ -91,10 +85,11 @@ public class GTRParameterEstimationTest {
 	}
 	
 	private double getRandomNum(double min, double max) { // range
+		Random r = new Random(); 
 		if (max > min) {
-			return (max-min)*Random.nextDouble() + min;
+			return (max-min)*r.nextDouble() + min;
 		} else {
-			return (min-max)*Random.nextDouble() + max;
+			return (min-max)*r.nextDouble() + max;
 		}
 	}
 

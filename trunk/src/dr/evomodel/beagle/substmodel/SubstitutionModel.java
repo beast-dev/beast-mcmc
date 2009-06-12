@@ -27,8 +27,6 @@ package dr.evomodel.beagle.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
-import dr.evomodel.beagle.substmodel.EigenDecomposition;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
 
 /**
  * <b>model of sequence substitution (rate matrix)</b>.
@@ -50,12 +48,13 @@ public interface SubstitutionModel extends Model {
 
     /**
      * This function returns the Eigen vectors.
+     *
      * @return the array
      */
     EigenDecomposition getEigenDecomposition();
 
     /**
-    /**
+     * /**
      * get the state frequencies
      *
      * @return the frequencies
@@ -66,5 +65,4 @@ public interface SubstitutionModel extends Model {
      * @return the data type
      */
     DataType getDataType();
-
 }

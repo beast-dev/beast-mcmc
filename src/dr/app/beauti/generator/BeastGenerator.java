@@ -1521,7 +1521,7 @@ public class BeastGenerator extends Generator {
 	    }        
 
         for (PartitionModel model : options.getActivePartitionModels()) {
-//            partitionModelGenerator.writeLog(writer, model);
+            partitionModelGenerator.writeLog(writer, model);
         }
         
         if (hasCodonOrUserPartitions()) {

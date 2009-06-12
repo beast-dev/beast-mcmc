@@ -207,8 +207,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Substitution Model:", nucSubstCombo);
                 addComponentWithLabel("Base frequencies:", frequencyCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
+                gammaCatCombo.setEnabled(false);
+                
                 addSeparator();
 
                 JPanel panel1 = new JPanel(new BorderLayout(6, 6));
@@ -231,16 +233,20 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.AMINO_ACIDS:
                 addComponentWithLabel("Substitution Model:", aaSubstCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
+                gammaCatCombo.setEnabled(false);
+                
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 addComponentWithLabel("Substitution Model:", binarySubstCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
+                heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
-
+                gammaCatCombo.setEnabled(false);
+                
                 break;
 
             default:

@@ -351,20 +351,24 @@ public class PartitionModelGenerator extends Generator {
 
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
-
-                            for (int i = 1; i <= codonPartitionCount; i++) {
-                                String prefix = model.getPrefix(i);
+                            for (int i = 1; i <= codonPartitionCount; i++) {                                
                                 for (String rateName : PartitionModel.GTR_RATE_NAMES) {
-                                    writer.writeIDref(ParameterParser.PARAMETER, prefix + rateName);
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
                                 }
                             }
-                        } else {
-                            String prefix = model.getPrefix();
+                        } else {                            
                             for (String rateName : PartitionModel.GTR_RATE_NAMES) {
-                                writer.writeIDref(ParameterParser.PARAMETER, prefix + rateName);
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                             }
                         }
                         break;
+                }
+                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                	for (int i = 1; i <= codonPartitionCount; i++) {
+                		writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
+                    }
+                } else {
+                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                 }
                 break;//NUCLEOTIDES
 

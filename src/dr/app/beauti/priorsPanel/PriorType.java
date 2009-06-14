@@ -38,7 +38,7 @@ public enum PriorType {
             case GAMMA_PRIOR:
                 return "Gamma";
             case JEFFREYS_PRIOR:
-                return "Jeffreys'";
+                return "1/x"; //rename Jeffreys prior to 1/x prior everywhere in Beauti
             case POISSON_PRIOR:
                 return "Poisson";
             case TRUNC_NORMAL_PRIOR:
@@ -103,7 +103,7 @@ public enum PriorType {
                 buffer.append("]");
                 break;
             case JEFFREYS_PRIOR:
-                buffer.append("Jeffreys");
+                buffer.append("1/x"); // rename Jeffreys prior to 1/x prior everywhere in Beauti
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");

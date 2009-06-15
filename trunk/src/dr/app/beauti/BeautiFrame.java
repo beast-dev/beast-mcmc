@@ -829,7 +829,7 @@ public class BeautiFrame extends DocumentFrame {
             }
 
             if (beautiOptions.isSpeciesAnalysis()) {
-                message += ";    You are doing Multispecies Coalescent analysis";
+                message += ";    Welcome to *BEAST";
             }
         } else if (beautiOptions.userTrees.size() > 0) {
             message += "Trees only : " + beautiOptions.userTrees.size() +

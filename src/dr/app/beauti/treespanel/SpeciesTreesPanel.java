@@ -74,7 +74,7 @@ public class SpeciesTreesPanel extends BeautiPanel {
 
         optionsPanel.addSeparator();
 
-        optionsPanel.addLabel("Note: the Multispecies Coalescent analysis only needs to select the prior for species tree.");
+        optionsPanel.addLabel("Note: *BEAST only needs to select the prior for species tree.");
 
         add(optionsPanel, BorderLayout.NORTH);
 

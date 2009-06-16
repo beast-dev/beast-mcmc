@@ -1,7 +1,9 @@
 package test.dr.integration;
 
 import java.io.*;
-import java.util.Random;
+import java.text.DecimalFormat;
+import java.util.*;
+
 import test.dr.beauti.BeautiTesterConfig;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
@@ -9,6 +11,7 @@ import dr.app.util.Utils;
 
 /**
  * GTR Parameter Estimation Tester.
+ * Only available for Windows OS
  *
  * @author Walter Xie
  * @version 1.0
@@ -20,8 +23,11 @@ public class GTRParameterEstimationTest {
 //    private static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
 //    private static final String birthRateIndicator = "birthRateIndicator";
 //    private static final String birthRate = "birthRate";
-
-	private static final String PRE_PATH = "examples/Joseph/test/";
+	
+	private static final String SEQUNECE_LEN = "1000";
+	private static final String PRE_PATH = "C:\\Users\\dxie004\\workspace\\BEAST_MCMC\\examples\\Joseph\\test\\";
+	private List<BEASTInputFile> inputFiles;
+	
 	
 	public GTRParameterEstimationTest() {
 		
@@ -30,33 +36,40 @@ public class GTRParameterEstimationTest {
 		} catch (IOException ioe) {
             System.err.println("Unable to read or write files: " + ioe.getMessage());
         }
+		System.out.println(PRE_PATH + "seqgen_banch.cmd is generated"); 
+		
+//	    try {
+//	        Process p = Runtime.getRuntime().exec(PRE_PATH + "seqgen_banch.cmd");
+//	        
+//	        p.waitFor();
+//	        System.out.println(p.exitValue());
+//	    } catch (Exception err) {
+//	    	System.err.println("Can not create seqgen_banch.cmd " + err.getMessage());
+//		}      	    
+		System.out.println(PRE_PATH + "seqgen_banch.cmd is executed"); 
 		
 //		createBeastXMLFiles();
 	}
     
 	
 	public void splitTreeFiles() throws IOException {
+		inputFiles = new ArrayList<BEASTInputFile>();
 		
 		FileReader fileReader = new FileReader(PRE_PATH + "n.trees");
 		BufferedReader reader = new BufferedReader(fileReader);
 		
 		FileWriter fileWriter; 
+//		FileWriter cmdWriter = new FileWriter (PRE_PATH + "seqgen_banch.cmd");
 		
 		BeautiTesterConfig btc = new BeautiTesterConfig();
-        btc.createScriptWriter(PRE_PATH + "seqgen_banch.bat");
-        
-        double ac;
-        double ag;
-        double at;
-        double cg;
-        double ct = 1; // fixed
-        double gt;
-        
+        btc.createScriptWriter(PRE_PATH + "seqgen_banch.cmd");
+                       
         String line = Utils.nextNonCommentLine(reader);
         
         while (line != null) {
             
         	if (line.startsWith("tree")) { 
+        		BEASTInputFile b = new BEASTInputFile(); 
         		// read 1 tree each line 
         		String[] values = line.split(" ");
         		// write this tree in a file
@@ -64,23 +77,33 @@ public class GTRParameterEstimationTest {
         		fileWriter.write(values[values.length - 1]); // tree
         		fileWriter.close();
         		
-        		ac = getRandomNum(0.05, 0.5);
-                ag = getRandomNum(0.3333, 3);
-                at = getRandomNum(0.05, 0.5);
-                cg = getRandomNum(0.05, 0.5);
-                gt = getRandomNum(0.05, 0.5);
+        		b.setAc(roundDecimals(5, getRandomNum(0.05, 0.5)));
+                b.setAg(roundDecimals(5, getRandomNum(0.3333, 3)));
+                b.setAt(roundDecimals(5, getRandomNum(0.05, 0.5)));
+                b.setCg(roundDecimals(5, getRandomNum(0.05, 0.5)));
+                b.setGt(roundDecimals(5, getRandomNum(0.05, 0.5)));
+                
+                b.setFileNamePrefix(values[1].trim());
+                
+        		inputFiles.add(b);
         		
-        		btc.printlnScriptWriter("C:\\Users\\dxie004\\Documents\\Seq-Gen.v1.3.2\\seq-gen -mGTR -fe -on -l1000 -r" + 
-        				Double.toString(ac) + "," + Double.toString(ag) + "," + Double.toString(at) + "," + 
-        				Double.toString(cg) + "," + Double.toString(ct) + "," + Double.toString(gt) + 
-        				" < " + values[1] + ".tree > " + values[1] + ".nex");
-// C:\Users\dxie004\Documents\Seq-Gen.v1.3.2\seq-Gen.v1.3.2\seq-gen -mGTR -fe -on -l1000 -r0.1,2.1,0.2,0.08,1,0.36 < STATE_0.tree > STATE_0.nex
+        		String comLine = "C:\\Users\\dxie004\\Documents\\Seq-Gen.v1.3.2\\seq-gen -mGTR -fe -on -l" + SEQUNECE_LEN + " -r" + 
+        				Double.toString(b.getAc()) + "," + Double.toString(b.getAg()) + "," + Double.toString(b.getAt()) + "," + 
+        				Double.toString(b.getCg()) + "," + Double.toString(BEASTInputFile.ct) + "," + Double.toString(b.getGt()) + 
+        				" < " + b.getFileNamePrefix() + ".tree > " + b.getFileNamePrefix() + ".nex";
+// C:\Users\dxie004\Documents\Seq-Gen.v1.3.2\seq-gen -mGTR -fe -on -l1000 -r0.1,2.1,0.2,0.08,1,0.36 < STATE_0.tree > STATE_0.nex
+          		
+        		btc.printlnScriptWriter(comLine);    
+//        		cmdWriter.write(comLine);
+//        		cmdWriter.write("\n\n");
+//        		System.out.println(comLine); 
         	}
 
             line = Utils.nextNonCommentLine(reader);
         }        
         
         btc.closeScriptWriter();
+//        cmdWriter.close();
         fileReader.close();
 	}
 	
@@ -92,22 +115,36 @@ public class GTRParameterEstimationTest {
 			return (min-max)*r.nextDouble() + max;
 		}
 	}
+	
+	private double roundDecimals(int decim, double d) {
+		String tmp = "#.";
+		if (decim < 1) {
+			tmp = "#.#"; 
+		}
+		
+		for (int i = 0; i < decim; i++) {
+			tmp = tmp + "#";
+		}
+		
+    	DecimalFormat twoDForm = new DecimalFormat(tmp);
+    	return Double.valueOf(twoDForm.format(d));
+	}
 
-    public void createBeastXMLFiles() {
+    public void createBeastInputFiles() {
     	BeautiOptions beautiOptions;
         BeautiTesterConfig btc = new BeautiTesterConfig();
         btc.createScriptWriter(PRE_PATH + "beast_banch.bat");
     	
-        for (int i = 0; i < 3; i++) {
+        for (BEASTInputFile b : inputFiles) {
 			beautiOptions = btc.createOptions();
-	        btc.importFromFile(PRE_PATH + "n.nex", beautiOptions, false); 
+	        btc.importFromFile(PRE_PATH + b.getFileNamePrefix() + ".nex", beautiOptions, false); 
 	        
 	        // assume only 1 partition model
 	        PartitionModel model = beautiOptions.getPartitionModels().get(0);
 	        
 	        // set substitution model 
-//	        model.setNucSubstitutionModel(NucModelType.GTR);
-	        model.setNucSubstitutionModel(NucModelType.HKY);
+	        model.setNucSubstitutionModel(NucModelType.GTR);
+//	        model.setNucSubstitutionModel(NucModelType.HKY);
 	        model.setCodonHeteroPattern(null);
 	        model.setUnlinkedSubstitutionModel(false);
 	        model.setUnlinkedHeterogeneityModel(false);
@@ -121,23 +158,26 @@ public class GTRParameterEstimationTest {
 	        beautiOptions.clockType = ClockType.STRICT_CLOCK;
 	        
 	        // change value of parameters
-	        Parameter para = beautiOptions.getParameter("yule.birthRate");
-	        para.initial = 50;
-	        // for multi-partition models, use beautiOptions.getParameter(name, model);
-	        
-	        // remove operators
-	        Operator op = beautiOptions.getOperator("yule.birthRate");
-	        op.inUse = false;	        
-	        op = model.getOperator("kappa");
-	        op.inUse = false;
-	        op = model.getOperator("frequencies");
-	        op.inUse = false;
+//	        Parameter para = beautiOptions.getParameter("yule.birthRate");
+//	        para.initial = 50;
+//	        // for multi-partition models, use beautiOptions.getParameter(name, model);
+//	        
+//	        // remove operators
+//	        Operator op = beautiOptions.getOperator("yule.birthRate");
+//	        op.inUse = false;	        
+//	        op = model.getOperator("kappa");
+//	        op.inUse = false;
+//	        op = model.getOperator("frequencies");
+//	        op.inUse = false;
 	        
 	        // set MCMC
-	        beautiOptions.chainLength = 2000000;;
+	        beautiOptions.chainLength = 1000000;
+	        beautiOptions.logEvery = 100;
+	        beautiOptions.fileNameStem = PRE_PATH + b.getFileNamePrefix();
+	        
 	        
 	        btc.setCOMMEND("java -jar beast.jar ");
-	        btc.generate(PRE_PATH + "gtr_" + Integer.toString(i), beautiOptions);        
+	        btc.generate(PRE_PATH + b.getFileNamePrefix(), beautiOptions); // include btc.printlnScriptWriter( )       
 	        
 		}
    
@@ -145,67 +185,18 @@ public class GTRParameterEstimationTest {
        
     }
 
+    public void writeReport() {
+    	
+    }
+    
+    
+    
     //Main method
     public static void main(String[] args) {
 
         new GTRParameterEstimationTest();
     }
 
-//    private void randomLocalYuleTester(TreeModel treeModel, Parameter I, Parameter b, OperatorSchedule schedule) {
-//
-//        MCMC mcmc = new MCMC("mcmc1");
-//        MCMCOptions options = new MCMCOptions();
-//        options.setChainLength(1000000);
-//        options.setUseCoercion(true);
-//        options.setPreBurnin(100);
-//        options.setTemperature(1.0);
-//        options.setFullEvaluationCount(2000);
-//
-//        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
-//        TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
-//
-//        Parameter m = new Parameter.Default("m", 1.0, 0.0, Double.MAX_VALUE);
-//
-//        SpeciationModel speciationModel = new RandomLocalYuleModel(b, I, m, false, Units.Type.YEARS, 4);
-//
-//        Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "randomYule.like");
-//
-//        ArrayLogFormatter formatter = new ArrayLogFormatter(false);
-//
-//        MCLogger[] loggers = new MCLogger[2];
-//        loggers[0] = new MCLogger(formatter, 100, false);
-//        loggers[0].add(likelihood);
-//        loggers[0].add(rootHeight);
-//        loggers[0].add(tls);
-//        loggers[0].add(I);
-//
-//        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
-//        loggers[1].add(likelihood);
-//        loggers[1].add(rootHeight);
-//        loggers[1].add(tls);
-//        loggers[1].add(I);
-//
-//        mcmc.setShowOperatorAnalysis(true);
-//
-//        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
-//
-//        mcmc.run();
-//
-//        List<Trace> traces = formatter.getTraces();
-//        ArrayTraceList traceList = new ArrayTraceList("yuleModelTest", traces, 0);
-//
-//        for (int i = 1; i < traces.size(); i++) {
-//            traceList.analyseTrace(i);
-//        }
-//
-//        TraceCorrelation tlStats =
-//                traceList.getCorrelationStatistics(traceList.getTraceIndex("root." + birthRateIndicator));
-//
-//        System.out.println("mean = " + tlStats.getMean());
-//        System.out.println("expected mean = 0.5");
-//
-//        assertExpectation("root." + birthRateIndicator, tlStats, 0.5);
-//    }
 
  
 }

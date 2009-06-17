@@ -364,6 +364,11 @@ public class BeautiOptions extends ModelOptions {
 
         localClockRateChangesStatistic = null;
         localClockRatesStatistic = null;
+        
+        for (PartitionModel model : getActivePartitionModels()) {
+        	model.localClockRateChangesStatistic = null;
+        	model.localClockRatesStatistic = null;
+        }
 
     }
 
@@ -442,13 +447,13 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentParameters(this, parameters);
         
-//        if (isSpeciesAnalysis()) { // species
-//        	for (PartitionModel model : getActivePartitionModels()) {
-//        		model.selectStatistics(parameters);
-//        	}
-//        } else {
+        if (isSpeciesAnalysis()) { // species
+        	for (PartitionModel model : getActivePartitionModels()) {
+        		model.selectStatistics(parameters);
+        	}
+        } else {
         	selectStatistics(parameters);
-//        }
+        }
 
         selectComponentStatistics(this, parameters);
 

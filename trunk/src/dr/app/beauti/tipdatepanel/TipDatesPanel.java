@@ -30,6 +30,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.components.*;
+import dr.app.beauti.datapanel.DataPanel;
 import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
@@ -212,6 +213,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
+                
+                frame.removeSpecifiedTreePrior(enabled);
             }
         });
 
@@ -223,7 +226,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         unitsCombo.addItemListener(listener);
         directionCombo.addItemListener(listener);
     }
-
+    
     public final void timeScaleChanged() {
         Units.Type units = Units.Type.YEARS;
         switch (unitsCombo.getSelectedIndex()) {

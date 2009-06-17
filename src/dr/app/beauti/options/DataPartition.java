@@ -96,6 +96,16 @@ public class DataPartition {
         }
         return (to - from + 1) / every;
     }
+    
+    public int getNumOfTaxa() {
+    	int n = alignment.getSequenceCount();
+    	
+    	if (n > 0) {
+    		return n;
+    	} else {
+    		return 0;
+    	}
+    }
 
     public String toString() {
         return getName();

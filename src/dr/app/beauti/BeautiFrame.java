@@ -241,6 +241,8 @@ public class BeautiFrame extends DocumentFrame {
         } else {
             throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }
+        
+        setStatusMessage();
     }
 
     public boolean requestClose() {
@@ -751,7 +753,7 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void reverseSetupSepciesAnalysis() {
+    public void removeSepciesAnalysisSetup() {
         int i = tabbedPane.indexOfTab("Trees");
         tabbedPane.removeTabAt(i);
         if (DataPanel.ALLOW_UNLINKED_TREES) {
@@ -759,7 +761,10 @@ public class BeautiFrame extends DocumentFrame {
         } else {
             tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
         }
-
+        
+//        beautiOptions.
+        
+        setStatusMessage();
     }
 
 
@@ -827,6 +832,10 @@ public class BeautiFrame extends DocumentFrame {
                 message += ", " + beautiOptions.userTrees.size() +
                         (beautiOptions.userTrees.size() > 1 ? " trees" : " tree");
             }
+            
+            if (beautiOptions.allowDifferentTaxa) {
+            	message += " in total";
+            }
 
             if (beautiOptions.isSpeciesAnalysis()) {
                 message += ";    Welcome to *BEAST";
@@ -835,7 +844,7 @@ public class BeautiFrame extends DocumentFrame {
             message += "Trees only : " + beautiOptions.userTrees.size() +
                     (beautiOptions.userTrees.size() > 1 ? " trees, " : " tree, ") +
                     beautiOptions.taxonList.getTaxonCount() + " taxa";
-        } else {
+        } else if (beautiOptions.taxonList != null && beautiOptions.taxonList.getTaxonCount() > 0) {
             message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";
         }
 

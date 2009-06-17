@@ -84,13 +84,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = dataTable.getColumnModel().getColumn(4);
+        TableColumn col = dataTable.getColumnModel().getColumn(5);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
         if (ALLOW_UNLINKED_TREES) {
-            col = dataTable.getColumnModel().getColumn(5);
+            col = dataTable.getColumnModel().getColumn(6);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             col.setCellRenderer(comboBoxRenderer);
@@ -165,14 +165,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(controlPanel1, BorderLayout.SOUTH);
     }
 
-
+    private void uncheckAllowDifferentTaxa() {
+    	allowDifferentTaxaCheck.setSelected(false);
+    	options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+    }
+    
     private void fireDataChanged() {
         frame.setDirty();
     }
 
     private void modelsChanged() {
         Object[] modelArray = options.getPartitionModels().toArray();
-        TableColumn col = dataTable.getColumnModel().getColumn(4);
+        TableColumn col = dataTable.getColumnModel().getColumn(5);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
     }
 
@@ -212,16 +216,21 @@ public class DataPanel extends BeautiPanel implements Exportable {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
 
-        // @todo would probably be a good idea to check if the user wants to remove the last partition
+        // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
         if (options.dataPartitions.size() == 0) {
         	if (options.isSpeciesAnalysis()) {
-        		frame.reverseSetupSepciesAnalysis();
+        		frame.removeSepciesAnalysisSetup();
         	}
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
         }
+               
+        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
+        	uncheckAllowDifferentTaxa();
+        }
+        
         dataTableModel.fireTableDataChanged();
 
         fireDataChanged();
@@ -345,8 +354,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "FileName", "Sites", "Sequence Type", "Partition Model", "Partition Tree"};
-        String[] columnNames2 = {"Name", "FileName", "Sites", "Sequence Type", "Partition Model"};
+        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model", "Partition Tree"};
+        String[] columnNames2 = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model"};
 
         public DataTableModel() {
         }
@@ -372,12 +381,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return partition.getFileName();
                 case 2:
-                    return "" + partition.getSiteCount();
-                case 3:
-                    return partition.getAlignment().getDataType().getDescription();
+                	return "" + partition.getNumOfTaxa();
+                case 3:	
+                    return "" + partition.getSiteCount(); // sequence length
                 case 4:
-                    return partition.getPartitionModel().getName();
+                    return partition.getAlignment().getDataType().getDescription();
                 case 5:
+                    return partition.getPartitionModel().getName();
+                case 6:
                     return partition.getPartitionTree().getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
@@ -393,10 +404,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         partition.setName(name);
                     }
                     break;
-                case 4:
+                case 5:
                     partition.setPartitionModel((PartitionModel) aValue);
                     break;
-                case 5:
+                case 6:
                     partition.setPartitionTree((PartitionTree) aValue);
                     break;
             }
@@ -410,10 +421,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 0:// name
                     editable = true;
                     break;
-                case 4:// model selection menu
+                case 5:// model selection menu
                     editable = true;
                     break;
-                case 5:// tree selection menu
+                case 6:// tree selection menu
                     editable = true;
                     break;
                 default:

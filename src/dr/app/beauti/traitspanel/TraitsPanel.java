@@ -316,12 +316,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
-        String trait = options.selecetedTraits.get(selRow);
-        if (trait.equals(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-    		frame.reverseSetupSepciesAnalysis();
-    	} 
+        String trait = options.selecetedTraits.get(selRow);        
         options.selecetedTraits.remove(trait);
-        options.traitTypes.remove(trait);               
+        options.traitTypes.remove(trait); 
+        
+        if (trait.equals(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+    		frame.removeSepciesAnalysisSetup();
+    	} 
+        
         traitsTableModel.fireTableDataChanged();
         fireTraitsChanged();
     }

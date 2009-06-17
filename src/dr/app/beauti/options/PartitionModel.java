@@ -583,37 +583,40 @@ public class PartitionModel extends ModelOptions {
     }
     
     // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix
-/*    public void selectStatistics(List<Parameter> params) {
+    public void selectStatistics(List<Parameter> params) {
 
-        if (options.taxonSets != null) {
-            for (Taxa taxonSet : options.taxonSets) {
-                Parameter statistic = statistics.get(taxonSet);
-                if (statistic == null) {
-                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-                    statistics.put(taxonSet, statistic);
-                }
-                params.add(statistic);
-            }
-        } else {
-            System.err.println("TaxonSets are null");
-        }
+//        if (options.taxonSets != null) {
+//            for (Taxa taxonSet : options.taxonSets) {
+//                Parameter statistic = statistics.get(taxonSet);
+//                if (statistic == null) {
+//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+//                    statistics.put(taxonSet, statistic);
+//                }
+//                params.add(statistic);
+//            }
+//        } else {
+//            System.err.println("TaxonSets are null");
+//        }
 
         if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-            if (options.localClockRateChangesStatistic == null) {
-            	options.localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-            	options.localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-            	options.localClockRateChangesStatistic.poissonMean = 1.0;
-            	options.localClockRateChangesStatistic.poissonOffset = 0.0;
+            if (this.localClockRateChangesStatistic == null) {
+            	this.localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
+            	this.localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
+            	this.localClockRateChangesStatistic.poissonMean = 1.0;
+            	this.localClockRateChangesStatistic.poissonOffset = 0.0;
             }
-            if (options.localClockRatesStatistic == null) {
-            	options.localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
+            if (this.localClockRatesStatistic == null) {
+            	this.localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
 
-            	options.localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-            	options.localClockRatesStatistic.gammaAlpha = 0.5;
-            	options.localClockRatesStatistic.gammaBeta = 2.0;
+            	this.localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
+            	this.localClockRatesStatistic.gammaAlpha = 0.5;
+            	this.localClockRatesStatistic.gammaBeta = 2.0;
             }
-            params.add(options.localClockRatesStatistic);
-            params.add(options.localClockRateChangesStatistic);
+            
+            this.localClockRateChangesStatistic.setPrefix(getPrefix());
+            params.add(this.localClockRateChangesStatistic);
+            this.localClockRatesStatistic.setPrefix(getPrefix());
+            params.add(this.localClockRatesStatistic);
         }
 
         if (options.clockType != ClockType.STRICT_CLOCK) {
@@ -622,7 +625,7 @@ public class PartitionModel extends ModelOptions {
             params.add(getParameter("covariance"));
         }
 
-    }*/
+    }
     
     public String getName() {
         return name;
@@ -1169,5 +1172,7 @@ public class PartitionModel extends ModelOptions {
 
     public DataType dataType;
     public String name;
-
+    
+    public Parameter localClockRateChangesStatistic = null;
+    public Parameter localClockRatesStatistic = null;
 }

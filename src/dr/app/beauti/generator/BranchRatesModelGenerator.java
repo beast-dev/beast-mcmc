@@ -237,11 +237,11 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeIDref(TreeModel.TREE_MODEL, genePrefix + TreeModel.TREE_MODEL);
 
                 writer.writeOpenTag("rates");
-                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + "rates");
+                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + ".rates");
                 writer.writeCloseTag("rates");
 
                 writer.writeOpenTag("rateIndicator");
-                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + "changes");
+                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + ".changes");
                 writer.writeCloseTag("rateIndicator");
 
                 writeParameter("clockRate", "clock.rate", options, writer);
@@ -257,7 +257,7 @@ public class BranchRatesModelGenerator extends Generator {
                                 new Attribute.Default<String>("elementwise", "true"),
                         }
                 );
-                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + "changes");
+                writer.writeIDref("parameter", genePrefix + ClockType.LOCAL_CLOCK + ".changes");
                 writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 
                 writer.writeText("");

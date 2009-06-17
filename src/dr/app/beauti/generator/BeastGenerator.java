@@ -1308,7 +1308,13 @@ public class BeastGenerator extends Generator {
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
-                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
+            	if (options.isSpeciesAnalysis()) { // species
+            		for (PartitionModel model : models) {
+            			writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+            		}
+            	} else {	
+            		writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
+            	}
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
@@ -1437,7 +1443,13 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(Columns.COLUMN);
 
         if (options.clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-            writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
+        	if ( options.isSpeciesAnalysis() ) { // species
+    	        for (PartitionModel model : models) {
+    	        	writeSumStatisticColumn(writer, model.getName() + ".rateChanges", "Rate Changes");
+    	        }
+        	} else { // no species
+        		writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
+        	}            
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);

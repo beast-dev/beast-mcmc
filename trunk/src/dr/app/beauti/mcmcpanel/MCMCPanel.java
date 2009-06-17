@@ -39,6 +39,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.*;
 
 /**
@@ -103,12 +104,21 @@ public class MCMCPanel extends BeautiPanel {
         fileNameStemField.setColumns(32);
         optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
         fileNameStemField.setEditable(true);
-        fileNameStemField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-            	options.fileNameStem = fileNameStemField.getText();
+        fileNameStemField.addKeyListener(new java.awt.event.KeyListener() {
+			public void keyTyped(KeyEvent e) {
+//				options.fileNameStem = fileNameStemField.getText();
+//            	setOptions(options);
+//                frame.setDirty();				
+			}
+
+			public void keyPressed(KeyEvent e) {				
+			}
+
+			public void keyReleased(KeyEvent e) {				
+				options.fileNameStem = fileNameStemField.getText();
             	setOptions(options);
-                frame.setDirty();
-            }
+                frame.setDirty();	
+			}
         });
         
         optionsPanel.addSeparator();

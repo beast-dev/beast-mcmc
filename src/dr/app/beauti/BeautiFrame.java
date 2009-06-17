@@ -51,6 +51,7 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -767,7 +768,26 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-
+    public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
+    	//TODO: wait for new implementation in BEAST
+    	if (isChecked) {    	
+	    	if (DataPanel.ALLOW_UNLINKED_TREES) {
+	            treesPanel.treePriorCombo.removeItem(TreePrior.YULE);
+	            treesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+	        } else {
+	        	oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
+	        	oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+	        }
+    	} else {
+    		if (DataPanel.ALLOW_UNLINKED_TREES) {
+    			treesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+    		} else {
+    			oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+    		}
+    	}
+    	
+    }
+    
     private void importMultiTraits(final File file) throws IOException {
 //        if( beautiOptions.taxonList == null ) {
 //             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",

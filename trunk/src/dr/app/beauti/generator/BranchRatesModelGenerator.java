@@ -4,6 +4,8 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
+import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -37,7 +39,7 @@ public class BranchRatesModelGenerator extends Generator {
     public void writeBranchRatesModel(XMLWriter writer) {
     	
         Attribute[] attributes;
-        int categoryCount;
+        int categoryCount = 0;
 
         switch (options.clockType) {
             case STRICT_CLOCK:
@@ -87,7 +89,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }
 
                     writer.writeOpenTag("logNormalDistributionModel",
-                            new Attribute.Default<String>(genePrefix + LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
+                            new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
                     writeParameter("mean", ClockType.UCLD_MEAN, options, writer);
                     writeParameter("stdev", ClockType.UCLD_STDEV, options, writer);
                     writer.writeCloseTag("logNormalDistributionModel");
@@ -96,7 +98,15 @@ public class BranchRatesModelGenerator extends Generator {
                 }
                 writer.writeCloseTag("distribution");
                 writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
+                if (options.allowDifferentTaxa) {
+                	for (DataPartition dataPartition : options.dataPartitions) {
+                		if (dataPartition.getPartitionModel().equals(getModel())) {
+                			categoryCount = (dataPartition.getNumOfTaxa() - 1) * 2;
+                		}
+                	}
+                } else {
+                	categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
+                }
                 writeParameter("branchRates.categories", categoryCount, writer);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);

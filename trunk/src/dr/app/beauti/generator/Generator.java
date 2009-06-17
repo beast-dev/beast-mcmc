@@ -4,6 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
@@ -28,7 +29,9 @@ public abstract class Generator {
 	protected static final String SPOPS = "spops";
 	
     protected final BeautiOptions options;
-    protected String genePrefix = ""; // gene file name
+    
+    protected PartitionModel model;
+	protected String genePrefix = ""; // gene file name
 
     protected Generator(BeautiOptions options) {
         this.options = options;        
@@ -50,7 +53,15 @@ public abstract class Generator {
 	public void setGenePrefix(String genePrefix) {
 		this.genePrefix = genePrefix;
 	}
+	
+    public PartitionModel getModel() {
+		return model;
+	}
 
+	public void setModel(PartitionModel model) {
+		this.model = model;
+		setGenePrefix(model.getName() + ".");
+	}
     /**
      * fix a parameter
      *

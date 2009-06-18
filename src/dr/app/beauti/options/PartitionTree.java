@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 public class PartitionTree extends ModelOptions {
 
-    public PartitionTree(BeautiOptions options, DataPartition partition) {
+    public PartitionTree(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName());
     }
 

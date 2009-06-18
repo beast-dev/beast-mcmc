@@ -29,7 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.StartingTreeType;
 import dr.app.beauti.options.TreePrior;
 import dr.app.tools.TemporalRooting;
@@ -264,7 +264,7 @@ public class OldTreesPanel extends BeautiPanel {
         int result = generateTreeDialog.showDialog(options);
         if (result != JOptionPane.CANCEL_OPTION) {
             GenerateTreeDialog.MethodTypes methodType = generateTreeDialog.getMethodType();
-            DataPartition partition = generateTreeDialog.getDataPartition();
+            PartitionData partition = generateTreeDialog.getDataPartition();
 
             Patterns patterns = new Patterns(partition.getAlignment());
             DistanceMatrix distances = new F84DistanceMatrix(patterns);

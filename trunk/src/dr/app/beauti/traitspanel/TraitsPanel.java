@@ -96,6 +96,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 traitSelectionChanged();
             }
         });
+        
+		JScrollPane scrollPane1 = new JScrollPane(traitsTable,
+		                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+		                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		        scrollPane1.setOpaque(false);
 
         dataTableModel = new DataTableModel();
         sorter = new TableSorter(dataTableModel);
@@ -119,15 +124,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
-                traitSelectionChanged();
+//                traitSelectionChanged();
             }
         });
-
-        JScrollPane scrollPane1 = new JScrollPane(traitsTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        scrollPane1.setOpaque(false);
-
+        
         JScrollPane scrollPane2 = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -190,12 +190,32 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
-
+        
+        int selRow = traitsTable.getSelectedRow();
         traitsTableModel.fireTableDataChanged();
+        
+        if (selRow < 0) {
+            selRow = 0;
+        }
+        traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        
+
+        if (selectedTrait == null) {
+        	traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+        }
+        
+//        traitsTableModel.fireTableDataChanged();
         dataTableModel.fireTableDataChanged();
+        
+        validate();
+        repaint();
     }
 
     public void getOptions(BeautiOptions options) {
+    	int selRow = traitsTable.getSelectedRow();
+    	if (selRow >= 0 && options.selecetedTraits.size() > 0) {
+            selectedTrait = options.selecetedTraits.get(selRow);
+    	}
 //        options.datesUnits = unitsCombo.getSelectedIndex();
 //        options.datesDirection = directionCombo.getSelectedIndex();
     }
@@ -210,7 +230,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private void traitSelectionChanged() {
         int selRow = traitsTable.getSelectedRow();
-        if (selRow >= 0) {
+        if (selRow >= 0 && options.selecetedTraits.size() > 0) {
             selectedTrait = options.selecetedTraits.get(selRow);
             removeTraitAction.setEnabled(true);
         } else {
@@ -492,16 +512,24 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 1) {
-                Location location = options.taxonList.getTaxon(row).getLocation();
-                if (location != null) {
-                    options.taxonList.getTaxon(row).setLocation(location);
+//                Location location = options.taxonList.getTaxon(row).getLocation();
+//                if (location != null) {
+//                    options.taxonList.getTaxon(row).setLocation(location);
+//                }            	
+                if (selectedTrait != null) {                    
+                    options.taxonList.getTaxon(row).setAttribute(selectedTrait, aValue);
                 }
+            	
             }
         }
 
         public boolean isCellEditable(int row, int col) {
-            if (col == 1) return true;
-            return false;
+            if (col == 1) {
+            	Object t = options.taxonList.getTaxon(row).getAttribute(selectedTrait);
+            	return (t != null);
+            } else {
+            	return false;
+            }
         }
 
         public String getColumnName(int column) {

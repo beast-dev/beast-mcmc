@@ -202,7 +202,7 @@ public class BeastGenerator extends Generator {
         	writer.writeText("");
         	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
         	// write all taxa in each gene tree regarding each data partition,
-        	for (DataPartition partition : options.dataPartitions) {
+        	for (PartitionData partition : options.dataPartitions) {
         		// do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
         		writeAllTaxaForMultiGene(partition, writer);
         	}
@@ -212,7 +212,7 @@ public class BeastGenerator extends Generator {
 
         List<Alignment> alignments = new ArrayList<Alignment>();
 
-        for (DataPartition partition : options.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             Alignment alignment = partition.getAlignment();
             if (!alignments.contains(alignment)) {
                 alignments.add(alignment);
@@ -513,7 +513,7 @@ public class BeastGenerator extends Generator {
     }
 
 
-    public void writeAllTaxaForMultiGene(DataPartition dataPartition, XMLWriter writer) {
+    public void writeAllTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
     	String gene = dataPartition.getName();
     	Alignment alignment = dataPartition.getAlignment();
 
@@ -620,7 +620,7 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + SitePatternsParser.PATTERNS),
                         }
                 );
-                for (DataPartition partition : options.dataPartitions) {
+                for (PartitionData partition : options.dataPartitions) {
                     if (partition.getPartitionModel() == model) {
                         writePatternList(partition, 0, 3, writer);
                         writePatternList(partition, 1, 3, writer);
@@ -635,7 +635,7 @@ public class BeastGenerator extends Generator {
                         }
                 );
 
-                for (DataPartition partition : options.dataPartitions) {
+                for (PartitionData partition : options.dataPartitions) {
                     if (partition.getPartitionModel() == model) {
                         writePatternList(partition, 2, 3, writer);
                     }
@@ -654,7 +654,7 @@ public class BeastGenerator extends Generator {
                             }
                     );
 
-                    for (DataPartition partition : options.dataPartitions) {
+                    for (PartitionData partition : options.dataPartitions) {
                         if (partition.getPartitionModel() == model) {
                             writePatternList(partition, i - 1, 3, writer);
                         }
@@ -673,7 +673,7 @@ public class BeastGenerator extends Generator {
                     }
             );
 
-            for (DataPartition partition : options.dataPartitions) {
+            for (PartitionData partition : options.dataPartitions) {
                 if (partition.getPartitionModel() == model) {
                     writePatternList(partition, 0, 1, writer);
                 }
@@ -691,7 +691,7 @@ public class BeastGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(DataPartition partition, int offset, int every, XMLWriter writer) {
+    private void writePatternList(PartitionData partition, int offset, int every, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();

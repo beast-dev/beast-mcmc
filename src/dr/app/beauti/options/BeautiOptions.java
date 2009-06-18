@@ -576,7 +576,7 @@ public class BeautiOptions extends ModelOptions {
 
         Set<PartitionModel> models = new HashSet<PartitionModel>();
 
-        for (DataPartition partition : dataPartitions) {
+        for (PartitionData partition : dataPartitions) {
             models.add(partition.getPartitionModel());
         }
 
@@ -608,7 +608,7 @@ public class BeautiOptions extends ModelOptions {
 
         int k = 0;
         for (PartitionModel model : getActivePartitionModels()) {
-            for (DataPartition partition : dataPartitions) {
+            for (PartitionData partition : dataPartitions) {
                 if (partition.getPartitionModel() == model) {
                     model.addWeightsForPartition(partition, weights, k);
                 }
@@ -625,7 +625,7 @@ public class BeautiOptions extends ModelOptions {
 
         Set<PartitionTree> trees = new HashSet<PartitionTree>();
 
-        for (DataPartition partition : dataPartitions) {
+        for (PartitionData partition : dataPartitions) {
             trees.add(partition.getPartitionTree());
         }
 
@@ -1464,7 +1464,7 @@ public class BeautiOptions extends ModelOptions {
     
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
-    public List<DataPartition> dataPartitions = new ArrayList<DataPartition>();
+    public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
 
     public double meanDistance = 1.0;
     public int datesUnits = YEARS;

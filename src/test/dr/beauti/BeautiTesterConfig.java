@@ -430,16 +430,16 @@ public class BeautiTesterConfig {
                 alignment = new ConvertAlignment(AminoAcids.INSTANCE, GeneticCode.UNIVERSAL, alignment);
             }
 
-            java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
+            java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new DataPartition(charSet.getName(), fileName,
+                    partitions.add(new PartitionData(charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new DataPartition(fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
             }
-            for (DataPartition partition : partitions) {
+            for (PartitionData partition : partitions) {
                 if (model != null) {
                     partition.setPartitionModel(model);
                     beautiOptions.addPartitionModel(model);

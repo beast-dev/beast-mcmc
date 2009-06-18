@@ -637,16 +637,16 @@ public class BeautiFrame extends DocumentFrame {
                               PartitionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {
-            java.util.List<DataPartition> partitions = new ArrayList<DataPartition>();
+            java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new DataPartition(charSet.getName(), fileName,
+                    partitions.add(new PartitionData(charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new DataPartition(fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
             }
-            for (DataPartition partition : partitions) {
+            for (PartitionData partition : partitions) {
                 beautiOptions.dataPartitions.add(partition);
                 if (model != null) {
                     partition.setPartitionModel(model);

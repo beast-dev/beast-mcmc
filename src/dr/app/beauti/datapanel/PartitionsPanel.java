@@ -27,7 +27,7 @@ package dr.app.beauti.datapanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.DataPartition;
+import dr.app.beauti.options.PartitionData;
 import dr.gui.table.DateCellEditor;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;
@@ -164,7 +164,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();

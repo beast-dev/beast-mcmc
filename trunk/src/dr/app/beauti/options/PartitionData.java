@@ -6,13 +6,13 @@ import dr.evolution.alignment.Alignment;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class DataPartition {
+public class PartitionData {
 
-    public DataPartition(String name, String fileName, Alignment alignment) {
+    public PartitionData(String name, String fileName, Alignment alignment) {
         this(name, fileName, alignment, -1, -1, 1);
     }
 
-    public DataPartition(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+    public PartitionData(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;

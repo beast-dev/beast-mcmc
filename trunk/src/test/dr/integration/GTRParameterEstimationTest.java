@@ -7,6 +7,10 @@ import java.util.*;
 import test.dr.beauti.BeautiTesterConfig;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceException;
+
 
 
 /**
@@ -24,13 +28,14 @@ public class GTRParameterEstimationTest {
 //    private static final String birthRateIndicator = "birthRateIndicator";
 //    private static final String birthRate = "birthRate";
 	
+	private static final int decimal = 3;
 	private static final String SEQUNECE_LEN = "1000";
 	private static final String PRE_PATH = "C:\\Users\\dxie004\\workspace\\BEAST_MCMC\\examples\\Joseph\\test\\";
 	private List<BEASTInputFile> inputFiles;
 	
 	
 	public GTRParameterEstimationTest() {
-		
+		// Runtime.getRuntime().exec not work, have to run in Debug and run *.cmd manually each stage.
 		try{
 			splitTreeFiles();			
 		} catch (IOException ioe) {
@@ -39,16 +44,40 @@ public class GTRParameterEstimationTest {
 		System.out.println(PRE_PATH + "seqgen_banch.cmd is generated"); 
 		
 //	    try {
-//	        Process p = Runtime.getRuntime().exec(PRE_PATH + "seqgen_banch.cmd");
+//	    	System.out.println(PRE_PATH + "seqgen_banch.cmd");
+//	        Process p = Runtime.getRuntime().exec("cmd.exe " + PRE_PATH + "seqgen_banch.cmd");
 //	        
 //	        p.waitFor();
 //	        System.out.println(p.exitValue());
 //	    } catch (Exception err) {
 //	    	System.err.println("Can not create seqgen_banch.cmd " + err.getMessage());
 //		}      	    
-		System.out.println(PRE_PATH + "seqgen_banch.cmd is executed"); 
+//		System.out.println(PRE_PATH + "seqgen_banch.cmd is executed"); 
 		
-//		createBeastXMLFiles();
+		createBeastInputFiles();
+		
+		System.out.println(PRE_PATH + "beast_banch.cmd is generated");
+		
+//	    try {
+//	    	
+//	        Process p = Runtime.getRuntime().exec("cmd.exe " + PRE_PATH + "beast_banch.cmd");
+//	        
+//	        p.waitFor();
+//	        System.out.println(p.exitValue());
+//	    } catch (Exception err) {
+//	    	System.err.println("Can not create beast_banch.cmd " + err.getMessage());
+//	    }      	    
+//	    System.out.println(PRE_PATH + "beast_banch.cmd is executed"); 
+		
+		try{
+			writeReport();
+		} catch (IOException ioe) {
+            System.err.println("Unable to write reprot file: " + ioe.getMessage());
+        } catch (TraceException te) {
+        	System.err.println("Problem to analyse log file: " + te.getMessage());
+        }
+		
+		System.out.println("report is saved in " + PRE_PATH);
 	}
     
 	
@@ -77,11 +106,11 @@ public class GTRParameterEstimationTest {
         		fileWriter.write(values[values.length - 1]); // tree
         		fileWriter.close();
         		
-        		b.setAc(roundDecimals(5, getRandomNum(0.05, 0.5)));
-                b.setAg(roundDecimals(5, getRandomNum(0.3333, 3)));
-                b.setAt(roundDecimals(5, getRandomNum(0.05, 0.5)));
-                b.setCg(roundDecimals(5, getRandomNum(0.05, 0.5)));
-                b.setGt(roundDecimals(5, getRandomNum(0.05, 0.5)));
+        		b.setAc(roundDecimals(decimal, getRandomNum(0.05, 0.5)));
+                b.setAg(roundDecimals(decimal, getRandomNum(0.3333, 3)));
+                b.setAt(roundDecimals(decimal, getRandomNum(0.05, 0.5)));
+                b.setCg(roundDecimals(decimal, getRandomNum(0.05, 0.5)));
+                b.setGt(roundDecimals(decimal, getRandomNum(0.05, 0.5)));
                 
                 b.setFileNamePrefix(values[1].trim());
                 
@@ -102,6 +131,7 @@ public class GTRParameterEstimationTest {
             line = Utils.nextNonCommentLine(reader);
         }        
         
+//        btc.printlnScriptWriter("exit");
         btc.closeScriptWriter();
 //        cmdWriter.close();
         fileReader.close();
@@ -133,7 +163,7 @@ public class GTRParameterEstimationTest {
     public void createBeastInputFiles() {
     	BeautiOptions beautiOptions;
         BeautiTesterConfig btc = new BeautiTesterConfig();
-        btc.createScriptWriter(PRE_PATH + "beast_banch.bat");
+        btc.createScriptWriter(PRE_PATH + "beast_banch.cmd");
     	
         for (BEASTInputFile b : inputFiles) {
 			beautiOptions = btc.createOptions();
@@ -173,6 +203,7 @@ public class GTRParameterEstimationTest {
 	        // set MCMC
 	        beautiOptions.chainLength = 1000000;
 	        beautiOptions.logEvery = 100;
+	        beautiOptions.echoEvery = 10000;
 	        beautiOptions.fileNameStem = PRE_PATH + b.getFileNamePrefix();
 	        
 	        
@@ -180,16 +211,90 @@ public class GTRParameterEstimationTest {
 	        btc.generate(PRE_PATH + b.getFileNamePrefix(), beautiOptions); // include btc.printlnScriptWriter( )       
 	        
 		}
-   
+//        btc.printlnScriptWriter("exit");
         btc.closeScriptWriter(); 
        
     }
 
-    public void writeReport() {
+    public void writeReport() throws IOException, TraceException {
+    	FileWriter fileWriter = new FileWriter (PRE_PATH + "report.txt");
+    	// columns 25
+    	fileWriter.write("YULE+STRICT_CLOCK\tBIRTH_RATE_1\tBIRTH_RATE_2\tBIRTH_RATE_IN_RANGE\tBIRTH_RATE_DSS" + 
+    			"\tAC_1\tAC_2\tAC_IN_RANGE\tAC_DSS" + "\tAG_1\tAG_2\tAG_IN_RANGE\tAG_DSS" + 
+    			"\tAT_1\tAT_2\tAT_IN_RANGE\tAT_DSS" + "\tCG_1\tCG_2\tCG_IN_RANGE\tCG_DSS" + "\tGT_1\tGT_2\tGT_IN_RANGE\tGT_DSS\n"); 
+		
+    	String resultLine;
     	
+    	for (BEASTInputFile b : inputFiles) {
+    		resultLine = b.getFileNamePrefix();
+    		
+    		File logFile = new File(resultLine + ".log");
+    		LogFileTraces traces = new LogFileTraces(resultLine + ".log", logFile);
+            traces.loadTraces();
+            traces.setBurnIn(100000);
+
+            for (int i = 0; i < traces.getTraceCount(); i++) {
+                traces.analyseTrace(i);
+            }
+    		
+            for (int i = 0; i < traces.getTraceCount(); i++) { 
+            	
+            	TraceCorrelation distribution = traces.getCorrelationStatistics(i);
+            	double hpdLower = distribution.getLowerHPD();
+            	double hpdUpper = distribution.getUpperHPD();
+            	
+            	if (traces.getTraceName(i).equalsIgnoreCase("yule.birthRate")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(BEASTInputFile.birthRate) + "\t" + Double.toString(distribution.getMean())
+    									+ "\t" + Boolean.toString(isInRange(BEASTInputFile.birthRate, hpdLower, hpdUpper)) 
+    									+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} else if (traces.getTraceName(i).equalsIgnoreCase("ac")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(b.getAc()) + "\t" + Double.toString(distribution.getMean())
+					+ "\t" + Boolean.toString(isInRange(b.getAc(), hpdLower, hpdUpper)) 
+					+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} else if (traces.getTraceName(i).equalsIgnoreCase("ag")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(b.getAg()) + "\t" + Double.toString(distribution.getMean())
+					+ "\t" + Boolean.toString(isInRange(b.getAg(), hpdLower, hpdUpper)) 
+					+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} else if (traces.getTraceName(i).equalsIgnoreCase("at")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(b.getAt()) + "\t" + Double.toString(distribution.getMean())
+					+ "\t" + Boolean.toString(isInRange(b.getAt(), hpdLower, hpdUpper)) 
+					+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} else if (traces.getTraceName(i).equalsIgnoreCase("cg")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(b.getCg()) + "\t" + Double.toString(distribution.getMean())
+					+ "\t" + Boolean.toString(isInRange(b.getCg(), hpdLower, hpdUpper)) 
+					+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} else if (traces.getTraceName(i).equalsIgnoreCase("gt")) {
+            		
+            		resultLine = resultLine + "\t" + Double.toString(b.getGt()) + "\t" + Double.toString(distribution.getMean())
+					+ "\t" + Boolean.toString(isInRange(b.getGt(), hpdLower, hpdUpper)) 
+					+ "\t" + Double.toString(distribution.getESS());
+            		
+            	} 
+            }
+              		
+    		fileWriter.write(resultLine + "\n");
+    	}
+    	
+    	fileWriter.close();
     }
     
-    
+    private boolean isInRange (double value, double min, double max) {
+    	if (max > min) {
+    		return (value > min && value < max);
+    	} else {
+    		return (value < min && value > max);
+    	}
+    }
     
     //Main method
     public static void main(String[] args) {

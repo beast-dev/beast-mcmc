@@ -12,13 +12,14 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Walter Xie
  */
-public class PartitionModel extends ModelOptions {
+public class PartitionPopulation extends ModelOptions {
 
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
     
-    public PartitionModel(BeautiOptions options, PartitionData partition) {
+    public PartitionPopulation(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
     }
 
@@ -29,7 +30,7 @@ public class PartitionModel extends ModelOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionModel(BeautiOptions options, String name, PartitionModel source) {
+    public PartitionPopulation(BeautiOptions options, String name, PartitionPopulation source) {
         this(options, name, source.dataType);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
@@ -46,7 +47,7 @@ public class PartitionModel extends ModelOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
     }
 
-    public PartitionModel(BeautiOptions options, String name, DataType dataType) {
+    public PartitionPopulation(BeautiOptions options, String name, DataType dataType) {
 
         this.options = options;
         this.name = name;

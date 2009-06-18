@@ -211,7 +211,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void removeSelection() {
         int[] selRows = dataTable.getSelectedRows();
-        Set<DataPartition> partitionsToRemove = new HashSet<DataPartition>();
+        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
         for (int row : selRows) {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
@@ -243,7 +243,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
 
             PartitionModel model = partition.getPartitionModel();
             if (!model.getName().equals(partition.getName())) {
@@ -263,7 +263,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         int[] selRows = dataTable.getSelectedRows();
         DataType dateType = null;
         for (int row : selRows) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             if (dateType == null) {
                 dateType = partition.getPartitionModel().dataType;
             } else {
@@ -293,7 +293,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
 
             for (int row : selRows) {
-                DataPartition partition = options.dataPartitions.get(row);
+                PartitionData partition = options.dataPartitions.get(row);
                 partition.setPartitionModel(model);
             }
         }
@@ -307,7 +307,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     private void unlinkTrees() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
 
             PartitionTree tree = partition.getPartitionTree();
             if (!tree.getName().equals(partition.getName())) {
@@ -340,7 +340,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
 
             for (int row : selRows) {
-                DataPartition partition = options.dataPartitions.get(row);
+                PartitionData partition = options.dataPartitions.get(row);
                 partition.setPartitionTree(tree);
             }
         }
@@ -374,7 +374,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
@@ -396,7 +396,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            DataPartition partition = options.dataPartitions.get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

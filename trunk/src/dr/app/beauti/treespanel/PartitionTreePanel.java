@@ -114,7 +114,7 @@ public class PartitionTreePanel extends OptionsPanel {
 		int result = generateTreeDialog.showDialog(options);
 		if (result != JOptionPane.CANCEL_OPTION) {
 			GenerateTreeDialog.MethodTypes methodType = generateTreeDialog.getMethodType();
-			DataPartition partition = generateTreeDialog.getDataPartition();
+			PartitionData partition = generateTreeDialog.getDataPartition();
 
 			Patterns patterns = new Patterns(partition.getAlignment());
 			DistanceMatrix distances = new F84DistanceMatrix(patterns);

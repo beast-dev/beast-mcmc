@@ -90,7 +90,7 @@ public class GenerateTreeDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         partitionCombo.removeAllItems();
-        for (DataPartition partition : options.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             partitionCombo.addItem(partition);
         }
         final JDialog dialog = optionPane.createDialog(frame, "Construct New Tree");
@@ -111,8 +111,8 @@ public class GenerateTreeDialog {
         return nameField.getText();
     }
 
-    public DataPartition getDataPartition() {
-        return (DataPartition)partitionCombo.getSelectedItem();
+    public PartitionData getDataPartition() {
+        return (PartitionData)partitionCombo.getSelectedItem();
     }
     public MethodTypes getMethodType() {
         return (MethodTypes)methodCombo.getSelectedItem();

@@ -740,7 +740,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.selectAll();
         dataPanel.unlinkModels();
         for (PartitionSubstitutionModel model : beautiOptions.getActivePartitionSubstitutionModels()) {
-        	model.initParametersAndOperators();
+        	model.initAllParametersAndOperators();
         }
 
         int i = tabbedPane.indexOfTab("Trees");

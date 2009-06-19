@@ -5,7 +5,7 @@ import dr.app.beauti.BeautiApp;
 import dr.app.beauti.options.AminoAcidModelType;
 import dr.app.beauti.options.FrequencyPolicy;
 import dr.app.beauti.options.NucModelType;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.panels.OptionsPanel;
 
@@ -21,9 +21,9 @@ import java.util.logging.Logger;
  */
 public class PartitionModelPanel extends OptionsPanel {
 
-    PartitionModel model;
+    PartitionSubstitutionModel model;
 
-    public PartitionModelPanel(PartitionModel partitionModel) {
+    public PartitionModelPanel(PartitionSubstitutionModel partitionModel) {
 
         super(12, 18);
 

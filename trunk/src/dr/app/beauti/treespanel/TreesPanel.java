@@ -85,9 +85,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     BeautiOptions options = null;
 
     JPanel treePanelParent;
-    PartitionTree currentTree = null;
+    PartitionTreeModel currentTree = null;
 
-    Map<PartitionTree, PartitionTreePanel> treePanels = new HashMap<PartitionTree, PartitionTreePanel>();
+    Map<PartitionTreeModel, PartitionTreePanel> treePanels = new HashMap<PartitionTreeModel, PartitionTreePanel>();
     TitledBorder treeBorder;
 
     // General settings ////////////////////////////////////////////////////////////////////////
@@ -265,7 +265,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         int selRow = treeTable.getSelectedRow();
         treeTableModel.fireTableDataChanged();
-        if (options.getPartitionTrees().size() > 0) {
+        if (options.getPartitionTreeModels().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
@@ -332,17 +332,17 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         frame.setDirty();
     }
 
-    private void createPartitionTree() {
+    private void createPartitionTreeModel() {
 //        if (createModelDialog == null) {
 //            createModelDialog = new CreateModelDialog(frame);
 //        }
 //
 //        int result = createModelDialog.showDialog();
 //        if (result != JOptionPane.CANCEL_OPTION) {
-//            PartitionModel model = new PartitionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
-//            options.addPartitionModel(model);
+//            PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
+//            options.addPartitionSubstitutionModel(model);
 //            modelTableModel.fireTableDataChanged();
-//            int row = options.getPartitionModels().size() - 1;
+//            int row = options.getPartitionSubstitutionModels().size() - 1;
 //            modelTable.getSelectionModel().setSelectionInterval(row, row);
 //        }
 
@@ -352,12 +352,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     public void removeSelection() {
         int selRow = treeTable.getSelectedRow();
         if (!isUsed(selRow)) {
-            PartitionModel model = options.getPartitionModels().get(selRow);
-            options.getPartitionModels().remove(model);
+            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);
+            options.getPartitionSubstitutionModels().remove(model);
         }
 
         treeTableModel.fireTableDataChanged();
-        int n = options.getPartitionModels().size();
+        int n = options.getPartitionSubstitutionModels().size();
         if (selRow >= n) {
             selRow--;
         }
@@ -373,7 +373,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         int selRow = treeTable.getSelectedRow();
         if (selRow >= 0) {
-            setCurrentTree(options.getPartitionTrees().get(selRow));
+            setCurrentTree(options.getPartitionTreeModels().get(selRow));
             frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
@@ -383,7 +383,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
      *
      * @param tree the new tree to display
      */
-    private void setCurrentTree(PartitionTree tree) {
+    private void setCurrentTree(PartitionTreeModel tree) {
 
         if (tree != null) {
             if (currentTree != null) treePanelParent.removeAll();
@@ -410,9 +410,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     private boolean isUsed(int row) {
-        PartitionModel model = options.getPartitionModels().get(row);
+        PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
         for (PartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionModel() == model) {
+            if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }
         }
@@ -440,11 +440,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getPartitionTrees().size();
+            return options.getPartitionTreeModels().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionTree tree = options.getPartitionTrees().get(row);
+            PartitionTreeModel tree = options.getPartitionTreeModels().get(row);
             switch (col) {
                 case 0:
                     return tree.getName();
@@ -460,7 +460,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object value, int row, int col) {
             String name = ((String) value).trim();
             if (name.length() > 0) {
-                PartitionTree tree = options.getPartitionTrees().get(row);
+                PartitionTreeModel tree = options.getPartitionTreeModels().get(row);
                 tree.setName(name);
                 updateBorder();
                 fireTreesChanged();
@@ -532,7 +532,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     Action addTreeAction = new AbstractAction("+") {
         public void actionPerformed(ActionEvent ae) {
-            createPartitionTree();
+            createPartitionTreeModel();
         }
     };
 }

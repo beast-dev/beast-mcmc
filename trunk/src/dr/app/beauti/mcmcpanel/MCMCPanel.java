@@ -28,7 +28,7 @@ package dr.app.beauti.mcmcpanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 
 import org.virion.jam.components.WholeNumberField;
@@ -150,7 +150,7 @@ public class MCMCPanel extends BeautiPanel {
                 if (substTreeLogCheck.isSelected()) {
 	                if (options.isSpeciesAnalysis()) {
 	            		String nameList = "";
-		            	for (PartitionModel model : options.getActivePartitionModels()) {
+		            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
 		            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 		            	}
 		            	substTreeFileNameField.setText(nameList);
@@ -230,7 +230,7 @@ public class MCMCPanel extends BeautiPanel {
             
             if (options.isSpeciesAnalysis()) {
             	String nameList = options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME;            	
-            	for (PartitionModel model : options.getActivePartitionModels()) {
+            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
             		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	}
             	treeFileNameField.setText(nameList);
@@ -240,7 +240,7 @@ public class MCMCPanel extends BeautiPanel {
             	//TODO: species sub tree
             	if (options.substTreeLog) {
             		nameList = "";
-	            	for (PartitionModel model : options.getActivePartitionModels()) {
+	            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
 	            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 	            	}
 	            	substTreeFileNameField.setText(nameList);

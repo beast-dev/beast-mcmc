@@ -5,7 +5,7 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -100,7 +100,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 if (options.allowDifferentTaxa) {
                 	for (PartitionData dataPartition : options.dataPartitions) {
-                		if (dataPartition.getPartitionModel().equals(getModel())) {
+                		if (dataPartition.getPartitionSubstitutionModel().equals(getModel())) {
                 			categoryCount = (dataPartition.getNumOfTaxa() - 1) * 2;
                 		}
                 	}

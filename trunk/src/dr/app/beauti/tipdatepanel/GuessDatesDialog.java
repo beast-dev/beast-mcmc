@@ -25,22 +25,12 @@
 
 package dr.app.beauti.tipdatepanel;
 
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionModel;
 import dr.app.beauti.options.DateGuesser;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.Calendar;
 import java.util.GregorianCalendar;

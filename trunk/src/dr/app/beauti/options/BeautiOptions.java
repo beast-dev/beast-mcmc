@@ -66,201 +66,14 @@ public class BeautiOptions extends ModelOptions {
     
     public BeautiOptions(ComponentFactory[] components) {
     	
-    	initParametersAndOperators ();
+    	initParametersAndOperators();
     	
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {
             addComponent(component.getOptions(this));
         }
     }
-    
-    /**
-     * Initialise parameters and operators in BeautiOptions, which is copied in PartitionModel where can add prefix of each data partition.
-     */
-    private void initParametersAndOperators () {
-        double branchWeights = 30.0;
-        double treeWeights = 15.0;
-        double rateWeights = 3.0;
-
-        createParameter("tree", "The tree");
-        createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
-        createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        // A vector of relative rates across all partitions...
-        createParameter("allMus", "All the relative rates");
-
-        createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
-
-        {
-            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-            p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
-        }
-        createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        {
-            final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-            p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
-        }
-
-        createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createScaleParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("exponential.growthRate", "coalescent growth rate parameter", GROWTH_RATE_SCALE, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        createParameter("exponential.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createScaleParameter("logistic.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("logistic.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("logistic.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("logistic.t50", "logistic shape parameter", T50_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-        createScaleParameter("expansion.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("expansion.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("expansion.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("expansion.ancestralProportion", "ancestral population proportion", NONE, 0.1, 0.0, 1.0);
-        createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
-
-        createParameter("skyride.popSize", "GMRF Bayesian skyride population sizes", TIME_SCALE, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
-        {
-            final Parameter p = createParameter("skyride.precision", "GMRF Bayesian skyride precision", NONE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-            p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 0.001;
-            p.gammaBeta = 1000;
-            p.priorFixed = true;
-        }
-
-        createParameter("demographic.popSize", "Extended Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch");
-        createScaleParameter("demographic.populationMean", "Extended Bayesian Skyline population prior mean", TIME_SCALE, 1, 0, Double.POSITIVE_INFINITY);
-        {
-            final Parameter p = createStatistic("demographic.populationSizeChanges", "Average number of population change points", true);
-            p.priorType = PriorType.POISSON_PRIOR;
-            p.poissonMean = Math.log(2);
-        }
-        createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
-
-        createScaleOperator("constant.popSize", demoTuning, demoWeights);
-        createScaleOperator("exponential.popSize", demoTuning, demoWeights);
-        createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
-        createScaleOperator("exponential.doublingTime", demoTuning, demoWeights);
-        createScaleOperator("logistic.popSize", demoTuning, demoWeights);
-        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
-        createScaleOperator("logistic.doublingTime", demoTuning, demoWeights);
-        createScaleOperator("logistic.t50", demoTuning, demoWeights);
-        createScaleOperator("expansion.popSize", demoTuning, demoWeights);
-        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
-        createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
-        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
-        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
-        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
-
-        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
-        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
-        // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
-
-        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
-
-        createScaleOperator("yule.birthRate", demoTuning, demoWeights);
-
-        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
-
-        // These are statistics which could have priors on...
-        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
-                0.0, Double.POSITIVE_INFINITY);
-        createStatistic("covariance",
-                "The covariance in rates of evolution on each lineage with their ancestral lineages",
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-        // This only works if the partitions are of the same size...
-//        createOperator("centeredMu", "Relative rates",
-//                "Scales codon position rates relative to each other maintaining mean", "allMus",
-//                OperatorType.CENTERED_SCALE, 0.75, rateWeights);
-        createOperator("deltaMu", "Relative rates",
-                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
-
-        createScaleOperator("clock.rate", demoTuning, rateWeights);
-        createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
-        createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
-        createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
-
-        createOperator("scaleRootRate", "treeModel.rootRate",
-                "Scales root rate", "treeModel.rootRate",
-                OperatorType.SCALE, 0.75, rateWeights);
-        createOperator("scaleOneRate", "treeModel.nodeRates",
-                "Scales one non-root rate", "treeModel.nodeRates",
-                OperatorType.SCALE, 0.75, branchWeights);
-        createOperator("scaleAllRates", "treeModel.allRates",
-                "Scales all rates simultaneously", "treeModel.allRates",
-                OperatorType.SCALE_ALL, 0.75, rateWeights);
-        createOperator("scaleAllRatesIndependently", "treeModel.nodeRates",
-                "Scales all non-root rates independently", "treeModel.nodeRates",
-                OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
-
-        createOperator("upDownAllRatesHeights", "All rates and heights",
-                "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
-        createScaleOperator("branchRates.var", demoTuning, rateWeights);
-
-        createOperator("swapBranchRateCategories", "branchRates.categories",
-                "Performs a swap of branch rate categories", "branchRates.categories",
-                OperatorType.SWAP, 1, branchWeights / 3);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories",
-                "Performs an integer random walk of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
-        createOperator("unformBranchRateCategories", "branchRates.categories",
-                "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
-
-        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
-        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
-        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
-                OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
-
-        createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
-        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
-                "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
-
-        createOperator("upDownRateHeights", "Substitution rate and heights",
-                "Scales substitution rates inversely to node heights of the tree", "clock.rate",
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
-                "Scales UCED mean inversely to node heights of the tree", ClockType.UCED_MEAN,
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
-                "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN,
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
-
-        createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_SLIDE, 1.0, treeWeights);
-        createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
-                OperatorType.NARROW_EXCHANGE, -1, treeWeights);
-        createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree",
-                OperatorType.WIDE_EXCHANGE, -1, demoWeights);
-        createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
-                OperatorType.WILSON_BALDING, -1, demoWeights);
-    }
-    
+        
     public void initSpeciesParametersAndOperators () {
     	double spWeights = 5.0;
     	double spTuning = 0.9;
@@ -329,7 +142,7 @@ public class BeautiOptions extends ModelOptions {
         userStartingTree = null;
 
         partitionModels.clear();
-        partitionTrees.clear();
+        partitionTreeModels.clear();
 
         fixedSubstitutionRate = true;
         meanSubstitutionRate = 1.0;
@@ -365,52 +178,11 @@ public class BeautiOptions extends ModelOptions {
         localClockRateChangesStatistic = null;
         localClockRatesStatistic = null;
         
-        for (PartitionModel model : getActivePartitionModels()) {
+        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
         	model.localClockRateChangesStatistic = null;
         	model.localClockRatesStatistic = null;
         }
 
-    }
-
-    public void addPartitionModel(PartitionModel model) {
-
-        if (!partitionModels.contains(model)) {
-            partitionModels.add(model);
-        }
-    }
-
-    /**
-     * @return a list of all partition models, whether or not they are used
-     */
-    public List<PartitionModel> getPartitionModels() {
-        return partitionModels;
-    }
-
-    /**
-     * @return a list of partition models that are of the given data type
-     */
-    public List<PartitionModel> getPartitionModels(DataType dataType) {
-        List<PartitionModel> models = new ArrayList<PartitionModel>();
-        for (PartitionModel model : getPartitionModels()) {
-            if (model.dataType == dataType) {
-                models.add(model);
-            }
-        }
-        return models;
-    }
-
-    public void addPartitionTree(PartitionTree tree) {
-
-        if (!partitionTrees.contains(tree)) {
-            partitionTrees.add(tree);
-        }
-    }
-
-    /**
-     * @return a list of all partition trees, whether or not they are used
-     */
-    public List<PartitionTree> getPartitionTrees() {
-        return partitionTrees;
     }
 
     private double round(double value, int sf) {
@@ -422,7 +194,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public Parameter getParameter(String name, PartitionModel model) {
+    public Parameter getParameter(String name, PartitionSubstitutionModel model) {
         return model.getParameter(name);
     }
 
@@ -437,8 +209,8 @@ public class BeautiOptions extends ModelOptions {
         
         if (isSpeciesAnalysis()) { // species
         	selectParametersForSpecies(parameters);        	       
-        	for (PartitionModel model : getActivePartitionModels()) {
-        		// use override method getParameter(String name) in PartitionModel containing prefix
+        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        		// use override method getParameter(String name) in PartitionSubstitutionModel containing prefix
             	model.selectParameters(parameters);    
         	}
         } else { // not species
@@ -448,7 +220,7 @@ public class BeautiOptions extends ModelOptions {
         selectComponentParameters(this, parameters);
         
         if (isSpeciesAnalysis()) { // species
-        	for (PartitionModel model : getActivePartitionModels()) {
+        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
         		model.selectStatistics(parameters);
         	}
         } else {
@@ -457,9 +229,9 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentStatistics(this, parameters);
 
-        boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
+        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
         // add all Parameter (with prefix) into parameters list     
-        for (PartitionModel model : getActivePartitionModels()) {        	
+        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {        	
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -572,17 +344,44 @@ public class BeautiOptions extends ModelOptions {
         return meanSubstitutionRate;
     }
 
-    public List<PartitionModel> getActivePartitionModels() {
+    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
 
-        Set<PartitionModel> models = new HashSet<PartitionModel>();
+        if (!partitionModels.contains(model)) {
+            partitionModels.add(model);
+        }
+    }
+
+    /**
+     * @return a list of all partition models, whether or not they are used
+     */
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
+        return partitionModels;
+    }
+
+    /**
+     * @return a list of partition models that are of the given data type
+     */
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
+        List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+            if (model.dataType == dataType) {
+                models.add(model);
+            }
+        }
+        return models;
+    }
+
+    public List<PartitionSubstitutionModel> getActivePartitionSubstitutionModels() {
+
+        Set<PartitionSubstitutionModel> models = new HashSet<PartitionSubstitutionModel>();
 
         for (PartitionData partition : dataPartitions) {
-            models.add(partition.getPartitionModel());
+            models.add(partition.getPartitionSubstitutionModel());
         }
 
         // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionModel> activeModels = new ArrayList<PartitionModel>();
-        for (PartitionModel model : getPartitionModels()) {
+        List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             if (models.contains(model)) { // if linked model, only return one model, if unlinked, return a list
                 activeModels.add(model);
             }
@@ -591,9 +390,9 @@ public class BeautiOptions extends ModelOptions {
         return activeModels;
     }
 
-    public int getTotalActivePartitionModelCount() {
+    public int getTotalActivePartitionSubstitutionModelCount() {
         int totalPartitionCount = 0;
-        for (PartitionModel model : getActivePartitionModels()) {
+        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
             totalPartitionCount += model.getCodonPartitionCount();
         }
         return totalPartitionCount;
@@ -604,12 +403,12 @@ public class BeautiOptions extends ModelOptions {
      * are strictly in the same order as the 'mu' relative rates are listed.
      */
     public int[] getPartitionWeights() {
-        int[] weights = new int[getTotalActivePartitionModelCount()];
+        int[] weights = new int[getTotalActivePartitionSubstitutionModelCount()];
 
         int k = 0;
-        for (PartitionModel model : getActivePartitionModels()) {
+        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
             for (PartitionData partition : dataPartitions) {
-                if (partition.getPartitionModel() == model) {
+                if (partition.getPartitionSubstitutionModel() == model) {
                     model.addWeightsForPartition(partition, weights, k);
                 }
             }
@@ -621,17 +420,32 @@ public class BeautiOptions extends ModelOptions {
         return weights;
     }
 
-    public List<PartitionTree> getActivePartitionTrees() {
 
-        Set<PartitionTree> trees = new HashSet<PartitionTree>();
+    public void addPartitionTreeModel(PartitionTreeModel tree) {
+
+        if (!partitionTreeModels.contains(tree)) {
+            partitionTreeModels.add(tree);
+        }
+    }
+
+    /**
+     * @return a list of all partition trees, whether or not they are used
+     */
+    public List<PartitionTreeModel> getPartitionTreeModels() {
+        return partitionTreeModels;
+    }
+
+    public List<PartitionTreeModel> getActivePartitionTreeModels() {
+
+        Set<PartitionTreeModel> trees = new HashSet<PartitionTreeModel>();
 
         for (PartitionData partition : dataPartitions) {
-            trees.add(partition.getPartitionTree());
+            trees.add(partition.getPartitionTreeModel());
         }
 
         // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionTree> activeTrees = new ArrayList<PartitionTree>();
-        for (PartitionTree tree : getPartitionTrees()) {
+        List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
             if (trees.contains(tree)) {
                 activeTrees.add(tree);
             }
@@ -640,10 +454,34 @@ public class BeautiOptions extends ModelOptions {
         return activeTrees;
     }
 
-    public int getTotalActivePartitionTreeCount() {
-        return getActivePartitionTrees().size();
+    public int getTotalActivePartitionTreeModelCount() {
+        return getActivePartitionTreeModels().size();
     }
 
+   
+    public List<PartitionTreePrior> getPartitionTreePriors() {
+        return partitionTreePriors;
+    }
+
+    public List<PartitionTreePrior> getActivePartitionTreePriors() {
+
+        Set<PartitionTreePrior> pops = new HashSet<PartitionTreePrior>();
+
+        for (PartitionData partition : dataPartitions) {
+            pops.add(partition.getPartitionTreePrior());
+        }
+
+        // Change to a list to ensure that the order is kept the same as in the table.
+        List<PartitionTreePrior> activeTreePriors = new ArrayList<PartitionTreePrior>();
+        for (PartitionTreePrior prior : getPartitionTreePriors()) {
+            if (pops.contains(prior)) { 
+                activeTreePriors.add(prior);
+            }
+        }
+
+        return activeTreePriors;
+    }
+    
     /**
      * return an list of operators that are required
      *
@@ -655,8 +493,8 @@ public class BeautiOptions extends ModelOptions {
         
         if (isSpeciesAnalysis()) { // species
         	selectOperatorsForSpecies(ops);
-        	// use override method getOperator(String name) in PartitionModel containing prefix
-        	for (PartitionModel model : getActivePartitionModels()) {            	
+        	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
+        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {            	
             	model.selectOperators(ops); 
             }
         } else { // not species
@@ -665,9 +503,9 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
-        boolean multiplePartitions = getTotalActivePartitionModelCount() > 1;
+        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
 
-        for (PartitionModel model : getActivePartitionModels()) {
+        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
             ops.addAll(model.getOperators());
         }
 
@@ -676,7 +514,7 @@ public class BeautiOptions extends ModelOptions {
 
             // update delta mu operator weight
             deltaMuOperator.weight = 0.0;
-            for (PartitionModel pm : getActivePartitionModels()) {
+            for (PartitionSubstitutionModel pm : getActivePartitionSubstitutionModels()) {
                 deltaMuOperator.weight += pm.getCodonPartitionCount();
             }
 
@@ -1085,7 +923,7 @@ public class BeautiOptions extends ModelOptions {
 
         root.addContent(taxaElement);
 
-        for (PartitionModel model : partitionModels) {
+        for (PartitionSubstitutionModel model : partitionModels) {
 
             Element modelElement = new Element("model");
 
@@ -1444,9 +1282,6 @@ public class BeautiOptions extends ModelOptions {
     public String mapTreeFileName = null;
     public boolean substTreeLog = false;
     public String substTreeFileName = null;
-
-    public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
-    public final String POP_MEAN = "popMean";
     
     // Data options
     public boolean allowDifferentTaxa = false;
@@ -1454,36 +1289,41 @@ public class BeautiOptions extends ModelOptions {
     public boolean dataReset = true;
 
     public Taxa taxonList = null;
-//    public Map<String, List<Taxon>> mapTaxaSpecies = new HashMap<String, List<Taxon>>();
-
+    
+    public List<Taxa> taxonSets = new ArrayList<Taxa>();
+    public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
+      
+    public double meanDistance = 1.0;
+    public int datesUnits = YEARS;
+    public int datesDirection = FORWARDS;
+    public double maximumTipHeight = 0.0;
+    public int translation = 0;
+        
     public DateGuesser dateGuesser = new DateGuesser();
     public TraitGuesser traitGuesser = new TraitGuesser();
 
     public List<String> selecetedTraits = new ArrayList<String>();
     public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
     
-    public List<Taxa> taxonSets = new ArrayList<Taxa>();
-    public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
+    public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
+    public final String POP_MEAN = "popMean";
+    
+    // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
-
-    public double meanDistance = 1.0;
-    public int datesUnits = YEARS;
-    public int datesDirection = FORWARDS;
-    public double maximumTipHeight = 0.0;
-    public int translation = 0;
-
-    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
-    public Tree userStartingTree = null;
-    public List<Tree> userTrees = new ArrayList<Tree>();
-
-    // Model options
-    List<PartitionModel> partitionModels = new ArrayList<PartitionModel>();
-    List<PartitionTree> partitionTrees = new ArrayList<PartitionTree>();
+    // Substitution Model
+    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
+    // Tree
+    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
+    // PopSize
+    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
 
     public boolean fixedSubstitutionRate = true;
     public double meanSubstitutionRate = 1.0;
     public boolean unlinkPartitionRates = true;
 
+    public Units.Type units = Units.Type.SUBSTITUTIONS;
+    public ClockType clockType = ClockType.STRICT_CLOCK;
+    
     public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
@@ -1497,8 +1337,9 @@ public class BeautiOptions extends ModelOptions {
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
 
-    public Units.Type units = Units.Type.SUBSTITUTIONS;
-    public ClockType clockType = ClockType.STRICT_CLOCK;
+    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    public Tree userStartingTree = null;
+    public List<Tree> userTrees = new ArrayList<Tree>();
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;

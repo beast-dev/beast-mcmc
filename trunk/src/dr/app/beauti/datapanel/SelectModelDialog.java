@@ -26,7 +26,7 @@
 package dr.app.beauti.datapanel;
 
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.gui.chart.Axis;
 import dr.gui.chart.JChart;
 import dr.gui.chart.LinearAxis;
@@ -110,8 +110,8 @@ public class SelectModelDialog {
         return result;
     }
 
-    public PartitionModel getModel() {
-        return (PartitionModel)modelCombo.getSelectedItem();
+    public PartitionSubstitutionModel getModel() {
+        return (PartitionSubstitutionModel)modelCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

@@ -8,7 +8,22 @@ import dr.evolution.alignment.Alignment;
  */
 public class PartitionData {
 
-    public PartitionData(String name, String fileName, Alignment alignment) {
+    private final String fileName;
+    private final Alignment alignment;
+    private final double meanDistance;
+
+    private String name;
+    private boolean coding;
+
+    private int fromSite;
+    private int toSite;
+    private int every = 1;
+
+    private PartitionSubstitutionModel model;
+    private PartitionTreeModel treeModel;
+	private PartitionTreePrior treePrior;
+    
+	public PartitionData(String name, String fileName, Alignment alignment) {
         this(name, fileName, alignment, -1, -1, 1);
     }
 
@@ -49,21 +64,29 @@ public class PartitionData {
         this.name = name;
     }
 
-    public void setPartitionModel(PartitionModel model) {
+    public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
         this.model = model;
     }
 
-    public PartitionModel getPartitionModel() {
+    public PartitionSubstitutionModel getPartitionSubstitutionModel() {
         return model;
     }
 
-    public void setPartitionTree(final PartitionTree tree) {
-        this.tree = tree;
-    }
+    public PartitionTreeModel getPartitionTreeModel() {
+		return treeModel;
+	}
 
-    public PartitionTree getPartitionTree() {
-        return tree;
-    }
+	public void setPartitionTreeModel(PartitionTreeModel treeModel) {
+		this.treeModel = treeModel;
+	}
+
+	public PartitionTreePrior getPartitionTreePrior() {
+		return treePrior;
+	}
+
+	public void setPartitionTreePrior(PartitionTreePrior treePrior) {
+		this.treePrior = treePrior;
+	}
 
     public boolean isCoding() {
         return coding;
@@ -111,18 +134,4 @@ public class PartitionData {
         return getName();
     }
 
-    private final String fileName;
-    private final Alignment alignment;
-    private final double meanDistance;
-
-    private String name;
-    private boolean coding;
-
-    private int fromSite;
-    private int toSite;
-    private int every = 1;
-
-
-    private PartitionModel model;
-    private PartitionTree tree;
 }

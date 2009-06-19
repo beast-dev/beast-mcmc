@@ -35,18 +35,10 @@ import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.tree.NeighborJoiningTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -67,9 +59,9 @@ public class PartitionTreePanel extends OptionsPanel {
 
 	private GenerateTreeDialog generateTreeDialog = null;
 
-    private final PartitionTree partitionTree;
+    private final PartitionTreeModel partitionTree;
 
-    public PartitionTreePanel(PartitionTree partitionTree) {
+    public PartitionTreePanel(PartitionTreeModel partitionTree) {
 
 		this.partitionTree = partitionTree;
 

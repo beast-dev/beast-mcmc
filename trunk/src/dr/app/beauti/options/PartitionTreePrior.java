@@ -14,12 +14,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class PartitionPopulation extends ModelOptions {
+public class PartitionTreePrior extends ModelOptions {
 
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
     
-    public PartitionPopulation(BeautiOptions options, PartitionData partition) {
+    public PartitionTreePrior(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
     }
 
@@ -30,7 +30,7 @@ public class PartitionPopulation extends ModelOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionPopulation(BeautiOptions options, String name, PartitionPopulation source) {
+    public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
         this(options, name, source.dataType);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
@@ -47,7 +47,7 @@ public class PartitionPopulation extends ModelOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
     }
 
-    public PartitionPopulation(BeautiOptions options, String name, DataType dataType) {
+    public PartitionTreePrior(BeautiOptions options, String name, DataType dataType) {
 
         this.options = options;
         this.name = name;
@@ -1121,7 +1121,7 @@ public class PartitionPopulation extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionModels().size() > 1 || options.isSpeciesAnalysis()) {
+        if (options.getActivePartitionSubstitutionModels().size() > 1 || options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -1130,7 +1130,7 @@ public class PartitionPopulation extends ModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getActivePartitionModels().size() > 1 || options.isSpeciesAnalysis()) {
+        if (options.getActivePartitionSubstitutionModels().size() > 1 || options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

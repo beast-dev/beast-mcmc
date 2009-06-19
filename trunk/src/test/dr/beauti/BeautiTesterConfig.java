@@ -115,7 +115,7 @@ public class BeautiTesterConfig {
 
 
     public void buildNucModels(String key, BeautiOptions beautiOptions) {
-        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+        PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setNucSubstitutionModel(NucModelType.HKY);
         buildCodonModels(key + "HKY", beautiOptions);
@@ -124,7 +124,7 @@ public class BeautiTesterConfig {
     }
 
     public void buildCodonModels(String key, BeautiOptions beautiOptions) {
-        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+        PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setCodonHeteroPattern(null);
         model.setUnlinkedSubstitutionModel(false);
@@ -164,7 +164,7 @@ public class BeautiTesterConfig {
     }
 
     public void buildHeteroModels(String key, BeautiOptions beautiOptions) {
-        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+        PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setGammaHetero(false);
         model.setGammaCategories(4);
@@ -185,7 +185,7 @@ public class BeautiTesterConfig {
     }
 
     public void buildAAModels(String key, BeautiOptions beautiOptions) {
-        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+        PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setAaSubstitutionModel(AminoAcidModelType.BLOSUM_62);
         buildHeteroModels(key + "BLOSUM62", beautiOptions);
@@ -265,7 +265,7 @@ public class BeautiTesterConfig {
         TaxonList taxa = null;
         Alignment alignment = null;
         Tree tree = null;
-        PartitionModel model = null;
+        PartitionSubstitutionModel model = null;
         java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
 
         try {
@@ -441,18 +441,18 @@ public class BeautiTesterConfig {
             }
             for (PartitionData partition : partitions) {
                 if (model != null) {
-                    partition.setPartitionModel(model);
-                    beautiOptions.addPartitionModel(model);
+                    partition.setPartitionSubstitutionModel(model);
+                    beautiOptions.addPartitionSubstitutionModel(model);
                 } else {
-                    for (PartitionModel pm : beautiOptions.getPartitionModels()) {
+                    for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
                         if (pm.dataType == alignment.getDataType()) {
-                            partition.setPartitionModel(pm);
+                            partition.setPartitionSubstitutionModel(pm);
                         }
                     }
-                    if (partition.getPartitionModel() == null) {
-                        PartitionModel pm = new PartitionModel(beautiOptions, partition);
-                        partition.setPartitionModel(pm);
-                        beautiOptions.addPartitionModel(pm);
+                    if (partition.getPartitionSubstitutionModel() == null) {
+                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(beautiOptions, partition);
+                        partition.setPartitionSubstitutionModel(pm);
+                        beautiOptions.addPartitionSubstitutionModel(pm);
                     }
                 }
                 beautiOptions.dataPartitions.add(partition);

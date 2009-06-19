@@ -73,9 +73,9 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     BeautiOptions options = null;
 
     JPanel modelPanelParent;
-    PartitionModel currentModel = null;
+    PartitionSubstitutionModel currentModel = null;
 
-    Map<PartitionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionModel, PartitionModelPanel>();
+    Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
     TitledBorder modelBorder;
 
     // Overall model parameters ////////////////////////////////////////////////////////////////////////
@@ -235,14 +235,14 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
-        if (options.getPartitionModels().size() > 0) {
+        if (options.getPartitionSubstitutionModels().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
             modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
-        if (currentModel == null && options.getPartitionModels().size() > 0) {
+        if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
@@ -282,10 +282,10 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         int result = createModelDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionModel model = new PartitionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
-            options.addPartitionModel(model);
+            PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
+            options.addPartitionSubstitutionModel(model);
             modelTableModel.fireTableDataChanged();
-            int row = options.getPartitionModels().size() - 1;
+            int row = options.getPartitionSubstitutionModels().size() - 1;
             modelTable.getSelectionModel().setSelectionInterval(row, row);
         }
 
@@ -295,12 +295,12 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     public void removeSelection() {
         int selRow = modelTable.getSelectedRow();
         if (!isUsed(selRow)) {
-            PartitionModel model = options.getPartitionModels().get(selRow);
-            options.getPartitionModels().remove(model);
+            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);
+            options.getPartitionSubstitutionModels().remove(model);
         }
 
         modelTableModel.fireTableDataChanged();
-        int n = options.getPartitionModels().size();
+        int n = options.getPartitionSubstitutionModels().size();
         if (selRow >= n) {
             selRow--;
         }
@@ -316,7 +316,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         int selRow = modelTable.getSelectedRow();
         if (selRow >= 0) {
-            setCurrentModel(options.getPartitionModels().get(selRow));
+            setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
             frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
@@ -326,7 +326,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
      *
      * @param model the new model to display
      */
-    private void setCurrentModel(PartitionModel model) {
+    private void setCurrentModel(PartitionSubstitutionModel model) {
 
         if (model != null) {
             if (currentModel != null) modelPanelParent.removeAll();
@@ -367,9 +367,9 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private boolean isUsed(int row) {
-        PartitionModel model = options.getPartitionModels().get(row);
+        PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
         for (PartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionModel() == model) {
+            if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }
         }
@@ -397,11 +397,11 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getPartitionModels().size();
+            return options.getPartitionSubstitutionModels().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionModel model = options.getPartitionModels().get(row);
+            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
             switch (col) {
                 case 0:
                     return model.getName();
@@ -417,7 +417,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object value, int row, int col) {
             String name = ((String) value).trim();
             if (name.length() > 0) {
-                PartitionModel model = options.getPartitionModels().get(row);
+                PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
                 model.setName(name);
                 updateBorder();
                 fireModelsChanged();

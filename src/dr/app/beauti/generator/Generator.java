@@ -4,7 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
@@ -30,7 +30,7 @@ public abstract class Generator {
 	
     protected final BeautiOptions options;
     
-    protected PartitionModel model;
+    protected PartitionSubstitutionModel model;
 	protected String genePrefix = ""; // gene file name
 
     protected Generator(BeautiOptions options) {
@@ -54,11 +54,11 @@ public abstract class Generator {
 		this.genePrefix = genePrefix;
 	}
 	
-    public PartitionModel getModel() {
+    public PartitionSubstitutionModel getModel() {
 		return model;
 	}
 
-	public void setModel(PartitionModel model) {
+	public void setModel(PartitionSubstitutionModel model) {
 		this.model = model;
 		setGenePrefix(model.getName() + ".");
 	}

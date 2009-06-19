@@ -30,7 +30,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeSubstitutionModel(PartitionModel model, XMLWriter writer) {
+    public void writeSubstitutionModel(PartitionSubstitutionModel model, XMLWriter writer) {
 
         DataType dataType = model.dataType;
         String dataTypeDescription = dataType.getDescription();
@@ -133,7 +133,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeHKYModel(int num, XMLWriter writer, PartitionModel model) {
+    public void writeHKYModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix(num);
 
@@ -157,7 +157,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeGTRModel(int num, XMLWriter writer, PartitionModel model) {
+    public void writeGTRModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix(num);
 
@@ -170,15 +170,15 @@ public class PartitionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
 
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionModel.GTR_RATE_NAMES[0], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[1], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[2], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionModel.GTR_RATE_NAMES[3], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionModel.GTR_RATE_NAMES[4], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, prefix + PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, prefix + PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, prefix + PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, prefix + PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, prefix + PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
     }
 
-    private void writeFrequencyModel(XMLWriter writer, PartitionModel model, int num) {
+    private void writeFrequencyModel(XMLWriter writer, PartitionSubstitutionModel model, int num) {
         String dataTypeDescription = model.dataType.getDescription();
         String prefix = model.getPrefix(num);
         writer.writeOpenTag(
@@ -217,7 +217,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeBinarySimpleModel(XMLWriter writer, PartitionModel model) {
+    public void writeBinarySimpleModel(XMLWriter writer, PartitionSubstitutionModel model) {
         String dataTypeDescription = model.dataType.getDescription();
 
         String prefix = model.getPrefix();
@@ -250,7 +250,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write
      */
-    public void writeBinaryCovarionModel(XMLWriter writer, PartitionModel model) {
+    public void writeBinaryCovarionModel(XMLWriter writer, PartitionSubstitutionModel model) {
         String prefix = model.getPrefix();
 
         writer.writeComment("The Binary covarion model");
@@ -278,7 +278,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writeMuParameter the relative rate parameter for this site model
      * @param writer           the writer
      */
-    public void writeSiteModel(PartitionModel model, boolean writeMuParameter, XMLWriter writer) {
+    public void writeSiteModel(PartitionSubstitutionModel model, boolean writeMuParameter, XMLWriter writer) {
 
         switch (model.dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -312,7 +312,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeMuParameterRefs(PartitionModel model, XMLWriter writer) {
+    public void writeMuParameterRefs(PartitionSubstitutionModel model, XMLWriter writer) {
 
         if (model.dataType.getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
@@ -324,7 +324,7 @@ public class PartitionModelGenerator extends Generator {
 
     }
 
-    public void writeLog(XMLWriter writer, PartitionModel model) {
+    public void writeLog(XMLWriter writer, PartitionSubstitutionModel model) {
 
         int codonPartitionCount = model.getCodonPartitionCount();
 
@@ -352,12 +352,12 @@ public class PartitionModelGenerator extends Generator {
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {                                
-                                for (String rateName : PartitionModel.GTR_RATE_NAMES) {
+                                for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
                                 }
                             }
                         } else {                            
-                            for (String rateName : PartitionModel.GTR_RATE_NAMES) {
+                            for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                             }
                         }
@@ -422,7 +422,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writer           the writer
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionModel model) {
+    private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix(num);
         String prefix2 = model.getPrefix();
@@ -512,7 +512,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writeMuParameter the relative rate parameter for this site model
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
+    private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix();
 
@@ -562,7 +562,7 @@ public class PartitionModelGenerator extends Generator {
      * @param writeMuParameter the relative rate parameter for this site model
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionModel model) {
+    private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix();
 

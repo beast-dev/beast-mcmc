@@ -7,9 +7,9 @@ import java.util.ArrayList;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class PartitionTree extends ModelOptions {
+public class PartitionTreeModel extends ModelOptions {
 
-    public PartitionTree(BeautiOptions options, PartitionData partition) {
+    public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName());
     }
 
@@ -20,11 +20,11 @@ public class PartitionTree extends ModelOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionTree(BeautiOptions options, String name, PartitionTree source) {
+    public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
         this(options, name);
     }
 
-    public PartitionTree(BeautiOptions options, String name) {
+    public PartitionTreeModel(BeautiOptions options, String name) {
         this.options = options;
         this.name = name;
   }
@@ -89,7 +89,7 @@ public class PartitionTree extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionTrees().size() > 1) {
+        if (options.getActivePartitionTreeModels().size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }

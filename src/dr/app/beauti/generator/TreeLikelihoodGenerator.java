@@ -4,7 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -36,7 +36,7 @@ public class TreeLikelihoodGenerator extends Generator {
      * @param model  the partition model to write likelihood block for
      * @param writer the writer
      */
-    void writeTreeLikelihood(PartitionModel model, XMLWriter writer) {
+    void writeTreeLikelihood(PartitionSubstitutionModel model, XMLWriter writer) {
 
         if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
@@ -55,7 +55,7 @@ public class TreeLikelihoodGenerator extends Generator {
      * @param model  the partition model to write likelihood block for
      * @param writer the writer
      */
-    public void writeTreeLikelihood(String id, int num, PartitionModel model, XMLWriter writer) {
+    public void writeTreeLikelihood(String id, int num, PartitionSubstitutionModel model, XMLWriter writer) {
 
         if (num > 0) {
             String prefix = model.getPrefix(num);
@@ -137,7 +137,7 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-        for (PartitionModel model : options.getActivePartitionModels()) {
+        for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
             if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix(i) + TreeLikelihood.TREE_LIKELIHOOD);
@@ -148,7 +148,7 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
-    private boolean useAmbiguities(PartitionModel model) {
+    private boolean useAmbiguities(PartitionSubstitutionModel model) {
         boolean useAmbiguities = false;
 
         switch (model.dataType.getType()) {

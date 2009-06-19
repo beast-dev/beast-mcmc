@@ -110,8 +110,8 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if PAUP block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    public PartitionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
-        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
+    public PartitionSubstitutionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs", Nucleotides.INSTANCE);
         readTopLevelBlock(options, model, charSets);
         return model;
     }
@@ -126,8 +126,8 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if MRBAYES block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    public PartitionModel parseMrBayesBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
-        PartitionModel model = new PartitionModel(options, "nucs", Nucleotides.INSTANCE);
+    public PartitionSubstitutionModel parseMrBayesBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs", Nucleotides.INSTANCE);
         readTopLevelBlock(options, model, charSets);
         return model;
     }
@@ -175,7 +175,7 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if top-level block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    private void readTopLevelBlock(BeautiOptions options, PartitionModel model, List<CharSet> charSets)
+    private void readTopLevelBlock(BeautiOptions options, PartitionSubstitutionModel model, List<CharSet> charSets)
             throws ImportException, IOException {
         boolean done = false;
 
@@ -209,7 +209,7 @@ public class NexusApplicationImporter extends NexusImporter {
         }
     }
 
-    private void readLSETCommand(PartitionModel model) throws ImportException, IOException {
+    private void readLSETCommand(PartitionSubstitutionModel model) throws ImportException, IOException {
         boolean done = false;
 
         while (!done) {

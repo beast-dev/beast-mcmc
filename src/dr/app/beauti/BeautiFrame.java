@@ -393,7 +393,7 @@ public class BeautiFrame extends DocumentFrame {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         java.util.List<Tree> trees = new ArrayList<Tree>();
-        PartitionModel model = null;
+        PartitionSubstitutionModel model = null;
         java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
 
         try {
@@ -517,7 +517,7 @@ public class BeautiFrame extends DocumentFrame {
             TaxonList taxa,
             Alignment alignment,
             java.util.List<Tree> trees,
-            PartitionModel model,
+            PartitionSubstitutionModel model,
             java.util.List<NexusApplicationImporter.CharSet> charSets,
             String fileName) {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
@@ -634,7 +634,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private void addAlignment(Alignment alignment, java.util.List<NexusApplicationImporter.CharSet> charSets,
-                              PartitionModel model,
+                              PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {
             java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
@@ -649,25 +649,25 @@ public class BeautiFrame extends DocumentFrame {
             for (PartitionData partition : partitions) {
                 beautiOptions.dataPartitions.add(partition);
                 if (model != null) {
-                    partition.setPartitionModel(model);
-                    beautiOptions.addPartitionModel(model);
+                    partition.setPartitionSubstitutionModel(model);
+                    beautiOptions.addPartitionSubstitutionModel(model);
                 } else {
-                    for (PartitionModel pm : beautiOptions.getPartitionModels()) {
+                    for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
                         if (pm.dataType == alignment.getDataType()) {
-                            partition.setPartitionModel(pm);
+                            partition.setPartitionSubstitutionModel(pm);
                         }
                     }
-                    if (partition.getPartitionModel() == null) {
-                        PartitionModel pm = new PartitionModel(beautiOptions, partition);
-                        partition.setPartitionModel(pm);
-                        beautiOptions.addPartitionModel(pm);
+                    if (partition.getPartitionSubstitutionModel() == null) {
+                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(beautiOptions, partition);
+                        partition.setPartitionSubstitutionModel(pm);
+                        beautiOptions.addPartitionSubstitutionModel(pm);
                     }
-                    if (beautiOptions.getPartitionTrees().size() > 0) {
-                        partition.setPartitionTree(beautiOptions.getPartitionTrees().get(0));
+                    if (beautiOptions.getPartitionTreeModels().size() > 0) {
+                        partition.setPartitionTreeModel(beautiOptions.getPartitionTreeModels().get(0));
                     } else {
-                        PartitionTree pt = new PartitionTree(beautiOptions, "default");
-                        partition.setPartitionTree(pt);
-                        beautiOptions.addPartitionTree(pt);
+                        PartitionTreeModel pt = new PartitionTreeModel(beautiOptions, "default");
+                        partition.setPartitionTreeModel(pt);
+                        beautiOptions.addPartitionTreeModel(pt);
                     }
                 }
             }
@@ -739,8 +739,8 @@ public class BeautiFrame extends DocumentFrame {
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
         dataPanel.unlinkModels();
-        for (PartitionModel model : beautiOptions.getActivePartitionModels()) {
-            model.initParametersAndOperatorsForEachPartitionModel();
+        for (PartitionSubstitutionModel model : beautiOptions.getActivePartitionSubstitutionModels()) {
+        	model.initParametersAndOperators();
         }
 
         int i = tabbedPane.indexOfTab("Trees");

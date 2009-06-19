@@ -25,8 +25,8 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionModel;
-import dr.app.beauti.options.PartitionTree;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -100,8 +100,8 @@ public class SelectTreeDialog {
         return result;
     }
 
-    public PartitionTree getTree() {
-        return (PartitionTree) treeCombo.getSelectedItem();
+    public PartitionTreeModel getTree() {
+        return (PartitionTreeModel) treeCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

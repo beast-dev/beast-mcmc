@@ -175,7 +175,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void modelsChanged() {
-        Object[] modelArray = options.getPartitionModels().toArray();
+        Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(5);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
     }
@@ -245,11 +245,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
 
-            PartitionModel model = partition.getPartitionModel();
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
-                PartitionModel newModel = new PartitionModel(options, partition.getName(), model);
-                options.addPartitionModel(newModel);
-                partition.setPartitionModel(newModel);
+                PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition.getName(), model);
+                options.addPartitionSubstitutionModel(newModel);
+                partition.setPartitionSubstitutionModel(newModel);
             }
         }
 
@@ -265,9 +265,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
             if (dateType == null) {
-                dateType = partition.getPartitionModel().dataType;
+                dateType = partition.getPartitionSubstitutionModel().dataType;
             } else {
-                if (partition.getPartitionModel().dataType != dateType) {
+                if (partition.getPartitionSubstitutionModel().dataType != dateType) {
                     JOptionPane.showMessageDialog(this, "Can only link the models for data partitions \n" +
                             "of the same data type (e.g., nucleotides)",
                             "Unable to link models",
@@ -277,7 +277,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        java.util.List<PartitionModel> models = options.getPartitionModels(dateType);
+        java.util.List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels(dateType);
         Object[] modelArray = models.toArray();
 
         if (selectModelDialog == null) {
@@ -286,15 +286,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int result = selectModelDialog.showDialog(modelArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionModel model = selectModelDialog.getModel();
+            PartitionSubstitutionModel model = selectModelDialog.getModel();
             if (selectModelDialog.getMakeCopy()) {
-                model = new PartitionModel(options, selectModelDialog.getName(), model);
-                options.addPartitionModel(model);
+                model = new PartitionSubstitutionModel(options, selectModelDialog.getName(), model);
+                options.addPartitionSubstitutionModel(model);
             }
 
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);
-                partition.setPartitionModel(model);
+                partition.setPartitionSubstitutionModel(model);
             }
         }
 
@@ -309,11 +309,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
 
-            PartitionTree tree = partition.getPartitionTree();
+            PartitionTreeModel tree = partition.getPartitionTreeModel();
             if (!tree.getName().equals(partition.getName())) {
-                PartitionTree newTree = new PartitionTree(options, partition.getName());
-                options.addPartitionTree(newTree);
-                partition.setPartitionTree(newTree);
+                PartitionTreeModel newTree = new PartitionTreeModel(options, partition.getName());
+                options.addPartitionTreeModel(newTree);
+                partition.setPartitionTreeModel(newTree);
             }
         }
 
@@ -325,7 +325,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void linkTrees() {
         int[] selRows = dataTable.getSelectedRows();
-        Object[] treeArray = options.getPartitionTrees().toArray();
+        Object[] treeArray = options.getPartitionTreeModels().toArray();
 
         if (selectTreeDialog == null) {
             selectTreeDialog = new SelectTreeDialog(frame);
@@ -333,15 +333,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int result = selectTreeDialog.showDialog(treeArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionTree tree = selectTreeDialog.getTree();
+            PartitionTreeModel tree = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-                tree = new PartitionTree(options, selectTreeDialog.getName());
-                options.addPartitionTree(tree);
+                tree = new PartitionTreeModel(options, selectTreeDialog.getName());
+                options.addPartitionTreeModel(tree);
             }
 
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);
-                partition.setPartitionTree(tree);
+                partition.setPartitionTreeModel(tree);
             }
         }
 
@@ -387,9 +387,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 4:
                     return partition.getAlignment().getDataType().getDescription();
                 case 5:
-                    return partition.getPartitionModel().getName();
+                    return partition.getPartitionSubstitutionModel().getName();
                 case 6:
-                    return partition.getPartitionTree().getName();
+                    return partition.getPartitionTreeModel().getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -405,10 +405,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     }
                     break;
                 case 5:
-                    partition.setPartitionModel((PartitionModel) aValue);
+                    partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     break;
                 case 6:
-                    partition.setPartitionTree((PartitionTree) aValue);
+                    partition.setPartitionTreeModel((PartitionTreeModel) aValue);
                     break;
             }
             fireDataChanged();

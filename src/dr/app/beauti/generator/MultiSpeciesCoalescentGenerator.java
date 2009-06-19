@@ -4,7 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionModel;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorType;
@@ -92,7 +92,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         writer.writeOpenTag(SpeciesBindings.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindings.GENE_TREES)});
 
     	// generate gene trees regarding each data partition
-    	for (PartitionModel partitionModel : options.getActivePartitionModels()) {
+    	for (PartitionSubstitutionModel partitionModel : options.getActivePartitionSubstitutionModels()) {
     		writer.writeIDref(TreeModel.TREE_MODEL, partitionModel.getName() + "." + TreeModel.TREE_MODEL);
         }
 
@@ -109,7 +109,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         
         //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
         // hard code get(0)
-        double popSizeValue = options.getParameter("constant.popSize", options.getActivePartitionModels().get(0)).initial; // "initial" is "value"
+        double popSizeValue = options.getParameter("constant.popSize", options.getActivePartitionSubstitutionModels().get(0)).initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
         		new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(popSizeValue))});
         

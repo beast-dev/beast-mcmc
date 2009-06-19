@@ -9,6 +9,7 @@ import dr.app.beauti.options.*;
 import dr.app.util.Utils;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 
 
@@ -36,27 +37,27 @@ public class GTRParameterEstimationTest {
 	
 	public GTRParameterEstimationTest() {
 		// Runtime.getRuntime().exec not work, have to run in Debug and run *.cmd manually each stage.
-		try{
-			splitTreeFiles();			
-		} catch (IOException ioe) {
-            System.err.println("Unable to read or write files: " + ioe.getMessage());
-        }
-		System.out.println(PRE_PATH + "seqgen_banch.cmd is generated"); 
-		
-//	    try {
-//	    	System.out.println(PRE_PATH + "seqgen_banch.cmd");
-//	        Process p = Runtime.getRuntime().exec("cmd.exe " + PRE_PATH + "seqgen_banch.cmd");
-//	        
-//	        p.waitFor();
-//	        System.out.println(p.exitValue());
-//	    } catch (Exception err) {
-//	    	System.err.println("Can not create seqgen_banch.cmd " + err.getMessage());
-//		}      	    
-//		System.out.println(PRE_PATH + "seqgen_banch.cmd is executed"); 
-		
-		createBeastInputFiles();
-		
-		System.out.println(PRE_PATH + "beast_banch.cmd is generated");
+//		try{
+//			splitTreeFiles();			
+//		} catch (IOException ioe) {
+//            System.err.println("Unable to read or write files: " + ioe.getMessage());
+//        }
+//		System.out.println(PRE_PATH + "seqgen_banch.cmd is generated"); 
+//		
+////	    try {
+////	    	System.out.println(PRE_PATH + "seqgen_banch.cmd");
+////	        Process p = Runtime.getRuntime().exec("cmd.exe " + PRE_PATH + "seqgen_banch.cmd");
+////	        
+////	        p.waitFor();
+////	        System.out.println(p.exitValue());
+////	    } catch (Exception err) {
+////	    	System.err.println("Can not create seqgen_banch.cmd " + err.getMessage());
+////		}      	    
+////		System.out.println(PRE_PATH + "seqgen_banch.cmd is executed"); 
+//		
+//		createBeastInputFiles();
+//		
+//		System.out.println(PRE_PATH + "beast_banch.cmd is generated");
 		
 //	    try {
 //	    	
@@ -68,6 +69,8 @@ public class GTRParameterEstimationTest {
 //	    	System.err.println("Can not create beast_banch.cmd " + err.getMessage());
 //	    }      	    
 //	    System.out.println(PRE_PATH + "beast_banch.cmd is executed"); 
+		
+		initTest();
 		
 		try{
 			writeReport();
@@ -170,7 +173,7 @@ public class GTRParameterEstimationTest {
 	        btc.importFromFile(PRE_PATH + b.getFileNamePrefix() + ".nex", beautiOptions, false); 
 	        
 	        // assume only 1 partition model
-	        PartitionModel model = beautiOptions.getPartitionModels().get(0);
+	        PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 	        
 	        // set substitution model 
 	        model.setNucSubstitutionModel(NucModelType.GTR);
@@ -232,14 +235,16 @@ public class GTRParameterEstimationTest {
     		LogFileTraces traces = new LogFileTraces(resultLine + ".log", logFile);
             traces.loadTraces();
             traces.setBurnIn(100000);
-
+//TODO: incorrect mean, stdv, ess, ...
             for (int i = 0; i < traces.getTraceCount(); i++) {
                 traces.analyseTrace(i);
-            }
-    		
-            for (int i = 0; i < traces.getTraceCount(); i++) { 
+//            }
+//    		
+//            for (int i = 0; i < traces.getTraceCount(); i++) { 
             	
             	TraceCorrelation distribution = traces.getCorrelationStatistics(i);
+//            	TraceDistribution distribution = traces.getDistributionStatistics(i);
+            	
             	double hpdLower = distribution.getLowerHPD();
             	double hpdUpper = distribution.getUpperHPD();
             	
@@ -280,6 +285,11 @@ public class GTRParameterEstimationTest {
 					+ "\t" + Double.toString(distribution.getESS());
             		
             	} 
+            	
+            	System.out.println("i = " + i + "   name = " + traces.getTraceName(i) + "  mean = " + distribution.getMean() + 
+            			"   stdv = " + distribution.getStdErrorOfMean() + "   median = " + distribution.getMedian() +
+            			"   min = " + distribution.getMinimum() + "   max = " + distribution.getMaximum() + 
+            			"  ESS = " + distribution.getESS() + "   Lhpd = " + distribution.getLowerHPD() + "   Hhpd = " + distribution.getUpperHPD());
             }
               		
     		fileWriter.write(resultLine + "\n");
@@ -294,6 +304,23 @@ public class GTRParameterEstimationTest {
     	} else {
     		return (value < min && value > max);
     	}
+    }
+    
+    private void initTest() {
+    	inputFiles = new ArrayList<BEASTInputFile>();
+    	
+    	BEASTInputFile b = new BEASTInputFile(); 
+    			
+		b.setAc(0.177);
+        b.setAg(0.377);
+        b.setAt(0.221);
+        b.setCg(0.437);
+        b.setGt(0.133);        
+        b.setFileNamePrefix("STATE_0");
+        
+		inputFiles.add(b);
+    	
+    	
     }
     
     //Main method

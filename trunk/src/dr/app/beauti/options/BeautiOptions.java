@@ -66,7 +66,7 @@ public class BeautiOptions extends ModelOptions {
     
     public BeautiOptions(ComponentFactory[] components) {
     	
-    	initParametersAndOperators();
+    	initAllParametersAndOperators();
     	
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {

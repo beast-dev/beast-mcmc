@@ -29,6 +29,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
+import dr.evomodel.operators.ImportaceNarrowExchange;
 
 import java.util.*;
 import java.io.*;
@@ -265,7 +266,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeUniform.PARSSR);
-        addXMLObjectParser(dr.evomodel.operators.INS.INS_PARSER);
+        addXMLObjectParser(ImportaceNarrowExchange.INS_PARSER);
 
         // rate operators
         addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);

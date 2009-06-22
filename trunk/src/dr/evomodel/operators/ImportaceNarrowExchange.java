@@ -22,7 +22,7 @@ import java.util.Map;
  * @version 1.0
  */
 @SuppressWarnings({"ConstantConditions"})
-public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
+public class ImportaceNarrowExchange extends AbstractTreeOperator implements TreeLogger.LogUpon {
 
     private TreeModel tree = null;
 
@@ -36,7 +36,7 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
     private final double[] weights;
     private double totalWeight;
 
-    public INS(TreeModel tree, PatternList patterns, double epsilon, double weight) throws Exception {
+    public ImportaceNarrowExchange(TreeModel tree, PatternList patterns, double epsilon, double weight) throws Exception {
         this.tree = tree;
         setWeight(weight);
 
@@ -313,7 +313,7 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
             final double epsilon = xo.getAttribute("epsilon", 0.1);
 
             try {
-                return new INS(treeModel, patterns, epsilon, weight);
+                return new ImportaceNarrowExchange(treeModel, patterns, epsilon, weight);
             } catch( Exception e ) {
                 throw new XMLParseException(e.getMessage());
             }
@@ -330,7 +330,7 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
         }
 
         public Class getReturnType() {
-            return INS.class;
+            return ImportaceNarrowExchange.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

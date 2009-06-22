@@ -41,7 +41,7 @@ public class TestStatistic extends BooleanStatistic {
     private Attribute attribute = null;
     private Attribute attribute2 = null;
     private double testValue1, testValue2;
-    private int mode;
+    private final int mode;
 
     private static final int EQUALS = 0;
     private static final int GREATER_THAN = 1;
@@ -49,6 +49,11 @@ public class TestStatistic extends BooleanStatistic {
     private static final int INSIDE = 3;
     private static final int OUTSIDE = 4;
 
+    private static final String SEQUALS = "equals";
+    private static final String SGREATER_THAN = "greaterThan";
+    private static final String SLESS_THAN = "lessThan";
+    private static final String SINSIDE = "inside";
+    private static final String SOUTSIDE = "outside";
 
     public TestStatistic(String name, Attribute attr, double value, int mode) {
         super(name);
@@ -125,7 +130,6 @@ public class TestStatistic extends BooleanStatistic {
         return false;
     }
 
-
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -140,31 +144,31 @@ public class TestStatistic extends BooleanStatistic {
 
             TestStatistic statistic;
 
-            if (xo.hasChildNamed("equals")) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild("equals");
+            if (xo.hasChildNamed(SEQUALS)) {
+                Attribute attr2 = (Attribute) xo.getElementFirstChild(SEQUALS);
                 statistic = new TestStatistic(name, attr, attr2, EQUALS);
-            } else if (xo.hasChildNamed("greaterThan")) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild("greaterThan");
+            } else if (xo.hasChildNamed(SGREATER_THAN)) {
+                Attribute attr2 = (Attribute) xo.getElementFirstChild(SGREATER_THAN);
                 statistic = new TestStatistic(name, attr, attr2, GREATER_THAN);
-            } else if (xo.hasChildNamed("lessThan")) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild("lessThan");
+            } else if (xo.hasChildNamed(SLESS_THAN)) {
+                Attribute attr2 = (Attribute) xo.getElementFirstChild(SLESS_THAN);
                 statistic = new TestStatistic(name, attr, attr2, LESS_THAN);
-            } else if (xo.hasAttribute("equals")) {
-                testValue1 = xo.getDoubleAttribute("equals");
+            } else if (xo.hasAttribute(SEQUALS)) {
+                testValue1 = xo.getDoubleAttribute(SEQUALS);
                 statistic = new TestStatistic(name, attr, testValue1, EQUALS);
-            } else if (xo.hasAttribute("greaterThan")) {
-                testValue1 = xo.getDoubleAttribute("greaterThan");
+            } else if (xo.hasAttribute(SGREATER_THAN)) {
+                testValue1 = xo.getDoubleAttribute(SGREATER_THAN);
                 statistic = new TestStatistic(name, attr, testValue1, GREATER_THAN);
-            } else if (xo.hasAttribute("lessThan")) {
-                testValue1 = xo.getDoubleAttribute("lessThan");
+            } else if (xo.hasAttribute(SLESS_THAN)) {
+                testValue1 = xo.getDoubleAttribute(SLESS_THAN);
                 statistic = new TestStatistic(name, attr, testValue1, LESS_THAN);
-            } else if (xo.hasAttribute("inside")) {
-                double[] values = xo.getDoubleArrayAttribute("inside");
+            } else if (xo.hasAttribute(SINSIDE)) {
+                double[] values = xo.getDoubleArrayAttribute(SINSIDE);
                 if (values.length != 2)
                     throw new XMLParseException("inside attribute of test element requires two values");
                 statistic = new TestStatistic(name, attr, values[0], values[1], INSIDE);
-            } else if (xo.hasAttribute("outside")) {
-                double[] values = xo.getDoubleArrayAttribute("outside");
+            } else if (xo.hasAttribute(SOUTSIDE)) {
+                double[] values = xo.getDoubleArrayAttribute(SOUTSIDE);
                 if (values.length != 2)
                     throw new XMLParseException("outside attribute of test element requires two values");
                 statistic = new TestStatistic(name, attr, values[0], values[1], OUTSIDE);
@@ -191,19 +195,19 @@ public class TestStatistic extends BooleanStatistic {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule("name", "A name for this statistic, for logging purposes", true),
                 new ElementRule(Attribute.class),
                 new XORRule(
                         new XMLSyntaxRule[]{
-                                new ElementRule("equals", Attribute.class),
-                                new ElementRule("greaterThan", Attribute.class),
-                                new ElementRule("lessThan", Attribute.class),
-                                AttributeRule.newDoubleRule("equals"),
-                                AttributeRule.newDoubleRule("greaterThan"),
-                                AttributeRule.newDoubleRule("lessThan"),
-                                AttributeRule.newDoubleArrayRule("inside"),
-                                AttributeRule.newDoubleArrayRule("outside")
+                                new ElementRule(SEQUALS, Attribute.class),
+                                new ElementRule(SGREATER_THAN, Attribute.class),
+                                new ElementRule(SLESS_THAN, Attribute.class),
+                                AttributeRule.newDoubleRule(SEQUALS),
+                                AttributeRule.newDoubleRule(SGREATER_THAN),
+                                AttributeRule.newDoubleRule(SLESS_THAN),
+                                AttributeRule.newDoubleArrayRule(SINSIDE),
+                                AttributeRule.newDoubleArrayRule(SOUTSIDE)
                         }
                 )
 		};

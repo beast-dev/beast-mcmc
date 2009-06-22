@@ -45,12 +45,12 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 	// Public stuff
 	//
 	
-	public static String EMPIRICAL_PIECEWISE = "empiricalPiecewise";
-	public static String INTERVAL_WIDTHS = "intervalWidths";
-	public static String POPULATION_SIZES = "populationSizes";
-	public static String TAU = "generationLength";
-	public static String THRESHOLD = "threshold";
-	public static String LAG = "lag";
+	public static final String EMPIRICAL_PIECEWISE = "empiricalPiecewise";
+	public static final String INTERVAL_WIDTHS = "intervalWidths";
+	public static final String POPULATION_SIZES = "populationSizes";
+	public static final String TAU = "generationLength";
+	public static final String THRESHOLD = "threshold";
+	public static final String LAG = "lag";
 
 	/**
 	 * Construct demographic model with default settings
@@ -138,11 +138,13 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 		// no intermediates need to be recalculated...
 	}
 	
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+//	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+//
+//		// no intermediates need to be recalculated...
+//	}
+//
 
-		// no intermediates need to be recalculated...
-	}
-	
+    // todo: why override?
 	protected void storeState() {} // no additional state needs storing
 	protected void restoreState() {} // no additional state needs restoring	
 	protected void acceptState() {} // no additional state needs accepting	
@@ -159,19 +161,19 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
 			
-			XMLObject cxo = (XMLObject)xo.getChild(INTERVAL_WIDTHS);
+			XMLObject cxo = xo.getChild(INTERVAL_WIDTHS);
 			double[] intervalWidths = cxo.getDoubleArrayAttribute("values");
 	
-			cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
+			cxo = xo.getChild(POPULATION_SIZES);
 			Parameter popSizes = (Parameter)cxo.getChild(Parameter.class);
 	
-			cxo = (XMLObject)xo.getChild(TAU);
+			cxo = xo.getChild(TAU);
 			Parameter scaleParam = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(THRESHOLD);
+			cxo = xo.getChild(THRESHOLD);
 			Parameter bParam = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(LAG);
+			cxo = xo.getChild(LAG);
 			Parameter offsetParam = (Parameter)cxo.getChild(Parameter.class);
 
 			return new EmpiricalPiecewiseModel(intervalWidths, popSizes, scaleParam, bParam, offsetParam, units);
@@ -190,7 +192,7 @@ public class EmpiricalPiecewiseModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			new ElementRule(INTERVAL_WIDTHS, 
 				new XMLSyntaxRule[] { AttributeRule.newDoubleArrayRule("values", false), }),
 			XMLUnits.SYNTAX_RULES[0],

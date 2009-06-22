@@ -328,7 +328,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     private class NumberArrayColumn extends NumberColumn {
 
-        private int index;
+        private final int index;
 
         public NumberArrayColumn(String label, int index) {
             super(label);
@@ -360,7 +360,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DEPENDENT_VARIABLES);
+            XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
             Parameter dependentParam = null;
             if (cxo != null)
                 dependentParam = (Parameter) cxo.getChild(Parameter.class);
@@ -379,13 +379,13 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                 throw new XMLParseException("Family '" + family + "' is not currently implemented");
 
             if (glm.requiresScale()) {
-                cxo = (XMLObject) xo.getChild(SCALE_VARIABLES);
+                cxo = xo.getChild(SCALE_VARIABLES);
                 Parameter scaleParameter = null;
 //                DesignMatrix designMatrix = null;
                 Parameter scaleDesign = null;
                 if (cxo != null) {
                     scaleParameter = (Parameter) cxo.getChild(Parameter.class);
-                    XMLObject gxo = (XMLObject) cxo.getChild(INDICATOR);
+                    XMLObject gxo = cxo.getChild(INDICATOR);
                     if (gxo != null)
                         scaleDesign = (Parameter) gxo.getChild(Parameter.class);
 //                    designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
@@ -424,7 +424,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                     Parameter independentParam = (Parameter) cxo.getChild(Parameter.class);
                     DesignMatrix designMatrix = (DesignMatrix) cxo.getChild(DesignMatrix.class);
                     checkDimensions(independentParam, dependentParam, designMatrix);
-                    cxo = (XMLObject) cxo.getChild(INDICATOR);
+                    cxo = cxo.getChild(INDICATOR);
                     Parameter indicator = null;
                     if (cxo != null) {
                         indicator = (Parameter) cxo.getChild(Parameter.class);

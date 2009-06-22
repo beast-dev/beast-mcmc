@@ -167,7 +167,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
             rateParameters[i] = ancestralRateParameter;
 
             if (xo.hasAttribute(CONTINUOUS_NORMALIZATION) && xo.getBooleanAttribute(CONTINUOUS_NORMALIZATION)) {
-                Parameter rootHeight = (Parameter) ((XMLObject) xo.getChild(TreeModelParser.ROOT_HEIGHT)).getChild(Parameter.class);
+                Parameter rootHeight = (Parameter) xo.getChild(TreeModelParser.ROOT_HEIGHT).getChild(Parameter.class);
                 return new ContinuousEpochBranchRateModel(timeParameters, rateParameters, rootHeight);
             }
 
@@ -212,7 +212,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(EPOCH,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newDoubleRule(TRANSITION_TIME, true, "The time of transition between this epoch and the previous one"),

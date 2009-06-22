@@ -84,7 +84,7 @@ public class ArbitraryBranchRates extends DiscretizedBranchRates {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 //	            AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
 //	            AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
 				new ElementRule(TreeModel.class),

@@ -80,16 +80,15 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
-        double logDet = Math.log(determinatePrecisionMatrix);
-        return MultivariateNormalDistribution.logPdf(stop, start,
-                diffusionPrecisionMatrix, logDet, time);
+        final double logDet = Math.log(determinatePrecisionMatrix);
+        return MultivariateNormalDistribution.logPdf(stop, start, diffusionPrecisionMatrix, logDet, time);
     }
 
-
+    // todo should be a test, no?
     public static void main(String[] args) {
-        double[] start = new double[]{1, 2};
-        double[] stop = new double[]{0, 0};
-        double[][] precision = new double[][]{{2, 0.5}, {0.5, 1}};
+        double[] start = {1, 2};
+        double[] stop = {0, 0};
+        double[][] precision = {{2, 0.5}, {0.5, 1}};
         double scale = 0.2;
         MatrixParameter precMatrix = new MatrixParameter("Hello");
         precMatrix.addParameter(new Parameter.Default(precision[0]));
@@ -158,7 +157,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
+            XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
             MatrixParameter diffusionParam = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
             return new MultivariateDiffusionModel(diffusionParam);
@@ -176,7 +175,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(DIFFUSION_CONSTANT,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
         };

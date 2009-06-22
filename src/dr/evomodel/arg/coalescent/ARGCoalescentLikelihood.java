@@ -279,7 +279,7 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(POPULATION_SIZE,
 						new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 				new ElementRule(RECOMBINATION_RATE,
@@ -290,13 +290,13 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 		};
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			XMLObject cxo = (XMLObject) xo.getChild(RECOMBINATION_RATE);
+			XMLObject cxo = xo.getChild(RECOMBINATION_RATE);
 			Parameter rRate = (Parameter) cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject) xo.getChild(POPULATION_SIZE);
+			cxo = xo.getChild(POPULATION_SIZE);
 			Parameter pSize = (Parameter) cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject) xo.getChild(ARG_MODEL);
+			cxo = xo.getChild(ARG_MODEL);
 			ARGModel argModel = (ARGModel) cxo.getChild(ARGModel.class);
 
 			int maxreassort = Integer.MAX_VALUE;

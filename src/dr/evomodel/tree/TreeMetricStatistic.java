@@ -137,19 +137,18 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
             return TREE_METRIC_STATISTIC;
         }
 
-        public Object parseXMLObject(
-                XMLObject xo)
-                throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree target = (Tree) xo.getElementFirstChild(TARGET);
-            Tree reference = (Tree) xo.getElementFirstChild(REFERENCE);
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Method m = Method.TOPOLOGY;
             if (xo.hasAttribute(METHOD)) {
                 final String s = xo.getStringAttribute(METHOD);
                 m = Method.valueOf(s.toUpperCase());
             }
+
+            final String name = xo.getAttribute(NAME, xo.hasId() ? xo.getId() : m.name());
+            final Tree target = (Tree) xo.getElementFirstChild(TARGET);
+            final Tree reference = (Tree) xo.getElementFirstChild(REFERENCE);
+
             return new TreeMetricStatistic(name, target, reference, m);
         }
 
@@ -172,7 +171,7 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(
                         NAME,
                         "A name for this statistic primarily for the purposes of logging",
@@ -196,7 +195,7 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
         return r;
     }
 
-    private Method method;
+    private final Method method;
 
     private Tree target = null;
 

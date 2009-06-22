@@ -254,7 +254,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
 
             // Set current breakpoints
             int dim = list.size() - 1;
-            XMLObject cxo = (XMLObject) xo.getChild(BREAK_POINTS);
+            XMLObject cxo = xo.getChild(BREAK_POINTS);
             Parameter breakPoints = new Parameter.Default(dim);
 
             replaceParameter(cxo, breakPoints);
@@ -285,7 +285,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(WINDOW_SIZE),
                 AttributeRule.newIntegerRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),

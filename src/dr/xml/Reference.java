@@ -39,5 +39,5 @@ public class Reference {
 		return "@" + referenceObject.toString();
 	}
 	
-	private XMLObject referenceObject;
+	private final XMLObject referenceObject;
 }

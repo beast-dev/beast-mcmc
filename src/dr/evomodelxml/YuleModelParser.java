@@ -23,15 +23,15 @@ public class YuleModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        final Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-        XMLObject cxo = (XMLObject) xo.getChild(BIRTH_RATE);
+        final XMLObject cxo = xo.getChild(BIRTH_RATE);
         Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
         Parameter deathParameter = new Parameter.Default(0.0);
 
         Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, units);
+       return new BirthDeathGernhard08Model(brParameter, deathParameter, null, units);
     }
 
     //************************************************************************

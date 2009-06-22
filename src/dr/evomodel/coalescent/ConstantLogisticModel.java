@@ -46,19 +46,19 @@ public class ConstantLogisticModel extends DemographicModel
 	// Public stuff
 	//
 	
-	public static String CONSTANT_LOGISTIC_MODEL = "constantLogistic";
-	public static String POPULATION_SIZE = "populationSize";
-	public static String ANCESTRAL_POPULATION_SIZE = "ancestralPopulationSize";
+	private static final String CONSTANT_LOGISTIC_MODEL = "constantLogistic";
+	private static final String POPULATION_SIZE = "populationSize";
+	private static final String ANCESTRAL_POPULATION_SIZE = "ancestralPopulationSize";
 
-	public static String GROWTH_RATE = "growthRate";
-	public static String SHAPE = "shape";
-	public static String ALPHA = "alpha";
+	private static final String GROWTH_RATE = "growthRate";
+	private static final String SHAPE = "shape";
+	private static final String ALPHA = "alpha";
 	
 
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
+    private ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 	
 		this(CONSTANT_LOGISTIC_MODEL, N0Parameter, N1Parameter, growthRateParameter, shapeParameter, alpha, units);
 	}
@@ -66,7 +66,7 @@ public class ConstantLogisticModel extends DemographicModel
 	/**
 	 * Construct demographic model with default settings
 	 */
-	public ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
+    private ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 	
 		super(name);
 		
@@ -125,16 +125,16 @@ public class ConstantLogisticModel extends DemographicModel
 			
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
-			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
+			XMLObject cxo = xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(ANCESTRAL_POPULATION_SIZE);
+			cxo = xo.getChild(ANCESTRAL_POPULATION_SIZE);
 			Parameter N1Param = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(GROWTH_RATE);
+			cxo = xo.getChild(GROWTH_RATE);
 			Parameter rParam = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(SHAPE);
+			cxo = xo.getChild(SHAPE);
 			Parameter cParam = (Parameter)cxo.getChild(Parameter.class);
 			
 			double alpha = xo.getDoubleAttribute(ALPHA);
@@ -154,7 +154,7 @@ public class ConstantLogisticModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			XMLUnits.SYNTAX_RULES[0],
 			new ElementRule(POPULATION_SIZE, 
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
@@ -171,10 +171,10 @@ public class ConstantLogisticModel extends DemographicModel
 	// protected stuff
 	//
 
-	Parameter N0Parameter = null;	
-	Parameter N1Parameter = null;	
-	Parameter growthRateParameter = null;	
-	Parameter shapeParameter = null;	
-	double alpha = 0.5;
-	ConstLogistic constLogistic = null;
+	private Parameter N0Parameter = null;
+	private Parameter N1Parameter = null;
+	private Parameter growthRateParameter = null;
+	private Parameter shapeParameter = null;
+	private double alpha = 0.5;
+	private ConstLogistic constLogistic = null;
 }

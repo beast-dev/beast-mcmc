@@ -552,10 +552,10 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
 
         public Object parseXMLObject(XMLObject xo) {
 
-            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
+            XMLObject cxo = xo.getChild(MODEL);
             DemographicModel demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
 
-            cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+            cxo = xo.getChild(POPULATION_TREE);
             TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
             return new VeryOldCoalescentLikelihood(treeModel, demoModel);
@@ -577,7 +577,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MODEL, new XMLSyntaxRule[]{
                         new ElementRule(DemographicModel.class)
                 }),

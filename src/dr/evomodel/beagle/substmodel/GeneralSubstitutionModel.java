@@ -25,10 +25,9 @@
 
 package dr.evomodel.beagle.substmodel;
 
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.SubstitutionModel;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -141,12 +140,12 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 
 			Parameter ratesParameter;
 
-			XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+			XMLObject cxo = xo.getChild(FREQUENCIES);
 			FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
 			DataType dataType = freqModel.getDataType();
 
-			cxo = (XMLObject) xo.getChild(RATES);
+			cxo = xo.getChild(RATES);
 
 			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
 			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
@@ -185,11 +184,12 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(FREQUENCIES, FrequencyModel.class),
 				new ElementRule(RATES,
-						new XMLSyntaxRule[]{
-								AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
+						new XMLSyntaxRule[] {
+								AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0)"+
+                                        " that all other rates are relative to. In DNA this is usually G<->T (6)"),
 								new ElementRule(Parameter.class, true)}
 				)
 		};

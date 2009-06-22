@@ -29,7 +29,6 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.*;
-import dr.evolution.util.*;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;

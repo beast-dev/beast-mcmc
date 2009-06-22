@@ -153,6 +153,7 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
                 evec = TopographicalMap.readEigenvectors(evecFile.getAbsolutePath());
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                assert false;
             }
 
 //			XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
@@ -163,7 +164,7 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 //			if (diffusionParam.getRowDimension()>1 && diffusionParam.getColumnDimension()>1)
 //				throw new XMLParseException("The bivariate discrete diffusion model currently uses a single rate.");
 
-            int totalDim = xDim * yDim;
+            final int totalDim = xDim * yDim;
             if (totalDim != evec.length || totalDim != eval.length)
                 throw new XMLParseException("Number of eigenvalues and eigenvectors must match the map grid dimensions");
 
@@ -182,7 +183,7 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(EVEC_NAME),
                 AttributeRule.newStringRule(EVAL_NAME),
                 AttributeRule.newIntegerRule(GRID_X_DIMENSION),
@@ -198,13 +199,13 @@ public class BivariateDiscreteDiffusionModel extends MultivariateDiffusionModel 
 
     };
 
-    private Parameter graphRate;
-    private int xDim;
-    private int yDim;
-    private int totalDim;
+    private final Parameter graphRate;
+    private final int xDim;
+    private final int yDim;
+    private final int totalDim;
     HashMap<Integer, Double> probabilityCache;
 
-    private double[] eVal;
-    private double[][] eVec;
+    private final double[] eVal;
+    private final double[][] eVec;
 
 }

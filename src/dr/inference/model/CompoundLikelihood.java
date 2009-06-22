@@ -86,6 +86,7 @@ public class CompoundLikelihood implements Likelihood {
 		return compoundModel;
 	}
 
+    // todo: remove in release
     static int DEBUG = 0;
 
 	public double getLogLikelihood() {
@@ -234,21 +235,20 @@ public class CompoundLikelihood implements Likelihood {
 
 			CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads);
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				if (xo.getChild(i) instanceof Likelihood) {
-					compoundLikelihood.addLikelihood((Likelihood) xo.getChild(i));
+			for(int i = 0; i < xo.getChildCount(); i++) {
+                final Object child = xo.getChild(i);
+                if( child instanceof Likelihood ) {
+					compoundLikelihood.addLikelihood((Likelihood) child);
 				} else {
 
-					Object rogueElement = xo.getChild(i);
-
-					throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to a " + COMPOUND_LIKELIHOOD + " element");
+                    throw new XMLParseException("An element (" + child + ") which is not a likelihood has been added to a "
+                            + COMPOUND_LIKELIHOOD + " element");
 				}
 			}
 
 			if (threads > 1) {
 				Logger.getLogger("dr.evomodel").info("Likelihood is using " + threads + " threads.");
 			}
-
 
 			return compoundLikelihood;
 		}

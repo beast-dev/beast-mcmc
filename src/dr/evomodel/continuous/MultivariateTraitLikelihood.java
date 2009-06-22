@@ -5,10 +5,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
@@ -383,7 +382,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             if (!validLogLikelihoods[nodeNumber]) { // recompute
 
                 childTrait = treeModel.getMultivariateNodeTrait(node,traitName);
-                double time = getRescaledBranchLength(node);
+                final double time = getRescaledBranchLength(node);
                 if (parentTrait == null)
                     parentTrait = treeModel.getMultivariateNodeTrait(treeModel.getParent(node),traitName);
                 logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
@@ -561,7 +560,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                 }
 
                 if (xo.hasChildNamed(MISSING)) {
-                    XMLObject cxo = (XMLObject) xo.getChild(MISSING);
+                    XMLObject cxo = xo.getChild(MISSING);
                     Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
                     for (int i : missingIndices) {
                         missingParameter.setParameterValue(i, 1.0);
@@ -585,16 +584,16 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
-                XMLObject cxo = (XMLObject) xo.getChild(SAMPLING_DENSITY);
+                XMLObject cxo = xo.getChild(SAMPLING_DENSITY);
                 samplingDensity = (Model) cxo.getChild(Model.class);
             }
             if (xo.hasChildNamed(RANDOMIZE)) {
-                XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
+                XMLObject cxo = xo.getChild(RANDOMIZE);
                 traits = (Parameter) cxo.getChild(Parameter.class);
             }
 
             if (xo.hasChildNamed(CHECK)) {
-                XMLObject cxo = (XMLObject) xo.getChild(CHECK);
+                XMLObject cxo = xo.getChild(CHECK);
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
 

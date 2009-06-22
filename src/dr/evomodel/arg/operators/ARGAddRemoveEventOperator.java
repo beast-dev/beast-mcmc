@@ -1548,12 +1548,9 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
             ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
 
-            CompoundParameter parameter1 =
-                    (CompoundParameter) ((XMLObject) xo.getChild(INTERNAL_NODES)).getChild(0);
-            CompoundParameter parameter2 =
-                    (CompoundParameter) ((XMLObject) xo.getChild(INTERNAL_AND_ROOT)).getChild(0);
-            CompoundParameter parameter3 =
-                    (CompoundParameter) ((XMLObject) xo.getChild(NODE_RATES)).getChild(0);
+            CompoundParameter parameter1 = (CompoundParameter) xo.getChild(INTERNAL_NODES).getChild(0);
+            CompoundParameter parameter2 = (CompoundParameter) xo.getChild(INTERNAL_AND_ROOT).getChild(0);
+            CompoundParameter parameter3 = (CompoundParameter) xo.getChild(NODE_RATES).getChild(0);
 
             int weight = xo.getIntegerAttribute("weight");
             double size = xo.getDoubleAttribute(ADD_PROBABILITY);
@@ -1601,28 +1598,30 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(ADD_PROBABILITY, false,
-                        "The probability that the operator adds a new"
-                                + " reassortment event"),
-                AttributeRule.newBooleanRule(JOINT_PARTITIONING, true),
-                AttributeRule.newIntegerRule(ARGPartitioningOperator.TOSS_SIZE, true),
-                AttributeRule.newDoubleRule(ADD_PROBABILITY, true),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE,true),
-                AttributeRule.newIntegerRule(WEIGHT,false),
-                new ElementRule(ARGModel.class,false),
-                new ElementRule(ARGPartitionLikelihood.class,false),
-                new ElementRule(ARGRatePrior.class,true),
-                new ElementRule(INTERNAL_NODES,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(CompoundParameter.class)}),
-                new ElementRule(INTERNAL_AND_ROOT,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(CompoundParameter.class)}),
-                new ElementRule(NODE_RATES,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(CompoundParameter.class)}),
-        };
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(ADD_PROBABILITY, false,
+                            "The probability that the operator adds a new"
+                                    + " reassortment event"),
+                    AttributeRule.newBooleanRule(JOINT_PARTITIONING, true),
+                    AttributeRule.newIntegerRule(ARGPartitioningOperator.TOSS_SIZE, true),
+                    AttributeRule.newDoubleRule(ADD_PROBABILITY, true),
+                    AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                    AttributeRule.newIntegerRule(WEIGHT, false),
+                    new ElementRule(ARGModel.class, false),
+                    new ElementRule(ARGPartitionLikelihood.class, false),
+                    new ElementRule(ARGRatePrior.class, true),
+                    new ElementRule(INTERNAL_NODES,
+                            new XMLSyntaxRule[]{
+                                    new ElementRule(CompoundParameter.class)}),
+                    new ElementRule(INTERNAL_AND_ROOT,
+                            new XMLSyntaxRule[]{
+                                    new ElementRule(CompoundParameter.class)}),
+                    new ElementRule(NODE_RATES,
+                            new XMLSyntaxRule[]{
+                                    new ElementRule(CompoundParameter.class)}),
+            };
+        }
     };
 
     private class NoReassortmentEventException extends OperatorFailedException {

@@ -29,7 +29,7 @@ public class GTRParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+        XMLObject cxo = xo.getChild(FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         Parameter rateACParameter = null;

@@ -64,19 +64,21 @@ public class XMLObject {
      *         an XMLObject.
      */
     public Object getChild(int i) {
-
         Object obj = getRawChild(i);
+        XMLObject xo = null;
 
-        if (obj instanceof XMLObject) {
-            XMLObject xo = (XMLObject) obj;
-            if (xo.hasNativeObject()) return xo.getNativeObject();
-        } else if (obj instanceof Reference) {
-            XMLObject xo = ((Reference) obj).getReferenceObject();
-            if (xo.hasNativeObject()) return xo.getNativeObject();
+        if( obj instanceof XMLObject ) {
+            xo = (XMLObject) obj;
+        } else if( obj instanceof Reference ) {
+            xo = ((Reference) obj).getReferenceObject();
+        }
+
+        if( xo != null && xo.hasNativeObject() ) {
+            return xo.getNativeObject();
         }
         return obj;
     }
-
+  
     /**
      * @param c the class of the child to return
      * @return the first child with a native format of the given class, or null if no such child exists.
@@ -85,7 +87,7 @@ public class XMLObject {
 
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
-            if (c.isInstance(child)) {
+            if( c.isInstance(child) ) {
                 return child;
             }
         }
@@ -96,13 +98,13 @@ public class XMLObject {
      * @param name the name of the child to return
      * @return the first child of type XMLObject with a given name, or null if no such child exists.
      */
-    public Object getChild(String name) {
+    public XMLObject getChild(String name) {
 
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
             if (child instanceof XMLObject) {
                 if (((XMLObject) child).getName().equals(name)) {
-                    return child;
+                    return (XMLObject) child;
                 }
             }
         }

@@ -36,7 +36,7 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
     private final double[] weights;
     private double totalWeight;
 
-    public INS(TreeModel tree, PatternList patterns, double epsilon, double weight) {
+    public INS(TreeModel tree, PatternList patterns, double epsilon, double weight) throws Exception {
         this.tree = tree;
         setWeight(weight);
 
@@ -47,7 +47,7 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
         setTaxaWeights(patterns);
     }
 
-    private void setTaxaWeights(PatternList patterns) {
+    private void setTaxaWeights(PatternList patterns) throws Exception {
         final DataType type = patterns.getDataType();
         Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
 
@@ -97,7 +97,14 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
 
         for(int i = 0; i < tree.getExternalNodeCount(); ++i) {
             final NodeRef leaf = tree.getExternalNode(i);
-            nodeCounts[leaf.getNumber()] = taxaWeights.get(tree.getNodeTaxon(leaf)) ;
+            final Taxon nodeTaxon = tree.getNodeTaxon(leaf);
+
+//            assert taxaWeights.containsKey(nodeTaxon) : nodeTaxon;
+            if( ! taxaWeights.containsKey(nodeTaxon) ) {
+                throw new  Exception("" + nodeTaxon + " in tree " + tree.getId() +
+                " not in patterns" + patterns.getId() + ".");
+            }
+            nodeCounts[leaf.getNumber()] = taxaWeights.get(nodeTaxon) ;
         }
     }
 
@@ -305,7 +312,11 @@ public class INS extends AbstractTreeOperator implements TreeLogger.LogUpon {
             final double weight = xo.getDoubleAttribute("weight");
             final double epsilon = xo.getAttribute("epsilon", 0.1);
 
-            return new INS(treeModel, patterns, epsilon, weight);
+            try {
+                return new INS(treeModel, patterns, epsilon, weight);
+            } catch( Exception e ) {
+                throw new XMLParseException(e.getMessage());
+            }
         }
 
         // ************************************************************************

@@ -135,10 +135,10 @@ public class ScaledPiecewiseModel extends DemographicModel
 			
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
-			XMLObject cxo = (XMLObject)xo.getChild(EPOCH_SIZES);
+			XMLObject cxo = xo.getChild(EPOCH_SIZES);
 			Parameter epochSizes = (Parameter)cxo.getChild(Parameter.class);
 	
-			cxo = (XMLObject)xo.getChild(TREE_MODEL);
+			cxo = xo.getChild(TREE_MODEL);
 			TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
 
 			boolean isLinear =  xo.getBooleanAttribute("linear");
@@ -159,7 +159,7 @@ public class ScaledPiecewiseModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			new ElementRule(EPOCH_SIZES, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
 			new ElementRule(TREE_MODEL, new XMLSyntaxRule[] { new ElementRule(TreeModel.class) }),
 			XMLUnits.SYNTAX_RULES[0],

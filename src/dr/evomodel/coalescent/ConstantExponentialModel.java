@@ -46,12 +46,12 @@ public class ConstantExponentialModel extends DemographicModel
 	// Public stuff
 	//
 	
-	public static String CONSTANT_EXPONENTIAL_MODEL = "constantExponential";
-	public static String POPULATION_SIZE = "populationSize";
-	public static String GROWTH_PHASE_START_TIME = "growthPhaseStartTime";
+	public static final String CONSTANT_EXPONENTIAL_MODEL = "constantExponential";
+	public static final String POPULATION_SIZE = "populationSize";
+	public static final String GROWTH_PHASE_START_TIME = "growthPhaseStartTime";
 
-	public static String GROWTH_RATE = "growthRate";	
-	public static String DOUBLING_TIME = "doublingTime";
+	public static final String GROWTH_RATE = "growthRate";
+	public static final String DOUBLING_TIME = "doublingTime";
 
 	/**
 	 * Construct demographic model with default settings
@@ -121,20 +121,20 @@ public class ConstantExponentialModel extends DemographicModel
 			
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 				
-			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
+			XMLObject cxo = xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(GROWTH_PHASE_START_TIME);
+			cxo = xo.getChild(GROWTH_PHASE_START_TIME);
 			Parameter timeParam = (Parameter)cxo.getChild(Parameter.class);
 			
 			Parameter rParam;
 			boolean usingGrowthRate = true;
 			
 			if (xo.getChild(GROWTH_RATE) != null) {			
-				cxo = (XMLObject)xo.getChild(GROWTH_RATE);
+				cxo = xo.getChild(GROWTH_RATE);
 				rParam = (Parameter)cxo.getChild(Parameter.class);
 			} else {
-				cxo = (XMLObject)xo.getChild(DOUBLING_TIME);
+				cxo = xo.getChild(DOUBLING_TIME);
 				rParam = (Parameter)cxo.getChild(Parameter.class);
 				usingGrowthRate = false;
 			}
@@ -154,7 +154,7 @@ public class ConstantExponentialModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			XMLUnits.SYNTAX_RULES[0],
 			new ElementRule(POPULATION_SIZE, 
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),

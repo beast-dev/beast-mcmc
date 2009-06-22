@@ -126,7 +126,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject)xo.getChild(MODEL);
+            XMLObject cxo = xo.getChild(MODEL);
             DemographicModel demoModel = (DemographicModel)cxo.getChild(DemographicModel.class);
 
             List<TreeModel> trees = new ArrayList<TreeModel>();
@@ -169,7 +169,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();
 
 			if (xo.hasChildNamed(EXCLUDE)) {
-				cxo = (XMLObject)xo.getChild(EXCLUDE);
+				cxo = xo.getChild(EXCLUDE);
 				for (int i =0; i < cxo.getChildCount(); i++) {
 					excludeSubtrees.add((TaxonList)cxo.getChild(i));
 				}

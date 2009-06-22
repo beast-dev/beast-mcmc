@@ -129,16 +129,16 @@ public class CataclysmicDemographicModel extends DemographicModel
 			
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 			
-			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
+			XMLObject cxo = xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(GROWTH_RATE);
+			cxo = xo.getChild(GROWTH_RATE);
 			Parameter rParam = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(SPIKE_SIZE);
+			cxo = xo.getChild(SPIKE_SIZE);
 			Parameter N1Param = (Parameter)cxo.getChild(Parameter.class);
 			
-			cxo = (XMLObject)xo.getChild(TIME_OF_CATACLYSM);
+			cxo = xo.getChild(TIME_OF_CATACLYSM);
 			Parameter tParam = (Parameter)cxo.getChild(Parameter.class);
 			
 			return new CataclysmicDemographicModel(N0Param, N1Param, rParam, tParam, units);
@@ -156,7 +156,7 @@ public class CataclysmicDemographicModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			new ElementRule(POPULATION_SIZE, 
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
 			new ElementRule(GROWTH_RATE, 

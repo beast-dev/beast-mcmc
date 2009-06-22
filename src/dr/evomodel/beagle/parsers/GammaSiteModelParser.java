@@ -47,7 +47,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         Parameter shapeParam = null;
         int catCount = 4;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
-            XMLObject cxo = (XMLObject) xo.getChild(GAMMA_SHAPE);
+            XMLObject cxo = xo.getChild(GAMMA_SHAPE);
             catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
@@ -90,7 +90,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                     new ElementRule(SubstitutionModel.class)
             }),

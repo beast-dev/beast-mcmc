@@ -10,10 +10,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     public static final String TYPE = "MultivariateNormal";
 
-    private double[] mean;
-    private double[][] precision;
+    private final double[] mean;
+    private final double[][] precision;
     //	private int dim;
-    private double logDet;
+    private final double logDet;
 
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
@@ -51,9 +51,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         if (logDet == Double.NEGATIVE_INFINITY)
             return logDet;
 
-        int dim = x.length;
-        double[] delta = new double[dim];
-        double[] tmp = new double[dim];
+        final int dim = x.length;
+        final double[] delta = new double[dim];
+        final double[] tmp = new double[dim];
 
         for (int i = 0; i < dim; i++) {
             delta[i] = x[i] - mean[i];
@@ -129,10 +129,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return x;
     }
 
+    // todo should be a test, no?
     public static void main(String[] args) {
-        double[] start = new double[] {1, 2};
-        double[] stop  = new double[] {0, 0};
-        double[][] precision = new double[][] { {2,0.5},{0.5,1} };
+        double[] start = {1, 2};
+        double[] stop  = {0, 0};
+        double[][] precision = { {2,0.5},{0.5,1} };
         double scale = 0.2;
         System.err.println("logPDF = "+ logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
         System.err.println("Should = -19.94863\n");

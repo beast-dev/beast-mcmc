@@ -517,7 +517,7 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
 				AttributeRule.newBooleanRule(STORE_PARTIALS, true),
 				AttributeRule.newBooleanRule(USE_SCALING, true),

@@ -394,13 +394,13 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
+            XMLObject cxo = xo.getChild(POPULATION_SIZES);
             Parameter param = (Parameter)cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject)xo.getChild(GROUP_SIZES);
+            cxo = xo.getChild(GROUP_SIZES);
             Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject)xo.getChild(CoalescentLikelihood.POPULATION_TREE);
+            cxo = xo.getChild(CoalescentLikelihood.POPULATION_TREE);
             TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
 
             int type = LINEAR_TYPE;
@@ -441,23 +441,23 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                new XORRule(
-                        AttributeRule.newBooleanRule(LINEAR),
-                        AttributeRule.newStringRule(TYPE)
-                ),
-                new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[] {
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(GROUP_SIZES, new XMLSyntaxRule[] {
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[] {
-                        new ElementRule(TreeModel.class)
-                }),
-        };
-
-
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    new XORRule(
+                            AttributeRule.newBooleanRule(LINEAR),
+                            AttributeRule.newStringRule(TYPE)
+                    ),
+                    new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[]{
+                            new ElementRule(TreeModel.class)
+                    }),
+            };
+        }
     };
 
     /** The demographic model. */

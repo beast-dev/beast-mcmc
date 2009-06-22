@@ -689,9 +689,10 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
                 System.exit(-1);
             }
 
-            CompoundParameter parameter1 = (CompoundParameter) xo.getChild(JUST_INTERNAL);
-            CompoundParameter parameter2 = (CompoundParameter) xo.getChild(INTERNAL_AND_ROOT);
-            CompoundParameter parameter3 = (CompoundParameter) xo.getChild(NODE_RATES);
+               // bug, getChild(String) returns an xmlObject;   not in XML rules
+            CompoundParameter parameter1 = null; //(CompoundParameter) xo.getChild(JUST_INTERNAL);
+            CompoundParameter parameter2 = null; //CompoundParameter) xo.getChild(INTERNAL_AND_ROOT);
+            CompoundParameter parameter3 = null; //(CompoundParameter) xo.getChild(NODE_RATES);
 
             int weight = xo.getIntegerAttribute("weight");
 //            int maxTips = xo.getIntegerAttribute(MAX_VALUE);
@@ -713,7 +714,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule("weight"),
 //                AttributeRule.newIntegerRule(MAX_VALUE),
                 AttributeRule.newDoubleRule("size"),

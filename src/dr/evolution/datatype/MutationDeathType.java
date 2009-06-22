@@ -202,13 +202,13 @@ public class MutationDeathType extends DataType {
             DataType dataType = DataTypeUtils.getDataType(xo);
 
             char extantChar = '\0';
-            XMLObject cxo = (XMLObject) xo.getChild(EXTANT);
+            XMLObject cxo = xo.getChild(EXTANT);
             if (cxo != null) {
                 extantChar = cxo.getStringAttribute(CODE).charAt(0);
             }
 
 
-            cxo = (XMLObject) xo.getChild(STATE);
+            cxo = xo.getChild(STATE);
             char stateChar = cxo.getStringAttribute(CODE).charAt(0);
 
             Logger.getLogger("dr.evolution").info("\tNon-existent code: " + stateChar);
@@ -263,7 +263,7 @@ public class MutationDeathType extends DataType {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(DataType.DATA_TYPE, "Base datatype name", DataType.getRegisteredDataTypeNames(), true),
                 new ElementRule(DataType.class, true),
                 new ElementRule(STATE, new XMLSyntaxRule[]{AttributeRule.newStringRule(CODE)}),

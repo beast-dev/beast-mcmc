@@ -322,7 +322,7 @@ public class EBSPAnalysis extends TabularData {
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         private String getElementText(XMLObject xo, String childName) throws XMLParseException {
-            return ((XMLObject) xo.getChild(childName)).getStringChild(0);
+            return xo.getChild(childName).getStringChild(0);
         }
 
         public String getParserName() {
@@ -341,7 +341,7 @@ public class EBSPAnalysis extends TabularData {
                 final double[] hpdLevels = xo.hasAttribute(HPD_LEVELS) ? xo.getDoubleArrayAttribute(HPD_LEVELS) : null;
 
                 final File log = LoggerParser.getFile(getElementText(xo, LOG_FILE_NAME));
-                final XMLObject treeFileNames = (XMLObject) xo.getChild(TREE_FILE_NAMES);
+                final XMLObject treeFileNames = xo.getChild(TREE_FILE_NAMES);
                 final int nTrees = treeFileNames.getChildCount();
                 File[] treeFiles = new File[nTrees];
                 for (int k = 0; k < nTrees; ++k) {

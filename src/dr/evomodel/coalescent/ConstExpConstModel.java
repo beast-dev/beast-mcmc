@@ -127,23 +127,23 @@ public class ConstExpConstModel extends DemographicModel
 
 			Type units = XMLParser.Utils.getUnitsAttr(xo);
 
-			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZE);
+			XMLObject cxo = xo.getChild(POPULATION_SIZE);
 			Parameter N0Param = (Parameter)cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject)xo.getChild(ANCESTRAL_POPULATION_SIZE);
+			cxo = xo.getChild(ANCESTRAL_POPULATION_SIZE);
 			Parameter N1Param = (Parameter)cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject)xo.getChild(FINAL_PHASE_START_TIME);
+			cxo = xo.getChild(FINAL_PHASE_START_TIME);
 			Parameter timeParam = (Parameter)cxo.getChild(Parameter.class);
 
 			Parameter rParam;
 			boolean usingGrowthRate = true;
 
 			if (xo.getChild(GROWTH_RATE) != null) {
-				cxo = (XMLObject)xo.getChild(GROWTH_RATE);
+				cxo = xo.getChild(GROWTH_RATE);
 				rParam = (Parameter)cxo.getChild(Parameter.class);
 			} else {
-				cxo = (XMLObject)xo.getChild(DOUBLING_TIME);
+				cxo = xo.getChild(DOUBLING_TIME);
 				rParam = (Parameter)cxo.getChild(Parameter.class);
 				usingGrowthRate = false;
 			}
@@ -163,7 +163,7 @@ public class ConstExpConstModel extends DemographicModel
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			XMLUnits.SYNTAX_RULES[0],
 			new ElementRule(POPULATION_SIZE,
 				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),

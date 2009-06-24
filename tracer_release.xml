@@ -51,6 +51,7 @@
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
+            <include name="dr/java16compat/**/"/>
         </javac>
     </target>
 
@@ -85,6 +86,7 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
+                <include name="dr/java16compat/**/*.class"/>
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/app/tracer/**/*.png"/>

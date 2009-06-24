@@ -3,14 +3,29 @@ package dr.app.beauti.options;
 import java.util.List;
 import java.util.ArrayList;
 
+import dr.evolution.tree.Tree;
+
 /**
  * @author Andrew Rambaut
+ * @author Walter Xie
  * @version $Id$
  */
 public class PartitionTreeModel extends ModelOptions {
+	
+	// Instance variables
 
-    public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
-        this(options, partition.getName());
+    private final BeautiOptions options;
+    private String name;
+    private PartitionData partitionData;
+    private PartitionTreePrior treePrior;
+    
+    private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    private Tree userStartingTree = null;    
+    
+	public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
+		this.options = options;
+		this.name = partition.getName();
+		this.partitionData = partition;
     }
 
     /**
@@ -21,13 +36,50 @@ public class PartitionTreeModel extends ModelOptions {
      * @param source  the source model
      */
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
-        this(options, name);
+    	this.options = options;
+		this.name = name;
+		this.partitionData = source.partitionData;
+		
+		this.startingTreeType = source.startingTreeType;
+		this.userStartingTree = source.userStartingTree;         
     }
 
-    public PartitionTreeModel(BeautiOptions options, String name) {
-        this.options = options;
-        this.name = name;
-  }
+//    public PartitionTreeModel(BeautiOptions options, String name) {
+//        this.options = options;
+//        this.name = name;
+//    }
+
+	public void setPartitionData(PartitionData partitionData) {
+		this.partitionData = partitionData;
+	}
+
+	public PartitionData getPartitionData() {
+		return partitionData;
+	}
+
+	public PartitionTreePrior getPartitionTreePrior() {
+		return treePrior;
+	}
+
+	public void setPartitionTreePrior(PartitionTreePrior treePrior) {
+		this.treePrior = treePrior;
+	}
+
+	public StartingTreeType getStartingTreeType() {
+		return startingTreeType;
+	}
+
+	public void setStartingTreeType(StartingTreeType startingTreeType) {
+		this.startingTreeType = startingTreeType;
+	}
+
+	public Tree getUserStartingTree() {
+		return userStartingTree;
+	}
+
+	public void setUserStartingTree(Tree userStartingTree) {
+		this.userStartingTree = userStartingTree;
+	}
 
     public String getName() {
         return name;
@@ -41,6 +93,10 @@ public class PartitionTreeModel extends ModelOptions {
         List<Operator> operators = new ArrayList<Operator>();
 
         return operators;
+    }
+
+    public String toString() {
+        return getName();
     }
 
     /**
@@ -82,23 +138,15 @@ public class PartitionTreeModel extends ModelOptions {
         return operator;
     }
 
-    public String toString() {
-        return getName();
-    }
-
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionTreeModels().size() > 1) {
+        if (options.getActivePartitionTreeModels().size() > 1) { //|| options.isSpeciesAnalysis()
             // There is more than one active partition model
             prefix += getName() + ".";
         }
         return prefix;
     }
 
-// Instance variables
-
-    private final BeautiOptions options;
-    public String name;
 
 }

@@ -280,9 +280,15 @@ public class NexusApplicationImporter extends NexusImporter {
                 String token = readToken(";");
                 if (match("USER", token, 1)) {
                     // How do we know what tree to use?
-                    options.startingTreeType = StartingTreeType.USER;
+//                    options.startingTreeType = StartingTreeType.USER;
+                	for (PartitionTreeModel model : options.getActivePartitionTreeModels()) {
+                		model.setStartingTreeType(StartingTreeType.USER);
+                 	}
                 } else if (match("RANDOM", token, 1)) {
-                    options.startingTreeType = StartingTreeType.RANDOM;
+//                    options.startingTreeType = StartingTreeType.RANDOM;
+                	for (PartitionTreeModel model : options.getActivePartitionTreeModels()) {
+                		model.setStartingTreeType(StartingTreeType.RANDOM);
+                 	}
                 } else {
                     throw new BadFormatException("Unknown value, '" + token + "'");
                 }

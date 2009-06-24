@@ -131,18 +131,19 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         dataPartitions.clear();
-        userTrees.clear();
+//        userTrees.clear(); // moved into PartitionData 
 
         meanDistance = 1.0;
         datesUnits = YEARS;
         datesDirection = FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
-        startingTreeType = StartingTreeType.RANDOM;
-        userStartingTree = null;
+//        startingTreeType = StartingTreeType.RANDOM; // moved into PartitionTreeModels
+//        userStartingTree = null; // moved into PartitionTreeModels
 
         partitionModels.clear();
         partitionTreeModels.clear();
+        partitionTreePriors.clear();
 
         fixedSubstitutionRate = true;
         meanSubstitutionRate = 1.0;
@@ -178,10 +179,10 @@ public class BeautiOptions extends ModelOptions {
         localClockRateChangesStatistic = null;
         localClockRatesStatistic = null;
         
-        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
-        	model.localClockRateChangesStatistic = null;
-        	model.localClockRatesStatistic = null;
-        }
+//        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+//        	model.localClockRateChangesStatistic = null;
+//        	model.localClockRatesStatistic = null;
+//        } // not necessary because partitionModels.clear();
 
     }
 
@@ -458,28 +459,34 @@ public class BeautiOptions extends ModelOptions {
         return getActivePartitionTreeModels().size();
     }
 
-   
+    public void addPartitionTreePrior(PartitionTreePrior tree) {
+
+        if (!partitionTreePriors.contains(tree)) {
+        	partitionTreePriors.add(tree);
+        }
+    }
+    
     public List<PartitionTreePrior> getPartitionTreePriors() {
         return partitionTreePriors;
     }
 
     public List<PartitionTreePrior> getActivePartitionTreePriors() {
+    	
+        Set<PartitionTreePrior> trees = new HashSet<PartitionTreePrior>();
 
-        Set<PartitionTreePrior> pops = new HashSet<PartitionTreePrior>();
-
-        for (PartitionData partition : dataPartitions) {
-            pops.add(partition.getPartitionTreePrior());
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            trees.add(tree.getPartitionTreePrior());
         }
 
         // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionTreePrior> activeTreePriors = new ArrayList<PartitionTreePrior>();
-        for (PartitionTreePrior prior : getPartitionTreePriors()) {
-            if (pops.contains(prior)) { 
-                activeTreePriors.add(prior);
+        List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
+        for (PartitionTreePrior tree : getPartitionTreePriors()) {
+            if (trees.contains(tree)) {
+                activeTrees.add(tree);
             }
         }
-
-        return activeTreePriors;
+        
+        return activeTrees;
     }
     
     /**
@@ -893,7 +900,8 @@ public class BeautiOptions extends ModelOptions {
         dataElement.addContent(createChild("datesUnits", datesUnits));
         dataElement.addContent(createChild("datesDirection", datesDirection));
         dataElement.addContent(createChild("translation", translation));
-        dataElement.addContent(createChild("startingTreeType", startingTreeType.name()));
+        //TODO:
+//        dataElement.addContent(createChild("startingTreeType", startingTreeType.name()));
 
         dataElement.addContent(createChild("guessDates", guessDates));
         dataElement.addContent(createChild("guessType", dateGuesser.guessType.name()));
@@ -1316,6 +1324,9 @@ public class BeautiOptions extends ModelOptions {
     List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
     List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
+    public boolean shareSameTreePrior = true;
+    // list of starting tree from user import
+    public List<Tree> userTrees = new ArrayList<Tree>();
 
     public boolean fixedSubstitutionRate = true;
     public double meanSubstitutionRate = 1.0;
@@ -1338,8 +1349,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean fixedTree = false;
 
     public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
-    public Tree userStartingTree = null;
-    public List<Tree> userTrees = new ArrayList<Tree>();
+    public Tree userStartingTree = null;    
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;

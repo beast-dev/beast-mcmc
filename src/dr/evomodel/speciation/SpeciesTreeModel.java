@@ -4,12 +4,14 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
+import dr.evolution.io.NewickImporter;
 import dr.evomodel.coalescent.VDdemographicFunction;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.inference.operators.Scalable;
 import dr.inference.operators.OperatorFailedException;
 import dr.util.Attributable;
@@ -254,8 +256,8 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     }
 
     private class PLSD implements SimpleDemographicFunction {
-        private double[] pops;
-        private double[] times;
+        private final double[] pops;
+        private final double[] times;
 
         public PLSD(double[] pops, double[] times) {
             assert pops.length == times.length + 1;
@@ -802,6 +804,41 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return props.get(tip).speciesIndex;
     }
 
+    private Double setInitialSplitPopulations(FlexibleTree startTree, NodeRef node, int pos[]) {
+        if( ! startTree.isExternal(node) ) {
+            int loc=-1;
+            for(int nc = 0; nc < startTree.getChildCount(node); ++nc ) {
+                Double p = setInitialSplitPopulations(startTree, startTree.getChild(node, nc), pos );
+                if( nc == 0 ) {
+                    loc = pos[0];
+                    pos[0] += 1;
+                }
+                if( p != null ) {
+                  sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + 2*loc + nc, p);
+                }
+            }
+        }
+
+
+        final String comment = (String)startTree.getNodeAttribute(node, NewickImporter.COMMENT);
+        Double p0 = null;
+        if( comment != null ) {
+            StringTokenizer st = new StringTokenizer(comment);
+
+            p0 = Double.parseDouble(st.nextToken());
+            if( startTree.isExternal(node) ) {
+              int ns = (Integer)startTree.getNodeAttribute(node, spIndexAttrName);
+              sppSplitPopulations.setParameterValueQuietly(ns, p0);
+            }
+
+            // if just one value const
+            if( st.hasMoreTokens()  ) {
+              p0 = Double.parseDouble(st.nextToken());
+            }
+        }
+        return p0;
+    }
+
     private SimpleTree compatibleUninformedSpeciesTree(Tree startTree) {
         double rootHeight = Double.MAX_VALUE;
 
@@ -812,14 +849,14 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         final SpeciesBindings.SPinfo[] spp = species.species;
 
         if( startTree != null ) {
-            // Allow start tree to be very basic basic - may be not fully resolved and no
+            // Allow start tree to be very basic basic - may be only partially resolved and no
             // branch lengths
 
             if( startTree.getExternalNodeCount() != spp.length ) {
                 throw new Error("Start tree error - different number of tips");
             }
 
-            final FlexibleTree tree = new FlexibleTree(startTree);
+            final FlexibleTree tree = new FlexibleTree(startTree, true);
             tree.resolveTree();
             final double treeHeight = tree.getRootHeight();
             if( treeHeight <= 0 ) {
@@ -837,10 +874,18 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
                 }
                 final SimpleNode node = sTree.getExternalNode(i);
                 node.setAttribute(spIndexAttrName, ns);
+
+                // set for possible pops
+                tree.setNodeAttribute( tree.getNode(tree.getTaxonIndex(sp.name)), spIndexAttrName, ns);
             }
 
             if( treeHeight > 0 ) {
                 sTree.setAttribute("check", new Double(rootHeight));
+            }
+
+            {
+                int[] pos = {0};
+                setInitialSplitPopulations(tree, tree.getRoot(), pos);
             }
 
             return sTree;
@@ -879,7 +924,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         setPreorderIndices(getRoot(), 0, indices);
     }
 
-    private int setPreorderIndices( NodeRef node, int loc, int[] indices) {
+    private int setPreorderIndices(NodeRef node, int loc, int[] indices) {
         if( ! isExternal(node) ) {
             int l = setPreorderIndices(getChild(node, 0), loc, indices);
             indices[node.getNumber()] = l;
@@ -1274,31 +1319,31 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             final Boolean cr = xo.getAttribute(CONST_ROOT_POPULATION, false);
             final Boolean bmp = xo.getAttribute(BMPRIOR, true);
             {
-                XMLObject cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_POPULATIONS);
+                XMLObject cxo = xo.getChild(COALESCENT_POINTS_POPULATIONS);
                 if( cxo != null ) {
                     final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
                     coalPointsPops = createCoalPointsPopParameter(spb, cxo.getAttribute(Attributable.VALUE, value), bmp);
-                    replaceParameter(cxo, coalPointsPops);
+                    ParameterParser.replaceParameter(cxo, coalPointsPops);
                     coalPointsPops.addBounds(
                             new Parameter.DefaultBounds(Double.MAX_VALUE, 0, coalPointsPops.getDimension()));
 
-                    cxo = (XMLObject) xo.getChild(COALESCENT_POINTS_INDICATORS);
+                    cxo = xo.getChild(COALESCENT_POINTS_INDICATORS);
                     if( cxo == null ) {
                         throw new XMLParseException("Must have indicators");
                     }
                     coalPointsIndicators = new Parameter.Default(coalPointsPops.getDimension(), 0);
-                    replaceParameter(cxo, coalPointsIndicators);
+                    ParameterParser.replaceParameter(cxo, coalPointsIndicators);
                 } else {
                    // assert ! bmp;
                 }
             }
 
-            XMLObject cxo = (XMLObject) xo.getChild(SPP_SPLIT_POPULATIONS);
+            XMLObject cxo = xo.getChild(SPP_SPLIT_POPULATIONS);
 
             final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
             final boolean nonConstRootPopulation = coalPointsPops == null && !cr;
             final Parameter sppSplitPopulations = createSplitPopulationsParameter(spb, value, nonConstRootPopulation);
-            replaceParameter(cxo, sppSplitPopulations);
+            ParameterParser.replaceParameter(cxo, sppSplitPopulations);
 
             final Parameter.DefaultBounds bounds =
                     new Parameter.DefaultBounds(Double.MAX_VALUE, 0, sppSplitPopulations.getDimension());

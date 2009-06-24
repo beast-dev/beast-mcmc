@@ -28,6 +28,7 @@ package dr.evomodelxml;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
 
@@ -120,7 +121,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 if (cxo.getName().equals(ROOT_HEIGHT)) {
 
-                    replaceParameter(cxo, treeModel.getRootHeightParameter());
+                    ParameterParser.replaceParameter(cxo, treeModel.getRootHeightParameter());
 
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 
@@ -136,7 +137,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("taxon " + taxonName + " not found for leafHeight element in treeModel element");
                     }
                     NodeRef node = treeModel.getExternalNode(index);
-                    replaceParameter(cxo, treeModel.getLeafHeightParameter(node));
+                    ParameterParser.replaceParameter(cxo, treeModel.getLeafHeightParameter(node));
 
                 } else if (cxo.getName().equals(NODE_HEIGHTS)) {
 
@@ -148,7 +149,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeHeights element");
                     }
 
-                    replaceParameter(cxo, treeModel.createNodeHeightsParameter(rootNode, internalNodes, leafNodes));
+                    ParameterParser.replaceParameter(cxo, treeModel.createNodeHeightsParameter(rootNode, internalNodes, leafNodes));
 
                 } else if (cxo.getName().equals(NODE_RATES)) {
 
@@ -165,7 +166,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeRates element");
                     }
 
-                    replaceParameter(cxo, treeModel.createNodeRatesParameter(initialValues, rootNode, internalNodes, leafNodes));
+                    ParameterParser.replaceParameter(cxo, treeModel.createNodeRatesParameter(initialValues, rootNode, internalNodes, leafNodes));
 
                 } else if (cxo.getName().equals(NODE_TRAITS)) {
 
@@ -185,7 +186,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
                     }
 
-                    replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents));
+                    ParameterParser.replaceParameter(cxo, treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents));
 
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 
@@ -209,7 +210,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     if (parameter == null)
                         throw new XMLParseException("trait '" + name + "' not found for leafTrait (taxon, " + taxonName + ") element in treeModel element");
 
-                    replaceParameter(cxo, parameter);
+                    ParameterParser.replaceParameter(cxo, parameter);
 
 
                 } else {

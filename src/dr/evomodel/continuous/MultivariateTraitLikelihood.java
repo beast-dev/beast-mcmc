@@ -573,7 +573,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
 						missingParameter.addParameter(thisParameter);
 					}*/
-                    replaceParameter(cxo, missingParameter);
+                    ParameterParser.replaceParameter(cxo, missingParameter);
                 }
 
 

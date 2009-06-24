@@ -52,7 +52,7 @@ import java.util.Set;
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
-    public final static boolean ALLOW_UNLINKED_TREES = false;
+    public final static boolean ALLOW_UNLINKED_TREES = true;
 
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
@@ -63,9 +63,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
+    
+    JCheckBox shareSameTreePriorCheck = new JCheckBox("Share same tree prior");
 
     JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
-
+    
     SelectModelDialog selectModelDialog = null;
     SelectTreeDialog selectTreeDialog = null;
 
@@ -137,6 +139,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkTreesAction.setEnabled(false);
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
+            
+            shareSameTreePriorCheck.setEnabled(true);
+            shareSameTreePriorCheck.setSelected(true);
+            shareSameTreePriorCheck.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent ev) {
+                    options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
+                }
+            });
+            toolBar1.add(shareSameTreePriorCheck);
         }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
@@ -178,6 +189,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(5);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        
+        if (ALLOW_UNLINKED_TREES) {
+        	modelArray = options.getPartitionTreeModels().toArray();
+        	col = dataTable.getColumnModel().getColumn(6);
+            col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        }
     }
 
     public void setOptions(BeautiOptions options) {
@@ -311,14 +328,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionTreeModel tree = partition.getPartitionTreeModel();
             if (!tree.getName().equals(partition.getName())) {
-                PartitionTreeModel newTree = new PartitionTreeModel(options, partition.getName());
+                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
                 options.addPartitionTreeModel(newTree);
                 partition.setPartitionTreeModel(newTree);
             }
         }
 
         modelsChanged();
-
+        
         fireDataChanged();
         repaint();
     }
@@ -335,7 +352,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionTreeModel tree = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-                tree = new PartitionTreeModel(options, selectTreeDialog.getName());
+//TODO                tree = new PartitionTreeModel(options, selectTreeDialog.getName());
                 options.addPartitionTreeModel(tree);
             }
 
@@ -345,6 +362,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
         }
 
+        shareSameTreePriorCheck.setSelected(true);
+        
         modelsChanged();
 
         fireDataChanged();

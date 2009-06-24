@@ -1,6 +1,10 @@
 package dr.app.beauti.options;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dr.evolution.alignment.Alignment;
+import dr.evolution.tree.Tree;
 
 /**
  * @author Andrew Rambaut
@@ -21,7 +25,8 @@ public class PartitionData {
 
     private PartitionSubstitutionModel model;
     private PartitionTreeModel treeModel;
-	private PartitionTreePrior treePrior;
+		
+//    public List<Tree> userTrees = new ArrayList<Tree>(); // a set of starting tree loaded from NEXUS file
     
 	public PartitionData(String name, String fileName, Alignment alignment) {
         this(name, fileName, alignment, -1, -1, 1);
@@ -78,14 +83,6 @@ public class PartitionData {
 
 	public void setPartitionTreeModel(PartitionTreeModel treeModel) {
 		this.treeModel = treeModel;
-	}
-
-	public PartitionTreePrior getPartitionTreePrior() {
-		return treePrior;
-	}
-
-	public void setPartitionTreePrior(PartitionTreePrior treePrior) {
-		this.treePrior = treePrior;
 	}
 
     public boolean isCoding() {

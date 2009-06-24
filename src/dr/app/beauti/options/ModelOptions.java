@@ -45,7 +45,7 @@ public class ModelOptions {
     public static final int LOG_VAR_SCALE = 9;
    
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
-    private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
+    protected static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
     
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
@@ -93,108 +93,6 @@ public class ModelOptions {
       createOperator("deltaMu", "Relative rates",
               "Changes partition relative rates relative to each other maintaining their mean", "allMus",
               OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
-    }
-    
-    // only init in PartitionSubstitutionModel
-    public void initSubstModelParaAndOpers() {
-        double substWeights = 1.0;
-
-        //Substitution model parameters
-        createParameter("frequencies", "base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1.frequencies", "base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP2.frequencies", "base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP3.frequencies", "base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
-
-        createScaleParameter("kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-
-//        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
-
-        // create the relative rate parameters for the GTR rate matrix
-        for (int j = 0; j < 5; j++) {
-            createScaleParameter(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-            for (int i = 1; i <= 3; i++) {
-
-                createScaleParameter(
-                        "CP" + i + "." + GTR_RATE_NAMES[j],
-                        "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                        SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-            }
-            createScaleParameter("CP1+2." + GTR_RATE_NAMES[j],
-                    "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        }
-
-//        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
-//
-//        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
-
-        createParameter("alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP2.alpha", "gamma shape parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP3.alpha", "gamma shape parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-
-        createParameter("pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP1.pInv", "proportion of invariant sites parameter for codon position 1", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
-
-        createParameter("mu", "relative rate parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP1.mu", "relative rate parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP2.mu", "relative rate parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createScaleOperator("kappa", demoTuning, substWeights);
-        createScaleOperator("CP1.kappa", demoTuning, substWeights);
-        createScaleOperator("CP2.kappa", demoTuning, substWeights);
-        createScaleOperator("CP1+2.kappa", demoTuning, substWeights);
-        createScaleOperator("CP3.kappa", demoTuning, substWeights);
-
-        createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("CP1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("CP2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("CP1+2.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-
-        for (String rateName : GTR_RATE_NAMES) {
-            createScaleOperator(rateName, demoTuning, substWeights);
-            for (int j = 1; j <= 3; j++) {
-                createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
-            }
-            createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
-        }
-
-        createScaleOperator("alpha", demoTuning, substWeights);
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".alpha", demoTuning, substWeights);
-        }
-        createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
-
-        createScaleOperator("pInv", demoTuning, substWeights);
-        for (int i = 1; i <= 3; i++) {
-            createScaleOperator("CP" + i + ".pInv", demoTuning, substWeights);
-        }
-        createScaleOperator("CP1+2.pInv", demoTuning, substWeights);
-
-        createScaleOperator("bcov.alpha", demoTuning, substWeights);
-        createScaleOperator("bcov.s", demoTuning, substWeights);
-        //createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
     }
     
     public void initTreeModelParaAndOpers() {
@@ -287,8 +185,7 @@ public class ModelOptions {
     
     public void initTreePriorParaAndOpers() {
     	double treeWeights = 15.0;
-    	double rateWeights = 3.0;
-    	
+    	    	
         createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         createScaleParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

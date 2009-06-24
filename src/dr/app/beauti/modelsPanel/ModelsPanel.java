@@ -80,6 +80,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
     // Overall model parameters ////////////////////////////////////////////////////////////////////////
 
+    String overallParas = "Overall substitution model(s) parameters:";
     JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
@@ -142,6 +143,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                 fireModelsChanged();
             }
         };
+        
+        
         PanelUtils.setupComponent(errorModelCombo);
         errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>" +
                 "post-mortem DNA damage.</html>");
@@ -182,7 +185,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         OptionsPanel panel = new OptionsPanel(10, 10);
         panel.addSeparator();
-
+        
+        panel.addLabel(overallParas);
         panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
         panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
@@ -386,7 +390,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Model"};
+        String[] columnNames = {"Substitution Model(s)"};
 
         public ModelTableModel() {
         }

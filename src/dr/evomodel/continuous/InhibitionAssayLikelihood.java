@@ -395,7 +395,7 @@ Parameter precision) {
 
             MatrixParameter data = (MatrixParameter) xo.getChild(MatrixParameter.class);
 
-            XMLObject cxo = (XMLObject) xo.getChild(PRECISION);
+            XMLObject cxo = xo.getChild(PRECISION);
 
             Parameter precision = (Parameter) cxo.getChild(Parameter.class);
 

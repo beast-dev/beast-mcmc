@@ -189,7 +189,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
     // Private and protected stuff
     // ****************************************************************
 
-    private Statistic migrationEventStatistic = new Statistic.Abstract() {
+    private final Statistic migrationEventStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "migrationEvents";
@@ -206,7 +206,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
 
     };
 
-    private Statistic rootColourStatistic = new Statistic.Abstract() {
+    private final Statistic rootColourStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "rootColour";
@@ -276,7 +276,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
 
             ColourSampler colourSampler;
             if (xo.hasChildNamed("colours")) {
-                XMLObject cxo = (XMLObject) xo.getChild("colours");
+                XMLObject cxo = xo.getChild("colours");
 
                 Taxa[] colourTaxa = new Taxa[cxo.getChildCount()];
                 for (int i = 0; i < cxo.getChildCount(); i++) {
@@ -330,7 +330,7 @@ public class ColourSamplerModel extends AbstractModel implements TreeColouringPr
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new XORRule(
                         new ElementRule("colours", new XMLSyntaxRule[]{
                                 new ElementRule(Taxa.class, "Taxa for each subsequent colour (after 0).", 1, Integer.MAX_VALUE),

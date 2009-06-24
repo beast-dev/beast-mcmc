@@ -4100,7 +4100,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
                     if (cxo.getName().equals(ROOT_HEIGHT)) {
 
-                        replaceParameter(cxo, treeModel
+                        ParameterParser.replaceParameter(cxo, treeModel
                                 .getRootHeightParameter());
 
                     } else if (cxo.getName().equals(LEAF_HEIGHT)) {
@@ -4121,7 +4121,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                                             + " not found for leafHeight element in treeModel element");
                         }
                         NodeRef node = treeModel.getExternalNode(index);
-                        replaceParameter(cxo, treeModel
+                        ParameterParser.replaceParameter(cxo, treeModel
                                 .getLeafHeightParameter(node));
 
                     } else if (cxo.getName().equals(NODE_HEIGHTS)) {
@@ -4149,7 +4149,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                                     "selected for the nodeHeights element");
                         }
 
-                        replaceParameter(cxo, treeModel
+                        ParameterParser.replaceParameter(cxo, treeModel
                                 .createNodeHeightsParameter(rootNode,
                                 internalNodes, leafNodes));
 
@@ -4182,7 +4182,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                                     "one or more of root, internal or leaf nodes must be selected for the nodeRates element");
                         }
 
-                        replaceParameter(cxo, treeModel
+                        ParameterParser.replaceParameter(cxo, treeModel
                                 .createNodeRatesParameter(rootNode,
                                 internalNodes, leafNodes,numberPartitions));
 
@@ -4210,7 +4210,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
                                     "one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
                         }
 
-                        replaceParameter(cxo, treeModel
+                        ParameterParser.replaceParameter(cxo, treeModel
                                 .createNodeTraitsParameter(rootNode,
                                 internalNodes, leafNodes));
 

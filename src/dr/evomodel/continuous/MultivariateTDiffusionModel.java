@@ -40,15 +40,19 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
     // *****************************************************************
     // Interface Model
     // *****************************************************************
-    public void handleModelChangedEvent(Model model, Object object, int index) {
-        super.handleModelChangedEvent(model, object, index);    //To change body of overridden methods use File | Settings | File Templates.
-    }
 
+    // No need to just call super of function, is there?
+
+//    public void handleModelChangedEvent(Model model, Object object, int index) {
+//        super.handleModelChangedEvent(model, object, index);    //To change body of overridden methods use File | Settings | File Templates.
+//    }
+/*
     protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
 //		if( parameter.getId().compareTo("allTraits")!= 0)
 //			System.err.println("parameter = "+parameter.getId());
         super.handleParameterChangedEvent(parameter, index, type);    //To change body of overridden methods use File | Settings | File Templates.
     }
+*/
 
     public Parameter getPrecisionParameter() {
         return precisionParameter;
@@ -66,9 +70,9 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
+            XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
             Parameter diffusionParam = (Parameter) cxo.getChild(Parameter.class);
-            cxo = (XMLObject) xo.getChild(DF);
+            cxo = xo.getChild(DF);
             Parameter df = (Parameter) cxo.getChild(Parameter.class);
 
             return new MultivariateTDiffusionModel(df, diffusionParam);
@@ -86,7 +90,7 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(DIFFUSION_CONSTANT,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(DF,
@@ -102,7 +106,7 @@ public class MultivariateTDiffusionModel extends MultivariateDiffusionModel {
     // Private instance variables
     // **************************************************************
 
-    private Parameter dfParameter;
-    private Parameter precisionParameter;
+    private final Parameter dfParameter;
+    private final Parameter precisionParameter;
 
 }

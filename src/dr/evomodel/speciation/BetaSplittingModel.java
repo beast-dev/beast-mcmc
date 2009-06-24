@@ -39,8 +39,8 @@ import dr.xml.*;
 public class BetaSplittingModel extends BranchingModel {
 
     public static final String BETA_SPLITTING_MODEL = "betaSplittingModel";
-    public static String PHI = "phi";
-    public static String TREE = "branchingTree";
+    public static final String PHI = "phi";
+    public static final String TREE = "branchingTree";
 
 
     public BetaSplittingModel(Parameter phiParameter, Tree tree) {
@@ -216,10 +216,10 @@ public class BetaSplittingModel extends BranchingModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(PHI);
+            XMLObject cxo = xo.getChild(PHI);
             Parameter phiParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(TREE);
+            cxo = xo.getChild(TREE);
             Tree tree = (Tree) cxo.getChild(Tree.class);
 
             return new BetaSplittingModel(phiParameter, tree);
@@ -241,7 +241,7 @@ public class BetaSplittingModel extends BranchingModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(PHI,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "A parameter that ranges from -infinity (comb-tree) to +infinity (balanced tree)"),
                 new ElementRule(TREE,
@@ -251,10 +251,10 @@ public class BetaSplittingModel extends BranchingModel {
 
 
     //Protected stuff
-    Parameter phiParameter;
+    final Parameter phiParameter;
 
     double[][] logProbs;
     double[][] storedLogProbs;
 
-    int N;
+    final int N;
 }

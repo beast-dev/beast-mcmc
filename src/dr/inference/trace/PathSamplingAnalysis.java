@@ -25,7 +25,7 @@ public class PathSamplingAnalysis {
         this.logLikelihoodSample = logLikelihoodSample;
         this.logLikelihoodName = logLikelihoodName;
         this.thetaSample = thetaSample;
-        this.thetaName = thetaName;
+        //this.thetaName = thetaName;
     }
 
     public double getLogBayesFactor() {
@@ -115,10 +115,10 @@ public class PathSamplingAnalysis {
 
                 fileName = file.getAbsolutePath();
 
-                XMLObject cxo = (XMLObject) xo.getChild(LIKELIHOOD_COLUMN);
+                XMLObject cxo = xo.getChild(LIKELIHOOD_COLUMN);
                 String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
 
-                cxo = (XMLObject) xo.getChild(THETA_COLUMN);
+                cxo = xo.getChild(THETA_COLUMN);
                 String thetaName = cxo.getStringAttribute(Attribute.NAME);
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
@@ -195,15 +195,16 @@ public class PathSamplingAnalysis {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule(LoggerParser.FILE_NAME, "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
+        private final XMLSyntaxRule[] rules = {
+                new StringAttributeRule(LoggerParser.FILE_NAME,
+                        "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
         };
     };
 
     private boolean logBayesFactorCalculated = false;
     private double logBayesFactor;
-    private double[] logLikelihoodSample;
-    private double[] thetaSample;
-    private String logLikelihoodName;
-    private String thetaName;
+    private final double[] logLikelihoodSample;
+    private final double[] thetaSample;
+    private final String logLikelihoodName;
+    //private final String thetaName;
 }

@@ -107,7 +107,7 @@ public class MapDiffusionModel extends MultivariateDiffusionModel {
 
 			TopographicalMap map = new TopographicalMap(mapValues);
 
-			XMLObject cxo = (XMLObject) xo.getChild(STARTING_VALUES);
+			XMLObject cxo = xo.getChild(STARTING_VALUES);
 			if (cxo != null) {
 				System.err.println("Init");
 				Parameter startPosition = (Parameter) cxo.getChild(Parameter.class);
@@ -146,7 +146,7 @@ public class MapDiffusionModel extends MultivariateDiffusionModel {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newStringRule(GRASS_FILE_NAME),
 				new ElementRule(Parameter.class),
 		};
@@ -157,7 +157,7 @@ public class MapDiffusionModel extends MultivariateDiffusionModel {
 
 	};
 
-	private TopographicalMap map;
-	private Parameter graphRate;
+	private final TopographicalMap map;
+	private final Parameter graphRate;
 
 }

@@ -2,12 +2,11 @@ package dr.evomodel.continuous;
 
 import dr.geo.cartogram.CartogramMapping;
 import dr.inference.model.Parameter;
-import dr.inference.model.Bounds;
 import dr.xml.*;
 
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -65,7 +64,7 @@ public class MixtureCartogramDiffusionModel extends CartogramDiffusionModel {
          
                Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
 
-               Parameter mixtureParam = (Parameter) ((XMLObject)xo.getChild(MIXTURE)).getChild(Parameter.class);
+               Parameter mixtureParam = (Parameter) xo.getChild(MIXTURE).getChild(Parameter.class);
 
                MixtureCartogramDiffusionModel model = new MixtureCartogramDiffusionModel(xo.getId(),
                        diffusionParam, mixtureParam);
@@ -93,7 +92,7 @@ public class MixtureCartogramDiffusionModel extends CartogramDiffusionModel {
                return rules;
            }
 
-           private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+           private final XMLSyntaxRule[] rules = {
                    new ElementRule(Parameter.class),
                    new ElementRule(MIXTURE, new XMLSyntaxRule[] {
                            new ElementRule(Parameter.class)
@@ -110,6 +109,6 @@ public class MixtureCartogramDiffusionModel extends CartogramDiffusionModel {
            }
        };
 
-      private Parameter mixture;
+      private final Parameter mixture;
       private List<CartogramMapping> mappingList;
 }

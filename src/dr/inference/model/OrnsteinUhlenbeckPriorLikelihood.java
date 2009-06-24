@@ -71,10 +71,10 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         this.times = timesParameter;
     }
 
-    // log of normal distribution coeffcient.
+    // log of normal distribution coefficient.
     final private double logNormalCoef =  -0.5 * Math.log(2*Math.PI);
 
-    // A specialized version where everthing is normalized. Time is normalized to 1. Data moved to mean zero and rescaled
+    // A specialized version where everything is normalized. Time is normalized to 1. Data moved to mean zero and rescaled
     // according to time. Lambda is 0.5. The prior on mean is added.
 
     private double reNormalize(VariableDemographicModel m) {
@@ -218,7 +218,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         }
 
         private Parameter getParam(XMLObject xo, String name) throws XMLParseException {
-            final XMLObject object = (XMLObject) xo.getChild(name);
+            final XMLObject object = xo.getChild(name);
             // optional
             if( object == null ) {
                 return null;
@@ -248,10 +248,11 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
                 return new OrnsteinUhlenbeckPriorLikelihood(mean, sigma, lambda, m, logSpace, normalize, popMeanPrior);
             }
 
-            XMLObject cxo1 = (XMLObject) xo.getChild(DATA);
+            final XMLObject cxo1 = xo.getChild(DATA);
             Parameter dataParameter = (Parameter) cxo1.getChild(Parameter.class);
-            XMLObject cxo2 = (XMLObject) xo.getChild(TIMES);
-            Parameter timesParameter = (Parameter) cxo2.getChild(Parameter.class);
+            final XMLObject cxo2 = xo.getChild(TIMES);
+            final Parameter timesParameter = (Parameter) cxo2.getChild(Parameter.class);
+
             return new OrnsteinUhlenbeckPriorLikelihood(mean, sigma, lambda, dataParameter, timesParameter, logSpace, normalize);
         }
 
@@ -288,7 +289,6 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
 
             };
         }
-
     };
 
     // simply saves last value
@@ -306,12 +306,9 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         makeDirty();
     }
 
-    protected void storeState() {
-    }
+    protected void storeState() {}
 
-    protected void restoreState() {
-    }
+    protected void restoreState() {}
 
-    protected void acceptState() {
-    }
+    protected void acceptState() {}
 }

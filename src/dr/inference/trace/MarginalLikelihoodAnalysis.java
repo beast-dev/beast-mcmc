@@ -45,15 +45,15 @@ public class MarginalLikelihoodAnalysis {
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
     public static final String COLUMN_NAME = "likelihoodColumn";
-    public static final String DO_BOOTSTRAP = "bootstrap";
+    //public static final String DO_BOOTSTRAP = "bootstrap";
     public static final String ONLY_HARMONIC = "harmonicOnly";
     public static final String BOOTSTRAP_LENGTH = "bootstrapLength";
 
-    private String traceName;
-    private double[] sample;
-    private int burnin;
-    private boolean harmonicOnly;
-    private int bootstrapLength;
+    private final String traceName;
+    private final double[] sample;
+    private final int burnin;
+    private final boolean harmonicOnly;
+    private final int bootstrapLength;
 
 
     private boolean marginalLikelihoodCalculated = false;
@@ -61,9 +61,9 @@ public class MarginalLikelihoodAnalysis {
     private double bootstrappedSE;
 
 
-    public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin) {
-        this(sample, traceName, burnin, false, 1000);
-    }
+//    public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin) {
+//        this(sample, traceName, burnin, false, 1000);
+//    }
 
     public String getTraceName() {
         return traceName;
@@ -316,7 +316,7 @@ public class MarginalLikelihoodAnalysis {
 
                 fileName = file.getAbsolutePath();
 
-                XMLObject cxo = (XMLObject) xo.getChild(COLUMN_NAME);
+                XMLObject cxo = xo.getChild(COLUMN_NAME);
                 String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
@@ -390,7 +390,7 @@ public class MarginalLikelihoodAnalysis {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(FILE_NAME, "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
                 AttributeRule.newIntegerRule("burnIn", true)
                 //, "The number of states (not sampled states, but actual states) that are discarded from the beginning of the trace before doing the analysis" ),

@@ -61,7 +61,7 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
              Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
              Parameter coefficient = null;
              if (xo.hasChildNamed(COEFFICIENT))
-                coefficient = (Parameter) ((XMLObject)xo.getChild(COEFFICIENT)).getChild(Parameter.class);
+                coefficient = (Parameter) xo.getChild(COEFFICIENT).getChild(Parameter.class);
 
              return new GreatCircleDiffusionModel(diffusionParam, coefficient);
          }
@@ -78,7 +78,7 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
              return rules;
          }
 
-         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+         private final XMLSyntaxRule[] rules = {
                  new ElementRule(Parameter.class),
                  new ElementRule(COEFFICIENT,
                          new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

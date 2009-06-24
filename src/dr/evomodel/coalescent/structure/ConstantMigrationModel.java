@@ -100,7 +100,7 @@ public class ConstantMigrationModel extends MigrationModel {
 
             int demeCount = 2;
 
-            XMLObject cxo = (XMLObject) xo.getChild(MIGRATION_RATES);
+            XMLObject cxo = xo.getChild(MIGRATION_RATES);
             Parameter migrationParameter = (Parameter) cxo.getChild(Parameter.class);
 
 
@@ -123,7 +123,7 @@ public class ConstantMigrationModel extends MigrationModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MIGRATION_RATES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
         };

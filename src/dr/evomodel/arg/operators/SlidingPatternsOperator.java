@@ -174,55 +174,6 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
             return OPERATOR_NAME;
         }
 
-        public void oldReplaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-
-                if (xo.getChild(i) instanceof Parameter) {
-
-                    XMLObject rxo = null;
-                    Object obj = xo.getRawChild(i);
-
-                    if (obj instanceof Reference) {
-                        rxo = ((Reference) obj).getReferenceObject();
-                    } else if (obj instanceof XMLObject) {
-                        rxo = (XMLObject) obj;
-                    } else {
-                        throw new XMLParseException("object reference not available");
-                    }
-
-                    if (rxo.getChildCount() > 0) {
-                        throw new XMLParseException("No child elements allowed in parameter element.");
-                    }
-
-                    if (rxo.hasAttribute(XMLParser.IDREF)) {
-                        throw new XMLParseException("References to " + xo.getName() + " parameters are not allowed.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.VALUE)) {
-                        throw new XMLParseException("Parameters in " + xo.getName() + " have values set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.UPPER)) {
-                        throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(ParameterParser.LOWER)) {
-                        throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
-                    }
-
-                    if (rxo.hasAttribute(XMLParser.ID)) {
-
-                        newParam.setId(rxo.getStringAttribute(XMLParser.ID));
-                    }
-
-                    rxo.setNativeObject(newParam);
-
-                    return;
-                }
-            }
-        }
-
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 //			int mode = CoercableMCMCOperator.DEFAULT;
@@ -257,7 +208,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
             XMLObject cxo = xo.getChild(BREAK_POINTS);
             Parameter breakPoints = new Parameter.Default(dim);
 
-            replaceParameter(cxo, breakPoints);
+            ParameterParser.replaceParameter(cxo, breakPoints);
 
             breakPoints.setDimension(dim);
             for (int index = 0; index < dim; index++)
@@ -297,9 +248,9 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
 
 
     private int totalAlignmentLength;
-    private List<SitePatterns> partitions;
+    private final List<SitePatterns> partitions;
     private int windowSize = 10;
     //	private int mode = CoercableMCMCOperator.DEFAULT;
     //	private int weight = 1;
-    private Parameter breakPoints;
+    private final Parameter breakPoints;
 }

@@ -25,10 +25,7 @@
 
 package dr.inference.model;
 
-import dr.xml.AttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * Parses a multi-dimensional continuous parameter.
@@ -169,4 +166,72 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
     public Class getReturnType() {
         return Parameter.class;
     }
+
+    static public void replaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {
+
+        for (int i = 0; i < xo.getChildCount(); i++) {
+
+            if (xo.getChild(i) instanceof Parameter) {
+
+                XMLObject rxo;
+                Object obj = xo.getRawChild(i);
+
+                if (obj instanceof Reference ) {
+                    rxo = ((Reference) obj).getReferenceObject();
+                } else if (obj instanceof XMLObject) {
+                    rxo = (XMLObject) obj;
+                } else {
+                    throw new XMLParseException("object reference not available");
+                }
+
+                if (rxo.getChildCount() > 0) {
+                    throw new XMLParseException("No child elements allowed in parameter element.");
+                }
+
+                if (rxo.hasAttribute(XMLParser.IDREF)) {
+                    throw new XMLParseException("References to " + xo.getName() + " parameters are not allowed in treeModel.");
+                }
+
+                if (rxo.hasAttribute(VALUE)) {
+                    throw new XMLParseException("Parameters in " + xo.getName() + " have values set automatically.");
+                }
+
+                if (rxo.hasAttribute(UPPER)) {
+                    throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
+                }
+
+                if (rxo.hasAttribute(LOWER)) {
+                    throw new XMLParseException("Parameters in " + xo.getName() + " have bounds set automatically.");
+                }
+
+                if (rxo.hasAttribute(XMLParser.ID)) {
+                    newParam.setId(rxo.getStringAttribute(XMLParser.ID));
+                }
+
+                rxo.setNativeObject(newParam);
+
+                return;
+            }
+        }
+    }
+
+//    static public Parameter getParameter(XMLObject xo) throws XMLParseException {
+//
+//        int paramCount = 0;
+//        Parameter param = null;
+//        for (int i = 0; i < xo.getChildCount(); i++) {
+//            if (xo.getChild(i) instanceof Parameter) {
+//                param = (Parameter) xo.getChild(i);
+//                paramCount += 1;
+//            }
+//        }
+//
+//        if (paramCount == 0) {
+//            throw new XMLParseException("no parameter element in treeModel " + xo.getName() + " element");
+//        } else if (paramCount > 1) {
+//            throw new XMLParseException("More than one parameter element in treeModel " + xo.getName() + " element");
+//        }
+//
+//        return param;
+//    }
 }

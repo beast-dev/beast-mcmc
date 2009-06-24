@@ -239,6 +239,8 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.removeSelection();
         } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
             modelsPanel.removeSelection();
+        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
+        	treesPanel.removeSelection();
         } else {
             throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }
@@ -648,27 +650,54 @@ public class BeautiFrame extends DocumentFrame {
             }
             for (PartitionData partition : partitions) {
                 beautiOptions.dataPartitions.add(partition);
+                //TODO Cannot load Substitution Model and Tree Model from BEAST file yet
                 if (model != null) {
                     partition.setPartitionSubstitutionModel(model);
                     beautiOptions.addPartitionSubstitutionModel(model);
-                } else {
-                    for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
-                        if (pm.dataType == alignment.getDataType()) {
-                            partition.setPartitionSubstitutionModel(pm);
+                    
+                    if (beautiOptions.getPartitionTreeModels() != null && beautiOptions.getPartitionTreeModels().size() > 0) {
+                    	PartitionTreeModel ptm = beautiOptions.getPartitionTreeModels().get(0);
+                    	partition.setPartitionTreeModel(ptm);
+                    	
+                    	PartitionTreePrior ptp = beautiOptions.getPartitionTreePriors().get(0);
+                        ptm.setPartitionTreePrior(ptp);
+                    } else {
+                        PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
+                        partition.setPartitionTreeModel(ptm);
+                        beautiOptions.addPartitionTreeModel(ptm);
+                        
+                        PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
+                        ptm.setPartitionTreePrior(ptp);
+                        beautiOptions.addPartitionTreePrior(ptp);
+                    }
+                } else {// only this works
+                    for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
+                        if (psm.dataType == alignment.getDataType()) { // use same substitution model in beginning
+                            partition.setPartitionSubstitutionModel(psm);
                         }
                     }
                     if (partition.getPartitionSubstitutionModel() == null) {
-                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(beautiOptions, partition);
-                        partition.setPartitionSubstitutionModel(pm);
-                        beautiOptions.addPartitionSubstitutionModel(pm);
+                        // PartitionSubstitutionModel based on PartitionData
+                    	PartitionSubstitutionModel psm = new PartitionSubstitutionModel(beautiOptions, partition);
+                        partition.setPartitionSubstitutionModel(psm);
+                        beautiOptions.addPartitionSubstitutionModel(psm);
                     }
-                    if (beautiOptions.getPartitionTreeModels().size() > 0) {
-                        partition.setPartitionTreeModel(beautiOptions.getPartitionTreeModels().get(0));
-                    } else {
-                        PartitionTreeModel pt = new PartitionTreeModel(beautiOptions, "default");
-                        partition.setPartitionTreeModel(pt);
-                        beautiOptions.addPartitionTreeModel(pt);
+                    
+                    // use same tree model in beginning
+                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
+                        partition.setPartitionTreeModel(ptm);                        
                     }
+                    if (partition.getPartitionTreeModel() == null) {
+                    	// PartitionTreeModel based on PartitionData
+                    	PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
+                        partition.setPartitionTreeModel(ptm);
+                        beautiOptions.addPartitionTreeModel(ptm);
+                        
+                        // PartitionTreePrior always based on PartitionTreeModel
+                        PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
+                        ptm.setPartitionTreePrior(ptp);
+                        beautiOptions.addPartitionTreePrior(ptp);
+                    }                    
                 }
             }
         }
@@ -770,22 +799,17 @@ public class BeautiFrame extends DocumentFrame {
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
     	//TODO: wait for new implementation in BEAST
-    	if (isChecked) {    	
-	    	if (DataPanel.ALLOW_UNLINKED_TREES) {
-	            treesPanel.treePriorCombo.removeItem(TreePrior.YULE);
-	            treesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
-	        } else {
-	        	oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
-	        	oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
-	        }
-    	} else {
-    		if (DataPanel.ALLOW_UNLINKED_TREES) {
-    			treesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
-    		} else {
-    			oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
-    		}
-    	}
-    	
+    	   	
+	    if (DataPanel.ALLOW_UNLINKED_TREES) {
+			treesPanel.setCheckedTipDate(isChecked);
+		} else {
+			if (isChecked) {
+				oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
+				oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+			} else {
+				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+			}
+		}    	
     }
     
     private void importMultiTraits(final File file) throws IOException {

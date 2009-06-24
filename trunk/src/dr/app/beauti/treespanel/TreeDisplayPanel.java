@@ -60,7 +60,7 @@ public class TreeDisplayPanel extends JPanel {
 
         treePanel = new JTreeDisplay(new SquareTreePainter());
 
-        tabbedPane.add("Tree", treePanel);
+        tabbedPane.add("Starting Tree", treePanel);
 
 //      AR - have removed root-to-tip chart for now.
 //        rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));

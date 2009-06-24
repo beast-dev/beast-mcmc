@@ -26,17 +26,22 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.modelsPanel.CreateModelDialog;
+import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.*;
 import dr.app.beauti.options.*;
+import dr.app.tools.TemporalRooting;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.distance.F84DistanceMatrix;
+import dr.evolution.tree.NeighborJoiningTree;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.UPGMATree;
+
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -51,10 +56,12 @@ import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.Set;
+
 
 /**
  * @author Andrew Rambaut
+ * @author Walter Xie
  * @version $Id:$
  */
 public class TreesPanel extends BeautiPanel implements Exportable {
@@ -63,74 +70,89 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
-    private OptionsPanel treePriorPanel = new OptionsPanel();
-    public JComboBox treePriorCombo;
-    private JComboBox parameterizationCombo = new JComboBox(new String[]{
-            "Growth Rate", "Doubling Time"});
-    private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
-            "Piecewise-constant", "Piecewise-linear"});
-    private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    JComboBox extendedBayesianSkylineCombo = new JComboBox(new String[]{
-            "Single-Locus", "Multi-Loci"});
+//    private JComboBox userTreeCombo = new JComboBox();
+//    private JButton button;
+    
+//    private CreateTreeAction createTreeAction = new CreateTreeAction();
+    private TreeDisplayPanel treeDisplayPanel;
 
-    JComboBox gmrfBayesianSkyrideCombo = new JComboBox(new String[]{
-            "Uniform", "Time-aware"});
+    private BeautiFrame frame = null;
+    private BeautiOptions options = null;
 
-    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
+    private JScrollPane scrollPane = new JScrollPane();
+    private JTable treesTable = null;
+    private TreesTableModel treesTableModel = null;
 
-    JScrollPane scrollPane = new JScrollPane();
-    JTable treeTable = null;
-    TreeTableModel treeTableModel = null;
-    BeautiOptions options = null;
+    private GenerateTreeDialog generateTreeDialog = null;    
+    private boolean settingOptions = false;
+//    boolean hasAlignment = false;        
+    
+    JPanel treeModelPanelParent;
+//    private OptionsPanel currentTreeModel = new OptionsPanel();
+    PartitionTreeModel currentTreeModel = null;
+    TitledBorder treeModelBorder;
+    Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
+    //  private OptionsPanel treePriorPanel = new OptionsPanel();
+    JPanel treePriorPanelParent;
+    PartitionTreePrior currentTreePrior = null;
+    TitledBorder treePriorBorder;
+    Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
 
-    JPanel treePanelParent;
-    PartitionTreeModel currentTree = null;
-
-    Map<PartitionTreeModel, PartitionTreePanel> treePanels = new HashMap<PartitionTreeModel, PartitionTreePanel>();
+    
     TitledBorder treeBorder;
 
-    // General settings ////////////////////////////////////////////////////////////////////////
-
+    // Overall model parameters ////////////////////////////////////////////////////////////////////////
+    private boolean isCheckedTipDate = false;
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    BeautiFrame frame = null;
-    CreateModelDialog createModelDialog = null;
-    boolean settingOptions = false;
-    boolean hasAlignment = false;
+	SequenceErrorModelComponentOptions comp;
 
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
-
-        super();
-
+    	super();
         this.frame = parent;
 
-        treeTableModel = new TreeTableModel();
-        treeTable = new JTable(treeTableModel);
+        treesTableModel = new TreesTableModel();
+        treesTable = new JTable(treesTableModel);
 
-        treeTable.getTableHeader().setReorderingAllowed(false);
-        treeTable.getTableHeader().setResizingAllowed(false);
-        treeTable.getTableHeader().setDefaultRenderer(
+        treesTable.getTableHeader().setReorderingAllowed(false);
+        treesTable.getTableHeader().setResizingAllowed(false);
+        treesTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        final TableColumnModel model = treeTable.getColumnModel();
+        final TableColumnModel model = treesTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
-        tableColumn0.setCellRenderer(new TreesTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        tableColumn0.setCellRenderer(new ModelsTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treeTable);
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(treesTable);
 
-        treeTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        treeTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        treesTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        treesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 selectionChanged();
             }
         });
 
-        scrollPane = new JScrollPane(treeTable,
+        scrollPane = new JScrollPane(treesTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
+
+//        JToolBar toolBar1 = new JToolBar();
+//        toolBar1.setFloatable(false);
+//        toolBar1.setOpaque(false);
+//        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+//        button = new JButton(createTreeAction);
+//        createTreeAction.setEnabled(true);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
+
+//        button = new JButton(linkModelAction);
+//        linkModelAction.setEnabled(false);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTreeAction);
@@ -139,299 +161,256 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
-
-        setCurrentTree(null);
-
-        ItemListener listener = new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                fireTreePriorsChanged();
-            }
-        };
-
-        treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
-
-        PanelUtils.setupComponent(treePriorCombo);
-        treePriorCombo.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
-                        fireTreePriorsChanged();
-                        setupPanel();
-                    }
-                }
-        );
-
-        KeyListener keyListener = new KeyAdapter() {
-            public void keyTyped(KeyEvent ev) {
-                if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
-                    fireTreePriorsChanged();
-                }
-            }
-        };
-
-        groupCountField.addKeyListener(keyListener);
-        samplingProportionField.addKeyListener(keyListener);
-
-        FocusListener focusListener = new FocusAdapter() {
-            public void focusLost(FocusEvent focusEvent) {
-                fireTreePriorsChanged();
-            }
-        };
-        groupCountField.addFocusListener(focusListener);
-//        samplingProportionField.addFocusListener(focusListener);
-
-        PanelUtils.setupComponent(parameterizationCombo);
-        parameterizationCombo.addItemListener(listener);
-
-        PanelUtils.setupComponent(bayesianSkylineCombo);
-        bayesianSkylineCombo.addItemListener(listener);
-
-        PanelUtils.setupComponent(extendedBayesianSkylineCombo);
-        extendedBayesianSkylineCombo.addItemListener(listener);
-
-        PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
-        gmrfBayesianSkyrideCombo.addItemListener(listener);
-
-        treePriorPanel.setBorder(null);
-        add(treePriorPanel, BorderLayout.CENTER);
+    
+        setCurrentModel(null);
+        setCurrentPrior(null);
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
-
-        OptionsPanel panel = new OptionsPanel(10, 10);
-        panel.addSeparator();
-        panel.add(treePriorPanel);
-
-        treePanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        treePanelParent.setOpaque(false);
-        treeBorder = new TitledBorder("Partition Tree");
-        treePanelParent.setBorder(treeBorder);
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treePanelParent);
+        
+        JPanel panel2 = new JPanel(new BorderLayout(0, 0));        
+        panel2.setOpaque(false);
+        
+        treeModelPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        treeModelPanelParent.setOpaque(false);
+        treeModelBorder = new TitledBorder("Tree Model");
+        treeModelPanelParent.setBorder(treeModelBorder);
+//        currentTreeModel.setBorder(null);
+               
+        panel2.add(treeModelPanelParent, BorderLayout.NORTH);
+        
+        treeDisplayPanel = new TreeDisplayPanel(parent);
+        panel2.add(treeDisplayPanel, BorderLayout.CENTER);        
+        
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
         splitPane.setDividerLocation(180);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-
+                       
         setOpaque(false);
-        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-
-        add(panel, BorderLayout.NORTH);
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
+        
+        treePriorPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        treePriorPanelParent.setOpaque(false);
+        treePriorBorder = new TitledBorder("Tree Prior");
+        treePriorPanelParent.setBorder(treePriorBorder);
+        
+        add(treePriorPanelParent, BorderLayout.SOUTH);
         add(splitPane, BorderLayout.CENTER);
 
-        setupPanel();
+        comp = new SequenceErrorModelComponentOptions ();
     }
 
-    private void setupPanel() {
-
-        treePriorPanel.removeAll();
-
-        treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
-        if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
-                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
-                treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
-            treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
-            groupCountField.setColumns(6);
-            treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
-            treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
-//            samplingProportionField.setColumns(8);
-//            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
-            treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
-            treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);        
+    private void fireTreePriorsChanged() {
+        if (!settingOptions) {
+            frame.setDirty();
+        }
+    }
+    public void removeSelection() {
+        int selRow = treesTable.getSelectedRow();
+        if (!isUsed(selRow)) {
+            PartitionTreeModel model = options.getPartitionTreeModels().get(selRow);
+            options.getPartitionTreeModels().remove(model);
         }
 
-        treePriorPanel.addSeparator();
+        treesTableModel.fireTableDataChanged();
+        int n = options.getPartitionTreeModels().size();
+        if (selRow >= n) {
+            selRow--;
+        }
+        treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        if (n == 0) {
+            setCurrentModel(null);
+        }
 
-//		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
-
-        validate();
-        repaint();
+        fireTreePriorsChanged();
+    }
+        
+    private void selectionChanged() {
+        int selRow = treesTable.getSelectedRow();
+        if (selRow >= 0) {
+        	setCurrentModel(options.getPartitionTreeModels().get(selRow));
+        	setCurrentPrior(options.getPartitionTreePriors().get(selRow));
+//TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));            
+            frame.modelSelectionChanged(!isUsed(selRow));
+        } else {
+        	setCurrentModel(null);
+        	setCurrentPrior(null);
+            treeDisplayPanel.setTree(null);
+        }
     }
 
+    private void createTree() {
+        if (generateTreeDialog == null) {
+            generateTreeDialog = new GenerateTreeDialog(frame);
+        }
+
+        int result = generateTreeDialog.showDialog(options);
+        if (result != JOptionPane.CANCEL_OPTION) {
+            GenerateTreeDialog.MethodTypes methodType = generateTreeDialog.getMethodType();
+            PartitionData partition = generateTreeDialog.getDataPartition();
+
+            Patterns patterns = new Patterns(partition.getAlignment());
+            DistanceMatrix distances = new F84DistanceMatrix(patterns);
+            Tree tree;
+            TemporalRooting temporalRooting;
+
+            switch (methodType) {
+                case NJ:
+                    tree = new NeighborJoiningTree(distances);
+                    temporalRooting = new TemporalRooting(tree);
+                    tree = temporalRooting.findRoot(tree);
+                    break;
+                case UPGMA:
+                    tree = new UPGMATree(distances);
+                    temporalRooting = new TemporalRooting(tree);
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown method type");
+            }
+
+            tree.setId(generateTreeDialog.getName());
+            options.userTrees.add(tree);
+            treesTableModel.fireTableDataChanged();
+            int row = options.userTrees.size() - 1;
+            treesTable.getSelectionModel().setSelectionInterval(row, row);
+        }
+
+        fireTreePriorsChanged();
+
+    }
+
+    
+    /**
+     * Sets the current model that this model panel is displaying
+     *
+     * @param model the new model to display
+     */
+    private void setCurrentModel(PartitionTreeModel model) {
+
+        if (model != null) {
+            if (currentTreeModel != null) treeModelPanelParent.removeAll();
+
+            PartitionTreeModelPanel panel = treeModelPanels.get(model);
+            if (panel == null) {
+                panel = new PartitionTreeModelPanel(model);
+                treeModelPanels.put(model, panel);
+            }
+
+            currentTreeModel = model;
+            treeModelPanelParent.add(panel);
+            
+            repaint();
+        }
+    }
+    
+    private void setCurrentPrior(PartitionTreePrior prior) {
+
+        if (prior != null) {
+            if (currentTreePrior != null) treePriorPanelParent.removeAll();
+
+            PartitionTreePriorPanel panel = treePriorPanels.get(prior);
+            if (panel == null) {
+                panel = new PartitionTreePriorPanel(prior);
+                treePriorPanels.put(prior, panel);
+            }
+
+            currentTreePrior = prior;
+            treePriorPanelParent.add(panel);
+
+            repaint();
+        }
+    }
+    
+    public void setCheckedTipDate(boolean isCheckedTipDate) {
+		this.isCheckedTipDate = isCheckedTipDate;
+	}
+    
     public void setOptions(BeautiOptions options) {
-
-        if (DEBUG) {
-            Logger.getLogger("dr.app.beauti").info("ModelsPanel.setOptions");
-        }
-
         this.options = options;
 
         settingOptions = true;
 
-        int selRow = treeTable.getSelectedRow();
-        treeTableModel.fireTableDataChanged();
+        Set<PartitionTreeModel> models = treeModelPanels.keySet();        
+        
+        for (PartitionTreeModel model : models) {
+        	treeModelPanels.get(model).setOptions(options);
+     	}
+        
+        Set<PartitionTreePrior> priors = treePriorPanels.keySet();
+        
+        for (PartitionTreePrior prior : priors) {
+        	PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
+        	
+        	ptpp.setOptions(options);        	
+        	
+			if (isCheckedTipDate) { 
+        		ptpp.treePriorCombo.removeItem(TreePrior.YULE);
+        		ptpp.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+        	} else {
+        		ptpp.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());    		
+        	}
+     	}
+
+        settingOptions = false;
+        
+        int selRow = treesTable.getSelectedRow();
+        treesTableModel.fireTableDataChanged();
         if (options.getPartitionTreeModels().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
-            treeTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
-        // set overall settings here
-        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
-
-        groupCountField.setValue(options.skylineGroupCount);
-        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
-
-        parameterizationCombo.setSelectedIndex(options.parameterization);
-        bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
-
-        extendedBayesianSkylineCombo.setSelectedIndex(options.multiLoci ? 1 : 0);
-
-        gmrfBayesianSkyrideCombo.setSelectedIndex(options.skyrideSmoothing);
+        if (currentTreeModel == null && options.getPartitionTreeModels().size() > 0) {
+        	treesTable.getSelectionModel().setSelectionInterval(0, 0);
+        }
 
         validate();
         repaint();
     }
 
     public void getOptions(BeautiOptions options) {
-
-        // This prevents options be overwritten due to listeners calling
-        // this function (indirectly through modelChanged()) whilst in the
-        // middle of the setOptions() method.
-        if (settingOptions) return;
-
-        // get overall settings here
-        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
-
-        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
-            Integer groupCount = groupCountField.getValue();
-            if (groupCount != null) {
-                options.skylineGroupCount = groupCount;
-            } else {
-                options.skylineGroupCount = 5;
-            }
-        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-//            Double samplingProportion = samplingProportionField.getValue();
-//            if (samplingProportion != null) {
-//                options.birthDeathSamplingProportion = samplingProportion;
-//            } else {
-//                options.birthDeathSamplingProportion = 1.0;
-//            }
-        }
-
-        options.parameterization = parameterizationCombo.getSelectedIndex();
-        options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
-        options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
-
-        options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
-        // the taxon list may not exist yet... this should be set when generating...
-//        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
+    	Set<PartitionTreeModel> models = treeModelPanels.keySet();        
+        
+        for (PartitionTreeModel model : models) {
+        	treeModelPanels.get(model).setOptions(options);
+     	}
+        
+        Set<PartitionTreePrior> priors = treePriorPanels.keySet();
+        
+        for (PartitionTreePrior prior : priors) {
+        	treePriorPanels.get(prior).getOptions(options);
+     	}
     }
-
-    private void fireTreesChanged() {
-        frame.setDirty();
+    
+ 
+    
+    public JComponent getExportableComponent() {
+        return treeDisplayPanel;
     }
-
-    private void fireTreePriorsChanged() {
-        frame.setDirty();
-    }
-
-    private void createPartitionTreeModel() {
-//        if (createModelDialog == null) {
-//            createModelDialog = new CreateModelDialog(frame);
-//        }
-//
-//        int result = createModelDialog.showDialog();
-//        if (result != JOptionPane.CANCEL_OPTION) {
-//            PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
-//            options.addPartitionSubstitutionModel(model);
-//            modelTableModel.fireTableDataChanged();
-//            int row = options.getPartitionSubstitutionModels().size() - 1;
-//            modelTable.getSelectionModel().setSelectionInterval(row, row);
-//        }
-
-        fireTreesChanged();
-    }
-
-    public void removeSelection() {
-        int selRow = treeTable.getSelectedRow();
-        if (!isUsed(selRow)) {
-            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);
-            options.getPartitionSubstitutionModels().remove(model);
-        }
-
-        treeTableModel.fireTableDataChanged();
-        int n = options.getPartitionSubstitutionModels().size();
-        if (selRow >= n) {
-            selRow--;
-        }
-        treeTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        if (n == 0) {
-            setCurrentTree(null);
-        }
-
-        fireTreesChanged();
-    }
-
-    private void selectionChanged() {
-
-        int selRow = treeTable.getSelectedRow();
-        if (selRow >= 0) {
-            setCurrentTree(options.getPartitionTreeModels().get(selRow));
-            frame.modelSelectionChanged(!isUsed(selRow));
-        }
-    }
-
-    /**
-     * Sets the current tree that this trees panel is displaying
-     *
-     * @param tree the new tree to display
-     */
-    private void setCurrentTree(PartitionTreeModel tree) {
-
-        if (tree != null) {
-            if (currentTree != null) treePanelParent.removeAll();
-
-            PartitionTreePanel panel = treePanels.get(tree);
-            if (panel == null) {
-                panel = new PartitionTreePanel(tree);
-                treePanels.put(tree, panel);
-            }
-
-            currentTree = tree;
-            treePanelParent.add(panel);
-
-            updateBorder();
-        }
-    }
-
-    private void updateBorder() {
-
-        String title = "Partition Tree: ";
-
-        treeBorder.setTitle(title + currentTree.getName());
-        repaint();
-    }
-
+    
     private boolean isUsed(int row) {
-        PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
+        PartitionTreeModel model = options.getPartitionTreeModels().get(row);
         for (PartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionSubstitutionModel() == model) {
+            if (partition.getPartitionTreeModel() == model) {
                 return true;
             }
         }
         return false;
     }
 
-    public JComponent getExportableComponent() {
-        return this;
-    }
+    class TreesTableModel extends AbstractTableModel {
 
-    class TreeTableModel extends AbstractTableModel {
-
-        /**
-         *
-         */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Partition Trees"};
+        String[] columnNames = {"Tree(s)"};
 
-        public TreeTableModel() {
+        public TreesTableModel() {
         }
 
         public int getColumnCount() {
@@ -444,28 +423,45 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionTreeModel tree = options.getPartitionTreeModels().get(row);
+        	PartitionTreeModel model = options.getPartitionTreeModels().get(row);
             switch (col) {
                 case 0:
-                    return tree.getName();
+                    return model.getName();
+                default:
+                    throw new IllegalArgumentException("unknown column, " + col);
+            }
+        }
+
+        public void setValueAt(Object aValue, int row, int col) {
+//            Tree tree = options.userTrees.get(row);
+            switch (col) {
+                case 0:
+                    String name = ((String) aValue).trim();
+                    if (name.length() > 0) {
+                    	PartitionTreeModel model = options.getPartitionTreeModels().get(row);
+                    	model.setName(name);
+                    	fireTreePriorsChanged();
+                    }
+                    break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
         }
 
         public boolean isCellEditable(int row, int col) {
-            return true;
+            boolean editable;
+
+            switch (col) {
+                case 0:// name
+                    editable = true;
+                    break;
+                default:
+                    editable = false;
+            }
+
+            return editable;
         }
 
-        public void setValueAt(Object value, int row, int col) {
-            String name = ((String) value).trim();
-            if (name.length() > 0) {
-                PartitionTreeModel tree = options.getPartitionTreeModels().get(row);
-                tree.setName(name);
-                updateBorder();
-                fireTreesChanged();
-            }
-        }
 
         public String getColumnName(int column) {
             return columnNames[column];
@@ -501,9 +497,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    class TreesTableCellRenderer extends TableRenderer {
+    class ModelsTableCellRenderer extends TableRenderer {
 
-        public TreesTableCellRenderer(int alignment, Insets insets) {
+        public ModelsTableCellRenderer(int alignment, Insets insets) {
             super(alignment, insets);
         }
 
@@ -529,10 +525,21 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
     }
-
+    
     Action addTreeAction = new AbstractAction("+") {
         public void actionPerformed(ActionEvent ae) {
-            createPartitionTreeModel();
+        	createTree();
         }
     };
+    
+//    public class CreateTreeAction extends AbstractAction {
+//        public CreateTreeAction() {
+//            super("Create Tree");
+//            setToolTipText("Create a NJ or UPGMA tree using a data partition");
+//        }
+//
+//        public void actionPerformed(ActionEvent ae) {
+//            createTree();
+//        }
+//    }
 }

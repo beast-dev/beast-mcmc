@@ -294,8 +294,14 @@ public interface Parameter extends Statistic {
 
         public String toString() {
             StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
-            final Bounds bounds = getBounds();
-            buffer.append(getId());
+            Bounds bounds = null;
+            try {
+               bounds = getBounds();
+            } catch( NullPointerException e) {
+               //
+            }
+            final String id = getId();
+            if( id != null) buffer.append(id);
             if (bounds != null) {
                 buffer.append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
                 buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
@@ -583,6 +589,6 @@ public interface Parameter extends Statistic {
             return uppers.length;
         }
 
-        private double[] uppers, lowers;
+        private final double[] uppers, lowers;
     }
 }

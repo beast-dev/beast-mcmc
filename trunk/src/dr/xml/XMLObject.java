@@ -102,8 +102,8 @@ public class XMLObject {
 
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
-            if (child instanceof XMLObject) {
-                if (((XMLObject) child).getName().equals(name)) {
+            if( child instanceof XMLObject ) {
+                if( ((XMLObject) child).getName().equals(name) ) {
                     return (XMLObject) child;
                 }
             }

@@ -160,12 +160,12 @@ public class DiffusionModel extends AbstractModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DIFFUSION_CONSTANT);
+            XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
             Parameter diffusionParam = (Parameter) cxo.getChild(Parameter.class);
 
             Parameter biasParam = null;
             if (xo.hasAttribute(BIAS)) {
-                cxo = (XMLObject) xo.getChild(BIAS);
+                cxo = xo.getChild(BIAS);
                 biasParam = (Parameter) cxo.getChild(Parameter.class);
             }
 
@@ -187,7 +187,7 @@ public class DiffusionModel extends AbstractModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(DIFFUSION_CONSTANT,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(BIAS,
@@ -203,6 +203,6 @@ public class DiffusionModel extends AbstractModel {
     // Private instance variables
     // **************************************************************
 
-    private Parameter diffusionRateParameter;
+    private final Parameter diffusionRateParameter;
     private Parameter biasParameter;
 }

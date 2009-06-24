@@ -158,7 +158,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         }
 
         private class StatisticColumn extends NumberColumn {
-            private int dim;
+            private final int dim;
 
             public StatisticColumn(String label, int dim) {
                 super(label);

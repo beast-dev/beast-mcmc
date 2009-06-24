@@ -18,9 +18,9 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
 
     public static String INDICATOR_PARAMETER = "indicators";
     public static String DATA_PARAMETER = "data";
-    private ParametricDistributionModel distribution;
-    private Parameter data;
-    private Parameter indicators;
+    private final ParametricDistributionModel distribution;
+    private final Parameter data;
+    private final Parameter indicators;
 
     public SampleNonActiveGibbsOperator(ParametricDistributionModel distribution,
                                         Parameter data, Parameter indicators, double weight) {
@@ -75,14 +75,14 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final double weight = xo.getDoubleAttribute(WEIGHT);
 
-            XMLObject cxo = (XMLObject) xo.getChild(DISTRIBUTION);
+            XMLObject cxo = xo.getChild(DISTRIBUTION);
             ParametricDistributionModel distribution =
                     (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
 
-            cxo = (XMLObject) xo.getChild(DATA_PARAMETER);
+            cxo = xo.getChild(DATA_PARAMETER);
             Parameter data = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(INDICATOR_PARAMETER);
+            cxo = xo.getChild(INDICATOR_PARAMETER);
             Parameter indicators = (Parameter) cxo.getChild(Parameter.class);
 
             return new SampleNonActiveGibbsOperator(distribution, data, indicators, weight);
@@ -105,7 +105,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule("distribution",
                         new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
                 new ElementRule(INDICATOR_PARAMETER,

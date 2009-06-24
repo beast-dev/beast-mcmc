@@ -209,8 +209,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     }
 
     class MeanPrecision {
-        double[] mean;
-        double[][] precision;
+        final double[] mean;
+        final double[][] precision;
 
         MeanPrecision(double[] mean, double[][] precision) {
             this.mean = mean;
@@ -250,6 +250,10 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
 
         for (int i=0; i<dim; i++) {
+            // todo: (FIXME) if code is correct in using the arbitrary last trait from 2 loops above that
+            // todo: (FIXME) requires at least a comment.
+            assert trait != null;
+            
             trait[i] = 0;
             for (int j=0; j<dim; j++)
                 trait[i] += variance[i][j] * weightedAverage[j];
@@ -272,7 +276,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             return GIBBS_OPERATOR;
         }
 
-        private final String[] names = new String[] { GIBBS_OPERATOR, "internalTraitGibbsOperator" };
+        private final String[] names = { GIBBS_OPERATOR, "internalTraitGibbsOperator" };
 
         public String[] getParserNames() { return names; }
 
@@ -287,7 +291,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
             // Get root prior
 
-            XMLObject cxo = (XMLObject) xo.getChild(ROOT_PRIOR);
+            XMLObject cxo = xo.getChild(ROOT_PRIOR);
             if (cxo != null) {
 
                 MultivariateDistributionLikelihood rootPrior = (MultivariateDistributionLikelihood) cxo.getChild(MultivariateDistributionLikelihood.class);

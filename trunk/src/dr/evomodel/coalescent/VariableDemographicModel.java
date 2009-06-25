@@ -191,13 +191,13 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
+            XMLObject cxo = xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
             Parameter popParam = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
+            cxo = xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
             Parameter indicatorParam = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(POPULATION_TREES);
+            cxo = xo.getChild(POPULATION_TREES);
 
             final int nc = cxo.getChildCount();
             TreeModel[] treeModels = new TreeModel[nc];
@@ -225,13 +225,13 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
                 }
             }
 
-            final boolean logSpace = xo.getAttribute(LOG_SPACE, false);
+            final boolean logSpace = xo.getAttribute(LOG_SPACE, false) || type == Type.EXPONENTIAL;
             final boolean useMid = xo.getAttribute(USE_MIDPOINTS, false);
 
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
             return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type,
-                    logSpace, useMid);
+                                                logSpace, useMid);
 
         }
 

@@ -29,7 +29,6 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import dr.evomodel.operators.ImportnaceNarrowExchange;
 
 import java.util.*;
 import java.io.*;
@@ -266,7 +265,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.TreeBitMoveOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeBitRandomWalkOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.TreeUniform.PARSSR);
-        addXMLObjectParser(ImportnaceNarrowExchange.INS_PARSER);
+        addXMLObjectParser(dr.evomodel.operators.ImportnaceNarrowExchange.INS_PARSER);
 
         // rate operators
         addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
@@ -281,6 +280,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
 
         addXMLObjectParser(dr.inference.model.OrnsteinUhlenbeckPriorLikelihood.PARSER);
+        addXMLObjectParser(dr.inference.model.BMPriorLikelihood.PARSER);
 
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.PARSER);
         addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);

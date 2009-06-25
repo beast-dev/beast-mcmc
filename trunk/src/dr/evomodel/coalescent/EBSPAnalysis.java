@@ -152,7 +152,7 @@ public class EBSPAnalysis extends TabularData {
                     final VDdemographicFunction demoFunction =
                             new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
 
-                    if( demoFunction.numberOfChanges() == restrictToNchanges ) {
+                    if( restrictToNchanges >= 0 && demoFunction.numberOfChanges() != restrictToNchanges ) {
                         continue;
                     }
 
@@ -178,7 +178,8 @@ public class EBSPAnalysis extends TabularData {
             for(int k = 0; k < xPoints.length; ++k) {
                 xPoints[k] /= nStates;
             }
-            if( nStates != nDataPoints ) {                                                     //Warning if log file ant tree files
+
+            if( nStates != nDataPoints ) {                                                     //Warning if log file and tree files
                 // have different rates
                 System.err.println("Different Rates is \"main\" and \"tree\" log files");
 
@@ -186,9 +187,7 @@ public class EBSPAnalysis extends TabularData {
             if( nDataPoints < 10 ) {                                                           //Warning if number of states is not sufficient
                 // enough to do the analysis
                 System.err.println("Warning!!! Not Sufficient number of data points");
-
             }
-
         }
 
         double[] popValues = new double[nDataPoints];

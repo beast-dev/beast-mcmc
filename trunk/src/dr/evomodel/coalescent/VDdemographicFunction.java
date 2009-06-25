@@ -41,6 +41,9 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         alltimes = new double[tot];
 
         setDirty();
+
+        assert !(type == VariableDemographicModel.Type.EXPONENTIAL && ! logSpace);
+
         setup(trees, indicatorParameter, popSizeParameter, logSpace, mid);
     }
 
@@ -76,8 +79,11 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     // Hack so that VDdemo can be used as just a linear piecewise demography (the BEAST one is broken)
     // Alexei fixed PiecewiseLinearPopulation, but did not say yet if it is tested or not.
     public VDdemographicFunction(double[] t, double[] p, Type units) {
-        super(units);
+        this(t, p, units, VariableDemographicModel.Type.LINEAR);
+    }
 
+    public VDdemographicFunction(double[] t, double[] p, Type units, VariableDemographicModel.Type type) {
+        super(units);
 // seem safe to remove them for now
 //        assert t[0] >= 0;
 //        for(int k = 1; k < t.length; ++k) {
@@ -85,11 +91,11 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 //        }
 //        assert t.length + 1 == p.length;
 //
-        this.type = VariableDemographicModel.Type.LINEAR;
+        this.type = type;
         final int tot = p.length;
-        times = new double[tot+1];
+        times = new double[tot + 1];
         values = p;
-        intervals = new double[tot -1];
+        intervals = new double[tot - 1];
 
         times[0] = 0.0;
         times[tot] = Double.POSITIVE_INFINITY;
@@ -99,7 +105,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         System.arraycopy(t, 0, times, 1, t.length);
 
         for(int n = 0; n < intervals.length; ++n) {
-           intervals[n] = times[n+1] - times[n];
+            intervals[n] = times[n + 1] - times[n];
         }
         dirty = false;
     }
@@ -175,6 +181,9 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     void setup(Tree[] trees, double[] indicatorParameter, double[] popSizes, boolean logSpace, boolean mid) {
         // boolean was = dirty;
         if( dirty ) {
+            // for exponential we do the exp in the code
+            if( type == VariableDemographicModel.Type.EXPONENTIAL ) logSpace = false;
+
             boolean any = false;
             for(int nt = 0; nt < ti.length; ++nt) {
                 if( setTreeTimes(nt, trees) ) {
@@ -250,8 +259,8 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         int j = 0;
         // ugly hack,
         // when doubles are added in a different order and compared later, they can be a tiny bit off. With a
-        // stepwise model this creates a "one off" situation here, which is unpleasent.
-        // use float comarison here to avoid it
+        // stepwise model this creates a "one off" situation here, which is unpleasant.
+        // use float comparison here to avoid it
 
         final float tf = (float)t;
         while( tf > (float)times[j+1] ) ++j;
@@ -264,29 +273,35 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return j;
     }
 
+    private double linPop(double t) {
+        final int j = getIntervalIndexLin(t);
+        if( j == values.length - 1 ) {
+            return values[j];
+        }
+
+        final double a = (t - times[j]) / (intervals[j]);
+        return a * values[j+1] + (1-a) * values[j];
+    }
+
     public double getDemographic(double t) {
 
         double p;
         switch( type ) {
-            case STEPWISE:
-            {
+            case STEPWISE: {
                 final int j = getIntervalIndexStep(t);
                 p = values[j];
                 break;
             }
-            case LINEAR:
-            {
-                final int j = getIntervalIndexLin(t);
-                if( j == values.length - 1 ) {
-                    p = values[j];
-                    break;
-                }
-
-                final double a = (t - times[j]) / (intervals[j]);
-                p = a * values[j+1] + (1-a) * values[j];
+            case LINEAR: {
+                p = linPop(t);
                 break;
             }
-            default: throw new IllegalArgumentException("");
+            case EXPONENTIAL: {
+                p = Math.exp(linPop(t));
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("");
 
         }
         return p;
@@ -317,15 +332,15 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 //        final double pop0 = popStart + ((start - time0) / interval) * popDiff;
 //       final double pop1 = popStart + ((end - time0) / interval) * popDiff;
 
-        // do same as above more effeciently
+        // do same as above more efficiently
 //        final double r = popDiff / interval;
 //        final double x = popStart - time0 * r;
 //        final double pop0 = x + start * r;
 //        final double pop1 = x + end * r;
         //better numerical stability but not perfect
-        double p1minusp0 = ((end-start)/interval) * popDiff;
+        final double p1minusp0 = ((end-start)/interval) * popDiff;
 
-        double v = interval * (popStart / popDiff);
+        final double v = interval * (popStart / popDiff);
         final double p1overp0 = (v + (end- time0)) / (v + (start- time0));
         if( p1minusp0 == 0.0 || p1overp0 <= 0 ) {
             // either dx == 0 or is very small (numerical inaccuracy)
@@ -345,6 +360,40 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
             return interval / pop0;
         }
         return interval * Math.log(pop1/pop0) / (pop1 - pop0);
+    }
+
+    private double intensityExpInterval(double start, double end, int index) {
+        final double pop0 = values[index];
+        
+        if( index == intervals.length ) {
+            // on last interval
+           return (end - start) / Math.exp(pop0);
+        }
+
+        final double interval = intervals[index];
+
+        final double pop1 = values[index + 1];
+        final double time0 = times[index];
+
+        assert start >= time0 && (float) start <= (float) (time0 + interval) && (float) end <= (float) (time0 + interval) && end >= time0;
+
+        final double a = (pop0 - pop1) / interval;
+        if( a == 0 ) {
+            return (end - start) / Math.exp(pop0);
+        }
+        return (Math.exp((end-time0)*a - pop0) - Math.exp((start-time0)*a - pop0))/a;
+    }
+
+    private double intensityExpInterval(int index) {
+        final double interval = intervals[index];
+        final double pop0 = values[index];
+        final double pop1 =  values[index+1];
+
+        final double a = (pop0-pop1)/interval;
+        if( a == 0 ) {
+           return interval/Math.exp(pop0);
+        }
+        return Math.exp(-pop0)/a * (Math.exp(interval*a) - 1);
     }
 
     public double getIntegral(double start, double finish) {
@@ -386,6 +435,25 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                     }
                     // last interval
                     intensity += intensityLinInterval(times[last], finish, last);
+                }
+                break;
+            }
+            case EXPONENTIAL:
+            {
+                final int first = getIntervalIndexLin(start);
+                final int last = getIntervalIndexLin(finish);
+
+                if( first == last ) {
+                    intensity += intensityExpInterval(start, finish, first);
+                } else {
+                    // from first to end of interval
+                    intensity += intensityExpInterval(start, times[first + 1], first);
+                    // intervals until (not including) last
+                    for(int k = first + 1; k < last; ++k) {
+                        intensity += intensityExpInterval(k);
+                    }
+                    // last interval
+                    intensity += intensityExpInterval(times[last], finish, last);
                 }
                 break;
             }
@@ -451,11 +519,12 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
             sb.append(times[k]);
         }
         sb.append("|");
-        sb.append(values[0]);
+        sb.append(type == VariableDemographicModel.Type.EXPONENTIAL ? Math.exp(values[0]) : values[0]);
         for(int k = 1; k < values.length; ++k) {
 
             sb.append(",");
-            sb.append(values [k]);
+            final double value = values[k];
+            sb.append(type == VariableDemographicModel.Type.EXPONENTIAL ? Math.exp(value) : value);
         }
         return sb.toString();
     }

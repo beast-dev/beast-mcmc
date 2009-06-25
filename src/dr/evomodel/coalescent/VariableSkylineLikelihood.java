@@ -360,13 +360,13 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
+            XMLObject cxo = xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
             Parameter param = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
+            cxo = xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
             Parameter param2 = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(CoalescentLikelihood.POPULATION_TREE);
+            cxo = xo.getChild(CoalescentLikelihood.POPULATION_TREE);
             TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
             Type type = VariableSkylineLikelihood.Type.STEPWISE;
@@ -411,7 +411,7 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(VariableSkylineLikelihood.TYPE, true),
                 new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
@@ -439,9 +439,9 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
     List<Double> groupHeights = new ArrayList<Double>();
     List<Double> groupEnds = new ArrayList<Double>();
 
-    private ArrayList<Integer> storeSizes = new ArrayList<Integer>();
-    private ArrayList<Double> storeHeights = new ArrayList<Double>();
-    private ArrayList<Double> storeEnds = new ArrayList<Double>();
+    private final ArrayList<Integer> storeSizes = new ArrayList<Integer>();
+    private final ArrayList<Double> storeHeights = new ArrayList<Double>();
+    private final ArrayList<Double> storeEnds = new ArrayList<Double>();
     private boolean storeValid;
 
     private final Type type;

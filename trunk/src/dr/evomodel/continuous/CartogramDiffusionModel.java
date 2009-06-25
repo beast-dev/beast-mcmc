@@ -64,10 +64,10 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
 
         final double factor = mapping.getAverageDensity(); // Weighted by average density of different cartograms
         final double distance = mappedStop.distance(mappedStart); // Euclidean distance in mapped space
-        final double inverseVariance = precision.getParameterValue(0) * factor / time;
+        final double inverseVariance = precision.getParameterValue(0) / time / Math.pow(factor,0.25);
         // I believe this is a 2D (not 1D) Normal diffusion approx; hence the precision is squared
         // in the normalization constant
-        return -LOG2PI + Math.log(inverseVariance) - 0.5*(distance * distance * inverseVariance);
+        return -LOG2PI + Math.log(inverseVariance) - 0.00 * Math.log(factor) - 0.5*(distance * distance * inverseVariance);
     }
 
     protected void calculatePrecisionInfo() {
@@ -97,9 +97,6 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
 
         CartogramMapping mapping = new CartogramMapping(xGridSize, yGridSize, boundingBox);
 
-        double density = xo.getAttribute(DENSITY,1.0);
-        mapping.setAverageDensity(density);
-
         String fileName = xo.getAttribute(FILENAME, "NONE");
 
         Logger.getLogger("dr.evomodel.continuous").info(
@@ -113,6 +110,10 @@ public class CartogramDiffusionModel extends MultivariateDiffusionModel {
                 throw new XMLParseException(e.getMessage());
             }
         }
+
+        double density = xo.getAttribute(DENSITY,1.0);
+        mapping.setAverageDensity(density);
+                
         return mapping;
     }
 

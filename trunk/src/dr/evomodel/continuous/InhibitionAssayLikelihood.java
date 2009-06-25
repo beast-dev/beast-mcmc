@@ -528,7 +528,7 @@ Parameter precision) {
 
 
         public Class getReturnType() {
-            return MultivariateTraitLikelihood.class;
+            return AbstractMultivariateTraitLikelihood.class;
         }
 
 //		public void replaceParameter(XMLObject xo, Parameter newParam) throws XMLParseException {

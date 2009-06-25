@@ -26,7 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.continuous.MultivariateTraitLikelihood;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.MatrixParameter;
@@ -53,7 +53,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     public static final String PRIOR = "prior";
     public static final String TRAIT_MODEL = "traitModel";
 
-    private MultivariateTraitLikelihood traitModel;
+    private AbstractMultivariateTraitLikelihood traitModel;
     private MatrixParameter precisionParam;
     private WishartDistribution priorDistribution;
     private int priorDf;
@@ -64,7 +64,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     private String traitName;
 
     public PrecisionMatrixGibbsOperator(
-            MultivariateTraitLikelihood traitModel,
+            AbstractMultivariateTraitLikelihood traitModel,
             WishartDistribution priorDistribution,
             double weight) {
         super();
@@ -171,7 +171,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(WEIGHT);
-            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
             MatrixParameter precMatrix = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
 
@@ -208,7 +208,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(MultivariateTraitLikelihood.class),
+                new ElementRule(AbstractMultivariateTraitLikelihood.class),
                 new ElementRule(MultivariateDistributionLikelihood.class),
         };
 

@@ -5,11 +5,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.*;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -24,7 +22,7 @@ import java.util.logging.Logger;
  */
 
 
-public class MultivariateTraitLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
+public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
 
     public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -43,8 +41,9 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
     public static final String SCALE_BY_TIME = "scaleByTime";
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SAMPLING_DENSITY = "samplingDensity";
+    public static final String INTEGRATE = "integrateInternalTraits";
 
-    public MultivariateTraitLikelihood(String traitName,
+    public AbstractMultivariateTraitLikelihood(String traitName,
                                        TreeModel treeModel,
                                        MultivariateDiffusionModel diffusionModel,
                                        CompoundParameter traitParameter,
@@ -72,11 +71,12 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             addModel(rateModel);
         }
 
-        if (samplingDensity != null) {
-            Model samplingDensity1 = samplingDensity;
+        if (samplingDensity != null) {           
             addModel(samplingDensity);
         }
-        addParameter(traitParameter);
+
+        if (traitParameter != null)
+            addParameter(traitParameter);
 
         this.reportAsMultivariate = reportAsMultivariate;
 
@@ -92,18 +92,19 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         this.useTreeLength = useTreeLength;
 
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
-        sb.append("\tTrait: " + traitName + "\n");
-        sb.append("\tDiffusion process: " + diffusionModel.getId() + "\n");
-        sb.append("\tHeterogenity model: " + (hasRateModel ? rateModel.getId() : "homogeneous") + "\n");
-        sb.append("\tTree normalization: " + (scaleByTime ? (useTreeLength ? "length" : "height") : "off") + "\n");
+        sb.append("\tTrait: ").append(traitName).append("\n");
+        sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
+        sb.append("\tHeterogenity model: ").append(rateModel != null ? rateModel.getId() : "homogeneous").append("\n");
+        sb.append("\tTree normalization: ").append(scaleByTime ? (useTreeLength ? "length" : "height") : "off").append("\n");
         if (scaleByTime) {
             recalculateTreeLength();
             if (useTreeLength) {
-                sb.append("\tInitial tree length: " + treeLength + "\n");
+                sb.append("\tInitial tree length: ").append(treeLength).append("\n");
             } else {
-                sb.append("\tInitial tree height: " + treeLength + "\n");
+                sb.append("\tInitial tree height: ").append(treeLength).append("\n");
             }
         }
+        sb.append(extraInfo());
         sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
 
         Logger.getLogger("dr.evomodel").info(sb.toString());
@@ -111,6 +112,8 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         recalculateTreeLength();
 
     }
+
+    protected abstract String extraInfo();
 
     public String getTraitName() {
         return traitName;
@@ -169,12 +172,12 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                         updateNodeAndChildren(event.getNode());
                     }
                 } else {
-                    throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in MultivariateTraitLikelihood");
+                    throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in AbstractMultivariateTraitLikelihood");
                 }
             } else if (object instanceof Parameter) {
                 // Ignoring                
             } else {
-                throw new RuntimeException("Unexpected TreeModel event occuring in MultivariateTraitLikelihood");
+                throw new RuntimeException("Unexpected TreeModel event occuring in AbstractMultivariateTraitLikelihood");
             }
         } else if (model == rateModel) {
             if (index == -1) {
@@ -311,25 +314,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         return logLikelihood;
     }
 
-    public final double getLogDataLikelihood() {
-        double logLikelihood = 0;
-        for(int i=0; i<treeModel.getExternalNodeCount(); i++) {
-            NodeRef tip = treeModel.getExternalNode(i); // TODO Do not include integrated tips; how to check???
-
-            if (cacheBranches && validLogLikelihoods[tip.getNumber()])
-                logLikelihood += cachedLogLikelihoods[tip.getNumber()];
-            else {
-                NodeRef parent = treeModel.getParent(tip);
-
-                double[] tipTrait = treeModel.getMultivariateNodeTrait(tip,traitName);
-                double[] parentTrait = treeModel.getMultivariateNodeTrait(parent,traitName);
-                double time = getRescaledBranchLength(tip);
-
-                logLikelihood += diffusionModel.getLogLikelihood(parentTrait,tipTrait,time);
-            }
-        }
-        return logLikelihood;
-    }
+    public abstract double getLogDataLikelihood();
 
     public void makeDirty() {
         likelihoodKnown = false;
@@ -348,93 +333,12 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         };
     }
 
-    /**
-     * Calculate the log likelihood of the current state.
-     *
-     * @return the log likelihood.
-     */
-    public double calculateLogLikelihood() {
-
-        double logLikelihood;
-
-        if (!cacheBranches)
-            logLikelihood = traitLogLikelihood(null, treeModel.getRoot());
-        else
-            logLikelihood = traitCachedLogLikelihood(null, treeModel.getRoot());
-        if (logLikelihood > maxLogLikelihood) {
-            maxLogLikelihood = logLikelihood;
-        }
-        return logLikelihood;
-    }
+    public abstract double calculateLogLikelihood();
 
     public double getMaxLogLikelihood() {
         return maxLogLikelihood;
     }
 
-    private double traitCachedLogLikelihood(double[] parentTrait, NodeRef node) {
-
-        double logL = 0.0;
-        double[] childTrait = null;
-        final int nodeNumber = node.getNumber();
-
-        if (!treeModel.isRoot(node)) {
-
-            if (!validLogLikelihoods[nodeNumber]) { // recompute
-
-                childTrait = treeModel.getMultivariateNodeTrait(node,traitName);
-                final double time = getRescaledBranchLength(node);
-                if (parentTrait == null)
-                    parentTrait = treeModel.getMultivariateNodeTrait(treeModel.getParent(node),traitName);
-                logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
-                cachedLogLikelihoods[nodeNumber] = logL;
-                validLogLikelihoods[nodeNumber] = true;
-            } else
-                logL = cachedLogLikelihoods[nodeNumber];            
-        }
-
-        int childCount = treeModel.getChildCount(node);
-        for (int i = 0; i < childCount; i++) {
-            logL += traitCachedLogLikelihood(childTrait, treeModel.getChild(node, i));
-        }
-
-        return logL;
-    }
-
-    private double traitLogLikelihood(double[] parentTrait, NodeRef node) {
-
-        double logL = 0.0;
-        double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
-
-        if (parentTrait != null) {
-
-            double time = getRescaledBranchLength(node);
-            logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
-            if (new Double(logL).isNaN()) {
-                System.err.println("MultivariateTraitLikelihood: likelihood is undefined");
-                System.err.println("time = " + time);
-                System.err.println("parent trait value = " + new Vector(parentTrait));
-                System.err.println("child trait value = " + new Vector(childTrait));
-                System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
-                if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
-                    CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
-                    System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
-                    System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
-                }
-            }
-        }
-        int childCount = treeModel.getChildCount(node);
-        for (int i = 0; i < childCount; i++) {
-            logL += traitLogLikelihood(childTrait, treeModel.getChild(node, i));
-        }
-
-        if (new Double(logL).isNaN()) {
-            System.err.println("logL = " + logL);
-            System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
-            System.exit(-1);
-        }
-
-        return logL;
-    }
 
     // **************************************************************
     // Loggable IMPLEMENTATION
@@ -456,8 +360,11 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
         return attributeLabel;
     }
 
+    protected abstract double[] traitForNode(TreeModel tree, NodeRef node, String traitName);
+
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
+//        double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
+        double trait[] = traitForNode(treeModel, node, traitName);
         String[] value;
         if (!reportAsMultivariate || trait.length == 1) {
             value = new String[trait.length];
@@ -506,6 +413,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
+            boolean integrate = xo.getAttribute(INTEGRATE,false);
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -560,7 +468,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                 }
 
                 if (xo.hasChildNamed(MISSING)) {
-                    XMLObject cxo = xo.getChild(MISSING);
+                    XMLObject cxo = (XMLObject) xo.getChild(MISSING);
                     Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
                     for (int i : missingIndices) {
                         missingParameter.setParameterValue(i, 1.0);
@@ -584,16 +492,16 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
-                XMLObject cxo = xo.getChild(SAMPLING_DENSITY);
+                XMLObject cxo = (XMLObject) xo.getChild(SAMPLING_DENSITY);
                 samplingDensity = (Model) cxo.getChild(Model.class);
             }
             if (xo.hasChildNamed(RANDOMIZE)) {
-                XMLObject cxo = xo.getChild(RANDOMIZE);
+                XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
                 traits = (Parameter) cxo.getChild(Parameter.class);
             }
 
             if (xo.hasChildNamed(CHECK)) {
-                XMLObject cxo = xo.getChild(CHECK);
+                XMLObject cxo = (XMLObject) xo.getChild(CHECK);
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
 
@@ -605,8 +513,13 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
             if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
                 reportAsMultivariate = true;
 
-            MultivariateTraitLikelihood like =
-                    new MultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+            if (integrate)
+                return new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                            traitParameter, missingIndices, cacheBranches,
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, null);
+
+            AbstractMultivariateTraitLikelihood like =
+                    new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
 
@@ -650,6 +563,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
                 new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
+                AttributeRule.newBooleanRule(INTEGRATE,true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),
@@ -668,7 +582,7 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
 
         public Class getReturnType() {
-            return MultivariateTraitLikelihood.class;
+            return AbstractMultivariateTraitLikelihood.class;
         }
     };
 
@@ -680,10 +594,10 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
 
     ArrayList dataList = new ArrayList();
 
-    private double logLikelihood;
-    private double maxLogLikelihood = Double.NEGATIVE_INFINITY;
+    protected double logLikelihood;
+    protected double maxLogLikelihood = Double.NEGATIVE_INFINITY;
     private double storedLogLikelihood;
-    private boolean likelihoodKnown = false;
+    protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
     private BranchRateModel rateModel = null;
     private boolean hasRateModel = false;
@@ -696,10 +610,10 @@ public class MultivariateTraitLikelihood extends AbstractModelLikelihood impleme
     private final boolean scaleByTime;
     private final boolean useTreeLength;
 
-    private boolean cacheBranches;
-    private double[] cachedLogLikelihoods;
-    private double[] storedCachedLogLikelihood;
-    private boolean[] validLogLikelihoods;
-    private boolean[] storedValidLogLikelihoods;
+    protected boolean cacheBranches;
+    protected double[] cachedLogLikelihoods;
+    protected double[] storedCachedLogLikelihood;
+    protected boolean[] validLogLikelihoods;
+    protected boolean[] storedValidLogLikelihoods;
 }
 

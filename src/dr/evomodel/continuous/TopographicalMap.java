@@ -2,6 +2,8 @@ package dr.evomodel.continuous;
 
 import dr.math.SparseMatrixExponential;
 import dr.math.matrixAlgebra.Vector;
+import dr.inference.loggers.NumberColumn;
+import dr.evomodelxml.LoggerParser;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
@@ -13,13 +15,38 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jul 14, 2007
- * Time: 7:33:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author Marc A. Suchard
  */
 public class TopographicalMap {
+
+
+    public static final String FORMAT = "%3.2f";
+
+
+        public TopographicalMap(double xStart, double xEnd, double yStart, double yEnd, int xDim, int yDim) {
+            this.xStart = xStart;
+            this.xEnd = xEnd;
+            this.yStart = yStart;
+            this.yEnd = yEnd;
+
+            this.xDim = xDim;
+            this.yDim = yDim;
+            map = new double[xDim][yDim];
+
+            xDelta = (xEnd - xStart) / xDim;
+            yDelta = (yEnd - yStart) / yDim;
+        }
+
+    private double xStart;
+    private double xEnd;
+    private double yStart;
+    private double yEnd;
+    private double xDelta;
+    private double yDelta;
+
+//        public TopographicalMap(int xDim, int yDim) {
+//            TopographicalMap(0,1,0,1,xDim,yDim);
+//        }
 
 	public TopographicalMap(double[][] map) {
 		xDim = map.length;
@@ -45,6 +72,8 @@ public class TopographicalMap {
 		return nonZeroElements;
 	}
 
+
+    
 
 	private int setUpIndices() {
 		int index = 0;
@@ -278,6 +307,22 @@ public class TopographicalMap {
 		return map;
 	}
 
+        public String toString() {
+            return toCartogram();
+        }
+
+        public String toCartogram() {
+            StringBuffer sb = new StringBuffer();
+            for (int i=0; i<xDim; i++) {
+                for (int j=0; j<yDim; j++) {
+                    sb.append(String.format(FORMAT,map[i][j]));
+                    if (j < (yDim-1))
+                        sb.append(" ");
+                }
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
 
 	public static BufferedReader getReader(String file) throws IOException {
 		BufferedReader reader;
@@ -290,6 +335,15 @@ public class TopographicalMap {
 			reader = new BufferedReader(new FileReader(file));
 		return reader;
 	}
+
+        public static BufferedWriter getWriter(String file) throws IOException {
+            BufferedWriter writer;
+            if( file.endsWith("gz"))
+                writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file))));
+            else
+                writer = new BufferedWriter(new FileWriter(file));
+            return writer;
+        }
 
 	public static double[] readEigenvalues(String file) throws IOException {
 
@@ -411,10 +465,12 @@ public class TopographicalMap {
 
 		// Make content
 		content.addContent(new Element("default").addContent("B"));
+		StringBuffer ascii = new StringBuffer();
+		boolean newLine = true;
 
 		for (int r = 0; r < map.length; r++) {
 			for (int c = 0; c < map[0].length; c++) {
-				if (!Double.isNaN(map[r][c]) && map[r][c] > -10) {
+				if (!Double.isNaN(map[r][c])) {
 					count++;
 					double value = map[r][c];
 //				if( value != Double.NaN ) {
@@ -437,13 +493,21 @@ public class TopographicalMap {
 					cell.addContent("L" + Integer.toString(cut));
 //					if( count < 10)
 					content.addContent(cell);
+					ascii.append((cut+1)+" ");
+
 //				}  else {
 //					System.err.println("about time");
 //					System.exit(-1);
 				}
+				else {
+					ascii.append("NA ");
+				}
 
 			}
+			ascii.append("\n");
 		}
+
+		System.out.println(ascii);
 
 		return root;
 	}

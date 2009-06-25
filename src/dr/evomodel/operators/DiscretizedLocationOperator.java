@@ -1,8 +1,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.continuous.MultivariateTraitLikelihood;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -23,7 +22,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
     public static final String DISK = "neighborhoodSize";
     public static final String RANDOMIZE = "randomize";
 
-    public DiscretizedLocationOperator(MultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, CoercionMode mode) {
+    public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, CoercionMode mode) {
         super(mode);
         this.treeModel = traitModel.getTreeModel();
         this.traitName = traitModel.getTraitName();
@@ -236,7 +235,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
             int disk = xo.getAttribute(DISK, 4);
 
 
-            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
             DiscretizedLocationOperator operator = new DiscretizedLocationOperator(traitModel, onlyInternalNodes, disk, mode);
             operator.setWeight(weight);
@@ -256,7 +255,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 //                            throw new XMLParseException("taxon '" + nodeLabel + "' not found for geoSpatialDistribution element in traitGibbsOperator element");
 //                        }
 //                        NodeRef node = treeModel.getExternalNode(index);
-////                        operator.setNodePrior(node, prior);
+////                        operator.setTaxonPrior(node, prior);
 //                        System.err.println("Adding truncated prior for " + node);
 //                    }
 //                }
@@ -290,7 +289,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(INTERNAL_ONLY, true),
-                new ElementRule(MultivariateTraitLikelihood.class),
+                new ElementRule(AbstractMultivariateTraitLikelihood.class),
                 AttributeRule.newIntegerRule(DISK, true),
                 AttributeRule.newBooleanRule(RANDOMIZE, true),
         };

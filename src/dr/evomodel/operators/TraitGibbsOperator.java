@@ -27,7 +27,8 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
-import dr.evomodel.continuous.MultivariateTraitLikelihood;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.geo.GeoSpatialDistribution;
 import dr.geo.GeoSpatialCollectionModel;
@@ -43,7 +44,6 @@ import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 
-import javax.management.OperationsException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -61,7 +61,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
     private final TreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
-    private final MultivariateTraitLikelihood traitModel;
+    private final SampledMultivariateTraitLikelihood traitModel;
     private final int dim;
     private final String traitName;
 
@@ -74,7 +74,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     private double[][] rootPriorPrecision;
     private final int maxTries = 10000;
 
-    public TraitGibbsOperator(MultivariateTraitLikelihood traitModel, boolean onlyInternalNodes) {
+    public TraitGibbsOperator(SampledMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes) {
         super();
         this.traitModel = traitModel;
         this.treeModel = traitModel.getTreeModel();
@@ -284,7 +284,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);
-            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            SampledMultivariateTraitLikelihood traitModel = (SampledMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
             TraitGibbsOperator operator = new TraitGibbsOperator(traitModel, onlyInternalNodes);
             operator.setWeight(weight);
@@ -350,7 +350,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(INTERNAL_ONLY, true),
-                new ElementRule(MultivariateTraitLikelihood.class),
+                new ElementRule(SampledMultivariateTraitLikelihood.class),
 //                new ElementRule(NODE_PRIOR, new XMLSyntaxRule[] {
 //                        AttributeRule.newStringRule(NODE_LABEL),
 //                        new ElementRule(MultivariateDistributionLikelihood.class),

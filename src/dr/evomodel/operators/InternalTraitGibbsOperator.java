@@ -26,7 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.continuous.MultivariateTraitLikelihood;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
@@ -46,11 +46,11 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
     private TreeModel treeModel;
     private MatrixParameter precisionMatrixParameter;
-    private MultivariateTraitLikelihood traitModel;
+    private AbstractMultivariateTraitLikelihood traitModel;
     private int dim;
     private String traitName;
 
-    public InternalTraitGibbsOperator(MultivariateTraitLikelihood traitModel
+    public InternalTraitGibbsOperator(AbstractMultivariateTraitLikelihood traitModel
 //		    TreeModel treeModel, MultivariateDiffusionModel diffusionModel, boolean inSubstitutionTime
     ) {
         super();
@@ -133,7 +133,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            MultivariateTraitLikelihood traitModel = (MultivariateTraitLikelihood) xo.getChild(MultivariateTraitLikelihood.class);
+            AbstractMultivariateTraitLikelihood traitModel = (AbstractMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
 //            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 //            TreeModel treeModel = traitModel.getTreeModel();
@@ -165,7 +165,7 @@ public class InternalTraitGibbsOperator extends SimpleMCMCOperator implements Gi
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(MultivariateTraitLikelihood.class)
+                new ElementRule(AbstractMultivariateTraitLikelihood.class)
         };
 
     };

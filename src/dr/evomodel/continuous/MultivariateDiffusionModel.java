@@ -58,6 +58,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
     }
 
+    public double getDeterminantPrecisionMatrix() { return determinatePrecisionMatrix; }
+
     /**
      * @return the log likelihood of going from start to stop in the given time
      */

@@ -34,6 +34,7 @@ import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
@@ -47,11 +48,10 @@ import java.util.EnumSet;
 public class PartitionTreePriorPanel extends OptionsPanel {
 
 	private static final long serialVersionUID = 5016996360264782252L;
-
-//	private String currentTreePriorTittle = "Overall tree(s) priors:";
 	
-    public JComboBox treePriorCombo;
-    private JComboBox parameterizationCombo = new JComboBox(new String[]{
+    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+
+	private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
     private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
             "Piecewise-constant", "Piecewise-linear"});
@@ -75,71 +75,62 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior) {
 
-		this.partitionTreePrior = partitionTreePrior;
+		this.partitionTreePrior = partitionTreePrior;        
 
-	       ItemListener listener = new ItemListener() {
-	            public void itemStateChanged(ItemEvent ev) {
-//	                fireTreePriorsChanged();
-	            }
-	        };
-
-	        treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
-
-	        PanelUtils.setupComponent(treePriorCombo);
-	        treePriorCombo.addItemListener(
-	                new ItemListener() {
-	                    public void itemStateChanged(ItemEvent ev) {
+        PanelUtils.setupComponent(treePriorCombo);
+        treePriorCombo.addItemListener(new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
 //	                        fireTreePriorsChanged();
-	                        setupPanel();
-	                    }
-	                }
-	        );
+                        setupPanel();
+                    }
+                }
+        );
 
-	        KeyListener keyListener = new KeyAdapter() {
-	            public void keyTyped(KeyEvent ev) {
-	                if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
+        KeyListener keyListener = new KeyAdapter() {
+            public void keyTyped(KeyEvent ev) {
+                if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
 //	                    fireTreePriorsChanged();
-	                }
-	            }
-	        };
-
-	        groupCountField.addKeyListener(keyListener);
+                }
+            }
+        };
+        groupCountField.addKeyListener(keyListener);
 //	        samplingProportionField.addKeyListener(keyListener);
 
-	        FocusListener focusListener = new FocusAdapter() {
-	            public void focusLost(FocusEvent focusEvent) {
+        FocusListener focusListener = new FocusAdapter() {
+            public void focusLost(FocusEvent focusEvent) {
 //	                fireTreePriorsChanged();
-	            }
-	        };
-	        groupCountField.addFocusListener(focusListener);
+            }
+        };
+        groupCountField.addFocusListener(focusListener);
 //	        samplingProportionField.addFocusListener(focusListener);
 
-	        PanelUtils.setupComponent(parameterizationCombo);
-	        parameterizationCombo.addItemListener(listener);
 
-	        PanelUtils.setupComponent(bayesianSkylineCombo);
-	        bayesianSkylineCombo.addItemListener(listener);
+       ItemListener listener = new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+//	                fireTreePriorsChanged();
+            }
+        };
+        PanelUtils.setupComponent(parameterizationCombo);
+        parameterizationCombo.addItemListener(listener);
 
-	        PanelUtils.setupComponent(extendedBayesianSkylineCombo);
-	        extendedBayesianSkylineCombo.addItemListener(listener);
+        PanelUtils.setupComponent(bayesianSkylineCombo);
+        bayesianSkylineCombo.addItemListener(listener);
 
-	        PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
-	        gmrfBayesianSkyrideCombo.addItemListener(listener);
+        PanelUtils.setupComponent(extendedBayesianSkylineCombo);
+        extendedBayesianSkylineCombo.addItemListener(listener);
 
-	        setupPanel();
+        PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
+        gmrfBayesianSkyrideCombo.addItemListener(listener);
+
+        setupPanel();
 	}
-
-//    private void fireTreePriorsChanged() {
-//        if (!settingOptions) {
-//            frame.setDirty();
-//        }
-//    }
 
     private void setupPanel() {
 
-        this.removeAll();
+        removeAll();
         
         addComponentWithLabel("Tree Prior:", treePriorCombo);
+        
         if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
                 treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
                 treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
@@ -161,7 +152,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
                 
         } 
-
+        
 
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
@@ -171,7 +162,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         repaint();
     }
     
-    public void setOptions(BeautiOptions options) {     
+    public void setOptions() {     
 
         if (partitionTreePrior == null) {
             return;
@@ -199,7 +190,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions() {
+    	if (settingOptions) return;
+    	
     	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
 
         if (partitionTreePrior.getNodeHeightPrior() == TreePrior.SKYLINE) {
@@ -227,5 +220,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        partitionTreePrior.skyrideIntervalCount = partitionTreePrior.taxonList.getTaxonCount() - 1;
         
     }
+    
+    public void removeCertainPriorFromTreePriorCombo() {
+    	treePriorCombo.removeItem(TreePrior.YULE);
+    	treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+	}
 
+	public void recoveryTreePriorCombo() {
+		if (treePriorCombo.getItemCount() < EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).size()) {
+			treePriorCombo.addItem(TreePrior.YULE);
+	    	treePriorCombo.addItem(TreePrior.BIRTH_DEATH);  
+		}
+	}
 }

@@ -25,12 +25,12 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.*;
 import dr.app.beauti.options.*;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.datatype.DataType;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.tree.NeighborJoiningTree;
@@ -88,6 +88,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private boolean settingOptions = false;
 //    boolean hasAlignment = false;        
     
+    private JCheckBox shareSameTreePriorCheck = new JCheckBox("Share the same tree prior");
+    
     JPanel treeModelPanelParent;
 //    private OptionsPanel currentTreeModel = new OptionsPanel();
     PartitionTreeModel currentTreeModel = null;
@@ -98,9 +100,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     PartitionTreePrior currentTreePrior = null;
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
-
-    
-    TitledBorder treeBorder;
 
     // Overall model parameters ////////////////////////////////////////////////////////////////////////
     private boolean isCheckedTipDate = false;
@@ -140,20 +139,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-//        JToolBar toolBar1 = new JToolBar();
-//        toolBar1.setFloatable(false);
-//        toolBar1.setOpaque(false);
-//        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-//        button = new JButton(createTreeAction);
-//        createTreeAction.setEnabled(true);
-//        PanelUtils.setupComponent(button);
-//        toolBar1.add(button);
-
-//        button = new JButton(linkModelAction);
-//        linkModelAction.setEnabled(false);
-//        PanelUtils.setupComponent(button);
-//        toolBar1.add(button);
-
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTreeAction);
         actionPanel1.setRemoveAction(removeTreeAction);
@@ -162,8 +147,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
     
-        setCurrentModel(null);
-        setCurrentPrior(null);
+        setCurrentModelAndPrior(null);
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
@@ -189,20 +173,54 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-                       
-        setOpaque(false);
-        setLayout(new BorderLayout(0, 0));
-        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         
         treePriorPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treePriorPanelParent.setOpaque(false);
         treePriorBorder = new TitledBorder("Tree Prior");
         treePriorPanelParent.setBorder(treePriorBorder);
         
-        add(treePriorPanelParent, BorderLayout.SOUTH);
-        add(splitPane, BorderLayout.CENTER);
-
+        JPanel panel3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel3.setOpaque(false);
+        shareSameTreePriorCheck.setEnabled(true);
+        shareSameTreePriorCheck.setSelected(true);
+        shareSameTreePriorCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
+            	fireShareSameTreePriorChanged();
+            }
+        });
+        panel3.add(shareSameTreePriorCheck);
+        
+        setOpaque(false);
+        setLayout(new BorderLayout(0, 0));
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
+        
+        add(splitPane, BorderLayout.NORTH);
+        add(treePriorPanelParent, BorderLayout.CENTER);
+        add(panel3, BorderLayout.SOUTH);
+        
         comp = new SequenceErrorModelComponentOptions ();
+    }
+    
+    public void fireShareSameTreePriorChanged () {
+    	shareSameTreePriorCheck.setSelected(options.shareSameTreePrior);
+    	if (options.shareSameTreePrior) {
+    		options.activedSameTreePrior = currentTreePrior;
+    		// keep previous prior for reuse
+    	} else {
+    		// reuse previous prior
+    		setCurrentModelAndPrior(currentTreeModel);
+    	}
+    	updateTreePriorBorder();
+    }
+    
+    private void updateTreePriorBorder() {
+    	if (options.shareSameTreePrior) {
+        	treePriorBorder.setTitle("Tree prior shared by all tree models");
+        } else {
+        	treePriorBorder.setTitle("Tree Prior - " + currentTreePrior.getName());
+        }
+        repaint();
     }
 
     private void fireTreePriorsChanged() {
@@ -224,7 +242,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
         treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         if (n == 0) {
-            setCurrentModel(null);
+            setCurrentModelAndPrior(null);
         }
 
         fireTreePriorsChanged();
@@ -233,13 +251,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
         if (selRow >= 0) {
-        	setCurrentModel(options.getPartitionTreeModels().get(selRow));
-        	setCurrentPrior(options.getPartitionTreePriors().get(selRow));
+        	PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
+        	setCurrentModelAndPrior(ptm);
 //TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));            
             frame.modelSelectionChanged(!isUsed(selRow));
         } else {
-        	setCurrentModel(null);
-        	setCurrentPrior(null);
+        	setCurrentModelAndPrior(null);
             treeDisplayPanel.setTree(null);
         }
     }
@@ -290,41 +307,65 @@ public class TreesPanel extends BeautiPanel implements Exportable {
      *
      * @param model the new model to display
      */
-    private void setCurrentModel(PartitionTreeModel model) {
+    private void setCurrentModelAndPrior(PartitionTreeModel model) {
 
         if (model != null) {
             if (currentTreeModel != null) treeModelPanelParent.removeAll();
 
             PartitionTreeModelPanel panel = treeModelPanels.get(model);
             if (panel == null) {
-                panel = new PartitionTreeModelPanel(model);
+                panel = new PartitionTreeModelPanel(model, options);
                 treeModelPanels.put(model, panel);
             }
 
             currentTreeModel = model;
+            treeModelBorder.setTitle("Tree Model - " + model.getName());
             treeModelPanelParent.add(panel);
+           
+            PartitionTreePrior prior;
             
-            repaint();
-        }
-    }
-    
-    private void setCurrentPrior(PartitionTreePrior prior) {
-
-        if (prior != null) {
             if (currentTreePrior != null) treePriorPanelParent.removeAll();
-
-            PartitionTreePriorPanel panel = treePriorPanels.get(prior);
-            if (panel == null) {
-                panel = new PartitionTreePriorPanel(prior);
-                treePriorPanels.put(prior, panel);
+            
+            if (options.shareSameTreePrior) {
+            	prior = options.activedSameTreePrior;
+            } else {
+            	prior = model.getPartitionTreePrior();
+            }
+            
+            PartitionTreePriorPanel panel1 = treePriorPanels.get(prior);
+            if (panel1 == null) {
+                panel1 = new PartitionTreePriorPanel(prior);
+                treePriorPanels.put(prior, panel1);
             }
 
             currentTreePrior = prior;
-            treePriorPanelParent.add(panel);
-
+            updateTreePriorBorder();
+            treePriorPanelParent.add(panel1);            
+            
             repaint();
+        } else {
+        	//TODO
         }
     }
+    
+//    private void setCurrentPrior(PartitionTreePrior prior) {
+//
+//        if (prior != null) {
+//            if (currentTreePrior != null) treePriorPanelParent.removeAll();
+//
+//            PartitionTreePriorPanel panel = treePriorPanels.get(prior);
+//            if (panel == null) {
+//                panel = new PartitionTreePriorPanel(prior);
+//                treePriorPanels.put(prior, panel);
+//            }
+//
+//            currentTreePrior = prior;
+//            treePriorBorder.setTitle("Tree Prior - " + prior.getName());
+//            treePriorPanelParent.add(panel);
+//
+//            repaint();
+//        }
+//    }
     
     public void setCheckedTipDate(boolean isCheckedTipDate) {
 		this.isCheckedTipDate = isCheckedTipDate;
@@ -334,28 +375,23 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         this.options = options;
 
         settingOptions = true;
-
-        Set<PartitionTreeModel> models = treeModelPanels.keySet();        
         
-        for (PartitionTreeModel model : models) {
-        	treeModelPanels.get(model).setOptions(options);
-     	}
+        PartitionTreeModelPanel tmp = treeModelPanels.get(currentTreeModel);
+        if (tmp != null) {
+        	tmp.setOptions();
+        }
         
-        Set<PartitionTreePrior> priors = treePriorPanels.keySet();
-        
-        for (PartitionTreePrior prior : priors) {
-        	PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
+        PartitionTreePriorPanel tpp = treePriorPanels.get(currentTreePrior);
+        if (tpp != null) {
+        	tpp.setOptions();
         	
-        	ptpp.setOptions(options);        	
-        	
-			if (isCheckedTipDate) { 
-        		ptpp.treePriorCombo.removeItem(TreePrior.YULE);
-        		ptpp.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
-        	} else {
-        		ptpp.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());    		
-        	}
-     	}
-
+	        if (isCheckedTipDate) { 
+	        	tpp.removeCertainPriorFromTreePriorCombo();
+	    	} else {
+	    		tpp.recoveryTreePriorCombo();    		
+	    	}
+        }
+        
         settingOptions = false;
         
         int selRow = treesTable.getSelectedRow();
@@ -371,22 +407,36 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         	treesTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
+        fireShareSameTreePriorChanged();
+        
         validate();
         repaint();
     }
 
     public void getOptions(BeautiOptions options) {
+    	if (settingOptions) return;
+    	
     	Set<PartitionTreeModel> models = treeModelPanels.keySet();        
         
         for (PartitionTreeModel model : models) {
-        	treeModelPanels.get(model).setOptions(options);
+        	treeModelPanels.get(model).getOptions(options);
      	}
         
-        Set<PartitionTreePrior> priors = treePriorPanels.keySet();
-        
-        for (PartitionTreePrior prior : priors) {
-        	treePriorPanels.get(prior).getOptions(options);
-     	}
+        if (options.shareSameTreePrior) {        	       	
+        	PartitionTreePriorPanel ptpp = treePriorPanels.get(options.activedSameTreePrior);
+        	if (ptpp != null) {
+        		ptpp.getOptions();
+        	}
+        	
+        } else {
+        	for (PartitionTreeModel model : models) {
+            	PartitionTreePriorPanel ptpp = treePriorPanels.get(model.getPartitionTreePrior());
+            	
+            	if (ptpp != null) {
+            		ptpp.getOptions(); 
+            	}
+         	}
+        }
     }
     
  

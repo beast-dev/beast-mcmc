@@ -57,69 +57,49 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 	private JComboBox userTreeCombo = new JComboBox();
 
 //	private BeautiFrame frame = null;
-//	private BeautiOptions options = null;
+	private BeautiOptions options = null;
 
 	private boolean settingOptions = false;
 	
     private final PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(PartitionTreeModel partitionTreeModel) {
+    public PartitionTreeModelPanel(PartitionTreeModel partitionTreeModel, BeautiOptions options) {
 
 		this.partitionTreeModel = partitionTreeModel;
+		this.options = options;
 
         PanelUtils.setupComponent(startingTreeCombo);
-        startingTreeCombo.addItemListener(
-                new ItemListener() {
+        startingTreeCombo.addItemListener( new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-//                        fireTreePriorsChanged();
                         setupPanel();
                     }
                 }
         );
 
         PanelUtils.setupComponent(userTreeCombo);
-        userTreeCombo.addItemListener(
-                new ItemListener() {
+        userTreeCombo.addItemListener( new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-//                        fireTreePriorsChanged();
+                    	fireUserTreeChanged();
                     }
                 }
         );        
 
 		setupPanel();
 	}
-
-	
-//    private void fireTreePriorsChanged() {
-//        if (!settingOptions) {
-//            frame.setDirty();
-//        }
-//    }
+    
+	 private void fireUserTreeChanged() {
+		 partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
+	}
 
 	private void setupPanel() {
         
-		this.removeAll();
+		removeAll();
 		                
         addComponentWithLabel("Starting Tree:", startingTreeCombo);
+        
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
         	addComponentWithLabel("Select Tree:", userTreeCombo);        	
         } 
-        
-//		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
-
-		validate();
-		repaint();
-	}
-
-    public void setOptions(BeautiOptions options) {     
-
-        if (partitionTreeModel == null) {
-            return;
-        }
-
-        settingOptions = true;
-
-        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
         
         userTreeCombo.removeAllItems();
         if (options.userTrees.size() == 0) {
@@ -130,6 +110,26 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.addItem(tree.getId());
             }
             userTreeCombo.setEnabled(true);
+        }
+        
+//		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
+
+		validate();
+		repaint();
+	}
+
+    public void setOptions() {     
+
+        if (partitionTreeModel == null) {
+            return;
+        }
+
+        settingOptions = true;
+
+        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
+        
+        if (partitionTreeModel.getUserStartingTree() != null) {
+        	userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree());
         }
         
 //        userStartingTree =
@@ -143,6 +143,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     }
 
     public void getOptions(BeautiOptions options) {
+    	if (settingOptions) return;
+    	
     	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
     	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
     }

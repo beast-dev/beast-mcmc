@@ -659,45 +659,57 @@ public class BeautiFrame extends DocumentFrame {
                     	PartitionTreeModel ptm = beautiOptions.getPartitionTreeModels().get(0);
                     	partition.setPartitionTreeModel(ptm);
                     	
-                    	PartitionTreePrior ptp = beautiOptions.getPartitionTreePriors().get(0);
-                        ptm.setPartitionTreePrior(ptp);
+                    	if (ptm.getPartitionTreePrior() == null || 
+                    			!(ptm.getPartitionTreePrior().getName().equalsIgnoreCase(beautiOptions.activedSameTreePrior.getName()))) {
+                    		PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
+                            ptm.setPartitionTreePrior(ptp);
+                    	}
                     } else {
                         PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
-                        partition.setPartitionTreeModel(ptm);
-                        beautiOptions.addPartitionTreeModel(ptm);
-                        
                         PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
                         ptm.setPartitionTreePrior(ptp);
-                        beautiOptions.addPartitionTreePrior(ptp);
+                        partition.setPartitionTreeModel(ptm); 
+                        
+                        beautiOptions.addPartitionTreeModel(ptm);
+                        beautiOptions.shareSameTreePrior = true;
+                        beautiOptions.activedSameTreePrior = ptp;      
                     }
-                } else {// only this works
-                    for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
+                } else {// only this works                    
+                	for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
                         if (psm.dataType == alignment.getDataType()) { // use same substitution model in beginning
                             partition.setPartitionSubstitutionModel(psm);
                         }
-                    }
-                    if (partition.getPartitionSubstitutionModel() == null) {
+                	}
+                	if (partition.getPartitionSubstitutionModel() == null) {
                         // PartitionSubstitutionModel based on PartitionData
                     	PartitionSubstitutionModel psm = new PartitionSubstitutionModel(beautiOptions, partition);
                         partition.setPartitionSubstitutionModel(psm);
                         beautiOptions.addPartitionSubstitutionModel(psm);
                     }
                     
-                    // use same tree model in beginning
+                	// use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
-                        partition.setPartitionTreeModel(ptm);                        
+                    	partition.setPartitionTreeModel(ptm);
+                    	
+                    	if (ptm.getPartitionTreePrior() == null || 
+                    			!(ptm.getPartitionTreePrior().getName().equalsIgnoreCase(beautiOptions.activedSameTreePrior.getName()))) {
+                    		PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
+                            ptm.setPartitionTreePrior(ptp);
+                    	}
                     }
                     if (partition.getPartitionTreeModel() == null) {
                     	// PartitionTreeModel based on PartitionData
                     	PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
                         partition.setPartitionTreeModel(ptm);
-                        beautiOptions.addPartitionTreeModel(ptm);
                         
                         // PartitionTreePrior always based on PartitionTreeModel
                         PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
                         ptm.setPartitionTreePrior(ptp);
-                        beautiOptions.addPartitionTreePrior(ptp);
-                    }                    
+                        
+                        beautiOptions.addPartitionTreeModel(ptm);
+                        beautiOptions.shareSameTreePrior = true;
+                        beautiOptions.activedSameTreePrior = ptp;                        
+                    }
                 }
             }
         }

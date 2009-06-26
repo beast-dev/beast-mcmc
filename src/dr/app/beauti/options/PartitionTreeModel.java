@@ -16,7 +16,6 @@ public class PartitionTreeModel extends ModelOptions {
 
     private final BeautiOptions options;
     private String name;
-    private PartitionData partitionData;
     private PartitionTreePrior treePrior;
     
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
@@ -25,7 +24,6 @@ public class PartitionTreeModel extends ModelOptions {
 	public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
 		this.options = options;
 		this.name = partition.getName();
-		this.partitionData = partition;
     }
 
     /**
@@ -38,7 +36,6 @@ public class PartitionTreeModel extends ModelOptions {
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
     	this.options = options;
 		this.name = name;
-		this.partitionData = source.partitionData;
 		
 		this.startingTreeType = source.startingTreeType;
 		this.userStartingTree = source.userStartingTree;         
@@ -49,13 +46,6 @@ public class PartitionTreeModel extends ModelOptions {
 //        this.name = name;
 //    }
 
-	public void setPartitionData(PartitionData partitionData) {
-		this.partitionData = partitionData;
-	}
-
-	public PartitionData getPartitionData() {
-		return partitionData;
-	}
 
 	public PartitionTreePrior getPartitionTreePrior() {
 		return treePrior;

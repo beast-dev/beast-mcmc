@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -51,6 +52,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         dimData = dim / dimTrait;
 
         meanCache = new double[dim * treeModel.getNodeCount()];
+        drawnStates = new double[dim * treeModel.getNodeCount()];
         upperPrecisionCache = new double[dim * treeModel.getNodeCount()];
         lowerPrecisionCache = new double[dim * treeModel.getNodeCount()];
         logRemainderDensityCache = new double[dim * treeModel.getNodeCount()];
@@ -99,6 +101,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
+        areStatesRedrawn = false;
         return logLikelihood;
     }
 
@@ -293,8 +296,49 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
     protected double[] traitForNode(TreeModel tree, NodeRef node, String traitName) {
         // TODO Must to a pre-order traversal to draw values, see AncestralStateTreeLikelihood
-        return new double[0];
+        if (tree != treeModel) {
+             throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+        }
+
+        if (!areStatesRedrawn)
+            redrawAncestralStates();
+
+        int index = node.getNumber();
+
+        return new double[dimTrait];
     }
+
+     private boolean areStatesRedrawn = false;
+
+     public void redrawAncestralStates() {
+         preOrderTraverseSample(treeModel, treeModel.getRoot(), 0, diffusionModel.getPrecisionmatrix());
+         areStatesRedrawn = true;
+     }
+
+    void preOrderTraverseSample(TreeModel treeModel, NodeRef node, int parentIndex, double[][] precisionMatrix) {
+
+        final int thisIndex = node.getNumber();
+
+        if (treeModel.isRoot(node)) {
+            // draw root
+        } else { // draw conditional on parentState
+
+            final int thisOffset = thisIndex * dimTrait;
+
+            if (Double.isInfinite(lowerPrecisionCache[thisIndex]))
+                System.arraycopy(meanCache,thisOffset,drawnStates,thisOffset,dimTrait);
+            else {
+                final int parentOffset = parentIndex * dimTrait;
+                // parent trait at drawnStates[parentOffset]
+            }
+        }
+
+        if (!treeModel.isExternal(node)) {
+            preOrderTraverseSample(treeModel, treeModel.getChild(node,0), thisIndex, precisionMatrix);
+            preOrderTraverseSample(treeModel, treeModel.getChild(node,1), thisIndex, precisionMatrix);
+        }
+    }
+
 
     // **************************************************************
     // XMLObjectParser
@@ -500,6 +544,8 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double[] upperPrecisionCache;
     private double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
+
+    private double[] drawnStates;
 
     private int dimData;
     private int dimTrait;

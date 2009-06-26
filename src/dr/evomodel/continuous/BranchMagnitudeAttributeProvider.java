@@ -10,7 +10,8 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
 
     public static final String MAGNITUDE_PROVIDER = "branchMagnitudes";
     public static final String SCALE = "scaleByLength";
-    public static String TRAIT_EXTENSION = ".magnitude";
+    public static String DISTANCE_EXTENSION = ".distance";
+    public static final String RATE_EXTENSION = ".rate";
 
     public BranchMagnitudeAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood, boolean scale) {
         super(traitLikelihood);
@@ -18,7 +19,9 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
     }
 
     protected String extensionName() {
-        return TRAIT_EXTENSION;
+        if (scale)
+            return RATE_EXTENSION;
+        return DISTANCE_EXTENSION;
     }
 
     protected double convert(double latValue, double longValue, double timeValue) {

@@ -1,30 +1,31 @@
 package dr.evomodel.continuous;
 
 import dr.xml.*;
-//import dr.math.matrixAlgebra.Vector;
 import dr.evolution.tree.BranchAttributeProvider;
 
 /*
  * @author Marc Suchard
  */
-public class BranchDirectionAttributeProvider extends BivariateTraitBranchAttributeProvider {
+public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttributeProvider {
 
-    public static final String DIRECTION_PROVIDER = "branchDirections";
-    public static String TRAIT_EXTENSION = ".angle";
+    public static final String MAGNITUDE_PROVIDER = "branchMagnitudes";
+    public static final String SCALE = "scaleByLength";
+    public static String TRAIT_EXTENSION = ".magnitude";
 
-    public BranchDirectionAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood) {
+    public BranchMagnitudeAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood, boolean scale) {
         super(traitLikelihood);
+        this.scale = scale;
     }
-     
+
     protected String extensionName() {
         return TRAIT_EXTENSION;
     }
 
     protected double convert(double latValue, double longValue, double timeValue) {
-        double angle = Math.atan2(latValue,longValue);
-             if (angle < 0)
-                 angle = 2*Math.PI + angle;
-        return angle;
+        double result = Math.sqrt(latValue*latValue + longValue*longValue);
+        if (scale)
+            result /= timeValue;
+        return result;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -34,12 +35,15 @@ public class BranchDirectionAttributeProvider extends BivariateTraitBranchAttrib
              SampledMultivariateTraitLikelihood traitLikelihood = (SampledMultivariateTraitLikelihood)
                      xo.getChild(SampledMultivariateTraitLikelihood.class);
 
-             return new BranchDirectionAttributeProvider(traitLikelihood);
+             boolean scale = xo.getAttribute(SCALE,false);
+
+             return new BranchMagnitudeAttributeProvider(traitLikelihood, scale);
          }
 
          public XMLSyntaxRule[] getSyntaxRules() {
              return new XMLSyntaxRule[] {
                  new ElementRule(SampledMultivariateTraitLikelihood.class),
+                 AttributeRule.newBooleanRule(SCALE,true),
              };
          }
 
@@ -52,17 +56,10 @@ public class BranchDirectionAttributeProvider extends BivariateTraitBranchAttrib
          }
 
          public String getParserName() {
-             return DIRECTION_PROVIDER;
+             return MAGNITUDE_PROVIDER;
          }
      };
 
-//     public static void main(String[] arg) {
-//        double[] vector = {-10,1};
-//
-//        double angle = convert(vector[0],vector[1]);
-//
-//        System.err.println("vec:   "+new Vector(vector));
-//        System.err.println("angle: "+angle);
-//    }
+    private boolean scale;
 
 }

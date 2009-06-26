@@ -21,6 +21,35 @@ import java.util.logging.Logger;
  */
 public class PartitionModelPanel extends OptionsPanel {
 
+    // Components
+
+    private JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
+    private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
+    private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
+
+    private JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
+
+    private JComboBox heteroCombo = new JComboBox(
+            new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
+
+    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5", "6", "7", "8", "9", "10"});
+    private JLabel gammaCatLabel;
+
+    private JComboBox codingCombo = new JComboBox(new String[]{
+            "Off",
+            "2 partitions: codon positions (1 + 2), 3",
+            "3 partitions: codon positions 1, 2, 3"});
+
+    private JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
+    private JCheckBox heteroUnlinkCheck =
+            new JCheckBox("Unlink rate heterogeneity model across codon positions");
+    private JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
+
+    private JButton setSRD06Button;
+
+    private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
+    // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
+
     PartitionSubstitutionModel model;
 
     public PartitionModelPanel(PartitionSubstitutionModel partitionModel) {
@@ -341,33 +370,5 @@ public class PartitionModelPanel extends OptionsPanel {
         }
     };
 
-    // Components
-
-    private JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
-    private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
-    private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
-
-    private JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
-
-    private JComboBox heteroCombo = new JComboBox(
-            new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
-
-    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5", "6", "7", "8", "9", "10"});
-    private JLabel gammaCatLabel;
-
-    private JComboBox codingCombo = new JComboBox(new String[]{
-            "Off",
-            "2 partitions: codon positions (1 + 2), 3",
-            "3 partitions: codon positions 1, 2, 3"});
-
-    private JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
-    private JCheckBox heteroUnlinkCheck =
-            new JCheckBox("Unlink rate heterogeneity model across codon positions");
-    private JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
-
-    private JButton setSRD06Button;
-
-    private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
-    // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
 }

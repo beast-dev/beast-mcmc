@@ -64,8 +64,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
     
-    JCheckBox shareSameTreePriorCheck = new JCheckBox("Share same tree prior");
-
     JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
     
     SelectModelDialog selectModelDialog = null;
@@ -139,15 +137,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkTreesAction.setEnabled(false);
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
-            
-            shareSameTreePriorCheck.setEnabled(true);
-            shareSameTreePriorCheck.setSelected(true);
-            shareSameTreePriorCheck.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent ev) {
-                    options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
-                }
-            });
-            toolBar1.add(shareSameTreePriorCheck);
         }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
@@ -321,16 +310,21 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    private void unlinkTrees() {
+    private void unlinkTrees() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
 
-            PartitionTreeModel tree = partition.getPartitionTreeModel();
-            if (!tree.getName().equals(partition.getName())) {
-                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
-                options.addPartitionTreeModel(newTree);
+            PartitionTreeModel model = partition.getPartitionTreeModel();
+            if (!model.getName().equals(partition.getName())) {
+                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);                
+                PartitionTreePrior newPrior = new PartitionTreePrior(options, newTree);
+                
+                newTree.setPartitionTreePrior(newPrior);
                 partition.setPartitionTreeModel(newTree);
+                
+                options.addPartitionTreeModel(newTree);
+                options.shareSameTreePrior = false;                       
             }
         }
 
@@ -340,7 +334,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void linkTrees() {
+    public void linkTrees() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
         Object[] treeArray = options.getPartitionTreeModels().toArray();
 
@@ -350,19 +344,20 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int result = selectTreeDialog.showDialog(treeArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionTreeModel tree = selectTreeDialog.getTree();
+            PartitionTreeModel model = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-//TODO                tree = new PartitionTreeModel(options, selectTreeDialog.getName());
-                options.addPartitionTreeModel(tree);
+                model = new PartitionTreeModel(options, selectTreeDialog.getName(), model);
+                options.addPartitionTreeModel(model);
             }
-
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            options.activedSameTreePrior = prior;
+            options.shareSameTreePrior = true;
+            
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);
-                partition.setPartitionTreeModel(tree);
+                partition.setPartitionTreeModel(model);
             }
         }
-
-        shareSameTreePriorCheck.setSelected(true);
         
         modelsChanged();
 

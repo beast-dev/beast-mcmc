@@ -143,7 +143,7 @@ public class BeautiOptions extends ModelOptions {
 
         partitionModels.clear();
         partitionTreeModels.clear();
-        partitionTreePriors.clear();
+//        partitionTreePriors.clear();
 
         fixedSubstitutionRate = true;
         meanSubstitutionRate = 1.0;
@@ -459,33 +459,30 @@ public class BeautiOptions extends ModelOptions {
         return getActivePartitionTreeModels().size();
     }
 
-    public void addPartitionTreePrior(PartitionTreePrior tree) {
-
-        if (!partitionTreePriors.contains(tree)) {
-        	partitionTreePriors.add(tree);
-        }
-    }
-    
-    public List<PartitionTreePrior> getPartitionTreePriors() {
-        return partitionTreePriors;
-    }
-
+//    public void addPartitionTreePrior(PartitionTreePrior tree) {
+//
+//        if (!partitionTreePriors.contains(tree)) {
+//        	partitionTreePriors.add(tree);
+//        }
+//    }
+//    
+//    public List<PartitionTreePrior> getPartitionTreePriors() {
+//        return partitionTreePriors;
+//    }
+//
     public List<PartitionTreePrior> getActivePartitionTreePriors() {
     	
-        Set<PartitionTreePrior> trees = new HashSet<PartitionTreePrior>();
+    	List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
+    	
+    	// # tree prior = 1 or # tree model
+    	if (shareSameTreePrior) {
+    		activeTrees.add(activedSameTreePrior);
+    	} else {
+    		for (PartitionTreeModel model : getActivePartitionTreeModels()) {
+	        	activeTrees.add(model.getPartitionTreePrior());
+	        }
+    	}
 
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-            trees.add(tree.getPartitionTreePrior());
-        }
-
-        // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
-        for (PartitionTreePrior tree : getPartitionTreePriors()) {
-            if (trees.contains(tree)) {
-                activeTrees.add(tree);
-            }
-        }
-        
         return activeTrees;
     }
     
@@ -1323,7 +1320,8 @@ public class BeautiOptions extends ModelOptions {
     // Tree
     List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
-    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
+    public PartitionTreePrior activedSameTreePrior;
+//    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
     public boolean shareSameTreePrior = true;
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();

@@ -207,15 +207,8 @@
                 <prior idref="prior"/>
             </destination>
         </pathLikelihood>
-        <log logEvery="100" fileName="testPathSampling.ML.log">
-            <column label="theta" dp="4" width="12">
-                <property name="pathParameter">
-                    <pathLikelihood idref="pathLikelihood"/>
-                </property>
-            </column>
+        <log logEvery="100" fileName="testPathSampling.PS.log">
             <pathLikelihood idref="pathLikelihood"/>
-            <likelihood idref="likelihood"/>
-            <prior idref="prior"/>
         </log>
     </marginalLikelihoodEstimator>
 
@@ -233,5 +226,9 @@
         <likelihoodColumn name="treeLikelihood" harmonicOnly="false" bootstrap="true"/>
     </marginalLikelihoodAnalysis>
 
+    <pathSamplingAnalysis fileName="testPathSampling.PS.log">
+        <likelihoodColumn name="pathLikelihood.delta"/>
+        <thetaColumn name="pathLikelihood.theta"/>
+    </pathSamplingAnalysis>
 
 </beast>

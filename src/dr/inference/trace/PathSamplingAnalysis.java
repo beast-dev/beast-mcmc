@@ -6,10 +6,7 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -20,22 +17,22 @@ public class PathSamplingAnalysis {
     public static final String PATH_SAMPLING_ANALYSIS = "pathSamplingAnalysis";
     public static final String LIKELIHOOD_COLUMN = "likelihoodColumn";
     public static final String THETA_COLUMN = "thetaColumn";
+    public static final String FORMAT = "%5.3f";
 
-    PathSamplingAnalysis(double[] logLikelihoodSample, String logLikelihoodName, double[] thetaSample, String thetaName) {
+    PathSamplingAnalysis(double[] logLikelihoodSample, String logLikelihoodName, double[] thetaSample) {
         this.logLikelihoodSample = logLikelihoodSample;
         this.logLikelihoodName = logLikelihoodName;
         this.thetaSample = thetaSample;
-        //this.thetaName = thetaName;
     }
 
     public double getLogBayesFactor() {
         if (!logBayesFactorCalculated) {
-            calculate();
+            calculateBF();
         }
         return logBayesFactor;
     }
 
-    private void calculate() {
+    private void calculateBF() {
 
 //  R code from Alex Alekseyenko
 //
@@ -48,9 +45,6 @@ public class PathSamplingAnalysis {
 //      sum(widths*midpoints)
 //  }
 
-//        List<Double> meanLogLikelihood = new ArrayList<Double>();
-//        List<Double> theta = new ArrayList<Double>();
-
         Map<Double, List<Double>> map = new HashMap<Double,List<Double>>();
         List<Double> orderedTheta = new ArrayList<Double>();
 
@@ -61,6 +55,9 @@ public class PathSamplingAnalysis {
             }
             map.get(thetaSample[i]).add(logLikelihoodSample[i]);
         }
+
+        Collections.sort(orderedTheta);
+
         List<Double> meanLogLikelihood = new ArrayList<Double>();
          for(double t : orderedTheta) {
             double totalMean = 0;
@@ -72,8 +69,6 @@ public class PathSamplingAnalysis {
             }
             meanLogLikelihood.add(totalMean/lengthMean);
         }
-//        System.err.println("classes = "+map.keySet().size());
-//        System.exit(-1);
 
         logBayesFactor = 0;
         for(int i=0; i<meanLogLikelihood.size()-1; i++)
@@ -88,7 +83,7 @@ public class PathSamplingAnalysis {
         sb.append("log Bayes factor from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
-        sb.append(String.valueOf(getLogBayesFactor()));
+        sb.append(String.format(FORMAT,getLogBayesFactor()));      
         return sb.toString();
     }
 
@@ -133,7 +128,7 @@ public class PathSamplingAnalysis {
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
                 }
 
-//                burnin = 0;
+                burnin = 0;   // TODO Double-check with Alex that burnin is ignored.
 
                 traces.setBurnIn(burnin);
 
@@ -164,7 +159,7 @@ public class PathSamplingAnalysis {
 
                 PathSamplingAnalysis analysis = new PathSamplingAnalysis(
                         sampleLogLikelihood, likelihoodName,
-                        sampleTheta, thetaName);
+                        sampleTheta);
 
                 System.out.println(analysis.toString());
 
@@ -198,6 +193,10 @@ public class PathSamplingAnalysis {
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(LoggerParser.FILE_NAME,
                         "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
+                new ElementRule(THETA_COLUMN, new XMLSyntaxRule[] {
+                        new StringAttributeRule(Attribute.NAME,"The column name")}),
+                new ElementRule(LIKELIHOOD_COLUMN, new XMLSyntaxRule[] {
+                        new StringAttributeRule(Attribute.NAME,"The column name")}),
         };
     };
 

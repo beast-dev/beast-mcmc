@@ -16,6 +16,7 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
     public BranchMagnitudeAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood, boolean scale) {
         super(traitLikelihood);
         this.scale = scale;
+        label = traitName + extensionName(); 
     }
 
     protected String extensionName() {

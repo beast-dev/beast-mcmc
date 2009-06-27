@@ -392,8 +392,10 @@ public class MarginalLikelihoodAnalysis {
 
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(FILE_NAME, "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
-                AttributeRule.newIntegerRule("burnIn", true)
+                AttributeRule.newIntegerRule("burnIn", true),
                 //, "The number of states (not sampled states, but actual states) that are discarded from the beginning of the trace before doing the analysis" ),
+                new ElementRule(COLUMN_NAME, new XMLSyntaxRule[] {
+                        new StringAttributeRule(Attribute.NAME,"The column name")}),
 		};
 	};
 }

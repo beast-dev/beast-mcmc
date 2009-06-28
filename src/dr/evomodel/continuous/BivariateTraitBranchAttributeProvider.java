@@ -26,7 +26,7 @@ public abstract class BivariateTraitBranchAttributeProvider implements BranchAtt
     protected abstract String extensionName();
 
     protected double branchFunction(double[] startValue, double[] endValue, double startTime, double endTime) {
-         return convert(endValue[0]-startValue[0], endValue[1] - startValue[0], startTime - endTime);
+         return convert(endValue[0]-startValue[0], endValue[1] - startValue[1], startTime - endTime);
     }
 
     protected abstract double convert(double latDifference, double longDifference, double timeDifference);

@@ -14,8 +14,11 @@ public class PartitionSubstitutionModel extends ModelOptions {
     // Instance variables
 
     private final BeautiOptions options;
+    private DataType dataType;
+    private String name;
+    private List<PartitionData> allPartitionData;
 
-    private NucModelType nucSubstitutionModel = NucModelType.HKY;
+	private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
@@ -31,15 +34,17 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     private boolean dolloModel = false;
 
-    public DataType dataType;
-    public String name;
+    
 
     
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
+        
+        allPartitionData = new ArrayList<PartitionData>();
+        addPartitionData(partition);
     }
 
-    /**
+	/**
      * A copy constructor
      *
      * @param options the beauti options
@@ -48,7 +53,9 @@ public class PartitionSubstitutionModel extends ModelOptions {
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
-
+        
+        this.setAllPartitionData(source.getAllPartitionData());
+        
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
@@ -495,33 +502,6 @@ public class PartitionSubstitutionModel extends ModelOptions {
         return params;
     }
 
-    public Parameter getParameter(String name) {
-
-        if (name.startsWith(getName())) {
-            name = name.substring(getName().length() + 1);
-        }
-        Parameter parameter = parameters.get(name);
-
-        if (parameter == null) {
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
-        }
-
-        parameter.setPrefix(getPrefix());
-
-        return parameter;
-    }
-
-    public Operator getOperator(String name) {
-
-        Operator operator = operators.get(name);
-
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
-
-        operator.setPrefix(getName());
-
-        return operator;
-    }
-
     public int getCodonPartitionCount() {
         if (codonHeteroPattern == null || codonHeteroPattern.equals("111")) {
             return 1;
@@ -557,9 +537,55 @@ public class PartitionSubstitutionModel extends ModelOptions {
         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
 
+    ///////////////////////////////////////////////////////
+    
+    public Parameter getParameter(String name) {
+
+        if (name.startsWith(getName())) {
+            name = name.substring(getName().length() + 1);
+        }
+        Parameter parameter = parameters.get(name);
+
+        if (parameter == null) {
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+        }
+
+        parameter.setPrefix(getPrefix());
+
+        return parameter;
+    }
+
+    public Operator getOperator(String name) {
+
+        Operator operator = operators.get(name);
+
+        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+
+        operator.setPrefix(getName());
+
+        return operator;
+    }
+
     public String toString() {
         return getName();
     }
+
+
+    public List<PartitionData> getAllPartitionData() {
+		return allPartitionData;
+	}
+
+	public void setAllPartitionData(List<PartitionData> allPartitionData) {
+		this.allPartitionData = allPartitionData;
+	}
+
+    public void addPartitionData(PartitionData partition) {
+    	allPartitionData.add(partition);		
+	}
+    
+    public boolean removePartitionData(PartitionData partition) {
+    	return allPartitionData.remove(partition);		
+	}
 
     public NucModelType getNucSubstitutionModel() {
         return nucSubstitutionModel;

@@ -161,7 +161,7 @@ public class PartitionModelPanel extends OptionsPanel {
             return;
         }
 
-        int dataType = model.dataType.getType();
+        int dataType = model.getDataType().getType();
         switch (dataType) {
             case DataType.NUCLEOTIDES:
                 if (model.getNucSubstitutionModel() == NucModelType.GTR) {
@@ -231,7 +231,7 @@ public class PartitionModelPanel extends OptionsPanel {
      */
     private void setupPanel() {
 
-        switch (model.dataType.getType()) {
+        switch (model.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 addComponentWithLabel("Substitution Model:", nucSubstCombo);
                 addComponentWithLabel("Base frequencies:", frequencyCombo);

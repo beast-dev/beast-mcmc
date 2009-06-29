@@ -296,9 +296,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
             if (dateType == null) {
-                dateType = partition.getPartitionSubstitutionModel().dataType;
+                dateType = partition.getPartitionSubstitutionModel().getDataType();
             } else {
-                if (partition.getPartitionSubstitutionModel().dataType != dateType) {
+                if (partition.getPartitionSubstitutionModel().getDataType() != dateType) {
                     JOptionPane.showMessageDialog(this, "Can only link the models for data partitions \n" +
                             "of the same data type (e.g., nucleotides)",
                             "Unable to link models",

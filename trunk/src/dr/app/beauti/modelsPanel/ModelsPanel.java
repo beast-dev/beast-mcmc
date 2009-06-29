@@ -352,7 +352,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         String title;
 
-        switch (currentModel.dataType.getType()) {
+        switch (currentModel.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 title = "Nucleotide";
                 break;

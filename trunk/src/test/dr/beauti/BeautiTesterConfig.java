@@ -445,7 +445,7 @@ public class BeautiTesterConfig {
                     beautiOptions.addPartitionSubstitutionModel(model);
                 } else {
                     for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
-                        if (pm.dataType == alignment.getDataType()) {
+                        if (pm.getDataType() == alignment.getDataType()) {
                             partition.setPartitionSubstitutionModel(pm);
                         }
                     }

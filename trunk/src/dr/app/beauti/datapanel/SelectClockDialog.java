@@ -25,7 +25,7 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionClockModel;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -34,9 +34,10 @@ import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
+ * @author Walter Xie
  * @version $Id:$
  */
-public class SelectTreeDialog {
+public class SelectClockDialog {
 
     private JFrame frame;
 
@@ -46,7 +47,7 @@ public class SelectTreeDialog {
 
     OptionsPanel optionPanel;
 
-    public SelectTreeDialog(JFrame frame) {
+    public SelectClockDialog(JFrame frame) {
         this.frame = frame;
 
         treeCombo = new JComboBox();
@@ -57,7 +58,7 @@ public class SelectTreeDialog {
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition tree:", treeCombo);
+        optionPanel.addComponentWithLabel("Partition clock model:", treeCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
@@ -70,11 +71,11 @@ public class SelectTreeDialog {
 
     }
 
-    public int showDialog(Object[] trees) {
+    public int showDialog(Object[] models) {
 
         treeCombo.removeAllItems();
-        for (Object tree : trees) {
-            treeCombo.addItem(tree);
+        for (Object model : models) {
+            treeCombo.addItem(model);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -85,7 +86,7 @@ public class SelectTreeDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Tree");
+        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Clock Model");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -99,8 +100,8 @@ public class SelectTreeDialog {
         return result;
     }
 
-    public PartitionTreeModel getTree() {
-        return (PartitionTreeModel) treeCombo.getSelectedItem();
+    public PartitionClockModel getModel() {
+        return (PartitionClockModel) treeCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {

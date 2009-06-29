@@ -24,8 +24,9 @@ public class PartitionData {
     private int every = 1;
 
     private PartitionSubstitutionModel model;
+    private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
-		
+    
 //    public List<Tree> userTrees = new ArrayList<Tree>(); // a set of starting tree loaded from NEXUS file
     
 	public PartitionData(String name, String fileName, Alignment alignment) {
@@ -76,6 +77,14 @@ public class PartitionData {
     public PartitionSubstitutionModel getPartitionSubstitutionModel() {
         return model;
     }
+
+	public void setPartitionClockModel(PartitionClockModel clockModel) {
+		this.clockModel = clockModel;
+	}
+
+	public PartitionClockModel getPartitionClockModel() {
+		return clockModel;
+	}
 
     public PartitionTreeModel getPartitionTreeModel() {
 		return treeModel;

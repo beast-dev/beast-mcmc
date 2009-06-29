@@ -676,7 +676,7 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 } else {// only this works                    
                 	for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
-                        if (psm.dataType == alignment.getDataType()) { // use same substitution model in beginning
+                        if (psm.getDataType() == alignment.getDataType()) { // use same substitution model in beginning
                             partition.setPartitionSubstitutionModel(psm);
                         }
                 	}
@@ -687,17 +687,6 @@ public class BeautiFrame extends DocumentFrame {
                         beautiOptions.addPartitionSubstitutionModel(psm);
                     }
                 	
-                	// use same clock model in beginning
-                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
-                        partition.setPartitionClockModel(pcm);                        
-                	}
-                	if (partition.getPartitionClockModel() == null) {
-                        // PartitionClockModel based on PartitionData
-                		PartitionClockModel pcm = new PartitionClockModel(beautiOptions, partition);
-                        partition.setPartitionClockModel(pcm);
-                        beautiOptions.addPartitionClockModel(pcm);
-                    }
-                    
                 	// use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
                     	partition.setPartitionTreeModel(ptm);
@@ -721,6 +710,18 @@ public class BeautiFrame extends DocumentFrame {
                         beautiOptions.shareSameTreePrior = true;
                         beautiOptions.activedSameTreePrior = ptp;                        
                     }
+
+                	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
+                        partition.setPartitionClockModel(pcm);                        
+                	}
+                	if (partition.getPartitionClockModel() == null) {
+                        // PartitionClockModel based on PartitionData
+                		PartitionClockModel pcm = new PartitionClockModel(beautiOptions, partition);
+                        partition.setPartitionClockModel(pcm);
+                        beautiOptions.addPartitionClockModel(pcm);
+                    }
+                    
                 }
             }
         }

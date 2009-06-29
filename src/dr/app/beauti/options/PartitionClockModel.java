@@ -16,14 +16,17 @@ public class PartitionClockModel extends ModelOptions {
 
     private final BeautiOptions options;
     private String name;
+    private PartitionData partition;
     
     private ClockType clockType = ClockType.STRICT_CLOCK;
     
     public Parameter localClockRateChangesStatistic = null;
     public Parameter localClockRatesStatistic = null;
     
+    
 	public PartitionClockModel(BeautiOptions options, PartitionData partition) {
 		this.options = options;
+		this.partition = partition;
 		this.name = partition.getName();
 		
 		initClockModelParaAndOpers();
@@ -71,16 +74,18 @@ public class PartitionClockModel extends ModelOptions {
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
         
         createScaleOperator("branchRates.var", demoTuning, rateWeights);
+        
+        String treePrefix = partition.getPartitionTreeModel().getPrefix();        
 
         createOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", "clock.rate",
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+                treePrefix + "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
         createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree", ClockType.UCED_MEAN,
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+                treePrefix + "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
         createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN,
-                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
+                treePrefix + "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
     }
     
     /**
@@ -113,6 +118,7 @@ public class PartitionClockModel extends ModelOptions {
                     break;
 
                 case AUTOCORRELATED_LOGNORMAL:
+//                	rateParam = partition.getPartitionTreeModel().getParameter("treeModel.rootRate");
                     rateParam = getParameter("treeModel.rootRate");
                     if (!fixed) params.add(rateParam);
                     params.add(getParameter("branchRates.var"));

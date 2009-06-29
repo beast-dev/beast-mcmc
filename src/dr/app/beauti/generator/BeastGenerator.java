@@ -611,7 +611,7 @@ public class BeastGenerator extends Generator {
         String codonHeteroPattern = model.getCodonHeteroPattern();
         int partitionCount = model.getCodonPartitionCount();
 
-        if (model.dataType == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
+        if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
                 writer.writeComment("The unique patterns for codon positions 1 & 2");

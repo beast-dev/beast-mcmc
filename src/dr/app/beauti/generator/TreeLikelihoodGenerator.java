@@ -38,7 +38,7 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     void writeTreeLikelihood(PartitionSubstitutionModel model, XMLWriter writer) {
 
-        if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
+        if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writeTreeLikelihood(TreeLikelihood.TREE_LIKELIHOOD, i, model, writer);
             }
@@ -138,7 +138,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
-            if (model.dataType == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
+            if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix(i) + TreeLikelihood.TREE_LIKELIHOOD);
                 }
@@ -151,7 +151,7 @@ public class TreeLikelihoodGenerator extends Generator {
     private boolean useAmbiguities(PartitionSubstitutionModel model) {
         boolean useAmbiguities = false;
 
-        switch (model.dataType.getType()) {
+        switch (model.getDataType().getType()) {
             case DataType.TWO_STATES:
             case DataType.COVARION:
 

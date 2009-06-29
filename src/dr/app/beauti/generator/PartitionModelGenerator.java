@@ -32,7 +32,7 @@ public class PartitionModelGenerator extends Generator {
      */
     public void writeSubstitutionModel(PartitionSubstitutionModel model, XMLWriter writer) {
 
-        DataType dataType = model.dataType;
+        DataType dataType = model.getDataType();
         String dataTypeDescription = dataType.getDescription();
 
         switch (dataType.getType()) {
@@ -179,7 +179,7 @@ public class PartitionModelGenerator extends Generator {
     }
 
     private void writeFrequencyModel(XMLWriter writer, PartitionSubstitutionModel model, int num) {
-        String dataTypeDescription = model.dataType.getDescription();
+        String dataTypeDescription = model.getDataType().getDescription();
         String prefix = model.getPrefix(num);
         writer.writeOpenTag(
                 FrequencyModel.FREQUENCY_MODEL,
@@ -218,7 +218,7 @@ public class PartitionModelGenerator extends Generator {
      * @param model  the partition model to write in BEAST XML
      */
     public void writeBinarySimpleModel(XMLWriter writer, PartitionSubstitutionModel model) {
-        String dataTypeDescription = model.dataType.getDescription();
+        String dataTypeDescription = model.getDataType().getDescription();
 
         String prefix = model.getPrefix();
 
@@ -280,7 +280,7 @@ public class PartitionModelGenerator extends Generator {
      */
     public void writeSiteModel(PartitionSubstitutionModel model, boolean writeMuParameter, XMLWriter writer) {
 
-        switch (model.dataType.getType()) {
+        switch (model.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 if (model.getCodonHeteroPattern() != null) {
                     for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
@@ -314,7 +314,7 @@ public class PartitionModelGenerator extends Generator {
      */
     public void writeMuParameterRefs(PartitionSubstitutionModel model, XMLWriter writer) {
 
-        if (model.dataType.getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
+        if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
             }
@@ -328,7 +328,7 @@ public class PartitionModelGenerator extends Generator {
 
         int codonPartitionCount = model.getCodonPartitionCount();
 
-        switch (model.dataType.getType()) {
+        switch (model.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
 
 // THIS IS DONE BY ALLMUS logging in BeastGenerator

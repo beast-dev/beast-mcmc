@@ -1,6 +1,9 @@
 package dr.app.beauti.options;
 
-import dr.evolution.tree.Tree;
+import java.util.List;
+
+import dr.app.beauti.priorsPanel.PriorType;
+import dr.evomodelxml.BirthDeathModelParser;
 
 /**
  * @author Alexei Drummond
@@ -34,6 +37,8 @@ public class PartitionTreePrior extends ModelOptions {
     	this.options = options;
 		this.name = treeModel.getName();
 		this.treeModel = treeModel;
+		
+		initTreePriorParaAndOpers();
     }
 
     /**
@@ -57,6 +62,7 @@ public class PartitionTreePrior extends ModelOptions {
 		this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
 		this.fixedTree = source.fixedTree;
         
+		initTreePriorParaAndOpers();
     }
 
 //    public PartitionTreePrior(BeautiOptions options, String name) {
@@ -64,6 +70,183 @@ public class PartitionTreePrior extends ModelOptions {
 //        this.name = name;
 //    }    
     
+    public void initTreePriorParaAndOpers() {
+    	double treeWeights = 15.0;
+    	    	
+        createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createScaleParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("exponential.growthRate", "coalescent growth rate parameter", GROWTH_RATE_SCALE, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createParameter("exponential.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createScaleParameter("logistic.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("logistic.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("logistic.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("logistic.t50", "logistic shape parameter", T50_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createScaleParameter("expansion.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("expansion.growthRate", "coalescent logistic growth rate parameter", GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("expansion.doublingTime", "coalescent doubling time parameter", TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("expansion.ancestralProportion", "ancestral population proportion", NONE, 0.1, 0.0, 1.0);
+        createParameter("skyline.popSize", "Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
+
+        createParameter("skyride.popSize", "GMRF Bayesian skyride population sizes", TIME_SCALE, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
+        {
+            final Parameter p = createParameter("skyride.precision", "GMRF Bayesian skyride precision", NONE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+            p.priorType = PriorType.GAMMA_PRIOR;
+            p.gammaAlpha = 0.001;
+            p.gammaBeta = 1000;
+            p.priorFixed = true;
+        }
+
+        createParameter("demographic.popSize", "Extended Bayesian Skyline population sizes", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch");
+        createScaleParameter("demographic.populationMean", "Extended Bayesian Skyline population prior mean", TIME_SCALE, 1, 0, Double.POSITIVE_INFINITY);
+        {
+            final Parameter p = createStatistic("demographic.populationSizeChanges", "Average number of population change points", true);
+            p.priorType = PriorType.POISSON_PRIOR;
+            p.poissonMean = Math.log(2);
+        }
+        createParameter("yule.birthRate", "Yule speciation process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
+
+        createScaleOperator("constant.popSize", demoTuning, demoWeights);
+        createScaleOperator("exponential.popSize", demoTuning, demoWeights);
+        createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
+        createScaleOperator("exponential.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.popSize", demoTuning, demoWeights);
+        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
+        createScaleOperator("logistic.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("logistic.t50", demoTuning, demoWeights);
+        createScaleOperator("expansion.popSize", demoTuning, demoWeights);
+        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
+        createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
+        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
+        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
+
+        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
+        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
+        
+        // hack pass distribution in name
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
+                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
+                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+
+        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
+                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+
+        createScaleOperator("yule.birthRate", demoTuning, demoWeights);
+
+        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+
+    }
+    
+    /**
+     * return a list of parameters that are required
+     *
+     * @param params the parameter list
+     */
+    public void selectParameters(List<Parameter> params) {
+    	
+        if (nodeHeightPrior == TreePrior.CONSTANT) {
+            params.add(getParameter("constant.popSize"));
+        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+            params.add(getParameter("exponential.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                params.add(getParameter("exponential.growthRate"));
+            } else {
+                params.add(getParameter("exponential.doublingTime"));
+            }
+        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+            params.add(getParameter("logistic.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                params.add(getParameter("logistic.growthRate"));
+            } else {
+                params.add(getParameter("logistic.doublingTime"));
+            }
+            params.add(getParameter("logistic.t50"));
+        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+            params.add(getParameter("expansion.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                params.add(getParameter("expansion.growthRate"));
+            } else {
+                params.add(getParameter("expansion.doublingTime"));
+            }
+            params.add(getParameter("expansion.ancestralProportion"));
+        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+            params.add(getParameter("skyline.popSize"));
+        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+            params.add(getParameter("demographic.populationSizeChanges"));
+            params.add(getParameter("demographic.populationMean"));
+        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+//            params.add(getParameter("skyride.popSize"));
+            params.add(getParameter("skyride.precision"));
+        } else if (nodeHeightPrior == TreePrior.YULE) {
+            params.add(getParameter("yule.birthRate"));
+        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        }
+
+    }
+    
+    /**
+     * return a list of operators that are required
+     *
+     * @param ops the operator list
+     */
+    public void selectOperators(List<Operator> ops) {
+
+        if (nodeHeightPrior == TreePrior.CONSTANT) {
+            ops.add(getOperator("constant.popSize"));
+        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+            ops.add(getOperator("exponential.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                ops.add(getOperator("exponential.growthRate"));
+            } else {
+                ops.add(getOperator("exponential.doublingTime"));
+            }
+        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+            ops.add(getOperator("logistic.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                ops.add(getOperator("logistic.growthRate"));
+            } else {
+                ops.add(getOperator("logistic.doublingTime"));
+            }
+            ops.add(getOperator("logistic.t50"));
+        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+            ops.add(getOperator("expansion.popSize"));
+            if (parameterization == GROWTH_RATE) {
+                ops.add(getOperator("expansion.growthRate"));
+            } else {
+                ops.add(getOperator("expansion.doublingTime"));
+            }
+            ops.add(getOperator("expansion.ancestralProportion"));
+        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+            ops.add(getOperator("skyline.popSize"));
+            ops.add(getOperator("skyline.groupSize"));
+        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+            ops.add(getOperator("gmrfGibbsOperator"));
+        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+            ops.add(getOperator("demographic.populationMean"));
+            ops.add(getOperator("demographic.popSize"));
+            ops.add(getOperator("demographic.indicators"));
+            ops.add(getOperator("demographic.scaleActive"));
+        } else if (nodeHeightPrior == TreePrior.YULE) {
+            ops.add(getOperator("yule.birthRate"));
+        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        }        
+    }
+    
+    
+    //////////////////////////////////////////////////////
 
     public Parameter getParameter(String name) {
 
@@ -91,7 +274,6 @@ public class PartitionTreePrior extends ModelOptions {
 
         return operator;
     }
-
  
     public String getPrefix() {
         String prefix = "";

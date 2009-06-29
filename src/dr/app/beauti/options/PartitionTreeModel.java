@@ -1,9 +1,10 @@
 package dr.app.beauti.options;
 
 import java.util.List;
-import java.util.ArrayList;
 
+import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.RateStatistic;
 
 /**
  * @author Andrew Rambaut
@@ -21,9 +22,13 @@ public class PartitionTreeModel extends ModelOptions {
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;    
     
+    private boolean fixedTree = false;
+    
 	public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
 		this.options = options;
 		this.name = partition.getName();
+		
+		initTreeModelParaAndOpers();
     }
 
     /**
@@ -38,7 +43,9 @@ public class PartitionTreeModel extends ModelOptions {
 		this.name = name;
 		
 		this.startingTreeType = source.startingTreeType;
-		this.userStartingTree = source.userStartingTree;         
+		this.userStartingTree = source.userStartingTree;  
+		
+		initTreeModelParaAndOpers();
     }
 
 //    public PartitionTreeModel(BeautiOptions options, String name) {
@@ -46,7 +53,112 @@ public class PartitionTreeModel extends ModelOptions {
 //        this.name = name;
 //    }
 
+    public void initTreeModelParaAndOpers() {
+        double branchWeights = 30.0;
+        double treeWeights = 15.0;
+        double rateWeights = 3.0;
+        
+        createParameter("tree", "The tree");
+        createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
+        createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
+        createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
+        createParameter("branchRates.categories", "relaxed clock branch rate categories");
+        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
+
+        {
+            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+            p.priorType = PriorType.GAMMA_PRIOR;
+            p.gammaAlpha = 1;
+            p.gammaBeta = 0.0001;
+        }
+        createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        // These are statistics which could have priors on...
+        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
+                0.0, Double.POSITIVE_INFINITY);
+        createStatistic("covariance",
+                "The covariance in rates of evolution on each lineage with their ancestral lineages",
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+        createOperator("scaleRootRate", "treeModel.rootRate",
+                "Scales root rate", "treeModel.rootRate",
+                OperatorType.SCALE, 0.75, rateWeights);
+        createOperator("scaleOneRate", "treeModel.nodeRates",
+                "Scales one non-root rate", "treeModel.nodeRates",
+                OperatorType.SCALE, 0.75, branchWeights);
+        createOperator("scaleAllRates", "treeModel.allRates",
+                "Scales all rates simultaneously", "treeModel.allRates",
+                OperatorType.SCALE_ALL, 0.75, rateWeights);
+        createOperator("scaleAllRatesIndependently", "treeModel.nodeRates",
+                "Scales all non-root rates independently", "treeModel.nodeRates",
+                OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
+
+        createOperator("upDownAllRatesHeights", "All rates and heights",
+                "Scales all rates inversely to node heights of the tree", "treeModel.allRates",
+                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, branchWeights);
+
+        createOperator("swapBranchRateCategories", "branchRates.categories",
+                "Performs a swap of branch rate categories", "branchRates.categories",
+                OperatorType.SWAP, 1, branchWeights / 3);
+        createOperator("randomWalkBranchRateCategories", "branchRates.categories",
+                "Performs an integer random walk of branch rate categories", "branchRates.categories",
+                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
+        createOperator("unformBranchRateCategories", "branchRates.categories",
+                "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
+                OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
+        
+        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
+        createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
+                OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
+
+        createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
+        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
+                "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
+
+        createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
+                OperatorType.SUBTREE_SLIDE, 1.0, treeWeights);
+        createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
+                OperatorType.NARROW_EXCHANGE, -1, treeWeights);
+        createOperator("wideExchange", "Tree", "Performs global rearrangements of the tree", "tree",
+                OperatorType.WIDE_EXCHANGE, -1, demoWeights);
+        createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
+                OperatorType.WILSON_BALDING, -1, demoWeights);
+    }
+    
+    /**
+     * return a list of parameters that are required
+     *
+     * @param params the parameter list
+     */
+    public void selectParameters(List<Parameter> params) {
+    	
+        params.add(getParameter("treeModel.rootHeight"));
+    }
+
+    /**
+     * return a list of operators that are required
+     *
+     * @param ops the operator list
+     */
+    public void selectOperators(List<Operator> ops) {
+
+        // if not a fixed tree then sample tree space
+        if (!fixedTree) {
+            ops.add(getOperator("subtreeSlide"));
+            ops.add(getOperator("narrowExchange"));
+            ops.add(getOperator("wideExchange"));
+            ops.add(getOperator("wilsonBalding"));
+        }
+
+    }
+    
+    /////////////////////////////////////////////////////////////
+    
 	public PartitionTreePrior getPartitionTreePrior() {
 		return treePrior;
 	}
@@ -79,26 +191,8 @@ public class PartitionTreeModel extends ModelOptions {
         this.name = name;
     }
 
-    public List<Operator> getOperators() {
-        List<Operator> operators = new ArrayList<Operator>();
-
-        return operators;
-    }
-
     public String toString() {
         return getName();
-    }
-
-    /**
-     * @param includeRelativeRates true if relative rate parameters should be added
-     * @return a list of parameters that are required
-     */
-    List<Parameter> getParameters(boolean includeRelativeRates) {
-
-        List<Parameter> params = new ArrayList<Parameter>();
-
-
-        return params;
     }
 
     public Parameter getParameter(String name) {

@@ -686,6 +686,17 @@ public class BeautiFrame extends DocumentFrame {
                         partition.setPartitionSubstitutionModel(psm);
                         beautiOptions.addPartitionSubstitutionModel(psm);
                     }
+                	
+                	// use same clock model in beginning
+                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
+                        partition.setPartitionClockModel(pcm);                        
+                	}
+                	if (partition.getPartitionClockModel() == null) {
+                        // PartitionClockModel based on PartitionData
+                		PartitionClockModel pcm = new PartitionClockModel(beautiOptions, partition);
+                        partition.setPartitionClockModel(pcm);
+                        beautiOptions.addPartitionClockModel(pcm);
+                    }
                     
                 	// use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        

@@ -62,10 +62,11 @@ public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
         this(new ComponentFactory[] {});
+        
+        initAllParametersAndOperators();
     }
     
     public BeautiOptions(ComponentFactory[] components) {
-    	
     	initAllParametersAndOperators();
     	
         // Install all the component's options from the given list of factories:
@@ -125,13 +126,12 @@ public class BeautiOptions extends ModelOptions {
         dataReset = true;
 
         taxonList = null;
-
-        selecetedTraits.clear();
-
         taxonSets.clear();
         taxonSetsMono.clear();
         dataPartitions.clear();
 //        userTrees.clear(); // moved into PartitionData 
+
+        selecetedTraits.clear();
 
         meanDistance = 1.0;
         datesUnits = YEARS;
@@ -144,6 +144,8 @@ public class BeautiOptions extends ModelOptions {
         partitionModels.clear();
         partitionTreeModels.clear();
 //        partitionTreePriors.clear();
+        activedSameTreePrior = null;
+        shareSameTreePrior = true;
 
         fixedSubstitutionRate = true;
         meanSubstitutionRate = 1.0;
@@ -157,7 +159,7 @@ public class BeautiOptions extends ModelOptions {
         extendedSkylineModel = VariableDemographicModel.LINEAR;
         multiLoci = false;
         birthDeathSamplingProportion = 1.0;
-        fixedTree = false;
+//        fixedTree = false;
 
         units = Units.Type.SUBSTITUTIONS;
         clockType = ClockType.STRICT_CLOCK;
@@ -210,18 +212,30 @@ public class BeautiOptions extends ModelOptions {
         
         if (isSpeciesAnalysis()) { // species
         	selectParametersForSpecies(parameters);        	       
-        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        	for (PartitionClockModel model : getActivePartitionClockModels()) {
         		// use override method getParameter(String name) in PartitionSubstitutionModel containing prefix
             	model.selectParameters(parameters);    
         	}
         } else { // not species
+        	for (PartitionClockModel model : getActivePartitionClockModels()) {
+        		model.selectParameters(parameters);    
+        	}
+        	
+        	for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        		tree.selectParameters(parameters);    
+        	}
+        	
+        	for (PartitionTreePrior prior : getActivePartitionTreePriors()) {
+        		prior.selectParameters(parameters);    
+            }      	
+        	
         	selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
         
         if (isSpeciesAnalysis()) { // species
-        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        	for (PartitionClockModel model : getActivePartitionClockModels()) {
         		model.selectStatistics(parameters);
         	}
         } else {
@@ -421,7 +435,42 @@ public class BeautiOptions extends ModelOptions {
         return weights;
     }
 
+    
+    
+    public void addPartitionClockModel (PartitionClockModel model) {
 
+        if (!clockModels.contains(model)) {
+        	clockModels.add(model);
+        }
+    }
+    
+    /**
+     * @return a list of all PartitionClockModel, whether or not they are used
+     */
+    public List<PartitionClockModel> getPartitionClockModels() {
+        return clockModels;
+    }
+
+    public List<PartitionClockModel> getActivePartitionClockModels() {
+
+        Set<PartitionClockModel> models = new HashSet<PartitionClockModel>();
+
+        for (PartitionData partition : dataPartitions) {
+        	models.add(partition.getPartitionClockModel());
+        }
+
+        // Change to a list to ensure that the order is kept the same as in the table.
+        List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            if (models.contains(model)) {
+                activeModels.add(model);
+            }
+        }
+
+        return activeModels;
+    }
+    
+    
     public void addPartitionTreeModel(PartitionTreeModel tree) {
 
         if (!partitionTreeModels.contains(tree)) {
@@ -476,7 +525,11 @@ public class BeautiOptions extends ModelOptions {
     	
     	// # tree prior = 1 or # tree model
     	if (shareSameTreePrior) {
-    		activeTrees.add(activedSameTreePrior);
+    		if (activedSameTreePrior == null) {
+    			return activeTrees;
+    		} else {
+    			activeTrees.add(activedSameTreePrior);
+    		}	
     	} else {
     		for (PartitionTreeModel model : getActivePartitionTreeModels()) {
 	        	activeTrees.add(model.getPartitionTreePrior());
@@ -498,10 +551,21 @@ public class BeautiOptions extends ModelOptions {
         if (isSpeciesAnalysis()) { // species
         	selectOperatorsForSpecies(ops);
         	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
-        	for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {            	
+        	for (PartitionClockModel model : getActivePartitionClockModels()) {            	
             	model.selectOperators(ops); 
             }
         } else { // not species
+        	for (PartitionClockModel model : getActivePartitionClockModels()) {
+        		model.selectOperators(ops);    
+        	}
+        	
+        	for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        		tree.selectOperators(ops);    
+        	}
+        	
+        	for (PartitionTreePrior prior : getActivePartitionTreePriors()) {
+        		prior.selectOperators(ops);    
+            }           	
         	selectOperators(ops);
         }
 
@@ -541,10 +605,12 @@ public class BeautiOptions extends ModelOptions {
             }
         }
 
-        Operator op = getOperator("subtreeSlide");
-        if (!op.tuningEdited) {
-            op.tuning = initialRootHeight / 10.0;
-        }
+        for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        	Operator op = tree.getOperator("subtreeSlide");
+            if (!op.tuningEdited) {
+                op.tuning = initialRootHeight / 10.0;
+            } 
+    	}        
 
         return ops;
     }
@@ -614,47 +680,47 @@ public class BeautiOptions extends ModelOptions {
 
         }
 
-        if (nodeHeightPrior == TreePrior.CONSTANT) {
-            params.add(getParameter("constant.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-            params.add(getParameter("exponential.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                params.add(getParameter("exponential.growthRate"));
-            } else {
-                params.add(getParameter("exponential.doublingTime"));
-            }
-        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-            params.add(getParameter("logistic.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                params.add(getParameter("logistic.growthRate"));
-            } else {
-                params.add(getParameter("logistic.doublingTime"));
-            }
-            params.add(getParameter("logistic.t50"));
-        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-            params.add(getParameter("expansion.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                params.add(getParameter("expansion.growthRate"));
-            } else {
-                params.add(getParameter("expansion.doublingTime"));
-            }
-            params.add(getParameter("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-            params.add(getParameter("skyline.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-            params.add(getParameter("demographic.populationSizeChanges"));
-            params.add(getParameter("demographic.populationMean"));
-        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-//            params.add(getParameter("skyride.popSize"));
-            params.add(getParameter("skyride.precision"));
-        } else if (nodeHeightPrior == TreePrior.YULE) {
-            params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        }
-
-        params.add(getParameter("treeModel.rootHeight"));
+//        if (nodeHeightPrior == TreePrior.CONSTANT) {
+//            params.add(getParameter("constant.popSize"));
+//        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+//            params.add(getParameter("exponential.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                params.add(getParameter("exponential.growthRate"));
+//            } else {
+//                params.add(getParameter("exponential.doublingTime"));
+//            }
+//        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+//            params.add(getParameter("logistic.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                params.add(getParameter("logistic.growthRate"));
+//            } else {
+//                params.add(getParameter("logistic.doublingTime"));
+//            }
+//            params.add(getParameter("logistic.t50"));
+//        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+//            params.add(getParameter("expansion.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                params.add(getParameter("expansion.growthRate"));
+//            } else {
+//                params.add(getParameter("expansion.doublingTime"));
+//            }
+//            params.add(getParameter("expansion.ancestralProportion"));
+//        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+//            params.add(getParameter("skyline.popSize"));
+//        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+//            params.add(getParameter("demographic.populationSizeChanges"));
+//            params.add(getParameter("demographic.populationMean"));
+//        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+////            params.add(getParameter("skyride.popSize"));
+//            params.add(getParameter("skyride.precision"));
+//        } else if (nodeHeightPrior == TreePrior.YULE) {
+//            params.add(getParameter("yule.birthRate"));
+//        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+//            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+//            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+//        }
+//
+//        params.add(getParameter("treeModel.rootHeight"));
     }
 
     
@@ -807,58 +873,58 @@ public class BeautiOptions extends ModelOptions {
             }
         }
 
-        if (nodeHeightPrior == TreePrior.CONSTANT) {
-            ops.add(getOperator("constant.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-            ops.add(getOperator("exponential.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                ops.add(getOperator("exponential.growthRate"));
-            } else {
-                ops.add(getOperator("exponential.doublingTime"));
-            }
-        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-            ops.add(getOperator("logistic.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                ops.add(getOperator("logistic.growthRate"));
-            } else {
-                ops.add(getOperator("logistic.doublingTime"));
-            }
-            ops.add(getOperator("logistic.t50"));
-        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-            ops.add(getOperator("expansion.popSize"));
-            if (parameterization == GROWTH_RATE) {
-                ops.add(getOperator("expansion.growthRate"));
-            } else {
-                ops.add(getOperator("expansion.doublingTime"));
-            }
-            ops.add(getOperator("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-            ops.add(getOperator("skyline.popSize"));
-            ops.add(getOperator("skyline.groupSize"));
-        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-            ops.add(getOperator("gmrfGibbsOperator"));
-        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-            ops.add(getOperator("demographic.populationMean"));
-            ops.add(getOperator("demographic.popSize"));
-            ops.add(getOperator("demographic.indicators"));
-            ops.add(getOperator("demographic.scaleActive"));
-        } else if (nodeHeightPrior == TreePrior.YULE) {
-            ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        }
-
-        ops.add(getOperator("treeModel.rootHeight"));
-        ops.add(getOperator("uniformHeights"));
-
-        // if not a fixed tree then sample tree space
-        if (!fixedTree) {
-            ops.add(getOperator("subtreeSlide"));
-            ops.add(getOperator("narrowExchange"));
-            ops.add(getOperator("wideExchange"));
-            ops.add(getOperator("wilsonBalding"));
-        }
+//        if (nodeHeightPrior == TreePrior.CONSTANT) {
+//            ops.add(getOperator("constant.popSize"));
+//        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+//            ops.add(getOperator("exponential.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                ops.add(getOperator("exponential.growthRate"));
+//            } else {
+//                ops.add(getOperator("exponential.doublingTime"));
+//            }
+//        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+//            ops.add(getOperator("logistic.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                ops.add(getOperator("logistic.growthRate"));
+//            } else {
+//                ops.add(getOperator("logistic.doublingTime"));
+//            }
+//            ops.add(getOperator("logistic.t50"));
+//        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+//            ops.add(getOperator("expansion.popSize"));
+//            if (parameterization == GROWTH_RATE) {
+//                ops.add(getOperator("expansion.growthRate"));
+//            } else {
+//                ops.add(getOperator("expansion.doublingTime"));
+//            }
+//            ops.add(getOperator("expansion.ancestralProportion"));
+//        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+//            ops.add(getOperator("skyline.popSize"));
+//            ops.add(getOperator("skyline.groupSize"));
+//        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+//            ops.add(getOperator("gmrfGibbsOperator"));
+//        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+//            ops.add(getOperator("demographic.populationMean"));
+//            ops.add(getOperator("demographic.popSize"));
+//            ops.add(getOperator("demographic.indicators"));
+//            ops.add(getOperator("demographic.scaleActive"));
+//        } else if (nodeHeightPrior == TreePrior.YULE) {
+//            ops.add(getOperator("yule.birthRate"));
+//        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+//            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+//            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+//        }
+//
+//        ops.add(getOperator("treeModel.rootHeight"));
+//        ops.add(getOperator("uniformHeights"));
+//
+//        // if not a fixed tree then sample tree space
+//        if (!fixedTree) {
+//            ops.add(getOperator("subtreeSlide"));
+//            ops.add(getOperator("narrowExchange"));
+//            ops.add(getOperator("wideExchange"));
+//            ops.add(getOperator("wilsonBalding"));
+//        }
 
     }
     
@@ -1317,10 +1383,12 @@ public class BeautiOptions extends ModelOptions {
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
     // Substitution Model
     List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
+    // Clock Model
+    List<PartitionClockModel> clockModels = new ArrayList<PartitionClockModel>();
     // Tree
     List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
-    public PartitionTreePrior activedSameTreePrior;
+    public PartitionTreePrior activedSameTreePrior = null;
 //    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
     public boolean shareSameTreePrior = true;
     // list of starting tree from user import
@@ -1332,6 +1400,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
     public ClockType clockType = ClockType.STRICT_CLOCK;
+//    public clockModelLinkMap = 
     
     public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     public int parameterization = GROWTH_RATE;
@@ -1344,7 +1413,7 @@ public class BeautiOptions extends ModelOptions {
     public String extendedSkylineModel = VariableDemographicModel.LINEAR;
     public boolean multiLoci = false;
     public double birthDeathSamplingProportion = 1.0;
-    public boolean fixedTree = false;
+//    public boolean fixedTree = false;
 
     public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     public Tree userStartingTree = null;    

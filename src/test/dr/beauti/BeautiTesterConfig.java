@@ -81,7 +81,7 @@ public class BeautiTesterConfig {
         beautiOptions.datesDirection = BeautiOptions.FORWARDS;
 
         beautiOptions.startingTreeType = StartingTreeType.RANDOM;
-        beautiOptions.fixedTree = false;
+//        beautiOptions.fixedTree = false;
 
         beautiOptions.performTraceAnalysis = false;
         beautiOptions.generateCSV = true;  // until beuati button

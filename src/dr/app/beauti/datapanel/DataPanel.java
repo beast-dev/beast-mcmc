@@ -29,6 +29,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
 import dr.app.beauti.*;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.PloidyType;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -93,7 +94,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
-        if (ALLOW_UNLINKED_TREES) {
+    	col = dataTable.getColumnModel().getColumn(5);
+        comboBoxRenderer = new ComboBoxRenderer();
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        col.setCellRenderer(comboBoxRenderer);
+        
+        if (ALLOW_UNLINKED_TREES) {        	
             col = dataTable.getColumnModel().getColumn(7);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
@@ -199,6 +205,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(6);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        
+        modelArray = PloidyType.values();
+    	col = dataTable.getColumnModel().getColumn(5);
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));   
         
         if (ALLOW_UNLINKED_TREES) {
         	modelArray = options.getPartitionClockModels().toArray();
@@ -481,7 +491,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 4:
                     return partition.getAlignment().getDataType().getDescription();
                 case 5:
-//                	return 
+                	return partition.getPloidyType(); 
                 case 6:
                     return partition.getPartitionSubstitutionModel().getName();                	
                 case 7:
@@ -502,6 +512,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         partition.setName(name);
                     }
                     break;
+                case 5:
+                    partition.setPloidyType((PloidyType) aValue);
+                    break;
                 case 6:
                     partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     break;
@@ -520,6 +533,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:// name
+                    editable = true;
+                    break;
+                case 5:// ploidy type selection menu
                     editable = true;
                     break;
                 case 6:// subsitution model selection menu

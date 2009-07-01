@@ -1,14 +1,11 @@
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.evolution.alignment.Alignment;
-import dr.evolution.tree.Tree;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class PartitionData {
 

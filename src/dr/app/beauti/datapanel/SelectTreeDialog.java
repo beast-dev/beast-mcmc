@@ -51,7 +51,7 @@ public class SelectTreeDialog {
 
         treeCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Make copy with name:");
+        copyCheck = new JCheckBox("Rename tree model partition to:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);

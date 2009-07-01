@@ -653,10 +653,10 @@ public class BeautiFrame extends DocumentFrame {
                 //TODO Cannot load Substitution Model and Tree Model from BEAST file yet
                 if (model != null) {
                     partition.setPartitionSubstitutionModel(model);
-                    beautiOptions.addPartitionSubstitutionModel(model);
+//                    beautiOptions.addPartitionSubstitutionModel(model);
                     
-                    if (beautiOptions.getPartitionTreeModels() != null && beautiOptions.getPartitionTreeModels().size() > 0) {
-                    	PartitionTreeModel ptm = beautiOptions.getPartitionTreeModels().get(0);
+                    // use same tree model and same tree prior in beginning
+                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
                     	partition.setPartitionTreeModel(ptm);
                     	
                     	if (ptm.getPartitionTreePrior() == null || 
@@ -664,15 +664,30 @@ public class BeautiFrame extends DocumentFrame {
                     		PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
                             ptm.setPartitionTreePrior(ptp);
                     	}
-                    } else {
-                        PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
+                    }
+                    if (partition.getPartitionTreeModel() == null) {
+                    	// PartitionTreeModel based on PartitionData
+                    	PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
+                        partition.setPartitionTreeModel(ptm);
+                        
+                        // PartitionTreePrior always based on PartitionTreeModel
                         PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
                         ptm.setPartitionTreePrior(ptp);
-                        partition.setPartitionTreeModel(ptm); 
                         
-                        beautiOptions.addPartitionTreeModel(ptm);
+//                        beautiOptions.addPartitionTreeModel(ptm);
                         beautiOptions.shareSameTreePrior = true;
-                        beautiOptions.activedSameTreePrior = ptp;      
+                        beautiOptions.activedSameTreePrior = ptp;                        
+                    }
+
+                	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
+                        partition.setPartitionClockModel(pcm);                        
+                	}
+                	if (partition.getPartitionClockModel() == null) {
+                        // PartitionClockModel based on PartitionData
+                		PartitionClockModel pcm = new PartitionClockModel(beautiOptions, partition);
+                        partition.setPartitionClockModel(pcm);
+//                        beautiOptions.addPartitionClockModel(pcm);
                     }
                 } else {// only this works                    
                 	for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
@@ -684,7 +699,7 @@ public class BeautiFrame extends DocumentFrame {
                         // PartitionSubstitutionModel based on PartitionData
                     	PartitionSubstitutionModel psm = new PartitionSubstitutionModel(beautiOptions, partition);
                         partition.setPartitionSubstitutionModel(psm);
-                        beautiOptions.addPartitionSubstitutionModel(psm);
+//                        beautiOptions.addPartitionSubstitutionModel(psm);
                     }
                 	
                 	// use same tree model and same tree prior in beginning
@@ -706,7 +721,7 @@ public class BeautiFrame extends DocumentFrame {
                         PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
                         ptm.setPartitionTreePrior(ptp);
                         
-                        beautiOptions.addPartitionTreeModel(ptm);
+//                        beautiOptions.addPartitionTreeModel(ptm);
                         beautiOptions.shareSameTreePrior = true;
                         beautiOptions.activedSameTreePrior = ptp;                        
                     }
@@ -719,7 +734,7 @@ public class BeautiFrame extends DocumentFrame {
                         // PartitionClockModel based on PartitionData
                 		PartitionClockModel pcm = new PartitionClockModel(beautiOptions, partition);
                         partition.setPartitionClockModel(pcm);
-                        beautiOptions.addPartitionClockModel(pcm);
+//                        beautiOptions.addPartitionClockModel(pcm);
                     }
                     
                 }
@@ -792,7 +807,7 @@ public class BeautiFrame extends DocumentFrame {
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
         dataPanel.unlinkModels();
-        for (PartitionSubstitutionModel model : beautiOptions.getActivePartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : beautiOptions.getPartitionSubstitutionModels()) {
         	model.initAllParametersAndOperators();
         }
 

@@ -140,9 +140,10 @@ public class BeautiOptions extends ModelOptions {
         translation = 0;
 //        startingTreeType = StartingTreeType.RANDOM; // moved into PartitionTreeModels
 //        userStartingTree = null; // moved into PartitionTreeModels
-
-        partitionModels.clear();
-        partitionTreeModels.clear();
+        
+//        clockModels.clear();
+//        partitionModels.clear();
+//        partitionTreeModels.clear();
 //        partitionTreePriors.clear();
         activedSameTreePrior = null;
         shareSameTreePrior = true;
@@ -181,7 +182,7 @@ public class BeautiOptions extends ModelOptions {
         localClockRateChangesStatistic = null;
         localClockRatesStatistic = null;
         
-//        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
 //        	model.localClockRateChangesStatistic = null;
 //        	model.localClockRatesStatistic = null;
 //        } // not necessary because partitionModels.clear();
@@ -212,41 +213,43 @@ public class BeautiOptions extends ModelOptions {
         
         if (isSpeciesAnalysis()) { // species
         	selectParametersForSpecies(parameters);        	       
-        	for (PartitionClockModel model : getActivePartitionClockModels()) {
+        	for (PartitionClockModel model : getPartitionClockModels()) {
         		// use override method getParameter(String name) in PartitionSubstitutionModel containing prefix
             	model.selectParameters(parameters);    
         	}
         } else { // not species
-        	for (PartitionClockModel model : getActivePartitionClockModels()) {
+        	for (PartitionClockModel model : getPartitionClockModels()) {
         		model.selectParameters(parameters);    
         	}
         	
-        	for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
         		tree.selectParameters(parameters);    
         	}
         	
-        	for (PartitionTreePrior prior : getActivePartitionTreePriors()) {
+        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
         		prior.selectParameters(parameters);    
             }      	
         	
-        	selectParameters(parameters);
+//        	selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
         
-        if (isSpeciesAnalysis()) { // species
-        	for (PartitionClockModel model : getActivePartitionClockModels()) {
-        		model.selectStatistics(parameters);
+//        if (isSpeciesAnalysis()) { // species
+////        	for (PartitionClockModel model : getPartitionClockModels()) {
+////        		model.selectStatistics(parameters);
+        	for (PartitionTreeModel tree : getPartitionTreeModels()) {	
+        		tree.selectStatistics(parameters);
         	}
-        } else {
-        	selectStatistics(parameters);
-        }
+//        } else {
+//        	selectStatistics(parameters);
+//        }
 
         selectComponentStatistics(this, parameters);
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
         // add all Parameter (with prefix) into parameters list     
-        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {        	
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {        	
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -359,23 +362,17 @@ public class BeautiOptions extends ModelOptions {
         return meanSubstitutionRate;
     }
 
-    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
+    // ++++++++++++++ Partition Substitution Model ++++++++++++++ 
+//    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
+//        if (!partitionModels.contains(model)) {
+//            partitionModels.add(model);
+//        }
+//    }   
+    
+//    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
+//        return partitionModels;
+//    }
 
-        if (!partitionModels.contains(model)) {
-            partitionModels.add(model);
-        }
-    }
-
-    /**
-     * @return a list of all partition models, whether or not they are used
-     */
-    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
-        return partitionModels;
-    }
-
-    /**
-     * @return a list of partition models that are of the given data type
-     */
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
@@ -385,29 +382,28 @@ public class BeautiOptions extends ModelOptions {
         }
         return models;
     }
+    
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<PartitionData> givenDataPartitions) {
 
-    public List<PartitionSubstitutionModel> getActivePartitionSubstitutionModels() {
+    	List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
 
-        Set<PartitionSubstitutionModel> models = new HashSet<PartitionSubstitutionModel>();
-
-        for (PartitionData partition : dataPartitions) {
-            models.add(partition.getPartitionSubstitutionModel());
-        }
-
-        // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            if (models.contains(model)) { // if linked model, only return one model, if unlinked, return a list
-                activeModels.add(model);
-            }
-        }
+        for (PartitionData partition : givenDataPartitions) {
+        	PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+        	if (model != null && (!activeModels.contains(model))) {
+        		activeModels.add(model);
+        	}
+        }       
 
         return activeModels;
+    }
+    
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
+        return getPartitionSubstitutionModels(dataPartitions);
     }
 
     public int getTotalActivePartitionSubstitutionModelCount() {
         int totalPartitionCount = 0;
-        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             totalPartitionCount += model.getCodonPartitionCount();
         }
         return totalPartitionCount;
@@ -421,7 +417,7 @@ public class BeautiOptions extends ModelOptions {
         int[] weights = new int[getTotalActivePartitionSubstitutionModelCount()];
 
         int k = 0;
-        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             for (PartitionData partition : dataPartitions) {
                 if (partition.getPartitionSubstitutionModel() == model) {
                     model.addWeightsForPartition(partition, weights, k);
@@ -435,91 +431,67 @@ public class BeautiOptions extends ModelOptions {
         return weights;
     }
 
+    // ++++++++++++++ Partition Clock Model ++++++++++++++    
+//    public void addPartitionClockModel (PartitionClockModel model) {
+//        if (!clockModels.contains(model)) {
+//        	clockModels.add(model);
+//        }
+//    }
     
+//    public List<PartitionClockModel> getPartitionClockModels() {
+//        return clockModels;
+//    }
     
-    public void addPartitionClockModel (PartitionClockModel model) {
+    public List<PartitionClockModel> getPartitionClockModels(List<PartitionData> givenDataPartitions) {
 
-        if (!clockModels.contains(model)) {
-        	clockModels.add(model);
-        }
-    }
-    
-    /**
-     * @return a list of all PartitionClockModel, whether or not they are used
-     */
-    public List<PartitionClockModel> getPartitionClockModels() {
-        return clockModels;
-    }
+    	List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
 
-    public List<PartitionClockModel> getActivePartitionClockModels() {
-
-        Set<PartitionClockModel> models = new HashSet<PartitionClockModel>();
-
-        for (PartitionData partition : dataPartitions) {
-        	models.add(partition.getPartitionClockModel());
-        }
-
-        // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
-        for (PartitionClockModel model : getPartitionClockModels()) {
-            if (models.contains(model)) {
-                activeModels.add(model);
-            }
-        }
+        for (PartitionData partition : givenDataPartitions) {
+        	PartitionClockModel model = partition.getPartitionClockModel();
+        	if (model != null && (!activeModels.contains(model))) {
+        		activeModels.add(model);
+        	}
+        }       
 
         return activeModels;
     }
     
+    public List<PartitionClockModel> getPartitionClockModels() {
+    	return getPartitionClockModels(dataPartitions);
+    }
     
-    public void addPartitionTreeModel(PartitionTreeModel tree) {
+    // ++++++++++++++ Partition Tree Model ++++++++++++++ 
+//    public void addPartitionTreeModel(PartitionTreeModel tree) {
+//
+//        if (!partitionTreeModels.contains(tree)) {
+//            partitionTreeModels.add(tree);
+//        }
+//    }
+    
+//    public List<PartitionTreeModel> getPartitionTreeModels() {
+//        return partitionTreeModels;
+//    }
+    
+    public List<PartitionTreeModel> getPartitionTreeModels(List<PartitionData> givenDataPartitions) {
 
-        if (!partitionTreeModels.contains(tree)) {
-            partitionTreeModels.add(tree);
-        }
-    }
+    	List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
 
-    /**
-     * @return a list of all partition trees, whether or not they are used
-     */
-    public List<PartitionTreeModel> getPartitionTreeModels() {
-        return partitionTreeModels;
-    }
-
-    public List<PartitionTreeModel> getActivePartitionTreeModels() {
-
-        Set<PartitionTreeModel> trees = new HashSet<PartitionTreeModel>();
-
-        for (PartitionData partition : dataPartitions) {
-            trees.add(partition.getPartitionTreeModel());
-        }
-
-        // Change to a list to ensure that the order is kept the same as in the table.
-        List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-            if (trees.contains(tree)) {
-                activeTrees.add(tree);
-            }
-        }
+        for (PartitionData partition : givenDataPartitions) {
+        	PartitionTreeModel tree = partition.getPartitionTreeModel();
+        	if (tree != null && (!activeTrees.contains(tree))) {
+        		activeTrees.add(tree);
+        	}
+        }       
 
         return activeTrees;
     }
-
-    public int getTotalActivePartitionTreeModelCount() {
-        return getActivePartitionTreeModels().size();
-    }
-
-//    public void addPartitionTreePrior(PartitionTreePrior tree) {
-//
-//        if (!partitionTreePriors.contains(tree)) {
-//        	partitionTreePriors.add(tree);
-//        }
-//    }
-//    
-//    public List<PartitionTreePrior> getPartitionTreePriors() {
-//        return partitionTreePriors;
-//    }
-//
-    public List<PartitionTreePrior> getActivePartitionTreePriors() {
+    
+    public List<PartitionTreeModel> getPartitionTreeModels() {
+    	return getPartitionTreeModels(dataPartitions);
+    }   
+    
+    // ++++++++++++++ Partition Tree Prior ++++++++++++++ 
+    public List<PartitionTreePrior> getPartitionTreePriors() {
     	
     	List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
     	
@@ -531,7 +503,7 @@ public class BeautiOptions extends ModelOptions {
     			activeTrees.add(activedSameTreePrior);
     		}	
     	} else {
-    		for (PartitionTreeModel model : getActivePartitionTreeModels()) {
+    		for (PartitionTreeModel model : getPartitionTreeModels()) {
 	        	activeTrees.add(model.getPartitionTreePrior());
 	        }
     	}
@@ -551,29 +523,29 @@ public class BeautiOptions extends ModelOptions {
         if (isSpeciesAnalysis()) { // species
         	selectOperatorsForSpecies(ops);
         	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
-        	for (PartitionClockModel model : getActivePartitionClockModels()) {            	
+        	for (PartitionClockModel model : getPartitionClockModels()) {            	
             	model.selectOperators(ops); 
             }
         } else { // not species
-        	for (PartitionClockModel model : getActivePartitionClockModels()) {
+        	for (PartitionClockModel model : getPartitionClockModels()) {
         		model.selectOperators(ops);    
         	}
         	
-        	for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
         		tree.selectOperators(ops);    
         	}
         	
-        	for (PartitionTreePrior prior : getActivePartitionTreePriors()) {
+        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
         		prior.selectOperators(ops);    
             }           	
-        	selectOperators(ops);
+//        	selectOperators(ops);
         }
 
         selectComponentOperators(this, ops);
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
 
-        for (PartitionSubstitutionModel model : getActivePartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             ops.addAll(model.getOperators());
         }
 
@@ -582,7 +554,7 @@ public class BeautiOptions extends ModelOptions {
 
             // update delta mu operator weight
             deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : getActivePartitionSubstitutionModels()) {
+            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
                 deltaMuOperator.weight += pm.getCodonPartitionCount();
             }
 
@@ -605,7 +577,7 @@ public class BeautiOptions extends ModelOptions {
             }
         }
 
-        for (PartitionTreeModel tree : getActivePartitionTreeModels()) {
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
         	Operator op = tree.getOperator("subtreeSlide");
             if (!op.tuningEdited) {
                 op.tuning = initialRootHeight / 10.0;
@@ -620,108 +592,108 @@ public class BeautiOptions extends ModelOptions {
      *
      * @param params the parameter list
      */
-    private void selectParameters(List<Parameter> params) {
-
-        if (hasData()) {
-
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = isFixedSubstitutionRate();
-            Parameter rateParam;
-
-            switch (clockType) {
-                case STRICT_CLOCK:
-                    rateParam = getParameter("clock.rate");
-                    if (!fixed) params.add(rateParam);
-                    break;
-
-                case UNCORRELATED_EXPONENTIAL:
-                    rateParam = getParameter(ClockType.UCED_MEAN);
-                    if (!fixed) params.add(rateParam);
-                    break;
-
-                case UNCORRELATED_LOGNORMAL:
-                    rateParam = getParameter(ClockType.UCLD_MEAN);
-                    if (!fixed) params.add(rateParam);
-                    params.add(getParameter(ClockType.UCLD_STDEV));
-                    break;
-
-                case AUTOCORRELATED_LOGNORMAL:
-                    rateParam = getParameter("treeModel.rootRate");
-                    if (!fixed) params.add(rateParam);
-                    params.add(getParameter("branchRates.var"));
-                    break;
-
-                case RANDOM_LOCAL_CLOCK:
-                    rateParam = getParameter("clock.rate");
-                    if (!fixed) params.add(rateParam);
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
-            }
-
-            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-				rateParam = getParameter("clock.rate");
-				if (!fixed) params.add(rateParam);
-			} else {
-				if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-					rateParam = getParameter("uced.mean");
-					if (!fixed) params.add(rateParam);
-				} else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-					rateParam = getParameter("ucld.mean");
-					if (!fixed) params.add(rateParam);
-					params.add(getParameter("ucld.stdev"));
-				} else {
-					throw new IllegalArgumentException("Unknown clock model");
-				}
-			}*/
-
-            rateParam.isFixed = fixed;
-
-        }
-
-//        if (nodeHeightPrior == TreePrior.CONSTANT) {
-//            params.add(getParameter("constant.popSize"));
-//        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-//            params.add(getParameter("exponential.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                params.add(getParameter("exponential.growthRate"));
-//            } else {
-//                params.add(getParameter("exponential.doublingTime"));
+//    private void selectParameters(List<Parameter> params) {
+//
+//        if (hasData()) {
+//
+//            // if not fixed then do mutation rate move and up/down move
+//            boolean fixed = isFixedSubstitutionRate();
+//            Parameter rateParam;
+//
+//            switch (clockType) {
+//                case STRICT_CLOCK:
+//                    rateParam = getParameter("clock.rate");
+//                    if (!fixed) params.add(rateParam);
+//                    break;
+//
+//                case UNCORRELATED_EXPONENTIAL:
+//                    rateParam = getParameter(ClockType.UCED_MEAN);
+//                    if (!fixed) params.add(rateParam);
+//                    break;
+//
+//                case UNCORRELATED_LOGNORMAL:
+//                    rateParam = getParameter(ClockType.UCLD_MEAN);
+//                    if (!fixed) params.add(rateParam);
+//                    params.add(getParameter(ClockType.UCLD_STDEV));
+//                    break;
+//
+//                case AUTOCORRELATED_LOGNORMAL:
+//                    rateParam = getParameter("treeModel.rootRate");
+//                    if (!fixed) params.add(rateParam);
+//                    params.add(getParameter("branchRates.var"));
+//                    break;
+//
+//                case RANDOM_LOCAL_CLOCK:
+//                    rateParam = getParameter("clock.rate");
+//                    if (!fixed) params.add(rateParam);
+//                    break;
+//
+//                default:
+//                    throw new IllegalArgumentException("Unknown clock model");
 //            }
-//        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-//            params.add(getParameter("logistic.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                params.add(getParameter("logistic.growthRate"));
-//            } else {
-//                params.add(getParameter("logistic.doublingTime"));
-//            }
-//            params.add(getParameter("logistic.t50"));
-//        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-//            params.add(getParameter("expansion.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                params.add(getParameter("expansion.growthRate"));
-//            } else {
-//                params.add(getParameter("expansion.doublingTime"));
-//            }
-//            params.add(getParameter("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-//            params.add(getParameter("skyline.popSize"));
-//        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-//            params.add(getParameter("demographic.populationSizeChanges"));
-//            params.add(getParameter("demographic.populationMean"));
-//        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-////            params.add(getParameter("skyride.popSize"));
-//            params.add(getParameter("skyride.precision"));
-//        } else if (nodeHeightPrior == TreePrior.YULE) {
-//            params.add(getParameter("yule.birthRate"));
-//        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-//            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-//            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+//
+//            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.RANDOM_LOCAL_CLOCK) {
+//				rateParam = getParameter("clock.rate");
+//				if (!fixed) params.add(rateParam);
+//			} else {
+//				if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
+//					rateParam = getParameter("uced.mean");
+//					if (!fixed) params.add(rateParam);
+//				} else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
+//					rateParam = getParameter("ucld.mean");
+//					if (!fixed) params.add(rateParam);
+//					params.add(getParameter("ucld.stdev"));
+//				} else {
+//					throw new IllegalArgumentException("Unknown clock model");
+//				}
+//			}*/
+//
+//            rateParam.isFixed = fixed;
+//
 //        }
 //
-//        params.add(getParameter("treeModel.rootHeight"));
-    }
+////        if (nodeHeightPrior == TreePrior.CONSTANT) {
+////            params.add(getParameter("constant.popSize"));
+////        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+////            params.add(getParameter("exponential.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                params.add(getParameter("exponential.growthRate"));
+////            } else {
+////                params.add(getParameter("exponential.doublingTime"));
+////            }
+////        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+////            params.add(getParameter("logistic.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                params.add(getParameter("logistic.growthRate"));
+////            } else {
+////                params.add(getParameter("logistic.doublingTime"));
+////            }
+////            params.add(getParameter("logistic.t50"));
+////        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+////            params.add(getParameter("expansion.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                params.add(getParameter("expansion.growthRate"));
+////            } else {
+////                params.add(getParameter("expansion.doublingTime"));
+////            }
+////            params.add(getParameter("expansion.ancestralProportion"));
+////        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+////            params.add(getParameter("skyline.popSize"));
+////        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+////            params.add(getParameter("demographic.populationSizeChanges"));
+////            params.add(getParameter("demographic.populationMean"));
+////        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+//////            params.add(getParameter("skyride.popSize"));
+////            params.add(getParameter("skyride.precision"));
+////        } else if (nodeHeightPrior == TreePrior.YULE) {
+////            params.add(getParameter("yule.birthRate"));
+////        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+////            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+////            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+////        }
+////
+////        params.add(getParameter("treeModel.rootHeight"));
+//    }
 
     
     private void selectParametersForSpecies(List<Parameter> params) {
@@ -742,191 +714,191 @@ public class BeautiOptions extends ModelOptions {
     }
     
     
-    private void selectStatistics(List<Parameter> params) {
-
-        if (taxonSets != null) {
-            for (Taxa taxonSet : taxonSets) {
-                Parameter statistic = statistics.get(taxonSet);
-                if (statistic == null) {
-                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-                    statistics.put(taxonSet, statistic);
-                }
-                params.add(statistic);
-            }
-        } else {
-            System.err.println("TaxonSets are null");
-        }
-
-        if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-            if (localClockRateChangesStatistic == null) {
-                localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-                localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-                localClockRateChangesStatistic.poissonMean = 1.0;
-                localClockRateChangesStatistic.poissonOffset = 0.0;
-            }
-            if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
-
-                localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-                localClockRatesStatistic.gammaAlpha = 0.5;
-                localClockRatesStatistic.gammaBeta = 2.0;
-            }
-            params.add(localClockRatesStatistic);
-            params.add(localClockRateChangesStatistic);
-        }
-
-        if (clockType != ClockType.STRICT_CLOCK) {
-            params.add(getParameter("meanRate"));
-            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
-            params.add(getParameter("covariance"));
-        }
-
-    }
+//    private void selectStatistics(List<Parameter> params) {
+//
+//        if (taxonSets != null) {
+//            for (Taxa taxonSet : taxonSets) {
+//                Parameter statistic = statistics.get(taxonSet);
+//                if (statistic == null) {
+//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+//                    statistics.put(taxonSet, statistic);
+//                }
+//                params.add(statistic);
+//            }
+//        } else {
+//            System.err.println("TaxonSets are null");
+//        }
+//
+//        if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {
+//            if (localClockRateChangesStatistic == null) {
+//                localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
+//                localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
+//                localClockRateChangesStatistic.poissonMean = 1.0;
+//                localClockRateChangesStatistic.poissonOffset = 0.0;
+//            }
+//            if (localClockRatesStatistic == null) {
+//                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
+//
+//                localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
+//                localClockRatesStatistic.gammaAlpha = 0.5;
+//                localClockRatesStatistic.gammaBeta = 2.0;
+//            }
+//            params.add(localClockRatesStatistic);
+//            params.add(localClockRateChangesStatistic);
+//        }
+//
+//        if (clockType != ClockType.STRICT_CLOCK) {
+//            params.add(getParameter("meanRate"));
+//            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+//            params.add(getParameter("covariance"));
+//        }
+//
+//    }
 
     /**
      * return a list of operators that are required
      *
      * @param ops the operator list
      */
-    private void selectOperators(List<Operator> ops) {
-
-        if (hasData()) {
-
-            if (!isFixedSubstitutionRate()) {
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-                        ops.add(getOperator("upDownRateHeights"));
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:
-                        ops.add(getOperator(ClockType.UCED_MEAN));
-                        ops.add(getOperator("upDownUCEDMeanHeights"));
-                        ops.add(getOperator("swapBranchRateCategories"));
-                        ops.add(getOperator("randomWalkBranchRateCategories"));
-                        ops.add(getOperator("unformBranchRateCategories"));
-                        break;
-
-                    case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator(ClockType.UCLD_MEAN));
-                        ops.add(getOperator(ClockType.UCLD_STDEV));
-                        ops.add(getOperator("upDownUCLDMeanHeights"));
-                        ops.add(getOperator("swapBranchRateCategories"));
-                        ops.add(getOperator("randomWalkBranchRateCategories"));
-                        ops.add(getOperator("unformBranchRateCategories"));
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("scaleRootRate"));
-                        ops.add(getOperator("scaleOneRate"));
-                        ops.add(getOperator("scaleAllRates"));
-                        ops.add(getOperator("scaleAllRatesIndependently"));
-                        ops.add(getOperator("upDownAllRatesHeights"));
-                        ops.add(getOperator("branchRates.var"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-                        ops.add(getOperator("upDownRateHeights"));
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
-                        ops.add(getOperator("treeBitMove"));
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            } else {
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        // no parameter to operator on
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:
-                        ops.add(getOperator("swapBranchRateCategories"));
-                        ops.add(getOperator("randomWalkBranchRateCategories"));
-                        ops.add(getOperator("unformBranchRateCategories"));
-                        break;
-
-                    case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator(ClockType.UCLD_STDEV));
-                        ops.add(getOperator("swapBranchRateCategories"));
-                        ops.add(getOperator("randomWalkBranchRateCategories"));
-                        ops.add(getOperator("unformBranchRateCategories"));
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("scaleOneRate"));
-                        ops.add(getOperator("scaleAllRatesIndependently"));
-                        ops.add(getOperator("branchRates.var"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
-                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
-                        ops.add(getOperator("treeBitMove"));
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            }
-        }
-
-//        if (nodeHeightPrior == TreePrior.CONSTANT) {
-//            ops.add(getOperator("constant.popSize"));
-//        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-//            ops.add(getOperator("exponential.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                ops.add(getOperator("exponential.growthRate"));
+//    private void selectOperators(List<Operator> ops) {
+//
+//        if (hasData()) {
+//
+//            if (!isFixedSubstitutionRate()) {
+//                switch (clockType) {
+//                    case STRICT_CLOCK:
+//                        ops.add(getOperator("clock.rate"));
+//                        ops.add(getOperator("upDownRateHeights"));
+//                        break;
+//
+//                    case UNCORRELATED_EXPONENTIAL:
+//                        ops.add(getOperator(ClockType.UCED_MEAN));
+//                        ops.add(getOperator("upDownUCEDMeanHeights"));
+//                        ops.add(getOperator("swapBranchRateCategories"));
+//                        ops.add(getOperator("randomWalkBranchRateCategories"));
+//                        ops.add(getOperator("unformBranchRateCategories"));
+//                        break;
+//
+//                    case UNCORRELATED_LOGNORMAL:
+//                        ops.add(getOperator(ClockType.UCLD_MEAN));
+//                        ops.add(getOperator(ClockType.UCLD_STDEV));
+//                        ops.add(getOperator("upDownUCLDMeanHeights"));
+//                        ops.add(getOperator("swapBranchRateCategories"));
+//                        ops.add(getOperator("randomWalkBranchRateCategories"));
+//                        ops.add(getOperator("unformBranchRateCategories"));
+//                        break;
+//
+//                    case AUTOCORRELATED_LOGNORMAL:
+//                        ops.add(getOperator("scaleRootRate"));
+//                        ops.add(getOperator("scaleOneRate"));
+//                        ops.add(getOperator("scaleAllRates"));
+//                        ops.add(getOperator("scaleAllRatesIndependently"));
+//                        ops.add(getOperator("upDownAllRatesHeights"));
+//                        ops.add(getOperator("branchRates.var"));
+//                        break;
+//
+//                    case RANDOM_LOCAL_CLOCK:
+//                        ops.add(getOperator("clock.rate"));
+//                        ops.add(getOperator("upDownRateHeights"));
+//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
+//                        ops.add(getOperator("treeBitMove"));
+//                        break;
+//
+//                    default:
+//                        throw new IllegalArgumentException("Unknown clock model");
+//                }
 //            } else {
-//                ops.add(getOperator("exponential.doublingTime"));
+//                switch (clockType) {
+//                    case STRICT_CLOCK:
+//                        // no parameter to operator on
+//                        break;
+//
+//                    case UNCORRELATED_EXPONENTIAL:
+//                        ops.add(getOperator("swapBranchRateCategories"));
+//                        ops.add(getOperator("randomWalkBranchRateCategories"));
+//                        ops.add(getOperator("unformBranchRateCategories"));
+//                        break;
+//
+//                    case UNCORRELATED_LOGNORMAL:
+//                        ops.add(getOperator(ClockType.UCLD_STDEV));
+//                        ops.add(getOperator("swapBranchRateCategories"));
+//                        ops.add(getOperator("randomWalkBranchRateCategories"));
+//                        ops.add(getOperator("unformBranchRateCategories"));
+//                        break;
+//
+//                    case AUTOCORRELATED_LOGNORMAL:
+//                        ops.add(getOperator("scaleOneRate"));
+//                        ops.add(getOperator("scaleAllRatesIndependently"));
+//                        ops.add(getOperator("branchRates.var"));
+//                        break;
+//
+//                    case RANDOM_LOCAL_CLOCK:
+//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
+//                        ops.add(getOperator("treeBitMove"));
+//                        break;
+//
+//                    default:
+//                        throw new IllegalArgumentException("Unknown clock model");
+//                }
 //            }
-//        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-//            ops.add(getOperator("logistic.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                ops.add(getOperator("logistic.growthRate"));
-//            } else {
-//                ops.add(getOperator("logistic.doublingTime"));
-//            }
-//            ops.add(getOperator("logistic.t50"));
-//        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-//            ops.add(getOperator("expansion.popSize"));
-//            if (parameterization == GROWTH_RATE) {
-//                ops.add(getOperator("expansion.growthRate"));
-//            } else {
-//                ops.add(getOperator("expansion.doublingTime"));
-//            }
-//            ops.add(getOperator("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-//            ops.add(getOperator("skyline.popSize"));
-//            ops.add(getOperator("skyline.groupSize"));
-//        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-//            ops.add(getOperator("gmrfGibbsOperator"));
-//        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-//            ops.add(getOperator("demographic.populationMean"));
-//            ops.add(getOperator("demographic.popSize"));
-//            ops.add(getOperator("demographic.indicators"));
-//            ops.add(getOperator("demographic.scaleActive"));
-//        } else if (nodeHeightPrior == TreePrior.YULE) {
-//            ops.add(getOperator("yule.birthRate"));
-//        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-//            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-//            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
 //        }
 //
-//        ops.add(getOperator("treeModel.rootHeight"));
-//        ops.add(getOperator("uniformHeights"));
+////        if (nodeHeightPrior == TreePrior.CONSTANT) {
+////            ops.add(getOperator("constant.popSize"));
+////        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+////            ops.add(getOperator("exponential.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                ops.add(getOperator("exponential.growthRate"));
+////            } else {
+////                ops.add(getOperator("exponential.doublingTime"));
+////            }
+////        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+////            ops.add(getOperator("logistic.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                ops.add(getOperator("logistic.growthRate"));
+////            } else {
+////                ops.add(getOperator("logistic.doublingTime"));
+////            }
+////            ops.add(getOperator("logistic.t50"));
+////        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+////            ops.add(getOperator("expansion.popSize"));
+////            if (parameterization == GROWTH_RATE) {
+////                ops.add(getOperator("expansion.growthRate"));
+////            } else {
+////                ops.add(getOperator("expansion.doublingTime"));
+////            }
+////            ops.add(getOperator("expansion.ancestralProportion"));
+////        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+////            ops.add(getOperator("skyline.popSize"));
+////            ops.add(getOperator("skyline.groupSize"));
+////        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+////            ops.add(getOperator("gmrfGibbsOperator"));
+////        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+////            ops.add(getOperator("demographic.populationMean"));
+////            ops.add(getOperator("demographic.popSize"));
+////            ops.add(getOperator("demographic.indicators"));
+////            ops.add(getOperator("demographic.scaleActive"));
+////        } else if (nodeHeightPrior == TreePrior.YULE) {
+////            ops.add(getOperator("yule.birthRate"));
+////        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+////            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+////            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+////        }
+////
+////        ops.add(getOperator("treeModel.rootHeight"));
+////        ops.add(getOperator("uniformHeights"));
+////
+////        // if not a fixed tree then sample tree space
+////        if (!fixedTree) {
+////            ops.add(getOperator("subtreeSlide"));
+////            ops.add(getOperator("narrowExchange"));
+////            ops.add(getOperator("wideExchange"));
+////            ops.add(getOperator("wilsonBalding"));
+////        }
 //
-//        // if not a fixed tree then sample tree space
-//        if (!fixedTree) {
-//            ops.add(getOperator("subtreeSlide"));
-//            ops.add(getOperator("narrowExchange"));
-//            ops.add(getOperator("wideExchange"));
-//            ops.add(getOperator("wilsonBalding"));
-//        }
-
-    }
+//    }
     
     private void selectOperatorsForSpecies(List<Operator> ops) {
     	
@@ -994,34 +966,34 @@ public class BeautiOptions extends ModelOptions {
 
         root.addContent(taxaElement);
 
-        for (PartitionSubstitutionModel model : partitionModels) {
-
-            Element modelElement = new Element("model");
-
-            /*modelElement.addContent(createChild("nucSubstitutionModel", nucSubstitutionModel));
-                           modelElement.addContent(createChild("aaSubstitutionModel", aaSubstitutionModel));
-                           modelElement.addContent(createChild("binarySubstitutionModel", binarySubstitutionModel));
-                           modelElement.addContent(createChild("frequencyPolicy", frequencyPolicy));
-                           modelElement.addContent(createChild("gammaHetero", gammaHetero));
-                           modelElement.addContent(createChild("gammaCategories", gammaCategories));
-                           modelElement.addContent(createChild("invarHetero", invarHetero));
-                           modelElement.addContent(createChild("codonHeteroPattern", codonHeteroPattern));
-                           modelElement.addContent(createChild("maximumTipHeight", maximumTipHeight));
-                           modelElement.addContent(createChild("hasSetFixedSubstitutionRate", hasSetFixedSubstitutionRate));
-                           modelElement.addContent(createChild("meanSubstitutionRate", meanSubstitutionRate));
-                           modelElement.addContent(createChild("fixedSubstitutionRate", fixedSubstitutionRate));
-                           modelElement.addContent(createChild("unlinkedSubstitutionModel", unlinkedSubstitutionModel));
-                           modelElement.addContent(createChild("unlinkedHeterogeneityModel", unlinkedHeterogeneityModel));
-                           modelElement.addContent(createChild("unlinkedFrequencyModel", unlinkedFrequencyModel));
-                           modelElement.addContent(createChild("clockModel", clockModel));
-                           modelElement.addContent(createChild("nodeHeightPrior", nodeHeightPrior));
-                           modelElement.addContent(createChild("parameterization", parameterization));
-                           modelElement.addContent(createChild("skylineGroupCount", skylineGroupCount));
-                           modelElement.addContent(createChild("skylineModel", skylineModel));
-                           modelElement.addContent(createChild("fixedTree", fixedTree)); */
-
-            root.addContent(modelElement);
-        }
+//        for (PartitionSubstitutionModel model : partitionModels) {
+//
+//            Element modelElement = new Element("model");
+//
+//            /*modelElement.addContent(createChild("nucSubstitutionModel", nucSubstitutionModel));
+//                           modelElement.addContent(createChild("aaSubstitutionModel", aaSubstitutionModel));
+//                           modelElement.addContent(createChild("binarySubstitutionModel", binarySubstitutionModel));
+//                           modelElement.addContent(createChild("frequencyPolicy", frequencyPolicy));
+//                           modelElement.addContent(createChild("gammaHetero", gammaHetero));
+//                           modelElement.addContent(createChild("gammaCategories", gammaCategories));
+//                           modelElement.addContent(createChild("invarHetero", invarHetero));
+//                           modelElement.addContent(createChild("codonHeteroPattern", codonHeteroPattern));
+//                           modelElement.addContent(createChild("maximumTipHeight", maximumTipHeight));
+//                           modelElement.addContent(createChild("hasSetFixedSubstitutionRate", hasSetFixedSubstitutionRate));
+//                           modelElement.addContent(createChild("meanSubstitutionRate", meanSubstitutionRate));
+//                           modelElement.addContent(createChild("fixedSubstitutionRate", fixedSubstitutionRate));
+//                           modelElement.addContent(createChild("unlinkedSubstitutionModel", unlinkedSubstitutionModel));
+//                           modelElement.addContent(createChild("unlinkedHeterogeneityModel", unlinkedHeterogeneityModel));
+//                           modelElement.addContent(createChild("unlinkedFrequencyModel", unlinkedFrequencyModel));
+//                           modelElement.addContent(createChild("clockModel", clockModel));
+//                           modelElement.addContent(createChild("nodeHeightPrior", nodeHeightPrior));
+//                           modelElement.addContent(createChild("parameterization", parameterization));
+//                           modelElement.addContent(createChild("skylineGroupCount", skylineGroupCount));
+//                           modelElement.addContent(createChild("skylineModel", skylineModel));
+//                           modelElement.addContent(createChild("fixedTree", fixedTree)); */
+//
+//            root.addContent(modelElement);
+//        }
 
         Element priorsElement = new Element("priors");
 
@@ -1382,11 +1354,11 @@ public class BeautiOptions extends ModelOptions {
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
     // Substitution Model
-    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
+//    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
     // Clock Model
-    List<PartitionClockModel> clockModels = new ArrayList<PartitionClockModel>();
+//    List<PartitionClockModel> clockModels = new ArrayList<PartitionClockModel>();
     // Tree
-    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
+//    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
     public PartitionTreePrior activedSameTreePrior = null;
 //    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();

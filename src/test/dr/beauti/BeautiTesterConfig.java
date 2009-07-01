@@ -442,7 +442,7 @@ public class BeautiTesterConfig {
             for (PartitionData partition : partitions) {
                 if (model != null) {
                     partition.setPartitionSubstitutionModel(model);
-                    beautiOptions.addPartitionSubstitutionModel(model);
+//                    beautiOptions.addPartitionSubstitutionModel(model);
                 } else {
                     for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
                         if (pm.getDataType() == alignment.getDataType()) {
@@ -452,7 +452,7 @@ public class BeautiTesterConfig {
                     if (partition.getPartitionSubstitutionModel() == null) {
                         PartitionSubstitutionModel pm = new PartitionSubstitutionModel(beautiOptions, partition);
                         partition.setPartitionSubstitutionModel(pm);
-                        beautiOptions.addPartitionSubstitutionModel(pm);
+//                        beautiOptions.addPartitionSubstitutionModel(pm);
                     }
                 }
                 beautiOptions.dataPartitions.add(partition);

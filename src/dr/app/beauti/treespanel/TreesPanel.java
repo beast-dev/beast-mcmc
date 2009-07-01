@@ -224,10 +224,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireTreePriorsChanged() {
-        if (!settingOptions) {
-            frame.setDirty();
-        }
+        frame.setDirty();        
     }
+    
     public void removeSelection() {
         int selRow = treesTable.getSelectedRow();
         if (!isUsed(selRow)) {

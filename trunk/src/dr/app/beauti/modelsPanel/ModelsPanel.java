@@ -85,7 +85,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
-    JComboBox clockModelCombo = new JComboBox(ClockType.values());
+//    JComboBox clockModelCombo = new JComboBox(ClockType.values());
+    ClockModelPanel clockModelPanel = null;
 
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
 
@@ -150,9 +151,9 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                 "post-mortem DNA damage.</html>");
         errorModelCombo.addItemListener(comboListener);
 
-        PanelUtils.setupComponent(clockModelCombo);
-        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
-        clockModelCombo.addItemListener(comboListener);
+//        PanelUtils.setupComponent(clockModelCombo);
+//        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
+//        clockModelCombo.addItemListener(comboListener);
 
         PanelUtils.setupComponent(fixedSubstitutionRateCheck);
         fixedSubstitutionRateCheck.setSelected(true);
@@ -183,21 +184,29 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         setCurrentModel(null);
 
-        OptionsPanel panel = new OptionsPanel(10, 10);
+        OptionsPanel panel = new OptionsPanel(10, 20);
         panel.addSeparator();
         
         panel.addLabel(overallParas);
         panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-        panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
+//        panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
         substitutionRateField.setColumns(10);
         panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
         panel.addSeparator();
-
+        
+        clockModelPanel = new ClockModelPanel(frame);
+               
+        JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, clockModelPanel, panel);
+        splitPane1.setDividerLocation(500);
+        splitPane1.setContinuousLayout(true);
+        splitPane1.setBorder(BorderFactory.createEmptyBorder());
+        splitPane1.setOpaque(false);
+        
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-        panel1.add(controlPanel1, BorderLayout.SOUTH);
+        panel1.add(controlPanel1, BorderLayout.SOUTH);        
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
@@ -213,8 +222,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(splitPane, BorderLayout.CENTER);
-        add(panel, BorderLayout.SOUTH);
+        add(splitPane, BorderLayout.NORTH);
+        add(splitPane1, BorderLayout.CENTER);
         
         comp = new SequenceErrorModelComponentOptions ();
     }
@@ -231,9 +240,13 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         //setModelOptions(currentModel);
 
-        clockModelCombo.setSelectedItem(options.clockType);
+//        clockModelCombo.setSelectedItem(options.clockType);
         comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
+        
+        if (clockModelPanel != null) {
+        	clockModelPanel.setOptions(options);
+        }
 
         settingOptions = false;
 
@@ -265,7 +278,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         // middle of the setOptions() method.
         if (settingOptions) return;
 
-        options.clockType = (ClockType) clockModelCombo.getSelectedItem();
+//        options.clockType = (ClockType) clockModelCombo.getSelectedItem();
 
         SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
@@ -273,6 +286,10 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
 
         options.meanSubstitutionRate = substitutionRateField.getValue();
+        
+        if (clockModelPanel != null) {
+        	clockModelPanel.getOptions(options);
+        }
     }
 
     private void fireModelsChanged() {

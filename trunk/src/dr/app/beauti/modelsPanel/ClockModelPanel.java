@@ -31,6 +31,7 @@ import dr.app.beauti.*;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
+import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
@@ -51,13 +52,12 @@ import java.util.Set;
  * @author Walter Xie
  * @version $Id: ClockModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class ClockModelPanel extends BeautiPanel implements Exportable {
+public class ClockModelPanel extends OptionsPanel {
 
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
     
     BeautiFrame frame = null;
-
     BeautiOptions options = null;
 
     public ClockModelPanel(BeautiFrame parent) {
@@ -71,7 +71,7 @@ public class ClockModelPanel extends BeautiPanel implements Exportable {
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = dataTable.getColumnModel().getColumn(3);
+        TableColumn col = dataTable.getColumnModel().getColumn(1);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
@@ -80,16 +80,14 @@ public class ClockModelPanel extends BeautiPanel implements Exportable {
         
         JScrollPane scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));        
-        add(scrollPane, BorderLayout.SOUTH);
+        add(scrollPane, BorderLayout.CENTER);
     }
-
-    
-    
+   
     private void fireDataChanged() {
         frame.setDirty();
     }
@@ -102,7 +100,15 @@ public class ClockModelPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
-        
+                
+        int selRow = dataTable.getSelectedRow();
+        dataTableModel.fireTableDataChanged();
+        if (options.getPartitionClockModels().size() > 0) {
+            if (selRow < 0) {
+                selRow = 0;
+            }
+            dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
 
         modelsChanged();
 
@@ -120,9 +126,10 @@ public class ClockModelPanel extends BeautiPanel implements Exportable {
     
 
     class DataTableModel extends AbstractTableModel {
-
-        private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};      
+               
+		private static final long serialVersionUID = -2852144669936634910L;
+		
+		String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};      
 
         public DataTableModel() {
         }

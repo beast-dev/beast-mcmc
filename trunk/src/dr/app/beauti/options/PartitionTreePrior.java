@@ -131,13 +131,13 @@ public class PartitionTreePrior extends ModelOptions {
         createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
         
         // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
-                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", super.getParameter("demographic.popSize"),
+        		super.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", super.getParameter("demographic.popSize"),
+        		super.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
-        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", super.getParameter("skyride.popSize"),
+        		super.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -277,7 +277,7 @@ public class PartitionTreePrior extends ModelOptions {
  
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionTreePriors().size() > 1 ) {//|| options.isSpeciesAnalysis()
+        if (options.getPartitionTreePriors().size() > 1 ) {//|| options.isSpeciesAnalysis()
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

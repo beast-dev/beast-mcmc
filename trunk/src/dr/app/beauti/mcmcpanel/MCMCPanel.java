@@ -150,7 +150,7 @@ public class MCMCPanel extends BeautiPanel {
                 if (substTreeLogCheck.isSelected()) {
 	                if (options.isSpeciesAnalysis()) {
 	            		String nameList = "";
-		            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
+		            	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
 		            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 		            	}
 		            	substTreeFileNameField.setText(nameList);
@@ -230,7 +230,7 @@ public class MCMCPanel extends BeautiPanel {
             
             if (options.isSpeciesAnalysis()) {
             	String nameList = options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME;            	
-            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
+            	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	}
             	treeFileNameField.setText(nameList);
@@ -240,7 +240,7 @@ public class MCMCPanel extends BeautiPanel {
             	//TODO: species sub tree
             	if (options.substTreeLog) {
             		nameList = "";
-	            	for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
+	            	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
 	            		nameList = nameList + "; " + options.fileNameStem + "." + model.getName() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
 	            	}
 	            	substTreeFileNameField.setText(nameList);

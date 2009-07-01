@@ -137,7 +137,7 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-        for (PartitionSubstitutionModel model : options.getActivePartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix(i) + TreeLikelihood.TREE_LIKELIHOOD);

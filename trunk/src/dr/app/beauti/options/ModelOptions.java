@@ -286,9 +286,9 @@ public class ModelOptions {
         operators.put(key, new Operator(name, description, parameter, type, tuning, weight));
     }
 
-    public void createOperator(String key, String name, String description, String parameterName1, String parameterName2, OperatorType type, double tuning, double weight) {
-        Parameter parameter1 = getParameter(parameterName1);
-        Parameter parameter2 = getParameter(parameterName2);
+    public void createOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2, OperatorType type, double tuning, double weight) {
+//        Parameter parameter1 = getParameter(parameterName1);
+//        Parameter parameter2 = getParameter(parameterName2);
         operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
 

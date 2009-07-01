@@ -287,7 +287,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         int result = createModelDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
-            options.addPartitionSubstitutionModel(model);
+//            options.addPartitionSubstitutionModel(model);
             modelTableModel.fireTableDataChanged();
             int row = options.getPartitionSubstitutionModels().size() - 1;
             modelTable.getSelectionModel().setSelectionInterval(row, row);
@@ -422,7 +422,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
             String name = ((String) value).trim();
             if (name.length() > 0) {
                 PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-                model.setName(name);
+                model.setName(name); //TODO: update every same model in diff PD?
                 updateBorder();
                 fireModelsChanged();
             }

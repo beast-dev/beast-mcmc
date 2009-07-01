@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Walter Xie
  */
 public class PartitionSubstitutionModel extends ModelOptions {
 
@@ -16,6 +17,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     private final BeautiOptions options;
     private DataType dataType;
     private String name;
+    
     private List<PartitionData> allPartitionData;
 
 	private NucModelType nucSubstitutionModel = NucModelType.HKY;
@@ -696,7 +698,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getActivePartitionSubstitutionModels().size() > 1) { // || options.isSpeciesAnalysis()) {
+        if (options.getPartitionSubstitutionModels().size() > 1) { // || options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -705,7 +707,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getActivePartitionSubstitutionModels().size() > 1 || options.isSpeciesAnalysis()) {
+        if (options.getPartitionSubstitutionModels().size() > 1 || options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

@@ -52,7 +52,7 @@ public class SelectClockDialog {
 
         treeCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Make copy with name:");
+        copyCheck = new JCheckBox("Rename clock model partition to:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);

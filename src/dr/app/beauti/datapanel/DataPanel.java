@@ -233,8 +233,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         int[] selRows = dataTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
+        
         unlinkModelsAction.setEnabled(hasSelection);
         linkModelsAction.setEnabled(selRows != null && selRows.length > 1);
+        
+        unlinkClocksAction.setEnabled(hasSelection);
+        linkClocksAction.setEnabled(selRows != null && selRows.length > 1);
 
         unlinkTreesAction.setEnabled(hasSelection);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
@@ -279,7 +283,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
                 PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition.getName(), model);
-                options.addPartitionSubstitutionModel(newModel);
+//                options.addPartitionSubstitutionModel(newModel);
                 partition.setPartitionSubstitutionModel(newModel);
             }
         }
@@ -319,8 +323,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionSubstitutionModel model = selectModelDialog.getModel();
             if (selectModelDialog.getMakeCopy()) {
-                model = new PartitionSubstitutionModel(options, selectModelDialog.getName(), model);
-                options.addPartitionSubstitutionModel(model);
+            	model.setName(selectModelDialog.getName());
+//                model = new PartitionSubstitutionModel(options, selectModelDialog.getName(), model);
+//                options.addPartitionSubstitutionModel(model);
             }
 
             for (int row : selRows) {
@@ -345,7 +350,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             	PartitionClockModel newModel = new PartitionClockModel(options, partition); 
             	
                 partition.setPartitionClockModel(newModel);                
-                options.addPartitionClockModel(newModel);                                     
+//                options.addPartitionClockModel(newModel);                                     
             }
         }
 
@@ -367,8 +372,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
         	PartitionClockModel model = selectClockDialog.getModel();
             if (selectClockDialog.getMakeCopy()) {
-                model = new PartitionClockModel(options, selectClockDialog.getName(), model);
-                options.addPartitionClockModel(model);
+            	model.setName(selectClockDialog.getName());
+//                model = new PartitionClockModel(options, selectClockDialog.getName(), model);
+//                options.addPartitionClockModel(model);
             }
                         
             for (int row : selRows) {
@@ -396,7 +402,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 newTree.setPartitionTreePrior(newPrior);
                 partition.setPartitionTreeModel(newTree);
                 
-                options.addPartitionTreeModel(newTree);
+//                options.addPartitionTreeModel(newTree);
                 options.shareSameTreePrior = false;                       
             }
         }
@@ -419,8 +425,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionTreeModel model = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-                model = new PartitionTreeModel(options, selectTreeDialog.getName(), model);
-                options.addPartitionTreeModel(model);
+            	model.setName(selectTreeDialog.getName());
+//                model = new PartitionTreeModel(options, selectTreeDialog.getName(), model);
+//                options.addPartitionTreeModel(model);
             }
             PartitionTreePrior prior = model.getPartitionTreePrior();
             options.activedSameTreePrior = prior;
@@ -596,7 +603,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkTrees();
+            unlinkClocks();
         }
     }
 
@@ -619,7 +626,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkClocks();
+            unlinkTrees();
         }
     }
 

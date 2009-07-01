@@ -281,12 +281,12 @@ public class NexusApplicationImporter extends NexusImporter {
                 if (match("USER", token, 1)) {
                     // How do we know what tree to use?
 //                    options.startingTreeType = StartingTreeType.USER;
-                	for (PartitionTreeModel model : options.getActivePartitionTreeModels()) {
+                	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 		model.setStartingTreeType(StartingTreeType.USER);
                  	}
                 } else if (match("RANDOM", token, 1)) {
 //                    options.startingTreeType = StartingTreeType.RANDOM;
-                	for (PartitionTreeModel model : options.getActivePartitionTreeModels()) {
+                	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 		model.setStartingTreeType(StartingTreeType.RANDOM);
                  	}
                 } else {

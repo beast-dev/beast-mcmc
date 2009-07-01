@@ -25,22 +25,11 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
-import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
@@ -62,7 +51,7 @@ public class SelectModelDialog {
 
         modelCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Make copy with name:");
+        copyCheck = new JCheckBox("Rename substitution model partition to:");
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);

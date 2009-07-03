@@ -17,6 +17,7 @@ import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class PartitionModelGenerator extends Generator {
 

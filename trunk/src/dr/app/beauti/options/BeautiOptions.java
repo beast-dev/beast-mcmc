@@ -152,8 +152,8 @@ public class BeautiOptions extends ModelOptions {
         meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
-        nodeHeightPrior = TreePrior.CONSTANT;
-        parameterization = GROWTH_RATE;
+//        nodeHeightPrior = TreePrior.CONSTANT;
+//        parameterization = GROWTH_RATE;
         skylineGroupCount = 10;
         skylineModel = CONSTANT_SKYLINE;
         skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
@@ -163,7 +163,7 @@ public class BeautiOptions extends ModelOptions {
 //        fixedTree = false;
 
         units = Units.Type.SUBSTITUTIONS;
-        clockType = ClockType.STRICT_CLOCK;
+//        clockType = ClockType.STRICT_CLOCK;
 
         // Operator schedule options
         coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
@@ -353,6 +353,83 @@ public class BeautiOptions extends ModelOptions {
 
         return parameters;
     }
+    
+    
+    /**
+     * return an list of operators that are required
+     *
+     * @return the operator list
+     */
+    public List<Operator> selectOperators() {
+
+        ArrayList<Operator> ops = new ArrayList<Operator>();
+        
+        if (isSpeciesAnalysis()) { // species
+        	selectOperatorsForSpecies(ops);
+        	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
+        	for (PartitionClockModel model : getPartitionClockModels()) {            	
+            	model.selectOperators(ops); 
+            }
+        } else { // not species
+        	for (PartitionClockModel model : getPartitionClockModels()) {
+        		model.selectOperators(ops);    
+        	}
+        	
+        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
+        		tree.selectOperators(ops);    
+        	}
+        	
+        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
+        		prior.selectOperators(ops);    
+            }           	
+//        	selectOperators(ops);
+        }
+
+        selectComponentOperators(this, ops);
+
+        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
+
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+            ops.addAll(model.getOperators());
+        }
+
+        if (multiplePartitions) {
+            Operator deltaMuOperator = getOperator("deltaMu");
+
+            // update delta mu operator weight
+            deltaMuOperator.weight = 0.0;
+            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
+                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            }
+
+            ops.add(deltaMuOperator);
+        }
+
+        double initialRootHeight = 1;
+
+        if (isFixedSubstitutionRate()) {
+            double rate = getMeanSubstitutionRate();
+
+            if (hasData()) {
+                initialRootHeight = meanDistance / rate;
+                initialRootHeight = round(initialRootHeight, 2);
+            }
+
+        } else {
+            if (maximumTipHeight > 0) {
+                initialRootHeight = maximumTipHeight * 10.0;
+            }
+        }
+
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+        	Operator op = tree.getOperator("subtreeSlide");
+            if (!op.tuningEdited) {
+                op.tuning = initialRootHeight / 10.0;
+            } 
+    	}        
+
+        return ops;
+    }
 
     public boolean isFixedSubstitutionRate() {
         return fixedSubstitutionRate;
@@ -511,81 +588,42 @@ public class BeautiOptions extends ModelOptions {
         return activeTrees;
     }
     
-    /**
-     * return an list of operators that are required
-     *
-     * @return the operator list
-     */
-    public List<Operator> selectOperators() {
+    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
+    public void updateLinksBetweenPDPCMPSMPTMPTPP () {
+		for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+			model.clearAllPartitionData();
+		}
+		
+    	for (PartitionClockModel model : getPartitionClockModels()) {
+    		model.clearAllPartitionData();
+		}
 
-        ArrayList<Operator> ops = new ArrayList<Operator>();
-        
-        if (isSpeciesAnalysis()) { // species
-        	selectOperatorsForSpecies(ops);
-        	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
-        	for (PartitionClockModel model : getPartitionClockModels()) {            	
-            	model.selectOperators(ops); 
-            }
-        } else { // not species
-        	for (PartitionClockModel model : getPartitionClockModels()) {
-        		model.selectOperators(ops);    
-        	}
-        	
-        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
-        		tree.selectOperators(ops);    
-        	}
-        	
-        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
-        		prior.selectOperators(ops);    
-            }           	
-//        	selectOperators(ops);
-        }
-
-        selectComponentOperators(this, ops);
-
-        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
-
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            ops.addAll(model.getOperators());
-        }
-
-        if (multiplePartitions) {
-            Operator deltaMuOperator = getOperator("deltaMu");
-
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
-            }
-
-            ops.add(deltaMuOperator);
-        }
-
-        double initialRootHeight = 1;
-
-        if (isFixedSubstitutionRate()) {
-            double rate = getMeanSubstitutionRate();
-
-            if (hasData()) {
-                initialRootHeight = meanDistance / rate;
-                initialRootHeight = round(initialRootHeight, 2);
-            }
-
-        } else {
-            if (maximumTipHeight > 0) {
-                initialRootHeight = maximumTipHeight * 10.0;
-            }
-        }
-
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-        	Operator op = tree.getOperator("subtreeSlide");
-            if (!op.tuningEdited) {
-                op.tuning = initialRootHeight / 10.0;
-            } 
-    	}        
-
-        return ops;
+		for (PartitionTreeModel tree : getPartitionTreeModels()) {
+			tree.clearAllPartitionData();
+		}
+		
+		//TODO update PartitionTreePrior ?
+		
+    	for (PartitionData partition : dataPartitions) {
+    		PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
+    		if (!psm.getAllPartitionData().contains(partition)) {
+    			psm.addPartitionData(partition);
+    		}
+    		
+    		PartitionClockModel pcm = partition.getPartitionClockModel();
+    		if (!pcm.getAllPartitionData().contains(partition)) {
+    			pcm.addPartitionData(partition);
+    		}
+    		
+    		PartitionTreeModel ptm = partition.getPartitionTreeModel();
+    		if (!ptm.getAllPartitionData().contains(partition)) {
+    			ptm.addPartitionData(partition);
+    		}
+    	}
+    	
     }
+    
+
 
     /**
      * return a list of parameters that are required
@@ -700,10 +738,10 @@ public class BeautiOptions extends ModelOptions {
     	
     	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
     	
-    	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+    	if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+       	} else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
        		params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
     	}
     	
@@ -904,10 +942,10 @@ public class BeautiOptions extends ModelOptions {
     	
     	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
     	
-       	if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+       	if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
 	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
 	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (nodeHeightPrior == TreePrior.SPECIES_YULE) {
+       	} else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
        		ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
     	}
     	
@@ -1350,6 +1388,7 @@ public class BeautiOptions extends ModelOptions {
     
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
     public final String POP_MEAN = "popMean";
+    public TreePrior speciesTreePrior = TreePrior.SPECIES_YULE;
     
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
@@ -1371,11 +1410,10 @@ public class BeautiOptions extends ModelOptions {
     public boolean unlinkPartitionRates = true;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
-    public ClockType clockType = ClockType.STRICT_CLOCK;
-//    public clockModelLinkMap = 
+    public ClockType clockType = ClockType.STRICT_CLOCK; 
     
-    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
-    public int parameterization = GROWTH_RATE;
+//    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
+//    public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
     public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;

@@ -353,12 +353,12 @@ public class OldTreesPanel extends BeautiPanel {
 
         settingOptions = true;
 
-        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
-
-        groupCountField.setValue(options.skylineGroupCount);
-        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
-
-        parameterizationCombo.setSelectedIndex(options.parameterization);
+//        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
+//
+//        groupCountField.setValue(options.skylineGroupCount);
+//        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
+//
+//        parameterizationCombo.setSelectedIndex(options.parameterization);
         bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
 
         extendedBayesianSkylineCombo.setSelectedIndex(options.multiLoci ? 1 : 0);
@@ -387,25 +387,25 @@ public class OldTreesPanel extends BeautiPanel {
     }
 
     public void getOptions(BeautiOptions options) {
-        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
-
-        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
-            Integer groupCount = groupCountField.getValue();
-            if (groupCount != null) {
-                options.skylineGroupCount = groupCount;
-            } else {
-                options.skylineGroupCount = 5;
-            }
-        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-//            Double samplingProportion = samplingProportionField.getValue();
-//            if (samplingProportion != null) {
-//                options.birthDeathSamplingProportion = samplingProportion;
+//        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
+//
+//        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
+//            Integer groupCount = groupCountField.getValue();
+//            if (groupCount != null) {
+//                options.skylineGroupCount = groupCount;
 //            } else {
-//                options.birthDeathSamplingProportion = 1.0;
+//                options.skylineGroupCount = 5;
 //            }
-        }
-
-        options.parameterization = parameterizationCombo.getSelectedIndex();
+//        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+////            Double samplingProportion = samplingProportionField.getValue();
+////            if (samplingProportion != null) {
+////                options.birthDeathSamplingProportion = samplingProportion;
+////            } else {
+////                options.birthDeathSamplingProportion = 1.0;
+////            }
+//        }
+//
+//        options.parameterization = parameterizationCombo.getSelectedIndex();
         options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
         options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
 

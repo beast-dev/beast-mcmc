@@ -3,6 +3,8 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.tree.NodeRef;
@@ -18,6 +20,7 @@ import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class InitialTreeGenerator extends Generator {
     final static public String STARTING_TREE = "startingTree";
@@ -28,26 +31,30 @@ public class InitialTreeGenerator extends Generator {
 
     /**
      * Generate XML for the starting tree
+     * @param model 
      *
      * @param writer the writer
      */
-    public void writeStartingTree(XMLWriter writer) {
+    public void writeStartingTree(PartitionTreeModel model, XMLWriter writer) {
+    	
+    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1) 
+    	
         dr.app.beauti.options.Parameter rootHeight;
 
-        switch (options.startingTreeType) {
+        switch (model.getStartingTreeType()) {
             case USER:
-                writeUserTree(options.userStartingTree, writer);
+                writeUserTree(model.getUserStartingTree(), writer);
                 break;
 
             case UPGMA:
                 // generate a upgma starting tree
                 writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-                rootHeight = options.getParameter("treeModel.rootHeight");
+                rootHeight = model.getParameter("treeModel.rootHeight");
                 if (rootHeight.priorType != PriorType.NONE) {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
                                     new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
@@ -55,7 +62,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
                             }
                     );
                 }
@@ -77,12 +84,12 @@ public class InitialTreeGenerator extends Generator {
             case RANDOM:
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
-                rootHeight = options.getParameter("treeModel.rootHeight");
+                rootHeight = model.getParameter("treeModel.rootHeight");
                 if (rootHeight.priorType != PriorType.NONE) {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE),
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
                                     new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
                                             "" + rootHeight.initial)
                             }
@@ -91,12 +98,12 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, genePrefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
                             }
                     );
                 }
 
-                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TaxaParser.TAXA)};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TaxaParser.TAXA)};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -136,15 +143,33 @@ public class InitialTreeGenerator extends Generator {
     }
 
     private void writeInitialDemoModelRef(XMLWriter writer) {
-        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
-        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
-        } else if (options.nodeHeightPrior == TreePrior.EXPONENTIAL) {
-        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, genePrefix + "exponential");
-        } else if (options.isSpeciesAnalysis()) {
-        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "constant");
-        } else {
-        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, genePrefix + "initialDemo");
-        }
+    	if (options.isSpeciesAnalysis()) { // gene tree prior
+    		if (options.getPartitionTreePriors().size() == 1) {
+    			writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "constant");
+    		} else {
+    			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+    				writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant"); // prior.constant
+    			} 
+    		}
+    	} else if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+			if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.CONSTANT) {
+	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "constant");
+	        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+	        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, "exponential");    	        
+	        } else {
+	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "initialDemo");
+	        }
+    	} else { 
+			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+				if (prior.getNodeHeightPrior() == TreePrior.CONSTANT) {
+		        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
+		        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+		        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
+		        } else {
+		        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
+		        }
+     		}    		
+    	}
     }
 
     /**

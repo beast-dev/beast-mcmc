@@ -17,6 +17,7 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public abstract class Generator {
 
@@ -30,8 +31,8 @@ public abstract class Generator {
 	
     protected final BeautiOptions options;
     
-    protected PartitionSubstitutionModel model;
-	protected String genePrefix = ""; // gene file name
+//    protected PartitionSubstitutionModel model;
+	protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
 
     protected Generator(BeautiOptions options) {
         this.options = options;        
@@ -46,22 +47,22 @@ public abstract class Generator {
         }        
     }
 
-    public String getGenePrefix() {
-		return genePrefix;
+    public String getModelPrefix() {
+		return modelPrefix;
 	}
 
-	public void setGenePrefix(String genePrefix) {
-		this.genePrefix = genePrefix;
+	public void setModelPrefix(String modelPrefix) {
+		this.modelPrefix = modelPrefix;
 	}
 	
-    public PartitionSubstitutionModel getModel() {
-		return model;
-	}
+//    public PartitionSubstitutionModel getModel() {
+//		return model;
+//	}
 
-	public void setModel(PartitionSubstitutionModel model) {
-		this.model = model;
-		setGenePrefix(model.getName() + ".");
-	}
+//	public void setModel(PartitionSubstitutionModel model) {
+//		this.model = model;
+//		setModelPrefix(model.getName() + ".");
+//	}
     /**
      * fix a parameter
      *
@@ -86,7 +87,7 @@ public abstract class Generator {
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
-        writer.writeIDref(ParameterParser.PARAMETER, genePrefix + id);
+        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + id);
         writer.writeCloseTag(wrapperName);
     }
 
@@ -172,7 +173,7 @@ public abstract class Generator {
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
-        attributes.add(new Attribute.Default<String>(XMLParser.ID, genePrefix + id));
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, modelPrefix + id));
         if (dimension > 1) {
             attributes.add(new Attribute.Default<String>(ParameterParser.DIMENSION, dimension + ""));
         }

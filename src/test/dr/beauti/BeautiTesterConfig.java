@@ -208,22 +208,22 @@ public class BeautiTesterConfig {
 
     public void buildTreePriorModels(String key, BeautiOptions beautiOptions) {
 
-        beautiOptions.nodeHeightPrior = TreePrior.CONSTANT;
-        buildClockModels(key + "+CP", beautiOptions);
-
-        beautiOptions.nodeHeightPrior = TreePrior.EXPONENTIAL;
-        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key + "+EG", beautiOptions);
-
-        beautiOptions.nodeHeightPrior = TreePrior.LOGISTIC;
-        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key + "+LG", beautiOptions);
-
-        beautiOptions.nodeHeightPrior = TreePrior.EXPANSION;
-        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-        buildClockModels(key + "+XG", beautiOptions);
-
-        beautiOptions.nodeHeightPrior = TreePrior.SKYLINE;
+//        beautiOptions.nodeHeightPrior = TreePrior.CONSTANT;
+//        buildClockModels(key + "+CP", beautiOptions);
+//
+//        beautiOptions.nodeHeightPrior = TreePrior.EXPONENTIAL;
+//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+EG", beautiOptions);
+//
+//        beautiOptions.nodeHeightPrior = TreePrior.LOGISTIC;
+//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+LG", beautiOptions);
+//
+//        beautiOptions.nodeHeightPrior = TreePrior.EXPANSION;
+//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+XG", beautiOptions);
+//
+//        beautiOptions.nodeHeightPrior = TreePrior.SKYLINE;
         beautiOptions.skylineGroupCount = 3;
         beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
         buildClockModels(key + "+SKC", beautiOptions);

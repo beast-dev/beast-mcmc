@@ -220,25 +220,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
         }
     }
-
-    public void setOptions(BeautiOptions options) {
-
-        this.options = options;
-        allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
-
-        modelsChanged();
-
-        dataTableModel.fireTableDataChanged();
-    }
-
-    public void getOptions(BeautiOptions options) {
-        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-    }
-
-    public JComponent getExportableComponent() {
-        return dataTable;
-    }
-
+    
     public void selectionChanged() {
         int[] selRows = dataTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
@@ -254,6 +236,28 @@ public class DataPanel extends BeautiPanel implements Exportable {
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
     }
 
+    public void setOptions(BeautiOptions options) {
+
+        this.options = options;
+        allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
+
+        options.updateLinksBetweenPDPCMPSMPTMPTPP();
+        
+        modelsChanged();
+
+        dataTableModel.fireTableDataChanged();
+    }
+
+    public void getOptions(BeautiOptions options) {
+        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+        
+        options.updateLinksBetweenPDPCMPSMPTMPTPP();
+    }
+
+    public JComponent getExportableComponent() {
+        return dataTable;
+    }
+    
     public void removeSelection() {
         int[] selRows = dataTable.getSelectedRows();
         Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();

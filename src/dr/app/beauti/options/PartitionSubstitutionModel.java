@@ -56,7 +56,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
         
-        this.setAllPartitionData(source.getAllPartitionData());
+        this.allPartitionData = source.allPartitionData;
         
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -577,8 +577,8 @@ public class PartitionSubstitutionModel extends ModelOptions {
 		return allPartitionData;
 	}
 
-	public void setAllPartitionData(List<PartitionData> allPartitionData) {
-		this.allPartitionData = allPartitionData;
+	public void clearAllPartitionData() {
+		this.allPartitionData.clear();
 	}
 
     public void addPartitionData(PartitionData partition) {
@@ -707,7 +707,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1 || options.isSpeciesAnalysis()) {
+        if (options.getPartitionSubstitutionModels().size() > 1) { //|| options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

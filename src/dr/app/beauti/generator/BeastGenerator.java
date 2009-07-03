@@ -79,6 +79,7 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Walter Xie
  * @version $Id: BeastGenerator.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class BeastGenerator extends Generator {
@@ -157,10 +158,10 @@ public class BeastGenerator extends Generator {
         
         //++++++++++++++++ Species tree ++++++++++++++++++
         if (options.isSpeciesAnalysis()) {
-        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
-        		//TODO: more species tree model
-        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
-        	}
+//        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
+//        		//TODO: more species tree model
+//        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
+//        	}
         }
         
         // add other tests and warnings here
@@ -190,26 +191,28 @@ public class BeastGenerator extends Generator {
         // this gives any added implementations of the 'Component' interface a
         // chance to generate XML at this point in the BEAST file.
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
-
+        
+        //++++++++++++++++ Taxon List ++++++++++++++++++
         writeTaxa(writer, options.taxonList);
 
         List<Taxa> taxonSets = options.taxonSets;
         if (taxonSets != null && taxonSets.size() > 0) {
-            writeTaxonSets(writer, taxonSets);
+            writeTaxonSets(writer, taxonSets); // TODO
         }
 
-        if ( options.isSpeciesAnalysis() ) { // species
+        if ( options.allowDifferentTaxa ) { // allow diff taxa for multi-gene
         	writer.writeText("");
         	writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
         	// write all taxa in each gene tree regarding each data partition,
         	for (PartitionData partition : options.dataPartitions) {
         		// do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
-        		writeAllTaxaForMultiGene(partition, writer);
+        		writeDifferentTaxaForMultiGene(partition, writer);
         	}
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
-
+        
+        //++++++++++++++++ Alignments ++++++++++++++++++
         List<Alignment> alignments = new ArrayList<Alignment>();
 
         for (PartitionData partition : options.dataPartitions) {
@@ -237,7 +240,8 @@ public class BeastGenerator extends Generator {
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
-
+            
+            //++++++++++++++++ Pattern Lists ++++++++++++++++++
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
                 writePatternList(model, writer);
                 writer.writeText("");
@@ -254,75 +258,79 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
 
-        if ( options.isSpeciesAnalysis() ) { // species
-        	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-        		treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.constant
-        		treePriorGenerator.writeTreePriorModel(writer);
+        //++++++++++++++++ Tree Prior Model ++++++++++++++++++
+//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+//        	treePriorGenerator.setModelPrefix("");
+//        	treePriorGenerator.writeTreePriorModel(options.activedSameTreePrior, writer);
+//        } else { // Different Tree Priors
+        	for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+//        		treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.constant
+        		treePriorGenerator.writeTreePriorModel(prior, writer);
          	}
-        } else { // no species
-        	treePriorGenerator.setGenePrefix("");
-        	treePriorGenerator.writeTreePriorModel(writer);
-        }
+//        }
         writer.writeText("");
-
-        if ( options.isSpeciesAnalysis() ) { // species
-        	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-	        	initialTreeGenerator.setGenePrefix(model.getName() + "."); // partitionName.startingTree
-	        	initialTreeGenerator.writeStartingTree(writer);
+        
+        //++++++++++++++++ Starting Tree ++++++++++++++++++
+//        if ( options.getPartitionTreeModels().size() == 1 ) { // 1 Partition Tree Model
+//        	initialTreeGenerator.setModelPrefix("");
+//        	initialTreeGenerator.writeStartingTree(options.getPartitionTreeModels().get(0), writer);
+//        } else { // Different Tree Models
+        	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+//	        	initialTreeGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
+	        	initialTreeGenerator.writeStartingTree(model, writer);
         	}
-        } else { // no species
-        	initialTreeGenerator.setGenePrefix("");
-        	initialTreeGenerator.writeStartingTree(writer);
-        }
+//        }
         writer.writeText("");
 
-//        treeModelGenerator = new TreeModelGenerator(options);
-        if ( options.isSpeciesAnalysis() ) { // species
-	        // generate gene trees regarding each data partition, if no species, only create 1 tree
-	    	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-	    		treeModelGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
-	    		treeModelGenerator.writeTreeModel(writer);
-	        }
-        } else { // no species
-        	treeModelGenerator.setGenePrefix("");
-        	treeModelGenerator.writeTreeModel(writer);
-	    }
+        //++++++++++++++++ Tree Model +++++++++++++++++++
+//        if ( options.getPartitionTreeModels().size() == 1 ) { // 1 Partition Tree Model
+//        	treeModelGenerator.setModelPrefix("");
+//        	treeModelGenerator.writeTreeModel(writer);
+//        } else { // Different Tree Models
+        	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+//        		treeModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
+        		treeModelGenerator.writeTreeModel(model, writer);
+        	}
+//        }
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
-
-        if ( options.isSpeciesAnalysis() ) { // species
-	        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
-	        	treePriorGenerator.writeTreePrior(writer);
+        
+        //++++++++++++++++ Tree Prior ++++++++++++++++++
+//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+//	        treePriorGenerator.setModelPrefix("");
+//        	treePriorGenerator.writeTreePrior(options.activedSameTreePrior, writer);
+//        } else { // no species
+        	for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.treeModel
+	        	treePriorGenerator.writeTreePrior(prior, writer);
 	        }
-        } else { // no species
-        	treePriorGenerator.setGenePrefix("");
-        	treePriorGenerator.writeTreePrior(writer);
-	    }
+//	    }
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
-
-        if (options.isSpeciesAnalysis()) { // species
-	        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-	        	branchRatesModelGenerator.setModel(model); // include setGenePrefix(model.getName() + ".")
-	        	//TODO: fixParameters
-	        	branchRatesModelGenerator.writeBranchRatesModel(writer);
-	        }
-        } else { // no species
-        	branchRatesModelGenerator.setGenePrefix("");
-        	branchRatesModelGenerator.writeBranchRatesModel(writer);
-        }
+        
+        //++++++++++++++++ Branch Rates Model ++++++++++++++++++                
+//        if ( options.getPartitionClockModels().size() == 1 ) { // 1 Partition Clock Model
+//        	branchRatesModelGenerator.setModelPrefix("");
+//        	branchRatesModelGenerator.writeBranchRatesModel(writer);
+//        } else { // Different Tree Models
+        	for (PartitionClockModel model : options.getPartitionClockModels()) {
+//        		branchRatesModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
+        		branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+        	}
+//        }
         writer.writeText("");
-
+        
+        //++++++++++++++++ Substitution Model ++++++++++++++++++
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             partitionModelGenerator.writeSubstitutionModel(model, writer);
             writer.writeText("");
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
-
+        
+        //++++++++++++++++ Site Model ++++++++++++++++++
         boolean writeMuParameters = options.getTotalActivePartitionSubstitutionModelCount() > 1;
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -340,20 +348,23 @@ public class BeastGenerator extends Generator {
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
-
+        
+        //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
         	if ( options.isSpeciesAnalysis() ) { // species
-        		treeLikelihoodGenerator.setGenePrefix(model.getName() + ".");
+        		treeLikelihoodGenerator.setModelPrefix(model.getName() + ".");
         	} else {
-        		treeLikelihoodGenerator.setGenePrefix("");
+        		treeLikelihoodGenerator.setModelPrefix("");
         	}
             //TODO: need merge genePrifx and prefix
+//        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
         	treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
             writer.writeText("");
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
-
+        
+        //++++++++++++++++ Traits ++++++++++++++++++
         // traits tag
         if (options.selecetedTraits.size() > 0) {
         	for (String trait : options.selecetedTraits) {
@@ -363,31 +374,43 @@ public class BeastGenerator extends Generator {
         	}
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }        
-
+        
+        //++++++++++++++++  ++++++++++++++++++
         if (taxonSets != null && taxonSets.size() > 0) {
             //TODO: need to suit for multi-gene-tree
         	writeTMRCAStatistics(writer);
         }
-
+        
+        //++++++++++++++++ Operators ++++++++++++++++++
         List<Operator> operators = options.selectOperators();
         operatorsGenerator.writeOperatorSchedule(operators, writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
-
+        
+        //++++++++++++++++ MCMC ++++++++++++++++++
         // XMLWriter writer, List<PartitionSubstitutionModel> models,
         writeMCMC(options.getPartitionSubstitutionModels(), writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
-
+        
+        //++++++++++++++++  ++++++++++++++++++
         writeTimerReport(writer);
         writer.writeText("");
         if (options.performTraceAnalysis) {
             writeTraceAnalysis(writer);
         }
         if (options.generateCSV) {
-            treePriorGenerator.writeAnalysisToCSVfile(writer);
+        	if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+            	treePriorGenerator.setModelPrefix("");
+            	treePriorGenerator.writeAnalysisToCSVfile(options.activedSameTreePrior, writer);
+            } else { // no species
+            	for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+            		treePriorGenerator.setModelPrefix(prior.getName() + "."); // partitionName.constant
+            		treePriorGenerator.writeAnalysisToCSVfile(prior, writer);
+             	}
+            }
         }
 
         writer.writeCloseTag("beast");
@@ -513,7 +536,7 @@ public class BeastGenerator extends Generator {
     }
 
 
-    public void writeAllTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
+    public void writeDifferentTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
     	String gene = dataPartition.getName();
     	Alignment alignment = dataPartition.getAlignment();
 
@@ -1224,7 +1247,7 @@ public class BeastGenerator extends Generator {
         	// coalescent prior
         	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
         	// prior on population sizes
-        	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        	if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
         		writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
         	} else {
         		writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
@@ -1235,68 +1258,10 @@ public class BeastGenerator extends Generator {
 
         writeParameterPriors(writer);
 
-        switch (options.nodeHeightPrior) {
-
-            case YULE:
-            case BIRTH_DEATH:
-                writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD,  "speciation");
-                break;
-            case SKYLINE:
-                writer.writeIDref(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,  "skyline");
-                writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL,  "eml1");
-                break;
-            case GMRF_SKYRIDE:
-                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  "skyride");
-                break;
-            case LOGISTIC:
-                writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD,  "booleanLikelihood1");
-                break;
-			case SPECIES_YULE:
-			case SPECIES_BIRTH_DEATH:
-				// do not need
-//				for (PartitionSubstitutionModel model : models) {
-//            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + COALESCENT);
-//            	}
-				break;
-            default:            	
-            	writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, COALESCENT);            	
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+        	treePriorGenerator.writeDemographicReference(prior, writer);
         }
-        
-        //TODO: make suitable for *BEAST
-        if (options.nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
-
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
-            writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,  "demographic.populationMeanDist");
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
-
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
-            writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,  "demographic.populationMeanDist");
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
-
-            writer.writeOpenTag(MixedDistributionLikelihood.DATA);
-            if ( options.isSpeciesAnalysis() ) { // species
-    	        for (PartitionSubstitutionModel model : models) {
-    	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".demographic.popSize");
-    	        }
-            } else {
-            	writer.writeIDref(ParameterParser.PARAMETER,  "demographic.popSize");
-            }
-            writer.writeCloseTag(MixedDistributionLikelihood.DATA);
-
-            writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
-            if ( options.isSpeciesAnalysis() ) { // species
-    	        for (PartitionSubstitutionModel model : models) {
-    	        	writer.writeIDref(ParameterParser.PARAMETER,  model.getName() + ".demographic.indicators");
-    	        }
-            } else {
-            	writer.writeIDref(ParameterParser.PARAMETER,  "demographic.indicators");
-            }
-            writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
-
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
-        }
-
+                
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihood.PRIOR);
@@ -1306,16 +1271,6 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-
-            if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
-            	if (options.isSpeciesAnalysis()) { // species
-            		for (PartitionSubstitutionModel model : models) {
-            			writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
-            		}
-            	} else {	
-            		writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
-            	}
-            }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
@@ -1488,7 +1443,7 @@ public class BeastGenerator extends Generator {
         	// coalescent prior
         	writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
         	// prior on population sizes
-        	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        	if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
         		writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
         	} else {
         		writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
@@ -1499,10 +1454,10 @@ public class BeastGenerator extends Generator {
         	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
         	writer.writeIDref(ParameterParser.PARAMETER,  SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
         	
-        	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) { 
+        	if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) { 
 	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
 	        	writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-        	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+        	} else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
         		writer.writeIDref(ParameterParser.PARAMETER,  TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
         	}
         	        	
@@ -1535,15 +1490,15 @@ public class BeastGenerator extends Generator {
             writer.writeIDref("tmrcaStatistic",  "tmrca(" + taxa.getId() + ")");
         }
         
-        if ( options.isSpeciesAnalysis() ) { // species
-	        for (PartitionSubstitutionModel model : models) {
-	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
-	        	treePriorGenerator.writeParameterLog(writer);
+        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+	        treePriorGenerator.setModelPrefix("");
+        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
+        } else { // no species        	
+        	for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+	        	treePriorGenerator.setModelPrefix(prior.getName() + "."); // priorName.treeModel
+	        	treePriorGenerator.writeParameterLog(prior, writer);
 	        }
-        } else { // no species
-        	treePriorGenerator.setGenePrefix("");
-        	treePriorGenerator.writeParameterLog(writer);
-	    }        
+	    }
 
         for (PartitionSubstitutionModel model : models) {
             partitionModelGenerator.writeLog(writer, model);
@@ -1628,16 +1583,15 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
-        if ( options.isSpeciesAnalysis() ) { // species
-	        for (PartitionSubstitutionModel model : models) {
-	        	treePriorGenerator.setGenePrefix(model.getName() + "."); // partitionName.treeModel
-	        	treePriorGenerator.writeLikelihoodLog(writer);
+        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+	        treePriorGenerator.setModelPrefix("");
+        	treePriorGenerator.writeLikelihoodLog(options.activedSameTreePrior, writer);
+        } else { // no species        	
+        	for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+	        	treePriorGenerator.setModelPrefix(prior.getName() + "."); // priorName.treeModel
+	        	treePriorGenerator.writeLikelihoodLog(prior, writer);
 	        }
-        } else { // no species
-        	treePriorGenerator.setGenePrefix("");
-        	treePriorGenerator.writeLikelihoodLog(writer);
-        }       
-
+	    }
         writer.writeCloseTag(LoggerParser.LOG);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);        

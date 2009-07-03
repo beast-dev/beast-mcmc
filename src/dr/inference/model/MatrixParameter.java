@@ -58,9 +58,7 @@ public class MatrixParameter extends CompoundParameter {
             }
         }
         sb.append("}");
-//		System.err.println("reit = "+new Matrix(parseFromSymmetricString(sb.toString()).getParameterAsMatrix()));
-//		return sb.toString();
-        return String.format("%5.4f", getParameterValue(0, 0));
+        return sb.toString();
     }
 
     public static MatrixParameter parseFromSymmetricString(String string) {

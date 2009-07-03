@@ -9,13 +9,12 @@ import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.util.Version;
+import dr.math.distributions.MultivariateNormalDistribution;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author Marc A. Suchard
@@ -26,7 +25,9 @@ public class TimeSlicer {
 
     public static final String sep = "\t";
 
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices) {
+    public static final String PRECISION_STRING = "precision";
+
+    public TimeSlicer(String treeFileName, String outFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
         List<Tree> trees = null;
 
@@ -44,12 +45,23 @@ public class TimeSlicer {
             System.exit(-1);
         }
 
-        run(trees, traits, slices);
+        run(trees, traits, slices, impute, trueNoise);
+
+        resultsStream = System.out;
+
+        if (outFileName != null) {
+            try {
+            resultsStream = new PrintStream(new File(outFileName));
+            } catch (IOException e) {
+                System.err.println("Error opening file: "+outFileName);
+                System.exit(-1);
+            }
+        }
 
         outputHeader(traits);
 
         if (slices == null)
-            outputSlice(0,1);
+            outputSlice(0,Double.NaN);
         else {
             for(int i=0; i<slices.length; i++)
                 outputSlice(i,slices[i]);
@@ -61,8 +73,14 @@ public class TimeSlicer {
     private void outputHeader(String[] traits) {
         StringBuffer sb = new StringBuffer("slice");
         for(int i=0; i<traits.length; i++) {
-            sb.append(sep);
-            sb.append(traits[i].toString());
+            // Load first value to check dimensionality
+            Trait trait = values.get(0).get(i).get(0);
+            if (trait.isMultivariate()) {
+                int dim = trait.getDim();
+                for(int j=1; j<=dim; j++)
+                    sb.append(sep).append(traits[i]).append(j);
+            } else
+                sb.append(sep).append(traits[i]);
         }
         sb.append("\n");
         resultsStream.print(sb);
@@ -85,7 +103,7 @@ public class TimeSlicer {
         BufferedReader reader1 = new BufferedReader(new FileReader(treeFileName));
 
         String line1 = reader1.readLine();
-        TreeImporter importer1 = null;
+        TreeImporter importer1;
         if (line1.toUpperCase().startsWith("#NEXUS")) {
             importer1 = new NexusImporter(new FileReader(treeFileName));
         } else {
@@ -111,12 +129,47 @@ public class TimeSlicer {
 
         Trait(Object obj) {
             this.obj = obj;
+            if (obj instanceof Object[]) {
+                isMultivariate = true;
+                array = (Object[])obj;
+            }
+        }
+
+        public boolean isMultivariate() { return isMultivariate; }
+
+        public boolean isNumber() {
+            if (!isMultivariate)
+                return (obj instanceof Double);
+            return (array[0] instanceof Double);
+        }
+
+        public int getDim() {
+            if (isMultivariate) {
+                return array.length;
+            }
+            return 1;
+        }
+
+        public double[] getValue() {
+            int dim = getDim();
+            double[] result = new double[dim];
+            for(int i=0; i<dim; i++)
+                result[i] = (Double)array[i];
+            return result;
         }
 
         private Object obj;
+        private Object[] array;
+        private boolean isMultivariate = false;
 
-        public String toString() { return obj.toString(); }
-
+        public String toString() {
+            if (!isMultivariate)
+                return obj.toString();
+            StringBuffer sb = new StringBuffer(array[0].toString());
+            for(int i=1; i<array.length; i++)
+                sb.append(sep).append(array[i]);
+            return sb.toString();
+        }
     }
 
     private List<List<List<Trait>>> values;
@@ -130,7 +183,10 @@ public class TimeSlicer {
         StringBuffer sb = new StringBuffer();
 
         for(int v=0; v<valueCount; v++) {
-            sb.append(sliceValue);
+            if (Double.isNaN(sliceValue))
+                sb.append("All");
+            else
+                sb.append(sliceValue);
             for(int t=0; t<traitCount; t++) {
                 sb.append(sep);
                 sb.append(thisSlice.get(t).get(v));
@@ -141,7 +197,7 @@ public class TimeSlicer {
        resultsStream.print(sb);            
     }
 
-    private void run(List<Tree> trees, String[] traits, double[] slices) {
+    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
         int traitCount = traits.length;
         int sliceCount = 1;
@@ -164,6 +220,23 @@ public class TimeSlicer {
 
         for (Tree treeTime : trees) {
 
+            double[][] precision = null;
+
+            if (impute) {
+                Object o = treeTime.getAttribute("precision");
+                if (o != null) {
+                    Object[] array = (Object[])o;
+                    int dim = (int) Math.sqrt(1+8*array.length) / 2;
+                    precision = new double[dim][dim];
+                    int c = 0;
+                    for(int i=0; i<dim; i++) {
+                        for(int j=i; j<dim; j++) {
+                            precision[j][i] = precision[i][j] = (Double)array[c++];
+                        }
+                    }
+                }              
+            }
+
             for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
                 NodeRef node = treeTime.getNode(x);
@@ -176,19 +249,24 @@ public class TimeSlicer {
                     for (int i = 0; i < sliceCount; i++) {
 
                         if (!doSlices ||
-                                (slices[i] > nodeHeight && slices[i] < parentHeight)
+                                (slices[i] >= nodeHeight && slices[i] < parentHeight)
                                 ) {
 
                             List<List<Trait>> thisSlice = values.get(i);
                             for (int j = 0; j < traitCount; j++) {
                                 
                                 List<Trait> thisTraitSlice = thisSlice.get(j);
-                                Object trait = treeTime.getNodeAttribute(node, traits[j]);
-                                if (trait == null) {
+                                Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
+                                if (tmpTrait == null) {
                                     System.err.println("Trait '"+traits[j]+"' not found on branch.");
                                     System.exit(-1);
                                 }
-                                thisTraitSlice.add(new Trait(trait));
+                                Trait trait = new Trait(tmpTrait);
+                                if (impute) {
+                                    trait = imputeValue(trait,new Trait(treeTime.getNodeAttribute(treeTime.getParent(node),traits[j])),
+                                            slices[i],nodeHeight, parentHeight,precision, 1.0, trueNoise); // TODO Fix for inhomogeneous model
+                                }
+                                thisTraitSlice.add(trait);
                             }
                         }
                     }
@@ -197,9 +275,50 @@ public class TimeSlicer {
         }
     }
 
+    private Trait imputeValue(Trait nodeTrait, Trait parentTrait, double time, double nodeHeight, double parentHeight, double[][] precision, double rate, boolean trueNoise) {
+        if (!nodeTrait.isNumber()) {
+            System.err.println("Can only impute numbers!");
+            System.exit(-1);
+        }
+
+        int dim = precision.length;
+        double[] nodeValue = nodeTrait.getValue();
+        double[] parentValue = parentTrait.getValue();
+
+        final double timeTotal = parentHeight - nodeHeight;
+        final double timeChild = (time - nodeHeight);
+        final double timeParent = (parentHeight - time);
+        final double weightTotal = 1.0 / timeChild + 1.0 / timeParent;
+
+        if (timeChild == 0)
+            return nodeTrait;
+
+        if (timeParent == 0)
+            return parentTrait;
+
+        // Find mean value, weighted average
+        double[] mean = new double[dim];
+        double[][] scaledPrecision = new double[dim][dim];
+
+        for(int i=0; i<dim; i++) {
+            mean[i] = (nodeValue[i] / timeChild + parentValue[i] / timeParent) / weightTotal;
+            if (trueNoise) {
+                for(int j=i; j<dim; j++)
+                    scaledPrecision[j][i] = scaledPrecision[i][j] = precision[i][j] / timeTotal / rate;
+            }
+        }
+
+        if (trueNoise)
+            mean = MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean, precision);
+        Object[] result = new Object[dim];
+        for(int i=0; i<dim; i++)
+            result[i] = mean[i];
+        return new Trait(result);
+    }
+
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
-    private static PrintStream resultsStream = System.out;
+    private PrintStream resultsStream;
 
 
     private final static Version version = new BeastVersion();
@@ -251,8 +370,44 @@ public class TimeSlicer {
         progressStream.println();
     }
 
+    private static double[] parseVariableLengthDoubleArray(String inString) throws Arguments.ArgumentException {
 
-    //Main method
+        List<Double> returnList = new ArrayList<Double>();
+        StringTokenizer st = new StringTokenizer(inString,",");
+        while(st.hasMoreTokens()) {
+            try {
+                returnList.add(Double.parseDouble(st.nextToken()));
+            } catch (NumberFormatException e) {
+                throw new Arguments.ArgumentException();
+            }
+
+        }
+
+        if (returnList.size()>0) {
+            double[] doubleArray = new double[returnList.size()];
+            for(int i=0; i<doubleArray.length; i++)
+                doubleArray[i] = returnList.get(i);
+            return doubleArray;
+        }
+        return null;
+    }
+
+     private static String[] parseVariableLengthStringArray(String inString) {
+
+        List<String> returnList = new ArrayList<String>();
+        StringTokenizer st = new StringTokenizer(inString,",");
+        while(st.hasMoreTokens()) {
+            returnList.add(st.nextToken());           
+        }
+
+        if (returnList.size()>0) {
+            String[] stringArray = new String[returnList.size()];
+            stringArray = returnList.toArray(stringArray);
+            return stringArray;
+        }
+        return null;
+    }
+
     public static void main(String[] args) throws IOException {
 
 
@@ -268,9 +423,13 @@ public class TimeSlicer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("trait", "trait_name", "specifies an attribute to use to create a density map [default = location.angle]"),
-                        new Arguments.StringOption("trait2", "trait2_name", "specifies an attribute to use to create a density map [default = null]"),
-                        new Arguments.RealArrayOption("slice", 0, Double.MAX_VALUE, "list of times to perform summary"), new Arguments.Option("help", "option to print this message")
+                        new Arguments.StringOption("trait", "trait_name", "specifies an attribute-list to use to create a density map [default = location.angle]"),
+                        new Arguments.StringOption("slice","time","specifies an slice time-list [default=none]"),
+                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.StringOption("noise", new String[]{"false","true"}, false,
+                                "add true noise [default = true])"),
+                        new Arguments.StringOption("impute", new String[]{"false", "true"}, false,
+                                "impute trait at time-slice [default = false])"),
                 });
 
         try {
@@ -291,24 +450,40 @@ public class TimeSlicer {
             burnin = arguments.getIntegerOption("burnin");
         }
 
-//        String[] traitNames = arguments.getStringArrayOption("trait");
+        String[] traitNames = null;
+        double[] sliceTimes = null;
 
-//        System.err.println("length = "+traitNames.length);
+        try {
 
-        String[] traitNames;
-        String traitName1 = arguments.getStringOption("trait2");
-        if (traitName1 == null)
-            traitNames = new String[1];
-        else {
-            traitNames = new String[2];
-            traitNames[1] = traitName1;
+            String traitString = arguments.getStringOption("trait");
+            if (traitString != null) {
+                traitNames = parseVariableLengthStringArray(traitString);
+            }
+            if (traitNames == null) {
+                traitNames = new String[1];
+                traitNames[0] = "location.rate";
+            }
+
+            String sliceString = arguments.getStringOption("slice");
+            if (sliceString != null) {
+                sliceTimes = parseVariableLengthDoubleArray(sliceString);
+            }
+                       
+        } catch (Arguments.ArgumentException e) {
+            progressStream.println(e);
+            printUsage(arguments);
+            System.exit(-1);
         }
 
-        traitNames[0] = arguments.getStringOption("trait"); // TODO Read in a list of traits
-        if(traitNames[0] == null)
-            traitNames[0] = "location.rate";
+        String imputeString = arguments.getStringOption("impute");
+        boolean impute = false;
+        if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
+            impute = true;
 
-        double[] slices = arguments.getRealArrayOption("slice");
+        String noiseString = arguments.getStringOption("noise");
+        boolean trueNoise = true;
+        if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
+            trueNoise = false;
 
         final String[] args2 = arguments.getLeftoverArguments();
 
@@ -330,7 +505,7 @@ public class TimeSlicer {
             }
         }
 
-        new TimeSlicer(inputFileName, burnin, traitNames, slices);
+        new TimeSlicer(inputFileName, outputFileName, burnin, traitNames, sliceTimes, impute, trueNoise);
 
         System.exit(0);
     }

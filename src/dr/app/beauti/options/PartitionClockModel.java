@@ -42,7 +42,7 @@ public class PartitionClockModel extends ModelOptions {
     	this.options = options;
 		this.name = name;
 		
-		this.setAllPartitionData(source.getAllPartitionData());
+		this.allPartitionData = source.allPartitionData;
 		
 		this.clockType = source.clockType;
 		
@@ -269,8 +269,8 @@ public class PartitionClockModel extends ModelOptions {
 		return allPartitionData;
 	}
 
-	public void setAllPartitionData(List<PartitionData> allPartitionData) {
-		this.allPartitionData = allPartitionData;
+    public void clearAllPartitionData() {
+		this.allPartitionData.clear();
 	}
 
     public void addPartitionData(PartitionData partition) {

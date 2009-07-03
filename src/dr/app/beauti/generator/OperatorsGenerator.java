@@ -26,6 +26,7 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class OperatorsGenerator extends Generator {
 
@@ -43,7 +44,9 @@ public class OperatorsGenerator extends Generator {
         Attribute[] operatorAttributes;
 //		switch (options.coolingSchedule) {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
-        if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+//        if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+        // TODO: multi-prior, currently simplify to share same prior case
+        if (options.shareSameTreePrior && options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
             operatorAttributes = new Attribute[2];
             operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {
@@ -64,10 +67,10 @@ public class OperatorsGenerator extends Generator {
             if (operator.weight > 0. && operator.inUse)
                 writeOperator(operator, writer);
             
-            if (options.isSpeciesAnalysis()) {
-            	this.setGenePrefix(operator.getPrefix() + ".");
+            if (options.isSpeciesAnalysis()) { // TODO
+            	this.setModelPrefix(operator.getPrefix() + ".");
             } else {
-            	this.setGenePrefix("");
+            	this.setModelPrefix("");
             }
         }
 
@@ -348,7 +351,7 @@ public class OperatorsGenerator extends Generator {
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
                         getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
     }
 
@@ -369,21 +372,21 @@ public class OperatorsGenerator extends Generator {
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.NARROW_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperator.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperator.WIDE_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperator.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(WilsonBalding.WILSON_BALDING,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         // not supported anymore. probably never worked. (todo) get it out of GUI too
 //        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
 //            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
@@ -418,7 +421,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  genePrefix + "skyride");
+        writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  modelPrefix + "skyride");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperator.BLOCK_UPDATE_OPERATOR);
     }
 
@@ -444,7 +447,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL,  genePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
     }
     

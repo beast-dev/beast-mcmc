@@ -3,6 +3,7 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockType;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evolution.datatype.DataType;
@@ -23,6 +24,7 @@ import dr.xml.XMLParser;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Walter Xie
  */
 public class TreeLikelihoodGenerator extends Generator {
 
@@ -76,7 +78,7 @@ public class TreeLikelihoodGenerator extends Generator {
             }
 
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TreeModel.TREE_MODEL)}, true);
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, prefix + SiteModel.SITE_MODEL)}, true);
         } else {
@@ -97,7 +99,7 @@ public class TreeLikelihoodGenerator extends Generator {
                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
             }
             writer.writeTag(TreeModel.TREE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + TreeModel.TREE_MODEL)}, true);
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL)}, true);
             writer.writeTag(GammaSiteModel.SITE_MODEL,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, prefix + SiteModel.SITE_MODEL)}, true);
         }
@@ -105,18 +107,18 @@ public class TreeLikelihoodGenerator extends Generator {
         switch (options.clockType) {
             case STRICT_CLOCK:
                 writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
                 writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
                 writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, genePrefix + BranchRateModel.BRANCH_RATES)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + BranchRateModel.BRANCH_RATES)}, true);
                 break;
 
             default:
@@ -145,6 +147,17 @@ public class TreeLikelihoodGenerator extends Generator {
             } else {
             	writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, model.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
             }
+        }
+        
+
+        if (options.clockType == ClockType.AUTOCORRELATED_LOGNORMAL) {
+        	if (options.isSpeciesAnalysis()) { // species
+        		for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+        			writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  model.getName() + "." + BranchRateModel.BRANCH_RATES);
+        		}
+        	} else {	
+        		writer.writeIDref(ACLikelihood.AC_LIKELIHOOD,  BranchRateModel.BRANCH_RATES);
+        	}
         }
     }
 

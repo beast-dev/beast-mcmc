@@ -187,8 +187,8 @@ public class GTRParameterEstimationTest {
 	        model.setInvarHetero(false);
 	        
 	        // set tree prior
-	        beautiOptions.nodeHeightPrior = TreePrior.YULE;
-	        beautiOptions.clockType = ClockType.STRICT_CLOCK;
+//	        beautiOptions.nodeHeightPrior = TreePrior.YULE;
+//	        beautiOptions.clockType = ClockType.STRICT_CLOCK;
 	        
 	        // change value of parameters
 //	        Parameter para = beautiOptions.getParameter("yule.birthRate");

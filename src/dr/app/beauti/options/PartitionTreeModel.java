@@ -50,7 +50,7 @@ public class PartitionTreeModel extends ModelOptions {
     	this.options = options;
 		this.name = name;
 		
-		this.setAllPartitionData(source.getAllPartitionData());
+		this.allPartitionData = source.allPartitionData;
 		
 		this.startingTreeType = source.startingTreeType;
 		this.userStartingTree = source.userStartingTree;  
@@ -219,8 +219,8 @@ public class PartitionTreeModel extends ModelOptions {
 		return allPartitionData;
 	}
 
-	public void setAllPartitionData(List<PartitionData> allPartitionData) {
-		this.allPartitionData = allPartitionData;
+    public void clearAllPartitionData() {
+		this.allPartitionData.clear();
 	}
 
     public void addPartitionData(PartitionData partition) {

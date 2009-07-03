@@ -127,7 +127,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	
     	writer.writeComment("Species Tree: tree prior");
     	
-    	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+    	if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
     		writer.writeComment("Species Tree: Birth Death Model");
     		
 	    	writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
@@ -157,7 +157,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 	    	    	
 	    	writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL); 
-    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    	} else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
     		writer.writeComment("Species Tree: Yule Model");
     		
     		writer.writeOpenTag(YuleModel.YULE_MODEL, new Attribute[]{
@@ -184,7 +184,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
     	writer.writeComment("Species Tree: Likelihood of species tree");
 	    	
-    	if (options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH) {
+    	if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
     		writer.writeComment("Species Tree: Birth Death Model");
     		
 	    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -194,7 +194,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 	    	writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);    	
 	    	writer.writeCloseTag(SpeciationLikelihood.MODEL);    	
 	    	 
-    	} else if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    	} else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
     		writer.writeComment("Species Tree: Yule Model");
     		
 	    	writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -242,7 +242,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     	
     	writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL); 
     	
-    	if (options.nodeHeightPrior == TreePrior.SPECIES_YULE) {
+    	if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
     		// new part
 	    	writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
 	    			new Attribute.Default<String>(XMLParser.ID, SPOPS)}); 

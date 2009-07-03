@@ -93,7 +93,7 @@ public class SpeciesTreesPanel extends BeautiPanel {
 
         settingOptions = true;
 
-        treePriorCombo.setSelectedItem(options.nodeHeightPrior);
+        treePriorCombo.setSelectedItem(options.speciesTreePrior);
 
         settingOptions = false;
 
@@ -102,7 +102,7 @@ public class SpeciesTreesPanel extends BeautiPanel {
     }
 
     public void getOptions(BeautiOptions options) {
-        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
+        options.speciesTreePrior = (TreePrior) treePriorCombo.getSelectedItem();
 
 //        if (options.nodeHeightPrior == ) {
 //

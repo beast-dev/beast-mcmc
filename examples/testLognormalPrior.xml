@@ -43,7 +43,7 @@
             </column>
         </log>
         <log id="fileLog" logEvery="100" fileName="testLogNormalPrior.log">
-            <posterior idref="prior"/>
+            <posterior idref="posterior"/>
             <parameter idref="param"/>
         </log>
     </mcmc>

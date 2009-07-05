@@ -28,19 +28,16 @@ package dr.inference.mcmc;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
-import dr.xml.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -267,12 +264,12 @@ public class MCMC implements Runnable, Identifiable {
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                 " Performance suggestion");
 
-        for(int i = 0; i < schedule.getOperatorCount(); i++) {
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
             final MCMCOperator op = schedule.getOperator(i);
-            if( op instanceof JointOperator ) {
+            if (op instanceof JointOperator) {
                 JointOperator jointOp = (JointOperator) op;
-                for(int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
+                for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
                             + formattedParameterString(jointOp.getSubOperator(k))
                             + formattedProbString(jointOp)
@@ -402,15 +399,15 @@ public class MCMC implements Runnable, Identifiable {
         return mc.isStopped();
     }
 
-	public boolean getSpawnable() {
-		return spawnable;
-	}
+    public boolean getSpawnable() {
+        return spawnable;
+    }
 
-	private boolean spawnable = true;
+    private boolean spawnable = true;
 
-	public void setSpawnable(boolean spawnable) {
-		this.spawnable = spawnable;
-	}
+    public void setSpawnable(boolean spawnable) {
+        this.spawnable = spawnable;
+    }
 
 
     //PRIVATE METHODS *****************************************
@@ -432,97 +429,6 @@ public class MCMC implements Runnable, Identifiable {
         showOperatorAnalysis = soa;
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return MCMC;
-        }
-
-        /**
-         * @return a tree object based on the XML element it was passed.
-         */
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            MCMC mcmc = new MCMC("mcmc1");
-            MCMCOptions options = new MCMCOptions();
-            OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
-            Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
-            ArrayList<Logger> loggers = new ArrayList<Logger>();
-
-            options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
-            options.setUseCoercion(xo.getAttribute(COERCION, true));
-            options.setPreBurnin(xo.getAttribute(PRE_BURNIN, options.getChainLength() / 100));
-            options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
-            options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
-            options.setminOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
-                if (child instanceof Logger) {
-                    loggers.add((Logger) child);
-                }
-            }
-
-            mcmc.setShowOperatorAnalysis(true);
-
-            Logger[] loggerArray = new Logger[loggers.size()];
-            loggers.toArray(loggerArray);
-
-            java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
-                    "\n  chainLength=" + options.getChainLength() +
-                    "\n  autoOptimize=" + options.useCoercion());
-
-            mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
-
-            MarkovChain mc = mcmc.getMarkovChain();
-            double initialScore = mc.getCurrentScore();
-
-            if (initialScore == Double.NEGATIVE_INFINITY) {
-                String message = "The initial posterior is zero";
-                if (likelihood instanceof CompoundLikelihood) {
-                    message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
-                } else {
-                    message += "!";
-                }
-                throw new IllegalArgumentException(message);
-            }
-
-	        if (!xo.getAttribute(SPAWN,true))
-	            mcmc.setSpawnable(false);
-
-            return mcmc;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns an MCMC chain and runs the chain as a side effect.";
-        }
-
-        public Class getReturnType() {
-            return MCMC.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newIntegerRule(CHAIN_LENGTH),
-                AttributeRule.newBooleanRule(COERCION, true),
-                AttributeRule.newIntegerRule(PRE_BURNIN, true),
-                AttributeRule.newDoubleRule(TEMPERATURE, true),
-                AttributeRule.newIntegerRule(FULL_EVALUATION, true),
-                 AttributeRule.newIntegerRule(MIN_OPS_EVALUATIONS, true),
-		        AttributeRule.newBooleanRule(SPAWN,true),
-                new ElementRule(OperatorSchedule.class),
-                new ElementRule(Likelihood.class),
-                new ElementRule(Logger.class, 1, Integer.MAX_VALUE)
-        };
-
-    };
 
     public String getId() {
         return id;
@@ -557,15 +463,5 @@ public class MCMC implements Runnable, Identifiable {
     private OperatorSchedule schedule;
 
     private String id = null;
-
-    public static final String COERCION = "autoOptimize";
-    public static final String PRE_BURNIN = "preBurnin";
-    public static final String MCMC = "mcmc";
-    public static final String CHAIN_LENGTH = "chainLength";
-    public static final String FULL_EVALUATION = "fullEvaluation";
-    public static final String MIN_OPS_EVALUATIONS = "minOpsFullEvaluations";
-    public static final String WEIGHT = "weight";
-    public static final String TEMPERATURE = "temperature";
-	public static final String SPAWN ="spawn";
 }
 

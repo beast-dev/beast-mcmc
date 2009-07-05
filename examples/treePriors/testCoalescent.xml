@@ -38,18 +38,18 @@
 
     <!-- simulate a coalescent tree -->
     <coalescentTree id="tree1">
-        <demographicModel idref="demo1"/>
+        <constantSize idref="demo1"/>
         <taxa idref="taxa1"/>
     </coalescentTree>
 
     <!-- simulate a coalescent tree -->
     <coalescentTree id="tree2">
-        <demographicModel idref="demo1"/>
+        <constantSize idref="demo1"/>
         <taxa idref="taxa2"/>
     </coalescentTree>
 
     <treeModel id="treeModel1">
-        <tree idref="tree1"/>
+        <coalescentTree idref="tree1"/>
         <rootHeight>
             <parameter id="treeModel1.rootHeight"/>
         </rootHeight>
@@ -62,7 +62,7 @@
     </treeModel>
 
     <treeModel id="treeModel2">
-        <tree idref="tree2"/>
+        <coalescentTree idref="tree2"/>
         <rootHeight>
             <parameter id="treeModel2.rootHeight"/>
         </rootHeight>
@@ -77,7 +77,7 @@
     <!-- create a coalescent model from a tree model and demographic model -->
     <coalescentLikelihood id="coalescent1">
         <model>
-            <demographicModel idref="demo1"/>
+            <constantSize idref="demo1"/>
         </model>
         <populationTree>
             <treeModel idref="treeModel1"/>
@@ -87,7 +87,7 @@
     <!-- create a second coalescent model -->
     <coalescentLikelihood id="coalescent2">
         <model>
-            <demographicModel idref="demo1"/>
+            <constantSize idref="demo1"/>
         </model>
         <populationTree>
             <treeModel idref="treeModel2"/>
@@ -98,12 +98,12 @@
         <coalescentLikelihood idref="coalescent1"/>
         <log id="logScreen2" logEvery="5000">
             <column dp="4">
-                <likelihood idref="coalescent1"/>
+                <coalescentLikelihood idref="coalescent1"/>
                 <parameter idref="treeModel1.rootHeight"/>
             </column>
         </log>
         <log id="log1" logEvery="5" fileName="coalescentPrior.log">
-            <likelihood idref="coalescent1"/>
+            <coalescentLikelihood idref="coalescent1"/>
             <parameter idref="treeModel1.rootHeight"/>
         </log>
         <logTree id="logTree1" logEvery="100" nexusFormat="true"
@@ -135,12 +135,12 @@
         <coalescentLikelihood idref="coalescent2"/>
         <log id="logScreen" logEvery="5000">
             <column dp="4">
-                <likelihood idref="coalescent2"/>
+                <coalescentLikelihood idref="coalescent2"/>
                 <parameter idref="treeModel2.rootHeight"/>
             </column>
         </log>
         <log id="log2" logEvery="5" fileName="coalescentPrior_2.log">
-            <likelihood idref="coalescent2"/>
+            <coalescentLikelihood idref="coalescent2"/>
             <parameter idref="treeModel2.rootHeight"/>
         </log>
         <logTree id="logTree2" logEvery="100" nexusFormat="true"

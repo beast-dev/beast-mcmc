@@ -20,7 +20,7 @@
 
     <!-- simulate a coalescent tree -->
     <coalescentTree id="tree1">
-        <demographicModel idref="demo1"/>
+        <constantSize idref="demo1"/>
         <taxa idref="taxa1"/>
     </coalescentTree>
 
@@ -35,7 +35,7 @@
     </yuleModel>
 
     <treeModel id="treeModel1">
-        <tree idref="tree1"/>
+        <coalescentTree idref="tree1"/>
         <rootHeight>
             <parameter id="treeModel1.rootHeight"/>
         </rootHeight>
@@ -64,13 +64,13 @@
         <speciationLikelihood idref="speciation"/>
         <log id="logScreen2" logEvery="100000">
             <column dp="4">
-                <likelihood idref="speciation"/>
+                <speciationLikelihood idref="speciation"/>
                 <parameter idref="treeModel1.rootHeight"/>
                 <treeLengthStatistic idref="TL"/>
             </column>
         </log>
         <log id="log1" logEvery="10" fileName="yulePrior.log">
-            <likelihood idref="speciation"/>
+            <speciationLikelihood idref="speciation"/>
             <parameter idref="treeModel1.rootHeight"/>
             <treeLengthStatistic idref="TL"/>
         </log>

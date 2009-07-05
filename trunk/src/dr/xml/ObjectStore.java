@@ -32,30 +32,31 @@ import java.util.Set;
 
 public interface ObjectStore {
 
-	/**
-	 * @return the object with unique id or throws an ObjectNotFoundException
-	 */
-	Object getObjectById(Object uid) throws ObjectNotFoundException;
-	
-	/** 
-	 * @return true if an object with the given id exists in this ObjectStore.
-	 */
-	boolean hasObjectId(Object uid);	
-	
-	/**
-	 * Adds an object using the id returned by getId().
-	 * @param force true if object should be place in store even if it will replace
-	 * an existing object of the same id, false otherwise.
-	 */
-	void addIdentifiableObject(Identifiable object, boolean force);
-	
-	/**
-	 * @return a set of the UIDs of the objects in this store.
-	 */
-	public Set getIdSet();
-	
-	/**
-	 * @return a collection of the objects in this store.
-	 */
-	public Collection getObjects();
+    /**
+     * @return the object with unique id or throws an ObjectNotFoundException
+     */
+    Object getObjectById(Object uid) throws ObjectNotFoundException;
+
+    /**
+     * @return true if an object with the given id exists in this ObjectStore.
+     */
+    boolean hasObjectId(Object uid);
+
+    /**
+     * Adds an object using the id returned by getId().
+     *
+     * @param force true if object should be placed in store even if it will replace
+     *              an existing object of the same id, false otherwise.
+     */
+    void addIdentifiableObject(Identifiable object, boolean force);
+
+    /**
+     * @return a set of the UIDs of the objects in this store.
+     */
+    public Set getIdSet();
+
+    /**
+     * @return a collection of the objects in this store.
+     */
+    public Collection getObjects();
 }

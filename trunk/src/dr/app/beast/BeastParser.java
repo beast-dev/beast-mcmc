@@ -30,9 +30,14 @@ import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * @author Alexei Drummond
@@ -72,12 +77,12 @@ public class BeastParser extends XMLParser {
 
             if (parsers != null) {
                 // load the parsers
-                loadProperties(this.getClass(), parsers +  "_parsers.properties", verbose);
+                loadProperties(this.getClass(), parsers + "_parsers.properties", verbose);
             }
 
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers +  "_parsers.properties", verbose);
+                    loadProperties(this.getClass(), addParsers + "_parsers.properties", verbose);
                 }
             }
         } catch (IOException e) {
@@ -114,7 +119,7 @@ public class BeastParser extends XMLParser {
                     Class parser = Class.forName(line);
                     if (XMLObjectParser.class.isAssignableFrom(parser)) {
                         // if this class is an XMLObjectParser then create an instance
-                        boolean replaced = addXMLObjectParser((XMLObjectParser)parser.newInstance(), true);
+                        boolean replaced = addXMLObjectParser((XMLObjectParser) parser.newInstance(), true);
                         if (verbose) {
                             System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName());
                         }
@@ -122,10 +127,10 @@ public class BeastParser extends XMLParser {
                         boolean parserFound = false;
                         // otherwise look for a static member which is an instance of XMLObjectParser
                         Field[] fields = parser.getDeclaredFields();
-                        for (Field field: fields) {
+                        for (Field field : fields) {
                             if (XMLObjectParser.class.isAssignableFrom(field.getType())) {
                                 try {
-                                    boolean replaced = addXMLObjectParser((XMLObjectParser)field.get(null), true);
+                                    boolean replaced = addXMLObjectParser((XMLObjectParser) field.get(null), true);
                                     if (verbose) {
                                         System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName() + "." + field.getName());
                                     }
@@ -298,7 +303,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.POISSON_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.LOG_NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.GAMMA_PRIOR_PARSER);
-       addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.INVGAMMA_PRIOR_PARSER);
+        addXMLObjectParser(dr.inference.distribution.DistributionLikelihood.INVGAMMA_PRIOR_PARSER);
 
         addXMLObjectParser(dr.inference.distribution.BinomialLikelihood.PARSER);
 
@@ -324,7 +329,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.SubStatistic.PARSER);
 
         // Markov chains and loggers
-        addXMLObjectParser(dr.inference.mcmc.MCMC.PARSER);
+        addXMLObjectParser(new dr.inference.mcmc.MCMCParser());
         addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
 
         addXMLObjectParser(new dr.evomodelxml.LoggerParser());

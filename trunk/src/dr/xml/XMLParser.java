@@ -57,7 +57,7 @@ public class XMLParser {
     public void addXMLObjectParser(XMLObjectParser parser) {
         addXMLObjectParser(parser, false);
     }
-    
+
     public boolean addXMLObjectParser(XMLObjectParser parser, boolean canReplace) {
 
         boolean replaced = false;
@@ -104,19 +104,21 @@ public class XMLParser {
     /**
      * An alternative parser that parses until it finds an object of the given
      * class and then returns it.
-     * @param reader  the reader
+     *
+     * @param reader the reader
      * @param target the target class
      * @return
      * @throws java.io.IOException
      * @throws org.xml.sax.SAXException
      * @throws dr.xml.XMLParseException
      * @throws javax.xml.parsers.ParserConfigurationException
+     *
      */
     public Object parse(Reader reader, Class target)
             throws java.io.IOException,
-                   org.xml.sax.SAXException,
-                   dr.xml.XMLParseException,
-                   javax.xml.parsers.ParserConfigurationException {
+            org.xml.sax.SAXException,
+            dr.xml.XMLParseException,
+            javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -137,9 +139,9 @@ public class XMLParser {
 
     public ObjectStore parse(Reader reader, boolean run)
             throws java.io.IOException,
-                   org.xml.sax.SAXException,
-                   dr.xml.XMLParseException,
-                   javax.xml.parsers.ParserConfigurationException {
+            org.xml.sax.SAXException,
+            dr.xml.XMLParseException,
+            javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -172,6 +174,17 @@ public class XMLParser {
             if (restoredXMLObject == null) {
                 throw new XMLParseException("Object with idref=" + idref + " has not been previously declared.");
             }
+
+            if (!e.getTagName().equals(restoredXMLObject.getName())) {
+                String msg = "Element named " + e.getTagName() + " with idref=" + idref +
+                        " does not match stored object with same id and tag name " + restoredXMLObject.getName();
+                if (strictXML) {
+                    throw new XMLParseException(msg);
+                } else {
+                    System.err.println("WARNING: " + msg);
+                }
+            }
+
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
 
@@ -212,8 +225,8 @@ public class XMLParser {
                         xo.addChild(xoc);
 
                         if (target != null && xoc instanceof XMLObject) {
-                            Object obj = ((XMLObject)xoc).getNativeObject();
-                            if (obj != null && target.isInstance(obj) ) {
+                            Object obj = ((XMLObject) xoc).getNativeObject();
+                            if (obj != null && target.isInstance(obj)) {
                                 return obj;
                             }
                         }
@@ -268,8 +281,8 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
-                    if (obj instanceof MCMC && !((MCMC)obj).getSpawnable()) {
-                        ((MCMC)obj).run();
+                    if (obj instanceof MCMC && !((MCMC) obj).getSpawnable()) {
+                        ((MCMC) obj).run();
                     } else {
                         Thread thread = new Thread((Runnable) obj);
                         thread.start();
@@ -366,6 +379,7 @@ public class XMLParser {
             }
         }
     };
+
 
     private final Hashtable<String, Object> store = new Hashtable<String, Object>();
     private final TreeMap<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());

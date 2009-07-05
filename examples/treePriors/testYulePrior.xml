@@ -122,7 +122,7 @@
     </yuleModel>
 
     <treeModel id="treeModel">
-        <tree idref="simulatedTree"/>
+        <newick idref="simulatedTree"/>
         <rootHeight>
             <parameter id="treeModel.rootHeight"/>
         </rootHeight>
@@ -167,7 +167,7 @@
                 <speciationLikelihood idref="speciation"/>
             </column>
             <column label="Posterior" dp="4" width="12">
-                <speciationLikelihood idref="posterior"/>
+                <posterior idref="posterior"/>
             </column>
 
         </log>

@@ -25,8 +25,6 @@
 
 package dr.xml;
 
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
 import org.w3c.dom.NamedNodeMap;
 
 import java.io.PrintWriter;
@@ -45,7 +43,6 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             final XMLSyntaxRule[] rules = getSyntaxRules();
             for (XMLSyntaxRule rule : rules) {
                 if (!rule.isSatisfied(xo)) {
-                    // System.err.println(this);
                     throw new XMLParseException("The '<" + getParserName() +
                             ">' element with id, '" + id +
                             "', is incorrectly constructed.\nThe following was expected:\n" +
@@ -55,19 +52,19 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
             // Look for undeclared attributes and issue a warning
             final NamedNodeMap attributes = xo.getAttributes();
-            for(int k = 0; k < attributes.getLength(); ++k) {
+            for (int k = 0; k < attributes.getLength(); ++k) {
                 String name = attributes.item(k).getNodeName();
-                if( name.equals(XMLObject.ID) ) continue;
+                if (name.equals(XMLObject.ID)) continue;
 
                 for (XMLSyntaxRule rule : rules) {
-                    if( rule.containsAttribute(name) ) {
+                    if (rule.containsAttribute(name)) {
                         name = null;
                         break;
                     }
                 }
-                if( name != null ) {
+                if (name != null) {
                     final String msg = "unhandled attribute (typo?) " + name + " in " + xo;
-                    if( strictXML ) {
+                    if (strictXML) {
                         throw new XMLParseException(msg);
                     }
                     System.err.println("WARNING:" + msg);
@@ -75,25 +72,25 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 }
             }
 
-            for(int k = 0; k < xo.getChildCount(); ++k) {
+            for (int k = 0; k < xo.getChildCount(); ++k) {
                 final Object child = xo.getChild(k);
                 String unexpectedName;
-                if( child instanceof XMLObject ) {
+                if (child instanceof XMLObject) {
                     final XMLObject ch = (XMLObject) child;
                     unexpectedName = !isAllowed(ch.getName()) ? ch.getName() : null;
                 } else {
-                    unexpectedName = child.getClass().getName(); 
+                    unexpectedName = child.getClass().getName();
                     for (XMLSyntaxRule rule : rules) {
-                        if( rule.isAllowed(child.getClass()) ) {
+                        if (rule.isAllowed(child.getClass())) {
                             unexpectedName = null;
                             break;
                         }
                     }
                 }
-                if( unexpectedName != null ) {
+                if (unexpectedName != null) {
 
                     String msg = "unexpected element " + unexpectedName + " in " + xo;
-                    if( strictXML ) {
+                    if (strictXML) {
                         throw new XMLParseException(msg);
                     }
                     System.err.println("WARNING: " + msg);
@@ -103,31 +100,34 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
         try {
             return parseXMLObject(xo);
-        } catch(XMLParseException xpe) {
+        } catch (XMLParseException xpe) {
             throw new XMLParseException("Error parsing '<" + getParserName() +
                     ">' element with id, '" + id + "':\n" +
                     xpe.getMessage());
         }
     }
 
-    public String[] getParserNames() { return new String[] { getParserName() }; }
+    public String[] getParserNames() {
+        return new String[]{getParserName()};
+    }
 
     public final void throwUnrecognizedElement(XMLObject xo) throws XMLParseException {
-        throw new XMLParseException("Unrecognized element '<" + xo.getName() + ">' in element '<" + getParserName()+">'");
+        throw new XMLParseException("Unrecognized element '<" + xo.getName() + ">' in element '<" + getParserName() + ">'");
     }
 
     public abstract Object parseXMLObject(XMLObject xo) throws XMLParseException;
+
     /**
      * @return an array of syntax rules required by this element.
-     * Order is not important.
+     *         Order is not important.
      */
     public abstract XMLSyntaxRule[] getSyntaxRules();
 
     public final boolean isAllowed(String elementName) {
         final XMLSyntaxRule[] rules = getSyntaxRules();
-        if( rules != null && rules.length > 0 ) {
-            for( XMLSyntaxRule rule : rules ) {
-                if( rule.isAllowed(elementName) ) {
+        if (rules != null && rules.length > 0) {
+            for (XMLSyntaxRule rule : rules) {
+                if (rule.isAllowed(elementName)) {
                     return true;
                 }
             }
@@ -144,7 +144,9 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         return getExample() != null;
     }
 
-    public String getExample() { return null; }
+    public String getExample() {
+        return null;
+    }
 
     public final ObjectStore getStore() {
         return store;
@@ -174,7 +176,8 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         handler.outputExampleXML(pw, this);
-        pw.flush(); pw.close();
+        pw.flush();
+        pw.close();
         buffer.append(sw.toString());
         buffer.append("</div>\n");
         buffer.append("</div>\n");
@@ -221,7 +224,8 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         handler.outputExampleXML(pw, this);
-        pw.flush(); pw.close();
+        pw.flush();
+        pw.close();
         buffer.append(sw.toString());
         buffer.append("\n");
         return buffer.toString();

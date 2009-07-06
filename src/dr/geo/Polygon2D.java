@@ -223,6 +223,24 @@ public class Polygon2D {
         convertPointsToArrays();
     }
 
+
+     // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:
+     //   Area = 1/2 [(x1*y2 - x2*y1) + (x2*y3 - x3*y2) + ... + (xn*y1 - x1*yn)].
+     //   This formula appears in an Article by Gil Strang of MIT
+     //   on p. 253 of the March 1993 issue of The American Mathematical Monthly, with the note that it is
+     //   "known, but not well known". There is also a very brief discussion of proofs and other references,
+     //   including an article by Bart Braden of Northern Kentucky U., a known Mathematica enthusiast.
+    public double calculateArea(){
+
+        double area = 0;
+        //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
+        for (int i = 0; i < length + 1; i++) {
+            area += (x[i]*y[i+1] - x[i+1]*y[i]);
+        }
+
+        return (area/2);
+    }
+
     private static boolean isInsideClip(Point2D p, Side side, Rectangle2D boundingBox) {
         if (side == Side.top)
             return (p.getY() <= boundingBox.getMaxY());

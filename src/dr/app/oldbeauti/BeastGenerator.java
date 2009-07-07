@@ -2338,9 +2338,9 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeCloseTag(DistributionLikelihood.GAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
-                writer.writeOpenTag(JeffreysPriorLikelihood.JEFFREYS_PRIOR);
+                writer.writeOpenTag(OneOnXDensity.ONE_ONE_X_PRIOR);
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(JeffreysPriorLikelihood.JEFFREYS_PRIOR);
+                writer.writeCloseTag(OneOnXDensity.ONE_ONE_X_PRIOR);
                 break;
             case POISSON_PRIOR:
                 writer.writeOpenTag(DistributionLikelihood.POISSON_PRIOR,
@@ -2786,8 +2786,7 @@ public class BeastGenerator extends BeautiOptions {
         }
         if (parameter.isFixed) {
             writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
-        } else
-        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+        } else if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             writeParameter(id, dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
         } else {
             writeParameter(id, dimension, parameter.initial, parameter.lower, parameter.upper, writer);

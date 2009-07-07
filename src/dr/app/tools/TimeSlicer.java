@@ -26,6 +26,7 @@ public class TimeSlicer {
     public static final String sep = "\t";
 
     public static final String PRECISION_STRING = "precision";
+    public static final String RATE_STRING = "rate";
 
     public TimeSlicer(String treeFileName, String outFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
@@ -89,7 +90,6 @@ public class TimeSlicer {
     private List<Tree> importTrees(String treeFileName, int burnin) throws IOException, Importer.ImportException {
 
         int totalTrees = 10000;
-//        int totalTreesUsed = 0;
 
         progressStream.println("Reading trees (bar assumes 10,000 trees)...");
         progressStream.println("0              25             50             75            100");
@@ -97,7 +97,6 @@ public class TimeSlicer {
 
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
-
 
         List<Tree> treeList = new ArrayList<Tree>();
         BufferedReader reader1 = new BufferedReader(new FileReader(treeFileName));
@@ -263,8 +262,17 @@ public class TimeSlicer {
                                 }
                                 Trait trait = new Trait(tmpTrait);
                                 if (impute) {
+                                    Double rateAttribute = (Double) treeTime.getNodeAttribute(node,RATE_STRING);
+                                    double rate = 1.0;
+                                    if (rateAttribute != null) {
+                                        rate = rateAttribute;
+                                        if (outputRateWarning) {
+                                            progressStream.println("Warning: using a rate attribute during imputation!");
+                                            outputRateWarning = false;
+                                        }
+                                    }
                                     trait = imputeValue(trait,new Trait(treeTime.getNodeAttribute(treeTime.getParent(node),traits[j])),
-                                            slices[i],nodeHeight, parentHeight,precision, 1.0, trueNoise); // TODO Fix for inhomogeneous model
+                                            slices[i],nodeHeight, parentHeight,precision, rate, trueNoise);
                                 }
                                 thisTraitSlice.add(trait);
                             }
@@ -274,6 +282,8 @@ public class TimeSlicer {
             }
         }
     }
+
+    private boolean outputRateWarning = true;
 
     private Trait imputeValue(Trait nodeTrait, Trait parentTrait, double time, double nodeHeight, double parentHeight, double[][] precision, double rate, boolean trueNoise) {
         if (!nodeTrait.isNumber()) {
@@ -323,7 +333,7 @@ public class TimeSlicer {
 
     private final static Version version = new BeastVersion();
 
-    private static final String commandName = "treeslicer";
+    private static final String commandName = "timeslicer";
 
 
     public static void printUsage(Arguments arguments) {
@@ -355,9 +365,9 @@ public class TimeSlicer {
         centreLine("University of California, Los Angeles", 60);
         centreLine("msuchard@ucla.edu", 60);
         progressStream.println();
-        centreLine("DEPARTMENT", 60);
-        centreLine("UNIVERSITY", 60);
-        centreLine("EMAIL", 60);
+        centreLine("Rega Institute for Medical Research", 60);
+        centreLine("Katholieke Unversiteit Leuven", 60);
+        centreLine("philippe.lemey@gmail.com", 60);
         progressStream.println();
         centreLine("Department of Computer Science", 60);
         centreLine("University of Auckland", 60);

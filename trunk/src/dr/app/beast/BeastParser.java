@@ -282,7 +282,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.JeffreysPriorLikelihood.PARSER);
+        addXMLObjectParser(dr.inference.model.OneOnXDensity.PARSER);
 
         addXMLObjectParser(dr.inference.model.OrnsteinUhlenbeckPriorLikelihood.PARSER);
         addXMLObjectParser(dr.inference.model.BMPriorLikelihood.PARSER);

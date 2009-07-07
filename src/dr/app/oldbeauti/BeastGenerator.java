@@ -2338,9 +2338,9 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeCloseTag(DistributionLikelihood.GAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
-                writer.writeOpenTag(OneOnXDensity.ONE_ONE_X_PRIOR);
+                writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(OneOnXDensity.ONE_ONE_X_PRIOR);
+                writer.writeCloseTag(OneOnXPrior.ONE_ONE_X_PRIOR);
                 break;
             case POISSON_PRIOR:
                 writer.writeOpenTag(DistributionLikelihood.POISSON_PRIOR,

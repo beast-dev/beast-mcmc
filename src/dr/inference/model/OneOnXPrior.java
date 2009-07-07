@@ -1,5 +1,5 @@
 /*
- * OneOnXDensity.java
+ * OneOnXPrior.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -33,18 +33,18 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  */
 
-public class OneOnXDensity extends Likelihood.Abstract {
+public class OneOnXPrior extends Likelihood.Abstract {
 
     public static final String ONE_ONE_X_PRIOR = "oneOnXPrior";
     public static final String DATA = "data";
 
-    public OneOnXDensity() {
+    public OneOnXPrior() {
 
         super(null);
     }
 
     /**
-     * Adds a statistic, this is the data for which the likelihood is calculated.
+     * Adds a statistic, this is the data for which the Prod_i (1/x_i) prior is calculated.
      *
      * @param data the statistic to compute density of
      */
@@ -73,7 +73,6 @@ public class OneOnXDensity extends Likelihood.Abstract {
 
         for (Statistic statistic : dataList) {
             for (int j = 0; j < statistic.getDimension(); j++) {
-                // replace v += log(1/x) with v -= log(x) , save a division
                 logL -= Math.log(statistic.getStatisticValue(j));
             }
         }
@@ -100,7 +99,7 @@ public class OneOnXDensity extends Likelihood.Abstract {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            OneOnXDensity likelihood = new OneOnXDensity();
+            OneOnXPrior likelihood = new OneOnXPrior();
 
             XMLObject cxo = xo;
 
@@ -137,7 +136,7 @@ public class OneOnXDensity extends Likelihood.Abstract {
         }
 
         public Class getReturnType() {
-            return OneOnXDensity.class;
+            return OneOnXPrior.class;
         }
     };
 }

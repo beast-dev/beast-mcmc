@@ -97,6 +97,10 @@ public class OneOnXPrior extends Likelihood.Abstract {
             return ONE_ONE_X_PRIOR;
         }
 
+        public String[] getParserNames() {
+            return new String[]{getParserName(), "jeffreysPrior"};
+        }
+        
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             OneOnXPrior likelihood = new OneOnXPrior();

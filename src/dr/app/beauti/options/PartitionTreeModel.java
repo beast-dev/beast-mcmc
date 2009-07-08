@@ -86,14 +86,7 @@ public class PartitionTreeModel extends ModelOptions {
         createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        // These are statistics which could have priors on...
-        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
-                0.0, Double.POSITIVE_INFINITY);
-        createStatistic("covariance",
-                "The covariance in rates of evolution on each lineage with their ancestral lineages",
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
+        
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
                 OperatorType.SCALE, 0.75, rateWeights);
@@ -182,7 +175,7 @@ public class PartitionTreeModel extends ModelOptions {
 //        } else {
 //            System.err.println("TaxonSets are null");
 //        }
-    	
+    	//TODO ?
     	for (PartitionClockModel clock : options.getPartitionClockModels(getAllPartitionData())) {
 	        if (clock.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
 	            if (localClockRateChangesStatistic == null) {
@@ -205,11 +198,11 @@ public class PartitionTreeModel extends ModelOptions {
 	            params.add(localClockRatesStatistic);
 	        }
 	
-	        if (clock.getClockType() != ClockType.STRICT_CLOCK) {
-	            params.add(getParameter("meanRate"));
-	            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
-	            params.add(getParameter("covariance"));
-	        }
+//	        if (clock.getClockType() != ClockType.STRICT_CLOCK) {
+//	            params.add(getParameter("meanRate"));
+//	            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+//	            params.add(getParameter("covariance"));
+//	        }
     	}
     }
     

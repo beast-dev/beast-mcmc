@@ -28,6 +28,7 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
+import dr.app.util.Arguments.Option;
 import dr.evolution.tree.Tree;
 
 import org.virion.jam.components.WholeNumberField;
@@ -69,13 +70,15 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //	private BeautiOptions options = null;
     
     private final PartitionTreePrior partitionTreePrior;
+    private final TreesPanel treesPanel;
     
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior) {
+    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, TreesPanel parent) {
 
-		this.partitionTreePrior = partitionTreePrior;        
+		this.partitionTreePrior = partitionTreePrior;
+		this.treesPanel = parent;
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
@@ -149,9 +152,23 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
             
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
-            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-                
+            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);            
+          
         } 
+        
+        if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
+        	//For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+            addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" + 
+            		"\nThe shareSameTreePrior has to be unchecked using GMRF."); 
+            
+            treesPanel.shareSameTreePriorCheck.setSelected(false);
+            treesPanel.shareSameTreePriorCheck.setEnabled(false);
+            treesPanel.updateShareSameTreePriorChanged();          
+        } else {
+        	treesPanel.shareSameTreePriorCheck.setEnabled(true);
+//            treesPanel.updateShareSameTreePriorChanged();
+        }
+        
         
 
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);

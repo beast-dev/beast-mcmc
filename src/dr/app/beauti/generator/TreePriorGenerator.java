@@ -38,7 +38,7 @@ public class TreePriorGenerator extends Generator {
 
 	void writeTreePrior(PartitionTreePrior prior, XMLWriter writer) {	// for species, partitionName.treeModel
 
-		writeNodeHeightPrior(prior.getNodeHeightPrior(), writer);
+		writeNodeHeightPrior(prior, writer);
 		if (prior.getNodeHeightPrior() == TreePrior.LOGISTIC) {
 			writer.writeText("");
 			writeBooleanLikelihood(writer);
@@ -261,7 +261,9 @@ public class TreePriorGenerator extends Generator {
 	 *
 	 * @param writer the writer
 	 */
-	private void writeNodeHeightPrior(TreePrior treePrior, XMLWriter writer) {
+	private void writeNodeHeightPrior(PartitionTreePrior prior, XMLWriter writer) {
+		
+		TreePrior treePrior = prior.getNodeHeightPrior();
 		
 		if (treePrior == TreePrior.YULE || treePrior == TreePrior.BIRTH_DEATH) {
 			// generate a speciational process
@@ -291,22 +293,22 @@ public class TreePriorGenerator extends Generator {
 					new Attribute[]{
 							new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skyline"),
 							new Attribute.Default<String>("linear",
-									options.skylineModel == ModelOptions.LINEAR_SKYLINE ? "true" : "false")
+									prior.getSkylineModel() == ModelOptions.LINEAR_SKYLINE ? "true" : "false")
 					}
 			);
 
 			// write pop size socket
 			writer.writeOpenTag(BayesianSkylineLikelihood.POPULATION_SIZES);
-			if (options.skylineModel == ModelOptions.LINEAR_SKYLINE) {
-				writeParameter("skyline.popSize", options.skylineGroupCount + 1, writer);
+			if (prior.getSkylineModel() == ModelOptions.LINEAR_SKYLINE) {
+				writeParameter("skyline.popSize", prior.getSkylineGroupCount() + 1, writer);
 			} else {
-				writeParameter("skyline.popSize", options.skylineGroupCount, writer);
+				writeParameter("skyline.popSize", prior.getSkylineGroupCount(), writer);
 			}
 			writer.writeCloseTag(BayesianSkylineLikelihood.POPULATION_SIZES);
 
 			// write group size socket
 			writer.writeOpenTag(BayesianSkylineLikelihood.GROUP_SIZES);
-			writeParameter("skyline.groupSize", options.skylineGroupCount, writer);
+			writeParameter("skyline.groupSize", prior.getSkylineGroupCount(), writer);
 			writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
@@ -321,7 +323,7 @@ public class TreePriorGenerator extends Generator {
 					tagName,
 					new Attribute[]{
 							new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName),
-							new Attribute.Default<String>(VariableDemographicModel.TYPE, options.extendedSkylineModel),
+							new Attribute.Default<String>(VariableDemographicModel.TYPE, prior.getExtendedSkylineModel()),
                             // use midpoint by default (todo) would be nice to have a user 'tickable' option
                             new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
                     }
@@ -329,7 +331,7 @@ public class TreePriorGenerator extends Generator {
 
 			writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
 			final int nTax = options.taxonList.getTaxonCount();
-			final int nPops = nTax - (options.extendedSkylineModel.equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
+			final int nPops = nTax - (prior.getExtendedSkylineModel().equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
 			writeParameter(VariableDemographicModel.demoElementName + ".popSize", nPops, writer);
 			writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 
@@ -375,15 +377,16 @@ public class TreePriorGenerator extends Generator {
 			writer.writeCloseTag(ExponentialDistributionModel.MEAN);
 			writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 		} else if (treePrior == TreePrior.GMRF_SKYRIDE) {
-			writer.writeComment("Generate a GMRF Bayesian Skyride process");
+			writer.writeComment("Generate a GMRF Bayesian Skyride process");					
 			writer.writeOpenTag(
 					GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
 					new Attribute[]{
 							new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skyride"),
 							new Attribute.Default<String>(GMRFSkyrideLikelihood.TIME_AWARE_SMOOTHING,
-									options.skyrideSmoothing == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false"),
+									prior.getSkyrideSmoothing() == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false"),
                             new Attribute.Default<String>(GMRFSkyrideLikelihood.RANDOMIZE_TREE,
-                                    options.startingTreeType == StartingTreeType.UPGMA ? "true" : "false"),
+            //TODO For GMRF, tree model/tree prior combination not implemented by BEAST yet. The validation is in BeastGenerator.checkOptions()
+                            		prior.getTreeModel().getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
 					}
 			);
 
@@ -460,7 +463,9 @@ public class TreePriorGenerator extends Generator {
 	}
 
 	void writeParameterLog(PartitionTreePrior prior, XMLWriter writer) {
-
+		
+		setModelPrefix(prior.getPrefix());
+		
 		switch (prior.getNodeHeightPrior()) {
 
 			case CONSTANT:
@@ -541,7 +546,7 @@ public class TreePriorGenerator extends Generator {
 			writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
 
 			writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
-			writer.writeText(options.extendedSkylineModel);
+			writer.writeText(prior.getExtendedSkylineModel());
 			writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
 
 			writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
@@ -605,6 +610,9 @@ public class TreePriorGenerator extends Generator {
 	}
 
 	public void writeLikelihoodLog(PartitionTreePrior prior, XMLWriter writer) {
+		
+		setModelPrefix(prior.getPrefix());
+		
 		if (prior.getNodeHeightPrior() == TreePrior.YULE || prior.getNodeHeightPrior() == TreePrior.BIRTH_DEATH) {
 			writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
 		} else if (prior.getNodeHeightPrior() == TreePrior.SKYLINE) {

@@ -42,11 +42,11 @@ public class MCMCParser extends AbstractXMLObjectParser {
     }
 
     /**
-     * @return a tree object based on the XML element it was passed.
+     * @return an mcmc object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        MCMC mcmc = new MCMC("mcmc1");
+        MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
         MCMCOptions options = new MCMCOptions();
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
@@ -120,12 +120,14 @@ public class MCMCParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),
             AttributeRule.newIntegerRule(MIN_OPS_EVALUATIONS, true),
             AttributeRule.newBooleanRule(SPAWN, true),
+            AttributeRule.newStringRule(NAME, true),
             new ElementRule(OperatorSchedule.class),
             new ElementRule(Likelihood.class),
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE)
     };
 
     public static final String COERCION = "autoOptimize";
+    public static final String NAME = "name";
     public static final String PRE_BURNIN = "preBurnin";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";

@@ -237,7 +237,7 @@ public class MCMC implements Runnable, Identifiable {
             if (showOperatorAnalysis) {
                 showOperatorAnalysis(System.out);
                 try {
-                    FileOutputStream out = new FileOutputStream("beast.operators");
+                    FileOutputStream out = new FileOutputStream(id + ".operators");
                     showOperatorAnalysis(new PrintStream(out));
                     out.flush();
                     out.close();

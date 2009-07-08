@@ -35,7 +35,7 @@ import dr.util.Version;
  * 1. the dr source has been checked out *by tag* before being packaged for
  * distribution.
  *
- * Version last changed 2007/07/31 by AER
+ * Version last changed 2009/07/08 by AER
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -46,14 +46,14 @@ public class BeastVersion implements Version {
 	/**
 	 * Version string: assumed to be in format x.x.x
 	 */
-	private static String VERSION = "1.5beta3";
+	private static String VERSION = "1.5beta4";
 	private static String DATE_STRING = "2002-2009";
 
 	/**
      * this used to parse the CVS ID string but there is no equivalent
      * for SVN. We must increment this manually.
 	 */
-	private static String BUILD_ID = "Build r1412";
+	private static String BUILD_ID = "Build r1831";
 
 	public String getVersionString() {
 		return "v" + VERSION;

@@ -4,7 +4,10 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
@@ -249,6 +252,27 @@ public abstract class Generator {
                 component.generateAtInsertionPoint(ip, item, writer);
             }
         }
+    }
+    
+    protected int[] validateClockTreeModelCombination(PartitionTreeModel model) {
+    	int autocorrelatedClockCount = 0;
+        int randomLocalClockCount = 0;
+        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
+        	PartitionClockModel clockModel = pd.getPartitionClockModel();
+        	switch (clockModel.getClockType()) {
+	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
+	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
+        	}
+        }
+        
+        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
+        	//FAIL
+            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
+        }
+        
+        int[] count = {autocorrelatedClockCount, randomLocalClockCount};
+        
+        return count;
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();

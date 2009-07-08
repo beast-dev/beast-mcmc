@@ -80,7 +80,7 @@ public class BeautiTesterConfig {
         beautiOptions.datesUnits = BeautiOptions.YEARS;
         beautiOptions.datesDirection = BeautiOptions.FORWARDS;
 
-        beautiOptions.startingTreeType = StartingTreeType.RANDOM;
+//        beautiOptions.startingTreeType = StartingTreeType.RANDOM;
 //        beautiOptions.fixedTree = false;
 
         beautiOptions.performTraceAnalysis = false;
@@ -224,22 +224,22 @@ public class BeautiTesterConfig {
 //        buildClockModels(key + "+XG", beautiOptions);
 //
 //        beautiOptions.nodeHeightPrior = TreePrior.SKYLINE;
-        beautiOptions.skylineGroupCount = 3;
-        beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
-        buildClockModels(key + "+SKC", beautiOptions);
-
-        beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
-        buildClockModels(key + "+SKL", beautiOptions);
+//        beautiOptions.skylineGroupCount = 3;
+//        beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
+//        buildClockModels(key + "+SKC", beautiOptions);
+//
+//        beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
+//        buildClockModels(key + "+SKL", beautiOptions);
 
     }
 
     public void buildClockModels(String key, BeautiOptions beautiOptions) {
-        beautiOptions.clockType = ClockType.STRICT_CLOCK;
-        generate(key + "+CLOC", beautiOptions);
-        beautiOptions.clockType = ClockType.UNCORRELATED_EXPONENTIAL;
-        generate(key + "+UCED", beautiOptions);
-        beautiOptions.clockType = ClockType.UNCORRELATED_LOGNORMAL;
-        generate(key + "+UCLD", beautiOptions);
+//        beautiOptions.clockType = ClockType.STRICT_CLOCK;
+//        generate(key + "+CLOC", beautiOptions);
+//        beautiOptions.clockType = ClockType.UNCORRELATED_EXPONENTIAL;
+//        generate(key + "+UCED", beautiOptions);
+//        beautiOptions.clockType = ClockType.UNCORRELATED_LOGNORMAL;
+//        generate(key + "+UCLD", beautiOptions);
     }
 
     public void generate(String name, BeautiOptions beautiOptions) {

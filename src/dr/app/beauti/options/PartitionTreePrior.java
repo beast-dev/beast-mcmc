@@ -3,6 +3,7 @@ package dr.app.beauti.options;
 import java.util.List;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
 
 /**
@@ -15,7 +16,8 @@ public class PartitionTreePrior extends ModelOptions {
     // Instance variables
 
     private final BeautiOptions options;        
-    private String name;
+    
+	private String name;
     
     private PartitionTreeModel treeModel;
     
@@ -27,12 +29,11 @@ public class PartitionTreePrior extends ModelOptions {
     // AR - this seems to be set to taxonCount - 1 so we don't need to
     // have a settable variable...
     // public int skyrideIntervalCount = 1;
-//    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
+    private String extendedSkylineModel = VariableDemographicModel.LINEAR;
     private boolean multiLoci = false;
     private double birthDeathSamplingProportion = 1.0;
     private boolean fixedTree = false;
-    
-    
+        
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
     	this.options = options;
 		this.name = treeModel.getName();
@@ -368,6 +369,18 @@ public class PartitionTreePrior extends ModelOptions {
 
 	public void setFixedTree(boolean fixedTree) {
 		this.fixedTree = fixedTree;
+	}
+
+	public void setExtendedSkylineModel(String extendedSkylineModel) {
+		this.extendedSkylineModel = extendedSkylineModel;
+	}
+
+	public String getExtendedSkylineModel() {
+		return extendedSkylineModel;
+	}
+	
+	public BeautiOptions getOptions() {
+		return options;
 	}
 
 }

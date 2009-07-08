@@ -154,12 +154,12 @@ public class BeautiOptions extends ModelOptions {
 
 //        nodeHeightPrior = TreePrior.CONSTANT;
 //        parameterization = GROWTH_RATE;
-        skylineGroupCount = 10;
-        skylineModel = CONSTANT_SKYLINE;
-        skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
-        extendedSkylineModel = VariableDemographicModel.LINEAR;
-        multiLoci = false;
-        birthDeathSamplingProportion = 1.0;
+//        skylineGroupCount = 10;
+//        skylineModel = CONSTANT_SKYLINE;
+//        skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
+//        extendedSkylineModel = VariableDemographicModel.LINEAR;
+//        multiLoci = false;
+//        birthDeathSamplingProportion = 1.0;
 //        fixedTree = false;
 
         units = Units.Type.SUBSTITUTIONS;
@@ -179,8 +179,8 @@ public class BeautiOptions extends ModelOptions {
         generateCSV = true;  // until/if a button
         samplePriorOnly = false;
 
-        localClockRateChangesStatistic = null;
-        localClockRatesStatistic = null;
+//        localClockRateChangesStatistic = null;
+//        localClockRatesStatistic = null;
         
 //        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
 //        	model.localClockRateChangesStatistic = null;
@@ -1355,7 +1355,7 @@ public class BeautiOptions extends ModelOptions {
     		return null;
     	}
     }
-   
+       
     public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
     public String treeFileName = null;
@@ -1410,23 +1410,23 @@ public class BeautiOptions extends ModelOptions {
     public boolean unlinkPartitionRates = true;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
-    public ClockType clockType = ClockType.STRICT_CLOCK; 
+//    public ClockType clockType = ClockType.STRICT_CLOCK; 
     
 //    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
 //    public int parameterization = GROWTH_RATE;
-    public int skylineGroupCount = 10;
-    public int skylineModel = CONSTANT_SKYLINE;
-    public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
+//    public int skylineGroupCount = 10;
+//    public int skylineModel = CONSTANT_SKYLINE;
+//    public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
     // AR - this seems to be set to taxonCount - 1 so we don't need to
     // have a settable variable...
     // public int skyrideIntervalCount = 1;
-    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
-    public boolean multiLoci = false;
-    public double birthDeathSamplingProportion = 1.0;
+//    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
+//    public boolean multiLoci = false;
+//    public double birthDeathSamplingProportion = 1.0;
 //    public boolean fixedTree = false;
 
-    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
-    public Tree userStartingTree = null;    
+//    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+//    public Tree userStartingTree = null;    
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
@@ -1442,7 +1442,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
-    public Parameter localClockRateChangesStatistic = null;
-    public Parameter localClockRatesStatistic = null;
+//    public Parameter localClockRateChangesStatistic = null;
+//    public Parameter localClockRatesStatistic = null;
 
 }

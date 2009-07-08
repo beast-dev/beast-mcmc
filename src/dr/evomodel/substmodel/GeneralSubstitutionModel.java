@@ -25,9 +25,11 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -38,173 +40,209 @@ import dr.xml.*;
  * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
  */
 public class GeneralSubstitutionModel extends AbstractSubstitutionModel
-		implements dr.util.XHTMLable {
+        implements dr.util.XHTMLable {
 
-	public static final String GENERAL_SUBSTITUTION_MODEL = "generalSubstitutionModel";
-	public static final String DATA_TYPE = "dataType";
-	public static final String RATES = "rates";
-	public static final String RELATIVE_TO = "relativeTo";
-	public static final String FREQUENCIES = "frequencies";
+    public static final String GENERAL_SUBSTITUTION_MODEL = "generalSubstitutionModel";
+    public static final String DATA_TYPE = "dataType";
+    public static final String RATES = "rates";
+    public static final String RELATIVE_TO = "relativeTo";
+    public static final String FREQUENCIES = "frequencies";
 
-	/**
-	 * the rate which the others are set relative to
-	 */
-	protected int ratesRelativeTo;
+    /**
+     * the rate which the others are set relative to
+     */
+    protected int ratesRelativeTo;
 
-	/**
-	 * constructor
-	 *
-	 * @param dataType the data type
-	 */
-	public GeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
+    /**
+     * constructor
+     *
+     * @param dataType   the data type
+     * @param freqModel  the equilibrium frequency model - this must match the data type
+     * @param parameter  the rates parameter, minus the rate that they are specified relative to
+     * @param relativeTo the index of the rate that all other are specified relative to
+     */
+    public GeneralSubstitutionModel(
+            DataType dataType,
+            FrequencyModel freqModel,
+            Parameter parameter,
+            int relativeTo) {
 
-		super(GENERAL_SUBSTITUTION_MODEL, dataType, freqModel);
+        super(GENERAL_SUBSTITUTION_MODEL, dataType, freqModel);
 
-		ratesParameter = parameter;
-		if (ratesParameter != null) {
-			addParameter(ratesParameter);
-			ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
-		}
-		setRatesRelativeTo(relativeTo);
-	}
+        ratesParameter = parameter;
+        if (ratesParameter != null) {
+            addParameter(ratesParameter);
+            ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
+        }
+        setRatesRelativeTo(relativeTo);
+    }
 
-	/**
-	 * constructor
-	 *
-	 * @param dataType the data type
-	 */
-	protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
+    /**
+     * constructor
+     *
+     * @param name       a name to give the substitution model
+     * @param dataType   the data type
+     * @param freqModel  the equilibrium frequency model - this must match the data type
+     * @param relativeTo the index of the rate that all other are specified relative to
+     */
+    protected GeneralSubstitutionModel(
+            String name,
+            DataType dataType,
+            FrequencyModel freqModel,
+            int relativeTo) {
 
-		super(name, dataType, freqModel);
+        super(name, dataType, freqModel);
 
-		setRatesRelativeTo(relativeTo);
-	}
+        setRatesRelativeTo(relativeTo);
+    }
 
-	protected void frequenciesChanged() {
-		// Nothing to precalculate
-	}
+    protected void frequenciesChanged() {
+        // Nothing to precalculate
+    }
 
-	protected void ratesChanged() {
-		// Nothing to precalculate
-	}
+    protected void ratesChanged() {
+        // Nothing to precalculate
+    }
 
-	protected void setupRelativeRates() {
+    protected void setupRelativeRates() {
 
-		for (int i = 0; i < relativeRates.length; i++) {
-			if (i == ratesRelativeTo) {
-				relativeRates[i] = 1.0;
-			} else if (i < ratesRelativeTo) {
-				relativeRates[i] = ratesParameter.getParameterValue(i);
-			} else {
-				relativeRates[i] = ratesParameter.getParameterValue(i - 1);
-			}
-		}
-	}
+        for (int i = 0; i < relativeRates.length; i++) {
+            if (i == ratesRelativeTo) {
+                relativeRates[i] = 1.0;
+            } else if (i < ratesRelativeTo) {
+                relativeRates[i] = ratesParameter.getParameterValue(i);
+            } else {
+                relativeRates[i] = ratesParameter.getParameterValue(i - 1);
+            }
+        }
+    }
 
-	/**
-	 * set which rate the others are relative to
-	 */
-	public void setRatesRelativeTo(int ratesRelativeTo) {
-		this.ratesRelativeTo = ratesRelativeTo;
-	}
+    /**
+     * set which rate the others are relative to
+     *
+     * @param ratesRelativeTo the index of the rate in the matrix that all other
+     *                        rates are parameterized relative to.
+     */
+    public void setRatesRelativeTo(int ratesRelativeTo) {
+        this.ratesRelativeTo = ratesRelativeTo;
+    }
 
-	// *****************************************************************
-	// Interface Model
-	// *****************************************************************
+    // *****************************************************************
+    // Interface Model
+    // *****************************************************************
 
 
-	protected void storeState() {
-	} // nothing to do
+    protected void storeState() {
+    } // nothing to do
 
-	/**
-	 * Restore the additional stored state
-	 */
-	protected void restoreState() {
-		updateMatrix = true;
-	}
+    /**
+     * Restore the additional stored state
+     */
+    protected void restoreState() {
+        updateMatrix = true;
+    }
 
-	protected void acceptState() {
-	} // nothing to do
+    protected void acceptState() {
+    } // nothing to do
 
-	// **************************************************************
-	// XHTMLable IMPLEMENTATION
-	// **************************************************************
+    // **************************************************************
+    // XHTMLable IMPLEMENTATION
+    // **************************************************************
 
-	public String toXHTML() {
-		StringBuffer buffer = new StringBuffer();
+    public String toXHTML() {
+        StringBuffer buffer = new StringBuffer();
 
-		buffer.append("<em>General Model</em>");
+        buffer.append("<em>General Model</em>");
 
-		return buffer.toString();
-	}
+        return buffer.toString();
+    }
 
-	/**
-	 * Parses an element from an DOM document into a DemographicModel. Recognises
-	 * ConstantPopulation and ExponentialGrowth.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    /**
+     * Parses an element from an DOM document into a DemographicModel. Recognises
+     * ConstantPopulation and ExponentialGrowth.
+     */
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserName() {
-			return GENERAL_SUBSTITUTION_MODEL;
-		}
+        public String getParserName() {
+            return GENERAL_SUBSTITUTION_MODEL;
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Parameter ratesParameter;
+            Parameter ratesParameter;
 
-			XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
-			FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+            XMLObject cxo = xo.getChild(FREQUENCIES);
+            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-			DataType dataType = freqModel.getDataType();
+            DataType dataType = freqModel.getDataType();
 
-			cxo = (XMLObject) xo.getChild(RATES);
+            cxo = xo.getChild(RATES);
 
-			int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
-			if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
+            int states = dataType.getStateCount();
 
-			ratesParameter = (Parameter) cxo.getChild(Parameter.class);
+            Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-			int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
+            int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
+            if (relativeTo < 0) {
+                throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
+            } else {
+                int t = relativeTo;
+                int s = states - 1;
+                int row = 0;
+                while (t >= s) {
+                    t -= s;
+                    s -= 1;
+                    row += 1;
+                }
+                int col = t + row + 1;
 
-			if (ratesParameter == null) {
+                Logger.getLogger("dr.evomodel").info("  Rates relative to "
+                        + dataType.getCode(row) + "<->" + dataType.getCode(col));
+            }
 
-				if (rateCount == 1) {
-					// simplest model for binary traits...
-				} else {
-					throw new XMLParseException("No rates parameter found in " + getParserName());
-				}
-			} else if (ratesParameter.getDimension() != rateCount - 1) {
-				throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions.");
-			}
+            ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
-			return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
-		}
+            int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
 
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
+            if (ratesParameter == null) {
 
-		public String getParserDescription() {
-			return "A general reversible model of sequence substitution for any data type.";
-		}
+                if (rateCount == 1) {
+                    // simplest model for binary traits...
+                } else {
+                    throw new XMLParseException("No rates parameter found in " + getParserName());
+                }
+            } else if (ratesParameter.getDimension() != rateCount - 1) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions.");
+            }
 
-		public Class getReturnType() {
-			return SubstitutionModel.class;
-		}
+            return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-		private final XMLSyntaxRule[] rules = {
-				new ElementRule(FREQUENCIES, FrequencyModel.class),
-				new ElementRule(RATES,
-						new XMLSyntaxRule[]{
-								AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
-								new ElementRule(Parameter.class, true)}
-				)
-		};
-	};
+        public String getParserDescription() {
+            return "A general reversible model of sequence substitution for any data type.";
+        }
 
-	protected Parameter ratesParameter = null;
+        public Class getReturnType() {
+            return SubstitutionModel.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(FREQUENCIES, FrequencyModel.class),
+                new ElementRule(RATES,
+                        new XMLSyntaxRule[]{
+                                AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0) that all other rates are relative to. In DNA this is usually G<->T (6)"),
+                                new ElementRule(Parameter.class, true)}
+                )
+        };
+    };
+
+    protected Parameter ratesParameter = null;
 }

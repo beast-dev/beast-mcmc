@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.evomodel.tree.RateStatistic;
 
 /**
  * @author Andrew Rambaut
@@ -77,16 +78,29 @@ public class PartitionClockModel extends ModelOptions {
         createScaleOperator("branchRates.var", demoTuning, rateWeights);
         
         for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) { // borrow the method in BeautiOption        	
-            createOperator("upDownRateHeights", "Substitution rate and heights",
+            createOperator(tree.getPrefix() + "upDownRateHeights", "Substitution rate and heights",
                     "Scales substitution rates inversely to node heights of the tree", super.getParameter("clock.rate"),
                     tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-            createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
+            createOperator(tree.getPrefix() + "upDownUCEDMeanHeights", "UCED mean and heights",
                     "Scales UCED mean inversely to node heights of the tree", super.getParameter(ClockType.UCED_MEAN),
                     tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-            createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
+            createOperator(tree.getPrefix() + "upDownUCLDMeanHeights", "UCLD mean and heights",
                     "Scales UCLD mean inversely to node heights of the tree", super.getParameter(ClockType.UCLD_MEAN),
                     tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-        }        
+            
+            // #meanRate = #Relaxed Clock Model * #Tree Model
+            createStatistic(tree.getPrefix() + "meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+            // #covariance = #Relaxed Clock Model * #Tree Model
+            createStatistic(tree.getPrefix() + "covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages",
+                    Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            
+        } 
+        
+        // These are statistics which could have priors on...        
+        // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
+        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
+                0.0, Double.POSITIVE_INFINITY);
+        
     }
     
 	/**
@@ -139,22 +153,16 @@ public class PartitionClockModel extends ModelOptions {
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
             }
-
-            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-				rateParam = getParameter("clock.rate");
-				if (!fixed) params.add(rateParam);
-			} else {
-				if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-					rateParam = getParameter("uced.mean");
-					if (!fixed) params.add(rateParam);
-				} else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-					rateParam = getParameter("ucld.mean");
-					if (!fixed) params.add(rateParam);
-					params.add(getParameter("ucld.stdev"));
-				} else {
-					throw new IllegalArgumentException("Unknown clock model");
-				}
-			}*/            
+            
+            // Statistics
+            if (clockType != ClockType.STRICT_CLOCK) {
+            	for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
+		            params.add(tree.getParameter("meanRate"));
+		            params.add(tree.getParameter("covariance"));
+            	}
+            	
+            	params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));	            
+	        }
         }        
     }
 

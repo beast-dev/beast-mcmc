@@ -88,7 +88,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private boolean settingOptions = false;
 //    boolean hasAlignment = false;        
     
-    private JCheckBox shareSameTreePriorCheck = new JCheckBox("Share the same tree prior");
+    public JCheckBox shareSameTreePriorCheck = new JCheckBox("Share the same tree prior");
     
     JPanel treeModelPanelParent;
 //    private OptionsPanel currentTreeModel = new OptionsPanel();
@@ -185,8 +185,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         shareSameTreePriorCheck.setSelected(true);
         shareSameTreePriorCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
-            	fireShareSameTreePriorChanged();
+            	updateShareSameTreePriorChanged ();
             }
         });
         panel3.add(shareSameTreePriorCheck);
@@ -202,7 +201,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         comp = new SequenceErrorModelComponentOptions ();
     }
     
-    public void fireShareSameTreePriorChanged () {
+    public void updateShareSameTreePriorChanged () {
+    	options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
+    	fireShareSameTreePriorChanged ();
+    }
+    
+    private void fireShareSameTreePriorChanged () {
     	shareSameTreePriorCheck.setSelected(options.shareSameTreePrior);
     	if (options.shareSameTreePrior) {
     		options.activedSameTreePrior = currentTreePrior;
@@ -333,7 +337,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             
             PartitionTreePriorPanel panel1 = treePriorPanels.get(prior);
             if (panel1 == null) {
-                panel1 = new PartitionTreePriorPanel(prior);
+                panel1 = new PartitionTreePriorPanel(prior, this);
                 treePriorPanels.put(prior, panel1);
             }
 

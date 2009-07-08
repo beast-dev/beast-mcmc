@@ -71,22 +71,26 @@ public class TreeModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-        int randomLocalClockCount = 0;
-        int autocorrelatedClockCount = 0;
-        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
-        	PartitionClockModel clockModel = pd.getPartitionClockModel();
-        	switch (clockModel.getClockType()) {
-	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
-	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
-        	}
-        }
+//        int randomLocalClockCount = 0;
+//        int autocorrelatedClockCount = 0;
+//        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
+//        	PartitionClockModel clockModel = pd.getPartitionClockModel();
+//        	switch (clockModel.getClockType()) {
+//	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
+//	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
+//        	}
+//        }
+//        
+//        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
+//        	//FAIL
+//            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
+//        } 
+        // move to validateClockTreeModelCombination(PartitionTreeModel model)
         
-        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
-        	//FAIL
-            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
-        }
-
-    	if (autocorrelatedClockCount == 1) {
+        int[] count = validateClockTreeModelCombination(model);
+        
+//    	if (autocorrelatedClockCount == 1) {
+        if (count[0] == 1) {
                 writer.writeOpenTag(TreeModelParser.NODE_RATES,
                         new Attribute[]{
                                 new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
@@ -107,7 +111,8 @@ public class TreeModelGenerator extends Generator {
                         new Attribute.Default<String>(XMLParser.ID,
                                 treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
                 writer.writeCloseTag(TreeModelParser.NODE_RATES);
-    	} else if (randomLocalClockCount == 1 ) {
+//    	} else if (randomLocalClockCount == 1 ) {
+        } else if (count[1] == 1 ) {
                 writer.writeOpenTag(TreeModelParser.NODE_RATES,
                         new Attribute[]{
                                 new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
@@ -133,7 +138,8 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeCloseTag(TreeModel.TREE_MODEL);
 
-        if (autocorrelatedClockCount == 1) {
+//        if (autocorrelatedClockCount == 1) {
+        if (count[0] == 1) {
             writer.writeText("");
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});

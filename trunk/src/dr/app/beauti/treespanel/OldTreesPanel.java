@@ -359,13 +359,13 @@ public class OldTreesPanel extends BeautiPanel {
 //        //samplingProportionField.setValue(options.birthDeathSamplingProportion);
 //
 //        parameterizationCombo.setSelectedIndex(options.parameterization);
-        bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
-
-        extendedBayesianSkylineCombo.setSelectedIndex(options.multiLoci ? 1 : 0);
-
-        gmrfBayesianSkyrideCombo.setSelectedIndex(options.skyrideSmoothing);
-
-        startingTreeCombo.setSelectedItem(options.startingTreeType);
+//        bayesianSkylineCombo.setSelectedIndex(options.skylineModel);
+//
+//        extendedBayesianSkylineCombo.setSelectedIndex(options.multiLoci ? 1 : 0);
+//
+//        gmrfBayesianSkyrideCombo.setSelectedIndex(options.skyrideSmoothing);
+//
+//        startingTreeCombo.setSelectedItem(options.startingTreeType);
 
         userTreeCombo.removeAllItems();
         if (options.userTrees.size() == 0) {
@@ -406,15 +406,15 @@ public class OldTreesPanel extends BeautiPanel {
 //        }
 //
 //        options.parameterization = parameterizationCombo.getSelectedIndex();
-        options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
-        options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
-
-        options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
-        // the taxon list may not exist yet... this should be set when generating...
-//        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
-
-        options.startingTreeType = (StartingTreeType) startingTreeCombo.getSelectedItem();
-        options.userStartingTree = getSelectedUserTree();
+//        options.skylineModel = bayesianSkylineCombo.getSelectedIndex();
+//        options.multiLoci = extendedBayesianSkylineCombo.getSelectedIndex() == 1;
+//
+//        options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
+//        // the taxon list may not exist yet... this should be set when generating...
+////        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
+//
+//        options.startingTreeType = (StartingTreeType) startingTreeCombo.getSelectedItem();
+//        options.userStartingTree = getSelectedUserTree();
     }
 
     private Tree getSelectedUserTree() {

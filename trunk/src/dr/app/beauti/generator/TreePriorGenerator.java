@@ -76,7 +76,7 @@ public class TreePriorGenerator extends Generator {
 			);
 
 			writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-			writeParameter("constant.popSize", options, writer);
+			writeParameter("constant.popSize", prior, writer);
 			writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
 			writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
 
@@ -95,18 +95,18 @@ public class TreePriorGenerator extends Generator {
 
 			// write pop size socket
 			writer.writeOpenTag(ExponentialGrowthModel.POPULATION_SIZE);
-			writeParameter("exponential.popSize", options, writer);
+			writeParameter("exponential.popSize", prior, writer);
 			writer.writeCloseTag(ExponentialGrowthModel.POPULATION_SIZE);
 
 			if (parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
 				writer.writeOpenTag(ExponentialGrowthModel.GROWTH_RATE);
-				writeParameter("exponential.growthRate", options, writer);
+				writeParameter("exponential.growthRate", prior, writer);
 				writer.writeCloseTag(ExponentialGrowthModel.GROWTH_RATE);
 			} else {
 				// write doubling time socket
 				writer.writeOpenTag(ExponentialGrowthModel.DOUBLING_TIME);
-				writeParameter("exponential.doublingTime", options, writer);
+				writeParameter("exponential.doublingTime", prior, writer);
 				writer.writeCloseTag(ExponentialGrowthModel.DOUBLING_TIME);
 			}
 
@@ -126,24 +126,24 @@ public class TreePriorGenerator extends Generator {
 
 			// write pop size socket
 			writer.writeOpenTag(LogisticGrowthModel.POPULATION_SIZE);
-			writeParameter("logistic.popSize", options, writer);
+			writeParameter("logistic.popSize", prior, writer);
 			writer.writeCloseTag(LogisticGrowthModel.POPULATION_SIZE);
 
 			if (parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
 				writer.writeOpenTag(LogisticGrowthModel.GROWTH_RATE);
-				writeParameter("logistic.growthRate", options, writer);
+				writeParameter("logistic.growthRate", prior, writer);
 				writer.writeCloseTag(LogisticGrowthModel.GROWTH_RATE);
 			} else {
 				// write doubling time socket
 				writer.writeOpenTag(LogisticGrowthModel.DOUBLING_TIME);
-				writeParameter("logistic.doublingTime", options, writer);
+				writeParameter("logistic.doublingTime", prior, writer);
 				writer.writeCloseTag(LogisticGrowthModel.DOUBLING_TIME);
 			}
 
 			// write logistic t50 socket
 			writer.writeOpenTag(LogisticGrowthModel.TIME_50);
-			writeParameter("logistic.t50", options, writer);
+			writeParameter("logistic.t50", prior, writer);
 			writer.writeCloseTag(LogisticGrowthModel.TIME_50);
 
 			writer.writeCloseTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL);
@@ -164,19 +164,19 @@ public class TreePriorGenerator extends Generator {
 			);
 
 			// write pop size socket
-			writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", options, writer);
+			writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", prior, writer);
 
 			if (parameterization == ModelOptions.GROWTH_RATE) {
 				// write growth rate socket
-				writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", options, writer);
+				writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", prior, writer);
 			} else {
 				// write doubling time socket
-				writeParameter(ExpansionModel.DOUBLING_TIME, "expansion.doublingTime", options, writer);
+				writeParameter(ExpansionModel.DOUBLING_TIME, "expansion.doublingTime", prior, writer);
 			}
 
 			// write ancestral proportion socket
 			writeParameter(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION,
-					"expansion.ancestralProportion", options, writer);
+					"expansion.ancestralProportion", prior, writer);
 
 			writer.writeCloseTag(ExpansionModel.EXPANSION_MODEL);
 
@@ -193,7 +193,7 @@ public class TreePriorGenerator extends Generator {
 					}
 			);
 
-			writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", options, writer);
+			writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", prior, writer);
 			writer.writeCloseTag(YuleModel.YULE_MODEL);
 		} else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
 			writer.writeComment("A prior on the distribution node heights defined given");
@@ -206,8 +206,8 @@ public class TreePriorGenerator extends Generator {
 					}
 			);
 
-			writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, modelPrefix + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, options, writer);
-			writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, modelPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, options, writer);
+			writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, modelPrefix + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, prior, writer);
+			writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, modelPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
 			writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
 		} else if (nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || nodeHeightPrior == TreePrior.SPECIES_YULE) {
 			
@@ -222,7 +222,7 @@ public class TreePriorGenerator extends Generator {
 				);
 
 				writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
-				writeParameter("constant.popSize", options, writer);
+				writeParameter("constant.popSize", prior, writer);
 				writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
 				writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
 		}
@@ -300,15 +300,15 @@ public class TreePriorGenerator extends Generator {
 			// write pop size socket
 			writer.writeOpenTag(BayesianSkylineLikelihood.POPULATION_SIZES);
 			if (prior.getSkylineModel() == ModelOptions.LINEAR_SKYLINE) {
-				writeParameter("skyline.popSize", prior.getSkylineGroupCount() + 1, writer);
+				writeParameter(prior.getParameter("skyline.popSize"), prior.getSkylineGroupCount() + 1, writer);
 			} else {
-				writeParameter("skyline.popSize", prior.getSkylineGroupCount(), writer);
+				writeParameter(prior.getParameter("skyline.popSize"), prior.getSkylineGroupCount(), writer);
 			}
 			writer.writeCloseTag(BayesianSkylineLikelihood.POPULATION_SIZES);
 
 			// write group size socket
 			writer.writeOpenTag(BayesianSkylineLikelihood.GROUP_SIZES);
-			writeParameter("skyline.groupSize", prior.getSkylineGroupCount(), writer);
+			writeParameter(prior.getParameter("skyline.groupSize"), prior.getSkylineGroupCount(), writer);
 			writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
@@ -332,11 +332,11 @@ public class TreePriorGenerator extends Generator {
 			writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
 			final int nTax = options.taxonList.getTaxonCount();
 			final int nPops = nTax - (prior.getExtendedSkylineModel().equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
-			writeParameter(VariableDemographicModel.demoElementName + ".popSize", nPops, writer);
+			writeParameter(prior.getParameter(VariableDemographicModel.demoElementName + ".popSize"), nPops, writer);
 			writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 
 			writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-			writeParameter(VariableDemographicModel.demoElementName + ".indicators", nPops - 1, writer);
+			writeParameter(prior.getParameter(VariableDemographicModel.demoElementName + ".indicators"), nPops - 1, writer);
 			writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
 
 			writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
@@ -392,15 +392,15 @@ public class TreePriorGenerator extends Generator {
 
             int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 			writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
-			writeParameter("skyride.popSize", skyrideIntervalCount, writer);
+			writeParameter(prior.getParameter("skyride.popSize"), skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.GROUP_SIZES);
-			writeParameter("skyride.groupSize", skyrideIntervalCount, writer);
+			writeParameter(prior.getParameter("skyride.groupSize"), skyrideIntervalCount, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.GROUP_SIZES);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
-			writeParameter("skyride.precision", 1, writer);
+			writeParameter(prior.getParameter("skyride.precision"), 1, writer);
 			writer.writeCloseTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
 
 			writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_TREE);

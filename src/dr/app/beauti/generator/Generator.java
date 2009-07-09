@@ -4,6 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
@@ -72,10 +73,10 @@ public abstract class Generator {
      * @param id    the id
      * @param value the value
      */
-    public void fixParameter(String id, double value) {
-        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+    public void fixParameter(Parameter parameter, double value) {
+//        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
-            throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
+            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
         }
         parameter.isFixed = true;
         parameter.initial = value;
@@ -90,7 +91,7 @@ public abstract class Generator {
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
-        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + id);
+        writer.writeIDref(ParameterParser.PARAMETER, id);
         writer.writeCloseTag(wrapperName);
     }
 
@@ -124,8 +125,9 @@ public abstract class Generator {
      * @param writer the writer
      */
     public void writeParameter(String wrapperName, String id, int dimension, XMLWriter writer) {
+    	dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         writer.writeOpenTag(wrapperName);
-        writeParameter(id, dimension, writer);
+        writeParameter(parameter, dimension, writer);
         writer.writeCloseTag(wrapperName);
     }
 
@@ -148,18 +150,18 @@ public abstract class Generator {
      * @param dimension the dimension
      * @param writer    the writer
      */
-    public void writeParameter(String id, int dimension, XMLWriter writer) {
-        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+    public void writeParameter(Parameter parameter, int dimension, XMLWriter writer) {
+//        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
-            throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
+            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
         }
         if (parameter.isFixed) {
-            writeParameter(id, dimension, parameter.initial, Double.NaN, Double.NaN, writer);
+            writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
         } else
         if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-            writeParameter(id, dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+            writeParameter(parameter.getName(), dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
         } else {
-            writeParameter(id, dimension, parameter.initial, parameter.lower, parameter.upper, writer);
+            writeParameter(parameter.getName(), dimension, parameter.initial, parameter.lower, parameter.upper, writer);
         }
     }
 

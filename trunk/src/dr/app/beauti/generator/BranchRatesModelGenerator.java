@@ -1,13 +1,31 @@
+/*
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.generator;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.*;
+import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -30,21 +48,21 @@ import dr.xml.XMLParser;
 public class BranchRatesModelGenerator extends Generator {
 
     public BranchRatesModelGenerator(BeautiOptions options, ComponentFactory[] components) {
-        super(options, components);       
+        super(options, components);
     }
- 
+
     /**
      * Write the relaxed clock branch rates block.
-     * @param model 
-     * @param tree 
      *
+     * @param model
+     * @param tree
      * @param writer the writer
      */
     public void writeBranchRatesModel(PartitionClockModel model, PartitionTreeModel tree, XMLWriter writer) {
-    	
-    	setModelPrefix(model.getPrefix());
-    	String treePrefix = tree.getPrefix();
-    	
+
+        setModelPrefix(model.getPrefix());
+        String treePrefix = tree.getPrefix();
+
         Attribute[] attributes;
         int categoryCount = 0;
 
@@ -106,13 +124,13 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeCloseTag("distribution");
                 writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 if (options.allowDifferentTaxa) {
-                	for (PartitionData dataPartition : options.dataPartitions) {
-                		if (dataPartition.getPartitionClockModel().equals(model)) { // TODO check this with Joseph
-                			categoryCount = (dataPartition.getNumOfTaxa() - 1) * 2;
-                		}
-                	}
+                    for (PartitionData dataPartition : options.dataPartitions) {
+                        if (dataPartition.getPartitionClockModel().equals(model)) { // TODO check this with Joseph
+                            categoryCount = (dataPartition.getTaxaCount() - 1) * 2;
+                        }
+                    }
                 } else {
-                	categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
+                    categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
                 }
                 writeParameter(tree.getParameter("branchRates.categories"), categoryCount, writer);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);

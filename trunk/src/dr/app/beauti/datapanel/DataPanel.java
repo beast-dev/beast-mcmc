@@ -1,7 +1,5 @@
 /*
- * DataPanel.java
- *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +10,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,9 +23,11 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.*;
-import dr.app.beauti.*;
+import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import org.virion.jam.framework.Exportable;
@@ -42,7 +42,9 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -61,15 +63,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkModelsAction unlinkModelsAction = new UnlinkModelsAction();
     LinkModelsAction linkModelsAction = new LinkModelsAction();
-    
+
     UnlinkClocksAction unlinkClocksAction = new UnlinkClocksAction();
     LinkClocksAction linkClocksAction = new LinkClocksAction();
 
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
-    
+
     JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
-    
+
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
     SelectTreeDialog selectTreeDialog = null;
@@ -94,17 +96,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
-    	col = dataTable.getColumnModel().getColumn(5);
+        col = dataTable.getColumnModel().getColumn(5);
         comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
-        
-        if (ALLOW_UNLINKED_TREES) {        	
+
+        if (ALLOW_UNLINKED_TREES) {
             col = dataTable.getColumnModel().getColumn(7);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             col.setCellRenderer(comboBoxRenderer);
-            
+
             col = dataTable.getColumnModel().getColumn(8);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
@@ -141,7 +143,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         if (ALLOW_UNLINKED_TREES) {
-        	toolBar1.addSeparator();
+            toolBar1.addSeparator();
 
             button = new JButton(unlinkClocksAction);
             unlinkClocksAction.setEnabled(false);
@@ -152,7 +154,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkClocksAction.setEnabled(false);
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
-            
+
             toolBar1.addSeparator();
 
             button = new JButton(unlinkTreesAction);
@@ -193,10 +195,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void uncheckAllowDifferentTaxa() {
-    	allowDifferentTaxaCheck.setSelected(false);
-    	options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+        allowDifferentTaxaCheck.setSelected(false);
+        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
     }
-    
+
     private void fireDataChanged() {
         frame.setDirty();
     }
@@ -205,30 +207,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(6);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
-        
+
         modelArray = PloidyType.values();
-    	col = dataTable.getColumnModel().getColumn(5);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));   
-        
+        col = dataTable.getColumnModel().getColumn(5);
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+
         if (ALLOW_UNLINKED_TREES) {
-        	modelArray = options.getPartitionClockModels().toArray();
-        	col = dataTable.getColumnModel().getColumn(7);
-            col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));        	
-        	
-        	modelArray = options.getPartitionTreeModels().toArray();
-        	col = dataTable.getColumnModel().getColumn(8);
+            modelArray = options.getPartitionClockModels().toArray();
+            col = dataTable.getColumnModel().getColumn(7);
+            col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+
+            modelArray = options.getPartitionTreeModels().toArray();
+            col = dataTable.getColumnModel().getColumn(8);
             col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
         }
     }
-    
+
     public void selectionChanged() {
         int[] selRows = dataTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
-        
+
         unlinkModelsAction.setEnabled(hasSelection);
         linkModelsAction.setEnabled(selRows != null && selRows.length > 1);
-        
+
         unlinkClocksAction.setEnabled(hasSelection);
         linkClocksAction.setEnabled(selRows != null && selRows.length > 1);
 
@@ -242,7 +244,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
 
         options.updateLinksBetweenPDPCMPSMPTMPTPP();
-        
+
         modelsChanged();
 
         dataTableModel.fireTableDataChanged();
@@ -250,14 +252,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void getOptions(BeautiOptions options) {
         options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-        
+
         options.updateLinksBetweenPDPCMPSMPTMPTPP();
     }
 
     public JComponent getExportableComponent() {
         return dataTable;
     }
-    
+
     public void removeSelection() {
         int[] selRows = dataTable.getSelectedRows();
         Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
@@ -268,25 +270,25 @@ public class DataPanel extends BeautiPanel implements Exportable {
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
         if (options.dataPartitions.size() == 0) {
-        	if (options.isSpeciesAnalysis()) {
-        		frame.removeSepciesAnalysisSetup();
-        	}
+            if (options.isSpeciesAnalysis()) {
+                frame.removeSepciesAnalysisSetup();
+            }
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
         }
-               
+
         if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-        	uncheckAllowDifferentTaxa();
+            uncheckAllowDifferentTaxa();
         }
-        
+
         dataTableModel.fireTableDataChanged();
 
         fireDataChanged();
     }
-    
-    public void selectAll () {
-    	dataTable.selectAll();
+
+    public void selectAll() {
+        dataTable.selectAll();
     }
 
     public void unlinkModels() {
@@ -337,7 +339,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionSubstitutionModel model = selectModelDialog.getModel();
             if (selectModelDialog.getMakeCopy()) {
-            	model.setName(selectModelDialog.getName());
+                model.setName(selectModelDialog.getName());
 //                model = new PartitionSubstitutionModel(options, selectModelDialog.getName(), model);
 //                options.addPartitionSubstitutionModel(model);
             }
@@ -361,15 +363,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionClockModel model = partition.getPartitionClockModel();
             if (!model.getName().equals(partition.getName())) {
-            	PartitionClockModel newModel = new PartitionClockModel(options, partition); 
-            	
-                partition.setPartitionClockModel(newModel);                
+                PartitionClockModel newModel = new PartitionClockModel(options, partition);
+
+                partition.setPartitionClockModel(newModel);
 //                options.addPartitionClockModel(newModel);                                     
             }
         }
 
         modelsChanged();
-        
+
         fireDataChanged();
         repaint();
     }
@@ -379,30 +381,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionClockModels().toArray();
 
         if (selectClockDialog == null) {
-        	selectClockDialog = new SelectClockDialog(frame);
+            selectClockDialog = new SelectClockDialog(frame);
         }
 
         int result = selectClockDialog.showDialog(modelArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-        	PartitionClockModel model = selectClockDialog.getModel();
+            PartitionClockModel model = selectClockDialog.getModel();
             if (selectClockDialog.getMakeCopy()) {
-            	model.setName(selectClockDialog.getName());
+                model.setName(selectClockDialog.getName());
 //                model = new PartitionClockModel(options, selectClockDialog.getName(), model);
 //                options.addPartitionClockModel(model);
             }
-                        
+
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);
                 partition.setPartitionClockModel(model);
             }
         }
-        
+
         modelsChanged();
 
         fireDataChanged();
         repaint();
     }
-    
+
     private void unlinkTrees() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
@@ -410,19 +412,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName())) {
-                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);                
+                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
                 PartitionTreePrior newPrior = new PartitionTreePrior(options, newTree);
-                
+
                 newTree.setPartitionTreePrior(newPrior);
                 partition.setPartitionTreeModel(newTree);
-                
+
 //                options.addPartitionTreeModel(newTree);
-                options.shareSameTreePrior = false;                       
+                options.shareSameTreePrior = false;
             }
         }
 
         modelsChanged();
-        
+
         fireDataChanged();
         repaint();
     }
@@ -439,20 +441,20 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (result != JOptionPane.CANCEL_OPTION) {
             PartitionTreeModel model = selectTreeDialog.getTree();
             if (selectTreeDialog.getMakeCopy()) {
-            	model.setName(selectTreeDialog.getName());
+                model.setName(selectTreeDialog.getName());
 //                model = new PartitionTreeModel(options, selectTreeDialog.getName(), model);
 //                options.addPartitionTreeModel(model);
             }
             PartitionTreePrior prior = model.getPartitionTreePrior();
             options.activedSameTreePrior = prior;
             options.shareSameTreePrior = true;
-            
+
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);
                 partition.setPartitionTreeModel(model);
             }
         }
-        
+
         modelsChanged();
 
         fireDataChanged();
@@ -489,17 +491,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return partition.getFileName();
                 case 2:
-                	return "" + partition.getNumOfTaxa();
-                case 3:	
+                    return "" + partition.getTaxaCount();
+                case 3:
                     return "" + partition.getSiteCount(); // sequence length
                 case 4:
                     return partition.getAlignment().getDataType().getDescription();
                 case 5:
-                	return partition.getPloidyType(); 
+                    return partition.getPloidyType();
                 case 6:
-                    return partition.getPartitionSubstitutionModel().getName();                	
+                    return partition.getPartitionSubstitutionModel().getName();
                 case 7:
-                	return partition.getPartitionClockModel().getName();
+                    return partition.getPartitionClockModel().getName();
                 case 8:
                     return partition.getPartitionTreeModel().getName();
                 default:
@@ -615,7 +617,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkModels();
         }
     }
-    
+
     public class UnlinkClocksAction extends AbstractAction {
         public UnlinkClocksAction() {
             super("Unlink Clock Models");
@@ -638,7 +640,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkClocks();
         }
     }
-    
+
     public class UnlinkTreesAction extends AbstractAction {
         public UnlinkTreesAction() {
             super("Unlink Trees");

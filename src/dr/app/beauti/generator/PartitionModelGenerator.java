@@ -4,6 +4,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
@@ -147,7 +148,7 @@ public class PartitionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-        writeParameter(HKYParser.KAPPA, prefix + "kappa", model, writer);
+        writeParameter(HKYParser.KAPPA, "kappa", model, writer);
         writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
@@ -190,7 +191,21 @@ public class PartitionModelGenerator extends Generator {
         );
 
         if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
-            writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
+        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
+//        		for (PartitionData partition : model.getAllPartitionData()) { //?
+//        			if (model.getCodonHeteroPattern().equals("112")) {
+//        				
+//        			} else {
+//        				
+//        			}
+//        		}
+        		//TODO
+        		throw new IllegalArgumentException("It is not developed yet, using pattern list!");
+        	} else {
+        		for (PartitionData partition : model.getAllPartitionData()) {
+        			writer.writeIDref(SitePatternsParser.PATTERNS, partition.getName() + "." + SitePatternsParser.PATTERNS);
+        		}
+        	}
         }
 
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
@@ -235,7 +250,18 @@ public class PartitionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
+        
+        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
+        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
+        		//TODO
+        		throw new IllegalArgumentException("It is not developed yet, using pattern list!");
+        	} else {
+        		for (PartitionData partition : model.getAllPartitionData()) {
+        			writer.writeIDref(SitePatternsParser.PATTERNS, partition.getName() + "." + SitePatternsParser.PATTERNS);
+        		}
+        	}
+        }
+//        writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);

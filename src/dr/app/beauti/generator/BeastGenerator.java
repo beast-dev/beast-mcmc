@@ -714,19 +714,24 @@ public class BeastGenerator extends Generator {
         } else {
             //partitionCount = 1;
             writer.writeComment("The unique patterns site patterns");
-            writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-                new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + partition.getName() + "." + SitePatternsParser.PATTERNS),
-                }
-            );
+            Alignment alignment = partition.getAlignment();
+            
+            writer.writeOpenTag(SitePatternsParser.PATTERNS,
+                    new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS),
+                    }
+                );
 
+            writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+            writer.writeCloseTag(SitePatternsParser.PATTERNS);
+ 
 //            for (PartitionData partition : options.dataPartitions) {
 //                if (partition.getPartitionSubstitutionModel() == model) {
-                    writePatternList(partition, 0, 1, writer);
+//                    writePatternList(partition, 0, 1, writer);
 //                }
 //            }
 
-            writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
+
         }
     }
 
@@ -1225,7 +1230,7 @@ public class BeastGenerator extends Generator {
     public void writeTimerReport(XMLWriter writer) {
         writer.writeOpenTag("report");
         writer.writeOpenTag("property", new Attribute.Default<String>("name", "timer"));
-        writer.writeIDref("object",  "mcmc");
+        writer.writeIDref("mcmc",  "mcmc");
         writer.writeCloseTag("property");
         writer.writeCloseTag("report");
     }

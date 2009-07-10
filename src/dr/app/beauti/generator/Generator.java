@@ -104,16 +104,15 @@ public abstract class Generator {
     public void writeParameter(String id, ModelOptions options, XMLWriter writer) {
         dr.app.beauti.options.Parameter parameter = options.getParameter(id);
         if (parameter == null) {
-
-            throw new IllegalArgumentException("parameter with name, " + id + ", is unknown");
+            throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + options.getPrefix());
         }
         if (parameter.isFixed) {
-            writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
+            writeParameter(options.getPrefix() + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                writeParameter(id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+                writeParameter(options.getPrefix() + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
             } else {
-                writeParameter(id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
+                writeParameter(options.getPrefix() + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             }
         }
     }
@@ -178,7 +177,7 @@ public abstract class Generator {
      */
     public void writeParameter(String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
-        attributes.add(new Attribute.Default<String>(XMLParser.ID, modelPrefix + id));
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
         if (dimension > 1) {
             attributes.add(new Attribute.Default<String>(ParameterParser.DIMENSION, dimension + ""));
         }

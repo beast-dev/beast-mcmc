@@ -73,8 +73,10 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
+                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, which may be 1 of many aligments using this tree.");
                 writer.writeTag(AlignmentParser.ALIGNMENT,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, 
+                        		model.getAllPartitionData().get(0).getAlignment().getId())}, true);
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);

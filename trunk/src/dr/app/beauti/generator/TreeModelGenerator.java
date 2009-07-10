@@ -12,6 +12,7 @@ import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
+import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
@@ -43,14 +44,23 @@ public class TreeModelGenerator extends Generator {
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
 
         final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
-
-        if( model.getStartingTreeType() == StartingTreeType.RANDOM ) {
-            writer.writeTag(CoalescentSimulator.COALESCENT_TREE,
-                    new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
-        } else {
-            writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+        
+        switch (model.getStartingTreeType()) {
+        	case USER:
+        		writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+        		break;
+	        case UPGMA:
+	        	writer.writeTag(UPGMATreeParser.UPGMA_TREE,
+	                    new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+	            break;
+	        case RANDOM:
+	        	writer.writeTag(CoalescentSimulator.COALESCENT_TREE,
+	                    new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+	            break;
+	        default:
+                throw new IllegalArgumentException("Unknown StartingTreeType");
         }
-
+        
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
                 new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + CoalescentSimulator.ROOT_HEIGHT), true);

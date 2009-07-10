@@ -25,9 +25,9 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.generator.Generator;
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
@@ -36,10 +36,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxaParser;
@@ -52,7 +50,10 @@ import org.jdom.Element;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -61,51 +62,51 @@ import java.util.*;
 public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
-        this(new ComponentFactory[] {});
-        
+        this(new ComponentFactory[]{});
+
         initAllParametersAndOperators();
     }
-    
+
     public BeautiOptions(ComponentFactory[] components) {
-    	initAllParametersAndOperators();
-    	
+        initAllParametersAndOperators();
+
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {
             addComponent(component.getOptions(this));
         }
     }
-        
-    public void initSpeciesParametersAndOperators () {
-    	double spWeights = 5.0;
-    	double spTuning = 0.9;
-    	
-    	createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator", 
-    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	// species tree Yule
-    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, 
-    			"Speices tree: Yule process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	
-    	// species tree Birth Death
-    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, 
-    			"Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, 
-    			"Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	
-    	createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator", 
-    			TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-    	
-    	createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
-    	
-    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
-    	
-    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
-    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
-    	createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
-    	
-    	createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
-    	
-    	createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
-    	//TODO: more
+
+    public void initSpeciesParametersAndOperators() {
+        double spWeights = 5.0;
+        double spTuning = 0.9;
+
+        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator",
+                TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        // species tree Yule
+        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+                "Speices tree: Yule process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        // species tree Birth Death
+        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
+                "Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
+                "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator",
+                TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
+
+        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
+
+        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
+        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+
+        createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
+
+        createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
+        //TODO: more
     }
 
     /**
@@ -140,7 +141,7 @@ public class BeautiOptions extends ModelOptions {
         translation = 0;
 //        startingTreeType = StartingTreeType.RANDOM; // moved into PartitionTreeModels
 //        userStartingTree = null; // moved into PartitionTreeModels
-        
+
 //        clockModels.clear();
 //        partitionModels.clear();
 //        partitionTreeModels.clear();
@@ -181,7 +182,7 @@ public class BeautiOptions extends ModelOptions {
 
 //        localClockRateChangesStatistic = null;
 //        localClockRatesStatistic = null;
-        
+
 //        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
 //        	model.localClockRateChangesStatistic = null;
 //        	model.localClockRatesStatistic = null;
@@ -210,29 +211,29 @@ public class BeautiOptions extends ModelOptions {
     public ArrayList<Parameter> selectParameters() {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-        
+
         for (PartitionClockModel model : getPartitionClockModels()) {
-    		model.selectParameters(parameters);    
-    	}
-    	
-    	for (PartitionTreeModel tree : getPartitionTreeModels()) {
-    		tree.selectParameters(parameters);    
-    	}
-    	
-    	for (PartitionTreePrior prior : getPartitionTreePriors()) {
-    		prior.selectParameters(parameters);    
-        }      	
-        
-    	for (PartitionClockModel model : getPartitionClockModels()) {
-    		for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
-    			PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink (this, model, tree);
-    	        
-    			clockTree.selectStatistics(parameters);    
-        	}
-    	}
-    	
+            model.selectParameters(parameters);
+        }
+
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            tree.selectParameters(parameters);
+        }
+
+        for (PartitionTreePrior prior : getPartitionTreePriors()) {
+            prior.selectParameters(parameters);
+        }
+
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
+
+                clockTree.selectStatistics(parameters);
+            }
+        }
+
         if (isSpeciesAnalysis()) { // species
-        	selectParametersForSpecies(parameters); 
+            selectParametersForSpecies(parameters);
         }
 
         selectComponentParameters(this, parameters);
@@ -241,7 +242,7 @@ public class BeautiOptions extends ModelOptions {
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
         // add all Parameter (with prefix) into parameters list     
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {        	
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             parameters.addAll(model.getParameters(multiplePartitions));
         }
 
@@ -345,8 +346,8 @@ public class BeautiOptions extends ModelOptions {
 
         return parameters;
     }
-    
-    
+
+
     /**
      * return an list of operators that are required
      *
@@ -354,32 +355,32 @@ public class BeautiOptions extends ModelOptions {
      */
     public List<Operator> selectOperators() {
 
-        ArrayList<Operator> ops = new ArrayList<Operator>();        
-        
-    	for (PartitionClockModel model : getPartitionClockModels()) {
-    		model.selectOperators(ops);    
-    	}
-    	
-    	for (PartitionTreeModel tree : getPartitionTreeModels()) {
-    		tree.selectOperators(ops);    
-    	}
-    	
-    	for (PartitionTreePrior prior : getPartitionTreePriors()) {
-    		prior.selectOperators(ops);    
-        } 
-    	
-    	for (PartitionClockModel model : getPartitionClockModels()) {
-    		for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
-    			PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink (this, model, tree);
-    	        
-    			clockTree.selectOperators(ops);    
-        	}
-    	}
+        ArrayList<Operator> ops = new ArrayList<Operator>();
 
-    	if (isSpeciesAnalysis()) { // species
-        	selectOperatorsForSpecies(ops);        	
-        } 
-    	
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            model.selectOperators(ops);
+        }
+
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            tree.selectOperators(ops);
+        }
+
+        for (PartitionTreePrior prior : getPartitionTreePriors()) {
+            prior.selectOperators(ops);
+        }
+
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
+
+                clockTree.selectOperators(ops);
+            }
+        }
+
+        if (isSpeciesAnalysis()) { // species
+            selectOperatorsForSpecies(ops);
+        }
+
         selectComponentOperators(this, ops);
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
@@ -417,11 +418,11 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
-        	Operator op = tree.getOperator("subtreeSlide");
+            Operator op = tree.getOperator("subtreeSlide");
             if (!op.tuningEdited) {
                 op.tuning = initialRootHeight / 10.0;
-            } 
-    	}        
+            }
+        }
 
         return ops;
     }
@@ -440,7 +441,7 @@ public class BeautiOptions extends ModelOptions {
 //            partitionModels.add(model);
 //        }
 //    }   
-    
+
 //    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
 //        return partitionModels;
 //    }
@@ -454,21 +455,21 @@ public class BeautiOptions extends ModelOptions {
         }
         return models;
     }
-    
+
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<PartitionData> givenDataPartitions) {
 
-    	List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
+        List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
 
         for (PartitionData partition : givenDataPartitions) {
-        	PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-        	if (model != null && (!activeModels.contains(model))) {
-        		activeModels.add(model);
-        	}
-        }       
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model != null && (!activeModels.contains(model))) {
+                activeModels.add(model);
+            }
+        }
 
         return activeModels;
     }
-    
+
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
         return getPartitionSubstitutionModels(dataPartitions);
     }
@@ -509,29 +510,29 @@ public class BeautiOptions extends ModelOptions {
 //        	clockModels.add(model);
 //        }
 //    }
-    
+
 //    public List<PartitionClockModel> getPartitionClockModels() {
 //        return clockModels;
 //    }
-    
+
     public List<PartitionClockModel> getPartitionClockModels(List<PartitionData> givenDataPartitions) {
 
-    	List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
+        List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
 
         for (PartitionData partition : givenDataPartitions) {
-        	PartitionClockModel model = partition.getPartitionClockModel();
-        	if (model != null && (!activeModels.contains(model))) {
-        		activeModels.add(model);
-        	}
-        }       
+            PartitionClockModel model = partition.getPartitionClockModel();
+            if (model != null && (!activeModels.contains(model))) {
+                activeModels.add(model);
+            }
+        }
 
         return activeModels;
     }
-    
+
     public List<PartitionClockModel> getPartitionClockModels() {
-    	return getPartitionClockModels(dataPartitions);
+        return getPartitionClockModels(dataPartitions);
     }
-    
+
     // ++++++++++++++ Partition Tree Model ++++++++++++++ 
 //    public void addPartitionTreeModel(PartitionTreeModel tree) {
 //
@@ -539,85 +540,84 @@ public class BeautiOptions extends ModelOptions {
 //            partitionTreeModels.add(tree);
 //        }
 //    }
-    
+
 //    public List<PartitionTreeModel> getPartitionTreeModels() {
 //        return partitionTreeModels;
 //    }
-    
+
     public List<PartitionTreeModel> getPartitionTreeModels(List<PartitionData> givenDataPartitions) {
 
-    	List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
+        List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
 
         for (PartitionData partition : givenDataPartitions) {
-        	PartitionTreeModel tree = partition.getPartitionTreeModel();
-        	if (tree != null && (!activeTrees.contains(tree))) {
-        		activeTrees.add(tree);
-        	}
-        }       
+            PartitionTreeModel tree = partition.getPartitionTreeModel();
+            if (tree != null && (!activeTrees.contains(tree))) {
+                activeTrees.add(tree);
+            }
+        }
 
         return activeTrees;
     }
-    
+
     public List<PartitionTreeModel> getPartitionTreeModels() {
-    	return getPartitionTreeModels(dataPartitions);
-    }   
-    
+        return getPartitionTreeModels(dataPartitions);
+    }
+
     // ++++++++++++++ Partition Tree Prior ++++++++++++++ 
     public List<PartitionTreePrior> getPartitionTreePriors() {
-    	
-    	List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
-    	
-    	// # tree prior = 1 or # tree model
-    	if (shareSameTreePrior) {
-    		if (activedSameTreePrior == null) {
-    			return activeTrees;
-    		} else {
-    			activeTrees.add(activedSameTreePrior);
-    		}	
-    	} else {
-    		for (PartitionTreeModel model : getPartitionTreeModels()) {
-	        	activeTrees.add(model.getPartitionTreePrior());
-	        }
-    	}
+
+        List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
+
+        // # tree prior = 1 or # tree model
+        if (shareSameTreePrior) {
+            if (activedSameTreePrior == null) {
+                return activeTrees;
+            } else {
+                activeTrees.add(activedSameTreePrior);
+            }
+        } else {
+            for (PartitionTreeModel model : getPartitionTreeModels()) {
+                activeTrees.add(model.getPartitionTreePrior());
+            }
+        }
 
         return activeTrees;
     }
-    
-    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
-    public void updateLinksBetweenPDPCMPSMPTMPTPP () {
-		for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-			model.clearAllPartitionData();
-		}
-		
-    	for (PartitionClockModel model : getPartitionClockModels()) {
-    		model.clearAllPartitionData();
-		}
 
-		for (PartitionTreeModel tree : getPartitionTreeModels()) {
-			tree.clearAllPartitionData();
-		}
-		
-		//TODO update PartitionTreePrior ?
-		
-    	for (PartitionData partition : dataPartitions) {
-    		PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-    		if (!psm.getAllPartitionData().contains(partition)) {
-    			psm.addPartitionData(partition);
-    		}
-    		
-    		PartitionClockModel pcm = partition.getPartitionClockModel();
-    		if (!pcm.getAllPartitionData().contains(partition)) {
-    			pcm.addPartitionData(partition);
-    		}
-    		
-    		PartitionTreeModel ptm = partition.getPartitionTreeModel();
-    		if (!ptm.getAllPartitionData().contains(partition)) {
-    			ptm.addPartitionData(partition);
-    		}
-    	}
-    	
+    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
+    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+            model.clearAllPartitionData();
+        }
+
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            model.clearAllPartitionData();
+        }
+
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            tree.clearAllPartitionData();
+        }
+
+        //TODO update PartitionTreePrior ?
+
+        for (PartitionData partition : dataPartitions) {
+            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
+            if (!psm.getAllPartitionData().contains(partition)) {
+                psm.addPartitionData(partition);
+            }
+
+            PartitionClockModel pcm = partition.getPartitionClockModel();
+            if (!pcm.getAllPartitionData().contains(partition)) {
+                pcm.addPartitionData(partition);
+            }
+
+            PartitionTreeModel ptm = partition.getPartitionTreeModel();
+            if (!ptm.getAllPartitionData().contains(partition)) {
+                ptm.addPartitionData(partition);
+            }
+        }
+
     }
-    
 
 
     /**
@@ -727,26 +727,24 @@ public class BeautiOptions extends ModelOptions {
 ////
 ////        params.add(getParameter("treeModel.rootHeight"));
 //    }
-
-    
     private void selectParametersForSpecies(List<Parameter> params) {
-    	
-    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-    	
-    	if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
-	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-	    	params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
-       		params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-    	}
-    	
+
+        params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+
+        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+        }
+
 //    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-    	
-    	//TODO: more
-    	
+
+        //TODO: more
+
     }
-    
-    
+
+
 //    private void selectStatistics(List<Parameter> params) {
 //
 //        if (taxonSets != null) {
@@ -932,22 +930,21 @@ public class BeautiOptions extends ModelOptions {
 ////        }
 //
 //    }
-    
     private void selectOperatorsForSpecies(List<Operator> ops) {
-    	
-    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-    	
-       	if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
-	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-	    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-       	} else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
-       		ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-    	}
-    	
-    	ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-    	
-    	ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
-    	//TODO: more
+
+        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+
+        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+        }
+
+        ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
+
+        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
+        //TODO: more
     }
 
     /**
@@ -1327,30 +1324,30 @@ public class BeautiOptions extends ModelOptions {
     public boolean hasData() {
         return dataPartitions.size() > 0;
     }
-    
+
     public boolean isSpeciesAnalysis() {
         return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES.toString());
     }
-    
-    public List<String> getSpeciesList() {
-    	List<String> species = new ArrayList<String>(); 
-    	String sp;
 
-    	if (taxonList != null) {
-	    	for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-	    		Taxon taxon = taxonList.getTaxon(i);
-	        	sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
-	
-	        	if (!species.contains(sp)) {
-	        		species.add(sp);
-	        	}
-	    	}	     
-	    	return species;
-    	} else {
-    		return null;
-    	}
+    public List<String> getSpeciesList() {
+        List<String> species = new ArrayList<String>();
+        String sp;
+
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
+
+                if (!species.contains(sp)) {
+                    species.add(sp);
+                }
+            }
+            return species;
+        } else {
+            return null;
+        }
     }
-       
+
     public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
     public String treeFileName = null;
@@ -1358,33 +1355,33 @@ public class BeautiOptions extends ModelOptions {
     public String mapTreeFileName = null;
     public boolean substTreeLog = false;
     public String substTreeFileName = null;
-    
+
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
     public boolean dataReset = true;
 
     public Taxa taxonList = null;
-    
+
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
-      
+
     public double meanDistance = 1.0;
     public int datesUnits = YEARS;
     public int datesDirection = FORWARDS;
     public double maximumTipHeight = 0.0;
     public int translation = 0;
-        
+
     public DateGuesser dateGuesser = new DateGuesser();
     public TraitGuesser traitGuesser = new TraitGuesser();
 
     public List<String> selecetedTraits = new ArrayList<String>();
     public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
-    
+
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
     public final String POP_MEAN = "popMean";
     public TreePrior speciesTreePrior = TreePrior.SPECIES_YULE;
-    
+
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
     // Substitution Model
@@ -1392,10 +1389,10 @@ public class BeautiOptions extends ModelOptions {
     // Clock Model
 //    List<PartitionClockModel> clockModels = new ArrayList<PartitionClockModel>();
     // Tree
-//    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
+    //    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
     public PartitionTreePrior activedSameTreePrior = null;
-//    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
+    //    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
     public boolean shareSameTreePrior = true;
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
@@ -1406,7 +1403,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
 //    public ClockType clockType = ClockType.STRICT_CLOCK; 
-    
+
 //    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
 //    public int parameterization = GROWTH_RATE;
 //    public int skylineGroupCount = 10;
@@ -1436,13 +1433,13 @@ public class BeautiOptions extends ModelOptions {
     public boolean performTraceAnalysis = false;
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
-	
-    
+
+
     @Override
-	public String getPrefix() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public String getPrefix() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 //    public Parameter localClockRateChangesStatistic = null;
 //    public Parameter localClockRatesStatistic = null;

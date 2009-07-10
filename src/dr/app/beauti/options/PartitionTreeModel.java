@@ -1,11 +1,10 @@
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.RateStatistic;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -13,30 +12,30 @@ import dr.evomodel.tree.RateStatistic;
  * @version $Id$
  */
 public class PartitionTreeModel extends ModelOptions {
-	
-	// Instance variables
+
+    // Instance variables
 
     private final BeautiOptions options;
     private String name;
     private PartitionTreePrior treePrior;
     private List<PartitionData> allPartitionData;
-    
+
     public Parameter localClockRateChangesStatistic = null;
     public Parameter localClockRatesStatistic = null;
-    
+
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
-    private Tree userStartingTree = null;    
-    
+    private Tree userStartingTree = null;
+
     private boolean fixedTree = false;
-    
-	public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
-		this.options = options;
-		this.name = partition.getName();
-		
-		allPartitionData = new ArrayList<PartitionData>();
+
+    public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
+        this.options = options;
+        this.name = partition.getName();
+
+        allPartitionData = new ArrayList<PartitionData>();
         addPartitionData(partition);
-		
-		initTreeModelParaAndOpers();
+
+        initTreeModelParaAndOpers();
     }
 
     /**
@@ -47,15 +46,15 @@ public class PartitionTreeModel extends ModelOptions {
      * @param source  the source model
      */
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
-    	this.options = options;
-		this.name = name;
-		
-		this.allPartitionData = source.allPartitionData;
-		
-		this.startingTreeType = source.startingTreeType;
-		this.userStartingTree = source.userStartingTree;  
-		
-		initTreeModelParaAndOpers();
+        this.options = options;
+        this.name = name;
+
+        this.allPartitionData = source.allPartitionData;
+
+        this.startingTreeType = source.startingTreeType;
+        this.userStartingTree = source.userStartingTree;
+
+        initTreeModelParaAndOpers();
     }
 
 //    public PartitionTreeModel(BeautiOptions options, String name) {
@@ -67,7 +66,7 @@ public class PartitionTreeModel extends ModelOptions {
         double branchWeights = 30.0;
         double treeWeights = 15.0;
         double rateWeights = 3.0;
-        
+
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
@@ -86,7 +85,6 @@ public class PartitionTreeModel extends ModelOptions {
         createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        
         createOperator("scaleRootRate", "treeModel.rootRate",
                 "Scales root rate", "treeModel.rootRate",
                 OperatorType.SCALE, 0.75, rateWeights);
@@ -113,7 +111,7 @@ public class PartitionTreeModel extends ModelOptions {
         createOperator("unformBranchRateCategories", "branchRates.categories",
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
-        
+
         createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -132,16 +130,16 @@ public class PartitionTreeModel extends ModelOptions {
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
     }
-    
+
     /**
      * return a list of parameters that are required
      *
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-    	
+
         params.add(getParameter("treeModel.rootHeight"));
-        
+
         selectStatistics(params);
     }
 
@@ -161,7 +159,7 @@ public class PartitionTreeModel extends ModelOptions {
         }
 
     }
-    
+
     // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix
     private void selectStatistics(List<Parameter> params) {
 
@@ -177,78 +175,78 @@ public class PartitionTreeModel extends ModelOptions {
 //        } else {
 //            System.err.println("TaxonSets are null");
 //        }
-    	//TODO ?
-    	for (PartitionClockModel clock : options.getPartitionClockModels(getAllPartitionData())) {
-	        if (clock.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
-	            if (localClockRateChangesStatistic == null) {
-	            	localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-	            	localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-	            	localClockRateChangesStatistic.poissonMean = 1.0;
-	            	localClockRateChangesStatistic.poissonOffset = 0.0;
-	            }
-	            if (localClockRatesStatistic == null) {
-	            	localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
-	
-	            	localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-	            	localClockRatesStatistic.gammaAlpha = 0.5;
-	            	localClockRatesStatistic.gammaBeta = 2.0;
-	            }
-	            
-	            localClockRateChangesStatistic.setPrefix(getPrefix());
-	            params.add(localClockRateChangesStatistic);
-	            localClockRatesStatistic.setPrefix(getPrefix());
-	            params.add(localClockRatesStatistic);
-	        }
-	
+        //TODO ?
+        for (PartitionClockModel clock : options.getPartitionClockModels(getAllPartitionData())) {
+            if (clock.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
+                if (localClockRateChangesStatistic == null) {
+                    localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
+                    localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
+                    localClockRateChangesStatistic.poissonMean = 1.0;
+                    localClockRateChangesStatistic.poissonOffset = 0.0;
+                }
+                if (localClockRatesStatistic == null) {
+                    localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
+
+                    localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
+                    localClockRatesStatistic.gammaAlpha = 0.5;
+                    localClockRatesStatistic.gammaBeta = 2.0;
+                }
+
+                localClockRateChangesStatistic.setPrefix(getPrefix());
+                params.add(localClockRateChangesStatistic);
+                localClockRatesStatistic.setPrefix(getPrefix());
+                params.add(localClockRatesStatistic);
+            }
+
 //	        if (clock.getClockType() != ClockType.STRICT_CLOCK) {
 //	            params.add(getParameter("meanRate"));
 //	            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
 //	            params.add(getParameter("covariance"));
 //	        }
-    	}
+        }
     }
-    
+
     /////////////////////////////////////////////////////////////
-    
+
     public List<PartitionData> getAllPartitionData() {
-		return allPartitionData;
-	}
+        return allPartitionData;
+    }
 
     public void clearAllPartitionData() {
-		this.allPartitionData.clear();
-	}
+        this.allPartitionData.clear();
+    }
 
     public void addPartitionData(PartitionData partition) {
-    	allPartitionData.add(partition);		
-	}
-    
+        allPartitionData.add(partition);
+    }
+
     public boolean removePartitionData(PartitionData partition) {
-    	return allPartitionData.remove(partition);		
-	}
-    
-	public PartitionTreePrior getPartitionTreePrior() {
-		return treePrior;
-	}
+        return allPartitionData.remove(partition);
+    }
 
-	public void setPartitionTreePrior(PartitionTreePrior treePrior) {
-		this.treePrior = treePrior;
-	}
+    public PartitionTreePrior getPartitionTreePrior() {
+        return treePrior;
+    }
 
-	public StartingTreeType getStartingTreeType() {
-		return startingTreeType;
-	}
+    public void setPartitionTreePrior(PartitionTreePrior treePrior) {
+        this.treePrior = treePrior;
+    }
 
-	public void setStartingTreeType(StartingTreeType startingTreeType) {
-		this.startingTreeType = startingTreeType;
-	}
+    public StartingTreeType getStartingTreeType() {
+        return startingTreeType;
+    }
 
-	public Tree getUserStartingTree() {
-		return userStartingTree;
-	}
+    public void setStartingTreeType(StartingTreeType startingTreeType) {
+        this.startingTreeType = startingTreeType;
+    }
 
-	public void setUserStartingTree(Tree userStartingTree) {
-		this.userStartingTree = userStartingTree;
-	}
+    public Tree getUserStartingTree() {
+        return userStartingTree;
+    }
+
+    public void setUserStartingTree(Tree userStartingTree) {
+        this.userStartingTree = userStartingTree;
+    }
 
     public String getName() {
         return name;
@@ -263,7 +261,7 @@ public class PartitionTreeModel extends ModelOptions {
     }
 
     public Parameter getParameter(String name) {
-       
+
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {

@@ -17,10 +17,10 @@ public class PartitionSubstitutionModel extends ModelOptions {
     private final BeautiOptions options;
     private DataType dataType;
     private String name;
-    
+
     private List<PartitionData> allPartitionData;
 
-	private NucModelType nucSubstitutionModel = NucModelType.HKY;
+    private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
@@ -36,17 +36,14 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     private boolean dolloModel = false;
 
-    
-
-    
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
-        
+
         allPartitionData = new ArrayList<PartitionData>();
         addPartitionData(partition);
     }
 
-	/**
+    /**
      * A copy constructor
      *
      * @param options the beauti options
@@ -55,9 +52,9 @@ public class PartitionSubstitutionModel extends ModelOptions {
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
-        
+
         this.allPartitionData = source.allPartitionData;
-        
+
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
@@ -79,9 +76,9 @@ public class PartitionSubstitutionModel extends ModelOptions {
         this.dataType = dataType;
 
         initSubstModelParaAndOpers();
-    }    
-        
-    
+    }
+
+
     // only init in PartitionSubstitutionModel
     public void initSubstModelParaAndOpers() {
         double substWeights = 1.0;
@@ -185,7 +182,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     }
 
     ////////////////////////////////////////////////////////////////
-    
+
     public String getName() {
         return name;
     }
@@ -500,7 +497,6 @@ public class PartitionSubstitutionModel extends ModelOptions {
             }
 
         }
-
         return params;
     }
 
@@ -540,7 +536,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     }
 
     ///////////////////////////////////////////////////////
-    
+
     public Parameter getParameter(String name) {
 
         Parameter parameter = parameters.get(name);
@@ -569,22 +565,21 @@ public class PartitionSubstitutionModel extends ModelOptions {
         return getName();
     }
 
-
     public List<PartitionData> getAllPartitionData() {
-		return allPartitionData;
-	}
+        return allPartitionData;
+    }
 
-	public void clearAllPartitionData() {
-		this.allPartitionData.clear();
-	}
+    public void clearAllPartitionData() {
+        this.allPartitionData.clear();
+    }
 
     public void addPartitionData(PartitionData partition) {
-    	allPartitionData.add(partition);		
-	}
-    
+        allPartitionData.add(partition);
+    }
+
     public boolean removePartitionData(PartitionData partition) {
-    	return allPartitionData.remove(partition);		
-	}
+        return allPartitionData.remove(partition);
+    }
 
     public NucModelType getNucSubstitutionModel() {
         return nucSubstitutionModel;
@@ -724,5 +719,4 @@ public class PartitionSubstitutionModel extends ModelOptions {
         }
         return prefix;
     }
-
 }

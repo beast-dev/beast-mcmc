@@ -20,18 +20,16 @@ public class PartitionData {
     private int fromSite;
     private int toSite;
     private int every = 1;
-    
+
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
-    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR; 
+    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
 
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
-    
-//    public List<Tree> userTrees = new ArrayList<Tree>(); // a set of starting tree loaded from NEXUS file
-    
-	public PartitionData(String name, String fileName, Alignment alignment) {
+
+    public PartitionData(String name, String fileName, Alignment alignment) {
         this(name, fileName, alignment, -1, -1, 1);
     }
 
@@ -80,21 +78,21 @@ public class PartitionData {
         return model;
     }
 
-	public void setPartitionClockModel(PartitionClockModel clockModel) {
-		this.clockModel = clockModel;
-	}
+    public void setPartitionClockModel(PartitionClockModel clockModel) {
+        this.clockModel = clockModel;
+    }
 
-	public PartitionClockModel getPartitionClockModel() {
-		return clockModel;
-	}
+    public PartitionClockModel getPartitionClockModel() {
+        return clockModel;
+    }
 
     public PartitionTreeModel getPartitionTreeModel() {
-		return treeModel;
-	}
+        return treeModel;
+    }
 
-	public void setPartitionTreeModel(PartitionTreeModel treeModel) {
-		this.treeModel = treeModel;
-	}
+    public void setPartitionTreeModel(PartitionTreeModel treeModel) {
+        this.treeModel = treeModel;
+    }
 
     public boolean isCoding() {
         return coding;
@@ -116,13 +114,13 @@ public class PartitionData {
         return every;
     }
 
-	public void setPloidyType(PloidyType ploidyType) {
-		this.ploidyType = ploidyType;
-	}
+    public void setPloidyType(PloidyType ploidyType) {
+        this.ploidyType = ploidyType;
+    }
 
-	public PloidyType getPloidyType() {
-		return ploidyType;
-	}
+    public PloidyType getPloidyType() {
+        return ploidyType;
+    }
 
     public int getSiteCount() {
         int from = getFromSite();
@@ -135,15 +133,15 @@ public class PartitionData {
         }
         return (to - from + 1) / every;
     }
-    
-    public int getNumOfTaxa() {
-    	int n = alignment.getSequenceCount();
-    	
-    	if (n > 0) {
-    		return n;
-    	} else {
-    		return 0;
-    	}
+
+    public int getTaxaCount() {
+        int n = alignment.getSequenceCount();
+
+        if (n > 0) {
+            return n;
+        } else {
+            return 0;
+        }
     }
 
     public String toString() {

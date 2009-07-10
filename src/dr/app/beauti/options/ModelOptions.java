@@ -2,11 +2,10 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.RateStatistic;
-import dr.evomodelxml.BirthDeathModelParser;
 
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -47,42 +46,42 @@ public abstract class ModelOptions {
     public static final int UNITY_SCALE = 7;
     public static final int ROOT_RATE_SCALE = 8;
     public static final int LOG_VAR_SCALE = 9;
-   
+
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     protected static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
-    
+
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
-   
-    
+
+
     /**
      * Initialise parameters and operators, the prefix will be added by parameter.setPrefix(getPrefix()) or operator.setPrefix(getName()).
      */
     public void initAllParametersAndOperators() {
-    	
+
         initGlobalParaAndOpers();
-        
+
 //        initClockModelParaAndOpers();
-        
+
 //        initTreeModelParaAndOpers();        
 //        initTreePriorParaAndOpers();        
     }
-    
+
     public void initGlobalParaAndOpers() {
-    	double rateWeights = 3.0; 
-    	
-    	// A vector of relative rates across all partitions...
-    	createParameter("allMus", "All the relative rates");
-    	
+        double rateWeights = 3.0;
+
+        // A vector of relative rates across all partitions...
+        createParameter("allMus", "All the relative rates");
+
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
 //              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
-    	createOperator("deltaMu", "Relative rates",
-              "Changes partition relative rates relative to each other maintaining their mean", "allMus",
-              OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+        createOperator("deltaMu", "Relative rates",
+                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
     }
-    
+
 //    public void initClockModelParaAndOpers() {
 //    	double rateWeights = 3.0; 
 //    	
@@ -115,7 +114,7 @@ public abstract class ModelOptions {
 //                "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN,
 //                "treeModel.allInternalNodeHeights", OperatorType.UP_DOWN, 0.75, rateWeights);
 //    }
-    
+
 //    public void initTreeModelParaAndOpers() {
 //        double branchWeights = 30.0;
 //        double treeWeights = 15.0;
@@ -203,7 +202,7 @@ public abstract class ModelOptions {
 //        createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
 //                OperatorType.WILSON_BALDING, -1, demoWeights);
 //    }
-    
+
 //    public void initTreePriorParaAndOpers() {
 //    	double treeWeights = 15.0;
 //    	    	
@@ -364,7 +363,7 @@ public abstract class ModelOptions {
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
         return operator;
     }
-    
+
     abstract public String getPrefix();
 
     protected void addComponent(ComponentOptions component) {

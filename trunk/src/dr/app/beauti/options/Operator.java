@@ -71,7 +71,7 @@ public class Operator {
     public String getName() {
         String name = baseName;
         if (prefix != null) {
-            name = prefix + "." + baseName;
+            name = prefix + baseName;
         }
         return name;
     }

@@ -211,39 +211,31 @@ public class BeautiOptions extends ModelOptions {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         
+        for (PartitionClockModel model : getPartitionClockModels()) {
+    		model.selectParameters(parameters);    
+    	}
+    	
+    	for (PartitionTreeModel tree : getPartitionTreeModels()) {
+    		tree.selectParameters(parameters);    
+    	}
+    	
+    	for (PartitionTreePrior prior : getPartitionTreePriors()) {
+    		prior.selectParameters(parameters);    
+        }      	
+        
+    	for (PartitionClockModel model : getPartitionClockModels()) {
+    		for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+    			PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink (this, model, tree);
+    	        
+    			clockTree.selectStatistics(parameters);    
+        	}
+    	}
+    	
         if (isSpeciesAnalysis()) { // species
-        	selectParametersForSpecies(parameters);        	       
-        	for (PartitionClockModel model : getPartitionClockModels()) {
-        		// use override method getParameter(String name) in PartitionSubstitutionModel containing prefix
-            	model.selectParameters(parameters);    
-        	}
-        } else { // not species
-        	for (PartitionClockModel model : getPartitionClockModels()) {
-        		model.selectParameters(parameters);    
-        	}
-        	
-        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
-        		tree.selectParameters(parameters);    
-        	}
-        	
-        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
-        		prior.selectParameters(parameters);    
-            }      	
-        	
-//        	selectParameters(parameters);
+        	selectParametersForSpecies(parameters); 
         }
 
         selectComponentParameters(this, parameters);
-        
-//        if (isSpeciesAnalysis()) { // species
-////        	for (PartitionClockModel model : getPartitionClockModels()) {
-////        		model.selectStatistics(parameters);
-        	for (PartitionTreeModel tree : getPartitionTreeModels()) {	
-        		tree.selectStatistics(parameters);
-        	}
-//        } else {
-//        	selectStatistics(parameters);
-//        }
 
         selectComponentStatistics(this, parameters);
 
@@ -362,29 +354,32 @@ public class BeautiOptions extends ModelOptions {
      */
     public List<Operator> selectOperators() {
 
-        ArrayList<Operator> ops = new ArrayList<Operator>();
+        ArrayList<Operator> ops = new ArrayList<Operator>();        
         
-        if (isSpeciesAnalysis()) { // species
-        	selectOperatorsForSpecies(ops);
-        	// use override method getOperator(String name) in PartitionSubstitutionModel containing prefix
-        	for (PartitionClockModel model : getPartitionClockModels()) {            	
-            	model.selectOperators(ops); 
-            }
-        } else { // not species
-        	for (PartitionClockModel model : getPartitionClockModels()) {
-        		model.selectOperators(ops);    
+    	for (PartitionClockModel model : getPartitionClockModels()) {
+    		model.selectOperators(ops);    
+    	}
+    	
+    	for (PartitionTreeModel tree : getPartitionTreeModels()) {
+    		tree.selectOperators(ops);    
+    	}
+    	
+    	for (PartitionTreePrior prior : getPartitionTreePriors()) {
+    		prior.selectOperators(ops);    
+        } 
+    	
+    	for (PartitionClockModel model : getPartitionClockModels()) {
+    		for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+    			PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink (this, model, tree);
+    	        
+    			clockTree.selectOperators(ops);    
         	}
-        	
-        	for (PartitionTreeModel tree : getPartitionTreeModels()) {
-        		tree.selectOperators(ops);    
-        	}
-        	
-        	for (PartitionTreePrior prior : getPartitionTreePriors()) {
-        		prior.selectOperators(ops);    
-            }           	
-//        	selectOperators(ops);
-        }
+    	}
 
+    	if (isSpeciesAnalysis()) { // species
+        	selectOperatorsForSpecies(ops);        	
+        } 
+    	
         selectComponentOperators(this, ops);
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;

@@ -141,6 +141,8 @@ public class PartitionTreeModel extends ModelOptions {
     public void selectParameters(List<Parameter> params) {
     	
         params.add(getParameter("treeModel.rootHeight"));
+        
+        selectStatistics(params);
     }
 
     /**
@@ -161,7 +163,7 @@ public class PartitionTreeModel extends ModelOptions {
     }
     
     // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix
-    public void selectStatistics(List<Parameter> params) {
+    private void selectStatistics(List<Parameter> params) {
 
 //        if (options.taxonSets != null) {
 //            for (Taxa taxonSet : options.taxonSets) {
@@ -261,10 +263,7 @@ public class PartitionTreeModel extends ModelOptions {
     }
 
     public Parameter getParameter(String name) {
-
-        if (name.startsWith(getName())) {
-            name = name.substring(getName().length() + 1);
-        }
+       
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {
@@ -282,7 +281,7 @@ public class PartitionTreeModel extends ModelOptions {
 
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
 
-        operator.setPrefix(getName());
+        operator.setPrefix(getPrefix());
 
         return operator;
     }

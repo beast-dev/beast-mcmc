@@ -543,9 +543,6 @@ public class PartitionSubstitutionModel extends ModelOptions {
     
     public Parameter getParameter(String name) {
 
-        if (name.startsWith(getName())) {
-            name = name.substring(getName().length() + 1);
-        }
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {
@@ -563,7 +560,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
 
-        operator.setPrefix(getName());
+        operator.setPrefix(getPrefix());
 
         return operator;
     }

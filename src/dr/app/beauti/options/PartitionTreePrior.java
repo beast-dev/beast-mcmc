@@ -1,10 +1,33 @@
-package dr.app.beauti.options;
+/*
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
 
-import java.util.List;
+package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
+
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -15,13 +38,13 @@ public class PartitionTreePrior extends ModelOptions {
 
     // Instance variables
 
-    private final BeautiOptions options;        
-    
-	private String name;
-    
+    private final BeautiOptions options;
+
+    private String name;
+
     private PartitionTreeModel treeModel;
-    
-	private TreePrior nodeHeightPrior = TreePrior.CONSTANT;
+
+    private TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     private int parameterization = GROWTH_RATE;
     private int skylineGroupCount = 10;
     private int skylineModel = CONSTANT_SKYLINE;
@@ -33,13 +56,13 @@ public class PartitionTreePrior extends ModelOptions {
     private boolean multiLoci = false;
     private double birthDeathSamplingProportion = 1.0;
     private boolean fixedTree = false;
-        
+
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
-    	this.options = options;
-		this.name = treeModel.getName();
-		this.treeModel = treeModel;
-		
-		initTreePriorParaAndOpers();
+        this.options = options;
+        this.name = treeModel.getName();
+        this.treeModel = treeModel;
+
+        initTreePriorParaAndOpers();
     }
 
     /**
@@ -50,30 +73,30 @@ public class PartitionTreePrior extends ModelOptions {
      * @param source  the source model
      */
     public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
-    	this.options = options;
-		this.name = name;
-		this.treeModel = source.treeModel;
+        this.options = options;
+        this.name = name;
+        this.treeModel = source.treeModel;
 
-		this.nodeHeightPrior = source.nodeHeightPrior;
-		this.parameterization = source.parameterization;
-		this.skylineGroupCount = source.skylineGroupCount;
-		this.skylineModel = source.skylineModel;
-		this.skyrideSmoothing = source.skyrideSmoothing;
-		this.multiLoci = source.multiLoci;
-		this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
-		this.fixedTree = source.fixedTree;
-        
-		initTreePriorParaAndOpers();
+        this.nodeHeightPrior = source.nodeHeightPrior;
+        this.parameterization = source.parameterization;
+        this.skylineGroupCount = source.skylineGroupCount;
+        this.skylineModel = source.skylineModel;
+        this.skyrideSmoothing = source.skyrideSmoothing;
+        this.multiLoci = source.multiLoci;
+        this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
+        this.fixedTree = source.fixedTree;
+
+        initTreePriorParaAndOpers();
     }
 
 //    public PartitionTreePrior(BeautiOptions options, String name) {
 //        this.options = options;
 //        this.name = name;
 //    }    
-    
+
     public void initTreePriorParaAndOpers() {
-    	double treeWeights = 15.0;
-    	    	
+        double treeWeights = 15.0;
+
         createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         createScaleParameter("exponential.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -130,15 +153,15 @@ public class PartitionTreePrior extends ModelOptions {
 
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
         createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
-        
+
         // hack pass distribution in name
         createOperator("demographic.popSize", "demographic.populationMeanDist", "", super.getParameter("demographic.popSize"),
-        		super.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+                super.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
         createOperator("demographic.scaleActive", "demographic.scaleActive", "", super.getParameter("demographic.popSize"),
-        		super.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+                super.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", super.getParameter("skyride.popSize"),
-        		super.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+                super.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -146,14 +169,14 @@ public class PartitionTreePrior extends ModelOptions {
         createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
 
     }
-    
+
     /**
      * return a list of parameters that are required
      *
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-    	
+
         if (nodeHeightPrior == TreePrior.CONSTANT) {
             params.add(getParameter("constant.popSize"));
         } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
@@ -195,7 +218,7 @@ public class PartitionTreePrior extends ModelOptions {
         }
 
     }
-    
+
     /**
      * return a list of operators that are required
      *
@@ -243,14 +266,14 @@ public class PartitionTreePrior extends ModelOptions {
         } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
             ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        }        
+        }
     }
-    
-    
+
+
     //////////////////////////////////////////////////////
 
     public Parameter getParameter(String name) {
-    	
+
         Parameter parameter = parameters.get(name);
 
         if (parameter == null) {
@@ -272,10 +295,10 @@ public class PartitionTreePrior extends ModelOptions {
 
         return operator;
     }
- 
+
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionTreePriors().size() > 1 ) {//|| options.isSpeciesAnalysis()
+        if (options.getPartitionTreePriors().size() > 1) {//|| options.isSpeciesAnalysis()
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -293,91 +316,91 @@ public class PartitionTreePrior extends ModelOptions {
     public String toString() {
         return getName();
     }
-    
+
     /////////////////////////////////////////////////////////////////////////
 
     public PartitionTreeModel getTreeModel() {
-		return treeModel;
-	}
+        return treeModel;
+    }
 
-	public void setTreeModel(PartitionTreeModel treeModel) {
-		this.treeModel = treeModel;
-	}
-   
+    public void setTreeModel(PartitionTreeModel treeModel) {
+        this.treeModel = treeModel;
+    }
+
     public TreePrior getNodeHeightPrior() {
-		return nodeHeightPrior;
-	}
+        return nodeHeightPrior;
+    }
 
-	public void setNodeHeightPrior(TreePrior nodeHeightPrior) {
-		this.nodeHeightPrior = nodeHeightPrior;
-	}
+    public void setNodeHeightPrior(TreePrior nodeHeightPrior) {
+        this.nodeHeightPrior = nodeHeightPrior;
+    }
 
-	public int getParameterization() {
-		return parameterization;
-	}
+    public int getParameterization() {
+        return parameterization;
+    }
 
-	public void setParameterization(int parameterization) {
-		this.parameterization = parameterization;
-	}
+    public void setParameterization(int parameterization) {
+        this.parameterization = parameterization;
+    }
 
-	public int getSkylineGroupCount() {
-		return skylineGroupCount;
-	}
+    public int getSkylineGroupCount() {
+        return skylineGroupCount;
+    }
 
-	public void setSkylineGroupCount(int skylineGroupCount) {
-		this.skylineGroupCount = skylineGroupCount;
-	}
+    public void setSkylineGroupCount(int skylineGroupCount) {
+        this.skylineGroupCount = skylineGroupCount;
+    }
 
-	public int getSkylineModel() {
-		return skylineModel;
-	}
+    public int getSkylineModel() {
+        return skylineModel;
+    }
 
-	public void setSkylineModel(int skylineModel) {
-		this.skylineModel = skylineModel;
-	}
+    public void setSkylineModel(int skylineModel) {
+        this.skylineModel = skylineModel;
+    }
 
-	public int getSkyrideSmoothing() {
-		return skyrideSmoothing;
-	}
+    public int getSkyrideSmoothing() {
+        return skyrideSmoothing;
+    }
 
-	public void setSkyrideSmoothing(int skyrideSmoothing) {
-		this.skyrideSmoothing = skyrideSmoothing;
-	}
+    public void setSkyrideSmoothing(int skyrideSmoothing) {
+        this.skyrideSmoothing = skyrideSmoothing;
+    }
 
-	public boolean isMultiLoci() {
-		return multiLoci;
-	}
+    public boolean isMultiLoci() {
+        return multiLoci;
+    }
 
-	public void setMultiLoci(boolean multiLoci) {
-		this.multiLoci = multiLoci;
-	}
+    public void setMultiLoci(boolean multiLoci) {
+        this.multiLoci = multiLoci;
+    }
 
-	public double getBirthDeathSamplingProportion() {
-		return birthDeathSamplingProportion;
-	}
+    public double getBirthDeathSamplingProportion() {
+        return birthDeathSamplingProportion;
+    }
 
-	public void setBirthDeathSamplingProportion(double birthDeathSamplingProportion) {
-		this.birthDeathSamplingProportion = birthDeathSamplingProportion;
-	}
+    public void setBirthDeathSamplingProportion(double birthDeathSamplingProportion) {
+        this.birthDeathSamplingProportion = birthDeathSamplingProportion;
+    }
 
-	public boolean isFixedTree() {
-		return fixedTree;
-	}
+    public boolean isFixedTree() {
+        return fixedTree;
+    }
 
-	public void setFixedTree(boolean fixedTree) {
-		this.fixedTree = fixedTree;
-	}
+    public void setFixedTree(boolean fixedTree) {
+        this.fixedTree = fixedTree;
+    }
 
-	public void setExtendedSkylineModel(String extendedSkylineModel) {
-		this.extendedSkylineModel = extendedSkylineModel;
-	}
+    public void setExtendedSkylineModel(String extendedSkylineModel) {
+        this.extendedSkylineModel = extendedSkylineModel;
+    }
 
-	public String getExtendedSkylineModel() {
-		return extendedSkylineModel;
-	}
-	
-	public BeautiOptions getOptions() {
-		return options;
-	}
+    public String getExtendedSkylineModel() {
+        return extendedSkylineModel;
+    }
+
+    public BeautiOptions getOptions() {
+        return options;
+    }
 
 }

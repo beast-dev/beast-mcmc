@@ -1436,6 +1436,13 @@ public class BeautiOptions extends ModelOptions {
     public boolean performTraceAnalysis = false;
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
+	
+    
+    @Override
+	public String getPrefix() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 //    public Parameter localClockRateChangesStatistic = null;
 //    public Parameter localClockRatesStatistic = null;

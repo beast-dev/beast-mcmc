@@ -12,7 +12,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ModelOptions {
+public abstract class ModelOptions {
 
     HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
     HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
@@ -364,6 +364,8 @@ public class ModelOptions {
         if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
         return operator;
     }
+    
+    abstract public String getPrefix();
 
     protected void addComponent(ComponentOptions component) {
         components.add(component);

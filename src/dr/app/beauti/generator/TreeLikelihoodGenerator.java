@@ -20,6 +20,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -85,18 +86,18 @@ public class TreeLikelihoodGenerator extends Generator {
     	
         if (!options.samplePriorOnly) {
         	 if (num > 0) {
-	            writer.writeTag(SitePatternsParser.PATTERNS,
+	            writer.writeTag(MergePatternsParser.MERGE_PATTERNS,
 	                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, substModel.getPrefix(num) + partition.getName() + "." 
 	                    		+ SitePatternsParser.PATTERNS)}, true);  
         	 } else {
         		 writer.writeTag(SitePatternsParser.PATTERNS,
-                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, substModel.getPrefix() + partition.getName() + "." 
+                         new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, partition.getName() + "." 
                          		 + SitePatternsParser.PATTERNS)}, true);
         	 }
         } else {
             // We just need to use the dummy alignment
-            writer.writeTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
+            writer.writeTag(AlignmentParser.ALIGNMENT,
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, partition.getAlignment().getId())}, true);
         }
 
         writer.writeTag(TreeModel.TREE_MODEL,

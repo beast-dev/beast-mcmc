@@ -91,7 +91,12 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
     }
 
     protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        fireModelChanged(null, getNodeNumberFromParameterIndex(index));
+        int nodeNumber = getNodeNumberFromParameterIndex(index);
+
+        NodeRef node = tree.getNode(nodeNumber);
+        assert (node.getNumber() == nodeNumber);
+
+        fireModelChanged(this, nodeNumber);
     }
 
     protected void storeState() {

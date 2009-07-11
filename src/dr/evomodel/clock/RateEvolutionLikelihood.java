@@ -1,10 +1,38 @@
+/*
+ * RateEvolutionLikelihood.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.clock;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 
 import java.util.logging.Logger;
 
@@ -23,12 +51,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
 
     public static final String ROOTRATE = "rootRate";
 
-    private final int rateCount;
-    private final double[] rates;
-
-    private boolean ratesKnown = false;
-
-
     public RateEvolutionLikelihood(String name, TreeModel treeModel, Parameter ratesParameter, Parameter rootRateParameter, boolean isEpisodic) {
 
         super(name);
@@ -36,28 +58,21 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
         this.treeModel = treeModel;
         addModel(treeModel);
 
-        this.ratesParameter = ratesParameter;
-        addParameter(ratesParameter);
+        this.ratesParameter = new TreeParameterModel(treeModel, ratesParameter, false);
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension());
+        ratesParameter.addBounds(bound);
+
+        addModel(this.ratesParameter);
 
         this.rootRateParameter = rootRateParameter;
+        rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, 1));
         addParameter(rootRateParameter);
-
-        rateCount = treeModel.getNodeCount();
-        rates = new double[rateCount];
-
-        if (ratesParameter.getDimension() != rateCount - 1) {
-            throw new IllegalArgumentException("The rates parameter must be of dimension nodeCount-1");
-        }
 
         if (rootRateParameter.getDimension() != 1) {
             throw new IllegalArgumentException("The root rate parameter must be of dimension 1");
         }
 
-        ratesKnown = false;
-
         this.isEpisodic = isEpisodic;
-
-        setupRates();
 
         Logger.getLogger("dr.evomodel").info("AutoCorrelated Relaxed Clock: " + name + (isEpisodic ? " (episodic)." : "."));
 
@@ -68,30 +83,20 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
     // **************************************************************
 
     public final void handleModelChangedEvent(Model model, Object object, int index) {
-
-        ratesKnown = false;
         likelihoodKnown = false;
+        if (model == ratesParameter) {
+            fireModelChanged(this, index);
+        }
     }
 
     protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-
-        if (parameter == rootRateParameter) {
-            ratesKnown = false;
-            likelihoodKnown = false;
-        } else if (parameter == ratesParameter) {
-            ratesKnown = false;
-            likelihoodKnown = false;
-        } else {
-            //eg, the variance parameter in ACLikelihood
-            likelihoodKnown = false;
-        }
+        likelihoodKnown = false;
     }
 
     protected void storeState() {
     }
 
     protected void restoreState() {
-        ratesKnown = false;
         likelihoodKnown = false;
     }
 
@@ -186,12 +191,8 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
 
     public double getBranchRate(Tree tree, NodeRef node) {
 
-        if (!ratesKnown) {
-            setupRates();
-            ratesKnown = true;
-        }
-
-        return rates[node.getNumber()];
+        if (tree.isRoot(node)) return rootRateParameter.getParameterValue(0);
+        return ratesParameter.getBranchValue(tree, node);
     }
 
     public boolean isEpisodic() {
@@ -207,14 +208,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
     // Private members
     // **************************************************************
 
-    private void setupRates() {
-
-        for (int i = 0; i < rateCount; i++) {
-            final NodeRef node = treeModel.getNode(i);
-            rates[node.getNumber()] = treeModel.getNodeRate(node);
-        }
-    }
-
     public String getBranchAttributeLabel() {
         return "rate";
     }
@@ -227,7 +220,7 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
     private boolean likelihoodKnown = false;
 
     private final TreeModel treeModel;
-    private final Parameter ratesParameter;
+    private final TreeParameterModel ratesParameter;
     protected final Parameter rootRateParameter;
     private final boolean isEpisodic;
 

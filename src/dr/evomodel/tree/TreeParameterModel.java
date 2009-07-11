@@ -69,7 +69,8 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
         this.tree = tree;
         this.parameter = parameter;
 
-
+        this.includeRoot = includeRoot;
+        
         int dim = parameter.getDimension();
         int treeSize = tree.getNodeCount();
         if (!includeRoot) treeSize -= 1;

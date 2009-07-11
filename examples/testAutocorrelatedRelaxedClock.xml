@@ -320,7 +320,7 @@
         </deltaExchange>
     </operators>
 
-    <mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="100000000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <gammaPrior shape="0.5" scale="0.00106" offset="0.0">
@@ -343,7 +343,7 @@
             </likelihood>
         </posterior>
         <operators idref="operators"/>
-        <log id="screenLog" logEvery="1000">
+        <log id="screenLog" logEvery="10000">
             <column label="Posterior" dp="4" width="12">
                 <posterior idref="posterior"/>
             </column>
@@ -360,7 +360,7 @@
                 <rateStatistic idref="meanRate"/>
             </column>
         </log>
-        <log id="fileLog" logEvery="1000" fileName="testAutocorrelatedRelaxedClock.log">
+        <log id="fileLog" logEvery="10000" fileName="testAutocorrelatedRelaxedClock.log">
             <posterior idref="posterior"/>
             <prior idref="prior"/>
             <likelihood idref="likelihood"/>
@@ -375,7 +375,7 @@
             <treeLikelihood idref="treeLikelihood"/>
             <coalescentLikelihood idref="coalescent"/>
         </log>
-        <logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testAutocorrelatedRelaxedClock.trees"
+        <logTree id="treeFileLog" logEvery="10000" nexusFormat="true" fileName="testAutocorrelatedRelaxedClock.trees"
                  sortTranslationTable="true">
             <treeModel idref="treeModel"/>
             <ACLikelihood idref="branchRates"/>
@@ -414,8 +414,29 @@
      covariance               0.68406       0.3471        0.92533       333.599
      treeLikelihood           -3850.6       -3857.75      -3844.1       2598.65
      coalescent               -71.9145      -76.9741      -67.1608      2531.48
-     -->
 
+     11/7/2009 (after TreeParameterModel refactoring)
+     Analysing log file: testAutocorrelatedRelaxedClock.log -seed = 666
+
+     burnIn   = -1
+     maxState = 40000000
+
+     statistic                mean          hpdLower      hpdUpper      ESS
+     posterior                -3627.5       -3655.24      -3599.65      1004.27
+     prior                    -65.807       -70.9949      -60.5394      6072.5
+     likelihood               -3561.69      -3587.33      -3532.81      1010.35
+     meanRate                 8.00334E-4    6.03074E-4    1.00027E-3    5808.67
+     treeModel.rootHeight     69.3395       55.7435       84.3751       4715.77
+     constant.popSize         34.3256       16.5467       55.6287       8398.0
+     kappa                    18.0393       11.6394       24.9999       3984.24
+     treeModel.rootRate       7.96561E-4    5.45297E-4    1.04298E-3    3586.08
+     branchRates.var          4.67653E-4    1.0727E-5     1.11304E-3    1783.07
+     coefficientOfVariation   8.15339E-2    1.90666E-2    0.15127       929.666
+     covariance               0.67042       0.31452       0.91912       2099.21
+     treeLikelihood           -3850.58      -3857.58      -3844.0       5892.16
+     coalescent               -71.8824      -76.8832      -66.9979      6710.33
+
+     -->
 
     <traceAnalysis fileName="testAutocorrelatedRelaxedClock.log">
         <expectation name="posterior" value="-3628.011"/>

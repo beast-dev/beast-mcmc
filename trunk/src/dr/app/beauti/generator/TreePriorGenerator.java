@@ -4,7 +4,6 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.StartingTreeType;
 import dr.app.beauti.options.TreePrior;
@@ -645,6 +644,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case LOGISTIC:
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD,  "booleanLikelihood1");
+                writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, COALESCENT); 
                 break;
 			case SPECIES_YULE:
 			case SPECIES_BIRTH_DEATH:

@@ -30,10 +30,30 @@ public class TimeSlicer {
 
     public TimeSlicer(String treeFileName, String outFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
-        List<Tree> trees = null;
+//        List<Tree> trees = null;
+
+        traitCount = traits.length;
+        sliceCount = 1;
+        doSlices = false;
+
+        if (slices != null) {
+            sliceCount = slices.length;
+            doSlices = true;
+        }
+
+        values = new ArrayList<List<List<Trait>>>(sliceCount);
+        for (int i = 0; i < sliceCount; i++) {
+            List<List<Trait>> thisSlice = new ArrayList<List<Trait>>(traitCount);
+            values.add(thisSlice);
+            for (int j = 0; j < traitCount; j++) {
+                List<Trait> thisTraitSlice = new ArrayList<Trait>();
+                thisSlice.add(thisTraitSlice);
+            }
+        }
 
         try {
-            trees = importTrees(treeFileName, burnin);
+//            trees = importTrees(treeFileName, burnin);
+            readAndAnalyzeTrees(treeFileName, burnin, traits, slices, impute, trueNoise);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
             System.exit(-1);
@@ -41,12 +61,14 @@ public class TimeSlicer {
             System.err.println("Error parsing trees in file: " + treeFileName);
             System.exit(-1);
         }
-        if (trees == null || trees.size() == 0) {
-            System.err.println("No trees read from file: " + treeFileName);
-            System.exit(-1);
-        }
+//        if (trees == null || trees.size() == 0) {
+//            System.err.println("No trees read from file: " + treeFileName);
+//            System.exit(-1);
+//        }
+        progressStream.println(treesRead+" trees read.");
+        progressStream.println(treesAnalyzed+" trees analyzed.");
 
-        run(trees, traits, slices, impute, trueNoise);
+//        run(trees, traits, slices, impute, trueNoise);
 
         resultsStream = System.out;
 
@@ -87,18 +109,56 @@ public class TimeSlicer {
         resultsStream.print(sb);
     }
 
-    private List<Tree> importTrees(String treeFileName, int burnin) throws IOException, Importer.ImportException {
+//    private List<Tree> importTrees(String treeFileName, int burnin) throws IOException, Importer.ImportException {
+//
+//        int totalTrees = 10000;
+//
+//        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
+//        progressStream.println("0              25             50             75            100");
+//        progressStream.println("|--------------|--------------|--------------|--------------|");
+//
+//        int stepSize = totalTrees / 60;
+//        if (stepSize < 1) stepSize = 1;
+//
+//        List<Tree> treeList = new ArrayList<Tree>();
+//        BufferedReader reader1 = new BufferedReader(new FileReader(treeFileName));
+//
+//        String line1 = reader1.readLine();
+//        TreeImporter importer1;
+//        if (line1.toUpperCase().startsWith("#NEXUS")) {
+//            importer1 = new NexusImporter(new FileReader(treeFileName));
+//        } else {
+//            importer1 = new NewickImporter(new FileReader(treeFileName));
+//        }
+//        totalTrees = 0;
+//        while (importer1.hasTree()) {
+//            Tree treeTime = importer1.importNextTree();
+//
+//            if (totalTrees > burnin)
+//                treeList.add(treeTime);
+//
+//            if (totalTrees > 0 && totalTrees % stepSize == 0) {
+//                progressStream.print("*");
+//                progressStream.flush();
+//            }
+//            totalTrees++;
+//        }
+//        return treeList;
+//    }
+
+    private void readAndAnalyzeTrees(String treeFileName, int burnin,
+                                     String[] traits, double[] slices, boolean impute, boolean trueNoise) throws IOException, Importer.ImportException {
 
         int totalTrees = 10000;
+        int totalStars = 0;
 
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
+        progressStream.println("Reading and analyzing trees (bar assumes 10,000 trees)...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        List<Tree> treeList = new ArrayList<Tree>();
         BufferedReader reader1 = new BufferedReader(new FileReader(treeFileName));
 
         String line1 = reader1.readLine();
@@ -111,17 +171,20 @@ public class TimeSlicer {
         totalTrees = 0;
         while (importer1.hasTree()) {
             Tree treeTime = importer1.importNextTree();
-
+            treesRead++;
             if (totalTrees > burnin)
-                treeList.add(treeTime);
+               analyzeTree(treeTime, traits, slices, impute, trueNoise);
 
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
+                totalStars++;
+                if(totalStars % 61 == 0)
+                    progressStream.print("\n");
                 progressStream.flush();
             }
             totalTrees++;
         }
-        return treeList;
+        progressStream.print("\n");        
     }
 
     class Trait {
@@ -196,92 +259,85 @@ public class TimeSlicer {
        resultsStream.print(sb);            
     }
 
-    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
+    private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
-        int traitCount = traits.length;
-        int sliceCount = 1;
-        boolean doSlices = false;
+        double[][] precision = null;
 
-        if (slices != null) {
-            sliceCount = slices.length;
-            doSlices = true;
-        }
-
-        values = new ArrayList<List<List<Trait>>>(sliceCount);
-        for (int i = 0; i < sliceCount; i++) {
-            List<List<Trait>> thisSlice = new ArrayList<List<Trait>>(traitCount);
-            values.add(thisSlice);
-            for (int j = 0; j < traitCount; j++) {
-                List<Trait> thisTraitSlice = new ArrayList<Trait>();
-                thisSlice.add(thisTraitSlice);
-            }
-        }
-
-        for (Tree treeTime : trees) {
-
-            double[][] precision = null;
-
-            if (impute) {
-                Object o = treeTime.getAttribute("precision");
-                if (o != null) {
-                    Object[] array = (Object[])o;
-                    int dim = (int) Math.sqrt(1+8*array.length) / 2;
-                    precision = new double[dim][dim];
-                    int c = 0;
-                    for(int i=0; i<dim; i++) {
-                        for(int j=i; j<dim; j++) {
-                            precision[j][i] = precision[i][j] = (Double)array[c++];
-                        }
+        if (impute) {
+            Object o = treeTime.getAttribute("precision");
+            if (o != null) {
+                Object[] array = (Object[]) o;
+                int dim = (int) Math.sqrt(1 + 8 * array.length) / 2;
+                precision = new double[dim][dim];
+                int c = 0;
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        precision[j][i] = precision[i][j] = (Double) array[c++];
                     }
-                }              
+                }
             }
+        }
 
-            for (int x = 0; x < treeTime.getNodeCount(); x++) {
+        for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
-                NodeRef node = treeTime.getNode(x);
+            NodeRef node = treeTime.getNode(x);
 
-                if (!(treeTime.isRoot(node))) {
+            if (!(treeTime.isRoot(node))) {
 
-                    double nodeHeight = treeTime.getNodeHeight(node);
-                    double parentHeight = treeTime.getNodeHeight(treeTime.getParent(node));
+                double nodeHeight = treeTime.getNodeHeight(node);
+                double parentHeight = treeTime.getNodeHeight(treeTime.getParent(node));
 
-                    for (int i = 0; i < sliceCount; i++) {
+                for (int i = 0; i < sliceCount; i++) {
 
-                        if (!doSlices ||
-                                (slices[i] >= nodeHeight && slices[i] < parentHeight)
-                                ) {
+                    if (!doSlices ||
+                            (slices[i] >= nodeHeight && slices[i] < parentHeight)
+                            ) {
 
-                            List<List<Trait>> thisSlice = values.get(i);
-                            for (int j = 0; j < traitCount; j++) {
-                                
-                                List<Trait> thisTraitSlice = thisSlice.get(j);
-                                Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
-                                if (tmpTrait == null) {
-                                    System.err.println("Trait '"+traits[j]+"' not found on branch.");
-                                    System.exit(-1);
-                                }
-                                Trait trait = new Trait(tmpTrait);
-                                if (impute) {
-                                    Double rateAttribute = (Double) treeTime.getNodeAttribute(node,RATE_STRING);
-                                    double rate = 1.0;
-                                    if (rateAttribute != null) {
-                                        rate = rateAttribute;
-                                        if (outputRateWarning) {
-                                            progressStream.println("Warning: using a rate attribute during imputation!");
-                                            outputRateWarning = false;
-                                        }
-                                    }
-                                    trait = imputeValue(trait,new Trait(treeTime.getNodeAttribute(treeTime.getParent(node),traits[j])),
-                                            slices[i],nodeHeight, parentHeight,precision, rate, trueNoise);
-                                }
-                                thisTraitSlice.add(trait);
+                        List<List<Trait>> thisSlice = values.get(i);
+                        for (int j = 0; j < traitCount; j++) {
+
+                            List<Trait> thisTraitSlice = thisSlice.get(j);
+                            Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
+                            if (tmpTrait == null) {
+                                System.err.println("Trait '" + traits[j] + "' not found on branch.");
+                                System.exit(-1);
                             }
+                            Trait trait = new Trait(tmpTrait);
+                            if (impute) {
+                                Double rateAttribute = (Double) treeTime.getNodeAttribute(node, RATE_STRING);
+                                double rate = 1.0;
+                                if (rateAttribute != null) {
+                                    rate = rateAttribute;
+                                    if (outputRateWarning) {
+                                        progressStream.println("Warning: using a rate attribute during imputation!");
+                                        outputRateWarning = false;
+                                    }
+                                }
+                                trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
+                                        slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                            }
+                            thisTraitSlice.add(trait);
                         }
                     }
                 }
             }
         }
+        treesAnalyzed++;
+
     }
+
+    private int traitCount;
+    private int sliceCount;
+    private boolean doSlices;
+    private int treesRead = 0;
+    private int treesAnalyzed = 0;
+
+//    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
+//
+//        for (Tree treeTime : trees) {
+//            analyzeTree(treeTime, traits, slices, impute, trueNoise);
+//        }
+//    }
 
     private boolean outputRateWarning = true;
 
@@ -366,7 +422,7 @@ public class TimeSlicer {
         centreLine("msuchard@ucla.edu", 60);
         progressStream.println();
         centreLine("Rega Institute for Medical Research", 60);
-        centreLine("Katholieke Unversiteit Leuven", 60);
+        centreLine("Katholieke Universiteit Leuven", 60);
         centreLine("philippe.lemey@gmail.com", 60);
         progressStream.println();
         centreLine("Department of Computer Science", 60);

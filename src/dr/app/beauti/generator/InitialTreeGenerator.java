@@ -1,12 +1,20 @@
 package dr.app.beauti.generator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -92,15 +100,28 @@ public class InitialTreeGenerator extends Generator {
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
                                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT,
-                                            "" + rootHeight.initial)
+                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + rootHeight.initial)
                             }
                     );
                 } else {
-                    writer.writeOpenTag(
+                	List<SiteList> siteLists = new ArrayList<SiteList>();
+                	
+                	for (PartitionData partition : model.getAllPartitionData()) {
+                		SiteList sl = (SiteList) partition.getAlignment();
+                		if (!siteLists.contains(sl)) {
+                			siteLists.add(sl);
+                		}
+                	}
+                	
+                	Patterns mergePartternsTree = new Patterns(siteLists);
+                	JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
+                	double meanDistance = dm.getMeanDistance();
+                	
+                	writer.writeOpenTag(
                             CoalescentSimulator.COALESCENT_TREE,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + meanDistance)
                             }
                     );
                 }

@@ -122,8 +122,8 @@ public class PartitionTreeModel extends ModelOptions {
                 OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
 
         createOperator("upDownAllRatesHeights", "All rates and heights",
-                "Scales all rates inversely to node heights of the tree", super.getParameter("treeModel.allRates"),
-                super.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
+                "Scales all rates inversely to node heights of the tree", this.getParameter("treeModel.allRates"),
+                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
 
         createOperator("swapBranchRateCategories", "branchRates.categories",
                 "Performs a swap of branch rate categories", "branchRates.categories",
@@ -131,7 +131,7 @@ public class PartitionTreeModel extends ModelOptions {
         createOperator("randomWalkBranchRateCategories", "branchRates.categories",
                 "Performs an integer random walk of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
-        createOperator("unformBranchRateCategories", "branchRates.categories",
+        createOperator("uniformBranchRateCategories", "branchRates.categories",
                 "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
                 OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 

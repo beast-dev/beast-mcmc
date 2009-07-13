@@ -85,6 +85,15 @@ public class Patterns implements PatternList {
     /**
      * Constructor
      */
+    public Patterns(List<SiteList> siteLists) {
+    	for(SiteList siteList : siteLists) {
+    		addPatterns(siteList, 0, 0, 1);
+    	}
+    }
+    
+    /**
+     * Constructor
+     */
     public Patterns(SiteList siteList, int from, int to, int every) {
         addPatterns(siteList, from, to, every);
     }

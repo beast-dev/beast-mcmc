@@ -100,29 +100,30 @@ public class TreeModelGenerator extends Generator {
         int[] count = validateClockTreeModelCombination(model);
         
 //    	if (autocorrelatedClockCount == 1) {
-        if (count[0] == 1) {
-                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-                        new Attribute[]{
-                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-                        });
-                writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.NODE_RATES), true);
-                writer.writeCloseTag(TreeModelParser.NODE_RATES);
-
-                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-                        new Attribute[]{
-                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
-                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
-                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
-                        });
-                writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute.Default<String>(XMLParser.ID,
-                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
-                writer.writeCloseTag(TreeModelParser.NODE_RATES);
-//    	} else if (randomLocalClockCount == 1 ) {
-        } else if (count[1] == 1 ) {
+//        if (count[0] == 1) {
+//                writer.writeOpenTag(TreeModelParser.NODE_RATES,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+//                        });
+//                writer.writeTag(ParameterParser.PARAMETER,
+//                        new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.NODE_RATES), true);
+//                writer.writeCloseTag(TreeModelParser.NODE_RATES);
+//
+//                writer.writeOpenTag(TreeModelParser.NODE_RATES,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
+//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
+//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
+//                        });
+//                writer.writeTag(ParameterParser.PARAMETER,
+//                        new Attribute.Default<String>(XMLParser.ID,
+//                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
+//                writer.writeCloseTag(TreeModelParser.NODE_RATES);
+////    	} else if (randomLocalClockCount == 1 ) {
+//        } else 
+        	if (count[1] == 1 ) {
                 writer.writeOpenTag(TreeModelParser.NODE_RATES,
                         new Attribute[]{
                                 new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
@@ -149,15 +150,15 @@ public class TreeModelGenerator extends Generator {
         writer.writeCloseTag(TreeModel.TREE_MODEL);
 
 //        if (autocorrelatedClockCount == 1) {
-        if (count[0] == 1) {
-            writer.writeText("");
-            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + TreeModelParser.NODE_RATES), true);
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
-            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
-        }
+//        if (count[0] == 1) {
+//            writer.writeText("");
+//            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
+//                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});
+//            writer.writeTag(ParameterParser.PARAMETER,
+//                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + TreeModelParser.NODE_RATES), true);
+//            writer.writeTag(ParameterParser.PARAMETER,
+//                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
+//            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+//        }
     }
 }

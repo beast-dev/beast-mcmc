@@ -249,6 +249,7 @@ public class PartitionClockModel extends ModelOptions {
 
                     case UNCORRELATED_LOGNORMAL:
                         addBranchRateCategories(ops);
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:

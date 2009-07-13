@@ -1,7 +1,7 @@
 /*
  * Event.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,16 +29,15 @@ import dr.evolution.coalescent.IntervalType;
 
 /**
  * @author Alexei
- *
  * @version $Id: Event.java,v 1.5 2005/09/21 15:58:34 rambaut Exp $
  */
 public class Event implements Comparable {
 
     double time;
-    IntervalType type;
     int[] lineageChanges;
-    int aboveColour;
-    int belowColour;
+    private IntervalType type;
+    private int aboveColour;
+    private int belowColour;
 
     public static Event createCoalescentEvent(double time, int colour, int colourCount) {
 
@@ -73,13 +72,25 @@ public class Event implements Comparable {
         this.belowColour = belowColour;
     }
 
+    public int getAboveColour() {
+        return aboveColour;
+    }
+
+    public int getBelowColour() {
+        return belowColour;
+    }
+
+    public IntervalType getType() {
+        return type;
+    }
+
     public String toString() {
         return type + " event at time " + time + " (above=" + aboveColour + ", below=" + belowColour + ")";
     }
 
     public int compareTo(Object o) {
-        Event e2 = (Event)o;
+        Event e2 = (Event) o;
 
-        return new Double(time).compareTo(new Double(e2.time));
+        return new Double(time).compareTo(e2.time);
     }
 }

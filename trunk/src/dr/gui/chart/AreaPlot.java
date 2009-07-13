@@ -1,7 +1,7 @@
 /*
  * AreaPlot.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,134 +25,134 @@
 
 package dr.gui.chart;
 
-import dr.util.Variate;
+import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 
-/** 
+/**
  * Description:	An area plot.
  *
- * @author Andrew Rambaut	
- * @author Alexei Drummond	
- * @version	$Id: AreaPlot.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @version $Id: AreaPlot.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class AreaPlot extends Plot.AbstractPlot {
 
-	protected Variate xData2 = null;
-	protected Variate yData2 = null;
-		
-	/**	
-	* Constructor
-	*/
-	public AreaPlot(Variate xData, Variate yData) {
-		super(xData, yData);
-	}
-	
-	/**	
-	* Constructor
-	*/
-	public AreaPlot(double[] xData, double[] yData) {
-		super(xData, yData);
-	}
+    protected Variate xData2 = null;
+    protected Variate yData2 = null;
 
-	/**	
-	* Constructor
-	*/
-	public AreaPlot(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
-		super(xData1, yData1);
-		this.xData2 = xData2;
-		this.yData2 = yData2;
-	}
-	
-	/**	
-	* Constructor
-	*/
-	public AreaPlot(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
-		super(xData1, yData1);
-		this.xData2 = new Variate.Double(xData2);
-		this.yData2 = new Variate.Double(yData2);
-	}
+    /**
+     * Constructor
+     */
+    public AreaPlot(Variate xData, Variate yData) {
+        super(xData, yData);
+    }
 
-	/**	
-	*	Set data
-	*/
-	public void setData(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
-		setData(xData1, yData1);
-		this.xData2 = new Variate.Double(xData2);
-		this.yData2 = new Variate.Double(yData2);
-	}
+    /**
+     * Constructor
+     */
+    public AreaPlot(double[] xData, double[] yData) {
+        super(xData, yData);
+    }
 
-	/**	
-	*	Set data
-	*/
-	public void setData(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
-		setData(xData1, yData1);
-		this.xData2 = xData2;
-		this.yData2 = yData2;
-	}
+    /**
+     * Constructor
+     */
+    public AreaPlot(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
+        super(xData1, yData1);
+        this.xData2 = xData2;
+        this.yData2 = yData2;
+    }
 
-	/**	
-	*	Set axes
-	*/
-	public void setAxes(Axis xAxis, Axis yAxis) {
-		super.setAxes(xAxis, yAxis);
-		
-		if (xData2 != null && yData2 != null) {
-			setupAxis(xAxis, yAxis, xData2, yData2);
-		}
-	}
+    /**
+     * Constructor
+     */
+    public AreaPlot(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
+        super(xData1, yData1);
+        this.xData2 = new Variate.Double(xData2);
+        this.yData2 = new Variate.Double(yData2);
+    }
 
-	/**	
-	*	Resets axis ranges (if new data has been added)
-	*/
-	public void resetAxes() {
-		super.resetAxes();
-		
-		if (xData2 != null && yData2 != null) {
-			setupAxis(xAxis, yAxis, xData2, yData2);
-		}
-	}
+    /**
+     * Set data
+     */
+    public void setData(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
+        setData(xData1, yData1);
+        this.xData2 = new Variate.Double(xData2);
+        this.yData2 = new Variate.Double(yData2);
+    }
 
-	/**	
-	*	Paint data series
-	*/
-	protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
-	
-		double x0 = transformX(xData.get(0));
-		double y0 = transformY(yData.get(0));
-		
-		GeneralPath path = new GeneralPath();
-		path.moveTo((float)x0, (float)y0);
-		
-		double x = x0;
-		double y = y0;
-		
-		for (int i = 1, n = xData.getCount(); i < n; i++) {
-			x = transformX(xData.get(i));
-			y = transformY(yData.get(i));
-			path.lineTo((float)x, (float)y);
-		}
-		
-		if (xData2 != null & yData2 != null) {
-			for (int i = xData2.getCount() - 1; i >= 0; i--) {
-				x = transformX(xData2.get(i));
-				y = transformY(yData2.get(i));
-				path.lineTo((float)x, (float)y);
-			}
-			
-		} else {
-			double y1 = transformY(0.0);
-			path.lineTo((float)x, (float)y1);
-			path.lineTo((float)x0, (float)y1);
-			path.lineTo((float)x0, (float)y0);
-		}
+    /**
+     * Set data
+     */
+    public void setData(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
+        setData(xData1, yData1);
+        this.xData2 = xData2;
+        this.yData2 = yData2;
+    }
 
-		path.closePath();
-		
-		g2.setPaint(linePaint);
-		g2.setStroke(lineStroke);
+    /**
+     * Set axes
+     */
+    public void setAxes(Axis xAxis, Axis yAxis) {
+        super.setAxes(xAxis, yAxis);
+
+        if (xData2 != null && yData2 != null) {
+            setupAxis(xAxis, yAxis, xData2, yData2);
+        }
+    }
+
+    /**
+     * Resets axis ranges (if new data has been added)
+     */
+    public void resetAxes() {
+        super.resetAxes();
+
+        if (xData2 != null && yData2 != null) {
+            setupAxis(xAxis, yAxis, xData2, yData2);
+        }
+    }
+
+    /**
+     * Paint data series
+     */
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+
+        double x0 = transformX(xData.get(0));
+        double y0 = transformY(yData.get(0));
+
+        GeneralPath path = new GeneralPath();
+        path.moveTo((float) x0, (float) y0);
+
+        double x = x0;
+        double y = y0;
+
+        for (int i = 1, n = xData.getCount(); i < n; i++) {
+            x = transformX(xData.get(i));
+            y = transformY(yData.get(i));
+            path.lineTo((float) x, (float) y);
+        }
+
+        if (xData2 != null & yData2 != null) {
+            for (int i = xData2.getCount() - 1; i >= 0; i--) {
+                x = transformX(xData2.get(i));
+                y = transformY(yData2.get(i));
+                path.lineTo((float) x, (float) y);
+            }
+
+        } else {
+            double y1 = transformY(0.0);
+            path.lineTo((float) x, (float) y1);
+            path.lineTo((float) x0, (float) y1);
+            path.lineTo((float) x0, (float) y0);
+        }
+
+        path.closePath();
+
+        g2.setPaint(linePaint);
+        g2.setStroke(lineStroke);
 			
 		g2.fill(path);
 	}

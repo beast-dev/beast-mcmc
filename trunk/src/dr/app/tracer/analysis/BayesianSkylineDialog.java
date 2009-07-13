@@ -1,7 +1,7 @@
 /*
  * BayesianSkylineDialog.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -27,7 +27,7 @@ package dr.app.tracer.analysis;
 
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
-import dr.util.Variate;
+import dr.stats.Variate;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
 import jebl.evolution.io.ImportException;
@@ -46,7 +46,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -709,7 +712,7 @@ public class BayesianSkylineDialog {
                         for (state = 0; state < stateCount; state++) {
 
                             if (isLinearOrExponential) {
-                                double lastGroupTime = 0.0;                                                 
+                                double lastGroupTime = 0.0;
 
                                 int index = 0;
                                 while (index < groupTimes[state].length && groupTimes[state][index] < height) {

@@ -1,7 +1,7 @@
 /*
- * BayesianSkylineDialog.java
+ * TimeDensityDialog.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,14 +25,12 @@
 
 package dr.app.tracer.analysis;
 
-import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
+import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
-import dr.util.Variate;
-import org.virion.jam.framework.DocumentFrame;
+import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.util.LongTask;
-import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -197,7 +195,7 @@ public class TimeDensityDialog {
         public Object doWork() {
 
             double[] times = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex((String)traceCombo.getSelectedItem()), times);
+            traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), times);
 
             minTime = frame.getMinTime();
             maxTime = frame.getMaxTime();
@@ -214,18 +212,18 @@ public class TimeDensityDialog {
             Variate.Double yData = new Variate.Double();
 
             double x = frequency.getLowerBound() - frequency.getBinSize();
-            xData.add(x + (frequency.getBinSize()/2.0));
+            xData.add(x + (frequency.getBinSize() / 2.0));
             yData.add(0.0);
             x += frequency.getBinSize();
 
             for (int i = 0; i < frequency.getBinCount(); i++) {
-                xData.add(x + (frequency.getBinSize()/2.0));
-                double density = frequency.getFrequency(i)/frequency.getBinSize()/times.length;
+                xData.add(x + (frequency.getBinSize() / 2.0));
+                double density = frequency.getFrequency(i) / frequency.getBinSize() / times.length;
                 yData.add(density);
                 x += frequency.getBinSize();
             }
 
-            xData.add(x + (frequency.getBinSize()/2.0));
+            xData.add(x + (frequency.getBinSize() / 2.0));
             yData.add(0.0);
 
             frame.addDensity("Density: " + traceList.getName(), xData, yData);

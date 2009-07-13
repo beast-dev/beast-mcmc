@@ -1,7 +1,7 @@
 /*
  * XMLDocumentationHandler.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,14 +25,12 @@
 
 package dr.xml;
 
-import dr.math.MathUtils;
-
-import java.io.File;
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.*;
 
 public class XMLDocumentationHandler {
+
+    private Random random = new Random();
 
     public XMLDocumentationHandler(XMLParser parser) {
 
@@ -40,7 +38,7 @@ public class XMLDocumentationHandler {
 
         Iterator iterator = parser.getParsers();
         while (iterator.hasNext()) {
-            XMLObjectParser xmlparser = (XMLObjectParser)iterator.next();
+            XMLObjectParser xmlparser = (XMLObjectParser) iterator.next();
 
             XMLSyntaxRule[] rules = xmlparser.getSyntaxRules();
 
@@ -70,7 +68,7 @@ public class XMLDocumentationHandler {
 
         Iterator iterator = parser.getParsers();
         while (iterator.hasNext()) {
-            XMLObjectParser xmlParser = (XMLObjectParser)iterator.next();
+            XMLObjectParser xmlParser = (XMLObjectParser) iterator.next();
             writer.println(xmlParser.toHTML(this));
             System.out.println("  outputting HTML for element " + xmlParser.getParserName());
         }
@@ -94,13 +92,21 @@ public class XMLDocumentationHandler {
     }
 
     public void outputHTMLSafeText(PrintWriter writer, String text) {
-        for (int i =0; i < text.length(); i++) {
+        for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '<': writer.print("&lt;"); break;
-                case '>': writer.print("&gt;"); break;
-                case '&': writer.print("&amp;"); break;
-                default: writer.print(c); break;
+                case '<':
+                    writer.print("&lt;");
+                    break;
+                case '>':
+                    writer.print("&gt;");
+                    break;
+                case '&':
+                    writer.print("&amp;");
+                    break;
+                default:
+                    writer.print(c);
+                    break;
             }
         }
     }
@@ -124,19 +130,19 @@ public class XMLDocumentationHandler {
                     int max = Math.max(min, Math.min(5, ((ElementRule) rule).getMax()));
 
                     int numRules = min;
-                    if (max != min) numRules = MathUtils.nextInt(max - min) + min;
+                    if (max != min) numRules = random.nextInt(max - min) + min;
                     for (int j = 0; j < numRules; j++) {
                         elementList.add((ElementRule) rule);
                     }
                 } else if (rule instanceof XORRule) {
                     XORRule xorRule = (XORRule) rule;
                     XMLSyntaxRule[] rules = xorRule.getRules();
-                    int ruleIndex = MathUtils.nextInt(rules.length);
+                    int ruleIndex = random.nextInt(rules.length);
                     stochasticCollectRules(new XMLSyntaxRule[]{rules[ruleIndex]}, attributeList, elementList);
                 } else if (rule instanceof OrRule) {
                     OrRule orRule = (OrRule) rule;
                     XMLSyntaxRule[] rules = orRule.getRules();
-                    int ruleIndex = MathUtils.nextInt(rules.length);
+                    int ruleIndex = random.nextInt(rules.length);
                     stochasticCollectRules(new XMLSyntaxRule[]{rules[ruleIndex]}, attributeList, elementList);
                 }
             }
@@ -147,7 +153,7 @@ public class XMLDocumentationHandler {
      * Outputs an example of a rule, using the syntax information.
      */
     public void outputExampleXML(PrintWriter writer, AttributeRule rule, int level) {
-        writer.print(" " + rule.getName()+"=\"");
+        writer.print(" " + rule.getName() + "=\"");
         if (rule.hasExample()) {
             writer.print(rule.getExample());
         } else {
@@ -166,7 +172,7 @@ public class XMLDocumentationHandler {
             outputElementRules(writer, rule.getName(), rule.getRules(), level);
         } else {
             if (rule.hasExample()) {
-                writer.println(spaces(level+1) + rule.getExample());
+                writer.println(spaces(level + 1) + rule.getExample());
             } else {
                 outputExampleXML(writer, rule.getElementClass(), level + 1);
             }
@@ -211,14 +217,16 @@ public class XMLDocumentationHandler {
         } else if (c == String[].class) {
             writer.println(spaces(level) + "foo bar");
         } else {
-            if (c == null) { throw new RuntimeException("Class is null"); }
+            if (c == null) {
+                throw new RuntimeException("Class is null");
+            }
             XMLObjectParser randomParser = getRandomParser(c);
             if (randomParser == null) {
                 writer.println(spaces(level) + "ERROR!");
             } else {
                 if (level > 1) {
                     writer.println(spaces(level) + "&lt;" + randomParser.getParserName() +
-                            " idref=\"" + randomParser.getParserName() + (MathUtils.nextInt(10)+1) + "\"/&gt;");
+                            " idref=\"" + randomParser.getParserName() + (random.nextInt(10) + 1) + "\"/&gt;");
                 } else {
                     outputExampleXML(writer, randomParser, level);
                 }
@@ -249,7 +257,7 @@ public class XMLDocumentationHandler {
 
     private String spaces(int level) {
         StringBuffer buffer = new StringBuffer("");
-        for (int i =0; i < level; i++) {
+        for (int i = 0; i < level; i++) {
             buffer.append(' ');
         }
         return buffer.toString();
@@ -260,7 +268,7 @@ public class XMLDocumentationHandler {
         ArrayList<XMLObjectParser> matchingParsers = getMatchingParsers(c);
 
         if (matchingParsers.size() == 0) return null;
-        return matchingParsers.get(MathUtils.nextInt(matchingParsers.size()));
+        return matchingParsers.get(random.nextInt(matchingParsers.size()));
     }
 
     public final ArrayList<XMLObjectParser> getMatchingParsers(Class c) {
@@ -269,7 +277,7 @@ public class XMLDocumentationHandler {
         // find all parsers that match this required type
         Iterator i = parser.getParsers();
         while (i.hasNext()) {
-            XMLObjectParser xmlParser = (XMLObjectParser)i.next();
+            XMLObjectParser xmlParser = (XMLObjectParser) i.next();
             Class returnType = xmlParser.getReturnType();
             if (c.isAssignableFrom(returnType)) {
                 matchingParsers.add(xmlParser);

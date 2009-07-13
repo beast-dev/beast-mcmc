@@ -1,7 +1,7 @@
 /*
  * TaxonParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,39 +25,41 @@
 
 package dr.evoxml;
 
-import dr.evolution.util.*;
+import dr.evolution.util.Date;
+import dr.evolution.util.Location;
+import dr.evolution.util.Taxon;
 import dr.util.Attribute;
-import dr.util.Identifiable;
 import dr.xml.*;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: TaxonParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class TaxonParser extends AbstractXMLObjectParser {
 
     public final static String TAXON = "taxon";
 
-    public String getParserName() { return TAXON; }
+    public String getParserName() {
+        return TAXON;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Taxon taxon = new Taxon(xo.getStringAttribute(Identifiable.ID));
+        Taxon taxon = new Taxon(xo.getStringAttribute(dr.xml.XMLParser.ID));
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
 
             if (child instanceof Date) {
-                taxon.setDate((Date)child);
+                taxon.setDate((Date) child);
             } else if (child instanceof Location) {
-                    taxon.setLocation((Location)child);
+                taxon.setLocation((Location) child);
             } else if (child instanceof Attribute) {
-                final Attribute attr = (Attribute)child;
+                final Attribute attr = (Attribute) child;
                 taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
             } else if (child instanceof Attribute[]) {
-                Attribute[] attrs = (Attribute[])child;
+                Attribute[] attrs = (Attribute[]) child;
                 for (Attribute attr : attrs) {
                     taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
                 }
@@ -69,13 +71,20 @@ public class TaxonParser extends AbstractXMLObjectParser {
         return taxon;
     }
 
-    public String getParserDescription() { return ""; }
-    public Class getReturnType() { return Taxon.class; }
+    public String getParserDescription() {
+        return "";
+    }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public Class getReturnType() {
+        return Taxon.class;
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
     private final XMLSyntaxRule[] rules = {
-            new StringAttributeRule(Identifiable.ID, "A unique identifier for this taxon"),
+            new StringAttributeRule(dr.xml.XMLParser.ID, "A unique identifier for this taxon"),
             new ElementRule(Attribute.Default.class, true),
             new ElementRule(Date.class, true),
             new ElementRule(Location.class, true)

@@ -1,17 +1,49 @@
+/*
+ * SkylineReconstructor.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tools;
 
-import dr.inference.trace.*;
-import dr.util.Variate;
-
-import java.io.*;
-import java.util.*;
-
-import jebl.evolution.io.*;
-import jebl.evolution.trees.RootedTree;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceException;
+import dr.inference.trace.TraceList;
+import dr.stats.Variate;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
+import jebl.evolution.io.ImportException;
+import jebl.evolution.io.NewickImporter;
+import jebl.evolution.io.NexusImporter;
+import jebl.evolution.io.TreeImporter;
+import jebl.evolution.trees.RootedTree;
 
-import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -263,7 +295,7 @@ public class SkylineReconstructor {
         for (int j = 0; j < traceList.getTraceCount(); j++) {
             String statistic = traceList.getTraceName(j);
             String suffix = getNumericalSuffix(statistic);
-            if ((suffix.length() == 0 || suffix.equals("1")) &&  statistic.substring(0, statistic.length() - 1).contains(argument)) {
+            if ((suffix.length() == 0 || suffix.equals("1")) && statistic.substring(0, statistic.length() - 1).contains(argument)) {
                 return j;
             }
         }

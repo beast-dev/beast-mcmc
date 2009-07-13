@@ -1,7 +1,7 @@
 /*
  * Identifiable.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -28,23 +28,20 @@ package dr.util;
 /**
  * An interface for supplying an Id for a data object.
  *
- * @version $Id: Identifiable.java,v 1.6 2005/05/24 20:26:01 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: Identifiable.java,v 1.6 2005/05/24 20:26:01 rambaut Exp $
  */
 public interface Identifiable {
 
-	public final static String ID = dr.xml.XMLParser.ID;
-	
-	/**
-	 * @return the id as a string.
-	 */
-	public String getId();
+    /**
+     * @return the id as a string.
+     */
+    public String getId();
 
-	/**
-	 * set the id as a string.
-	 */
-	public void setId(String id);
-	
+    /**
+     * set the id as a string.
+     */
+    public void setId(String id);
+
 }
 

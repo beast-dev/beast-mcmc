@@ -1,7 +1,7 @@
 /*
- * BayesianSkylineDialog.java
+ * TraitThroughTimeDialog.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -27,13 +27,13 @@ package dr.app.tracer.analysis;
 
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
-import dr.util.Variate;
+import dr.stats.Variate;
+import jebl.evolution.graphs.Node;
 import jebl.evolution.io.ImportException;
 import jebl.evolution.io.NewickImporter;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.io.TreeImporter;
 import jebl.evolution.trees.RootedTree;
-import jebl.evolution.graphs.Node;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.framework.DocumentFrame;
@@ -41,7 +41,6 @@ import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.util.LongTask;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -51,7 +50,6 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.*;
 
 public class TraitThroughTimeDialog {
 
@@ -488,7 +486,7 @@ public class TraitThroughTimeDialog {
                                 double h1 = tree.getHeight(node);
                                 double h0 = tree.getHeight(tree.getParent(node));
 
-                                Double value = (Double)node.getAttribute(traitName);
+                                Double value = (Double) node.getAttribute(traitName);
                                 if (value != null) {
                                     traitFound = true;
                                     double height = startHeight;

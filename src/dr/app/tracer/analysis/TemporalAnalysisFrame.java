@@ -1,7 +1,7 @@
 /*
  * TemporalAnalysisFrame.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -32,7 +32,7 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 import dr.app.tracer.application.TracerFileMenuHandler;
-import dr.util.Variate;
+import dr.stats.Variate;
 import org.virion.jam.framework.AuxilaryFrame;
 import org.virion.jam.framework.DocumentFrame;
 
@@ -250,7 +250,7 @@ public class TemporalAnalysisFrame extends AuxilaryFrame implements TracerFileMe
             }
         }
         buffer.append("\n");
-        
+
         buffer.append("Time");
         for (TemporalAnalysisPlotPanel.AnalysisData analysis : analyses) {
             if (analysis.isDemographic) {

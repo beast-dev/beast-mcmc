@@ -1,9 +1,34 @@
+/*
+ * CorrelationPanel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
-import dr.util.Variate;
+import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
@@ -125,8 +150,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
             traceIndex2 = tl2.getTraceIndex(traceNames.get(0));
             name1 = name1 + " - " + tl1.getTraceName(traceIndex1);
             name2 = name2 + " - " + tl2.getTraceName(traceIndex2);
-        } else
-        if (traceLists != null && traceNames != null && traceLists.length == 1 && traceNames.size() == 2) {
+        } else if (traceLists != null && traceNames != null && traceLists.length == 1 && traceNames.size() == 2) {
             tl1 = traceLists[0];
             tl2 = traceLists[0];
             traceIndex1 = tl1.getTraceIndex(traceNames.get(0));
@@ -242,8 +266,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
             buffer.append("\t");
             buffer.append(String.valueOf(yData.get(i)));
             buffer.append("\n");
-	}
+        }
 
         return buffer.toString();
-	}
+    }
 }

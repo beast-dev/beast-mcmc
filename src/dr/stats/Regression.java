@@ -1,7 +1,7 @@
 /*
  * Regression.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,14 +25,11 @@
 
 package dr.stats;
 
-import dr.util.Variate;
-
 /**
  * simple regression of two variables
  *
- * @version $Id: Regression.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: Regression.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Regression {
     private Variate xData = null;
@@ -50,7 +47,8 @@ public class Regression {
     /**
      * Constructor
      */
-    public Regression() { }
+    public Regression() {
+    }
 
     /**
      * Constructor
@@ -83,7 +81,7 @@ public class Regression {
     }
 
     /**
-     *	Set data
+     * Set data
      */
     public void setData(double[] xData, double[] yData) {
         Variate.Double xd = new Variate.Double();
@@ -101,7 +99,7 @@ public class Regression {
     }
 
     /**
-     *	Set data
+     * Set data
      */
     public void setData(Variate xData, Variate yData) {
         this.xData = xData;
@@ -148,7 +146,7 @@ public class Regression {
         return residualMeanSquared;
     }
 
-    public double getCorrelationCoefficient  () {
+    public double getCorrelationCoefficient() {
         if (!regressionKnown) {
             calculateRegression();
         }
@@ -176,7 +174,7 @@ public class Regression {
 
     private void calculateRegression() {
         int i, n = xData.getCount();
-        double meanX=0.0, meanY=0.0;
+        double meanX = 0.0, meanY = 0.0;
 
         if (!forceOrigin) {
             meanX = xData.getMean();
@@ -185,9 +183,9 @@ public class Regression {
 
         //Calculate sum of products & sum of x squares
 
-        double sumProducts=0.0;
-        double sumSquareX=0.0;
-        double sumSquareY=0.0;
+        double sumProducts = 0.0;
+        double sumSquareX = 0.0;
+        double sumSquareY = 0.0;
         double x1, y1;
         for (i = 0; i < n; i++) {
             x1 = xData.get(i) - meanX;
@@ -199,15 +197,15 @@ public class Regression {
 
         //Calculate gradient and intercept of regression line. Calculate covariance.
 
-        gradient = sumProducts / sumSquareX; 			// Gradient
-        intercept = meanY - (gradient * meanX);			// Intercept
-        covariance = sumProducts / (n - 1);				// Covariance
+        gradient = sumProducts / sumSquareX;             // Gradient
+        intercept = meanY - (gradient * meanX);            // Intercept
+        covariance = sumProducts / (n - 1);                // Covariance
 
         correlationCoefficient = sumProducts / Math.sqrt(sumSquareX * sumSquareY);
 
         //Calculate residual mean square
 
-        double sumResidualsSquared=0;
+        double sumResidualsSquared = 0;
         double residual;
         for (i = 0; i < n; i++) {
             residual = yData.get(i) - ((gradient * xData.get(i)) + intercept);

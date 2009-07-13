@@ -1,7 +1,7 @@
 /*
  * SumStatistic.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -70,8 +70,10 @@ public class SumStatistic extends Statistic.Abstract {
     public double getStatisticValue(int dim) {
 
         double sum = 0.0;
-        
-        if( elementwise ) { assert dim == 0; }
+
+        if (elementwise) {
+            assert dim == 0;
+        }
 
         for (Statistic statistic : statistics) {
             if (elementwise) {
@@ -101,7 +103,7 @@ public class SumStatistic extends Statistic.Abstract {
             boolean elementwise = xo.getAttribute("elementwise", false);
 
             String name = SUM_STATISTIC;
-            if (xo.hasAttribute(NAME) || xo.hasAttribute(ID))
+            if (xo.hasAttribute(NAME) || xo.hasAttribute(dr.xml.XMLParser.ID))
                 name = xo.getAttribute(NAME, xo.getId());
 
             SumStatistic sumStatistic = new SumStatistic(name, elementwise);

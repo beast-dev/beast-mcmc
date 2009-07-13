@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -26,22 +26,23 @@
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
-import dr.app.util.Arguments;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.*;
-import dr.evolution.util.*;
-import dr.evolution.util.Date;
-import dr.util.Version;
-import dr.util.Variate;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.stats.Regression;
-import dr.math.UnivariateMinimum;
-import dr.math.UnivariateFunction;
+import dr.stats.Variate;
+import dr.util.Version;
 
-import java.io.*;
-import java.util.*;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * @author Andrew Rambaut
@@ -99,7 +100,7 @@ public class RootToTip {
                     regressions.add(temporalRooting.getRootToTipRegression(rootedTree));
 
                     if (writeTree) {
-                        trees.add(rootedTree); 
+                        trees.add(rootedTree);
                     }
                     totalTreesUsed += 1;
                 }

@@ -1,7 +1,7 @@
 /*
  * StructuredCoalescent.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,36 +25,31 @@
 
 package dr.evolution.coalescent.structure;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.structure.MetaPopulationModel;
 
 /**
  * @author Alexei Drummond
  * @author Gerton Lunter
  * @author Andrew Rambaut
- *
  * @version $Id: StructuredCoalescent.java,v 1.17 2006/09/11 09:33:01 gerton Exp $
  */
 public class StructuredCoalescent {
 
-	static double tinyTime = 1.0e-6;        // make sure rounding errors don't influence population sizes (for Bayesian Skyline)
-	
+    static double tinyTime = 1.0e-6;        // make sure rounding errors don't influence population sizes (for Bayesian Skyline)
+
     public StructuredCoalescent() {
 
     }
 
     /**
-     *
      * @param intervals
-     * @param N
      * @return the log likelihood
      */
 //    public double calculateLogLikelihood(TreeColouring treeColouring, StructuredIntervalList intervals, ColourChangeMatrix mm, double[] N) {
-    public double calculateLogLikelihood(TreeColouring treeColouring, StructuredIntervalList intervals, ColourChangeMatrix mm, MetaPopulationModel mp) {
+    public double calculateLogLikelihood(TreeColouring treeColouring, StructuredIntervalList intervals, ColourChangeMatrix mm, MetaPopulation mp) {
 
         double logL = 0;
         Tree tree = treeColouring.getTree();
@@ -63,19 +58,19 @@ public class StructuredCoalescent {
 
         // include the probability of the leaf colouring
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-        	
-        	NodeRef leafNode = tree.getExternalNode( i );
-        	logL += Math.log( mm.getEquilibrium( treeColouring.getNodeColour( leafNode ) ) );
-        	
+
+            NodeRef leafNode = tree.getExternalNode(i);
+            logL += Math.log(mm.getEquilibrium(treeColouring.getNodeColour(leafNode)));
+
         }
-        
+
         double currentTime = 0.0;
-        
+
         // walk up the tree
         for (int i = 0; i < intervals.getIntervalCount(); i++) {
 
-        	// integral of exit rate over time interval
-            double intensity = 0.0;                 
+            // integral of exit rate over time interval
+            double intensity = 0.0;
 
             // get length of current interval
             double time = intervals.getInterval(i);
@@ -83,71 +78,76 @@ public class StructuredCoalescent {
             // calculate the integrated exit rate
             for (int j = 0; j < intervals.getPopulationCount(); j++) {
 
-                int lineages = intervals.getLineageCount(i,j);
+                int lineages = intervals.getLineageCount(i, j);
 
                 // coalescent contribution
                 //exitRate += lineages * (lineages-1) / (2*N[j]);
 
-                intensity += (lineages * (lineages-1) / 2.0) * mp.getIntegral(currentTime, currentTime + time, j);
+                intensity += (lineages * (lineages - 1) / 2.0) * mp.getIntegral(currentTime, currentTime + time, j);
 
                 // migration contribution
-                intensity += (-mm.getBackwardRate(j,j)) * lineages * time;
+                intensity += (-mm.getBackwardRate(j, j)) * lineages * time;
             }
 
             _totalIntegratedRate += intensity;
-            
+
             //System.out.print(" LL: interv="+i+"\trate="+df.format(exitRate)+"\tt="+df.format(time)+"\tintrate="+ df.format(time*exitRate) + "\tsurv="+df.format(survivalProbability));
-            
+
             double pointDensity = 0.0;
             Event event = intervals.getEvent(i);
 
             // update current time
             currentTime += time;
-           //currentTime = event.time;
-            
-            if (event.type == IntervalType.COALESCENT) {
+            //currentTime = event.time;
 
-                if (!(event.aboveColour == event.belowColour)) {
-                    throw new Error("Coalescent event changes colour");
+            switch (event.getType()) {
+
+                case COALESCENT: {
+
+                    if (!(event.getAboveColour() == event.getBelowColour())) {
+                        throw new Error("Coalescent event changes colour");
+                    }
+                    // old version:
+                    //pointDensity = 1.0 / N[event.aboveColour];
+
+                    // Make sure that rounding errors do not influence the population size (relevant for
+                    // non-continuous population models, e.g. piecewise constant models for the Bayesian skyline)
+                    pointDensity = 1.0 / mp.getDemographic(currentTime - tinyTime, event.getAboveColour());
+
+                    //System.out.println(" Coalescent; density="+pointDensity);
+
                 }
-                // old version:
-                //pointDensity = 1.0 / N[event.aboveColour];
-                
-                // Make sure that rounding errors do not influence the population size (relevant for
-                // non-continuous population models, e.g. piecewise constant models for the Bayesian skyline)
-                pointDensity = 1.0 / mp.getDemographic( currentTime - tinyTime, event.aboveColour );
+                break;
 
-                //System.out.println(" Coalescent; density="+pointDensity);
-                
-            } else if (event.type == IntervalType.MIGRATION) {
+                case MIGRATION: {
 
-                if (!(event.aboveColour != event.belowColour)) {
-                    throw new Error("Colour-change event fails to change colour");
+                    if (!(event.getAboveColour() != event.getBelowColour())) {
+                        throw new Error("Colour-change event fails to change colour");
+                    }
+                    pointDensity = mm.getBackwardRate(event.getBelowColour(), event.getAboveColour());
+
+                    //System.out.println(" Migration; density="+pointDensity);
+
                 }
-                pointDensity = mm.getBackwardRate(event.belowColour, event.aboveColour);
+                break;
+                case SAMPLE: {
 
-                //System.out.println(" Migration; density="+pointDensity);
-
-            } else if (event.type == IntervalType.SAMPLE) {
-
-                pointDensity = 1.0;
-                //System.out.println(" Sample");
+                    pointDensity = 1.0;
+                    //System.out.println(" Sample");
+                }
+                break;
             }
 
             logL += Math.log(pointDensity) - intensity;
-
         }
 
         /*
         System.out.println("Full likelihood "+logL);
         System.out.println("Integrated exit rate "+_totalIntegratedRate);
         */
-        
+
         return logL;
     }
-
-
-
 
     /**
      * Calculate the (2-population) structured coalescent likelihood for the given tree,

@@ -1,7 +1,7 @@
 /*
  * ColouredTreeIntervals.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -38,14 +38,13 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- *
  * @version $Id: ColouredTreeIntervals.java,v 1.9 2005/12/08 13:48:41 rambaut Exp $
  */
 public class ColouredTreeIntervals implements StructuredIntervalList {
 
     int intervalCount;
     int sampleCount;
-    List eventList = new ArrayList();
+    List<Event> eventList = new ArrayList<Event>();
     int colourStateCount;
     int[][] lineageCount;
     Type units;
@@ -59,7 +58,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
         extractMigrationEvents(tree, colouring, eventList);
         Collections.sort(eventList);
 
-        lineageCount = new int[eventList.size()+1][colourStateCount];
+        lineageCount = new int[eventList.size() + 1][colourStateCount];
         int externalNodeCount = tree.getExternalNodeCount();
         for (int i = 0; i < externalNodeCount; i++) {
             NodeRef node = tree.getExternalNode(i);
@@ -70,20 +69,22 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
             }
         }
         for (int i = 0; i < eventList.size(); i++) {
-            Event event = (Event)eventList.get(i);
+            Event event = eventList.get(i);
             //System.out.println(event);
 
             for (int j = 0; j < colourStateCount; j++) {
-                lineageCount[i+1][j] = lineageCount[i][j] + event.lineageChanges[j];
-                if (lineageCount[i+1][j] < 0) {
-                    throw new RuntimeException("lineageCount[" + (i + 1) + "][" + j + "] = " + lineageCount[i+1][j] + ". This is wrong!");
+                lineageCount[i + 1][j] = lineageCount[i][j] + event.lineageChanges[j];
+                if (lineageCount[i + 1][j] < 0) {
+                    throw new RuntimeException("lineageCount[" + (i + 1) + "][" + j + "] = " + lineageCount[i + 1][j] + ". This is wrong!");
                 }
             }
         }
         intervalCount = eventList.size();
     }
 
-    public int getPopulationCount() { return lineageCount[0].length; }
+    public int getPopulationCount() {
+        return lineageCount[0].length;
+    }
 
     /**
      * get number of intervals
@@ -103,8 +104,8 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
      * Gets an interval.
      */
     public double getInterval(int i) {
-        if (i==0) return getEvent(i).time;
-        return getEvent(i).time - getEvent(i-1).time;
+        if (i == 0) return getEvent(i).time;
+        return getEvent(i).time - getEvent(i - 1).time;
     }
 
     /**
@@ -131,7 +132,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
      * Returns the number coalescent events in an interval
      */
     public int getCoalescentEvents(int i) {
-        if (getEvent(i).type == IntervalType.COALESCENT) return 1;
+        if (getEvent(i).getType() == IntervalType.COALESCENT) return 1;
         return 0;
     }
 
@@ -139,7 +140,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
      * Returns the type of interval observed.
      */
     public IntervalType getIntervalType(int i) {
-        return getEvent(i).type;
+        return getEvent(i).getType();
     }
 
     /**
@@ -181,7 +182,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
         this.units = units;
     }
 
-    private final void extractCoalescentEvents(Tree tree, TreeColouring colouring, List eventList) {
+    private void extractCoalescentEvents(Tree tree, TreeColouring colouring, List<Event> eventList) {
         int internalNodeCount = tree.getInternalNodeCount();
         for (int i = 0; i < internalNodeCount; i++) {
             NodeRef node = tree.getInternalNode(i);
@@ -191,7 +192,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
         }
     }
 
-    private final int extractSampleEvents(Tree tree, TreeColouring colouring, List eventList) {
+    private int extractSampleEvents(Tree tree, TreeColouring colouring, List<Event> eventList) {
         int externalNodeCount = tree.getExternalNodeCount();
         int sampleEventCount = 0;
         for (int i = 0; i < externalNodeCount; i++) {
@@ -206,21 +207,19 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
         return sampleEventCount;
     }
 
-    private final void extractMigrationEvents(Tree tree, TreeColouring colouring, List eventList) {
+    private void extractMigrationEvents(Tree tree, TreeColouring colouring, List<Event> eventList) {
         int nodeCount = tree.getNodeCount();
         for (int i = 0; i < nodeCount; i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
 
                 BranchColouring branchColouring = colouring.getBranchColouring(node);
-                List changes = branchColouring.getColourChanges();
+                List<ColourChange> changes = branchColouring.getColourChanges();
                 int belowColour = colouring.getNodeColour(node);
-                for (int j = 0; j < changes.size(); j++) {
-                    ColourChange change = (ColourChange)changes.get(j);
+                for (ColourChange change : changes) {
 
                     double time = change.getTime();
                     int aboveColour = change.getColourAbove();
-
                     eventList.add(Event.createMigrationEvent(time, belowColour, aboveColour, colouring.getColourCount()));
                     belowColour = aboveColour;
                 }
@@ -229,7 +228,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     }
 
     public final Event getEvent(int i) {
-        return (Event)eventList.get(i);
+        return eventList.get(i);
     }
 
 }

@@ -1,28 +1,49 @@
-/**
- * 
+/*
+ * ConditionalCladeFrequencyParser.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
-package dr.evolution.tree;
+
+/**
+ *
+ */
+package dr.evomodelxml;
+
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.ConditionalCladeFrequency;
+import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.StringAttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-
 /**
  * @author Sebastian Hoehna
- * 
- * This is the parser for the xml block in the BEAST input file for the conditional clade frequency statistic.
- * It is used to estimate the posterior of a tree given a trace of trees.
- *
+ *         <p/>
+ *         This is the parser for the xml block in the BEAST input file for the conditional clade frequency statistic.
+ *         It is used to estimate the posterior of a tree given a trace of trees.
  */
 public class ConditionalCladeFrequencyParser extends AbstractXMLObjectParser {
 
@@ -66,7 +87,7 @@ public class ConditionalCladeFrequencyParser extends AbstractXMLObjectParser {
                 // leaving the burnin attribute off will result in 10% being used
                 burnin = xo.getIntegerAttribute(BURN_IN);
             }
-            
+
             // the epsilon value which represents the number of occurrences for every not observed clade
             double e = 1.0;
             if (xo.hasAttribute(EPSILON)) {

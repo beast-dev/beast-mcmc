@@ -1,5 +1,5 @@
 /*
- * ColourSampler.java
+ * MetaPopulation.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -23,22 +23,25 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evolution.colouring;
-
-import dr.evolution.coalescent.structure.MetaPopulation;
-import dr.evolution.tree.Tree;
+package dr.evolution.coalescent.structure;
 
 /**
- * @author Alexei Drummond
- * @author Gerton Lunter
- * @author Andrew Rambaut
- * @version $Id: ColourSampler.java,v 1.5 2006/09/11 09:33:01 gerton Exp $
+ * Created by IntelliJ IDEA.
+ * User: alexei
+ * Date: Jul 13, 2009
+ * Time: 9:52:38 PM
+ * To change this template use File | Settings | File Templates.
  */
-public interface ColourSampler {
+public interface MetaPopulation {
+    int getPopulationCount();
 
-    DefaultTreeColouring sampleTreeColouring(Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulation mp);
+    double[] getPopulationSizes(double time);/* returns value of demographic function at time t  (population size; one entry of double[] getPopulationSizes)
+    * (This function mirrors an equivalent function in DemographicFunction)
+    */
 
-    double getProposalProbability(TreeColouring treeColouring, Tree tree, ColourChangeMatrix colourChangeMatrix, MetaPopulation mp);
+    double getDemographic(double time, int population);/* calculates the integral 1/N(x) dx from start to finish, for one of the populations
+    * (This function mirrors an equivalent function in DemographicFunction)
+    */
 
-    int[] getLeafColourCounts();
+    double getIntegral(double start, double finish, int population);
 }

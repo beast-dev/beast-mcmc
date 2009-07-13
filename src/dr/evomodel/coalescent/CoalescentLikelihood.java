@@ -27,14 +27,16 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.MultiLociTreeSet;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.Likelihood;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 

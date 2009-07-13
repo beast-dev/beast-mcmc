@@ -27,13 +27,15 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.MultiLociTreeSet;
 import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.math.Binomial;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;

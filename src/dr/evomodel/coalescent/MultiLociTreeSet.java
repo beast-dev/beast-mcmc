@@ -1,6 +1,7 @@
-package dr.evolution.coalescent;
+package dr.evomodel.coalescent;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
@@ -45,12 +46,12 @@ public interface MultiLociTreeSet {
     void restoreTheState();
 
     public class Default implements MultiLociTreeSet, ModelListener {
-        private List<TreeModel> trees;
-        private List<Double> factors;
-        private boolean[] dirty;
-        private boolean[] gotDirty;
+        private final List<TreeModel> trees;
+        private final List<Double> factors;
+        private final boolean[] dirty;
+        private final boolean[] gotDirty;
 
-        private TreeIntervals[] intervals;
+        private final TreeIntervals[] intervals;
 
         public Default(List<TreeModel> trees, List<Double> popFactors) {
             this.trees = trees;

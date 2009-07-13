@@ -261,7 +261,7 @@ public abstract class Generator {
         for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
         	PartitionClockModel clockModel = pd.getPartitionClockModel();
         	switch (clockModel.getClockType()) {
-	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
+//	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
 	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
         	}
         }

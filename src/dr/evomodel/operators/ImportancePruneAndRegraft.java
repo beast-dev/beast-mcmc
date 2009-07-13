@@ -1,12 +1,37 @@
+/*
+ * ImportancePruneAndRegraft.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 /**
  *
  */
 package dr.evomodel.operators;
 
-import dr.evolution.tree.ConditionalCladeFrequency;
 import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -94,10 +119,10 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
      */
     @Override
     public double doOperation() throws OperatorFailedException {
-        if( !burnin ) {
-            if( sampleCount < samples * SAMPLE_EVERY ) {
+        if (!burnin) {
+            if (sampleCount < samples * SAMPLE_EVERY) {
                 sampleCount++;
-                if( sampleCount % SAMPLE_EVERY == 0 ) {
+                if (sampleCount % SAMPLE_EVERY == 0) {
                     probabilityEstimater.addTree(tree);
                 }
                 setAcceptCount(0);
@@ -132,7 +157,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         do {
             int indexI = MathUtils.nextInt(nodeCount);
             i = tree.getNode(indexI);
-        } while( root == i || tree.getParent(i) == root );
+        } while (root == i || tree.getParent(i) == root);
 
         List<Integer> secondNodeIndices = new ArrayList<Integer>();
         List<Double> probabilities = new ArrayList<Double>();
@@ -147,14 +172,14 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         final NodeRef oldGrandfather = tree.getParent(iP);
 
         tree.beginTreeEdit();
-        for(int n = 0; n < nodeCount; n++) {
+        for (int n = 0; n < nodeCount; n++) {
             j = tree.getNode(n);
-            if( j != root ) {
+            if (j != root) {
                 jP = tree.getParent(j);
 
-                if( (iP != jP)
+                if ((iP != jP)
                         && (tree.getNodeHeight(j) < iParentHeight && iParentHeight < tree
-                        .getNodeHeight(jP)) ) {
+                        .getNodeHeight(jP))) {
                     secondNodeIndices.add(n);
 
                     pruneAndRegraft(tree, i, iP, j, jP);
@@ -170,7 +195,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
         double ran = Math.random() * sum;
         int index = 0;
-        while( ran > 0.0 ) {
+        while (ran > 0.0) {
             ran -= probabilities.get(index);
             index++;
         }
@@ -179,13 +204,13 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         j = tree.getNode(secondNodeIndices.get(index));
         jP = tree.getParent(j);
 
-        if( iP != jP ) {
+        if (iP != jP) {
             pruneAndRegraft(tree, i, iP, j, jP);
             tree.pushTreeChangedEvent(i);
         }
         try {
             tree.endTreeEdit();
-        } catch( InvalidTreeException e ) {
+        } catch (InvalidTreeException e) {
             throw new OperatorFailedException(e.getMessage());
         }
 

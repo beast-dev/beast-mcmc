@@ -1,12 +1,37 @@
+/*
+ * ImportanceSubtreeSwap.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 /**
  *
  */
 package dr.evomodel.operators;
 
-import dr.evolution.tree.ConditionalCladeFrequency;
 import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -96,10 +121,10 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
      */
     @Override
     public double doOperation() throws OperatorFailedException {
-        if( !burnin ) {
-            if( sampleCount < samples * SAMPLE_EVERY ) {
+        if (!burnin) {
+            if (sampleCount < samples * SAMPLE_EVERY) {
                 sampleCount++;
-                if( sampleCount % SAMPLE_EVERY == 0 ) {
+                if (sampleCount % SAMPLE_EVERY == 0) {
                     probabilityEstimater.addTree(tree);
                 }
                 setAcceptCount(0);
@@ -142,9 +167,9 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         do {
             indexI = MathUtils.nextInt(nodeCount);
             i = tree.getNode(indexI);
-        } while( root == i
+        } while (root == i
                 || (tree.getParent(i) == root &&
-                tree.getNodeHeight(i) > tree.getNodeHeight(getOtherChild(tree, tree.getParent(i), i))) );
+                tree.getNodeHeight(i) > tree.getNodeHeight(getOtherChild(tree, tree.getParent(i), i))));
 
         List<Integer> secondNodeIndices = new ArrayList<Integer>();
         List<Double> probabilities = new ArrayList<Double>();
@@ -156,14 +181,14 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         backward = Math.exp(backward + offset);
 
         tree.beginTreeEdit();
-        for(int n = 0; n < nodeCount; n++) {
+        for (int n = 0; n < nodeCount; n++) {
             j = tree.getNode(n);
-            if( j != root ) {
+            if (j != root) {
                 jP = tree.getParent(j);
 
-                if( (iP != jP) && (i != jP) && (j != iP)
+                if ((iP != jP) && (i != jP) && (j != iP)
                         && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-                        && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
+                        && (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
                     secondNodeIndices.add(n);
 
                     swap(tree, tree.getNode(indexI), tree.getNode(n));
@@ -178,7 +203,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
         double ran = Math.random() * sum;
         int index = 0;
-        while( ran > 0.0 ) {
+        while (ran > 0.0) {
             ran -= probabilities.get(index);
             index++;
         }
@@ -192,14 +217,14 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         double sumForward2 = 0.0;
         NodeRef k, kP;
         indexJ = secondNodeIndices.get(index);
-        for(int n = 0; n < nodeCount; n++) {
+        for (int n = 0; n < nodeCount; n++) {
             k = tree.getNode(n);
-            if( k != root ) {
+            if (k != root) {
                 kP = tree.getParent(k);
 
-                if( (jP != kP) && (j != kP) && (k != jP)
+                if ((jP != kP) && (j != kP) && (k != jP)
                         && (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
-                        && (tree.getNodeHeight(j) < tree.getNodeHeight(kP)) ) {
+                        && (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 
                     swap(tree, tree.getNode(indexJ), tree.getNode(n));
                     double prob = Math.exp(calculateTreeProbability(tree)
@@ -215,14 +240,14 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
         iP = tree.getParent(i);
         double sumBackward = 0.0;
-        for(int n = 0; n < nodeCount; n++) {
+        for (int n = 0; n < nodeCount; n++) {
             j = tree.getNode(n);
-            if( j != root ) {
+            if (j != root) {
                 jP = tree.getParent(j);
 
-                if( (iP != jP) && (i != jP) && (j != iP)
+                if ((iP != jP) && (i != jP) && (j != iP)
                         && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-                        && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
+                        && (tree.getNodeHeight(i) < tree.getNodeHeight(jP))) {
 
                     swap(tree, tree.getNode(indexI), tree.getNode(n));
                     double prob = Math.exp(calculateTreeProbability(tree)
@@ -239,14 +264,14 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         double sumBackward2 = 0.0;
         j = tree.getNode(secondNodeIndices.get(index));
         jP = tree.getParent(j);
-        for(int n = 0; n < nodeCount; n++) {
+        for (int n = 0; n < nodeCount; n++) {
             k = tree.getNode(n);
-            if( k != root ) {
+            if (k != root) {
                 kP = tree.getParent(k);
 
-                if( (jP != kP) && (j != kP) && (k != jP)
+                if ((jP != kP) && (j != kP) && (k != jP)
                         && (tree.getNodeHeight(k) < tree.getNodeHeight(jP))
-                        && (tree.getNodeHeight(j) < tree.getNodeHeight(kP)) ) {
+                        && (tree.getNodeHeight(j) < tree.getNodeHeight(kP))) {
 
                     swap(tree, tree.getNode(indexJ), tree.getNode(n));
                     double prob = Math.exp(calculateTreeProbability(tree)
@@ -259,7 +284,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
         try {
             tree.endTreeEdit();
-        } catch( InvalidTreeException e ) {
+        } catch (InvalidTreeException e) {
             throw new OperatorFailedException(e.getMessage());
         }
 

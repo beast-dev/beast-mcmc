@@ -10,11 +10,18 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.util.Version;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.geo.KernelDensityEstimator2D;
+import dr.geo.KMLCoordinates;
+import dr.geo.contouring.ContourPath;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
+import org.jdom.output.Format;
 
 /**
  * @author Marc A. Suchard
@@ -28,11 +35,11 @@ public class TimeSlicer {
     public static final String PRECISION_STRING = "precision";
     public static final String RATE_STRING = "rate";
 
-    public TimeSlicer(String treeFileName, String outFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
+    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 
-//        List<Tree> trees = null;
-
+        this.traits = traits;
         traitCount = traits.length;
+        this.slices = slices;
         sliceCount = 1;
         doSlices = false;
 
@@ -52,7 +59,6 @@ public class TimeSlicer {
         }
 
         try {
-//            trees = importTrees(treeFileName, burnin);
             readAndAnalyzeTrees(treeFileName, burnin, traits, slices, impute, trueNoise);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
@@ -61,14 +67,16 @@ public class TimeSlicer {
             System.err.println("Error parsing trees in file: " + treeFileName);
             System.exit(-1);
         }
-//        if (trees == null || trees.size() == 0) {
-//            System.err.println("No trees read from file: " + treeFileName);
-//            System.exit(-1);
-//        }
         progressStream.println(treesRead+" trees read.");
         progressStream.println(treesAnalyzed+" trees analyzed.");
 
-//        run(trees, traits, slices, impute, trueNoise);
+    }
+
+    public void output(String outFileName, boolean summaryOnly) {
+        output(outFileName,summaryOnly,OutputFormat.XML, 0.80);
+    }
+
+    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue) {
 
         resultsStream = System.out;
 
@@ -81,14 +89,104 @@ public class TimeSlicer {
             }
         }
 
-        outputHeader(traits);
+        if (!summaryOnly) {
+            outputHeader(traits);
 
-        if (slices == null)
-            outputSlice(0,Double.NaN);
-        else {
-            for(int i=0; i<slices.length; i++)
-                outputSlice(i,slices[i]);
-        
+            if (slices == null)
+                outputSlice(0,Double.NaN);
+            else {
+                for(int i=0; i<slices.length; i++)
+                    outputSlice(i,slices[i]);
+
+            }
+        } else { // Output summaries
+            if (slices == null)
+                summarizeSlice(0,Double.NaN, outputFormat, hpdValue);
+            else {
+                for(int i=0; i<slices.length; i++)
+                    summarizeSlice(i,slices[i], outputFormat, hpdValue);
+            }
+        }
+    }
+
+    enum OutputFormat {
+        TAB,
+        XML
+    }
+
+    public static final String SLICE_ELEMENT = "slice";
+    public static final String REGIONS_ELEMENT = "hpdRegion";
+    public static final String TRAIT_NAME = "trait";            
+    public static final String DENSITY_VALUE = "density";
+    public static final String SLICE_VALUE = "time";
+
+//    private double hpdValue = 0.80;
+
+    private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
+
+        if (outputFormat == OutputFormat.XML) {
+            Element sliceElement = new Element(SLICE_ELEMENT);
+            sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+
+            List<List<Trait>> thisSlice = values.get(slice);
+            int traitCount = thisSlice.size();
+//            int valueCount = thisSlice.get(0).size();
+
+            for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
+                List<Trait> thisTrait = thisSlice.get(traitIndex);
+                boolean isNumber = thisTrait.get(0).isNumber();
+                boolean isMultivariate = thisTrait.get(0).isMultivariate();
+                boolean isBivariate = isMultivariate && thisTrait.get(0).getValue().length == 2;
+                if (isNumber) {
+                    if (isBivariate) {
+                        int count = thisTrait.size();
+                        double[][] xy = new double[2][count];
+                        for(int i=0; i<count; i++) {
+                            Trait trait = thisTrait.get(i);
+                            double[] value = trait.getValue();
+                            xy[0][i] = value[0];
+                            xy[1][i] = value[1];
+                        }
+                        KernelDensityEstimator2D kde = new KernelDensityEstimator2D(xy[0], xy[1]);
+                        ContourPath[] paths = kde.getContourPaths(hpdValue);
+                        for(ContourPath path : paths) {
+                            Element regionElement = new Element(REGIONS_ELEMENT);
+                            regionElement.setAttribute(TRAIT_NAME,traits[traitIndex]);
+                            regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
+                            KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
+                            regionElement.addContent(coords.toXML());
+                            sliceElement.addContent(regionElement);                           
+                        }
+
+                    } // else skip, TODO
+
+                } // else skip, TODO
+            }
+//
+//        StringBuffer sb = new StringBuffer();
+//
+//        for(int v=0; v<valueCount; v++) {
+//            if (Double.isNaN(sliceValue))
+//                sb.append("All");
+//            else
+//                sb.append(sliceValue);
+//            for(int t=0; t<traitCount; t++) {
+//                sb.append(sep);
+//                sb.append(thisSlice.get(t).get(v));
+//            }
+//            sb.append("\n");
+//        }
+
+//        resultsStream.print(sliceElement.toString());
+            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
+            try {
+                xmlOutputter.output(sliceElement,resultsStream);
+            } catch (IOException e) {
+                System.err.println("IO Exception encountered: "+e.getMessage());
+                System.exit(-1);
+            }
+        } else {
+            throw new RuntimeException("Only XML output is implemented");
         }
 
     }
@@ -328,6 +426,8 @@ public class TimeSlicer {
 
     private int traitCount;
     private int sliceCount;
+    private String[] traits;
+    private double[] slices;
     private boolean doSlices;
     private int treesRead = 0;
     private int treesAnalyzed = 0;
@@ -495,7 +595,12 @@ public class TimeSlicer {
                         new Arguments.StringOption("noise", new String[]{"false","true"}, false,
                                 "add true noise [default = true])"),
                         new Arguments.StringOption("impute", new String[]{"false", "true"}, false,
-                                "impute trait at time-slice [default = false])"),
+                                "impute trait at time-slice [default = false]"),
+                        new Arguments.StringOption("summary", new String[]{"false","true"}, false,
+                                "compute summary statistics [default = false]"),
+                        new Arguments.StringOption("format", new String[]{"XML"}, false,
+                                "summary output format [default = XML]"),
+                        new Arguments.IntegerOption("hpd","mass (1 - 99%) to include in HPD regions [default = 80]"),
                 });
 
         try {
@@ -514,6 +619,16 @@ public class TimeSlicer {
         int burnin = -1;
         if (arguments.hasOption("burnin")) {
             burnin = arguments.getIntegerOption("burnin");
+        }
+
+        double hpdValue = 0.80;
+        if (arguments.hasOption("hpd")) {
+            int intValue = arguments.getIntegerOption("hpd");
+            if (intValue < 1 || intValue > 99) {
+                progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
+                System.exit(-1);
+            }
+            hpdValue = intValue / 100.0;
         }
 
         String[] traitNames = null;
@@ -551,6 +666,14 @@ public class TimeSlicer {
         if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
             trueNoise = false;
 
+        String summaryString = arguments.getStringOption("summary");
+        boolean summaryOnly = false;
+        if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
+            summaryOnly = true;
+
+//        String summaryFormat = arguments.getStringOption("format");
+        OutputFormat outputFormat = OutputFormat.XML;
+
         final String[] args2 = arguments.getLeftoverArguments();
 
         switch (args2.length) {
@@ -571,7 +694,8 @@ public class TimeSlicer {
             }
         }
 
-        new TimeSlicer(inputFileName, outputFileName, burnin, traitNames, sliceTimes, impute, trueNoise);
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise);
+        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue);
 
         System.exit(0);
     }

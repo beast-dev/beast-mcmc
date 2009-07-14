@@ -957,16 +957,17 @@ public class TreeAnnotator {
 
 
                 KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-                double thresholdDensity = kde.findLevelCorrespondingToMass(hpd);
-                ContourGenerator contour = new ContourGenerator(kde.getXGrid(), kde.getYGrid(), kde.getKDE(),
-                        new ContourAttrib[]{new ContourAttrib(thresholdDensity)});
-
-                ContourPath[] paths = null;
-                try {
-                    paths = contour.getContours();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                double thresholdDensity = kde.findLevelCorrespondingToMass(hpd);
+//                ContourGenerator contour = new ContourGenerator(kde.getXGrid(), kde.getYGrid(), kde.getKDE(),
+//                        new ContourAttrib[]{new ContourAttrib(thresholdDensity)});
+//
+//                ContourPath[] paths = null;
+//                try {
+//                    paths = contour.getContours();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+                ContourPath[] paths = kde.getContourPaths(hpd);
     
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", paths.length);
 

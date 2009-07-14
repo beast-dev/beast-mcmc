@@ -13,6 +13,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.KMLCoordinates;
 import dr.geo.contouring.ContourPath;
+import dr.inference.trace.TraceDistribution;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -116,11 +117,15 @@ public class TimeSlicer {
 
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
-    public static final String TRAIT_NAME = "trait";            
+    public static final String TRAIT = "trait";
+    public static final String NAME = "name";
     public static final String DENSITY_VALUE = "density";
     public static final String SLICE_VALUE = "time";
 
-//    private double hpdValue = 0.80;
+    private void addDimInfo(Element element, int j, int dim) {
+        if (dim > 1)
+            element.setAttribute("dim",Integer.toString(j+1));
+    }
 
     private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
 
@@ -130,54 +135,58 @@ public class TimeSlicer {
 
             List<List<Trait>> thisSlice = values.get(slice);
             int traitCount = thisSlice.size();
-//            int valueCount = thisSlice.get(0).size();
 
             for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
                 List<Trait> thisTrait = thisSlice.get(traitIndex);
                 boolean isNumber = thisTrait.get(0).isNumber();
                 boolean isMultivariate = thisTrait.get(0).isMultivariate();
-                boolean isBivariate = isMultivariate && thisTrait.get(0).getValue().length == 2;
+                int dim = thisTrait.get(0).getValue().length;
+                boolean isBivariate = isMultivariate && dim == 2;
                 if (isNumber) {
+                    Element traitElement = new Element(TRAIT);
+                    traitElement.setAttribute(NAME,traits[traitIndex]);
+                    int count = thisTrait.size();
+                    double[][] x = new double[dim][count];
+                    for(int i=0; i<count; i++) {
+                        Trait trait = thisTrait.get(i);
+                        double[] value = trait.getValue();
+                        for(int j=0; j<dim; j++)
+                            x[j][i] = value[j];
+                    }
+                    // Compute marginal means and standard deviations
+                    for(int j=0; j<dim; j++) {
+                        TraceDistribution trace = new TraceDistribution(x[j]);
+                        Element statsElement = new Element("stats");
+                        addDimInfo(statsElement,j,dim);
+                        StringBuffer sb = new StringBuffer();
+                        sb.append(KMLCoordinates.NEWLINE);
+                        sb.append(String.format(KMLCoordinates.FORMAT,
+                                trace.getMean())).append(KMLCoordinates.SEPERATOR);
+                        sb.append(String.format(KMLCoordinates.FORMAT,
+                                trace.getStdError())).append(KMLCoordinates.SEPERATOR);
+                        sb.append(String.format(KMLCoordinates.FORMAT,
+                                trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
+                        sb.append(String.format(KMLCoordinates.FORMAT,
+                                trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
+                        statsElement.addContent(sb.toString());
+                        traitElement.addContent(statsElement);                        
+                    }
                     if (isBivariate) {
-                        int count = thisTrait.size();
-                        double[][] xy = new double[2][count];
-                        for(int i=0; i<count; i++) {
-                            Trait trait = thisTrait.get(i);
-                            double[] value = trait.getValue();
-                            xy[0][i] = value[0];
-                            xy[1][i] = value[1];
-                        }
-                        KernelDensityEstimator2D kde = new KernelDensityEstimator2D(xy[0], xy[1]);
+                        KernelDensityEstimator2D kde = new KernelDensityEstimator2D(x[0], x[1]);
                         ContourPath[] paths = kde.getContourPaths(hpdValue);
                         for(ContourPath path : paths) {
-                            Element regionElement = new Element(REGIONS_ELEMENT);
-                            regionElement.setAttribute(TRAIT_NAME,traits[traitIndex]);
+                            Element regionElement = new Element(REGIONS_ELEMENT);                            
                             regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
                             KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
                             regionElement.addContent(coords.toXML());
-                            sliceElement.addContent(regionElement);                           
+                            traitElement.addContent(regionElement);
                         }
 
-                    } // else skip, TODO
-
-                } // else skip, TODO
+                    }
+                    sliceElement.addContent(traitElement);
+                } // else skip
             }
-//
-//        StringBuffer sb = new StringBuffer();
-//
-//        for(int v=0; v<valueCount; v++) {
-//            if (Double.isNaN(sliceValue))
-//                sb.append("All");
-//            else
-//                sb.append(sliceValue);
-//            for(int t=0; t<traitCount; t++) {
-//                sb.append(sep);
-//                sb.append(thisSlice.get(t).get(v));
-//            }
-//            sb.append("\n");
-//        }
 
-//        resultsStream.print(sliceElement.toString());
             XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
             try {
                 xmlOutputter.output(sliceElement,resultsStream);
@@ -589,7 +598,7 @@ public class TimeSlicer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("trait", "trait_name", "specifies an attribute-list to use to create a density map [default = location.angle]"),
+                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.angle]"),
                         new Arguments.StringOption("slice","time","specifies an slice time-list [default=none]"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.StringOption("noise", new String[]{"false","true"}, false,
@@ -636,7 +645,7 @@ public class TimeSlicer {
 
         try {
 
-            String traitString = arguments.getStringOption("trait");
+            String traitString = arguments.getStringOption(TRAIT);
             if (traitString != null) {
                 traitNames = parseVariableLengthStringArray(traitString);
             }

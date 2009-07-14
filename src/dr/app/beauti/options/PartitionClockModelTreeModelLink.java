@@ -102,6 +102,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
+                    	// in PartitionClockModel.selectOperators(List<Operator> ops) "upDownAllRatesHeights"
                         break;
 
                     case RANDOM_LOCAL_CLOCK:

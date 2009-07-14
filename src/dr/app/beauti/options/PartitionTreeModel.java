@@ -123,7 +123,10 @@ public class PartitionTreeModel extends ModelOptions {
 
         createOperator("upDownAllRatesHeights", "All rates and heights",
                 "Scales all rates inversely to node heights of the tree", this.getParameter("treeModel.allRates"),
-                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
+                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);        
+//        createOperator("upDownNodeRatesHeights", "Node rates and heights",
+//                "Scales all rates inversely to all rates heights of the tree", this.getParameter("treeModel.nodeRates"),
+//                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
 
         createOperator("swapBranchRateCategories", "branchRates.categories",
                 "Performs a swap of branch rate categories", "branchRates.categories",
@@ -180,6 +183,9 @@ public class PartitionTreeModel extends ModelOptions {
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
         }
+        
+        ops.add(getOperator("treeModel.rootHeight"));
+        ops.add(getOperator("uniformHeights"));
 
     }
 

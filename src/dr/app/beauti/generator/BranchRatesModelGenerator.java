@@ -38,6 +38,7 @@ import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.TreeModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.util.Attribute;
@@ -194,7 +195,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
                 if (options.isFixedSubstitutionRate()) {
-                    fixParameter(tree.getParameter("treeModel.rootRate"), options.getMeanSubstitutionRate());
+                    fixParameter(tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), options.getMeanSubstitutionRate());//"treeModel.rootRate"
                 }
 
                 writer.writeOpenTag(RateEvolutionLikelihood.RATES,
@@ -203,25 +204,36 @@ public class BranchRatesModelGenerator extends Generator {
                               new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
                               new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                       });
-              writer.writeTag(ParameterParser.PARAMETER,
+                writer.writeTag(ParameterParser.PARAMETER,
                       new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "." + TreeModelParser.NODE_RATES), true);
-              writer.writeCloseTag(RateEvolutionLikelihood.RATES);
+                writer.writeCloseTag(RateEvolutionLikelihood.RATES);
 
-              writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
+                writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
                       new Attribute[]{
                               new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
                               new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
                               new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
                       });
-              writer.writeTag(ParameterParser.PARAMETER,
+                writer.writeTag(ParameterParser.PARAMETER,
                       new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), true);
-              writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
+                writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
 //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
 //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
                 writeParameter("variance", "branchRates.var", model, writer);
 
                 writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
-
+                
+                if (!options.isFixedSubstitutionRate()) {
+	              	writer.writeText("");
+		            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
+		                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "." + "allRates")});
+		            writer.writeTag(ParameterParser.PARAMETER,
+		                      new Attribute.Default<String>(XMLParser.IDREF, treePrefix + TreeModel.TREE_MODEL + "." + TreeModelParser.NODE_RATES), true);
+		            writer.writeTag(ParameterParser.PARAMETER,
+		                      new Attribute.Default<String>(XMLParser.IDREF, treePrefix + TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), true);
+		            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+                }
+                
                 writer.writeText("");
                 writer.writeOpenTag(
                         RateStatistic.RATE_STATISTIC,

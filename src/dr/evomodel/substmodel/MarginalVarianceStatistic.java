@@ -1,7 +1,8 @@
-package dr.inference.model;
+package dr.evomodel.substmodel;
 
-import dr.inference.distribution.MultivariateOUModel;
+import dr.evomodel.substmodel.MultivariateOUModel;
 import dr.xml.*;
+import dr.inference.model.Statistic;
 
 /**
  * @author Marc A. Suchard

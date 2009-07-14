@@ -24,6 +24,28 @@ public class Polygon2D {
     public static final String CLOSED = "closed";
     public static final String FILL_VALUE = "fillValue";
 
+    public Polygon2D(double[] x, double[]y) {
+        if (x.length != y.length) {
+            throw new RuntimeException("Unbalanced arrays");
+        }
+
+        if (x[0] != x[x.length-1] && y[0] != y[y.length-1]) {
+            double[] newX = new double[x.length+1];
+            double[] newY = new double[y.length+1];
+            System.arraycopy(x,0,newX,0,x.length);
+            System.arraycopy(y,0,newY,0,y.length);
+            newX[x.length] = x[0];
+            newY[y.length] = y[0];
+            this.x = newX;
+            this.y = newY;
+        } else {
+            this.x = x;
+            this.y = y;
+        }
+        length = this.x.length - 1;
+        
+    }
+
     public Polygon2D(LinkedList<Point2D> points, boolean closed) {
         this.point2Ds = points;
         if (!closed) {
@@ -49,13 +71,13 @@ public class Polygon2D {
             if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 
                 String value = childElement.getTextTrim();
-                StringTokenizer st1 = new StringTokenizer(value, "\n");
+                StringTokenizer st1 = new StringTokenizer(value, KMLCoordinates.NEWLINE);
                 int count = st1.countTokens();  //System.out.println(count);
 
                 point2Ds = new LinkedList<Point2D>();
                 for (int i = 0; i < count; i++) {
                     String line = st1.nextToken();
-                    StringTokenizer st2 = new StringTokenizer(line, ",");
+                    StringTokenizer st2 = new StringTokenizer(line, KMLCoordinates.SEPERATOR);
                     if (st2.countTokens() != 3)
                         throw new IllegalArgumentException("All KML coordinates must contain (X,Y,Z) values.  Three dimensions not found in element '" + line + "'");
                     final double x = Double.valueOf(st2.nextToken());
@@ -275,7 +297,7 @@ public class Polygon2D {
 
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("polygon[\n");
+        sb.append(POLYGON).append("[\n");
         for(Point2D pt : point2Ds) {
             sb.append("\t");
             sb.append(pt);
@@ -300,7 +322,7 @@ public class Polygon2D {
 
             List<Element> children = root.getChildren();
             for(Element e : children) {
-                if (e.getName().equalsIgnoreCase("polygon")) {
+                if (e.getName().equalsIgnoreCase(POLYGON)) {
                     Polygon2D polygon = new Polygon2D(e);
                     polygons.add(polygon);
                 }
@@ -313,7 +335,10 @@ public class Polygon2D {
         }
         return polygons;
     }
-
+//
+//    public Element toXML() {
+//        return new KMLCoordinates(x,y).toXML();
+//    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

@@ -1,8 +1,7 @@
-package dr.inference.distribution;
+package dr.evomodel.substmodel;
 
-import dr.evomodel.substmodel.PositiveDefiniteSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.*;
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;

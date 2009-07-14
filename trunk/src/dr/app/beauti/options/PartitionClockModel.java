@@ -224,6 +224,7 @@ public class PartitionClockModel extends ModelOptions {
                             ops.add(tree.getOperator("scaleAllRates"));
                             ops.add(tree.getOperator("scaleAllRatesIndependently"));
                             ops.add(tree.getOperator("upDownAllRatesHeights"));
+//                            ops.add(tree.getOperator("upDownNodeRatesHeights"));
                         }
                         ops.add(getOperator("branchRates.var"));
                         break;

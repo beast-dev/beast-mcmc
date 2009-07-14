@@ -424,8 +424,9 @@ public class CoalescentSimulator {
                 for (int i = 0; i < subtrees.size(); i++) {
                     trees[i + taxonLists.size()] = subtrees.get(i);
                 }
-
-                return simulator.simulateTree(trees, demoModel, rootHeight, true);
+                
+                return simulator.simulateTree(trees, demoModel, rootHeight, trees.length != 1);
+                
             } catch (IllegalArgumentException iae) {
                 throw new XMLParseException(iae.getMessage());
             }

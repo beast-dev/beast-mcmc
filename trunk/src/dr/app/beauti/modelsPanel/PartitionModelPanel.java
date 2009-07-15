@@ -1,11 +1,36 @@
+/*
+ * PartitionModelPanel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.modelsPanel;
 
-import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.options.AminoAcidModelType;
 import dr.app.beauti.options.FrequencyPolicy;
 import dr.app.beauti.options.NucModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.panels.OptionsPanel;
 
@@ -239,7 +264,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
                 gammaCatCombo.setEnabled(false);
-                
+
                 addSeparator();
 
                 JPanel panel1 = new JPanel(new BorderLayout(6, 6));
@@ -265,7 +290,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
                 gammaCatCombo.setEnabled(false);
-                
+
                 break;
 
             case DataType.TWO_STATES:
@@ -275,7 +300,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
                 gammaCatCombo.setEnabled(false);
-                
+
                 break;
 
             default:
@@ -369,6 +394,4 @@ public class PartitionModelPanel extends OptionsPanel {
             setSRD06Model();
         }
     };
-
-
 }

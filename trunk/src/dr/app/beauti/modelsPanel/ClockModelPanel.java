@@ -1,7 +1,7 @@
 /*
  * ClockModelPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,26 +25,19 @@
 
 package dr.app.beauti.modelsPanel;
 
-import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.options.*;
-import dr.app.beauti.*;
-import dr.evolution.datatype.DataType;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.ComboBoxRenderer;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockType;
+import dr.app.beauti.options.PartitionClockModel;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -56,7 +49,7 @@ public class ClockModelPanel extends OptionsPanel {
 
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
-    
+
     BeautiFrame frame = null;
     BeautiOptions options = null;
 
@@ -75,24 +68,24 @@ public class ClockModelPanel extends OptionsPanel {
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
-        
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
-        
+
         JScrollPane scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
         setOpaque(false);
-        setLayout(new BorderLayout(0, 0));        
+        setLayout(new BorderLayout(0, 0));
         add(scrollPane, BorderLayout.CENTER);
     }
-   
+
     private void fireDataChanged() {
         frame.setDirty();
     }
 
-    private void modelsChanged() {        
+    private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(ClockType.values())));
     }
@@ -100,7 +93,7 @@ public class ClockModelPanel extends OptionsPanel {
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
-                
+
         int selRow = dataTable.getSelectedRow();
         dataTableModel.fireTableDataChanged();
         if (options.getPartitionClockModels().size() > 0) {
@@ -116,26 +109,24 @@ public class ClockModelPanel extends OptionsPanel {
     }
 
     public void getOptions(BeautiOptions options) {
-        
+
     }
 
     public JComponent getExportableComponent() {
         return dataTable;
     }
 
-    
-
     class DataTableModel extends AbstractTableModel {
-               
-		private static final long serialVersionUID = -2852144669936634910L;
-		
-		String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};      
+
+        private static final long serialVersionUID = -2852144669936634910L;
+
+        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};
 
         public DataTableModel() {
         }
 
-        public int getColumnCount() {           
-            return columnNames.length;            
+        public int getColumnCount() {
+            return columnNames.length;
         }
 
         public int getRowCount() {
@@ -144,28 +135,28 @@ public class ClockModelPanel extends OptionsPanel {
         }
 
         public Object getValueAt(int row, int col) {
-        	PartitionClockModel model = options.getPartitionClockModels().get(row);
+            PartitionClockModel model = options.getPartitionClockModels().get(row);
             switch (col) {
                 case 0:
                     return model.getName();
-                case 1: 
-                	return model.getClockType();
+                case 1:
+                    return model.getClockType();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-        	PartitionClockModel model = options.getPartitionClockModels().get(row);
+            PartitionClockModel model = options.getPartitionClockModels().get(row);
             switch (col) {
-            	case 0:
-            		String name = ((String) aValue).trim();
+                case 0:
+                    String name = ((String) aValue).trim();
                     if (name.length() > 0) {
-                    	model.setName(name);
+                        model.setName(name);
                     }
-            		break;
-            	case 1:
-            		model.setClockType((ClockType) aValue);
+                    break;
+                case 1:
+                    model.setClockType((ClockType) aValue);
                     break;
             }
             fireDataChanged();

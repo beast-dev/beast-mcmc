@@ -1,7 +1,7 @@
 /*
- * SamplesPanel.java
+ * TraitsPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,16 +25,18 @@
 
 package dr.app.beauti.traitspanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.*;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
+import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
-import org.virion.jam.panels.ActionPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -61,9 +63,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private final JTable dataTable;
     private final DataTableModel dataTableModel;
-
-    private final ClearTraitAction clearTraitAction = new ClearTraitAction();
-    private final GuessLocationsAction guessLocationsAction = new GuessLocationsAction();
 
     private final BeautiFrame frame;
 
@@ -95,11 +94,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 traitSelectionChanged();
             }
         });
-        
-		JScrollPane scrollPane1 = new JScrollPane(traitsTable,
-		                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-		                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		        scrollPane1.setOpaque(false);
+
+        JScrollPane scrollPane1 = new JScrollPane(traitsTable,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollPane1.setOpaque(false);
 
         dataTableModel = new DataTableModel();
         sorter = new TableSorter(dataTableModel);
@@ -126,7 +125,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //                traitSelectionChanged();
             }
         });
-        
+
         JScrollPane scrollPane2 = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -137,9 +136,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         toolBar1.setOpaque(false);
 
         toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        GuessLocationsAction guessLocationsAction = new GuessLocationsAction();
         JButton button = new JButton(guessLocationsAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
+        ClearTraitAction clearTraitAction = new ClearTraitAction();
         button = new JButton(clearTraitAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
@@ -189,32 +190,32 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
-        
+
         int selRow = traitsTable.getSelectedRow();
         traitsTableModel.fireTableDataChanged();
-        
+
         if (selRow < 0) {
             selRow = 0;
         }
         traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        
+
 
         if (selectedTrait == null) {
-        	traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+            traitsTable.getSelectionModel().setSelectionInterval(0, 0);
         }
-        
+
 //        traitsTableModel.fireTableDataChanged();
         dataTableModel.fireTableDataChanged();
-        
+
         validate();
         repaint();
     }
 
     public void getOptions(BeautiOptions options) {
-    	int selRow = traitsTable.getSelectedRow();
-    	if (selRow >= 0 && options.selecetedTraits.size() > 0) {
+        int selRow = traitsTable.getSelectedRow();
+        if (selRow >= 0 && options.selecetedTraits.size() > 0) {
             selectedTrait = options.selecetedTraits.get(selRow);
-    	}
+        }
 //        options.datesUnits = unitsCombo.getSelectedIndex();
 //        options.datesDirection = directionCombo.getSelectedIndex();
     }
@@ -257,43 +258,43 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void guessTrait() {
-    	if( options.taxonList != null ) { // validation of check empty taxonList
-	    	TraitGuesser guesser = options.traitGuesser;
-	    	
-	        if (guessTraitDialog == null) {
-	        	guessTraitDialog = new GuessTraitDialog(frame, guesser);
-	        }
-	
-	        int result = guessTraitDialog.showDialog();
-	
-	        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-	            return;
-	        }
-	
-	        guesser.guessTrait = true; // ?? no use?
-	        guessTraitDialog.setupGuesser();
-		        
-	        try {
-	        	guesser.guessTrait(options);	               
-	        	        
-				switch (guesser.traitAnalysisType) {
-					case TRAIT_SPECIES :
-						addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
-						frame.setupSpeciesAnalysis();						
-						break;
-					default:
-						throw new IllegalArgumentException("unknown trait selected");       	
-		        }
-	        } catch (IllegalArgumentException iae) {
-                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);                
-            } 
-	
-	        dataTableModel.fireTableDataChanged();
-	        frame.setDirty();
-    	} else {
-    		JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
-                  "No taxa loaded", JOptionPane.ERROR_MESSAGE);
-    	}
+        if (options.taxonList != null) { // validation of check empty taxonList
+            TraitGuesser guesser = options.traitGuesser;
+
+            if (guessTraitDialog == null) {
+                guessTraitDialog = new GuessTraitDialog(frame, guesser);
+            }
+
+            int result = guessTraitDialog.showDialog();
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            guesser.guessTrait = true; // ?? no use?
+            guessTraitDialog.setupGuesser();
+
+            try {
+                guesser.guessTrait(options);
+
+                switch (guesser.traitAnalysisType) {
+                    case TRAIT_SPECIES:
+                        addTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString(), guesser.traitType);
+                        frame.setupSpeciesAnalysis();
+                        break;
+                    default:
+                        throw new IllegalArgumentException("unknown trait selected");
+                }
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
+            }
+
+            dataTableModel.fireTableDataChanged();
+            frame.setDirty();
+        } else {
+            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+                    "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void addTrait() {
@@ -320,29 +321,29 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         fireTraitsChanged();
 
     }
-    
+
     private void addTrait(String traitName, TraitGuesser.TraitType traitType) {
-    	
+
         if (!options.selecetedTraits.contains(traitName)) {
-        	options.selecetedTraits.add(traitName);
+            options.selecetedTraits.add(traitName);
         }
-	    options.traitTypes.put(traitName, traitType);
-	    
-	    traitsTableModel.fireTableDataChanged();
-	    int row = options.selecetedTraits.size() - 1;
-	    traitsTable.getSelectionModel().setSelectionInterval(row, row);    	
+        options.traitTypes.put(traitName, traitType);
+
+        traitsTableModel.fireTableDataChanged();
+        int row = options.selecetedTraits.size() - 1;
+        traitsTable.getSelectionModel().setSelectionInterval(row, row);
     }
 
     private void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
-        String trait = options.selecetedTraits.get(selRow);        
+        String trait = options.selecetedTraits.get(selRow);
         options.selecetedTraits.remove(trait);
-        options.traitTypes.remove(trait); 
-        
+        options.traitTypes.remove(trait);
+
         if (trait.equals(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-    		frame.removeSepciesAnalysisSetup();
-    	} 
-        
+            frame.removeSepciesAnalysisSetup();
+        }
+
         traitsTableModel.fireTableDataChanged();
         fireTraitsChanged();
     }
@@ -374,8 +375,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             setToolTipText("Use this tool to guess the trait values from the taxon labels");
         }
 
-        public void actionPerformed(ActionEvent ae) {        	
-        	guessTrait();        	
+        public void actionPerformed(ActionEvent ae) {
+            guessTrait();
         }
     }
 
@@ -429,7 +430,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             if (col == 0) {
                 options.selecetedTraits.set(row, aValue.toString());
             } else if (col == 1) {
-                options.traitTypes.put(options.selecetedTraits.get(row), (TraitGuesser.TraitType)aValue);
+                options.traitTypes.put(options.selecetedTraits.get(row), (TraitGuesser.TraitType) aValue);
             }
         }
 
@@ -515,19 +516,19 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //                if (location != null) {
 //                    options.taxonList.getTaxon(row).setLocation(location);
 //                }            	
-                if (selectedTrait != null) {                    
+                if (selectedTrait != null) {
                     options.taxonList.getTaxon(row).setAttribute(selectedTrait, aValue);
                 }
-            	
+
             }
         }
 
         public boolean isCellEditable(int row, int col) {
             if (col == 1) {
-            	Object t = options.taxonList.getTaxon(row).getAttribute(selectedTrait);
-            	return (t != null);
+                Object t = options.taxonList.getTaxon(row).getAttribute(selectedTrait);
+                return (t != null);
             } else {
-            	return false;
+                return false;
             }
         }
 

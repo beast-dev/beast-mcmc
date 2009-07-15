@@ -1,7 +1,7 @@
 /*
- * SamplesPanel.java
+ * TipDatesPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,12 +25,13 @@
 
 package dr.app.beauti.tipdatepanel;
 
-import dr.app.beauti.*;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.TipDateSamplingComponentOptions;
+import dr.app.beauti.components.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.components.*;
-import dr.app.beauti.datapanel.DataPanel;
 import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
@@ -213,7 +214,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
-                
+
                 frame.removeSpecifiedTreePrior(enabled);
             }
         });
@@ -226,7 +227,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         unitsCombo.addItemListener(listener);
         directionCombo.addItemListener(listener);
     }
-    
+
     public final void timeScaleChanged() {
         Units.Type units = Units.Type.YEARS;
         switch (unitsCombo.getSelectedIndex()) {
@@ -293,7 +294,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         options.datesUnits = unitsCombo.getSelectedIndex();
         options.datesDirection = directionCombo.getSelectedIndex();
 
-        TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions)options.getComponentOptions(TipDateSamplingComponentOptions.class);
+        TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions) options.getComponentOptions(TipDateSamplingComponentOptions.class);
         comp.tipDateSamplingType = (TipDateSamplingType) tipDateSamplingCombo.getSelectedItem();
         if (tipDateTaxonSetCombo.getSelectedItem() instanceof TaxonList) {
             comp.tipDateSamplingTaxonSet = (TaxonList) tipDateTaxonSetCombo.getSelectedItem();

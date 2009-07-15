@@ -84,9 +84,9 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
             acceptCount += 1;
             sumDeviation += deviation;
 
-            spanDeviation[0] = Math.min(spanDeviation[0], deviation);
-            spanDeviation[1] = Math.max(spanDeviation[1], deviation);
-            spanCount += 1;
+//            spanDeviation[0] = Math.min(spanDeviation[0], deviation);
+//            spanDeviation[1] = Math.max(spanDeviation[1], deviation);
+//            spanCount += 1;
         } else {
             throw new RuntimeException(
                     "Accept/reject methods called twice without operate called in between!");
@@ -147,19 +147,19 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         this.sumDeviation = sumDeviation;
     }
 
-    public double getSpan(boolean reset) {
-        double span = 0;
-        if( spanDeviation[1] > spanDeviation[0] && spanCount > 2000 ) {
-            span = spanDeviation[1] - spanDeviation[0];
-
-            if( reset ) {
-                spanDeviation[0] = Double.MAX_VALUE;
-                spanDeviation[1] = -Double.MAX_VALUE;
-                spanCount = 0;
-            }
-        }
-        return span;
-    }
+//    public double getSpan(boolean reset) {
+//        double span = 0;
+//        if( spanDeviation[1] > spanDeviation[0] && spanCount > 2000 ) {
+//            span = spanDeviation[1] - spanDeviation[0];
+//
+//            if( reset ) {
+//                spanDeviation[0] = Double.MAX_VALUE;
+//                spanDeviation[1] = -Double.MAX_VALUE;
+//                spanCount = 0;
+//            }
+//        }
+//        return span;
+//    }
 
     public final double operate() throws OperatorFailedException {
         if( operateAllowed ) {
@@ -208,11 +208,13 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private double weight = 1.0;
     private int acceptCount = 0;
     private int rejectCount = 0;
+
     private double sumDeviation = 0.0;
     private double lastDeviation = 0.0;
+
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
 
-    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
-    private int spanCount = 0;
+//    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
+//    private int spanCount = 0;
 }

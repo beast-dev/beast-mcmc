@@ -251,8 +251,8 @@ public class BeastMain {
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
                         new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
-                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
-                                "in number of states."),
+//                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
+//                                "in number of states."),
                         new Arguments.Option("java", "use Java only, no native implementations."),
                         new Arguments.Option("beagle", "use beagle library if available."),
                         new Arguments.Option("help", "option to print this message"),
@@ -292,7 +292,7 @@ public class BeastMain {
 
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
-        MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
+        // MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
 
         long seed = MathUtils.getSeed();
         if (arguments.hasOption("seed")) {

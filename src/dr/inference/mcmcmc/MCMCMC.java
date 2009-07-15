@@ -153,6 +153,7 @@ public class MCMCMC implements Runnable {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
+                    //
                 }
 
                 allDone = true;
@@ -403,7 +404,7 @@ public class MCMCMC implements Runnable {
         int step = 0;
     }
 
-    private MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -533,16 +534,16 @@ public class MCMCMC implements Runnable {
 
     // PRIVATE TRANSIENTS
 
-    private MCMCOptions mcmcOptions;
-    private MCMCMCOptions mcmcmcOptions;
+    private final MCMCOptions mcmcOptions;
+    private final MCMCMCOptions mcmcmcOptions;
 
     private boolean showOperatorAnalysis = true;
-    private dr.util.Timer timer = new dr.util.Timer();
+    private final dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;
 
-    private MarkovChain[] chains;
-    private MCLogger[][] mcLoggers;
-    private OperatorSchedule[] schedules;
+    private final MarkovChain[] chains;
+    private final MCLogger[][] mcLoggers;
+    private final OperatorSchedule[] schedules;
     private int coldChain;
 }
 

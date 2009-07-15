@@ -13,16 +13,16 @@ import java.util.logging.Logger;
 
 public class ARGPartitioningOperator extends SimpleMCMCOperator {
 
-    private CompoundParameter partitioningParameters;
-    private ARGModel arg;
+    private final CompoundParameter partitioningParameters;
+    private final ARGModel arg;
 
     public final static String OPERATOR_NAME = "argPartitionOperator";
     public static final String TOSS_SIZE = "tossSize";
     public static final String TOSS_ALL = "tossAll";
 
-    private boolean tossAll;
-    private boolean isRecombination;
-    private int tossSize;
+    private final boolean tossAll;
+    private final boolean isRecombination;
+    private final int tossSize;
 
     public ARGPartitioningOperator(ARGModel arg, int tossSize, int weight, boolean tossAll) {
         super.setWeight(weight);
@@ -251,7 +251,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(WEIGHT),
                 AttributeRule.newIntegerRule(TOSS_SIZE,true),
                 AttributeRule.newBooleanRule(TOSS_ALL,true),
@@ -262,8 +262,4 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     public String toString() {
         return "tossPartitioningOperator(" + partitioningParameters.getParameterName() + ")";
     }
-
-    
-
-
 }

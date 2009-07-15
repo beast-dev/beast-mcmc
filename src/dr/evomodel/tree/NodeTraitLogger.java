@@ -17,7 +17,7 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 
 	public static final String TRAIT_LOGGER = "logAllTraits";
 
-	private TreeModel treeModel;
+	private final TreeModel treeModel;
 
 	public NodeTraitLogger(TreeModel treeModel) {
 		this.treeModel = treeModel;
@@ -35,14 +35,14 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 
 		Map<String, Parameter> traits = tree.getTraitMap(tree.getRoot());
 		List<String> labels = new ArrayList<String>();
-		for (String traitName : traits.keySet()) {
+		for (Map.Entry<String, Parameter> stringParameterEntry : traits.entrySet()) {
 
-			Parameter traitParameter = traits.get(traitName);
+			Parameter traitParameter = stringParameterEntry.getValue();
 			if (traitParameter.getDimension() == 1)
-				labels.add(traitName);
+				labels.add(stringParameterEntry.getKey());
 			else {
 				for (int i = 1; i <= traitParameter.getDimension(); i++)
-					labels.add(traitName + i);
+					labels.add(stringParameterEntry.getKey() + i);
 			}
 		}
 		return labels.toArray(new String[labels.size()]);
@@ -52,9 +52,9 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 
 		Map<String, Parameter> traits = tree.getTraitMap(node);
 		List<String> values = new ArrayList<String>();
-		for (String traitName : traits.keySet()) {
+		for( Map.Entry<String, Parameter> stringParameterEntry : traits.entrySet() ) {
 
-			Parameter traitParameter = traits.get(traitName);
+			Parameter traitParameter = stringParameterEntry.getValue();
 
 			for (int i = 0; i < traitParameter.getDimension(); i++)
 				values.add(Double.toString(traitParameter.getParameterValue(i)));
@@ -95,8 +95,7 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-
+		private final XMLSyntaxRule[] rules = {
 				new ElementRule(TreeModel.class, "The tree which is to be logged")
 		};
 
@@ -112,6 +111,4 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 			return NodeAttributeProvider.class;
 		}
 	};
-
-
 }

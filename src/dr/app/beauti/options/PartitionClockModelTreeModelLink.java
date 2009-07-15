@@ -46,7 +46,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
         initClockModelParaAndOpers();
     }
 
-    public void initClockModelParaAndOpers() {
+    private void initClockModelParaAndOpers() {
         double rateWeights = 3.0;
 
         createOperator("upDownRateHeights", "Substitution rate and heights",

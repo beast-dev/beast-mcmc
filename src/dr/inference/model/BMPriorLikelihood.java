@@ -70,6 +70,7 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
     // according to time.
 
     private double reNormalize(VariableDemographicModel m) {
+
         final double[] tps = m.getDemographicFunction().allTimePoints();
         // get a copy since we re-scale data
         final double[] vals = m.getPopulationValues().getParameterValues();
@@ -78,22 +79,26 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
 
         final double tMax = tps[tps.length-1];
 
-        // compute mean
-        double popMean = 0;
-        // todo not correct when using midpoints
-        if( m.getType() == VariableDemographicModel.Type.LINEAR ) {
-            for(int k = 0; k < tps.length; ++k) {
-                final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
-                popMean += dt * (vals[k+1] + vals[k]);
-            }
-            popMean /= (2* tMax);
+
+        if(false) {
+             return -Math.log(tMax/m.getDemographicFunction().getIntegral(0, tMax));
         } else {
-            for(int k = 0; k < tps.length; ++k) {
-                final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
-                popMean += dt * vals[k];
-            }
-            popMean /= tMax;
-        }
+        // compute mean
+        double popMean = tMax/m.getDemographicFunction().getIntegral(0, tMax);
+        // todo not correct when using midpoints
+//        if( m.getType() == VariableDemographicModel.Type.LINEAR ) {
+//            for(int k = 0; k < tps.length; ++k) {
+//                final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
+//                popMean += dt * (vals[k+1] + vals[k]);
+//            }
+//            popMean /= (2* tMax);
+//        } else {
+//            for(int k = 0; k < tps.length; ++k) {
+//                final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
+//                popMean += dt * vals[k];
+//            }
+//            popMean /= tMax;
+//        }
 
         // Normalize to time interval = 1 and mean = 0
         final double sigma = this.sigma.getStatisticValue(0);
@@ -105,23 +110,28 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
         // optimized version of the code in getLogLikelihood.
         // get factors out when possible. logpdf of a normal is -x^2/2, when mean is 0
         double ll = 0.0;
+
         final double s2 = 2 * sigma*sigma;
         for(int k = 0; k < tps.length; ++k) {
-            final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0)) / tMax;
+            final double dt = ((tps[k] - (k > 0 ? tps[k - 1] : 0)) / tMax);
 
-            final double d = (vals[k+1] - vals[k])/tMax;
-            ll -=  (d*d / (s2 * dt));
+            //final double d = (vals[k+1] - vals[k]);
+            final double r = logSpace ? (vals[k+1] - vals[k]) : Math.log(vals[k + 1] / vals[k]);
+            final double d = r;
+            ll -= (d*d / (s2 * dt));
             ll -= 0.5 * Math.log(dt);
         }
         ll += tps.length * (logNormalCoef - Math.log(sigma));
-
+        //ll /= tps.length;
         if( popMeanPrior != null ) {
             ll += popMeanPrior.logPdf(popMean);
         } else {
             // default Jeffrey's
-            ll -= Math.log(logSpace ? Math.exp(popMean) : popMean);
+            ll -= logSpace ? popMean : Math.log(popMean);
         }
+        
         return ll;
+        }
     }
 
     public double getLogLikelihood() {
@@ -135,6 +145,7 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
     }
 
     public void makeDirty() {
+
         lastValue = Double.NEGATIVE_INFINITY;
     }
 
@@ -233,7 +244,7 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
 
     protected void storeState() {}
 
-    protected void restoreState() {}
+    protected void restoreState() { makeDirty(); }
 
     protected void acceptState() {}
 }

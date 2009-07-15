@@ -168,7 +168,7 @@ public interface Likelihood extends Loggable, Identifiable {
 
 		public String getId() { return id; }
 
-		private Model model;
+		private final Model model;
 		private double logLikelihood;
 		private boolean likelihoodKnown = false;
 	}

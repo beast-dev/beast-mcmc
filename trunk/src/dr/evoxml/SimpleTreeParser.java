@@ -141,7 +141,7 @@ public class SimpleTreeParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             XMLUnits.SYNTAX_RULES[0],
             new ElementRule(SimpleNode.class)
     };

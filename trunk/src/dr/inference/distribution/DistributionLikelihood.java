@@ -131,12 +131,12 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final XMLObject cxo = (XMLObject) xo.getChild(DISTRIBUTION);
+            final XMLObject cxo = xo.getChild(DISTRIBUTION);
             ParametricDistributionModel model = (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(model);
 
-            XMLObject cxo1 = (XMLObject) xo.getChild(DATA);
+            XMLObject cxo1 = xo.getChild(DATA);
             final int from = cxo1.getAttribute(FROM, -1);
             int to = cxo1.getAttribute(TO, -1);
             if( from >= 0 || to >= 0 ) {

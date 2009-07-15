@@ -47,9 +47,9 @@ public class ColouredOperator implements CoercableMCMCOperator {
 
     public static final String COLOURED_OPERATOR = "colouredOperator";
 
-    private ColourSamplerModel colouringModel;
+    private final ColourSamplerModel colouringModel;
 
-    private MCMCOperator innerOperator;
+    private final MCMCOperator innerOperator;
 
     public ColouredOperator(ColourSamplerModel colouringModel, MCMCOperator operator) {
 
@@ -230,7 +230,7 @@ public class ColouredOperator implements CoercableMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MCMCOperator.class),
                 new ElementRule(ColourSamplerModel.class)
         };

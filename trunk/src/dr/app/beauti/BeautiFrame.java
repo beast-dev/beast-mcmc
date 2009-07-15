@@ -807,8 +807,9 @@ public class BeautiFrame extends DocumentFrame {
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
         dataPanel.unlinkModels();
+        //TODO tree
         for (PartitionSubstitutionModel model : beautiOptions.getPartitionSubstitutionModels()) {
-        	model.initAllParametersAndOperators();
+//        	model.initAllParametersAndOperators();
         }
 
         int i = tabbedPane.indexOfTab("Trees");

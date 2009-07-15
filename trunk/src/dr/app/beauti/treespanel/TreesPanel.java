@@ -493,6 +493,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                     if (name.length() > 0) {
                     	PartitionTreeModel model = options.getPartitionTreeModels().get(row);
                     	model.setName(name);
+                    	// keep tree prior name same as tree model name
+                    	PartitionTreePrior prior = model.getPartitionTreePrior();
+                    	prior.setName(name);
                     	fireTreePriorsChanged();
                     }
                     break;

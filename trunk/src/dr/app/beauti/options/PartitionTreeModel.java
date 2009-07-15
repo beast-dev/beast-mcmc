@@ -85,7 +85,7 @@ public class PartitionTreeModel extends ModelOptions {
 //        this.name = name;
 //    }
 
-    public void initTreeModelParaAndOpers() {
+    private void initTreeModelParaAndOpers() {
         double branchWeights = 30.0;
         double treeWeights = 15.0;
         double rateWeights = 3.0;

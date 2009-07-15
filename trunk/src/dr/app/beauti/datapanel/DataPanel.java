@@ -69,6 +69,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
+    
+    UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
+    LinkAllAction linkAllAction = new LinkAllAction();
 
     JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
 
@@ -166,6 +169,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkTreesAction.setEnabled(false);
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
+            
+            // all
+            button = new JButton(unlinkAllAction);
+            unlinkAllAction.setEnabled(false);
+            PanelUtils.setupComponent(button);
+            toolBar1.add(button);
+
+            button = new JButton(linkAllAction);
+            linkAllAction.setEnabled(false);
+            PanelUtils.setupComponent(button);
+            toolBar1.add(button);
         }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
@@ -236,6 +250,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(hasSelection);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
+        
+        unlinkAllAction.setEnabled(hasSelection);
+        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
     }
 
     public void setOptions(BeautiOptions options) {
@@ -291,6 +308,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
+
+    public void unlinkAll() {
+    	unlinkModels();
+    	unlinkClocks();
+    	unlinkTrees();
+	}
+    
+    public void linkAll() {
+    	linkModels();
+    	linkClocks();
+    	linkTrees();
+	}
+    
     public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
@@ -598,7 +628,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class UnlinkModelsAction extends AbstractAction {
         public UnlinkModelsAction() {
             super("Unlink Subst Models");
-            setToolTipText("Use this tool to use a different model for each selected data partition");
+            setToolTipText("Use this tool to use a different substitution model for each selected data partition");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -610,7 +640,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class LinkModelsAction extends AbstractAction {
         public LinkModelsAction() {
             super("Link Subst Models");
-            setToolTipText("Use this tool to set all the selected partitions to the same model");
+            setToolTipText("Use this tool to set all the selected partitions to the same substitution model");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -662,5 +692,27 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public void actionPerformed(ActionEvent ae) {
             linkTrees();
         }
+    }
+    
+    public class UnlinkAllAction extends AbstractAction {
+        public UnlinkAllAction() {
+            super("Unlink All");
+            setToolTipText("Use this tool to use a different substitution model, different clock model and different tree for each selected data partition");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            unlinkAll();
+        }
+    }
+
+    public class LinkAllAction extends AbstractAction {
+        public LinkAllAction() {
+            super("Link All");
+            setToolTipText("Use this tool to set all the selected partitions to the same substitution, clock model and tree");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            linkAll();
+        }		
     }
 }

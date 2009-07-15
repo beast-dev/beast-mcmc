@@ -126,7 +126,7 @@ public class InitialTreeGenerator extends Generator {
                     );
                 }
 
-                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TaxaParser.TAXA)};
+                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, TaxaParser.TAXA)};
                 if (options.taxonSets.size() > 0) {
                     writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -156,7 +156,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 }
 
-                writeInitialDemoModelRef(writer);
+                writeInitialDemoModelRef(model, writer);
                 writer.writeCloseTag(CoalescentSimulator.COALESCENT_TREE);
                 break;
             default:
@@ -165,33 +165,30 @@ public class InitialTreeGenerator extends Generator {
         }
     }
 
-    private void writeInitialDemoModelRef(XMLWriter writer) {
-    	if (options.isSpeciesAnalysis()) { // gene tree prior
-    		if (options.getPartitionTreePriors().size() == 1) {
-    			writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "constant");
-    		} else {
-    			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-    				writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant"); // prior.constant
-    			} 
-    		}
-    	} else if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-			if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.CONSTANT) {
+    private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
+    	PartitionTreePrior prior;
+    	
+    	if ( options.shareSameTreePrior ) { // Share Same Tree Prior, use options.activedSameTreePrior instead of prior
+    		prior = options.activedSameTreePrior;
+    		
+			if (prior.getNodeHeightPrior() == TreePrior.CONSTANT) {
 	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "constant");
-	        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+	        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
 	        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, "exponential");    	        
 	        } else {
 	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "initialDemo");
 	        }
     	} else { 
-			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-				if (prior.getNodeHeightPrior() == TreePrior.CONSTANT) {
-		        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
-		        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
-		        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
-		        } else {
-		        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
-		        }
-     		}    		
+    		prior = model.getPartitionTreePrior();
+    		
+			if (prior.getNodeHeightPrior() == TreePrior.CONSTANT || options.isSpeciesAnalysis()) {
+	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
+	        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+	        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
+	        } else {
+	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
+	        }
+     		    		
     	}
     }
 

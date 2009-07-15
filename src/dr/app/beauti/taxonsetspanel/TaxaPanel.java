@@ -1,7 +1,7 @@
 /*
  * TaxaPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,7 +25,9 @@
 
 package dr.app.beauti.taxonsetspanel;
 
-import dr.app.beauti.*;
+import dr.app.beauti.BeautiApp;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -551,8 +553,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     /**
      * Returns true if taxa are all found in availableTaxa
      *
-     * @param taxa
-     * @param availableTaxa
+     * @param taxa          a set of taxa
+     * @param availableTaxa a potential superset of taxa
      * @return true if the taxa are all found in availableTaxa
      */
     private boolean isCompatible(Taxa taxa, List availableTaxa) {
@@ -686,7 +688,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         buttonPanel.add(addButton);
         buttonPanel.add(new JToolBar.Separator(new Dimension(6, 6)));
         buttonPanel.add(removeButton);
-        
+
         return buttonPanel;
     }
 

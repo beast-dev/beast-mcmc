@@ -1,3 +1,28 @@
+/*
+ * GeoSpatialCollectionModel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.geo;
 
 import dr.inference.model.AbstractModelLikelihood;
@@ -5,20 +30,19 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.List;
-import java.awt.geom.Point2D;
 
 /**
  * @author Marc A. Suchard
- *
- * Provides a GeoSpatialDistribution over multiple points in multiple polygon.
- * Uses AbstractModelLikelihood to cache 'contains' to reduce recalculations
- * when only a single point is updated
+ *         <p/>
+ *         Provides a GeoSpatialDistribution over multiple points in multiple polygon.
+ *         Uses AbstractModelLikelihood to cache 'contains' to reduce recalculations
+ *         when only a single point is updated
  */
 
 public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
     public GeoSpatialCollectionModel(String name, Parameter points, List<GeoSpatialDistribution> geoSpatialDistributions) {
-        
+
         super(name);
         this.points = points;
         this.geoSpatialDistributions = geoSpatialDistributions;
@@ -45,8 +69,8 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
     protected void storeState() {
 
-        System.arraycopy(cachedPointLogLikelihood,0,storedCachedPointLogLikelihood,0,dim);
-        System.arraycopy(validPointLogLikelihood,0,storedValidPointLogLikelihood,0,dim);
+        System.arraycopy(cachedPointLogLikelihood, 0, storedCachedPointLogLikelihood, 0, dim);
+        System.arraycopy(validPointLogLikelihood, 0, storedValidPointLogLikelihood, 0, dim);
 
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
@@ -82,14 +106,14 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
         logLikelihood = 0.0;
         final double[] point = new double[GeoSpatialDistribution.dimPoint];
 
-        for(int i=0; i<dim; i++) {
+        for (int i = 0; i < dim; i++) {
             if (!validPointLogLikelihood[i]) {
-                final int offset = i*GeoSpatialDistribution.dimPoint;
-                for(int j=0; j<GeoSpatialDistribution.dimPoint; j++)
-                    point[j] = points.getParameterValue(offset+j);
+                final int offset = i * GeoSpatialDistribution.dimPoint;
+                for (int j = 0; j < GeoSpatialDistribution.dimPoint; j++)
+                    point[j] = points.getParameterValue(offset + j);
 
                 double pointLogLikelihood = 0;
-                for(GeoSpatialDistribution distribution : geoSpatialDistributions) {
+                for (GeoSpatialDistribution distribution : geoSpatialDistributions) {
                     pointLogLikelihood += distribution.logPdf(point);
                     if (pointLogLikelihood == Double.NEGATIVE_INFINITY)
                         break; // No need to finish
@@ -102,16 +126,18 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
                 break; // No need to finish
         }
         likelihoodKnown = true;
-        return logLikelihood;        
+        return logLikelihood;
     }
 
     public void makeDirty() {
         likelihoodKnown = false;
-        for(int i=0; i<dim; i++)
+        for (int i = 0; i < dim; i++)
             validPointLogLikelihood[i] = false;
     }
 
-    public Parameter getParameter() { return points; }
+    public Parameter getParameter() {
+        return points;
+    }
 
     private Parameter points;
     private List<GeoSpatialDistribution> geoSpatialDistributions;
@@ -127,5 +153,5 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
     private double storedLogLikelihood;
 
     private boolean[] validPointLogLikelihood;
-    private boolean[] storedValidPointLogLikelihood;  
+    private boolean[] storedValidPointLogLikelihood;
 }

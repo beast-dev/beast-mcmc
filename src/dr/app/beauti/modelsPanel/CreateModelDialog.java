@@ -1,7 +1,7 @@
 /*
- * PriorDialog.java
+ * CreateModelDialog.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,21 +25,14 @@
 
 package dr.app.beauti.modelsPanel;
 
-import dr.app.beauti.options.Parameter;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
-import org.virion.jam.components.RealNumberField;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.TwoStates;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
@@ -106,6 +99,6 @@ public class CreateModelDialog {
     }
 
     public DataType getDataType() {
-        return (DataType)dataTypeCombo.getSelectedItem();
+        return (DataType) dataTypeCombo.getSelectedItem();
     }
 }

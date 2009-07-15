@@ -64,6 +64,7 @@ import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
 import dr.inference.model.*;
 import dr.inference.operators.*;
+import dr.inference.xml.LoggerParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;

@@ -45,7 +45,7 @@ import java.util.*;
  * @author Sebastian Hoehna
  */
 public abstract class AbstractImportanceDistributionOperator extends
-        SimpleMCMCOperator {
+        SimpleMCMCOperator implements GeneralOperator {
 
     private int transitions = 0;
 

@@ -8,6 +8,7 @@ import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
+import dr.inference.xml.LoggerParser;
 import dr.xml.*;
 
 import java.io.PrintWriter;
@@ -55,9 +56,9 @@ public class TreeLoggerParser extends LoggerParser {
         List<NodeAttributeProvider> naps = new ArrayList<NodeAttributeProvider>();
         List<BranchAttributeProvider> baps = new ArrayList<BranchAttributeProvider>();
 
-        for(int i = 0; i < xo.getChildCount(); i++) {
+        for (int i = 0; i < xo.getChildCount(); i++) {
             Object cxo = xo.getChild(i);
-            if( cxo instanceof TreeColouringProvider ) {
+            if (cxo instanceof TreeColouringProvider) {
                 final TreeColouringProvider colouringProvider = (TreeColouringProvider) cxo;
                 baps.add(new BranchAttributeProvider() {
 
@@ -69,10 +70,10 @@ public class TreeLoggerParser extends LoggerParser {
                         TreeColouring colouring = colouringProvider.getTreeColouring(tree);
                         BranchColouring bcol = colouring.getBranchColouring(node);
                         StringBuilder buffer = new StringBuilder();
-                        if( bcol != null ) {
+                        if (bcol != null) {
                             buffer.append("{");
                             buffer.append(bcol.getChildColour());
-                            for(int i = 1; i <= bcol.getNumEvents(); i++) {
+                            for (int i = 1; i <= bcol.getNumEvents(); i++) {
                                 buffer.append(",");
                                 buffer.append(bcol.getBackwardTime(i));
                                 buffer.append(",");
@@ -84,7 +85,7 @@ public class TreeLoggerParser extends LoggerParser {
                     }
                 });
 
-            } else if( cxo instanceof Likelihood ) {
+            } else if (cxo instanceof Likelihood) {
                 final Likelihood likelihood = (Likelihood) cxo;
                 taps.add(new TreeAttributeProvider() {
 
@@ -98,22 +99,22 @@ public class TreeLoggerParser extends LoggerParser {
                 });
 
             } //else {
-            if( cxo instanceof TreeAttributeProvider ) {
+            if (cxo instanceof TreeAttributeProvider) {
                 taps.add((TreeAttributeProvider) cxo);
             }
-            if( cxo instanceof NodeAttributeProvider ) {
+            if (cxo instanceof NodeAttributeProvider) {
                 naps.add((NodeAttributeProvider) cxo);
             }
-            if( cxo instanceof BranchAttributeProvider ) {
+            if (cxo instanceof BranchAttributeProvider) {
                 baps.add((BranchAttributeProvider) cxo);
             }
             //}
         }
         BranchRateController branchRateProvider = null;
-        if( substitutions ) {
+        if (substitutions) {
             branchRateProvider = (BranchRateController) xo.getChild(BranchRateController.class);
         }
-        if( substitutions && branchRateProvider == null ) {
+        if (substitutions && branchRateProvider == null) {
             throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
         }
 
@@ -123,7 +124,7 @@ public class TreeLoggerParser extends LoggerParser {
         // decimal places
         final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
         NumberFormat format = null;
-        if( dp != -1 ) {
+        if (dp != -1) {
             format = NumberFormat.getNumberInstance(Locale.ENGLISH);
             format.setMaximumFractionDigits(dp);
         }
@@ -150,7 +151,7 @@ public class TreeLoggerParser extends LoggerParser {
                 treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
                 formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition);
 
-        if( title != null ) {
+        if (title != null) {
             logger.setTitle(title);
         }
 

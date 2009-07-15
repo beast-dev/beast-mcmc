@@ -116,7 +116,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
-        int rateCategory = (int) Math.round(rateCategoryParameter.getBranchValue(tree, node));
+        int rateCategory = (int) Math.round(rateCategoryParameter.getNodeValue(tree, node));
 
         return rates[rateCategory];
     }

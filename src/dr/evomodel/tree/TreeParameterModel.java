@@ -70,7 +70,7 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
         this.parameter = parameter;
 
         this.includeRoot = includeRoot;
-        
+
         int dim = parameter.getDimension();
         int treeSize = tree.getNodeCount();
         if (!includeRoot) treeSize -= 1;
@@ -112,7 +112,7 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
     protected void acceptState() {
     }
 
-    public double getBranchValue(Tree tree, NodeRef node) {
+    public double getNodeValue(Tree tree, NodeRef node) {
 
         assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
 
@@ -129,7 +129,7 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
     }
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchValue(tree, node));
+        return Double.toString(getNodeValue(tree, node));
     }
 
     private int getNodeNumberFromParameterIndex(int parameterIndex) {

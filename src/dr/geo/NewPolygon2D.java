@@ -1,14 +1,36 @@
+/*
+ * NewPolygon2D.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.geo;
 
 import dr.xml.*;
+import org.jdom.Element;
 
 import java.awt.geom.*;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.LinkedList;
-
-import org.jdom.Element;
-
 
 /**
  * @author Marc A. Suchard
@@ -23,13 +45,13 @@ public class NewPolygon2D {
 
     public NewPolygon2D(GeneralPath path) {
         this.path = path;
-       }
+    }
 
     public NewPolygon2D(Element e) {
 
         List<Element> children = e.getChildren();
 //        for (int a = 0; a < children.size(); a++) {
-        for(Element childElement: children) {
+        for (Element childElement : children) {
 //            Element childElement = (Element) children.get(a);
             if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 
@@ -48,12 +70,12 @@ public class NewPolygon2D {
                     final float x = Float.valueOf(st2.nextToken());
                     final float y = Float.valueOf(st2.nextToken());
                     if (i == 0) {
-                        path.moveTo(x,y);
+                        path.moveTo(x, y);
                     } else {
-                        path.lineTo(x,y);
+                        path.lineTo(x, y);
                     }
 //                    point2Ds.add(new Point2D.Double(x, y));
-                }                
+                }
 //                length = point2Ds.size() - 1;
                 break;
 
@@ -62,15 +84,15 @@ public class NewPolygon2D {
     }
 
     public NewPolygon2D() {
-       path = new GeneralPath();
+        path = new GeneralPath();
     }
 
     public void moveTo(Point2D pt) {
-        path.moveTo((float)pt.getX(),(float)pt.getY());
+        path.moveTo((float) pt.getX(), (float) pt.getY());
     }
 
     public void lineTo(Point2D pt) {
-        path.lineTo((float)pt.getX(), (float)pt.getY());
+        path.lineTo((float) pt.getX(), (float) pt.getY());
     }
 
     public boolean contains(Point2D pt) {
@@ -94,12 +116,12 @@ public class NewPolygon2D {
         thisArea.intersect(new Area(boundingBox));
         PathIterator iterator = thisArea.getPathIterator(null);
         double[] v = new double[2];
-        while(!iterator.isDone()) {
+        while (!iterator.isDone()) {
             int type = iterator.currentSegment(v);
-            System.err.println(":"+v[0]+v[1]+"\n");
+            System.err.println(":" + v[0] + v[1] + "\n");
             iterator.next();
         }
-                            System.exit(-1);
+        System.exit(-1);
 
         GeneralPath path = new GeneralPath(thisArea);
         path.closePath();
@@ -115,9 +137,9 @@ public class NewPolygon2D {
         sb.append(")[\n");
         PathIterator iterator = path.getPathIterator(null);
         float[] values = new float[2];
-        while(!iterator.isDone()) {
+        while (!iterator.isDone()) {
             int type = iterator.currentSegment(values);
-            Point2D pt = new Point2D.Double(values[0],values[1]);
+            Point2D pt = new Point2D.Double(values[0], values[1]);
             sb.append("\t");
             sb.append(pt);
             sb.append("\n");
@@ -150,13 +172,13 @@ public class NewPolygon2D {
                 throw new XMLParseException("Insufficient points in polygon '" + xo.getId() + "' to define a polygon in 2D");
 
             NewPolygon2D polygon = new NewPolygon2D();
-            polygon.moveTo(new Point2D.Double(coordinates.x[0],coordinates.y[0]));
+            polygon.moveTo(new Point2D.Double(coordinates.x[0], coordinates.y[0]));
             int length = coordinates.length;
             if (closed)
                 length--;
             for (int i = 1; i < length; i++)
                 polygon.lineTo(new Point2D.Double(coordinates.x[i], coordinates.y[i]));
-            polygon.lineTo(new Point2D.Double(coordinates.x[0],coordinates.y[0]));
+            polygon.lineTo(new Point2D.Double(coordinates.x[0], coordinates.y[0]));
 //            polygon.closePath();
 
             polygon.setFillValue(xo.getAttribute(FILL_VALUE, 0.0));
@@ -189,23 +211,23 @@ public class NewPolygon2D {
 
     public static void main(String[] args) {
         NewPolygon2D polygon = new NewPolygon2D();
-        polygon.moveTo(new Point2D.Double(-10,-10));
-        polygon.lineTo(new Point2D.Double(-10,50));
-        polygon.lineTo(new Point2D.Double(10,50));
-        polygon.lineTo(new Point2D.Double(10,-10));
-        polygon.lineTo(new Point2D.Double(-10,-10));
+        polygon.moveTo(new Point2D.Double(-10, -10));
+        polygon.lineTo(new Point2D.Double(-10, 50));
+        polygon.lineTo(new Point2D.Double(10, 50));
+        polygon.lineTo(new Point2D.Double(10, -10));
+        polygon.lineTo(new Point2D.Double(-10, -10));
 //        polygon.closePath();
         System.out.println(polygon);
         System.out.println("");
 //        System.exit(-1);
 
-        Point2D pt = new Point2D.Double(0,0);
-        System.out.println("polygon contains "+pt+": "+polygon.contains(pt));
-        pt = new Point2D.Double(100,100);
-        System.out.println("polygon contains "+pt+": "+polygon.contains(pt));
+        Point2D pt = new Point2D.Double(0, 0);
+        System.out.println("polygon contains " + pt + ": " + polygon.contains(pt));
+        pt = new Point2D.Double(100, 100);
+        System.out.println("polygon contains " + pt + ": " + polygon.contains(pt));
         System.out.println("");
 
-        Rectangle2D boundingBox = new Rectangle2D.Double(0,0,100,100);  // defines lower-left corner and width/height
+        Rectangle2D boundingBox = new Rectangle2D.Double(0, 0, 100, 100);  // defines lower-left corner and width/height
         System.out.println(boundingBox);
         NewPolygon2D myClip = polygon.clip(boundingBox);
         System.out.println(myClip);

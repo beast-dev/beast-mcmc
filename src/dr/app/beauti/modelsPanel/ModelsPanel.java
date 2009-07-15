@@ -1,7 +1,7 @@
 /*
- * ModelPanel.java
+ * ModelsPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -26,13 +26,13 @@
 package dr.app.beauti.modelsPanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.modelsPanel.CreateModelDialog;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
-import dr.app.beauti.components.SequenceErrorType;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.*;
+import dr.app.beauti.components.SequenceErrorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
@@ -51,7 +51,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -85,7 +87,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
-//    JComboBox clockModelCombo = new JComboBox(ClockType.values());
+    //    JComboBox clockModelCombo = new JComboBox(ClockType.values());
     ClockModelPanel clockModelPanel = null;
 
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
@@ -96,7 +98,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
     boolean hasAlignment = false;
-    
+
     SequenceErrorModelComponentOptions comp;
 
     public ModelsPanel(BeautiFrame parent, Action removeModelAction) {
@@ -144,8 +146,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                 fireModelsChanged();
             }
         };
-        
-        
+
+
         PanelUtils.setupComponent(errorModelCombo);
         errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>" +
                 "post-mortem DNA damage.</html>");
@@ -186,7 +188,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
         OptionsPanel panel = new OptionsPanel(10, 20);
         panel.addSeparator();
-        
+
         panel.addLabel(overallParas);
         panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
 //        panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
@@ -194,19 +196,19 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         substitutionRateField.setColumns(10);
         panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
         panel.addSeparator();
-        
+
         clockModelPanel = new ClockModelPanel(frame);
-               
+
         JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, clockModelPanel, panel);
         splitPane1.setDividerLocation(500);
         splitPane1.setContinuousLayout(true);
         splitPane1.setBorder(BorderFactory.createEmptyBorder());
         splitPane1.setOpaque(false);
-        
+
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-        panel1.add(controlPanel1, BorderLayout.SOUTH);        
+        panel1.add(controlPanel1, BorderLayout.SOUTH);
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
@@ -224,8 +226,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.NORTH);
         add(splitPane1, BorderLayout.CENTER);
-        
-        comp = new SequenceErrorModelComponentOptions ();
+
+        comp = new SequenceErrorModelComponentOptions();
     }
 
     public void setOptions(BeautiOptions options) {
@@ -241,11 +243,11 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         //setModelOptions(currentModel);
 
 //        clockModelCombo.setSelectedItem(options.clockType);
-        comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
-        
+
         if (clockModelPanel != null) {
-        	clockModelPanel.setOptions(options);
+            clockModelPanel.setOptions(options);
         }
 
         settingOptions = false;
@@ -280,15 +282,15 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
 //        options.clockType = (ClockType) clockModelCombo.getSelectedItem();
 
-        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
         options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
 
         options.meanSubstitutionRate = substitutionRateField.getValue();
-        
+
         if (clockModelPanel != null) {
-        	clockModelPanel.getOptions(options);
+            clockModelPanel.getOptions(options);
         }
     }
 

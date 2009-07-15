@@ -1,3 +1,28 @@
+/*
+ * GeoSpatialDistribution.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.geo;
 
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -6,10 +31,10 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
 import dr.xml.*;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.logging.Logger;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -39,7 +64,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     }
 
     public double logPdf(double[] x) {
-        final boolean contains = region.containsPoint2D(new Point2D.Double(x[0],x[1]));
+        final boolean contains = region.containsPoint2D(new Point2D.Double(x[0], x[1]));
         if (outside ^ contains)
             return 0;
         return Double.NEGATIVE_INFINITY;
@@ -57,9 +82,13 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         return TYPE;
     }
 
-    public String getLabel() { return label; }
+    public String getLabel() {
+        return label;
+    }
 
-    public Polygon2D getRegion() { return region; }
+    public Polygon2D getRegion() {
+        return region;
+    }
 
     protected Polygon2D region;
     protected String label = null;
@@ -74,9 +103,9 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String label = xo.getAttribute(NODE_LABEL,"");
+            String label = xo.getAttribute(NODE_LABEL, "");
 
-            boolean inside = xo.getAttribute(INSIDE,true);
+            boolean inside = xo.getAttribute(INSIDE, true);
             boolean readFromFile = false;
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
@@ -85,23 +114,23 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 // read file
                 String kmlFileName = xo.getStringAttribute(KML_FILE);
                 List<Polygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
-                for(Polygon2D region : polygons)
-                    geoSpatialDistributions.add(new GeoSpatialDistribution(label,region,inside));
+                for (Polygon2D region : polygons)
+                    geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside));
                 readFromFile = true;
             } else {
 
-              for(int i=0; i<xo.getChildCount(); i++) {
+                for (int i = 0; i < xo.getChildCount(); i++) {
                     if (xo.getChild(i) instanceof Polygon2D) {
                         Polygon2D region = (Polygon2D) xo.getChild(i);
                         geoSpatialDistributions.add(
-                                new GeoSpatialDistribution(label,region,inside)
+                                new GeoSpatialDistribution(label, region, inside)
                         );
                     }
                 }
             }
 
             List<Parameter> parameters = new ArrayList<Parameter>();
-            XMLObject cxo = (XMLObject) xo.getChild(DATA);
+            XMLObject cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 Parameter spatialParameter = (Parameter) cxo.getChild(j);
                 parameters.add(spatialParameter);
@@ -109,9 +138,9 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
             if (geoSpatialDistributions.size() == 1 && !readFromFile) {
                 MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
-                for(Parameter spatialParameter : parameters) {
+                for (Parameter spatialParameter : parameters) {
                     if (spatialParameter.getDimension() != dimPoint)
-                        throw new XMLParseException("Spatial priors currently only work in "+dimPoint+"D");
+                        throw new XMLParseException("Spatial priors currently only work in " + dimPoint + "D");
                     likelihood.addData(spatialParameter);
                 }
                 return likelihood;
@@ -120,14 +149,14 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             if (parameters.size() == 1) {
                 Parameter parameter = parameters.get(0);
                 if (parameter.getDimension() % dimPoint != 0)
-                    throw new XMLParseException("Spatial priors currently only work in "+dimPoint+"D");
+                    throw new XMLParseException("Spatial priors currently only work in " + dimPoint + "D");
 
                 Logger.getLogger("dr.geo").info(
-                        "\nConstructing a GeoSpatialCollectionModel:\n"+
-                        "\tParameter: "+parameter.getId()+"\n"+
-                        "\tNumber of regions: "+geoSpatialDistributions.size()+"\n\n");
-                
-                return new GeoSpatialCollectionModel(xo.getId(),parameter,geoSpatialDistributions);
+                        "\nConstructing a GeoSpatialCollectionModel:\n" +
+                                "\tParameter: " + parameter.getId() + "\n" +
+                                "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
+
+                return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions);
             }
 
             throw new XMLParseException("Multiple separate parameters and multiple regions not yet implemented");
@@ -139,11 +168,11 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(NODE_LABEL,true),
-                AttributeRule.newBooleanRule(INSIDE,true),
+                AttributeRule.newStringRule(NODE_LABEL, true),
+                AttributeRule.newBooleanRule(INSIDE, true),
                 new XORRule(
-                    AttributeRule.newStringRule(KML_FILE),
-                    new ElementRule(Polygon2D.class,1,Integer.MAX_VALUE)
+                        AttributeRule.newStringRule(KML_FILE),
+                        new ElementRule(Polygon2D.class, 1, Integer.MAX_VALUE)
                 ),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}

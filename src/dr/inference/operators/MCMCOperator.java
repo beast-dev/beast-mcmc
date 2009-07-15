@@ -102,7 +102,7 @@ public interface MCMCOperator {
 
     double getSumDeviation();
 
-    double getSpan(boolean reset);
+    //double getSpan(boolean reset);
 
     void setSumDeviation(double sumDeviation);
 
@@ -159,8 +159,8 @@ public interface MCMCOperator {
     class Utils {
 
         public static double getAcceptanceProbability(MCMCOperator op) {
-            int accepted = op.getAcceptCount();
-            int rejected = op.getRejectCount();
+            final int accepted = op.getAcceptCount();
+            final int rejected = op.getRejectCount();
             return (double) accepted / (double) (accepted + rejected);
         }
 
@@ -168,5 +168,4 @@ public interface MCMCOperator {
             return op.getAcceptCount() + op.getRejectCount();
         }
     }
-
 }

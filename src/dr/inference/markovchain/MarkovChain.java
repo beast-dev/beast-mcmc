@@ -99,10 +99,10 @@ public final class MarkovChain {
      *
      * @param length
      *            number of states to run the chain.
-     * @param onTheFlyOperatorWeights
+     *
+     * param onTheFlyOperatorWeights
      */
-    public int chain(int length, boolean disableCoerce,
-                     int onTheFlyOperatorWeights) {
+    public int chain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
         currentScore = evaluate(likelihood, prior);
 
@@ -140,7 +140,7 @@ public final class MarkovChain {
         pleaseStop = false;
         isStopped = false;
 
-        int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
+        //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
         double[] logr = {0.0};
 
@@ -205,6 +205,7 @@ public final class MarkovChain {
             double score = 0.0;
             double deviation = 0.0;
 
+        //    System.err.print("" + currentState + ": ");
             if( operatorSucceeded ) {
 
                 // The new model is proposed
@@ -258,13 +259,13 @@ public final class MarkovChain {
                 currentModel.acceptModelState();
                 currentScore = score;
 
-                if( otfcounter > 0 ) {
-                    --otfcounter;
-                    if( otfcounter == 0 ) {
-                        adjustOpWeights(currentState);
-                        otfcounter = onTheFlyOperatorWeights;
-                    }
-                }
+//                if( otfcounter > 0 ) {
+//                    --otfcounter;
+//                    if( otfcounter == 0 ) {
+//                        adjustOpWeights(currentState);
+//                        otfcounter = onTheFlyOperatorWeights;
+//                    }
+//                }
 
                 oldScore = score; // for the usingFullEvaluation test
             } else {
@@ -333,53 +334,55 @@ public final class MarkovChain {
         return currentLength;
     }
 
-    private void adjustOpWeights(int currentState) {
-        final int count = schedule.getOperatorCount();
-        double[] s = new double[count];
-        final double factor = 100;
-        final double limitSpan = 1000;
-        System.err.println("start cycle " + currentState);
+//
+//    private void adjustOpWeights(int currentState) {
+//        final int count = schedule.getOperatorCount();
+//        double[] s = new double[count];
+//        final double factor = 100;
+//        final double limitSpan = 1000;
+//        System.err.println("start cycle " + currentState);
+//
+//        double sHas = 0.0/* , sNot = 0.0 */, nHas = 0.0;
+//        for(int no = 0; no < count; ++no) {
+//            final MCMCOperator op = schedule.getOperator(no);
+//            final double v = op.getSpan(true);
+//
+//            if( v == 0 ) {
+//                // sNot += op.getWeight();
+//                s[no] = 0;
+//            } else {
+//                sHas += op.getWeight();
+//                s[no] = Math.max(factor * Math.min(v, limitSpan), 1);
+//                nHas += s[no];
+//            }
+//        }
+//
+//        // for(int no = 0; no < count; ++no) {
+//        // final MCMCOperator op = schedule.getOperator(no);
+//        // final double v = op.getSpan(false);
+//        // if( v == 0 ) {
+//        // System.err.println(op.getOperatorName() + " blocks");
+//        // return;
+//        // }
+//        // }
+//
+//        // keep sum of changed parts unchanged
+//        final double scaleHas = sHas / nHas;
+//
+//        for(int no = 0; no < count; ++no) {
+//            final MCMCOperator op = schedule.getOperator(no);
+//            if( s[no] > 0 ) {
+//                final double val = s[no] * scaleHas;
+//                op.setWeight(val);
+//                System.err.println("set " + op.getOperatorName() + " " + val);
+//            } else {
+//                System.err.println("** " + op.getOperatorName() + " = "
+//                        + op.getWeight());
+//            }
+//        }
+//        schedule.operatorsHasBeenUpdated();
+//    }
 
-        double sHas = 0.0/* , sNot = 0.0 */, nHas = 0.0;
-        for(int no = 0; no < count; ++no) {
-            final MCMCOperator op = schedule.getOperator(no);
-            final double v = op.getSpan(true);
-
-            if( v == 0 ) {
-                // sNot += op.getWeight();
-                s[no] = 0;
-            } else {
-                sHas += op.getWeight();
-                s[no] = Math.max(factor * Math.min(v, limitSpan), 1);
-                nHas += s[no];
-            }
-        }
-
-        // for(int no = 0; no < count; ++no) {
-        // final MCMCOperator op = schedule.getOperator(no);
-        // final double v = op.getSpan(false);
-        // if( v == 0 ) {
-        // System.err.println(op.getOperatorName() + " blocks");
-        // return;
-        // }
-        // }
-
-        // keep sum of changed parts unchanged
-        final double scaleHas = sHas / nHas;
-
-        for(int no = 0; no < count; ++no) {
-            final MCMCOperator op = schedule.getOperator(no);
-            if( s[no] > 0 ) {
-                final double val = s[no] * scaleHas;
-                op.setWeight(val);
-                System.err.println("set " + op.getOperatorName() + " " + val);
-            } else {
-                System.err.println("** " + op.getOperatorName() + " = "
-                        + op.getWeight());
-            }
-        }
-        schedule.operatorsHasBeenUpdated();
-    }
 
     public Prior getPrior() {
         return prior;

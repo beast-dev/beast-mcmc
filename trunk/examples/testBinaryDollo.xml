@@ -42,7 +42,6 @@
     </alignment>
     <newick id="shortTree">
         (Ar:3,((Dr:1,An:1):1,(Ho:1,Ca:1):1):1);
-
     </newick>
 
     <ascertainedPatterns from="1" id="shortPatterns">
@@ -92,7 +91,6 @@
     <gammaPrior id="deathRatePrior" scale="1" shape="0.0001" offset="0">
         <parameter idref="intron.death"/>
     </gammaPrior>
-
 
     <operators id="operators">
         <!--      <scaleOperator scaleFactor="0.9110" weight="1">

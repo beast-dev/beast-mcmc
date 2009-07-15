@@ -1,7 +1,10 @@
-package dr.inference.model;
+package dr.evomodel.coalescent;
 
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
@@ -39,7 +42,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         this.normalize = normalize;
 
         this.mean = mean;
-        if( mean != null ) {
+        if (mean != null) {
             addParameter(mean);
         }
 
@@ -48,7 +51,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
 
         this.lambda = lambda;
         if (lambda != null) {
-            addParameter( lambda );
+            addParameter(lambda);
         }
     }
 
@@ -72,7 +75,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
     }
 
     // log of normal distribution coefficient.
-    final private double logNormalCoef =  -0.5 * Math.log(2*Math.PI);
+    final private double logNormalCoef = -0.5 * Math.log(2 * Math.PI);
 
     // A specialized version where everything is normalized. Time is normalized to 1. Data moved to mean zero and rescaled
     // according to time. Lambda is 0.5. The prior on mean is added.
@@ -82,21 +85,21 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         // get a copy since we re-scale data
         final double[] vals = m.getPopulationValues().getParameterValues();
 
-        assert ! logSpace : "not implemented yet";
+        assert !logSpace : "not implemented yet";
 
-        final double len = tps[tps.length-1];
+        final double len = tps[tps.length - 1];
 
         // compute mean
         double popMean = 0;
         // todo not correct when using midpoints
-        if( m.getType() == VariableDemographicModel.Type.LINEAR ) {
-            for(int k = 0; k < tps.length; ++k) {
+        if (m.getType() == VariableDemographicModel.Type.LINEAR) {
+            for (int k = 0; k < tps.length; ++k) {
                 final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
-                popMean += dt * (vals[k+1] + vals[k]);
+                popMean += dt * (vals[k + 1] + vals[k]);
             }
-            popMean /= (2* len);
+            popMean /= (2 * len);
         } else {
-            for(int k = 0; k < tps.length; ++k) {
+            for (int k = 0; k < tps.length; ++k) {
                 final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
                 popMean += dt * vals[k];
             }
@@ -104,30 +107,30 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         }
 
         // Normalize to time interval = 1 and mean = 0
-        final double sigma = this.sigma.getStatisticValue(0)/ Math.sqrt(len);
+        final double sigma = this.sigma.getStatisticValue(0) / Math.sqrt(len);
         final double lam = 0.5 * len;
-        for(int k = 0; k < vals.length; ++k) {
-            vals[k] = (vals[k] - popMean)/len;
+        for (int k = 0; k < vals.length; ++k) {
+            vals[k] = (vals[k] - popMean) / len;
         }
 
         // optimized version of the code in getLogLikelihood.
         // get factors out when possible. logpdf of a normal is -x^2/2, when mean is 0
         double ll = 0.0;
 
-        for(int k = 0; k < tps.length; ++k) {
+        for (int k = 0; k < tps.length; ++k) {
             final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0)) / len;
 
             final double a = Math.exp(-lam * dt);
-            final double d = (vals[k+1] - vals[k] * a);
+            final double d = (vals[k + 1] - vals[k] * a);
 
             final double c = 1 - a * a;
-            ll +=  (d*d / c) - 0.5 * Math.log(c);
+            ll += (d * d / c) - 0.5 * Math.log(c);
         }
 
-        final double f2 =  (2*lam) / (sigma*sigma);
-        ll = tps.length * (logNormalCoef - Math.log(sigma)) + ll*f2/-2;
+        final double f2 = (2 * lam) / (sigma * sigma);
+        ll = tps.length * (logNormalCoef - Math.log(sigma)) + ll * f2 / -2;
 
-        if( popMeanPrior != null ) {
+        if (popMeanPrior != null) {
             ll += popMeanPrior.logPdf(popMean);
         } else {
             // default Jeffreys
@@ -137,15 +140,15 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        if( lastValue > 0 ) {
+        if (lastValue > 0) {
             return lastValue;
         }
-         double logL;
+        double logL;
 
-        if( normalize ) {
+        if (normalize) {
             assert m != null;
             logL = reNormalize(m);
-        }  else {
+        } else {
 
 //        final double[] tps = m != null ? m.getDemographicFunction().allTimePoints() : times.getParameterValues();
 //
@@ -164,7 +167,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
             final double mean = this.mean.getStatisticValue(0);
 
             double sigma = this.sigma.getStatisticValue(0);
-            if( normalize ) {
+            if (normalize) {
                 // make the process have a SD of sigma
                 sigma *= Math.sqrt(2 * lambda);
             }
@@ -173,7 +176,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
 
             final double xScale = -lambda * (normalize ? 1.0 / tps[tps.length - 1] : 1.0);
 
-            for(int k = 0; k < tps.length; ++k) {
+            for (int k = 0; k < tps.length; ++k) {
                 double dt = tps[k] - (k > 0 ? tps[k - 1] : 0);
                 double a = Math.exp(xScale * dt);
                 double den = sigma * Math.sqrt((1 - a * a) / (2 * lambda));
@@ -220,7 +223,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         private Parameter getParam(XMLObject xo, String name) throws XMLParseException {
             final XMLObject object = xo.getChild(name);
             // optional
-            if( object == null ) {
+            if (object == null) {
                 return null;
             }
             final Object child = object.getChild(0);
@@ -242,8 +245,8 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
             final boolean normalize = xo.getAttribute(NORMALIZE, false);
 
             VariableDemographicModel m = (VariableDemographicModel) xo.getChild(VariableDemographicModel.class);
-            
-            if ( m != null ) {
+
+            if (m != null) {
                 ParametricDistributionModel popMeanPrior = (ParametricDistributionModel) xo.getChild(ParametricDistributionModel.class);
                 return new OrnsteinUhlenbeckPriorLikelihood(mean, sigma, lambda, m, logSpace, normalize, popMeanPrior);
             }
@@ -306,9 +309,12 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         makeDirty();
     }
 
-    protected void storeState() {}
+    protected void storeState() {
+    }
 
-    protected void restoreState() {}
+    protected void restoreState() {
+    }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 }

@@ -32,7 +32,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 
 import java.util.HashSet;
 import java.util.List;
@@ -175,7 +178,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     public abstract double calculateLogLikelihood();
 
     /**
-     * @returns the node ref of the MRCA of this coalescent prior in the given tree.
+     * @return the node ref of the MRCA of this coalescent prior in the given tree.
      */
     protected NodeRef getIncludedMRCA(Tree tree) {
         if (includedLeafSet != null) {
@@ -186,16 +189,16 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     }
 
     /**
-     * @returns an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
-     * May return null if no subtrees should be excluded.
+     * @return an array of noderefs that represent the MRCAs of subtrees to exclude from coalescent prior.
+     *         May return null if no subtrees should be excluded.
      */
     protected Set<NodeRef> getExcludedMRCAs(Tree tree) {
 
         if (excludedLeafSets.length == 0) return null;
 
         Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
-        for (int i = 0; i < excludedLeafSets.length; i++) {
-            excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSets[i]));
+        for (Set excludedLeafSet : excludedLeafSets) {
+            excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSet));
         }
         return excludeNodesBelow;
     }

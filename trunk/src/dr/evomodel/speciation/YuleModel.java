@@ -30,29 +30,15 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 
 /**
- * The Yule model.
+ * From Gernhard 2008, Yule density (p; conditioned on n nodes) should be:
  * <p/>
- * The trouble seems to be that Nee (2001) and Yang & Rannala (1997) are both
- * avoiding assuming a prior on t_1 (which becomes a hyperprior in the context
- * of Bayesian phylogenetics). That is, what do you know about t_1 before
- * you've seen the sample, and don't even know the number of species? It seems
- * an improper uniform prior is the obvious choice, and that is essentially
- * what you need to go from an expression like Nee 2001, eq (3) to a
- * probability for t_1. Simplest possible case: pure birth process with rate v,
- * and two tips.
+ * double p = 0.0;
  * <p/>
- * P(tree with 2 tips|root at time t) = exp(-2vt)
+ * p = lambda^(n-1) * exp(-lambda*rootHeight);
  * <p/>
- * This is the likelihood
- * <p/>
- * L(root at time t|tree with 2 tips)
- * <p/>
- * but to be a probability density, it needs normalising, so with a uniform
- * prior on t, this is
- * <p/>
- * 2v exp(-2vt).
- * <p/>
- * -- comments by Graham Jones, pers. comms.
+ * for (int i = 1; i < n; i++) {
+ * p *= exp(-lambda*height[i])
+ * }
  *
  * @author Alexei Drummond
  * @author Roald Forsberg
@@ -99,14 +85,10 @@ public class YuleModel extends SpeciationModel {
 
 
         if (tree.isRoot(node)) {
-            // see Appendix 1 of Nee (2001) paper for discussion about why we double this
-            // nodeHeight for the root.
-            nodeHeight *= 2;
+            logP += -lambda * nodeHeight;
         } else {
-            // see Appendix 1 of Nee (2001) paper for discussion about why we leave off
-            // this contribution for the last internode
-            logP += Math.log(lambda);
         }
+        logP += Math.log(lambda);
         logP += -lambda * nodeHeight;
 
         return logP;

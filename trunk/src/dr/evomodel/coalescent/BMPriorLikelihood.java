@@ -1,8 +1,9 @@
-package dr.inference.model;
+package dr.evomodel.coalescent;
 
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.math.distributions.NormalDistribution;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -13,13 +14,13 @@ import dr.xml.*;
 // It should be a model since it may be the only user of parameter sigma
 
 public class BMPriorLikelihood extends AbstractModelLikelihood {
-   // private final Parameter mean;
+    // private final Parameter mean;
     private final Parameter sigma;
     //private final Parameter lambda;
     private final boolean logSpace;
     //private final boolean normalize;
-   // private Parameter data;
-   // private Parameter times;
+    // private Parameter data;
+    // private Parameter times;
     private ParametricDistributionModel popMeanPrior = null;
     private final VariableDemographicModel m;
 
@@ -38,19 +39,19 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
         this.sigma = sigma;
         addParameter(sigma);
 
-       // this.lambda = lambda;
+        // this.lambda = lambda;
 //        if (lambda != null) {
 //            addParameter( lambda );
 //        }
     }
 
     public BMPriorLikelihood(Parameter sigma, VariableDemographicModel demographicModel, boolean logSpace,
-                                            ParametricDistributionModel popMeanPrior) {
+                             ParametricDistributionModel popMeanPrior) {
         this(sigma, logSpace, demographicModel);
-     //   this.m = demographicModel;
+        //   this.m = demographicModel;
         addModel(demographicModel);
 
-     //   this.data = this.times = null;
+        //   this.data = this.times = null;
         this.popMeanPrior = popMeanPrior;
     }
 
@@ -64,7 +65,7 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
 //    }
 
     // log of normal distribution coeffcient.
-    final private double logNormalCoef = -0.5 * Math.log(2*Math.PI);
+    final private double logNormalCoef = -0.5 * Math.log(2 * Math.PI);
 
     // A specialized version where everything is normalized. Time is normalized to 1. Data moved to mean zero and rescaled
     // according to time.
@@ -77,15 +78,15 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
 
         //assert ! logSpace : "not implemented yet";
 
-        final double tMax = tps[tps.length-1];
+        final double tMax = tps[tps.length - 1];
 
 
-        if(false) {
-             return -Math.log(tMax/m.getDemographicFunction().getIntegral(0, tMax));
+        if (false) {
+            return -Math.log(tMax / m.getDemographicFunction().getIntegral(0, tMax));
         } else {
-        // compute mean
-        double popMean = tMax/m.getDemographicFunction().getIntegral(0, tMax);
-        // todo not correct when using midpoints
+            // compute mean
+            double popMean = tMax / m.getDemographicFunction().getIntegral(0, tMax);
+            // todo not correct when using midpoints
 //        if( m.getType() == VariableDemographicModel.Type.LINEAR ) {
 //            for(int k = 0; k < tps.length; ++k) {
 //                final double dt = (tps[k] - (k > 0 ? tps[k - 1] : 0));
@@ -100,37 +101,37 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
 //            popMean /= tMax;
 //        }
 
-        // Normalize to time interval = 1 and mean = 0
-        final double sigma = this.sigma.getStatisticValue(0);
+            // Normalize to time interval = 1 and mean = 0
+            final double sigma = this.sigma.getStatisticValue(0);
 //        final double lam = 0.5 * tMax;
 //        for(int k = 0; k < vals.length; ++k) {
 //            vals[k] = vals[k]/tMax;
 //        }
 
-        // optimized version of the code in getLogLikelihood.
-        // get factors out when possible. logpdf of a normal is -x^2/2, when mean is 0
-        double ll = 0.0;
+            // optimized version of the code in getLogLikelihood.
+            // get factors out when possible. logpdf of a normal is -x^2/2, when mean is 0
+            double ll = 0.0;
 
-        final double s2 = 2 * sigma*sigma;
-        for(int k = 0; k < tps.length; ++k) {
-            final double dt = ((tps[k] - (k > 0 ? tps[k - 1] : 0)) / tMax);
+            final double s2 = 2 * sigma * sigma;
+            for (int k = 0; k < tps.length; ++k) {
+                final double dt = ((tps[k] - (k > 0 ? tps[k - 1] : 0)) / tMax);
 
-            //final double d = (vals[k+1] - vals[k]);
-            final double r = logSpace ? (vals[k+1] - vals[k]) : Math.log(vals[k + 1] / vals[k]);
-            final double d = r;
-            ll -= (d*d / (s2 * dt));
-            ll -= 0.5 * Math.log(dt);
-        }
-        ll += tps.length * (logNormalCoef - Math.log(sigma));
-        //ll /= tps.length;
-        if( popMeanPrior != null ) {
-            ll += popMeanPrior.logPdf(popMean);
-        } else {
-            // default Jeffrey's
-            ll -= logSpace ? popMean : Math.log(popMean);
-        }
-        
-        return ll;
+                //final double d = (vals[k+1] - vals[k]);
+                final double r = logSpace ? (vals[k + 1] - vals[k]) : Math.log(vals[k + 1] / vals[k]);
+                final double d = r;
+                ll -= (d * d / (s2 * dt));
+                ll -= 0.5 * Math.log(dt);
+            }
+            ll += tps.length * (logNormalCoef - Math.log(sigma));
+            //ll /= tps.length;
+            if (popMeanPrior != null) {
+                ll += popMeanPrior.logPdf(popMean);
+            } else {
+                // default Jeffrey's
+                ll -= logSpace ? popMean : Math.log(popMean);
+            }
+
+            return ll;
         }
     }
 
@@ -154,11 +155,11 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
     //static final String NORMALIZE = "normalize";
 
     //static final String DATA = "data";
-   // static final String TIMES = "times";
+    // static final String TIMES = "times";
 
-   // public static final String MEAN = "mean";
+    // public static final String MEAN = "mean";
     public static final String SIGMA = "sigma";
-  //  public static final String LAMBDA = "lambda";
+    //  public static final String LAMBDA = "lambda";
 
     // (todo) Parser is still in a bad state
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -178,11 +179,11 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
         private Parameter getParam(XMLObject xo, String name) throws XMLParseException {
             final XMLObject object = xo.getChild(name);
             // optional
-            if( object == null ) {
+            if (object == null) {
                 return null;
             }
             final Object child = object.getChild(0);
-            if( child instanceof Parameter ) {
+            if (child instanceof Parameter) {
                 return (Parameter) child;
             }
 
@@ -242,9 +243,13 @@ public class BMPriorLikelihood extends AbstractModelLikelihood {
         makeDirty();
     }
 
-    protected void storeState() {}
+    protected void storeState() {
+    }
 
-    protected void restoreState() { makeDirty(); }
+    protected void restoreState() {
+        makeDirty();
+    }
 
-    protected void acceptState() {}
+    protected void acceptState() {
+    }
 }

@@ -1,8 +1,9 @@
-package dr.evomodelxml;
+package dr.inference.xml;
 
 import dr.app.beast.BeastVersion;
 import dr.inference.loggers.*;
 import dr.math.MathUtils;
+import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import dr.util.Property;
 import dr.xml.*;
@@ -23,7 +24,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
     public static final String ECHO = "echo";
     public static final String ECHO_EVERY = "echoEvery";
     public static final String TITLE = "title";
-    public static final String FILE_NAME = "fileName";
+    public static final String FILE_NAME = FileHelpers.FILE_NAME;
     public static final String FORMAT = "format";
     public static final String TAB = "tab";
     public static final String HTML = "html";
@@ -145,7 +146,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
             final String fileName = xo.getStringAttribute(FILE_NAME);
 
-            final File logFile = getFile(fileName);
+            final File logFile = FileHelpers.getFile(fileName);
 
 //	         System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
             try {
@@ -156,50 +157,6 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
         }
         return new PrintWriter(System.out);
-    }
-
-    /**
-     * Resolve file from name.
-     * <p/>
-     * Keep A fully qualified (i.e. absolute path) as is. A name starting with a "./" is
-     * relative to the master BEAST directory. Any other name is stripped of any directory
-     * component and placed in the "user.dir" directory.
-     *
-     * @param fileName an absolute or relative file name
-     * @return a File object resolved from provided file name
-     */
-    public static File getFile(String fileName) {
-        final boolean localFile = fileName.startsWith("./");
-        final boolean relative = masterBeastDirectory != null && localFile;
-        if (localFile) {
-            fileName = fileName.substring(2);
-        }
-
-        final File file = new File(fileName);
-        final String name = file.getName();
-        String parent = file.getParent();
-
-        if (!file.isAbsolute()) {
-            String p;
-            if (relative) {
-                p = masterBeastDirectory.getAbsolutePath();
-            } else {
-                p = System.getProperty("user.dir");
-            }
-            if (parent != null && parent.length() > 0) {
-                parent = p + '/' + parent;
-            } else {
-                parent = p;
-            }
-        }
-        return new File(parent, name);
-    }
-
-    // directory where beast xml file resides
-    private static File masterBeastDirectory = null;
-
-    public static void setMasterDir(File fileName) {
-        masterBeastDirectory = fileName;
     }
 }
 

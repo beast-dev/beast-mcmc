@@ -4,11 +4,11 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.Tree;
-import dr.evomodelxml.LoggerParser;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inference.xml.LoggerParser;
 import dr.xml.*;
 
 import java.io.*;

@@ -1,7 +1,7 @@
 package dr.inference.trace;
 
-import dr.evomodelxml.LoggerParser;
 import dr.util.Attribute;
+import dr.util.FileHelpers;
 import dr.xml.*;
 
 import java.io.File;
@@ -45,11 +45,11 @@ public class PathSamplingAnalysis {
 //      sum(widths*midpoints)
 //  }
 
-        Map<Double, List<Double>> map = new HashMap<Double,List<Double>>();
+        Map<Double, List<Double>> map = new HashMap<Double, List<Double>>();
         List<Double> orderedTheta = new ArrayList<Double>();
 
-        for(int i=0; i<logLikelihoodSample.length; i++) {
-            if( !map.containsKey(thetaSample[i])) {
+        for (int i = 0; i < logLikelihoodSample.length; i++) {
+            if (!map.containsKey(thetaSample[i])) {
                 map.put(thetaSample[i], new ArrayList<Double>());
                 orderedTheta.add(thetaSample[i]);
             }
@@ -59,21 +59,21 @@ public class PathSamplingAnalysis {
         Collections.sort(orderedTheta);
 
         List<Double> meanLogLikelihood = new ArrayList<Double>();
-         for(double t : orderedTheta) {
+        for (double t : orderedTheta) {
             double totalMean = 0;
             int lengthMean = 0;
             List<Double> values = map.get(t);
-            for(double v: values) {
+            for (double v : values) {
                 totalMean += v;
                 lengthMean++;
             }
-            meanLogLikelihood.add(totalMean/lengthMean);
+            meanLogLikelihood.add(totalMean / lengthMean);
         }
 
         logBayesFactor = 0;
-        for(int i=0; i<meanLogLikelihood.size()-1; i++)
-                logBayesFactor += (meanLogLikelihood.get(i+1) + meanLogLikelihood.get(i)) / 2.0 *
-                                  (orderedTheta.get(i+1) - orderedTheta.get(i));
+        for (int i = 0; i < meanLogLikelihood.size() - 1; i++)
+            logBayesFactor += (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
+                    (orderedTheta.get(i + 1) - orderedTheta.get(i));
 
         logBayesFactorCalculated = true;
     }
@@ -83,7 +83,7 @@ public class PathSamplingAnalysis {
         sb.append("log Bayes factor from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
-        sb.append(String.format(FORMAT,getLogBayesFactor()));      
+        sb.append(String.format(FORMAT, getLogBayesFactor()));
         return sb.toString();
     }
 
@@ -95,7 +95,7 @@ public class PathSamplingAnalysis {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String fileName = xo.getStringAttribute(LoggerParser.FILE_NAME);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
             try {
 
                 File file = new File(fileName);
@@ -191,12 +191,12 @@ public class PathSamplingAnalysis {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(LoggerParser.FILE_NAME,
+                new StringAttributeRule(FileHelpers.FILE_NAME,
                         "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
-                new ElementRule(THETA_COLUMN, new XMLSyntaxRule[] {
-                        new StringAttributeRule(Attribute.NAME,"The column name")}),
-                new ElementRule(LIKELIHOOD_COLUMN, new XMLSyntaxRule[] {
-                        new StringAttributeRule(Attribute.NAME,"The column name")}),
+                new ElementRule(THETA_COLUMN, new XMLSyntaxRule[]{
+                        new StringAttributeRule(Attribute.NAME, "The column name")}),
+                new ElementRule(LIKELIHOOD_COLUMN, new XMLSyntaxRule[]{
+                        new StringAttributeRule(Attribute.NAME, "The column name")}),
         };
     };
 

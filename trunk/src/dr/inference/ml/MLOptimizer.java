@@ -50,12 +50,12 @@ public class MLOptimizer implements Runnable, Identifiable {
 	public static final String CHAIN_LENGTH = "chainLength";
 
 	/** the likelihood function */
-	private Likelihood likelihood;
+	private final Likelihood likelihood;
 
 	/** the operator schedule */
 	private OperatorSchedule schedule;
 
-	private Logger[] loggers;
+	private final Logger[] loggers;
 
 	int chainLength;
 
@@ -111,7 +111,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 		timer.start();
 
 			mc.addMarkovChainListener(chainListener);
-			mc.chain(getChainLength(), true, 0);
+			mc.chain(getChainLength(), true/*, 0*/);
 			mc.removeMarkovChainListener(chainListener);
 
 		timer.stop();
@@ -146,7 +146,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 		return (double)currentState / chainLength;
 	}
 
-    private MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 	// for receiving messages from subordinate MarkovChain
 
         /**
@@ -255,7 +255,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			AttributeRule.newIntegerRule(CHAIN_LENGTH),
 			new ElementRule(OperatorSchedule.class ),
 			new ElementRule(Likelihood.class ),
@@ -272,7 +272,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 	int currentState;
 
-    private dr.util.Timer timer = new dr.util.Timer();
+    private final dr.util.Timer timer = new dr.util.Timer();
 
 	/** this markov chain does most of the work. */
 	private MarkovChain mc = null;

@@ -64,13 +64,10 @@ public class OperatorsGenerator extends Generator {
         );
 
         for (Operator operator : operators) {
-            if (operator.weight > 0. && operator.inUse)
-                writeOperator(operator, writer);
-            
-            if (options.isSpeciesAnalysis()) { // TODO
-            	this.setModelPrefix(operator.getPrefix() + ".");
-            } else {
-            	this.setModelPrefix("");
+            if (operator.weight > 0. && operator.inUse) {
+            	setModelPrefix(operator.getPrefix());
+            	
+            	writeOperator(operator, writer);
             }
         }
 

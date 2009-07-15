@@ -79,7 +79,7 @@ public class PartitionClockModel extends ModelOptions {
 //        this.name = name;
 //    }
 
-    public void initClockModelParaAndOpers() {
+    private void initClockModelParaAndOpers() {
         double rateWeights = 3.0;
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

@@ -37,6 +37,9 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     // Instance variables
 
+    public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
+    private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
+
     private final BeautiOptions options;
     private DataType dataType;
     private String name;
@@ -103,7 +106,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
 
     // only init in PartitionSubstitutionModel
-    public void initSubstModelParaAndOpers() {
+    private void initSubstModelParaAndOpers() {
         double substWeights = 1.0;
 
         //Substitution model parameters

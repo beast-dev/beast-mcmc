@@ -103,16 +103,36 @@ public abstract class Generator {
      */
     public void writeParameter(String id, ModelOptions options, XMLWriter writer) {
         dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+        String prefix = options.getPrefix();
+        
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + options.getPrefix());
         }
         if (parameter.isFixed) {
-            writeParameter(options.getPrefix() + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
+            writeParameter(prefix + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                writeParameter(options.getPrefix() + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+                writeParameter(prefix + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
             } else {
-                writeParameter(options.getPrefix() + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
+                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
+            }
+        }
+    }
+    
+    public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
+        dr.app.beauti.options.Parameter parameter = model.getParameter(id);        
+        String prefix = model.getPrefix(num);
+        
+        if (parameter == null) {
+            throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + model.getPrefix());
+        }
+        if (parameter.isFixed) {
+            writeParameter(prefix + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
+        } else {
+            if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                writeParameter(prefix + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+            } else {
+                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             }
         }
     }

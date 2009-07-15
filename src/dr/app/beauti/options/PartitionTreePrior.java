@@ -94,7 +94,7 @@ public class PartitionTreePrior extends ModelOptions {
 //        this.name = name;
 //    }    
 
-    public void initTreePriorParaAndOpers() {
+    private void initTreePriorParaAndOpers() {
         double treeWeights = 15.0;
 
         createScaleParameter("constant.popSize", "coalescent population size parameter", TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

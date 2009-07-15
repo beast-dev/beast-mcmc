@@ -62,16 +62,31 @@ public class BeautiOptions extends ModelOptions {
     public BeautiOptions() {
         this(new ComponentFactory[]{});
 
-        initAllParametersAndOperators();
+        initGlobalParaAndOpers();
     }
 
     public BeautiOptions(ComponentFactory[] components) {
-        initAllParametersAndOperators();
+    	initGlobalParaAndOpers();
 
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {
             addComponent(component.getOptions(this));
         }
+    }   
+
+    private void initGlobalParaAndOpers() {
+        double rateWeights = 3.0;
+
+        // A vector of relative rates across all partitions...
+        createParameter("allMus", "All the relative rates");
+
+        // This only works if the partitions are of the same size...
+//      createOperator("centeredMu", "Relative rates",
+//              "Scales codon position rates relative to each other maintaining mean", "allMus",
+//              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
+        createOperator("deltaMu", "Relative rates",
+                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
     }
 
     public void initSpeciesParametersAndOperators() {

@@ -25,8 +25,8 @@
 
 package dr.inference.loggers;
 
-import dr.evomodelxml.LoggerParser;
 import dr.inference.model.Likelihood;
+import dr.inference.xml.LoggerParser;
 import dr.util.Identifiable;
 import dr.xml.*;
 

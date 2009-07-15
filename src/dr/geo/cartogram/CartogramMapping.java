@@ -1,6 +1,6 @@
 package dr.geo.cartogram;
 
-import dr.evomodelxml.LoggerParser;
+import dr.util.FileHelpers;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -33,12 +33,16 @@ public class CartogramMapping {
 
     }
 
-    public double getAverageDensity() { return averageDensity; }
+    public double getAverageDensity() {
+        return averageDensity;
+    }
 
-    public void setAverageDensity(double d) { averageDensity = d; }
+    public void setAverageDensity(double d) {
+        averageDensity = d;
+    }
 
     public void readCartogramOutput(String fileName) throws IOException {
-        readCartogramOutput(LoggerParser.getFile(fileName));
+        readCartogramOutput(FileHelpers.getFile(fileName));
     }
 
     public void readCartogramOutput(File file) throws IOException {
@@ -73,7 +77,7 @@ public class CartogramMapping {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("grid: [x="+gridXSize+",y="+gridYSize+"], boundingBox: "+boundingBox.toString());
+        sb.append("grid: [x=" + gridXSize + ",y=" + gridYSize + "], boundingBox: " + boundingBox.toString());
         return sb.toString();
     }
 
@@ -138,7 +142,7 @@ public class CartogramMapping {
                     // end of file
                     break;
                 } else if (line.length() == 0) {
-                   break;
+                    break;
                 } else {
                     // not a blank line
                     StringTokenizer st = new StringTokenizer(line);
@@ -163,5 +167,5 @@ public class CartogramMapping {
     private double dX, dY;
     private Point2D[][] gridPt;
     private boolean loaded = false;
-    private double averageDensity = 1.0;    
+    private double averageDensity = 1.0;
 }

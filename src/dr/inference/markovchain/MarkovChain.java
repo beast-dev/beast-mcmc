@@ -25,11 +25,9 @@
 
 package dr.inference.markovchain;
 
-import dr.evomodel.operators.AbstractImportanceDistributionOperator;
-import dr.evomodel.operators.SimpleMetropolizedGibbsOperator;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -89,7 +87,7 @@ public final class MarkovChain {
         currentLength = 0;
 
         // reset operator acceptance levels
-        for(int i = 0; i < schedule.getOperatorCount(); i++) {
+        for (int i = 0; i < schedule.getOperatorCount(); i++) {
             schedule.getOperator(i).reset();
         }
     }
@@ -97,10 +95,9 @@ public final class MarkovChain {
     /**
      * Run the chain for a given number of states.
      *
-     * @param length
-     *            number of states to run the chain.
-     *
-     * param onTheFlyOperatorWeights
+     * @param length number of states to run the chain.
+     *               <p/>
+     *               param onTheFlyOperatorWeights
      */
     public int chain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
@@ -110,26 +107,26 @@ public final class MarkovChain {
 
         final Model currentModel = likelihood.getModel();
 
-        if( currentState == 0 ) {
+        if (currentState == 0) {
             initialScore = currentScore;
             bestScore = currentScore;
             fireBestModel(currentState, currentModel);
         }
 
-        if( currentScore == Double.NEGATIVE_INFINITY ) {
+        if (currentScore == Double.NEGATIVE_INFINITY) {
 
             // identify which component of the score is zero...
-            if( prior != null ) {
+            if (prior != null) {
                 double logPrior = prior.getLogPrior(likelihood.getModel());
 
-                if( logPrior == Double.NEGATIVE_INFINITY ) {
+                if (logPrior == Double.NEGATIVE_INFINITY) {
                     throw new IllegalArgumentException(
                             "The initial model is invalid because one of the priors has zero probability.");
                 }
             }
 
             String message = "The initial likelihood is zero";
-            if( likelihood instanceof CompoundLikelihood ) {
+            if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
             } else {
                 message += "!";
@@ -150,12 +147,12 @@ public final class MarkovChain {
 //        	usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
-        while( !pleaseStop && (currentState < (currentLength + length)) ) {
+        while (!pleaseStop && (currentState < (currentLength + length))) {
 
             // periodically log states
             fireCurrentModel(currentState, currentModel);
 
-            if( pleaseStop ) {
+            if (pleaseStop) {
                 isStopped = true;
                 break;
             }
@@ -169,7 +166,7 @@ public final class MarkovChain {
             // assert Profiler.startProfile("Store");
 
             // The current model is stored here in case the proposal fails
-            if( currentModel != null ) {
+            if (currentModel != null) {
                 currentModel.storeModelState();
             }
 
@@ -185,33 +182,31 @@ public final class MarkovChain {
                 // The new model is proposed
                 // assert Profiler.startProfile("Operate");
 
-                if( DEBUG ) {
+                if (DEBUG) {
                     System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
                 }
 
-                if( mcmcOperator instanceof SimpleMetropolizedGibbsOperator ) {
-                    hastingsRatio = ((SimpleMetropolizedGibbsOperator) mcmcOperator).operate(prior, likelihood);
-                } else if( mcmcOperator instanceof AbstractImportanceDistributionOperator ) {
-                    hastingsRatio = ((AbstractImportanceDistributionOperator) mcmcOperator).operate(prior, likelihood);
+                if (mcmcOperator instanceof GeneralOperator) {
+                    hastingsRatio = ((GeneralOperator) mcmcOperator).operate(prior, likelihood);
                 } else {
                     hastingsRatio = mcmcOperator.operate();
                 }
 
                 // assert Profiler.stopProfile("Operate");
-            } catch( OperatorFailedException e ) {
+            } catch (OperatorFailedException e) {
                 operatorSucceeded = false;
             }
 
             double score = 0.0;
             double deviation = 0.0;
 
-        //    System.err.print("" + currentState + ": ");
-            if( operatorSucceeded ) {
+            //    System.err.print("" + currentState + ": ");
+            if (operatorSucceeded) {
 
                 // The new model is proposed
                 // assert Profiler.startProfile("Evaluate");
 
-                if( DEBUG ) {
+                if (DEBUG) {
                     System.out.println("** Evaluate");
                 }
 
@@ -227,7 +222,7 @@ public final class MarkovChain {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
-                    if( Math.abs(testScore - score) > EVALUATION_TEST_THRESHOLD ) {
+                    if (Math.abs(testScore - score) > EVALUATION_TEST_THRESHOLD) {
                         Logger.getLogger("error").severe(
                                 "State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
@@ -238,7 +233,7 @@ public final class MarkovChain {
                     }
                 }
 
-                if( score > bestScore ) {
+                if (score > bestScore) {
                     bestScore = score;
                     fireBestModel(currentState, currentModel);
                 }
@@ -249,8 +244,8 @@ public final class MarkovChain {
             }
 
             // The new model is accepted or rejected
-            if( accept ) {
-                if( DEBUG ) {
+            if (accept) {
+                if (DEBUG) {
                     System.out.println("** Move accepted: new score = " + score
                             + ", old score = " + oldScore);
                 }
@@ -269,7 +264,7 @@ public final class MarkovChain {
 
                 oldScore = score; // for the usingFullEvaluation test
             } else {
-                if( DEBUG ) {
+                if (DEBUG) {
                     System.out.println("** Move rejected: new score = " + score
                             + ", old score = " + oldScore);
                 }
@@ -282,14 +277,14 @@ public final class MarkovChain {
             }
             // assert Profiler.stopProfile("Restore");
 
-            if( usingFullEvaluation ) {
+            if (usingFullEvaluation) {
                 // This is a test that the state is correctly restored. The
                 // restored state is fully evaluated and the likelihood compared with
                 // that before the operation was made.
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
-                if( Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD ) {
+                if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"
                             + "Likelihood before: " + oldScore
@@ -300,13 +295,13 @@ public final class MarkovChain {
                 }
             }
 
-            if( !disableCoerce && mcmcOperator instanceof CoercableMCMCOperator ) {
+            if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
                 coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
             }
 
             if (usingFullEvaluation &&
                     schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
-                    currentState >= fullEvaluationCount ) {
+                    currentState >= fullEvaluationCount) {
                 // full evaluation is only switched off when each operator has done a
                 // minimum number of operations (currently 1) and fullEvalationCount
                 // operations in total.
@@ -436,10 +431,10 @@ public final class MarkovChain {
 
         double logPosterior = 0.0;
 
-        if( prior != null ) {
+        if (prior != null) {
             final double logPrior = prior.getLogPrior(likelihood.getModel());
 
-            if( logPrior == Double.NEGATIVE_INFINITY ) {
+            if (logPrior == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
 
@@ -448,7 +443,7 @@ public final class MarkovChain {
 
         final double logLikelihood = likelihood.getLogLikelihood();
 
-        if( Double.isNaN(logLikelihood) ) {
+        if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;
         }
         // System.err.println("** " + logPosterior + " + " + logLikelihood +
@@ -468,7 +463,7 @@ public final class MarkovChain {
      */
     private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
-        if( isCoercable(op) ) {
+        if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
 
             final double i = schedule.getOptimizationTransform(MCMCOperator.Utils.getOperationCount(op));
@@ -477,7 +472,7 @@ public final class MarkovChain {
 
             final double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
 
-            if( newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE ) {
+            if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setCoercableParameter(newp);
             }
         }
@@ -499,20 +494,20 @@ public final class MarkovChain {
 
     public void fireBestModel(int state, Model bestModel) {
 
-        for(MarkovChainListener listener : listeners) {
+        for (MarkovChainListener listener : listeners) {
             listener.bestState(state, bestModel);
         }
     }
 
     public void fireCurrentModel(int state, Model currentModel) {
-        for(MarkovChainListener listener : listeners) {
+        for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
     }
 
     public void fireFinished(int chainLength) {
 
-        for(MarkovChainListener listener : listeners) {
+        for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);
         }
     }

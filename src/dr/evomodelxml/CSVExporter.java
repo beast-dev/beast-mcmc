@@ -26,6 +26,7 @@
 package dr.evomodelxml;
 
 import dr.inference.model.Parameter;
+import dr.util.FileHelpers;
 import dr.util.TabularData;
 import dr.xml.*;
 
@@ -56,7 +57,7 @@ public class CSVExporter extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String fileName = xo.getStringAttribute(FILE_NAME);
 
-        File csv = LoggerParser.getFile(fileName);
+        File csv = FileHelpers.getFile(fileName);
 
         String sep = xo.getAttribute(SEPARATOR, "\t");
 

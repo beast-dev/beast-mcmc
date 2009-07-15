@@ -25,19 +25,15 @@
 
 package dr.evomodel.coalescent;
 
-import dr.app.tools.NexusExporter;
-import dr.evolution.tree.*;
-import dr.evolution.util.Units;
-import dr.inference.loggers.*;
-import dr.inference.model.Parameter;
+import dr.inference.loggers.LogFormatter;
+import dr.inference.loggers.Logger;
+import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inference.xml.LoggerParser;
 import dr.xml.*;
-import dr.evoxml.XMLUnits;
-import dr.evomodelxml.LoggerParser;
-import dr.math.MathUtils;
 
-import java.text.NumberFormat;
-import java.util.*;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A logger that logs tree and clade frequencies.
@@ -89,13 +85,13 @@ public class DemographicLogger implements Logger {
             values[k] = Integer.toString(state);
             k++;
 
-            for (int i = 0; i < intervals.length; i++) {
-                values[k] = Double.toString(intervals[i]);
+            for (double interval : intervals) {
+                values[k] = Double.toString(interval);
                 k++;
             }
 
-            for (int i = 0; i < popSizes.length; i++) {
-                values[k] = Double.toString(popSizes[i]);
+            for (double popSize : popSizes) {
+                values[k] = Double.toString(popSize);
                 k++;
             }
 
@@ -120,7 +116,9 @@ public class DemographicLogger implements Logger {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return DEMOGRAPHIC_LOG; }
+        public String getParserName() {
+            return DEMOGRAPHIC_LOG;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -130,7 +128,7 @@ public class DemographicLogger implements Logger {
 
             final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-            DemographicReconstructor reconstructor = (DemographicReconstructor)xo.getChild(DemographicReconstructor.class);
+            DemographicReconstructor reconstructor = (DemographicReconstructor) xo.getChild(DemographicReconstructor.class);
 
             return new DemographicLogger(reconstructor, formatter, logEvery);
         }
@@ -143,16 +141,20 @@ public class DemographicLogger implements Logger {
             return "A demographic model of constant population size followed by logistic growth.";
         }
 
-        public Class getReturnType() { return ConstantLogisticModel.class; }
+        public Class getReturnType() {
+            return ConstantLogisticModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newIntegerRule(LOG_EVERY),
                 new StringAttributeRule(FILE_NAME,
                         "The name of the file to send log output to. " +
                                 "If no file name is specified then log is sent to standard output", true),
-             new ElementRule(DemographicReconstructor.class)
+                new ElementRule(DemographicReconstructor.class)
         };
     };
 

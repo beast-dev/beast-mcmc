@@ -1,13 +1,13 @@
 package dr.inference.distribution;
 
 import dr.inference.model.AbstractModel;
-import dr.inference.model.Parameter;
 import dr.inference.model.Model;
-import dr.math.distributions.InverseGaussianDistribution;
+import dr.inference.model.Parameter;
 import dr.math.UnivariateFunction;
+import dr.math.distributions.InverseGaussianDistribution;
 import dr.xml.*;
-import org.w3c.dom.Element;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /*
  * InverseGaussianDistributionModel.java
@@ -35,10 +35,7 @@ import org.w3c.dom.Document;
  */
 
 
-
 /**
- *
- *
  * @author Wai Lok Sibon Li
  * @version $Id: InverseGaussianDistributionModel.java,v 1.8 2009/03/30 20:25:59 rambaut Exp $
  */
@@ -53,10 +50,9 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
 
     /**
-     * @param meanParameter the mean, mu
+     * @param meanParameter  the mean, mu
      * @param shapeParameter the shape parameter, lambda
-     * @param offset offset of the distribution
-     *
+     * @param offset         offset of the distribution
      */
     public InverseGaussianDistributionModel(Parameter meanParameter, Parameter shapeParameter, double offset) {
 
@@ -85,7 +81,7 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
     /* Unused method */
     //private double getStDev() {
-        //return Math.sqrt(InverseGaussianDistribution.variance(getM(), getShape()));//Math.sqrt((getM()*getM()*getM())/getShape());
+    //return Math.sqrt(InverseGaussianDistribution.variance(getM(), getShape()));//Math.sqrt((getM()*getM()*getM())/getShape());
     //}
 
     /**

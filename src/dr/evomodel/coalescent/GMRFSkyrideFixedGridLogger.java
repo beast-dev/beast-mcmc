@@ -1,11 +1,11 @@
 package dr.evomodel.coalescent;
 
 import dr.app.beast.BeastVersion;
-import dr.evomodelxml.LoggerParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inference.xml.LoggerParser;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
@@ -24,88 +24,81 @@ import java.util.logging.Logger;
  * @author Erik Bloomquist
  */
 
-public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
+public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger {
 
-	
-	
-	public static final String GMRF_SKYRIDE_FIXED_GRID_LOGGER = "skyrideFixedGridLogger";
 
-	private GMRFSkyrideLikelihood gsl;
+    public static final String GMRF_SKYRIDE_FIXED_GRID_LOGGER = "skyrideFixedGridLogger";
 
-	private int extraDraws = 1;
-	private double extraDensity;
+    private GMRFSkyrideLikelihood gsl;
 
-	public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
-			GMRFSkyrideLikelihood gsl, double gridHeight, int intervalNumber) {
-		super(formatter, logEvery, gridHeight, intervalNumber);
+    private int extraDraws = 1;
+    private double extraDensity;
 
-		
-		
-		this.gsl = gsl;
-	}
-	
-	
-	
-	public double[] getPopSizes(){
-		
-		extraDensity = 0;
-			
-		double[] coalescentHeights = this.getCoalescentHeights();
-				
-		double[] bslPopSizes = gsl.getPopSizeParameter().getParameterValues();
-		double[] popSizes = new double[bslPopSizes.length + extraDraws];
-				
-		double treeHeightScale = coalescentHeights[bslPopSizes.length - 1];
-		double precision = gsl.getPrecisionParameter().getParameterValue(0);
-		
-		for(int i = 0; i < bslPopSizes.length; i++){
-			popSizes[i] = bslPopSizes[i];
-		}
-		
-		double previousMidPoint = (coalescentHeights[bslPopSizes.length - 1] + 
-									coalescentHeights[bslPopSizes.length - 2])/2.0;
-				
-		for(int i = bslPopSizes.length; i < popSizes.length; i++){
-			double currentMidPoint = (coalescentHeights[i] + coalescentHeights[i-1])/2.0;
-			double length = currentMidPoint - previousMidPoint;
-			
-			double stdev = Math.sqrt(length/precision/treeHeightScale);
-			
-			popSizes[i] = MathUtils.nextGaussian()*stdev + popSizes[i-1];
-			
-			extraDensity += NormalDistribution.logPdf(popSizes[i], popSizes[i-1], stdev);
-			
-			previousMidPoint = currentMidPoint;
-		}
-		
-		
-		return popSizes;
-	}
-	
-	public double[] getCoalescentHeights(){
-			double[] bslGroupHeights = gsl.getCoalescentIntervalHeights();
-			
-			double[] groupHeights = new double[bslGroupHeights.length + extraDraws];
-				
-			for(int i = 0; i < bslGroupHeights.length; i++){
-				groupHeights[i] = bslGroupHeights[i];
-			}
-			
-			double length = (getGridStopTime() - bslGroupHeights[bslGroupHeights.length - 1])/extraDraws;
-			
-			for(int i = bslGroupHeights.length; i < groupHeights.length; i++){
-				groupHeights[i] = groupHeights[i - 1] + length;
-			}
-				
-			groupHeights[groupHeights.length - 1] = getGridStopTime();
-				
-			return  groupHeights;
-	}
-	
-	public double getAdditionalDensity(){
-		return extraDensity;
-	}
-	
+    public GMRFSkyrideFixedGridLogger(LogFormatter formatter, int logEvery,
+                                      GMRFSkyrideLikelihood gsl, double gridHeight, int intervalNumber) {
+        super(formatter, logEvery, gridHeight, intervalNumber);
+
+
+        this.gsl = gsl;
+    }
+
+
+    public double[] getPopSizes() {
+
+        extraDensity = 0;
+
+        double[] coalescentHeights = this.getCoalescentHeights();
+
+        double[] bslPopSizes = gsl.getPopSizeParameter().getParameterValues();
+        double[] popSizes = new double[bslPopSizes.length + extraDraws];
+
+        double treeHeightScale = coalescentHeights[bslPopSizes.length - 1];
+        double precision = gsl.getPrecisionParameter().getParameterValue(0);
+
+        System.arraycopy(bslPopSizes, 0, popSizes, 0, bslPopSizes.length);
+
+        double previousMidPoint = (coalescentHeights[bslPopSizes.length - 1] +
+                coalescentHeights[bslPopSizes.length - 2]) / 2.0;
+
+        for (int i = bslPopSizes.length; i < popSizes.length; i++) {
+            double currentMidPoint = (coalescentHeights[i] + coalescentHeights[i - 1]) / 2.0;
+            double length = currentMidPoint - previousMidPoint;
+
+            double stdev = Math.sqrt(length / precision / treeHeightScale);
+
+            popSizes[i] = MathUtils.nextGaussian() * stdev + popSizes[i - 1];
+
+            extraDensity += NormalDistribution.logPdf(popSizes[i], popSizes[i - 1], stdev);
+
+            previousMidPoint = currentMidPoint;
+        }
+
+
+        return popSizes;
+    }
+
+    public double[] getCoalescentHeights() {
+        double[] bslGroupHeights = gsl.getCoalescentIntervalHeights();
+
+        double[] groupHeights = new double[bslGroupHeights.length + extraDraws];
+
+        System.arraycopy(bslGroupHeights, 0, groupHeights, 0, bslGroupHeights.length);
+
+        double length = (getGridStopTime() - bslGroupHeights[bslGroupHeights.length - 1]) / extraDraws;
+
+        for (int i = bslGroupHeights.length; i < groupHeights.length; i++) {
+            groupHeights[i] = groupHeights[i - 1] + length;
+        }
+
+        groupHeights[groupHeights.length - 1] = getGridStopTime();
+
+        return groupHeights;
+    }
+
+    public double getAdditionalDensity() {
+        return extraDensity;
+    }
+
 
 //	public double[] getPopSizes(){
 //		return gsl.getPopSizeParameter().getParameterValues();
@@ -120,117 +113,103 @@ public class GMRFSkyrideFixedGridLogger extends AbstractFixedGridLogger{
 //		return 0;
 //	}
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-		public String getParserDescription() {
-			return "";
-		}
+        public String getParserDescription() {
+            return "";
+        }
 
-		public Class getReturnType() {
-			return GMRFSkyrideFixedGridLogger.class;
-		}
+        public Class getReturnType() {
+            return GMRFSkyrideFixedGridLogger.class;
+        }
 
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return new XMLSyntaxRule[]{
-					new ElementRule(GMRFSkyrideLikelihood.class),
-					AttributeRule.newDoubleRule(GRID_STOP_TIME,false),
-					AttributeRule.newIntegerRule(NUMBER_OF_INTERVALS,false),
-					AttributeRule.newIntegerRule(LoggerParser.LOG_EVERY,true),
-					AttributeRule.newStringRule(LoggerParser.FILE_NAME, true),
-			};
-		}
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    new ElementRule(GMRFSkyrideLikelihood.class),
+                    AttributeRule.newDoubleRule(GRID_STOP_TIME, false),
+                    AttributeRule.newIntegerRule(NUMBER_OF_INTERVALS, false),
+                    AttributeRule.newIntegerRule(LoggerParser.LOG_EVERY, true),
+                    AttributeRule.newStringRule(LoggerParser.FILE_NAME, true),
+            };
+        }
 
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			int logEvery = 1;
-			if(xo.hasAttribute(LoggerParser.LOG_EVERY)){
-				logEvery = xo.getIntegerAttribute(LoggerParser.LOG_EVERY);
-			}
+            int logEvery = 1;
+            if (xo.hasAttribute(LoggerParser.LOG_EVERY)) {
+                logEvery = xo.getIntegerAttribute(LoggerParser.LOG_EVERY);
+            }
 
-			String fileName = null;
-			if (xo.hasAttribute(LoggerParser.FILE_NAME)) {
-				fileName = xo.getStringAttribute(LoggerParser.FILE_NAME);
-			}
+            String fileName = null;
+            if (xo.hasAttribute(LoggerParser.FILE_NAME)) {
+                fileName = xo.getStringAttribute(LoggerParser.FILE_NAME);
+            }
 
-			double gridHeight = xo.getDoubleAttribute(GRID_STOP_TIME);
-			int intervalNumber = xo.getIntegerAttribute(NUMBER_OF_INTERVALS);
+            double gridHeight = xo.getDoubleAttribute(GRID_STOP_TIME);
+            int intervalNumber = xo.getIntegerAttribute(NUMBER_OF_INTERVALS);
 
-			PrintWriter pw;
+            PrintWriter pw;
 
-			Logger.getLogger("dr.evomodel").info("Creating " + GMRF_SKYRIDE_FIXED_GRID_LOGGER + " \n"
-					+ "\t" + GRID_STOP_TIME + ": " + gridHeight
-					+ "\n\t" + NUMBER_OF_INTERVALS + ": " + intervalNumber);
+            Logger.getLogger("dr.evomodel").info("Creating " + GMRF_SKYRIDE_FIXED_GRID_LOGGER + " \n"
+                    + "\t" + GRID_STOP_TIME + ": " + gridHeight
+                    + "\n\t" + NUMBER_OF_INTERVALS + ": " + intervalNumber);
 
-			if (fileName != null) {
+            if (fileName != null) {
 
-				try {
-					File file = new File(fileName);
-					String name = file.getName();
-					String parent = file.getParent();
+                try {
+                    File file = new File(fileName);
+                    String name = file.getName();
+                    String parent = file.getParent();
 
-					if (!file.isAbsolute()) {
-						parent = System.getProperty("user.dir");
-					}
-					pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
-				} catch (FileNotFoundException fnfe) {
-					throw new XMLParseException("File '" +
-							fileName + "' can not be opened for " +
-							getParserName() + " element.");
-				}
-			} else {
-				pw = new PrintWriter(System.out);
-			}
+                    if (!file.isAbsolute()) {
+                        parent = System.getProperty("user.dir");
+                    }
+                    pw = new PrintWriter(new FileOutputStream(new File(parent, name)));
+                } catch (FileNotFoundException fnfe) {
+                    throw new XMLParseException("File '" +
+                            fileName + "' can not be opened for " +
+                            getParserName() + " element.");
+                }
+            } else {
+                pw = new PrintWriter(System.out);
+            }
 
-			LogFormatter lf = new TabDelimitedFormatter(pw);
+            LogFormatter lf = new TabDelimitedFormatter(pw);
 
-			MCLogger logger = new GMRFSkyrideFixedGridLogger(lf,logEvery,
-					(GMRFSkyrideLikelihood)xo.getChild(GMRFSkyrideLikelihood.class),
-					gridHeight, intervalNumber);
+            MCLogger logger = new GMRFSkyrideFixedGridLogger(lf, logEvery,
+                    (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class),
+                    gridHeight, intervalNumber);
 
-			final BeastVersion version = new BeastVersion();
+            final BeastVersion version = new BeastVersion();
 
-			logger.setTitle("BEAST " + version.getVersionString() + ", " +
-								version.getBuildString() + "\n" +
-								"Generated " + (new Date()).toString() +
-								"\nString = " + (MathUtils.getSeed()) +
-								"\nFirst value corresponds to coalescent interval closet to sampling time\n" +
-								"Last value corresponds to coalescent interval closet to the root\n" +
-								"Grid Height = " + gridHeight +
-								"\nNumber of intervals = " + intervalNumber);
+            logger.setTitle("BEAST " + version.getVersionString() + ", " +
+                    version.getBuildString() + "\n" +
+                    "Generated " + (new Date()).toString() +
+                    "\nString = " + (MathUtils.getSeed()) +
+                    "\nFirst value corresponds to coalescent interval closet to sampling time\n" +
+                    "Last value corresponds to coalescent interval closet to the root\n" +
+                    "Grid Height = " + gridHeight +
+                    "\nNumber of intervals = " + intervalNumber);
 
-			for(int i = 0 ; i < intervalNumber; i++){
-				logger.addColumn(new LogColumn.Default("V" + (i+1),null));
-			}
-			
-			logger.addColumn(new LogColumn.Default("ExtraDensity",null));
+            for (int i = 0; i < intervalNumber; i++) {
+                logger.addColumn(new LogColumn.Default("V" + (i + 1), null));
+            }
 
-
-			return (GMRFSkyrideFixedGridLogger)logger;
-
-		}
-
-		public String getParserName() {
-			return GMRF_SKYRIDE_FIXED_GRID_LOGGER;
-		}
-
-	};
+            logger.addColumn(new LogColumn.Default("ExtraDensity", null));
 
 
+            return logger;
 
+        }
 
+        public String getParserName() {
+            return GMRF_SKYRIDE_FIXED_GRID_LOGGER;
+        }
 
-
-
-
-
-
-
-
-
+    };
 
 
 //This is an older version.
-
 
 
 //	public static final String SKYRIDE_FIXED_GRID = "skyrideFixedGridLogger";

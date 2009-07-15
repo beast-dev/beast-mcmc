@@ -1,6 +1,6 @@
 package dr.inference.trace;
 
-import dr.evomodelxml.LoggerParser;
+import dr.util.FileHelpers;
 import dr.util.TabularData;
 import dr.xml.AttributeRule;
 import dr.xml.XMLObject;
@@ -84,7 +84,7 @@ public class LogFileTraceExporter extends TabularData {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final File file = LoggerParser.getFile(xo.getStringAttribute(FILENAME));
+            final File file = FileHelpers.getFile(xo.getStringAttribute(FILENAME));
             int burnIn = xo.getAttribute(BURN_IN, -1);
 
             try {

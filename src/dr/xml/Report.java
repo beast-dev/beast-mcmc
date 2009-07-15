@@ -25,13 +25,10 @@
 
 package dr.xml;
 
-import dr.evomodelxml.LoggerParser;
+import dr.inference.xml.LoggerParser;
 
-import java.util.ArrayList;
-import java.io.PrintStream;
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 
 /**
@@ -59,7 +56,7 @@ public class Report {
             final String item;
 
             if (object instanceof Reportable) {
-                item = ((Reportable)object).getReport();
+                item = ((Reportable) object).getReport();
             } else {
                 item = object.toString();
             }
@@ -144,11 +141,12 @@ public class Report {
                 new StringAttributeRule("type", "The format of the report", new String[]{"TEXT", "XHTML"}, true),
                 new StringAttributeRule("title", "The title of the report", "Report", true),
                 new ElementRule(Object.class, "An arbitrary mixture of text and elements to report", 1, Integer.MAX_VALUE),
-                AttributeRule.newStringRule(FILENAME,true),
+                AttributeRule.newStringRule(FILENAME, true),
         };
 
         public Class getReturnType() {
-            return Report.class; }
-	};
+            return Report.class;
+        }
+    };
 
 }

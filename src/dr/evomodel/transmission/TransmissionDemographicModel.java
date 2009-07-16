@@ -1,7 +1,7 @@
 /*
  * TransmissionDemographicModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -35,13 +35,11 @@ import dr.xml.*;
 /**
  * A demographic model for within patient evolution in a transmission history.
  *
- * @version $Id: TransmissionDemographicModel.java,v 1.7 2005/05/24 20:25:58 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: TransmissionDemographicModel.java,v 1.7 2005/05/24 20:25:58 rambaut Exp $
  */
-public class TransmissionDemographicModel extends DemographicModel
-{
+public class TransmissionDemographicModel extends DemographicModel {
 
     //
     // Public stuff
@@ -122,37 +120,37 @@ public class TransmissionDemographicModel extends DemographicModel
         if (model == 0) {
             // constant
             double N0 = N0Parameter.getParameterValue(0);
-            ((ConstantPopulation)hostDemographic).setN0(N0);
+            ((ConstantPopulation) hostDemographic).setN0(N0);
 
         } else if (model == 1) {
             // exponential
             double N1 = N1Parameter.getParameterValue(0);
-            ((TransmissionDemographicFunction)hostDemographic).setTransmissionTime(transmissionTime);
-            ((TransmissionDemographicFunction)hostDemographic).setDonorSize(donorSize);
-            ((TransmissionDemographicFunction)hostDemographic).setBottleNeckProportion(N1);
+            ((TransmissionDemographicFunction) hostDemographic).setTransmissionTime(transmissionTime);
+            ((TransmissionDemographicFunction) hostDemographic).setDonorSize(donorSize);
+            ((TransmissionDemographicFunction) hostDemographic).setBottleNeckProportion(N1);
             if (growthRateParameter != null) {
                 double r = growthRateParameter.getParameterValue(0);
-                ((TransmissionExponentialGrowth)hostDemographic).setGrowthRate(r);
+                ((TransmissionExponentialGrowth) hostDemographic).setGrowthRate(r);
             } else {
                 double d = doublingTimeParameter.getParameterValue(0);
-                ((TransmissionExponentialGrowth)hostDemographic).setDoublingTime(d);
+                ((TransmissionExponentialGrowth) hostDemographic).setDoublingTime(d);
             }
 
         } else if (model == 2) {
             // logistic
-            ((TransmissionDemographicFunction)hostDemographic).setTransmissionTime(transmissionTime);
-            ((TransmissionDemographicFunction)hostDemographic).setDonorSize(donorSize);
+            ((TransmissionDemographicFunction) hostDemographic).setTransmissionTime(transmissionTime);
+            ((TransmissionDemographicFunction) hostDemographic).setDonorSize(donorSize);
 
             double N0 = N0Parameter.getParameterValue(0);
-            ((TransmissionLogisticGrowth)hostDemographic).setN0(N0);
+            ((TransmissionLogisticGrowth) hostDemographic).setN0(N0);
             double N1 = N1Parameter.getParameterValue(0);
-            ((TransmissionDemographicFunction)hostDemographic).setBottleNeckProportion(N1);
+            ((TransmissionDemographicFunction) hostDemographic).setBottleNeckProportion(N1);
             if (growthRateParameter != null) {
                 double r = growthRateParameter.getParameterValue(0);
-                ((TransmissionLogisticGrowth)hostDemographic).setGrowthRate(r);
+                ((TransmissionLogisticGrowth) hostDemographic).setGrowthRate(r);
             } else {
                 double d = doublingTimeParameter.getParameterValue(0);
-                ((TransmissionLogisticGrowth)hostDemographic).setDoublingTime(d);
+                ((TransmissionLogisticGrowth) hostDemographic).setDoublingTime(d);
             }
 
         }
@@ -165,11 +163,13 @@ public class TransmissionDemographicModel extends DemographicModel
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return TRANSMISSION_MODEL; }
+        public String getParserName() {
+            return TRANSMISSION_MODEL;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
             int model = 0;
 
@@ -180,34 +180,34 @@ public class TransmissionDemographicModel extends DemographicModel
 
             if (xo.hasChildNamed(CONSTANT)) {
 
-                XMLObject cxo = (XMLObject)xo.getChild(CONSTANT);
+                XMLObject cxo = (XMLObject) xo.getChild(CONSTANT);
 
-                N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
+                N0Param = (Parameter) cxo.getElementFirstChild(POPULATION_SIZE);
                 model = 0;
 
             } else if (xo.hasChildNamed(EXPONENTIAL)) {
 
-                XMLObject cxo = (XMLObject)xo.getChild(EXPONENTIAL);
+                XMLObject cxo = (XMLObject) xo.getChild(EXPONENTIAL);
 
-                N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
+                N1Param = (Parameter) cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
                 if (cxo.hasChildNamed(GROWTH_RATE)) {
-                    rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
+                    rParam = (Parameter) cxo.getElementFirstChild(GROWTH_RATE);
                 } else {
-                    dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);
+                    dParam = (Parameter) cxo.getElementFirstChild(DOUBLING_TIME);
                 }
                 model = 1;
 
             } else if (xo.hasChildNamed(LOGISTIC)) {
 
-                XMLObject cxo = (XMLObject)xo.getChild(LOGISTIC);
+                XMLObject cxo = (XMLObject) xo.getChild(LOGISTIC);
 
-                N0Param = (Parameter)cxo.getElementFirstChild(POPULATION_SIZE);
-                N1Param = (Parameter)cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
+                N0Param = (Parameter) cxo.getElementFirstChild(POPULATION_SIZE);
+                N1Param = (Parameter) cxo.getElementFirstChild(ANCESTRAL_PROPORTION);
 
                 if (cxo.hasChildNamed(GROWTH_RATE)) {
-                    rParam = (Parameter)cxo.getElementFirstChild(GROWTH_RATE);
+                    rParam = (Parameter) cxo.getElementFirstChild(GROWTH_RATE);
                 } else {
-                    dParam = (Parameter)cxo.getElementFirstChild(DOUBLING_TIME);
+                    dParam = (Parameter) cxo.getElementFirstChild(DOUBLING_TIME);
                 }
                 model = 2;
             }
@@ -223,51 +223,55 @@ public class TransmissionDemographicModel extends DemographicModel
             return "A SiteModel that has a gamma distributed rates across sites";
         }
 
-        public Class getReturnType() { return TransmissionDemographicModel.class; }
+        public Class getReturnType() {
+            return TransmissionDemographicModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 XMLUnits.UNITS_RULE,
                 new XORRule(
                         new ElementRule(CONSTANT,
-                                new XMLSyntaxRule[] {
+                                new XMLSyntaxRule[]{
                                         new ElementRule(POPULATION_SIZE,
-                                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                 "This parameter represents the carrying capacity (maximum population size). " +
                                                         "If the shape is very large then the current day population size will be very close to the carrying capacity."),
                                 }
                         ),
                         new XORRule(
                                 new ElementRule(EXPONENTIAL,
-                                        new XMLSyntaxRule[] {
+                                        new XMLSyntaxRule[]{
                                                 new XORRule(
                                                         new ElementRule(GROWTH_RATE,
-                                                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                                 "This parameter determines the rate of growth during the exponential phase. See exponentialGrowth for details."),
                                                         new ElementRule(DOUBLING_TIME,
-                                                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-                                                                "This parameter determines the doubling time at peak growth rate.") ),
+                                                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                                                                "This parameter determines the doubling time at peak growth rate.")),
                                                 new ElementRule(ANCESTRAL_PROPORTION,
-                                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                         "This parameter determines the populaation size at transmission.")
                                         }
                                 ),
                                 new ElementRule(LOGISTIC,
-                                        new XMLSyntaxRule[] {
+                                        new XMLSyntaxRule[]{
                                                 new ElementRule(POPULATION_SIZE,
-                                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                         "This parameter represents the carrying capacity (maximum population size). " +
                                                                 "If the shape is very large then the current day population size will be very close to the carrying capacity."),
                                                 new XORRule(
                                                         new ElementRule(GROWTH_RATE,
-                                                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                                 "This parameter determines the rate of growth during the exponential phase. See exponentialGrowth for details."),
                                                         new ElementRule(DOUBLING_TIME,
-                                                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-                                                                "This parameter determines the doubling time at peak growth rate.") ),
+                                                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                                                                "This parameter determines the doubling time at peak growth rate.")),
                                                 new ElementRule(ANCESTRAL_PROPORTION,
-                                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+                                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                                                         "This parameter determines the populaation size at transmission.")
                                         }
                                 )
@@ -277,12 +281,18 @@ public class TransmissionDemographicModel extends DemographicModel
 
     };
 
-    private abstract class TransmissionDemographicFunction extends DemographicFunction.Abstract
-    {
-        public TransmissionDemographicFunction(Type units) { super(units); }
+    private abstract class TransmissionDemographicFunction extends DemographicFunction.Abstract {
+        public TransmissionDemographicFunction(Type units) {
+            super(units);
+        }
 
-        public void setDonorSize(double donorSize) { this.donorSize = donorSize; }
-        public void setTransmissionTime(double transmissionTime) { this.transmissionTime = transmissionTime; }
+        public void setDonorSize(double donorSize) {
+            this.donorSize = donorSize;
+        }
+
+        public void setTransmissionTime(double transmissionTime) {
+            this.transmissionTime = transmissionTime;
+        }
 
         public abstract void setBottleNeckProportion(double prop);
 
@@ -290,14 +300,18 @@ public class TransmissionDemographicModel extends DemographicModel
         protected double donorSize;
     }
 
-    private class TransmissionExponentialGrowth extends TransmissionDemographicFunction
-    {
+    private class TransmissionExponentialGrowth extends TransmissionDemographicFunction {
 
-        public TransmissionExponentialGrowth(Type units) { super(units); }
+        public TransmissionExponentialGrowth(Type units) {
+            super(units);
+        }
 
-        public void setGrowthRate(double r) { this.r = r; }
+        public void setGrowthRate(double r) {
+            this.r = r;
+        }
+
         public void setDoublingTime(double doublingTime) {
-            setGrowthRate( Math.log(2) / doublingTime );
+            setGrowthRate(Math.log(2) / doublingTime);
         }
 
         public void setBottleNeckProportion(double prop) {
@@ -316,19 +330,42 @@ public class TransmissionDemographicModel extends DemographicModel
             double t1 = start - transmissionTime;
             double t2 = finish - transmissionTime;
 
-            double integral = ((Math.exp(t2*r)-1.0)/N1/r) - ((Math.exp(t1*r)-1.0)/N1/r);
+            double integral = ((Math.exp(t2 * r) - 1.0) / N1 / r) - ((Math.exp(t1 * r) - 1.0) / N1 / r);
 
             return integral;
         }
 
-        public double getIntensity(double t) { throw new RuntimeException("Function not used"); }
-        public double getInverseIntensity(double x) { throw new RuntimeException("Function not used"); }
-        public int getNumArguments() { throw new RuntimeException("Function not used"); }
-        public String getArgumentName(int n) { throw new RuntimeException("Function not used"); }
-        public double getArgument(int n) { throw new RuntimeException("Function not used"); }
-        public void setArgument(int n, double value) { throw new RuntimeException("Function not used"); }
-        public double getLowerBound(int n) { throw new RuntimeException("Function not used"); }
-        public double getUpperBound(int n) { throw new RuntimeException("Function not used"); }
+        public double getIntensity(double t) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getInverseIntensity(double x) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public int getNumArguments() {
+            throw new RuntimeException("Function not used");
+        }
+
+        public String getArgumentName(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getArgument(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public void setArgument(int n, double value) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getLowerBound(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getUpperBound(int n) {
+            throw new RuntimeException("Function not used");
+        }
 
         public DemographicFunction getCopy() {
             TransmissionExponentialGrowth t = new TransmissionExponentialGrowth(getUnits());
@@ -344,28 +381,37 @@ public class TransmissionDemographicModel extends DemographicModel
         private double N1;
     }
 
-    private class TransmissionLogisticGrowth extends TransmissionDemographicFunction
-    {
+    private class TransmissionLogisticGrowth extends TransmissionDemographicFunction {
 
-        public TransmissionLogisticGrowth(Type units) { super(units); }
+        public TransmissionLogisticGrowth(Type units) {
+            super(units);
+        }
 
-        public void setGrowthRate(double r) { this.r = r; }
+        public void setGrowthRate(double r) {
+            this.r = r;
+        }
+
         public void setDoublingTime(double doublingTime) {
-            setGrowthRate( Math.log(2) / doublingTime );
+            setGrowthRate(Math.log(2) / doublingTime);
         }
 
         public void setBottleNeckProportion(double prop) {
             this.N1 = prop * donorSize;
         }
 
-        public void setN0(double N0) { this.N0 = N0; }
-        public double getN0() { return N0; }
+        public void setN0(double N0) {
+            this.N0 = N0;
+        }
+
+        public double getN0() {
+            return N0;
+        }
 
         // Implementation of abstract methods
 
         public double getDemographic(double t) {
 
-            double common = Math.exp(-r*(t - transmissionTime - (Math.log(1.0 / ((N0 / N1) - 1.0)) / r)));
+            double common = Math.exp(-r * (t - transmissionTime - (Math.log(1.0 / ((N0 / N1) - 1.0)) / r)));
             return (N0 * common) / (1.0 + common);
         }
 
@@ -374,10 +420,10 @@ public class TransmissionDemographicModel extends DemographicModel
             double g = finish - start;
             double t = start - transmissionTime - (Math.log(1.0 / ((N0 / N1) - 1.0)) / r);
 
-            double eMinusRT = Math.exp(-r*t);
-            double eMinusRG = Math.exp(-r*g);
+            double eMinusRT = Math.exp(-r * t);
+            double eMinusRG = Math.exp(-r * g);
 
-            double integral = (g / N0) + ( (1 - eMinusRG) / ( N0 * eMinusRT * r * eMinusRG));
+            double integral = (g / N0) + ((1 - eMinusRG) / (N0 * eMinusRT * r * eMinusRG));
 
 //			double integral2 = getNumericalIntegral(start, finish);
 //			if (Math.abs(integral - integral2) > 1E-8) {
@@ -388,14 +434,37 @@ public class TransmissionDemographicModel extends DemographicModel
             return integral;
         }
 
-        public double getIntensity(double t) { throw new RuntimeException("Function not used"); }
-        public double getInverseIntensity(double x) { throw new RuntimeException("Function not used"); }
-        public int getNumArguments() { throw new RuntimeException("Function not used"); }
-        public String getArgumentName(int n) { throw new RuntimeException("Function not used"); }
-        public double getArgument(int n) { throw new RuntimeException("Function not used"); }
-        public void setArgument(int n, double value) { throw new RuntimeException("Function not used"); }
-        public double getLowerBound(int n) { throw new RuntimeException("Function not used"); }
-        public double getUpperBound(int n) { throw new RuntimeException("Function not used"); }
+        public double getIntensity(double t) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getInverseIntensity(double x) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public int getNumArguments() {
+            throw new RuntimeException("Function not used");
+        }
+
+        public String getArgumentName(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getArgument(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public void setArgument(int n, double value) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getLowerBound(int n) {
+            throw new RuntimeException("Function not used");
+        }
+
+        public double getUpperBound(int n) {
+            throw new RuntimeException("Function not used");
+        }
 
         public DemographicFunction getCopy() {
             TransmissionLogisticGrowth t = new TransmissionLogisticGrowth(getUnits());

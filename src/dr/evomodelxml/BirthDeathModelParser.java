@@ -1,3 +1,28 @@
+/*
+ * BirthDeathModelParser.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodelxml;
 
 import dr.evolution.util.Units;
@@ -17,7 +42,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
-    public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";   
+    public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
     public static final String SAMPLE_RATE = "sampleRate";
 
     public static final String BIRTH_DEATH = "birthDeath";
@@ -30,7 +55,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);

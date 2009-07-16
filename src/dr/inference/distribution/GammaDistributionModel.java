@@ -1,7 +1,7 @@
 /*
  * GammaDistributionModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -30,7 +30,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -44,9 +43,6 @@ import org.w3c.dom.Element;
 public class GammaDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     public static final String GAMMA_DISTRIBUTION_MODEL = "gammaDistributionModel";
-    public static final String SHAPE = "shape";
-    public static final String SCALE = "scale";
-
 
     /**
      * Construct a constant mutation rate model.
@@ -149,62 +145,6 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
-
-    /**
-     * Reads a gamma distribution model from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return GAMMA_DISTRIBUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final XMLObject cxo = (XMLObject) xo.getChild(SHAPE);
-            Parameter shapeParam = cxo.getChild(0) instanceof Parameter ?
-                    (Parameter) cxo.getChild(Parameter.class) : new Parameter.Default(cxo.getDoubleChild(0));
-
-            final XMLObject cxo1 = (XMLObject) xo.getChild(SCALE);
-            Parameter scaleParam = cxo1.getChild(0) instanceof Parameter ?
-                    (Parameter) cxo1.getChild(Parameter.class) : new Parameter.Default(cxo1.getDoubleChild(0));
-
-            return new GammaDistributionModel(shapeParam, scaleParam);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(SHAPE,
-                        new XMLSyntaxRule[]{
-                                new XORRule(
-                                        new ElementRule(Parameter.class),
-                                        new ElementRule(Double.class)
-                                )}
-                ),
-                new ElementRule(SCALE,
-                        new XMLSyntaxRule[]{
-                                new XORRule(
-                                        new ElementRule(Parameter.class),
-                                        new ElementRule(Double.class)
-                                )}
-                )
-        };
-
-        public String getParserDescription() {
-            return "Describes a gamma distribution with a given shape and scale " +
-                    "that can be used in a distributionLikelihood element.";
-        }
-
-        public Class getReturnType() {
-            return GammaDistributionModel.class;
-        }
-    };
 
     // **************************************************************
     // Private methods

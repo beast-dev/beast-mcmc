@@ -1,7 +1,7 @@
 /*
  * DateParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -32,7 +32,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- *
  * @version $Id: DateParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class DateParser extends AbstractXMLObjectParser {
@@ -48,7 +47,9 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String MONTHS = "units";
     public static final String DAYS = "days";
 
-    public String getParserName() { return Date.DATE; }
+    public String getParserName() {
+        return Date.DATE;
+    }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -83,20 +84,20 @@ public class DateParser extends AbstractXMLObjectParser {
         boolean backwards = false;
 
         if (xo.hasAttribute(DIRECTION)) {
-            String direction = (String)xo.getAttribute(DIRECTION);
+            String direction = (String) xo.getAttribute(DIRECTION);
             if (direction.equals(BACKWARDS)) {
-                backwards =	true;
+                backwards = true;
             }
         }
 
-        Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         Date date;
 
         if (xo.hasAttribute(ORIGIN)) {
 
-            String originString = (String)xo.getAttribute(ORIGIN);
-            java.util.Date origin = null;
+            String originString = (String) xo.getAttribute(ORIGIN);
+            java.util.Date origin;
 
             try {
                 origin = dateFormat.parse(originString);
@@ -130,23 +131,27 @@ public class DateParser extends AbstractXMLObjectParser {
 
     public String getExample() {
         return
-            "<!-- a date representing 10 years in the past                                 -->\n" +
-            "<date value=\"10.0\" units=\"years\" direction=\"backwards\"/>\n" +
-            "\n" +
-            "<!-- a date representing 300 days after Jan 1st 1989                          -->\n" +
-            "<date value=\"300.0\" origin=\"01/01/89\" units=\"days\" direction=\"forwards\"/>\n";
+                "<!-- a date representing 10 years in the past                                 -->\n" +
+                        "<date value=\"10.0\" units=\"years\" direction=\"backwards\"/>\n" +
+                        "\n" +
+                        "<!-- a date representing 300 days after Jan 1st 1989                          -->\n" +
+                        "<date value=\"300.0\" origin=\"01/01/89\" units=\"days\" direction=\"forwards\"/>\n";
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        new StringAttributeRule(VALUE,
-            "The value of this date"),
-        new StringAttributeRule(ORIGIN,
-            "The origin of this time scale, which must be a valid calendar date", "01/01/01", true),
-        new StringAttributeRule(UNITS, "The units of the timescale", new String[] { YEARS, MONTHS, DAYS }, true),
-        new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[] { FORWARDS, BACKWARDS }, true),
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new StringAttributeRule(VALUE,
+                    "The value of this date"),
+            new StringAttributeRule(ORIGIN,
+                    "The origin of this time scale, which must be a valid calendar date", "01/01/01", true),
+            new StringAttributeRule(UNITS, "The units of the timescale", new String[]{YEARS, MONTHS, DAYS}, true),
+            new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[]{FORWARDS, BACKWARDS}, true),
     };
 
-    public Class getReturnType() { return dr.evolution.util.Date.class; }
+    public Class getReturnType() {
+        return dr.evolution.util.Date.class;
+    }
 }

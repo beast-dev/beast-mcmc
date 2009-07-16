@@ -1,7 +1,7 @@
 /*
  * TwoEpochDemographicModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -105,15 +105,15 @@ public class TwoEpochDemographicModel extends DemographicModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-            XMLObject cxo = (XMLObject) xo.getChild(EPOCH_1);
+            XMLObject cxo = xo.getChild(EPOCH_1);
             DemographicModel demo1 = (DemographicModel) cxo.getChild(DemographicModel.class);
 
-            cxo = (XMLObject) xo.getChild(EPOCH_2);
+            cxo = xo.getChild(EPOCH_2);
             DemographicModel demo2 = (DemographicModel) cxo.getChild(DemographicModel.class);
 
-            cxo = (XMLObject) xo.getChild(TRANSITION_TIME);
+            cxo = xo.getChild(TRANSITION_TIME);
             Parameter timeParameter = (Parameter) cxo.getChild(Parameter.class);
 
             return new TwoEpochDemographicModel(demo1, demo2, timeParameter, units);

@@ -30,6 +30,8 @@ import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
 import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.TreePrior;
+
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
@@ -38,6 +40,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -87,7 +90,7 @@ public class ClockModelPanel extends OptionsPanel {
 
     private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(ClockType.values())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
     }
 
     public void setOptions(BeautiOptions options) {

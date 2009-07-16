@@ -43,9 +43,6 @@ public class PartitionTreeModel extends ModelOptions {
     private PartitionTreePrior treePrior;
     private List<PartitionData> allPartitionData;
 
-    public Parameter localClockRateChangesStatistic = null;
-    public Parameter localClockRatesStatistic = null;
-
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
@@ -86,60 +83,13 @@ public class PartitionTreeModel extends ModelOptions {
 //    }
 
     private void initTreeModelParaAndOpers() {
-        double branchWeights = 30.0;
-        double treeWeights = 15.0;
-        double rateWeights = 3.0;
-
+        
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
         createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
-
-        {
-            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-            p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
-        }
-        createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createOperator("scaleRootRate", "treeModel.rootRate",
-                "Scales root rate", "treeModel.rootRate",
-                OperatorType.SCALE, 0.75, rateWeights);
-        createOperator("scaleOneRate", "treeModel.nodeRates",
-                "Scales one non-root rate", "treeModel.nodeRates",
-                OperatorType.SCALE, 0.75, branchWeights);
-        createOperator("scaleAllRates", "treeModel.allRates",
-                "Scales all rates simultaneously", "treeModel.allRates",
-                OperatorType.SCALE_ALL, 0.75, rateWeights);
-        createOperator("scaleAllRatesIndependently", "treeModel.nodeRates",
-                "Scales all non-root rates independently", "treeModel.nodeRates",
-                OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
-
-        createOperator("upDownAllRatesHeights", "All rates and heights",
-                "Scales all rates inversely to node heights of the tree", this.getParameter("treeModel.allRates"),
-                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);        
-//        createOperator("upDownNodeRatesHeights", "Node rates and heights",
-//                "Scales all rates inversely to all rates heights of the tree", this.getParameter("treeModel.nodeRates"),
-//                this.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
-
-        createOperator("swapBranchRateCategories", "branchRates.categories",
-                "Performs a swap of branch rate categories", "branchRates.categories",
-                OperatorType.SWAP, 1, branchWeights / 3);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories",
-                "Performs an integer random walk of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
-        createOperator("uniformBranchRateCategories", "branchRates.categories",
-                "Performs an integer uniform draw of branch rate categories", "branchRates.categories",
-                OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
-
-        createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
-        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
+        //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
@@ -163,10 +113,11 @@ public class PartitionTreeModel extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-
+    	getParameter("tree");
+    	getParameter("treeModel.internalNodeHeights");
+    	getParameter("treeModel.allInternalNodeHeights");    	
+    	
         params.add(getParameter("treeModel.rootHeight"));
-
-        selectStatistics(params);
     }
 
     /**
@@ -187,52 +138,6 @@ public class PartitionTreeModel extends ModelOptions {
         ops.add(getOperator("treeModel.rootHeight"));
         ops.add(getOperator("uniformHeights"));
 
-    }
-
-    // use override method getParameter(String name) and getOperator(String name) in PartitionModel containing prefix
-    private void selectStatistics(List<Parameter> params) {
-
-//        if (options.taxonSets != null) {
-//            for (Taxa taxonSet : options.taxonSets) {
-//                Parameter statistic = statistics.get(taxonSet);
-//                if (statistic == null) {
-//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-//                    statistics.put(taxonSet, statistic);
-//                }
-//                params.add(statistic);
-//            }
-//        } else {
-//            System.err.println("TaxonSets are null");
-//        }
-        //TODO ?
-        for (PartitionClockModel clock : options.getPartitionClockModels(getAllPartitionData())) {
-            if (clock.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
-                if (localClockRateChangesStatistic == null) {
-                    localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-                    localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-                    localClockRateChangesStatistic.poissonMean = 1.0;
-                    localClockRateChangesStatistic.poissonOffset = 0.0;
-                }
-                if (localClockRatesStatistic == null) {
-                    localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
-
-                    localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-                    localClockRatesStatistic.gammaAlpha = 0.5;
-                    localClockRatesStatistic.gammaBeta = 2.0;
-                }
-
-                localClockRateChangesStatistic.setPrefix(getPrefix());
-                params.add(localClockRateChangesStatistic);
-                localClockRatesStatistic.setPrefix(getPrefix());
-                params.add(localClockRatesStatistic);
-            }
-
-//	        if (clock.getClockType() != ClockType.STRICT_CLOCK) {
-//	            params.add(getParameter("meanRate"));
-//	            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
-//	            params.add(getParameter("covariance"));
-//	        }
-        }
     }
 
     /////////////////////////////////////////////////////////////

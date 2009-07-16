@@ -1,7 +1,7 @@
 /*
  * TransmissionHistoryModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -103,7 +103,8 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
             hosts.add(recipient);
         }
 
-        Logger.getLogger("dr.evomodel").info("Transmission from " + donor + " to " + recipient + " at " + parameter.getParameterValue(0));
+        Logger.getLogger("dr.evomodel").info("Transmission from "
+                + donor + " to " + recipient + (parameter != null ? "at " + parameter.getParameterValue(0) : ""));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -121,11 +122,11 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     }
 
     public TransmissionEvent getTransmissionEvent(int index) {
-        return (TransmissionEvent) transmissionEvents.get(index);
+        return transmissionEvents.get(index);
     }
 
     public TransmissionEvent getTransmissionEventToHost(Taxon recipient) {
-        return (TransmissionEvent) transmissionEventMap.get(recipient);
+        return transmissionEventMap.get(recipient);
     }
 
     // *****************************************************************
@@ -185,7 +186,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
             TransmissionHistoryModel history = new TransmissionHistoryModel(units);
 
@@ -261,7 +262,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
 
     private Taxon createTreeColouring(Tree tree, NodeRef node, DefaultTreeColouring treeColouring) {
         Taxon parentHost = null;
-        Taxon childHost = null;
+        Taxon childHost;
 
         if (tree.isExternal(node)) {
             childHost = (Taxon) tree.getNodeTaxon(node).getAttribute("host");
@@ -292,14 +293,14 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
                     throw new RuntimeException("Transmission event is before the node");
                 }
 
-                List hosts = new ArrayList();
-                List times = new ArrayList();
+                List<Taxon> hosts = new ArrayList<Taxon>();
+                List<Double> times = new ArrayList<Double>();
 
                 parentHost = childHost;
 
                 while (event != null && event.getTransmissionTime() < height1) {
                     hosts.add(parentHost);
-                    times.add(new Double(event.getTransmissionTime()));
+                    times.add(event.getTransmissionTime());
 
                     parentHost = event.donor;
 
@@ -310,8 +311,8 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
                 int host2 = getHostIndex(parentHost);
                 branchColouring = new DefaultBranchColouring(host2, host1);
                 for (int i = hosts.size() - 1; i >= 0; i--) {
-                    int host = getHostIndex((Taxon) hosts.get(i));
-                    double time = ((Double) times.get(i)).doubleValue();
+                    int host = getHostIndex(hosts.get(i));
+                    double time = times.get(i);
                     branchColouring.addEvent(host, time);
                 }
 

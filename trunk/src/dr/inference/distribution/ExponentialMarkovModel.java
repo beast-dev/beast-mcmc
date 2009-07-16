@@ -1,7 +1,7 @@
 /*
  * ExponentialMarkovModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,7 +29,6 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GammaDistribution;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -45,10 +44,6 @@ import org.w3c.dom.Element;
 public class ExponentialMarkovModel extends AbstractModelLikelihood {
 
     public static final String EXPONENTIAL_MARKOV_MODEL = "exponentialMarkovLikelihood";
-    public static final String CHAIN_PARAMETER = "chainParameter";
-    public static final String JEFFREYS = "jeffreys";
-    public static final String REVERSE = "reverse";
-    public static final String SHAPE = "shape";
 
     /**
      * Constructor.
@@ -98,57 +93,6 @@ public class ExponentialMarkovModel extends AbstractModelLikelihood {
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return EXPONENTIAL_MARKOV_MODEL;
-        }
-
-        /**
-         * Reads a gamma distribution model from a DOM Document element.
-         */
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject object = (XMLObject) xo.getChild(CHAIN_PARAMETER);
-
-            Parameter chainParameter = (Parameter) object.getChild(0);
-
-            boolean jeffreys = xo.getAttribute(JEFFREYS, false);
-            boolean reverse = xo.getAttribute(REVERSE, false);
-
-            double shape = xo.getAttribute(SHAPE, 1.0);
-            if (shape < 1.0) {
-                throw new XMLParseException("ExponentialMarkovModel: shape parameter must be >= 1.0");
-            }
-
-            if (shape == 1.0) {
-                System.out.println("Exponential markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + ")");
-            } else {
-                System.out.println("Gamma markov model on parameter " + chainParameter.getParameterName() + " (jeffreys=" + jeffreys + ", reverse=" + reverse + " shape=" + shape + ")");
-            }
-
-            return new ExponentialMarkovModel(chainParameter, jeffreys, reverse, shape);
-        }
-
-        public String getParserDescription() {
-            return "A continuous state, discrete time markov chain in which each new state is an exponentially distributed variable with a mean of the previous state.";
-        }
-
-        public Class getReturnType() {
-            return ExponentialMarkovModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(JEFFREYS, true),
-                AttributeRule.newBooleanRule(REVERSE, true),
-                new ElementRule(CHAIN_PARAMETER, Parameter.class)
-        };
-    };
 
     // **************************************************************
     // Likelihood

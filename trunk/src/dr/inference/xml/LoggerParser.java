@@ -1,3 +1,28 @@
+/*
+ * LoggerParser.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.xml;
 
 import dr.app.beast.BeastVersion;
@@ -8,9 +33,6 @@ import dr.util.Identifiable;
 import dr.util.Property;
 import dr.xml.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
 
@@ -55,7 +77,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
             fileName = xo.getStringAttribute(FILE_NAME);
         }
 
-        final PrintWriter pw = getLogFile(xo, getParserName());
+        final PrintWriter pw = XMLParser.getFilePrintWriter(xo, getParserName());
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
@@ -101,6 +123,10 @@ public class LoggerParser extends AbstractXMLObjectParser {
         return logger;
     }
 
+    public static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
+        return XMLParser.getFilePrintWriter(xo, parserName);
+    }
+
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
@@ -131,32 +157,6 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
     public Class getReturnType() {
         return MLLogger.class;
-    }
-
-    /**
-     * Allow a file relative to beast xml file with a prefix of ./
-     *
-     * @param xo         log element
-     * @param parserName for error messages
-     * @return logger object
-     * @throws XMLParseException if file can't be created for some reason
-     */
-    public static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
-        if (xo.hasAttribute(FILE_NAME)) {
-
-            final String fileName = xo.getStringAttribute(FILE_NAME);
-
-            final File logFile = FileHelpers.getFile(fileName);
-
-//	         System.out.println("Writing log file to "+parent+System.getProperty("path.separator")+name);
-            try {
-                return new PrintWriter(new FileOutputStream(logFile));
-            } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + logFile.getAbsolutePath() + "' can not be opened for " + parserName + " element.");
-            }
-
-        }
-        return new PrintWriter(System.out);
     }
 }
 

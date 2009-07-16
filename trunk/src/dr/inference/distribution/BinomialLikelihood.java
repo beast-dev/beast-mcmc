@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,9 +25,10 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.Binomial;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -42,10 +43,6 @@ import org.w3c.dom.Element;
 public class BinomialLikelihood extends AbstractModelLikelihood {
 
     public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
-
-    public static final String TRIALS = "trials";
-    public static final String COUNTS = "counts";
-    public static final String PROPORTION = "proportion";
 
     public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, int[] counts) {
 
@@ -130,57 +127,6 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
     public Element createElement(Document d) {
         throw new RuntimeException("Not implemented yet!");
     }
-
-
-    /**
-     * Reads a distribution likelihood from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BINOMIAL_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = (XMLObject) xo.getChild(TRIALS);
-            Parameter trialsParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = (XMLObject) xo.getChild(PROPORTION);
-            Parameter proportionParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = (XMLObject) xo.getChild(COUNTS);
-            int[] counts = cxo.getIntegerArrayAttribute("values");
-
-            return new BinomialLikelihood(trialsParam, proportionParam, counts);
-
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(TRIALS,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(PROPORTION,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(COUNTS,
-                        new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule("values", false),})
-        };
-
-        public String getParserDescription() {
-            return "Calculates the likelihood of some data given some parametric or empirical distribution.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-    };
 
     Binomial binom = new Binomial();
     Parameter trialsParameter;

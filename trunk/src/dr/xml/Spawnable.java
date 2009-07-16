@@ -1,5 +1,5 @@
 /*
- * LikelihoodBenchmarker.java
+ * Spawnable.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -23,33 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.model;
-
-import java.util.List;
-import java.util.logging.Logger;
+package dr.xml;
 
 /**
- * @author Andrew Rambaut
- * @version $Id$
+ * @author Alexei Drummond
  */
-public class LikelihoodBenchmarker {
+public interface Spawnable extends Runnable {
 
-    public LikelihoodBenchmarker(List<Likelihood> likelihoods, int iterationCount) {
-        for (Likelihood likelihood : likelihoods) {
-            long startTime = System.nanoTime();
+    boolean getSpawnable();
 
-            for (int i = 0; i < iterationCount; i++) {
-                likelihood.makeDirty();
-                likelihood.getLogLikelihood();
-            }
-
-            long endTime = System.nanoTime();
-
-            double seconds = (endTime - startTime) * 1E-9;
-            Logger.getLogger("dr.evomodel.beagle").info(
-                    "Benchmark " + likelihood.getId() + "(" + likelihood.getClass().getName() + "): " +
-                            seconds + " sec");
-
-        }
-    }
 }

@@ -1,7 +1,7 @@
 /*
  * PiecewisePopulationModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,7 +25,10 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.*;
+import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.PiecewiseConstantPopulation;
+import dr.evolution.coalescent.PiecewiseExponentialPopulation;
+import dr.evolution.coalescent.PiecewiseLinearPopulation;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -33,14 +36,11 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
- *
- * @version $Id: PiecewisePopulationModel.java,v 1.13 2005/05/24 20:25:57 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: PiecewisePopulationModel.java,v 1.13 2005/05/24 20:25:57 rambaut Exp $
  */
-public class PiecewisePopulationModel extends DemographicModel
-{
+public class PiecewisePopulationModel extends DemographicModel {
 
     //
     // Public stuff
@@ -109,7 +109,7 @@ public class PiecewisePopulationModel extends DemographicModel
 
         if (popSizeCount == epochCount && growthRateCount == 1) {
             piecewiseFunction = new PiecewiseExponentialPopulation(epochLengths,
-                    new double[N0Parameter.getDimension()], 
+                    new double[N0Parameter.getDimension()],
                     growthRatesParameter.getParameterValue(0),
                     units);
         } else if (popSizeCount == 1 && growthRateCount == epochCount) {
@@ -164,9 +164,14 @@ public class PiecewisePopulationModel extends DemographicModel
         // no intermediates need to be recalculated...
     }
 
-    protected void storeState() {} // no additional state needs storing
-    protected void restoreState() {} // no additional state needs restoring
-    protected void acceptState() {} // no additional state needs accepting
+    protected void storeState() {
+    } // no additional state needs storing
+
+    protected void restoreState() {
+    } // no additional state needs restoring
+
+    protected void acceptState() {
+    } // no additional state needs accepting
 
     public class GrowthRateStatistic extends Statistic.Abstract {
 
@@ -175,11 +180,11 @@ public class PiecewisePopulationModel extends DemographicModel
         }
 
         public int getDimension() {
-            return ((PiecewiseExponentialPopulation)piecewiseFunction).getEpochCount();
+            return ((PiecewiseExponentialPopulation) piecewiseFunction).getEpochCount();
         }
 
         public double getStatisticValue(int i) {
-            return ((PiecewiseExponentialPopulation)piecewiseFunction).getEpochGrowthRate(i);
+            return ((PiecewiseExponentialPopulation) piecewiseFunction).getEpochGrowthRate(i);
         }
 
     }
@@ -189,17 +194,19 @@ public class PiecewisePopulationModel extends DemographicModel
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return PIECEWISE_POPULATION; }
+        public String getParserName() {
+            return PIECEWISE_POPULATION;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-            XMLObject obj = (XMLObject)xo.getChild(EPOCH_WIDTHS);
+            XMLObject obj = xo.getChild(EPOCH_WIDTHS);
             double[] epochWidths = obj.getDoubleArrayAttribute("widths");
 
             if (xo.hasChildNamed(EPOCH_SIZES)) {
-                Parameter epochSizes = (Parameter)xo.getElementFirstChild(EPOCH_SIZES);
+                Parameter epochSizes = (Parameter) xo.getElementFirstChild(EPOCH_SIZES);
 
                 boolean isLinear = false;
                 if (xo.hasAttribute("linear")) {
@@ -208,8 +215,8 @@ public class PiecewisePopulationModel extends DemographicModel
 
                 return new PiecewisePopulationModel(PIECEWISE_POPULATION, epochSizes, epochWidths, isLinear, units);
             } else {
-                Parameter populationSize = (Parameter)xo.getElementFirstChild(POPULATION_SIZE);
-                Parameter growthRates = (Parameter)xo.getElementFirstChild(GROWTH_RATES);
+                Parameter populationSize = (Parameter) xo.getElementFirstChild(POPULATION_SIZE);
+                Parameter growthRates = (Parameter) xo.getElementFirstChild(GROWTH_RATES);
                 return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, growthRates, epochWidths, units);
             }
         }
@@ -223,23 +230,27 @@ public class PiecewisePopulationModel extends DemographicModel
             return "This element represents a piecewise population model";
         }
 
-        public Class getReturnType() { return PiecewisePopulationModel.class; }
+        public Class getReturnType() {
+            return PiecewisePopulationModel.class;
+        }
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new XORRule(
                         new ElementRule(EPOCH_SIZES,
-                                new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                         new AndRule(
                                 new ElementRule(POPULATION_SIZE,
-                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                                 new ElementRule(GROWTH_RATES,
-                                        new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
+                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
                         )
                 ),
                 new ElementRule(EPOCH_WIDTHS,
-                        new XMLSyntaxRule[] { AttributeRule.newDoubleArrayRule("widths") }),
+                        new XMLSyntaxRule[]{AttributeRule.newDoubleArrayRule("widths")}),
                 AttributeRule.newBooleanRule("linear", true)
         };
     };

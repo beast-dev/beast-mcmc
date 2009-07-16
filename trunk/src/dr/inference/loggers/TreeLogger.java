@@ -206,7 +206,7 @@
 //            }
 //
 //            Tree tree = (Tree) xo.getChild(Tree.class);
-//            PrintWriter pw = getLogFile(xo, getParserName());
+//            PrintWriter pw = getFilePrintWriter(xo, getParserName());
 //            LogFormatter formatter = new TabDelimitedFormatter(pw);
 //
 //            TreeLogger logger = new TreeLogger(tree, formatter,

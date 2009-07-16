@@ -1,7 +1,7 @@
 /*
  * XMLParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,13 +25,12 @@
 
 package dr.xml;
 
-import dr.evolution.util.Units;
-import dr.inference.mcmc.MCMC;
+import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 
-import java.io.Reader;
+import java.io.*;
 import java.util.*;
 
 public class XMLParser {
@@ -304,8 +303,8 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
-                    if (obj instanceof MCMC && !((MCMC) obj).getSpawnable()) {
-                        ((MCMC) obj).run();
+                    if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
+                        ((Spawnable) obj).run();
                     } else {
                         Thread thread = new Thread((Runnable) obj);
                         thread.start();
@@ -319,6 +318,33 @@ public class XMLParser {
             return xo;
         }
     }
+
+    /**
+     * Allow a file relative to beast xml file with a prefix of ./
+     *
+     * @param xo         element
+     * @param parserName for error messages
+     * @return Print writer from fileName attribute in the given XMLObject
+     * @throws XMLParseException if file can't be created for some reason
+     */
+    public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName) throws XMLParseException {
+        if (xo.hasAttribute(FileHelpers.FILE_NAME)) {
+
+            final String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            final File logFile = FileHelpers.getFile(fileName);
+
+            try {
+                return new PrintWriter(new FileOutputStream(logFile));
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + logFile.getAbsolutePath() +
+                        "' can not be opened for " + parserName + " element.");
+            }
+
+        }
+        return new PrintWriter(System.out);
+    }
+
 
     public class ArrayParser extends AbstractXMLObjectParser {
 
@@ -413,42 +439,6 @@ public class XMLParser {
 
     public static class Utils {
 
-        final static String GENERATIONS = "generations";
-        final static String DAYS = "days";
-        final static String MONTHS = "months";
-        final static String YEARS = "years";
-        public final static String SUBSTITUTIONS = "substitutions";
-        // Mutations has been replaced with substitutions...
-        final static String MUTATIONS = "mutations";
-        final static String UNKNOWN = "unknown";
-
-        public final static String UNITS = "units";
-
-        /**
-         * Converts a unit integer into a human-readable name.
-         *
-         * @param units
-         * @return unit name
-         */
-        public static String getUnitString(Units.Type units) {
-            switch (units) {
-                case GENERATIONS:
-                    return GENERATIONS;
-                case DAYS:
-                    return DAYS;
-                case MONTHS:
-                    return MONTHS;
-                case YEARS:
-                    return YEARS;
-                // Mutations has been replaced with substitutions...
-                case SUBSTITUTIONS:
-                    return SUBSTITUTIONS;
-                default:
-                    return UNKNOWN;
-            }
-        }
-
-
         /**
          * Throws a runtime exception if the element does not have
          * the given name.
@@ -457,24 +447,6 @@ public class XMLParser {
             if (!e.getTagName().equals(name)) {
                 throw new XMLParseException("Wrong tag name! Expected " + name + ", found " + e.getTagName() + ".");
             }
-        }
-
-        public static Units.Type getUnitsAttr(XMLObject xo) throws XMLParseException {
-
-            Units.Type units = dr.evolution.util.Units.Type.GENERATIONS;
-            if (xo.hasAttribute(UNITS)) {
-                String unitsAttr = (String) xo.getAttribute(UNITS);
-                if (unitsAttr.equals(YEARS)) {
-                    units = dr.evolution.util.Units.Type.YEARS;
-                } else if (unitsAttr.equals(MONTHS)) {
-                    units = dr.evolution.util.Units.Type.MONTHS;
-                } else if (unitsAttr.equals(DAYS)) {
-                    units = dr.evolution.util.Units.Type.DAYS;
-                } else if (unitsAttr.equals(SUBSTITUTIONS) || unitsAttr.equals(MUTATIONS)) {
-                    units = dr.evolution.util.Units.Type.SUBSTITUTIONS;
-                }
-            }
-            return units;
         }
 
         public static boolean hasAttribute(Element e, String name) {

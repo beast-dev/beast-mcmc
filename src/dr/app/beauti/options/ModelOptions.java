@@ -73,7 +73,10 @@ public abstract class ModelOptions {
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
 
-
+	protected static final double branchWeights = 30.0;
+	protected static final double treeWeights = 15.0;
+	protected static final double rateWeights = 3.0;
+	
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));

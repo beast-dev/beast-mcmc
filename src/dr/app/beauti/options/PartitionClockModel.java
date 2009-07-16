@@ -38,7 +38,6 @@ import java.util.List;
 public class PartitionClockModel extends ModelOptions {
 
     // Instance variables
-
     private final BeautiOptions options;
     private String name;
 
@@ -80,51 +79,15 @@ public class PartitionClockModel extends ModelOptions {
 //    }
 
     private void initClockModelParaAndOpers() {
-        double rateWeights = 3.0;
-
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-
-        {
-            final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-            p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
-        }
-
+        
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
-
-        createScaleOperator("branchRates.var", demoTuning, rateWeights);
-
-//        for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) { // borrow the method in BeautiOption        	
-//            createOperator(tree.getPrefix() + "upDownRateHeights", "Substitution rate and heights",
-//                    "Scales substitution rates inversely to node heights of the tree", super.getParameter("clock.rate"),
-//                    tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-//            createOperator(tree.getPrefix() + "upDownUCEDMeanHeights", "UCED mean and heights",
-//                    "Scales UCED mean inversely to node heights of the tree", super.getParameter(ClockType.UCED_MEAN),
-//                    tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-//            createOperator(tree.getPrefix() + "upDownUCLDMeanHeights", "UCLD mean and heights",
-//                    "Scales UCLD mean inversely to node heights of the tree", super.getParameter(ClockType.UCLD_MEAN),
-//                    tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
-//            
-//            // #meanRate = #Relaxed Clock Model * #Tree Model
-//            createStatistic(tree.getPrefix() + "meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-//            // #covariance = #Relaxed Clock Model * #Tree Model
-//            createStatistic(tree.getPrefix() + "covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages",
-//                    Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            
-//        }  move to PartitionClockModelTreeModelLink
-
-        // These are statistics which could have priors on...        
-        // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
-                0.0, Double.POSITIVE_INFINITY);
-
     }
 
     /**
@@ -132,9 +95,8 @@ public class PartitionClockModel extends ModelOptions {
      *
      * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> params) {
+    public void selectParameters(List<Parameter> params) {    	    	
         if (options.hasData()) {
-
             // if not fixed then do mutation rate move and up/down move
             boolean fixed = options.isFixedSubstitutionRate();
             Parameter rateParam;
@@ -159,13 +121,12 @@ public class PartitionClockModel extends ModelOptions {
                     params.add(getParameter(ClockType.UCLD_STDEV));
                     break;
 
-                case AUTOCORRELATED_LOGNORMAL:
-                    for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
-                        rateParam = tree.getParameter("treeModel.rootRate");
-                        rateParam.isFixed = fixed;
-                        if (!fixed) params.add(rateParam);
-                    }
-                    params.add(getParameter("branchRates.var"));
+                case AUTOCORRELATED_LOGNORMAL:                    
+//                    rateParam = getParameter("treeModel.rootRate");
+//                    rateParam.isFixed = fixed;
+//                    if (!fixed) params.add(rateParam);
+//                    
+//                    params.add(getParameter("branchRates.var"));
                     break;
 
                 case RANDOM_LOCAL_CLOCK:
@@ -177,15 +138,7 @@ public class PartitionClockModel extends ModelOptions {
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
             }
-
-            selectStatistics(params);
-        }
-    }
-
-    private void selectStatistics(List<Parameter> params) {
-        // Statistics
-        if (clockType != ClockType.STRICT_CLOCK) {
-            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+           
         }
     }
 
@@ -207,32 +160,30 @@ public class PartitionClockModel extends ModelOptions {
                     case UNCORRELATED_EXPONENTIAL:
                         ops.add(getOperator(ClockType.UCED_MEAN));
 //                        ops.add(getOperator("upDownUCEDMeanHeights"));
-                        addBranchRateCategories(ops);
+//                        addBranchRateCategories(ops);
                         break;
 
                     case UNCORRELATED_LOGNORMAL:
                         ops.add(getOperator(ClockType.UCLD_MEAN));
                         ops.add(getOperator(ClockType.UCLD_STDEV));
 //                        ops.add(getOperator("upDownUCLDMeanHeights"));
-                        addBranchRateCategories(ops);
+//                        addBranchRateCategories(ops);
                         break;
 
-                    case AUTOCORRELATED_LOGNORMAL:
-                        for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
-                            ops.add(tree.getOperator("scaleRootRate"));
-                            ops.add(tree.getOperator("scaleOneRate"));
-                            ops.add(tree.getOperator("scaleAllRates"));
-                            ops.add(tree.getOperator("scaleAllRatesIndependently"));
-                            ops.add(tree.getOperator("upDownAllRatesHeights"));
-//                            ops.add(tree.getOperator("upDownNodeRatesHeights"));
-                        }
-                        ops.add(getOperator("branchRates.var"));
+                    case AUTOCORRELATED_LOGNORMAL:                       
+//                        ops.add(getOperator("scaleRootRate"));
+//                        ops.add(getOperator("scaleOneRate"));
+//                        ops.add(getOperator("scaleAllRates"));
+//                        ops.add(getOperator("scaleAllRatesIndependently"));
+////                        ops.add(getOperator("upDownAllRatesHeights"));
+////                        ops.add(getOperator("upDownNodeRatesHeights"));
+//                        ops.add(getOperator("branchRates.var"));
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
                         ops.add(getOperator("clock.rate"));
 //                        ops.add(getOperator("upDownRateHeights"));
-                        addRandomLocalClockOperators(ops);
+//                        addRandomLocalClockOperators(ops);
                         break;
 
                     default:
@@ -245,24 +196,22 @@ public class PartitionClockModel extends ModelOptions {
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
-                        addBranchRateCategories(ops);
+//                        addBranchRateCategories(ops);
                         break;
 
                     case UNCORRELATED_LOGNORMAL:
-                        addBranchRateCategories(ops);
+//                        addBranchRateCategories(ops);
                         ops.add(getOperator(ClockType.UCLD_STDEV));
                         break;
 
-                    case AUTOCORRELATED_LOGNORMAL:
-                        for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
-                            ops.add(tree.getOperator("scaleOneRate"));
-                            ops.add(tree.getOperator("scaleAllRatesIndependently"));
-                        }
-                        ops.add(getOperator("branchRates.var"));
+                    case AUTOCORRELATED_LOGNORMAL:                        
+//                        ops.add(getOperator("scaleOneRate"));
+//                        ops.add(getOperator("scaleAllRatesIndependently"));                        
+//                        ops.add(getOperator("branchRates.var"));
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
-                        addRandomLocalClockOperators(ops);
+//                        addRandomLocalClockOperators(ops);
                         break;
 
                     default:
@@ -271,23 +220,7 @@ public class PartitionClockModel extends ModelOptions {
             }
         }
     }
-
-    private void addBranchRateCategories(List<Operator> ops) {
-        for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
-            ops.add(tree.getOperator("swapBranchRateCategories"));
-            ops.add(tree.getOperator("randomWalkBranchRateCategories"));
-            ops.add(tree.getOperator("uniformBranchRateCategories"));
-        }
-    }
-
-    private void addRandomLocalClockOperators(List<Operator> ops) {
-        for (PartitionTreeModel tree : options.getPartitionTreeModels(getAllPartitionData())) {
-            ops.add(tree.getOperator(ClockType.LOCAL_CLOCK + ".rates"));
-            ops.add(tree.getOperator(ClockType.LOCAL_CLOCK + ".changes"));
-            ops.add(tree.getOperator("treeBitMove"));
-        }
-    }
-
+    
     /////////////////////////////////////////////////////////////
 
     public List<PartitionData> getAllPartitionData() {

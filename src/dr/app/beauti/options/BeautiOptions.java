@@ -240,7 +240,8 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionClockModel model : getPartitionClockModels()) {
             for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
                 PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-
+                
+                clockTree.selectParameters(parameters);
                 clockTree.selectStatistics(parameters);
             }
         }
@@ -436,6 +437,10 @@ public class BeautiOptions extends ModelOptions {
                 op.tuning = initialRootHeight / 10.0;
             }
         }
+        
+//        for (Operator op : ops) {
+//        	System.out.println(op.prefix + " + " + op.getName());
+//        }
 
         return ops;
     }

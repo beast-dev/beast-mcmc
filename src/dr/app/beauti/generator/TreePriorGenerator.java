@@ -44,6 +44,8 @@ import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.inference.model.TestStatistic;
+import dr.inferencexml.DistributionModelParser;
+import dr.inferencexml.ExponentialMarkovModelParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -57,8 +59,8 @@ public class TreePriorGenerator extends Generator {
     }
 
     void writeTreePrior(PartitionTreePrior prior, XMLWriter writer) {    // for species, partitionName.treeModel
-    	setModelPrefix(prior.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
-    	
+        setModelPrefix(prior.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
+
         writeNodeHeightPrior(prior, writer);
         if (prior.getNodeHeightPrior() == TreePrior.LOGISTIC) {
             writer.writeText("");
@@ -390,12 +392,12 @@ public class TreePriorGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMeanDist")
                             //,new Attribute.Default<String>("elementwise", "true")
                     });
-            writer.writeOpenTag(ExponentialDistributionModel.MEAN);
+            writer.writeOpenTag(DistributionModelParser.MEAN);
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMean"),
                             new Attribute.Default<String>("value", "1")}, true);
-            writer.writeCloseTag(ExponentialDistributionModel.MEAN);
+            writer.writeCloseTag(DistributionModelParser.MEAN);
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
         } else if (treePrior == TreePrior.GMRF_SKYRIDE) {
             writer.writeComment("Generate a GMRF Bayesian Skyride process");
@@ -599,9 +601,9 @@ public class TreePriorGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "eml1"),
                         new Attribute.Default<String>("jeffreys", "true")}
         );
-        writer.writeOpenTag(ExponentialMarkovModel.CHAIN_PARAMETER);
+        writer.writeOpenTag(ExponentialMarkovModelParser.CHAIN_PARAMETER);
         writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyline.popSize");
-        writer.writeCloseTag(ExponentialMarkovModel.CHAIN_PARAMETER);
+        writer.writeCloseTag(ExponentialMarkovModelParser.CHAIN_PARAMETER);
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
@@ -639,7 +641,7 @@ public class TreePriorGenerator extends Generator {
         } else if (prior.getNodeHeightPrior() == TreePrior.SKYLINE) {
             writer.writeIDref(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyline");
         } else if (prior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
-	        writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+            writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
             // Currently nothing additional needs logging
         } else if (options.isSpeciesAnalysis()) {
             // no
@@ -650,8 +652,8 @@ public class TreePriorGenerator extends Generator {
     }
 
     public void writeDemographicReference(PartitionTreePrior prior, XMLWriter writer) {
-    	setModelPrefix(prior.getPrefix());
-    	
+        setModelPrefix(prior.getPrefix());
+
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
@@ -707,5 +709,5 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
         }
 
-	}
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * YuleModelParser.java
+ * LikelihoodBenchmarkerParser.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -23,40 +23,46 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml;
+package dr.inferencexml;
 
-import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.YuleModel;
-import dr.evoxml.XMLUnits;
-import dr.inference.model.Parameter;
+import dr.inference.model.Likelihood;
+import dr.inference.model.LikelihoodBenchmarker;
 import dr.xml.*;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Alexei Drummond
  */
-public class YuleModelParser extends AbstractXMLObjectParser {
+public class LikelihoodBenchmarkerParser extends AbstractXMLObjectParser {
 
-    public static String YULE = "yule";
-    public static String BIRTH_RATE = "birthRate";
+    public static final String BENCHMARKER = "benchmarker";
 
     public String getParserName() {
-        return YuleModel.YULE_MODEL;
+        return BENCHMARKER;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        int iterationCount = 1000;
 
-        final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        if (xo.hasAttribute("iterationCount")) {
+            iterationCount = xo.getIntegerAttribute("iterationCount");
+        }
 
-        final XMLObject cxo = xo.getChild(BIRTH_RATE);
-        Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
-        Parameter deathParameter = new Parameter.Default(0.0);
+        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
 
-        Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Object xco = xo.getChild(i);
+            if (xco instanceof Likelihood) {
+                likelihoods.add((Likelihood) xco);
+            }
+        }
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, units);
+        if (likelihoods.size() == 0) {
+            throw new XMLParseException("No likelihoods for benchmarking");
+        }
+
+        return new LikelihoodBenchmarker(likelihoods, iterationCount);
     }
 
     //************************************************************************
@@ -64,11 +70,11 @@ public class YuleModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A speciation model of a simple constant rate Birth-death process.";
+        return "This element runs a benchmark on a series of likelihood calculators.";
     }
 
     public Class getReturnType() {
-        return BirthDeathGernhard08Model.class;
+        return Likelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -76,8 +82,8 @@ public class YuleModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(BIRTH_RATE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            XMLUnits.SYNTAX_RULES[0]
+            AttributeRule.newIntegerRule("iterationCount"),
+            new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE)
     };
+
 }

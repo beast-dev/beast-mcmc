@@ -1,7 +1,7 @@
 /*
  * MCMC.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -34,6 +34,7 @@ import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
+import dr.xml.Spawnable;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,7 +47,7 @@ import java.io.PrintStream;
  * @author Andrew Rambaut
  * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
-public class MCMC implements Runnable, Identifiable {
+public class MCMC implements Identifiable, Spawnable {
 
     public MCMC(String id) {
         this.id = id;

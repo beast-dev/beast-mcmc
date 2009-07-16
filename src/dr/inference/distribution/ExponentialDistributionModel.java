@@ -1,7 +1,7 @@
 /*
  * ExponentialDistributionModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -30,7 +30,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -45,8 +44,6 @@ import org.w3c.dom.Element;
 public class ExponentialDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     public static final String EXPONENTIAL_DISTRIBUTION_MODEL = "exponentialDistributionModel";
-    public static final String MEAN = "mean";
-    public static final String OFFSET = "offset";
 
     /**
      * Constructor.
@@ -148,52 +145,6 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
-
-    /**
-     * Reads an exponential distribution model from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return EXPONENTIAL_DISTRIBUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject object = (XMLObject) xo.getChild(MEAN);
-
-            double offset = xo.getAttribute(OFFSET, 0.0);
-
-            Parameter meanParameter;
-            try {
-                double mean = object.getDoubleChild(0);
-                meanParameter = new Parameter.Default(mean);
-            } catch (Exception pe) {
-                meanParameter = (Parameter) object.getChild(0);
-            }
-            return new ExponentialDistributionModel(meanParameter, offset);
-        }
-
-        public String getParserDescription() {
-            return "A model of an exponential distribution.";
-        }
-
-        public Class getReturnType() {
-            return ExponentialDistributionModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(OFFSET, true),
-                new XORRule(
-                        new ElementRule(MEAN, Double.class),
-                        new ElementRule(MEAN, Parameter.class)
-                )
-        };
-    };
 
     // **************************************************************
     // Private methods

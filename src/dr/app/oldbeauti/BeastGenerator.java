@@ -65,6 +65,9 @@ import dr.inference.loggers.Columns;
 import dr.inference.model.*;
 import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
+import dr.inferencexml.DistributionModelParser;
+import dr.inferencexml.ExponentialMarkovModelParser;
+import dr.inferencexml.PriorParsers;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -1493,12 +1496,12 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMeanDist")
                             //,new Attribute.Default<String>("elementwise", "true")
                     });
-            writer.writeOpenTag(ExponentialDistributionModel.MEAN);
+            writer.writeOpenTag(DistributionModelParser.MEAN);
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMean"),
                             new Attribute.Default<String>("value", "1")}, true);
-            writer.writeCloseTag(ExponentialDistributionModel.MEAN);
+            writer.writeCloseTag(DistributionModelParser.MEAN);
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
         } else {
@@ -1549,9 +1552,9 @@ public class BeastGenerator extends BeautiOptions {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "eml1"),
                         new Attribute.Default<String>("jeffreys", "true")}
         );
-        writer.writeOpenTag(ExponentialMarkovModel.CHAIN_PARAMETER);
+        writer.writeOpenTag(ExponentialMarkovModelParser.CHAIN_PARAMETER);
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "skyline.popSize"), true);
-        writer.writeCloseTag(ExponentialMarkovModel.CHAIN_PARAMETER);
+        writer.writeCloseTag(ExponentialMarkovModelParser.CHAIN_PARAMETER);
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
@@ -2288,54 +2291,54 @@ public class BeastGenerator extends BeautiOptions {
     private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.UNIFORM_PRIOR,
+                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.LOWER, "" + parameter.uniformLower),
-                                new Attribute.Default<String>(DistributionLikelihood.UPPER, "" + parameter.uniformUpper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.UNIFORM_PRIOR);
+                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
                 break;
             case EXPONENTIAL_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.EXPONENTIAL_PRIOR,
+                writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.exponentialMean),
-                                new Attribute.Default<String>(DistributionLikelihood.OFFSET, "" + parameter.exponentialOffset)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.exponentialMean),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.exponentialOffset)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.EXPONENTIAL_PRIOR);
+                writer.writeCloseTag(PriorParsers.EXPONENTIAL_PRIOR);
                 break;
             case NORMAL_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.NORMAL_PRIOR,
+                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.normalMean),
-                                new Attribute.Default<String>(DistributionLikelihood.STDEV, "" + parameter.normalStdev)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.normalMean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.normalStdev)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.NORMAL_PRIOR);
+                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             case LOGNORMAL_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.LOG_NORMAL_PRIOR,
+                writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.logNormalMean),
-                                new Attribute.Default<String>(DistributionLikelihood.STDEV, "" + parameter.logNormalStdev),
-                                new Attribute.Default<String>(DistributionLikelihood.OFFSET, "" + parameter.logNormalOffset),
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.logNormalMean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.logNormalStdev),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.logNormalOffset),
 
                                 // this is to be implemented...
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN_IN_REAL_SPACE, "false")
+                                new Attribute.Default<String>(PriorParsers.MEAN_IN_REAL_SPACE, "false")
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.LOG_NORMAL_PRIOR);
+                writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
                 break;
             case GAMMA_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.GAMMA_PRIOR,
+                writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.SHAPE, "" + parameter.gammaAlpha),
-                                new Attribute.Default<String>(DistributionLikelihood.SCALE, "" + parameter.gammaBeta),
-                                new Attribute.Default<String>(DistributionLikelihood.OFFSET, "" + parameter.gammaOffset)
+                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.gammaAlpha),
+                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.gammaBeta),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.gammaOffset)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.GAMMA_PRIOR);
+                writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
                 writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);
@@ -2343,29 +2346,29 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeCloseTag(OneOnXPrior.ONE_ONE_X_PRIOR);
                 break;
             case POISSON_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.POISSON_PRIOR,
+                writer.writeOpenTag(PriorParsers.POISSON_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.poissonMean),
-                                new Attribute.Default<String>(DistributionLikelihood.OFFSET, "" + parameter.poissonOffset)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.poissonMean),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.poissonOffset)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.POISSON_PRIOR);
+                writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
                 break;
             case TRUNC_NORMAL_PRIOR:
-                writer.writeOpenTag(DistributionLikelihood.UNIFORM_PRIOR,
+                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.LOWER, "" + parameter.uniformLower),
-                                new Attribute.Default<String>(DistributionLikelihood.UPPER, "" + parameter.uniformUpper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.UNIFORM_PRIOR);
-                writer.writeOpenTag(DistributionLikelihood.NORMAL_PRIOR,
+                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(DistributionLikelihood.MEAN, "" + parameter.normalMean),
-                                new Attribute.Default<String>(DistributionLikelihood.STDEV, "" + parameter.normalStdev)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.normalMean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.normalStdev)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(DistributionLikelihood.NORMAL_PRIOR);
+                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");

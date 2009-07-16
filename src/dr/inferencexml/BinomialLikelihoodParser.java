@@ -1,5 +1,5 @@
 /*
- * YuleModelParser.java
+ * BinomialLikelihoodParser.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -23,61 +23,63 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml;
+package dr.inferencexml;
 
-import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.YuleModel;
-import dr.evoxml.XMLUnits;
+import dr.inference.distribution.BinomialLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.logging.Logger;
-
 /**
- * @author Alexei Drummond
+ *
  */
-public class YuleModelParser extends AbstractXMLObjectParser {
+public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static String YULE = "yule";
-    public static String BIRTH_RATE = "birthRate";
+    public static final String TRIALS = "trials";
+    public static final String COUNTS = "counts";
+    public static final String PROPORTION = "proportion";
 
     public String getParserName() {
-        return YuleModel.YULE_MODEL;
+        return BinomialLikelihood.BINOMIAL_LIKELIHOOD;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        XMLObject cxo = xo.getChild(TRIALS);
+        Parameter trialsParam = (Parameter) cxo.getChild(Parameter.class);
 
-        final XMLObject cxo = xo.getChild(BIRTH_RATE);
-        Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
-        Parameter deathParameter = new Parameter.Default(0.0);
+        cxo = xo.getChild(PROPORTION);
+        Parameter proportionParam = (Parameter) cxo.getChild(Parameter.class);
 
-        Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
+        cxo = xo.getChild(COUNTS);
+        int[] counts = cxo.getIntegerArrayAttribute("values");
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, units);
+        return new BinomialLikelihood(trialsParam, proportionParam, counts);
+
     }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
-    public String getParserDescription() {
-        return "A speciation model of a simple constant rate Birth-death process.";
-    }
-
-    public Class getReturnType() {
-        return BirthDeathGernhard08Model.class;
-    }
-
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(BIRTH_RATE,
+            new ElementRule(TRIALS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            XMLUnits.SYNTAX_RULES[0]
+            new ElementRule(PROPORTION,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(COUNTS,
+                    new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule("values", false),})
     };
+
+    public String getParserDescription() {
+        return "Calculates the likelihood of some data given some parametric or empirical distribution.";
+    }
+
+    public Class getReturnType() {
+        return Likelihood.class;
+    }
 }

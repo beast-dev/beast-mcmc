@@ -1,7 +1,7 @@
 /*
  * TKF91Model.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -121,7 +121,7 @@ public class TKF91Model extends IndelModel {
 
             Parameter lengthDistParameter = (Parameter) xo.getElementFirstChild("lengthDistribution");
             Parameter deathParameter = (Parameter) xo.getElementFirstChild("deathRate");
-            Type units = XMLParser.Utils.getUnitsAttr(xo);
+            Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
             return new TKF91Model(lengthDistParameter, deathParameter, units);
         }

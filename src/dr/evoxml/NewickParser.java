@@ -1,7 +1,7 @@
 /*
  * NewickParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -63,7 +63,7 @@ public class NewickParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final Units.Type units = XMLParser.Utils.getUnitsAttr(xo);
+        final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         boolean usingDates = xo.getAttribute(SimpleTreeParser.USING_DATES, true);
 
@@ -137,8 +137,8 @@ public class NewickParser extends AbstractXMLObjectParser {
                 if (date != null && ((mostRecent == null) || date.after(mostRecent))) {
                     mostRecent = date;
                 }
-                if( date == null ) {
-                    tree.setNodeHeight(tree.getExternalNode(i) , 0.0);
+                if (date == null) {
+                    tree.setNodeHeight(tree.getExternalNode(i), 0.0);
                 }
             }
 
@@ -190,13 +190,13 @@ public class NewickParser extends AbstractXMLObjectParser {
             MutableTree.Utils.correctHeightsForTips(tree);
         } else {
             // not using dates
-           for (int i = 0; i < tree.getTaxonCount(); i++) {
-               final NodeRef leaf = tree.getExternalNode(i);
-               final double h = tree.getNodeHeight(leaf);
-               if( h != 0.0 ) {
-                 tree.setNodeHeight(leaf, 0.0);
-               }
-           }
+            for (int i = 0; i < tree.getTaxonCount(); i++) {
+                final NodeRef leaf = tree.getExternalNode(i);
+                final double h = tree.getNodeHeight(leaf);
+                if (h != 0.0) {
+                    tree.setNodeHeight(leaf, 0.0);
+                }
+            }
         }
 
         if (xo.hasAttribute(RESCALE_HEIGHT)) {
@@ -210,8 +210,8 @@ public class NewickParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(RESCALE_LENGTH)) {
             double rescaleLength = xo.getDoubleAttribute(RESCALE_LENGTH);
-            double scale = rescaleLength / Tree.Utils.getTreeLength(tree,tree.getRoot());
-            for (int i =0; i<tree.getInternalNodeCount(); i++) {
+            double scale = rescaleLength / Tree.Utils.getTreeLength(tree, tree.getRoot());
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef n = tree.getInternalNode(i);
                 tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);
             }

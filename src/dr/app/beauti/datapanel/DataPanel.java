@@ -443,13 +443,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName())) {
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
-                PartitionTreePrior newPrior = new PartitionTreePrior(options, newTree);
+//                PartitionTreePrior newPrior = new PartitionTreePrior(options, newTree);
 
-                newTree.setPartitionTreePrior(newPrior);
+                newTree.setPartitionTreePrior(options.activedSameTreePrior); // default is sharing same prior
                 partition.setPartitionTreeModel(newTree);
 
 //                options.addPartitionTreeModel(newTree);
-                options.shareSameTreePrior = false;
+                options.shareSameTreePrior = true; // default is sharing same prior
             }
         }
 

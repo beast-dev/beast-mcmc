@@ -30,6 +30,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
 import dr.app.util.Arguments.Option;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.VariableDemographicModel;
 
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
@@ -58,8 +59,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             "Piecewise-constant", "Piecewise-linear"});
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    JComboBox extendedBayesianSkylineCombo = new JComboBox(new String[]{
-            "Single-Locus", "Multi-Loci"});
+    private JComboBox extendedBayesianSkylineCombo = new JComboBox(VariableDemographicModel.Type.values());
 
     JComboBox gmrfBayesianSkyrideCombo = new JComboBox(new String[]{
             "Uniform", "Time-aware"});
@@ -149,7 +149,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
-            addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
+            addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
             
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);            
@@ -195,7 +195,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         parameterizationCombo.setSelectedIndex(partitionTreePrior.getParameterization());
         bayesianSkylineCombo.setSelectedIndex(partitionTreePrior.getSkylineModel());
 
-        extendedBayesianSkylineCombo.setSelectedIndex(partitionTreePrior.isMultiLoci() ? 1 : 0);
+        extendedBayesianSkylineCombo.setSelectedItem(partitionTreePrior.getExtendedSkylineModel());
 
         gmrfBayesianSkyrideCombo.setSelectedIndex(partitionTreePrior.getSkyrideSmoothing());
 
@@ -230,7 +230,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());
         partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
-        partitionTreePrior.setMultiLoci(extendedBayesianSkylineCombo.getSelectedIndex() == 1);
+        partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) extendedBayesianSkylineCombo.getSelectedItem()).toString());
 
         partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
         // the taxon list may not exist yet... this should be set when generating...

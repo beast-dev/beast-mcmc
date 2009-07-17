@@ -1901,7 +1901,7 @@ public class BeautiOptions {
     public int parameterization = GROWTH_RATE;
     public int skylineGroupCount = 10;
     public int skylineModel = CONSTANT_SKYLINE;
-    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
+    public String extendedSkylineModel = VariableDemographicModel.Type.LINEAR.toString();
     public double birthDeathSamplingProportion = 1.0;
     public boolean fixedTree = false;
     public Units.Type units = Units.Type.SUBSTITUTIONS;

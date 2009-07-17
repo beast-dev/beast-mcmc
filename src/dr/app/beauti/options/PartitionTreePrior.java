@@ -42,7 +42,7 @@ public class PartitionTreePrior extends ModelOptions {
 
     private String name;
 
-    private PartitionTreeModel treeModel;
+    private PartitionTreeModel treeModel; // only used when not sharing same prior
 
     private TreePrior nodeHeightPrior = TreePrior.CONSTANT;
     private int parameterization = GROWTH_RATE;
@@ -52,8 +52,7 @@ public class PartitionTreePrior extends ModelOptions {
     // AR - this seems to be set to taxonCount - 1 so we don't need to
     // have a settable variable...
     // public int skyrideIntervalCount = 1;
-    private String extendedSkylineModel = VariableDemographicModel.LINEAR;
-    private boolean multiLoci = false;
+    private String extendedSkylineModel = VariableDemographicModel.Type.LINEAR.toString();
     private double birthDeathSamplingProportion = 1.0;
     private boolean fixedTree = false;
 
@@ -82,7 +81,6 @@ public class PartitionTreePrior extends ModelOptions {
         this.skylineGroupCount = source.skylineGroupCount;
         this.skylineModel = source.skylineModel;
         this.skyrideSmoothing = source.skyrideSmoothing;
-        this.multiLoci = source.multiLoci;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.fixedTree = source.fixedTree;
 
@@ -154,13 +152,13 @@ public class PartitionTreePrior extends ModelOptions {
         createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
 
         // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", super.getParameter("demographic.popSize"),
-                super.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", super.getParameter("demographic.popSize"),
-                super.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+        createOperator("demographic.popSize", "demographic.populationMeanDist", "", this.getParameter("demographic.popSize"),
+        		this.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperator("demographic.scaleActive", "demographic.scaleActive", "", this.getParameter("demographic.popSize"),
+        		this.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
-        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", super.getParameter("skyride.popSize"),
-                super.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", this.getParameter("skyride.popSize"),
+        		this.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -322,9 +320,9 @@ public class PartitionTreePrior extends ModelOptions {
         return treeModel;
     }
 
-    public void setTreeModel(PartitionTreeModel treeModel) {
-        this.treeModel = treeModel;
-    }
+//    public void setTreeModel(PartitionTreeModel treeModel) {
+//        this.treeModel = treeModel;
+//    }
 
     public TreePrior getNodeHeightPrior() {
         return nodeHeightPrior;
@@ -364,14 +362,6 @@ public class PartitionTreePrior extends ModelOptions {
 
     public void setSkyrideSmoothing(int skyrideSmoothing) {
         this.skyrideSmoothing = skyrideSmoothing;
-    }
-
-    public boolean isMultiLoci() {
-        return multiLoci;
-    }
-
-    public void setMultiLoci(boolean multiLoci) {
-        this.multiLoci = multiLoci;
     }
 
     public double getBirthDeathSamplingProportion() {

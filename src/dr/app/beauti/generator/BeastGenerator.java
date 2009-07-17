@@ -304,7 +304,6 @@ public class BeastGenerator extends Generator {
         }
 //        }
 
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
         //++++++++++++++++ Tree Prior ++++++++++++++++++
@@ -312,13 +311,22 @@ public class BeastGenerator extends Generator {
 //	        treePriorGenerator.setModelPrefix("");
 //        	treePriorGenerator.writeTreePrior(options.activedSameTreePrior, writer);
 //        } else { // no species
-        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+//        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
 //	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.treeModel
-            treePriorGenerator.writeTreePrior(prior, writer);
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+        	PartitionTreePrior prior;
+        	if (options.shareSameTreePrior) {
+        		prior = options.activedSameTreePrior;        		
+        	} else {
+        		prior = model.getPartitionTreePrior();
+        	}
+            treePriorGenerator.writePriorLikelihood(prior, model, writer);
             writer.writeText("");
         }
-//	    }
-
+        
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+        	treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
+	    }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
 
@@ -560,11 +568,11 @@ public class BeastGenerator extends Generator {
 
 
     public void writeDifferentTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
-        String gene = dataPartition.getName();
+        String data = dataPartition.getName();
         Alignment alignment = dataPartition.getAlignment();
 
-        writer.writeComment("gene name = " + gene + ", ntax= " + alignment.getTaxonCount());
-        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, gene + ".taxa")});
+        writer.writeComment("gene name = " + data + ", ntax= " + alignment.getTaxonCount());
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, data + "." + TaxaParser.TAXA)});
 
         for (int i = 0; i < alignment.getTaxonCount(); i++) {
             final Taxon taxon = alignment.getTaxon(i);

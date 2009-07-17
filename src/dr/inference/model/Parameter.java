@@ -122,7 +122,7 @@ public interface Parameter extends Statistic {
      * Can be called before store is called. If it results in new
      * dimensions, then the value of the first dimension is copied into the new dimensions.
      *
-     * @param dim new dimention
+     * @param dim new dimension
      */
     void setDimension(int dim);
 
@@ -191,7 +191,7 @@ public interface Parameter extends Statistic {
         /**
          * Fired when a single dimension of the parameter has changed
          *
-         * @param index which dimention changed
+         * @param index which dimension changed
          * @param type  the type of parameter change event
          */
         public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {

@@ -174,10 +174,9 @@ public abstract class Generator {
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
         }
-        if (parameter.isFixed) {
+        if (parameter.isFixed) { // with prefix
             writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
-        } else
-        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+        } else if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             writeParameter(parameter.getName(), dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
         } else {
             writeParameter(parameter.getName(), dimension, parameter.initial, parameter.lower, parameter.upper, writer);

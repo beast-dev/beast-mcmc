@@ -125,35 +125,16 @@ public class InitialTreeGenerator extends Generator {
                             }
                     );
                 }
-
-                Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, TaxaParser.TAXA)};
-                if (options.taxonSets.size() > 0) {
-                    writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
-                    writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
-                    for (Taxa taxonSet : options.taxonSets) {
-                        dr.app.beauti.options.Parameter statistic = options.getStatistic(taxonSet);
-
-                        Attribute mono = new Attribute.Default<Boolean>(
-                                CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxonSet));
-
-                        writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
-
-                        writer.writeTag(TaxaParser.TAXA,
-                                new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
-                        if (statistic.isNodeHeight) {
-                            if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                                writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-                                writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
-                                writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
-                                writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-                            }
-                        }
-
-                        writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
-                    }
-                    writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+                
+                String taxaId;
+                if (options.allowDifferentTaxa) {
+                	for (PartitionData partition : model.getAllPartitionData()) {
+                		taxaId = partition.getName() + "." + TaxaParser.TAXA;
+                		writeTaxaRef(taxaId, writer);
+                	}
                 } else {
-                    writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+                	taxaId = TaxaParser.TAXA;
+                	writeTaxaRef(taxaId, writer);
                 }
 
                 writeInitialDemoModelRef(model, writer);
@@ -162,6 +143,40 @@ public class InitialTreeGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
 
+        }
+    }
+    
+    private void writeTaxaRef(String taxaId, XMLWriter writer) {
+    	
+        Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
+        
+        if (options.taxonSets.size() > 0) { //TODO maybe incorrect for multi-data partition
+            writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
+            writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+            for (Taxa taxonSet : options.taxonSets) {
+                dr.app.beauti.options.Parameter statistic = options.getStatistic(taxonSet);
+
+                Attribute mono = new Attribute.Default<Boolean>(
+                        CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxonSet));
+
+                writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
+
+                writer.writeTag(TaxaParser.TAXA,
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
+                if (statistic.isNodeHeight) {
+                    if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                        writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                        writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                        writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+                        writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                    }
+                }
+
+                writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+            }
+            writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+        } else {
+            writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
         }
     }
 

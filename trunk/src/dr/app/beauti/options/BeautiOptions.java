@@ -1402,6 +1402,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
     // Substitution Model
 //    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
     // Clock Model

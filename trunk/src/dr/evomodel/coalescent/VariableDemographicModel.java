@@ -25,9 +25,9 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public static final String USE_MIDPOINTS = "useMidpoints";
 
     public static final String TYPE = "type";
-    public static final String STEPWISE = "stepwise";
-    public static final String LINEAR = "linear";
-    public static final String EXPONENTIAL = "exponential";
+    //public static final String STEPWISE = "stepwise";
+    //public static final String LINEAR = "linear";
+    //public static final String EXPONENTIAL = "exponential";
 
     public static final String demoElementName = "demographic";
 
@@ -51,9 +51,13 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     }
 
     public enum Type {
-        STEPWISE,
-        LINEAR,
-        EXPONENTIAL
+        LINEAR("linear"),
+        EXPONENTIAL("exponential"),
+        STEPWISE("stepwise");
+        
+        Type(String name) { this.name = name; }
+        public String toString() { return name; } 
+        String name;
     }
 
     public VariableDemographicModel(TreeModel[] trees, double[] popFactors,
@@ -68,7 +72,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
         int events = 0;
         for (Tree t : trees) {
-            // number of coalescent envents
+            // number of coalescent events
             events += t.getExternalNodeCount() - 1;
             // we will have to handle this I guess
             assert t.getUnits() == trees[0].getUnits();
@@ -84,13 +88,22 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         this.mid = mid;
 
         if (popSizes != events) {
-            throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
-                    ") must be the same as the number of internal nodes in the tree. (" + events + ")");
+        	
+        	popSizeParameter.setDimension(events);
+        	System.err.println("WARNING: resetting parameter size of parameter " + popSizeParameter.getParameterName() + 
+        			" in variable demographic model to " + events);
+        	
+            //throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
+            //        ") must be the same as the number of internal nodes in the tree. (" + events + ")");
         }
 
-        if (nIndicators != popSizes - 1) {
-            throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
-                    + nIndicators + " != " + (events - 1) + ")");
+        if (nIndicators != events - 1) {
+        	indicatorParameter.setDimension(events);
+        	System.err.println("WARNING: resetting parameter size of parameter " + indicatorParameter.getParameterName() + 
+        			" in variable demographic model to " + (events - 1));
+        	
+        	//throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
+            //        + nIndicators + " != " + (events - 1) + ")");
         }
 
         this.trees = trees;
@@ -213,11 +226,11 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
             if (xo.hasAttribute(TYPE)) {
                 final String s = xo.getStringAttribute(TYPE);
-                if (s.equalsIgnoreCase(STEPWISE)) {
+                if (s.equalsIgnoreCase(Type.STEPWISE.toString())) {
                     type = Type.STEPWISE;
-                } else if (s.equalsIgnoreCase(LINEAR)) {
+                } else if (s.equalsIgnoreCase(Type.LINEAR.toString())) {
                     type = Type.LINEAR;
-                } else if (s.equalsIgnoreCase(EXPONENTIAL)) {
+                } else if (s.equalsIgnoreCase(Type.EXPONENTIAL.toString())) {
                     type = Type.EXPONENTIAL;
                 } else {
                     throw new XMLParseException("Unknown Bayesian Skyline type: " + s);

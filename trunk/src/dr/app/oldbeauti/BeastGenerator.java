@@ -1458,7 +1458,7 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
             final int nTax = taxonList.getTaxonCount();
-            final int nPops = nTax - (extendedSkylineModel.equals(VariableDemographicModel.STEPWISE) ? 1 : 0);
+            final int nPops = nTax - (extendedSkylineModel.equals(VariableDemographicModel.Type.STEPWISE.toString()) ? 1 : 0);
             writeParameter(VariableDemographicModel.demoElementName + ".popSize", nPops, writer);
             writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 

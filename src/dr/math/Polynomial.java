@@ -25,6 +25,8 @@ public interface Polynomial extends Cloneable {
 
     public double logEvaluateHorner(double x);
 
+    public void expand(double x);
+
     public Polynomial integrateWithLowerBound(double bound);
 
     public double getCoefficient(int n);
@@ -58,6 +60,8 @@ public interface Polynomial extends Cloneable {
         public abstract double logEvaluate(double x);
 
         public abstract double logEvaluateHorner(double x);
+
+        public abstract void expand(double x);
 
         public String toString() {
             StringBuffer bf = new StringBuffer();
@@ -94,9 +98,19 @@ public interface Polynomial extends Cloneable {
             }
         }
 
-        public String getCoefficientString(int n) {
-            return String.format(FORMAT, getCoefficient(n));
+        public double getLogCoefficient(int n) {
+            return logCoefficient[n];
         }
+
+        public void expand(double x) {
+            final int degree = getDegree();
+            for(int i=0; i<=degree; i++)
+                logCoefficient[i] = x + logCoefficient[i];
+        }
+
+        public String getCoefficientString(int n) {
+                 return String.format(FORMAT, getCoefficient(n));
+             }
 
 
         public LogDouble(double[] logCoefficient, boolean[] positiveCoefficient) {
@@ -310,7 +324,12 @@ public interface Polynomial extends Cloneable {
         public String getCoefficientString(int n) {
             return coefficient[n].toString();
 
+             }
+
+         public void expand(double x) {
+            throw new RuntimeException("Not yet implement: Polynomial.BigDouble.expand()");
         }
+
 
 
         public BigDouble(BigDecimal[] coefficient) {
@@ -318,7 +337,7 @@ public interface Polynomial extends Cloneable {
         }
 
         public int getDegree() {
-            return coefficient.length - 1;
+             return coefficient.length - 1;
         }
 
         public BigDouble multiply(Polynomial b) {
@@ -330,7 +349,7 @@ public interface Polynomial extends Cloneable {
                 newCoefficient[i] = new BigDecimal(0.0);
             for(int n=0; n<=getDegree(); n++) {
                 for(int m=0; m<=bd.getDegree(); m++)
-                    newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));
+                   newCoefficient[n+m] = newCoefficient[n+m].add(coefficient[n].multiply(bd.coefficient[m]));
             }
             return new BigDouble(newCoefficient);
         }
@@ -547,9 +566,15 @@ public interface Polynomial extends Cloneable {
                 coefficient[n] = polynomial.getCoefficient(n);
         }
 
-        public String getCoefficientString(int n) {
-            return String.format(FORMAT, getCoefficient(n));
+        public void expand(double x) {
+            final int degree = getDegree();
+            for(int i=0; i<=degree; i++)
+                coefficient[i] = x * coefficient[i];
         }
+
+        public String getCoefficientString(int n) {
+                 return String.format(FORMAT, getCoefficient(n));
+             }
 
 
         public int getDegree() {
@@ -562,6 +587,10 @@ public interface Polynomial extends Cloneable {
 
         public double logEvaluate(double x) {
             return Math.log(evaluate(x));
+        }
+
+        public double logEvaluateQuick(double x, int n) {
+            return Math.log(evaluateQuick(x,n));
         }
 
         public double logEvaluateHorner(double x) {
@@ -625,6 +654,18 @@ public interface Polynomial extends Cloneable {
             return result;
         }
 
+        public double evaluateQuick(double x, int n) {
+            int m = getDegree();
+            double xm = Math.pow(x,m);
+            double result = xm * coefficient[m];
+            for (int i=n-1; i>0; i--) {
+                xm /= x;
+                m--;
+                result += xm * coefficient[m];
+            }
+            return result;
+        }
+
         public double evaluate(double x) {
             double result = 0.0;
             double xn = 1;
@@ -650,6 +691,6 @@ public interface Polynomial extends Cloneable {
     }
 
     public enum Type {
-        DOUBLE, APDOUBLE, LOG_DOUBLE, BIG_DOUBLE
+        DOUBLE, APDOUBLE, LOG_DOUBLE, BIG_DOUBLE//, RATIONAL
     }
 }

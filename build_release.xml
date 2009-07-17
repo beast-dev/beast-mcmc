@@ -48,6 +48,7 @@
             <include name="dr/gui/chart/**"/>
             <include name="dr/gui/tree/**"/>
             <include name="dr/inference/**"/>
+            <include name="dr/inferencexml/**"/>
             <include name="dr/math/**"/>
             <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
@@ -84,6 +85,7 @@
                 <include name="dr/exporters/**/*.class"/>
                 <include name="dr/gui/tree/**/*.class"/>
                 <include name="dr/inference/**/*.class"/>
+                <include name="dr/inferencexml/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
@@ -147,6 +149,7 @@
                 <include name="dr/gui/table/**"/>
                 <include name="dr/gui/tree/**"/>
                 <include name="dr/inference/**/*.class"/>
+                <include name="dr/inferencexml/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>

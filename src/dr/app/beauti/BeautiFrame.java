@@ -181,7 +181,7 @@ public class BeautiFrame extends DocumentFrame {
         setSize(new java.awt.Dimension(1024, 768));
 
         // make JFileChooser chooser remember previous path
-        chooser = new JFileChooser();
+        chooser = new JFileChooser(Utils.getCWD());
     }
 
     /**
@@ -946,14 +946,14 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        FileDialog dialog = new FileDialog(this,
-                "Generate BEAST File...",
-                FileDialog.SAVE);
+        // todo save last dir, sync import and out directory, offer stem as default
 
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Generate BEAST File...", "xml", "beast");
+        chooser.setFileFilter(filter);
+      
+        final int returnVal = chooser.showSaveDialog(this);
+        if( returnVal == JFileChooser.APPROVE_OPTION ) {
+            File file = chooser.getSelectedFile();
             try {
                 generate(file);
 
@@ -965,6 +965,25 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
+//        FileDialog dialog = new FileDialog(this,
+//                "Generate BEAST File...",
+//                FileDialog.SAVE);
+//
+//        dialog.setVisible(true);
+//        if (dialog.getFile() != null) {
+//            File file = new File(dialog.getDirectory(), dialog.getFile());
+//
+//            try {
+//                generate(file);
+//
+//            } catch (IOException ioe) {
+//                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
+//                        "Unable to generate file",
+//                        JOptionPane.ERROR_MESSAGE);
+//                return false;
+//            }
+//        }
+        
         clearDirty();
         return true;
     }

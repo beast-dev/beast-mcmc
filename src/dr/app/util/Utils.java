@@ -40,17 +40,17 @@ import java.util.List;
  * @version
  */
 public class Utils {
-	
+
+    public static String absName(File file) {
+       return (file != null) ? file.getAbsolutePath() : null;
+    }
+
 	public static String getLoadFileName(String message) {
-		java.io.File file = getLoadFile(message);
-		if (file == null) return null;
-		return file.getAbsolutePath();
+		return absName(getLoadFile(message));
 	}
 
 	public static String getSaveFileName(String message) {
-		java.io.File file = getSaveFile(message);
-		if (file == null) return null;
-		return file.getAbsolutePath();
+		return absName(getSaveFile(message));
 	}
 
 	public static File getLoadFile(String message) {
@@ -97,8 +97,8 @@ public class Utils {
         }
     }
 
-    // Ner object of type cl from text.
-    // return null if can't be done of value can't be converted
+    // New object of type cl from text.
+    // return null if can't be done of value can't be converted.
 
     public static Object constructFromString(Class cl, String value) {
         for( Constructor c : cl.getConstructors() ) {
@@ -221,4 +221,33 @@ public class Utils {
 			} else return null;
 		}
 	}
+
+    public static File getCWD() {
+        final String f = System.getProperty("user.dir");
+        return new File(f);
+    }
+
+    enum Platform {
+        WINDOWS,
+        MACOSX,
+        LINUX;
+
+        Platform detect() {
+            final String os = System.getProperty("os.name");
+
+            if( os.equals("Linux") ) {
+                return LINUX;
+            }
+            // todo probably wrong, please check on windows and mac
+            if( os.equals("Windows") ) {
+                return WINDOWS;
+            }
+
+            if( os.equals("MacOSX") ) {
+                return MACOSX;
+            }
+
+            return null;
+        }
+    }
 }

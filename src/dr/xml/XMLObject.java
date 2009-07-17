@@ -53,9 +53,9 @@ public class XMLObject {
 
     public XMLObject(XMLObject obj, int index) {
 
-        this(obj.element);
-        nativeObject = ((List) obj.getNativeObject()).get(index);
-    }
+       this(obj.element);
+       nativeObject = ((List)obj.getNativeObject()).get(index);
+   }  
 
     /**
      * @return the number of children this XMLObject has.
@@ -73,13 +73,13 @@ public class XMLObject {
         Object obj = getRawChild(i);
         XMLObject xo = null;
 
-        if (obj instanceof XMLObject) {
+        if( obj instanceof XMLObject ) {
             xo = (XMLObject) obj;
-        } else if (obj instanceof Reference) {
+        } else if( obj instanceof Reference ) {
             xo = ((Reference) obj).getReferenceObject();
         }
 
-        if (xo != null && xo.hasNativeObject()) {
+        if( xo != null && xo.hasNativeObject() ) {
             return xo.getNativeObject();
         }
         return obj;
@@ -93,7 +93,7 @@ public class XMLObject {
 
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
-            if (c.isInstance(child)) {
+            if( c.isInstance(child) ) {
                 return child;
             }
         }
@@ -108,8 +108,8 @@ public class XMLObject {
 
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
-            if (child instanceof XMLObject) {
-                if (((XMLObject) child).getName().equals(name)) {
+            if( child instanceof XMLObject ) {
+                if( ((XMLObject) child).getName().equals(name) ) {
                     return (XMLObject) child;
                 }
             }

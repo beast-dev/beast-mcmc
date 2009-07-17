@@ -173,18 +173,24 @@ public class XMLParser {
 
             String idref = e.getAttribute(IDREF);
 
-            if (e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1) {
+            if(e.hasAttribute("index")){
+                index = Integer.parseInt(e.getAttribute("index"));
+            }
+            if ((e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1)&& index == -1) {
                 throw new XMLParseException("Object with idref=" + idref + " must not have other content or attributes (or perhaps it was not intended to be a reference?).");
             }
-
-            if (idref.indexOf(':') >= 0) {
-                // parse idref
-                String[] s = idref.split(":");
-                idref = s[0];
-                index = Integer.parseInt(s[1]);
-            }
+               
 
             XMLObject restoredXMLObject = (XMLObject) store.get(idref);
+            if (index != -1) {
+
+                if (restoredXMLObject.getNativeObject() instanceof List) {
+
+                    restoredXMLObject = new XMLObject(restoredXMLObject, index);
+                } else {
+                    throw new XMLParseException("Trying to get indexed object from non-list");
+                }
+            }
 
             if (restoredXMLObject == null) {
                 throw new XMLParseException("Object with idref=" + idref + " has not been previously declared.");
@@ -202,15 +208,7 @@ public class XMLParser {
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
-            if (index != -1) {
 
-                if (restoredXMLObject.getNativeObject() instanceof List) {
-
-                    restoredXMLObject = new XMLObject(restoredXMLObject, index);
-                } else {
-                    throw new XMLParseException("Trying to get indexed object from non-list");
-                }
-            }
 
             return new Reference(restoredXMLObject);
 

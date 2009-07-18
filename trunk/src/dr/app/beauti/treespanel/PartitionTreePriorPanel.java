@@ -1,7 +1,7 @@
 /*
- * PriorsPanel.java
+ * PartitionTreePriorPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,19 +25,14 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.options.*;
-import dr.app.util.Arguments.Option;
-import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.VariableDemographicModel;
-
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-
-import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 
@@ -49,11 +44,11 @@ import java.util.EnumSet;
  */
 public class PartitionTreePriorPanel extends OptionsPanel {
 
-	private static final long serialVersionUID = 5016996360264782252L;
-	
+    private static final long serialVersionUID = 5016996360264782252L;
+
     private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
 
-	private JComboBox parameterizationCombo = new JComboBox(new String[]{
+    private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
     private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
             "Piecewise-constant", "Piecewise-linear"});
@@ -68,25 +63,25 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 //	private BeautiFrame frame = null;
 //	private BeautiOptions options = null;
-    
+
     private final PartitionTreePrior partitionTreePrior;
     private final TreesPanel treesPanel;
-    
+
     private boolean settingOptions = false;
 
 
     public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, TreesPanel parent) {
 
-		this.partitionTreePrior = partitionTreePrior;
-		this.treesPanel = parent;
+        this.partitionTreePrior = partitionTreePrior;
+        this.treesPanel = parent;
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
+            public void itemStateChanged(ItemEvent ev) {
 //	                        fireTreePriorsChanged();
-                        setupPanel();
-                    }
-                }
+                setupPanel();
+            }
+        }
         );
 
         KeyListener keyListener = new KeyAdapter() {
@@ -108,7 +103,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //	        samplingProportionField.addFocusListener(focusListener);
 
 
-       ItemListener listener = new ItemListener() {
+        ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 //	                fireTreePriorsChanged();
             }
@@ -126,50 +121,49 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         gmrfBayesianSkyrideCombo.addItemListener(listener);
 
         setupPanel();
-	}
+    }
 
     private void setupPanel() {
 
         removeAll();
-        
+
         addComponentWithLabel("Tree Prior:", treePriorCombo);
-        
+
         if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
                 treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
                 treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
             addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-           
+
         } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
             groupCountField.setColumns(6);
             addComponentWithLabel("Number of groups:", groupCountField);
             addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
-           
+
         } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
-        	
+
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
             addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-            
+
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
-            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);            
-          
-        } 
-        
+            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+
+        }
+
         if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
-        	//For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-            addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" + 
-            		"\nThe shareSameTreePrior has to be unchecked using GMRF."); 
-            
+            //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+            addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
+                    "\nThe shareSameTreePrior has to be unchecked using GMRF.");
+
             treesPanel.shareSameTreePriorCheck.setSelected(false);
             treesPanel.shareSameTreePriorCheck.setEnabled(false);
-            treesPanel.updateShareSameTreePriorChanged();          
+            treesPanel.updateShareSameTreePriorChanged();
         } else {
-        	treesPanel.shareSameTreePriorCheck.setEnabled(true);
+            treesPanel.shareSameTreePriorCheck.setEnabled(true);
 //            treesPanel.updateShareSameTreePriorChanged();
         }
-        
-        
+
 
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
@@ -178,8 +172,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         validate();
         repaint();
     }
-    
-    public void setOptions() {     
+
+    public void setOptions() {
 
         if (partitionTreePrior == null) {
             return;
@@ -208,9 +202,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     }
 
     public void getOptions() {
-    	if (settingOptions) return;
-    	
-    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
+        if (settingOptions) return;
+
+        partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
 
         if (partitionTreePrior.getNodeHeightPrior() == TreePrior.SKYLINE) {
             Integer groupCount = groupCountField.getValue();
@@ -235,18 +229,18 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
         // the taxon list may not exist yet... this should be set when generating...
 //        partitionTreePrior.skyrideIntervalCount = partitionTreePrior.taxonList.getTaxonCount() - 1;
-        
-    }
-    
-    public void removeCertainPriorFromTreePriorCombo() {
-    	treePriorCombo.removeItem(TreePrior.YULE);
-    	treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
-	}
 
-	public void recoveryTreePriorCombo() {
-		if (treePriorCombo.getItemCount() < EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).size()) {
-			treePriorCombo.addItem(TreePrior.YULE);
-	    	treePriorCombo.addItem(TreePrior.BIRTH_DEATH);  
-		}
-	}
+    }
+
+    public void removeCertainPriorFromTreePriorCombo() {
+        treePriorCombo.removeItem(TreePrior.YULE);
+        treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+    }
+
+    public void recoveryTreePriorCombo() {
+        if (treePriorCombo.getItemCount() < EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).size()) {
+            treePriorCombo.addItem(TreePrior.YULE);
+            treePriorCombo.addItem(TreePrior.BIRTH_DEATH);
+        }
+    }
 }

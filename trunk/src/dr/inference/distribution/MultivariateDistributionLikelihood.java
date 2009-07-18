@@ -1,5 +1,31 @@
+/*
+ * MultivariateDistributionLikelihood.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.distribution;
 
+import dr.inference.model.DummyModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -33,11 +59,12 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     private final MultivariateDistribution distribution;
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-        super(null);
+        super(new DummyModel());
         this.distribution = distribution;
     }
 
     public void addData(Parameter data) {
+        ((DummyModel) getModel()).addParameter(data);
         dataList.add(data);
     }
 
@@ -53,7 +80,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         double logL = 0.0;
 
         for (Parameter parameter : dataList) {
-                logL += distribution.logPdf(parameter.getParameterValues());
+            logL += distribution.logPdf(parameter.getParameterValues());
         }
         return logL;
     }
@@ -71,7 +98,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-            XMLObject cxo = (XMLObject) xo.getChild(COUNTS);
+            XMLObject cxo = xo.getChild(COUNTS);
             Parameter counts = (Parameter) cxo.getChild(Parameter.class);
 
             DirichletDistribution dirichlet = new DirichletDistribution(counts.getParameterValues());
@@ -79,7 +106,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
                     dirichlet);
 
-            cxo = (XMLObject) xo.getChild(DATA);
+            cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof Parameter) {
                     likelihood.addData((Parameter) cxo.getChild(j));
@@ -120,14 +147,14 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
             int df = xo.getIntegerAttribute(DF);
 
-            XMLObject cxo = (XMLObject) xo.getChild(SCALE_MATRIX);
+            XMLObject cxo = xo.getChild(SCALE_MATRIX);
             MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
             InverseWishartDistribution invWishart = new InverseWishartDistribution(df, scaleMatrix.getParameterAsMatrix());
 
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
                     invWishart);
 
-            cxo = (XMLObject) xo.getChild(DATA);
+            cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof MatrixParameter) {
                     likelihood.addData((MatrixParameter) cxo.getChild(j));
@@ -168,13 +195,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MultivariateDistributionLikelihood likelihood = null;
+            MultivariateDistributionLikelihood likelihood;
 
-            if ( xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE) ) {
+            if (xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE)) {
                 // Make non-informative settings
-                XMLObject cxo = (XMLObject) xo.getChild(DATA);
+                XMLObject cxo = xo.getChild(DATA);
                 int dim = ((MatrixParameter) cxo.getChild(0)).getColumnDimension();
-                likelihood = new MultivariateDistributionLikelihood( new WishartDistribution(dim));
+                likelihood = new MultivariateDistributionLikelihood(new WishartDistribution(dim));
             } else {
                 if (!xo.hasAttribute(DF) || !xo.hasChildNamed(SCALE_MATRIX)) {
                     throw new XMLParseException("Must specify both a df and scaleMatrix");
@@ -182,16 +209,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
                 int df = xo.getIntegerAttribute(DF);
 
-                XMLObject cxo = (XMLObject) xo.getChild(SCALE_MATRIX);
+                XMLObject cxo = xo.getChild(SCALE_MATRIX);
                 MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
                 likelihood = new MultivariateDistributionLikelihood(
-                    new WishartDistribution(df, scaleMatrix.getParameterAsMatrix())
+                        new WishartDistribution(df, scaleMatrix.getParameterAsMatrix())
                 );
 
             }
 
-            XMLObject cxo = (XMLObject) xo.getChild(DATA);
+            XMLObject cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof MatrixParameter) {
                     likelihood.addData((MatrixParameter) cxo.getChild(j));
@@ -237,10 +264,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(MVN_MEAN);
+            XMLObject cxo = xo.getChild(MVN_MEAN);
             Parameter mean = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(MVN_PRECISION);
+            cxo = xo.getChild(MVN_PRECISION);
             MatrixParameter precision = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
             if (mean.getDimension() != precision.getRowDimension() ||
@@ -252,7 +279,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                             new MultivariateNormalDistribution(mean.getParameterValues(),
                                     precision.getParameterAsMatrix())
                     );
-            cxo = (XMLObject) xo.getChild(DATA);
+            cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof Parameter) {
                     Parameter data = (Parameter) cxo.getChild(j);
@@ -304,10 +331,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
             if (xo.hasChildNamed(MVGAMMA_SHAPE)) {
 
-                XMLObject cxo = (XMLObject) xo.getChild(MVGAMMA_SHAPE);
+                XMLObject cxo = xo.getChild(MVGAMMA_SHAPE);
                 shape = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
-                cxo = (XMLObject) xo.getChild(MVGAMMA_SCALE);
+                cxo = xo.getChild(MVGAMMA_SCALE);
                 scale = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
                 if (shape.length != scale.length)
@@ -315,10 +342,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
             } else {
 
-                XMLObject cxo = (XMLObject) xo.getChild(MVN_MEAN);
+                XMLObject cxo = xo.getChild(MVN_MEAN);
                 double[] mean = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
-                cxo = (XMLObject) xo.getChild(MVN_CV);
+                cxo = xo.getChild(MVN_CV);
                 double[] cv = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
 
                 if (mean.length != cv.length)
@@ -339,7 +366,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     new MultivariateDistributionLikelihood(
                             new MultivariateGammaDistribution(shape, scale)
                     );
-            XMLObject cxo = (XMLObject) xo.getChild(DATA);
+            XMLObject cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof Parameter) {
                     Parameter data = (Parameter) cxo.getChild(j);

@@ -1,7 +1,7 @@
 /*
  * UniformRootPrior.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,11 +25,14 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.inference.model.*;
-import dr.xml.*;
+import dr.evolution.tree.Tree;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.Polynomial;
+import dr.xml.*;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -46,7 +49,6 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Erik Bloomquist
  * @author Marc Suchard
- *
  * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
 public class UniformRootPrior extends AbstractModelLikelihood {
@@ -81,7 +83,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         this.tree = tree;
         this.isNicholls = false;
         this.usePolynomial = usePolynomial;
-        
+
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
@@ -146,7 +148,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         super(name);
     }
 
-// **************************************************************
+    // **************************************************************
     // Extendable methods
     // **************************************************************
 
@@ -280,7 +282,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 //                logLike = logFactorialK - (double) k * Math.log(rootHeight);
                 // Try new prior.... should behave the same.
                 tmpLogLikelihood = 0;
-                recursivelyComputeDensity(tree,tree.getRoot(),0);
+                recursivelyComputeDensity(tree, tree.getRoot(), 0);
                 logLike = tmpLogLikelihood;
 
             } else {
@@ -288,7 +290,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                 if (usePolynomial) {
                     if (!treePolynomialKnown) {
                         polynomialType = Polynomial.Type.LOG_DOUBLE;
-                        treePolynomial  = recursivelyComputePolynomial(tree,tree.getRoot(),polynomialType).getPolynomial();
+                        treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
 //                        System.err.println("poly1: "+treePolynomial);
 //                        System.err.println("eval = "+treePolynomial.logEvaluate(rootHeight));
 //                        System.err.println("last: "+treePolynomial.getCoefficientString(0));
@@ -301,7 +303,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                         treePolynomialKnown = true;
                     }
 
-                    logLike  = -treePolynomial .logEvaluate(rootHeight);
+                    logLike = -treePolynomial.logEvaluate(rootHeight);
 
                     if (Double.isNaN(logLike)) {
                         // Try using Horner's method
@@ -313,7 +315,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                 } else {
                     // Try new prior!
                     tmpLogLikelihood = 0;
-                    recursivelyComputeDensity(tree,tree.getRoot(),0);
+                    recursivelyComputeDensity(tree, tree.getRoot(), 0);
                     logLike = tmpLogLikelihood;
                 }
             }
@@ -329,8 +331,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
             return tree.getNodeHeight(node);
 
         double thisHeight = tree.getNodeHeight(node);
-        double heightChild1 = recursivelyComputeDensity(tree,tree.getChild(node,0),thisHeight);
-        double heightChild2 = recursivelyComputeDensity(tree,tree.getChild(node,1),thisHeight);
+        double heightChild1 = recursivelyComputeDensity(tree, tree.getChild(node, 0), thisHeight);
+        double heightChild2 = recursivelyComputeDensity(tree, tree.getChild(node, 1), thisHeight);
         double minHeight = (heightChild1 > heightChild2) ? heightChild1 : heightChild2;
 
         if (!tree.isRoot(node)) {
@@ -349,12 +351,12 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
 
         if (tree.isExternal(node)) {
-            double[] value = new double[] {1.0};
+            double[] value = new double[]{1.0};
             return new TipLabeledPolynomial(value, tree.getNodeHeight(node), type, true);
         }
 
-        TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node,0),type);
-        TipLabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node,1),type);
+        TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node, 0), type);
+        TipLabeledPolynomial childPolynomial2 = recursivelyComputePolynomial(tree, tree.getChild(node, 1), type);
         // TODO The partialPolynomial below *should* be cached in an efficient reuse scheme (at least for arbitrary precision)
         TipLabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
         // See AbstractTreeLikelihood for an example of how to flag cached polynomials for re-evaluation
@@ -410,11 +412,14 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
         TipLabeledPolynomial(double[] coefficients, double label, Polynomial.Type type, boolean isTip) {
             switch (type) {
-                case DOUBLE:        polynomial = new Polynomial.Double(coefficients);
+                case DOUBLE:
+                    polynomial = new Polynomial.Double(coefficients);
                     break;
-                case LOG_DOUBLE:    polynomial = new Polynomial.LogDouble(coefficients);
+                case LOG_DOUBLE:
+                    polynomial = new Polynomial.LogDouble(coefficients);
                     break;
-                case BIG_DOUBLE:    polynomial = new Polynomial.BigDouble(coefficients);
+                case BIG_DOUBLE:
+                    polynomial = new Polynomial.BigDouble(coefficients);
                     break;
 //                case APDOUBLE:      polynomial = new Polynomial.APDouble(coefficients);
 //                    break;
@@ -423,7 +428,8 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 //                case MARCRATIONAL:  polynomial = new Polynomial.MarcRational(coefficients);
 //                                    break;
 
-                default: throw new RuntimeException("Unknown polynomial type");
+                default:
+                    throw new RuntimeException("Unknown polynomial type");
             }
             this.label = label;
             this.isTip = isTip;
@@ -437,14 +443,16 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
         public TipLabeledPolynomial copy() {
             Polynomial copyPolynomial = polynomial.copy();
-            return new TipLabeledPolynomial(copyPolynomial,this.label,this.isTip);
+            return new TipLabeledPolynomial(copyPolynomial, this.label, this.isTip);
         }
 
-        public Polynomial getPolynomial() { return polynomial; }
+        public Polynomial getPolynomial() {
+            return polynomial;
+        }
 
         public TipLabeledPolynomial multiply(TipLabeledPolynomial b) {
-            double maxLabel = Math.max(label,b.label);
-            return new TipLabeledPolynomial(polynomial.multiply(b),maxLabel,false);
+            double maxLabel = Math.max(label, b.label);
+            return new TipLabeledPolynomial(polynomial.multiply(b), maxLabel, false);
         }
 
         public int getDegree() {
@@ -476,11 +484,11 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
 
         public void setCoefficient(int n, double x) {
-            polynomial.setCoefficient(n,x);
+            polynomial.setCoefficient(n, x);
         }
 
         public TipLabeledPolynomial integrateWithLowerBound(double bound) {
-            return new TipLabeledPolynomial(polynomial.integrateWithLowerBound(bound),label,isTip);
+            return new TipLabeledPolynomial(polynomial.integrateWithLowerBound(bound), label, isTip);
         }
 
         public double getCoefficient(int n) {
@@ -488,7 +496,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
 
         public String toString() {
-            return polynomial.toString() + " {"+label+"}";
+            return polynomial.toString() + " {" + label + "}";
         }
 
         public String getCoefficientString(int n) {
@@ -583,7 +591,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private Polynomial storedTreePolynomial;
 
     private double tmpLogLikelihood;
-//    private Iterator<Polynomial.Type> typeIterator = EnumSet.allOf(Polynomial.Type.class).iterator();
+    //    private Iterator<Polynomial.Type> typeIterator = EnumSet.allOf(Polynomial.Type.class).iterator();
     //    private Polynomial.Type polynomialType = typeIterator.next();
     private Polynomial.Type polynomialType;
 

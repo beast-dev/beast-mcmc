@@ -1,7 +1,7 @@
 /*
- * CenteredScaleOperator.java
+ * BitSwapOperator.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -32,7 +32,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
- * Given a values vector (data) and an indicators vector (boolean vector indicating wheather the corrosponding value
+ * Given a values vector (data) and an indicators vector (boolean vector indicating whether the corrosponding value
  * is used or ignored), this operator explores all possible positions for the used data points while preserving their
  * order.
  * The distribition is uniform on all possible data positions.
@@ -122,8 +122,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
             pos = loc[rand];
             direction = MathUtils.nextInt(2 * radius);
             direction -= radius - (direction < radius ? 0 : 1);
-            for (int i = direction > 0 ? pos + 1 : pos + direction; i < (direction > 0 ? pos + direction + 1 : pos); i++)
-            {
+            for (int i = direction > 0 ? pos + 1 : pos + direction; i < (direction > 0 ? pos + direction + 1 : pos); i++) {
                 if (i < 0 || i >= dim || indicators.getStatisticValue(i) > 0) {
                     throw new OperatorFailedException("swap faild");
                 }
@@ -240,7 +239,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule(RADIUS) , 
+                AttributeRule.newDoubleRule(RADIUS),
                 new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
                 new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
         };

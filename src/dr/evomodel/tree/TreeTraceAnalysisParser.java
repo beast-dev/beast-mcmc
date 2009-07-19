@@ -118,7 +118,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
             if (shortReport) {
                 analysis.shortReport(name, referenceTree, true, credSetProbability);
             } else {
-                analysis.report(minCladeProbability, credSetProbability);
+                analysis.report(minCladeProbability, credSetProbability, 0);
             }
 
             System.out.println();
@@ -146,7 +146,7 @@ public class TreeTraceAnalysisParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new StringAttributeRule(FILE_NAME, "name of a tree log file", "trees.log"),
             AttributeRule.newIntegerRule(BURN_IN, true),
             AttributeRule.newDoubleRule(MIN_CLADE_PROBABILITY, true),

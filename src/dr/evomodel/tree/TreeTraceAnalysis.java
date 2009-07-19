@@ -252,19 +252,19 @@ public class TreeTraceAnalysis {
         throw new RuntimeException("Couldn't find tree " + index);
     }
 
-    public void report() throws IOException {
-        report(0.5, 0.95);
+    public void report(int minNT) throws IOException {
+        report(0.5, 0.95, minNT);
     }
 
-    public void report(double minCladeProbability) throws IOException {
-        report(minCladeProbability, 0.95);
+    public void report(double minCladeProbability, int minNT) throws IOException {
+        report(minCladeProbability, 0.95, minNT);
     }
 
     /**
      * @param minCladeProbability clades with at least this posterior probability will be included in report.
      * @throws IOException if general I/O error occurs
      */
-    public void report(double minCladeProbability, double credSetProbability) throws IOException {
+    public void report(double minCladeProbability, double credSetProbability, int minNT) throws IOException {
 
         System.err.println("making report");
 
@@ -288,31 +288,45 @@ public class TreeTraceAnalysis {
         System.out.println("Count\tPercent\tTree");
         int credSet = (int) (credSetProbability * totalTrees);
         int sumFreq = 0;
+        int skipped = 0;
 
         NumberFormatter nf = new NumberFormatter(8);
 
         for (int i = 0; i < nTreeSet; i++) {
-            int freq = treeSet.getFrequency(i);
-            double prop = ((double) freq) / totalTrees;
-            System.out.print(freq);
-            System.out.print("\t" + nf.formatDecimal(prop * 100.0, 2) + "%");
+            final int freq = treeSet.getFrequency(i);
+            boolean show = true;
+            if( minNT > 0 && freq <= minNT ) {
+                show = false;
+                skipped += 1;
+            }
+            final double prop = ((double) freq) / totalTrees;
+            if( show ) {
+                System.out.print(freq);
+                System.out.print("\t" + nf.formatDecimal(prop * 100.0, 2) + "%");
+            }
 
             sumFreq += freq;
-            double sumProp = ((double) sumFreq) / totalTrees;
-            System.out.print("\t" + nf.formatDecimal(sumProp * 100.0, 2) + "%");
+            final double sumProp = ((double) sumFreq) / totalTrees;
+            if( show ) {
+                System.out.print("\t" + nf.formatDecimal(sumProp * 100.0, 2) + "%");
 
-            String newickTree = treeSet.get(i);
+                String newickTree = treeSet.get(i);
 
-            if (freq > 100) {
-                // calculate conditional average node heights
-                Tree meanTree = analyzeTree(newickTree);
-                System.out.println("\t" + Tree.Utils.newick(meanTree));
+                if (freq > 100) {
+                    // calculate conditional average node heights
+                    Tree meanTree = analyzeTree(newickTree);
+                    System.out.println("\t" + Tree.Utils.newick(meanTree));
 
-            } else {
-                System.out.println("\t" + newickTree);
+                } else {
+                    System.out.println("\t" + newickTree);
+                }
             }
 
             if (sumFreq >= credSet) {
+                if( skipped > 0 ) {
+                   System.out.println();
+                   System.out.println("... (" + skipped + ") trees.");  
+                }
                 System.out.println();
                 System.out.println("95% credible set has " + (i + 1) + " trees.");
                 break;

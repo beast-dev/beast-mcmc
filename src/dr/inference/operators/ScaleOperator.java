@@ -1,7 +1,7 @@
 /*
  * ScaleOperator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -54,11 +54,6 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
     private Parameter indicator;
     private double indicatorOnProb;
-
-    public ScaleOperator(Parameter parameter, double scale) {
-
-        this(parameter, scale, CoercionMode.COERCION_ON, 1.0);
-    }
 
     public ScaleOperator(Parameter parameter, double scale, CoercionMode mode, double weight) {
 
@@ -107,7 +102,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
                 final double scaleOne = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
                 final double value = scaleOne * parameter.getParameterValue(i);
-
+                
                 logq -= Math.log(scaleOne);
 
                 if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
@@ -132,7 +127,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             for (int i = 0; i < dim; i++) {
                 parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
             }
-
+            
             for (int i = 0; i < dim; i++) {
                 if (parameter.getParameterValue(i) < parameter.getBounds().getLowerLimit(i) ||
                         parameter.getParameterValue(i) > parameter.getBounds().getUpperLimit(i)) {
@@ -141,7 +136,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             }
         } else {
             logq = -Math.log(scale);
-
+            
             // which bit to scale
             int index;
             if (indicator != null) {
@@ -177,16 +172,16 @@ public class ScaleOperator extends AbstractCoercableOperator {
             }
 
             final double oldValue = parameter.getParameterValue(index);
-
-            if (oldValue == 0) {
-                Logger.getLogger("dr.inference").warning("The " + SCALE_OPERATOR +
-                        " for " +
-                        parameter.getParameterName()
-                        + " has failed since the parameter has a value of 0.0." +
-                        "\nTo fix this problem, initalize the value of " +
-                        parameter.getParameterName() + " to be a positive real number"
-                );
-                throw new OperatorFailedException("");
+            
+            if(oldValue == 0){
+            	Logger.getLogger("dr.inference").warning("The " + SCALE_OPERATOR + 
+            			" for " +
+            			parameter.getParameterName()
+            			+ " has failed since the parameter has a value of 0.0." +
+            			"\nTo fix this problem, initalize the value of " +
+            			parameter.getParameterName() + " to be a positive real number"
+            			      			 );
+            	throw new OperatorFailedException("");
             }
             final double newValue = scale * oldValue;
 

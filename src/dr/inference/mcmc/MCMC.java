@@ -90,25 +90,6 @@ public class MCMC implements Identifiable, Spawnable {
         }*/
     }
 
-    /**
-     * Must be called before calling chain.
-     */
-    public void init(int chainlength,
-                     Likelihood likelihood,
-                     MCMCOperator[] operators,
-                     Logger[] loggers) {
-
-        MCMCOptions options = new MCMCOptions();
-        options.setPreBurnin(0);
-        options.setChainLength(chainlength);
-        MCMCCriterion criterion = new MCMCCriterion();
-        criterion.setTemperature(1);
-        OperatorSchedule schedule = new SimpleOperatorSchedule();
-        for (MCMCOperator operator : operators) schedule.addOperator(operator);
-
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
-    }
-
     public MarkovChain getMarkovChain() {
         return mc;
     }

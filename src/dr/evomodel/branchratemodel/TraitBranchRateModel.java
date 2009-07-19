@@ -1,37 +1,12 @@
-/*
- * TraitBranchRateModel.java
- *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
 import dr.xml.*;
+import dr.evomodel.tree.TreeModel;
 
 import java.util.logging.Logger;
 
@@ -102,7 +77,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
             ratio = ratioParameter.getParameterValue(0);
         }
 
-        TreeModel treeModel = (TreeModel) tree;
+        TreeModel treeModel = (TreeModel)tree;
 
         // get the log rate for the node and its parent
         double rate1 = ratio * treeModel.getMultivariateNodeTrait(node, trait)[0];
@@ -162,7 +137,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
+	            AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
                 new ElementRule(RATE, Parameter.class, "The rate parameter", true),
                 new ElementRule(RATIO, Parameter.class, "The ratio parameter", true),
         };

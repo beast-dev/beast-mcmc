@@ -1,7 +1,15 @@
+package dr.math.distributions;
+
+import dr.math.UnivariateFunction;
+import dr.math.ErrorFunction;
+import dr.math.interfaces.OneVariableFunction;
+import dr.math.iterations.BisectionZeroFinder;
+import dr.math.iterations.NewtonZeroFinder;
+
 /*
  * InverseGaussianDistribution.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,24 +20,16 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
-
-package dr.math.distributions;
-
-import dr.math.ErrorFunction;
-import dr.math.UnivariateFunction;
-import dr.math.interfaces.OneVariableFunction;
-import dr.math.iterations.BisectionZeroFinder;
-
 /**
  * normal distribution (pdf, cdf, quantile)
  *
@@ -43,9 +43,8 @@ public class InverseGaussianDistribution implements Distribution {
 
     /**
      * Constructor
-     *
      * @param mean  mean
-     * @param shape shape
+     * @param shape  shape
      */
     public InverseGaussianDistribution(double mean, double shape) {
         this.m = mean;
@@ -65,7 +64,6 @@ public class InverseGaussianDistribution implements Distribution {
     public double getShape() {
         return shape;
     }
-
     public void setShape(double value) {
         shape = value;
         sd = calculateSD(m, shape);
@@ -73,14 +71,14 @@ public class InverseGaussianDistribution implements Distribution {
 
 
     public static double calculateSD(double mean, double shape) {
-        return Math.sqrt((mean * mean * mean) / shape);
+        return Math.sqrt((mean*mean*mean)/shape);
     }
     //public double getSD() {
-    //return sd;
+        //return sd;
     //}
 
     //public void setSD(double value) {
-    //sd = value;
+        //sd = value;
     //}
 
     public double pdf(double x) {
@@ -127,17 +125,18 @@ public class InverseGaussianDistribution implements Distribution {
     };
 
 
+
     /**
      * probability density function
      *
-     * @param x     argument
-     * @param m     mean
-     * @param shape shape parameter
+     * @param x  argument
+     * @param m  mean
+     * @param shape  shape parameter
      * @return pdf at x
      */
     public static double pdf(double x, double m, double shape) {
-        double a = Math.sqrt(shape / (2.0 * Math.PI * x * x * x));
-        double b = ((-shape) * (x - m) * (x - m)) / (2.0 * m * m * x);
+        double a = Math.sqrt(shape/(2.0 * Math.PI * x * x * x));
+        double b = ((-shape) * (x - m) * (x - m))/(2.0 * m * m * x);
 
         return a * Math.exp(b);
     }
@@ -145,14 +144,14 @@ public class InverseGaussianDistribution implements Distribution {
     /**
      * the natural log of the probability density function of the distribution
      *
-     * @param x     argument
-     * @param m     mean
-     * @param shape shape parameter
+     * @param x  argument
+     * @param m  mean
+     * @param shape  shape parameter
      * @return log pdf at x
      */
     public static double logPdf(double x, double m, double shape) {
-        double a = Math.sqrt(shape / (2.0 * Math.PI * x * x * x));
-        double b = ((-shape) * (x - m) * (x - m)) / (2.0 * m * m * x);
+        double a = Math.sqrt(shape/(2.0 * Math.PI * x * x * x));
+        double b = ((-shape) * (x - m) * (x - m))/(2.0 * m * m * x);
 
         return Math.log(a) + b;
     }
@@ -160,32 +159,32 @@ public class InverseGaussianDistribution implements Distribution {
     /**
      * cumulative density function
      *
-     * @param x     argument
-     * @param m     mean
-     * @param shape shape parameter
+     * @param x  argument
+     * @param m  mean
+     * @param shape  shape parameter
      * @return cdf at x
      */
     public static double cdf(double x, double m, double shape) {
         double a = Math.sqrt(shape / (2.0 * x)) * ((x / m) - 1);
         double b = (1.0 + ErrorFunction.erf(a));
         double c = Math.sqrt(shape / (2.0 * x)) * ((x / m) + 1);
-        double d = Math.exp((2.0 * shape) / m) * (1 - ErrorFunction.erf(c));
+        double d = Math.exp((2.0 * shape)/m) * (1 - ErrorFunction.erf(c));
 
-        return 0.5 * b + 0.5 * d;
+        return 0.5*b + 0.5*d;
     }
 
     /**
      * quantiles (=inverse cumulative density function)
-     * <p/>
+     *
      * CURRENTLY NOT IMPLEMENTED PROPERLY. Can be implemented later using a Zero finder function
      * (See JUnit test for LogNormal distribution for zero finder). Alternatively find out
      * how they do it with SuppleDists in R (download source code and open the C function which
      * contains the implementation. Reading: Chhikara, R. S., and Folks, J. Leroy, (1989). The
      * inverse Gaussian distribution: Theory, methodology, and applications. Marcel Dekker, New York.
      *
-     * @param z     argument
-     * @param m     mean
-     * @param shape shape parameter
+     * @param z  argument
+     * @param m  mean
+     * @param shape  shape parameter
      * @return icdf at z
      */
     public static double quantile(double z, double m, double shape) {
@@ -199,22 +198,22 @@ public class InverseGaussianDistribution implements Distribution {
         //double p=pnorm(-a*(b+1.0),0,1,true,false);
 
 //        if (z<=0 || m<=0 || shape<=0)
-        //return NA_REAL;
+            //return NA_REAL;
 //            return Double.NaN;
 
 //        if (p==0.0) {
-        //System.out.println("stats\t" + z+"\t"+m+"\t"+shape+"\t"+q);
+            //System.out.println("stats\t" + z+"\t"+m+"\t"+shape+"\t"+q);
 //            return q;
 //        }
 //        else {
 //            double c=2.0*shape/m;
-        //if (c>=MAXEXP)
-        //    return NA_REAL;
+            //if (c>=MAXEXP)
+            //    return NA_REAL;
 //            if (c>=Double.MAX_VALUE || c>=Double.POSITIVE_INFINITY)
 //                return Double.NaN;
 
-        //double returnValue = q-Math.exp(c)*p; //temp variable. delete
-        //System.out.println(z+"\t"+m+"\t"+shape+"\t"+returnValue);
+            //double returnValue = q-Math.exp(c)*p; //temp variable. delete
+            //System.out.println(z+"\t"+m+"\t"+shape+"\t"+returnValue);
 //            return q-Math.exp(c)*p;
 //        }
 
@@ -259,7 +258,7 @@ public class InverseGaussianDistribution implements Distribution {
             public double value(double x) {
                 return f.cdf(x) - y;
             }
-            //}, 0.001, 100);
+        //}, 0.001, 100);
         }, 0.0001, 100000);
 
         zeroFinder.evaluate();
@@ -269,8 +268,8 @@ public class InverseGaussianDistribution implements Distribution {
     /**
      * mean
      *
-     * @param m     mean
-     * @param shape shape parameter
+     * @param m  mean
+     * @param shape  shape parameter
      * @return mean
      */
     public static double mean(double m, double shape) {
@@ -280,8 +279,8 @@ public class InverseGaussianDistribution implements Distribution {
     /**
      * variance
      *
-     * @param m     mean
-     * @param shape shape parameter
+     * @param m  mean
+     * @param shape  shape parameter
      * @return variance
      */
     public static double variance(double m, double shape) {

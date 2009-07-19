@@ -37,7 +37,13 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: Parameter.java,v 1.22 2005/06/08 11:23:25 alexei Exp $
  */
-public interface Parameter extends Statistic, Variable<Double> {
+public interface Parameter extends Statistic {
+
+    public enum ChangeType {
+        VALUE_CHANGED,
+        REMOVED,
+        ADDED
+    }
 
     /**
      * @param dim the index of the parameter dimension of interest
@@ -194,11 +200,6 @@ public interface Parameter extends Statistic, Variable<Double> {
                     listener.parameterChangedEvent(this, index, type);
                 }
             }
-            if (variableListeners != null) {
-                for (VariableListener listener : variableListeners) {
-                    listener.variableChangedEvent(this, index, type);
-                }
-            }
         }
 
         public void addParameterListener(ParameterListener listener) {
@@ -283,74 +284,6 @@ public interface Parameter extends Statistic, Variable<Double> {
             return true;
         }
 
-        // --------------------------------------------------------------------
-        // IMPLEMENT VARIABLE
-        // --------------------------------------------------------------------
-
-        /**
-         * @return the name of this variable.
-         */
-        public final String getVariableName() {
-            return getParameterName();
-        }
-
-        public final Double getValue(int index) {
-            return getParameterValue(index);
-        }
-
-        public final void setValue(int index, Double value) {
-            setParameterValue(index, value);
-        }
-
-        /**
-         * @return the size of this variable - i.e. the length of the vector
-         */
-        public final int getSize() {
-            return getDimension();
-        }
-
-        /**
-         * adds a parameter listener that is notified when this parameter changes.
-         *
-         * @param listener the listener
-         */
-        public void addVariableListener(VariableListener listener) {
-            variableListeners.add(listener);
-        }
-
-        /**
-         * removes a parameter listener.
-         *
-         * @param listener the listener
-         */
-        public void removeVariableListener(VariableListener listener) {
-            variableListeners.remove(listener);
-        }
-
-        /**
-         * stores the state of this parameter for subsquent restore
-         */
-        public void storeVariableValues() {
-            storeParameterValues();
-        }
-
-        /**
-         * restores the stored state of this parameter
-         */
-        public void restoreVariableValues() {
-            storeParameterValues();
-        }
-
-        /**
-         * accepts the stored state of this parameter
-         */
-        public void acceptVariableValues() {
-            acceptParameterValues();
-        }
-
-
-        // --------------------------------------------------------------------
-
         protected abstract void storeValues();
 
         protected abstract void restoreValues();
@@ -391,7 +324,6 @@ public interface Parameter extends Statistic, Variable<Double> {
         private boolean isValid = true;
 
         private ArrayList<ParameterListener> listeners;
-        private ArrayList<VariableListener> variableListeners;
     }
 
 
@@ -433,11 +365,6 @@ public interface Parameter extends Statistic, Variable<Double> {
         public Default(double[] values) {
             this.values = new double[values.length];
             System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Default(String id, int dimension, double initialValue) {
-            this(dimension, initialValue);
-            setId(id);
         }
 
         public void addBounds(Bounds boundary) {
@@ -613,9 +540,6 @@ public interface Parameter extends Statistic, Variable<Double> {
         //private boolean hasBeenStored = false;
         private IntersectionBounds bounds = null;
 
-        public void addBounds(double lower, double upper) {
-            addBounds(new DefaultBounds(upper, lower, 1));
-        }
     }
 
     class DefaultBounds implements Bounds {

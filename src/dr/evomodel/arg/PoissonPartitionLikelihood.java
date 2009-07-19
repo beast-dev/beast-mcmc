@@ -28,7 +28,7 @@ package dr.evomodel.arg;
 
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable.ChangeType;
+import dr.inference.model.Parameter.ChangeType;
 import dr.inferencexml.PriorParsers;
 import dr.math.MathUtils;
 import dr.math.Poisson;

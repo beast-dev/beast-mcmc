@@ -1,7 +1,7 @@
 /*
  * MCLogger.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,9 +25,6 @@
 
 package dr.inference.loggers;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,15 +37,15 @@ import java.util.List;
  * @version $Id: MCLogger.java,v 1.18 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCLogger implements Logger {
-
-    // the file that this logger is logging to or
-    // null if the LogFormatter is logging to a non-file print stream
-    String fileName;
-
-    /**
+    
+	// the file that this logger is logging to or 
+	// null if the LogFormatter is logging to a non-file print stream
+	String fileName;
+	
+	/**
      * Output performance stats in this log
      */
-    private boolean performanceReport;
+     private boolean performanceReport;
 
     /**
      * Constructor. Will log every logEvery.
@@ -63,7 +60,7 @@ public class MCLogger implements Logger {
         this.performanceReport = performanceReport;
         this.fileName = fileName;
     }
-
+    
     /**
      * Constructor. Will log every logEvery.
      *
@@ -72,24 +69,6 @@ public class MCLogger implements Logger {
      */
     public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
         this(null, formatter, logEvery, performanceReport);
-    }
-
-    /**
-     * Constructor. Will log every logEvery.
-     *
-     * @param logEvery logging frequency
-     */
-    public MCLogger(String fileName, int logEvery, boolean performanceReport) throws IOException {
-        this(fileName, new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport);
-    }
-
-    /**
-     * Constructor. Will log every logEvery.
-     *
-     * @param logEvery logging frequency
-     */
-    public MCLogger(int logEvery) {
-        this(null, new TabDelimitedFormatter(System.out), logEvery, true);
     }
 
     public final void setTitle(String title) {
@@ -152,12 +131,12 @@ public class MCLogger implements Logger {
 
         return columns.get(index).getFormatted();
     }
-
+    
     /**
      * @return file name or null if this logger is logging to a non-file print stream
      */
     public final String getFileName() {
-        return fileName;
+    	return fileName;
     }
 
     protected void logHeading(String heading) {
@@ -227,7 +206,7 @@ public class MCLogger implements Logger {
                 values[i + 1] = getColumnFormatted(i);
             }
 
-            if (performanceReport) {
+            if( performanceReport ) {
                 if (state > 0) {
 
                     long timeTaken = System.currentTimeMillis() - startTime;

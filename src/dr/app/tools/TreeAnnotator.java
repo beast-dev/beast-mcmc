@@ -1,7 +1,7 @@
 /*
  * TreeAnnotator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -28,19 +28,21 @@ package dr.app.tools;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.geo.KernelDensityEstimator2D;
-import dr.geo.contouring.ContourPath;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
+import dr.geo.KernelDensityEstimator2D;
+import dr.geo.contouring.ContourAttrib;
+import dr.geo.contouring.ContourGenerator;
+import dr.geo.contouring.ContourPath;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
@@ -62,12 +64,11 @@ public class TreeAnnotator {
     private final static double HPD_2D = 0.80;
 
     enum Target {
-        MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
+        MAX_CLADE_CREDIBILITY( "Maximum clade credibility tree"),
         MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
-
         Target(String s) {
             desc = s;
         }
@@ -83,7 +84,6 @@ public class TreeAnnotator {
         MEDIAN_HEIGHTS("Median heights");
 
         String desc;
-
         HeightsSummary(String s) {
             desc = s;
         }
@@ -156,15 +156,15 @@ public class TreeAnnotator {
             progressStream.println();
             progressStream.println();
 
-            if (totalTrees < 1) {
-                System.err.println("No trees");
+            if( totalTrees < 1 ) {
+               System.err.println("No trees");
                 return;
             }
-            if (totalTreesUsed <= 1) {
-                if (burnin > 0) {
-                    System.err.println("No trees to use: burnin too high");
-                    return;
-                }
+            if( totalTreesUsed <= 1 ) {
+               if( burnin > 0 ) {
+                 System.err.println("No trees to use: burnin too high");
+                   return;
+               }
             }
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
@@ -179,19 +179,20 @@ public class TreeAnnotator {
 
         MutableTree targetTree = null;
 
-        switch (targetOption) {
-            case USER_TARGET_TREE: {
+        switch( targetOption ) {
+            case USER_TARGET_TREE:
+            {
                 if (targetTreeFileName != null) {
                     progressStream.println("Reading user specified target tree, " + targetTreeFileName);
 
                     NexusImporter importer = new NexusImporter(new FileReader(targetTreeFileName));
                     try {
                         Tree tree = importer.importNextTree();
-                        if (tree == null) {
-                            NewickImporter x = new NewickImporter(new FileReader(targetTreeFileName));
-                            tree = x.importNextTree();
+                        if( tree == null ) {
+                             NewickImporter x = new NewickImporter(new FileReader(targetTreeFileName));
+                             tree = x.importNextTree();
                         }
-                        if (tree == null) {
+                        if( tree == null ) {
                             System.err.println("No tree in target nexus or newick file " + targetTreeFileName);
                             return;
                         }
@@ -211,7 +212,8 @@ public class TreeAnnotator {
                 targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
                 break;
             }
-            case MAX_SUM_CLADE_CREDIBILITY: {
+            case MAX_SUM_CLADE_CREDIBILITY:
+            {
                 progressStream.println("Finding maximum sum clade credibility tree...");
                 targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
                 break;
@@ -273,7 +275,7 @@ public class TreeAnnotator {
         final PrintStream stream = outputFileName != null ?
                 new PrintStream(new FileOutputStream(outputFileName)) :
                 System.out;
-
+        
         new NexusExporter(stream).exportTree(targetTree);
     }
 
@@ -353,8 +355,7 @@ public class TreeAnnotator {
 
         /**
          */
-        public CladeSystem() {
-        }
+        public CladeSystem() {}
 
         /**
          */
@@ -471,7 +472,7 @@ public class TreeAnnotator {
                         Object value1 = tree.getNodeAttribute(node, attributeName);
                         Object value2 = tree.getNodeAttribute(node, location2Attribute);
 
-                        value = new Object[]{value1, value2};
+                        value = new Object[] { value1, value2 };
                     } else if (attributeName.equals(location2Attribute)) {
                         // do nothing - already dealt with this...
                         value = null;
@@ -606,7 +607,7 @@ public class TreeAnnotator {
 
         private void annotateNode(MutableTree tree, NodeRef node, BitSet bits, boolean isTip, HeightsSummary heightsOption) {
             Clade clade = cladeMap.get(bits);
-            assert clade != null : "Clade missing?";
+            assert  clade != null :  "Clade missing?";
 
             boolean filter = false;
             if (!isTip) {
@@ -640,11 +641,11 @@ public class TreeAnnotator {
                         boolean isDoubleArray = isArray && ((Object[]) v[i])[0] instanceof Double;
                         // This is Java, friends - first value type does not imply all.
                         if (isDoubleArray) {
-                            for (Object n : (Object[]) v[i]) {
-                                if (!(n instanceof Double)) {
+                            for(Object n : (Object[])v[i]) {
+                               if( ! (n instanceof Double) )  {
                                     isDoubleArray = false;
-                                    break;
-                                }
+                                   break;
+                               }
                             }
                         }
                         // todo Handle other types of arrays
@@ -688,7 +689,7 @@ public class TreeAnnotator {
                                 }
                             } else {
                                 // Ignore other (unknown) types
-                                if (value instanceof Number) {
+                                if ( value instanceof Number ) {
                                     values[j] = ((Number) value).doubleValue();
                                     if (values[j] < minValue) minValue = values[j];
                                     if (values[j] > maxValue) maxValue = values[j];
@@ -753,7 +754,7 @@ public class TreeAnnotator {
                                         annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
                                     if (variationInFirst && variationInSecond)
-                                        annotate2DHPDAttribute(tree, node, name, "_" + HPD_2D_STRING + "%HPD", HPD_2D, valuesArray);
+                                        annotate2DHPDAttribute(tree, node, name, "_"+HPD_2D_STRING+"%HPD", HPD_2D, valuesArray);
                                 }
                             }
                         }
@@ -799,7 +800,7 @@ public class TreeAnnotator {
         }
 
         private void annotateFrequencyAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
-            double totalCount = 0;
+            double totalCount = 0;         
             Set keySet = values.keySet();
             int length = keySet.size();
             String[] name = new String[length];
@@ -811,11 +812,11 @@ public class TreeAnnotator {
                 totalCount += freq[index];
                 index++;
             }
-            for (int i = 0; i < length; i++)
+            for (int i=0; i<length; i++)
                 freq[i] /= totalCount;
 
             tree.setNodeAttribute(node, label + ".set", name);
-            tree.setNodeAttribute(node, label + ".set.prob", freq);
+            tree.setNodeAttribute(node, label + ".set.prob", freq);           
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
@@ -892,26 +893,27 @@ public class TreeAnnotator {
             int N = 50;
             if (USE_R) {
 
-                // Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
+            // Uses R-Java interface, and the HPD routines from 'emdbook' and 'coda'
 
-                if (rEngine == null) {
+            if (rEngine == null) {
 
-                    if (!Rengine.versionCheck()) {
-                        throw new RuntimeException("JRI library version mismatch");
-                    }
-
-                    rEngine = new Rengine(rArgs, false, null);
-
-                    if (!rEngine.waitForR()) {
-                        throw new RuntimeException("Cannot load R");
-                    }
-
-                    for (String command : rBootCommands) {
-                        rEngine.eval(command);
-                    }
+                if (!Rengine.versionCheck()) {
+                    throw new RuntimeException("JRI library version mismatch");
                 }
 
-                // todo Need a good method to pick grid size
+                rEngine = new Rengine(rArgs, false, null);
+
+                if (!rEngine.waitForR()) {
+                    throw new RuntimeException("Cannot load R");
+                }
+
+                for (String command : rBootCommands) {
+                    rEngine.eval(command);
+                }
+            }
+
+            // todo Need a good method to pick grid size
+
 
 
                 REXP x = rEngine.eval("makeContour(" +
@@ -924,9 +926,9 @@ public class TreeAnnotator {
                 int numberContours = contourList.size();
 
                 if (numberContours > 1) {
-                    System.err.println("Warning: a node has a disjoint " + 100 * hpd + "% HPD region.  This may be an artifact!");
-                    System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
-                }
+                      System.err.println("Warning: a node has a disjoint "+100*hpd+"% HPD region.  This may be an artifact!");
+                      System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
+                  }
 
 
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", numberContours);
@@ -966,16 +968,16 @@ public class TreeAnnotator {
 //                    e.printStackTrace();
 //                }
                 ContourPath[] paths = kde.getContourPaths(hpd);
-
+    
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", paths.length);
 
                 if (paths.length > 1) {
-                    System.err.println("Warning: a node has a disjoint " + 100 * hpd + "% HPD region.  This may be an artifact!");
+                    System.err.println("Warning: a node has a disjoint "+100*hpd+"% HPD region.  This may be an artifact!");
                     System.err.println("Try decreasing the enclosed mass or increasing the number of samples.");
                 }
 
                 StringBuffer output = new StringBuffer();
-                int i = 0;
+                int i=0;
                 for (ContourPath p : paths) {
                     output.append("\n<" + CORDINATE + ">\n");
                     double[] xList = p.getAllX();
@@ -993,7 +995,7 @@ public class TreeAnnotator {
                     tree.setNodeAttribute(node, preLabel + "2" + postLabel + "_" + (i + 1), yString);
                     i++;
 
-                }
+               }
             }
         }
 
@@ -1190,7 +1192,7 @@ public class TreeAnnotator {
             // The ConsoleApplication will have overridden System.out so set progressStream
             // to capture the output to the window:
             progressStream = System.out;
-
+            
             printTitle();
 
             TreeAnnotatorDialog dialog = new TreeAnnotatorDialog(new JFrame());
@@ -1275,9 +1277,9 @@ public class TreeAnnotator {
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
-                heights = HeightsSummary.MEAN_HEIGHTS;
+                heights =  HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
-                heights = HeightsSummary.MEDIAN_HEIGHTS;
+                heights =  HeightsSummary.MEDIAN_HEIGHTS;
             }
         }
 
@@ -1299,7 +1301,7 @@ public class TreeAnnotator {
 
         final String[] args2 = arguments.getLeftoverArguments();
 
-        switch (args2.length) {
+        switch ( args2.length ) {
             case 2:
                 outputFileName = args2[1];
                 // fall to
@@ -1314,7 +1316,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName,inputFileName, outputFileName);
 
         System.exit(0);
     }

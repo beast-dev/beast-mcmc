@@ -1,14 +1,39 @@
+/*
+ * NormalGammaPrecisionGibbsOperator.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.NormalDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.model.Statistic;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
+import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;
-import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.List;
@@ -24,7 +49,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     public static final String PRIOR = "prior";
 
     public NormalGammaPrecisionGibbsOperator(DistributionLikelihood inLikelihood, Distribution prior,
-                                         double weight) {
+                                             double weight) {
 
         if (!(prior instanceof GammaDistribution || prior instanceof GammaDistributionModel))
             throw new RuntimeException("Precision prior must be Gamma");
@@ -32,8 +57,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         Distribution likelihood = inLikelihood.getDistribution();
         this.dataList = inLikelihood.getDataList();
         if (likelihood instanceof NormalDistributionModel) {
-            this.precisionParameter = ((NormalDistributionModel) likelihood).getPrecisionParameter();
-            this.meanParameter = ((NormalDistributionModel) likelihood).getMeanParameter();
+            this.precisionParameter = (Parameter) ((NormalDistributionModel) likelihood).getPrecision();
+            this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
         } else if (likelihood instanceof LogNormalDistributionModel) {
             this.precisionParameter = ((LogNormalDistributionModel) likelihood).getPrecisionParameter();
             this.meanParameter = ((LogNormalDistributionModel) likelihood).getMeanParameter();
@@ -89,19 +114,19 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             for (double x : statistic.getAttributeValue()) {
                 if (isLog) {
                     final double logX = Math.log(x);
-                    SSE += (logX - mu)*(logX - mu);
+                    SSE += (logX - mu) * (logX - mu);
                 } else {
-                    SSE += (x - mu)*(x - mu);
+                    SSE += (x - mu) * (x - mu);
                 }
                 n++;
             }
         }
 
         final double shape = priorShape + n / 2.0;
-        final double rate  = priorRate  + 0.5 * SSE;
+        final double rate = priorRate + 0.5 * SSE;
 
         final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
-        precisionParameter.setParameterValue(0,draw);
+        precisionParameter.setParameterValue(0, draw);
 
         return 0;
     }

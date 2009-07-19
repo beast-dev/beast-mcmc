@@ -43,7 +43,7 @@ import java.io.IOException;
 /**
  * This tutorial in code covers:
  * (1) The creation of random variables with bounds.
- * (2) The creation of a one-parameter normal distribution model.
+ * (2) The creation of a one-dimensional normal distribution model.
  * (3) Creation of normal likelihood and data
  * (4) Initialization of MCMC chain with proposal distribution and two loggers.
  * (5) Post-run trace analysis
@@ -77,9 +77,6 @@ public class Tutorial1 {
         // add data (representing 9 independent observations) to likelihood
         likelihood.addData(d);
 
-        // construct MCMC object
-        MCMC mcmc = new MCMC("tutorial1:normal");
-
         // construct two "operators" to be used as the proposal distribution
         MCMCOperator meanMove = new ScaleOperator(mean, 0.75);
         MCMCOperator stdevMove = new ScaleOperator(stdev, 0.75);
@@ -93,6 +90,9 @@ public class Tutorial1 {
         MCLogger logger2 = new MCLogger("tutorial1.log", 100, false);
         logger2.add(mean);
         logger2.add(stdev);
+
+        // construct MCMC object
+        MCMC mcmc = new MCMC("tutorial1:normal");
 
         // initialize MCMC with chain length, likelihood, operators and loggers
         mcmc.init(100000, likelihood, new MCMCOperator[]{meanMove, stdevMove}, new Logger[]{logger1, logger2});

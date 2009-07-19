@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -52,14 +53,14 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
 
         this.rateParameter = rateParameter;
 
-        addParameter(rateParameter);
+        addVariable(rateParameter);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         // nothing to do
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

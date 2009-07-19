@@ -34,6 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -69,7 +70,7 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
 
         this.substitutionRatesParameter = substitutionRatesParameter;
 
-        addParameter(substitutionRatesParameter);
+        addVariable(substitutionRatesParameter);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -78,7 +79,7 @@ public class ColouredTreeRateModel extends AbstractModel implements BranchRateMo
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // Rate Parameters have changed
         ratesCalculated = false;
         fireModelChanged();

@@ -59,7 +59,7 @@ public class CovarionHKY extends AbstractCovarionDNAModel {
         super(COVARION_HKY, dataType, hiddenClassRates, switchingRates, freqModel);
 
         this.kappaParameter = kappaParameter;
-        addParameter(kappaParameter);
+        addVariable(kappaParameter);
         setupRelativeRates();
     }
 

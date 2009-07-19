@@ -71,15 +71,15 @@ public class ExpansionModel extends DemographicModel {
         expansion = new Expansion(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.N1Parameter = N1Parameter;
-        addParameter(N1Parameter);
+        addVariable(N1Parameter);
         N1Parameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
         this.growthRateParameter = growthRateParameter;
-        addParameter(growthRateParameter);
+        addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.usingGrowthRate = usingGrowthRate;

@@ -58,17 +58,17 @@ public class RandomLocalYuleModel extends SpeciationModel implements NodeAttribu
 
         super(RandomLocalYuleModel.YULE_MODEL, units);
 
-        addParameter(birthRates);
+        addVariable(birthRates);
         birthRates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRates.getDimension()));
 
         for (int i = 0; i < indicators.getDimension(); i++) {
             indicators.setParameterValueQuietly(i, 0.0);
         }
 
-        addParameter(indicators);
+        addVariable(indicators);
 
         this.meanRate = meanRate;
-        addParameter(meanRate);
+        addVariable(meanRate);
 
         birthRatesAreMultipliers = ratesAsMultipliers;
 

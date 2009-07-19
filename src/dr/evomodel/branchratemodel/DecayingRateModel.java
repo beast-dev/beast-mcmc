@@ -31,6 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -72,13 +73,13 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         this.proportionParameter = proportionParameter;
         this.halfLifeParameter = halfLifeParameter;
 
-        addParameter(mutationRateParameter);
+        addVariable(mutationRateParameter);
         if (proportionParameter != null) {
-            addParameter(proportionParameter);
+            addVariable(proportionParameter);
         } else {
-            addParameter(substitutionRateParameter);
+            addVariable(substitutionRateParameter);
         }
-        addParameter(halfLifeParameter);
+        addVariable(halfLifeParameter);
 
         this.useAveraging = useAveraging;
     }
@@ -89,7 +90,7 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         // Parameters have changed
         ratesCalculated = false;

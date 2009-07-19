@@ -1,3 +1,28 @@
+/*
+ * GreatCircleDiffusionModel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.continuous;
 
 import dr.evolution.continuous.SphericalPolarCoordinates;
@@ -19,10 +44,10 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
     public GreatCircleDiffusionModel(Parameter precision, Parameter coefficient) {
         super();
         this.precision = precision;
-        addParameter(precision);
+        addVariable(precision);
         this.coefficient = coefficient;
         if (coefficient != null)
-            addParameter(coefficient);
+            addVariable(coefficient);
     }
 
     public GreatCircleDiffusionModel(Parameter precision) {
@@ -30,9 +55,9 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
     }
 
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
- 
+
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(start[0], start[1]);
-        SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(stop[0],  stop[1] );
+        SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(stop[0], stop[1]);
 
         double distance = coord1.distance(coord2);
 
@@ -41,9 +66,9 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
         // I believe this is a 2D (not 1D) Normal diffusion approx; hence the precision is squared (compared to 1D) 
         // in the normalization constant
         if (coefficient == null)
-            return - LOG2PI + Math.log(inverseVariance) - 0.5 * (distance * distance * inverseVariance);
-        double coef = - coefficient.getParameterValue(0);
-        return - LOG2PI + coef * Math.log(inverseVariance)  - 0.5 * (distance * distance * Math.pow(inverseVariance,coef));
+            return -LOG2PI + Math.log(inverseVariance) - 0.5 * (distance * distance * inverseVariance);
+        double coef = -coefficient.getParameterValue(0);
+        return -LOG2PI + coef * Math.log(inverseVariance) - 0.5 * (distance * distance * Math.pow(inverseVariance, coef));
     }
 
     protected void calculatePrecisionInfo() {
@@ -52,42 +77,42 @@ public class GreatCircleDiffusionModel extends MultivariateDiffusionModel {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-         public String getParserName() {
-             return DIFFUSION_PROCESS;
-         }
+        public String getParserName() {
+            return DIFFUSION_PROCESS;
+        }
 
-         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-             Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
-             Parameter coefficient = null;
-             if (xo.hasChildNamed(COEFFICIENT))
+            Parameter diffusionParam = (Parameter) xo.getChild(Parameter.class);
+            Parameter coefficient = null;
+            if (xo.hasChildNamed(COEFFICIENT))
                 coefficient = (Parameter) xo.getChild(COEFFICIENT).getChild(Parameter.class);
 
-             return new GreatCircleDiffusionModel(diffusionParam, coefficient);
-         }
+            return new GreatCircleDiffusionModel(diffusionParam, coefficient);
+        }
 
-         //************************************************************************
-         // AbstractXMLObjectParser implementation
-         //************************************************************************
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
 
-         public String getParserDescription() {
-             return "Describes a bivariate diffusion process using great circle distances.";
-         }
+        public String getParserDescription() {
+            return "Describes a bivariate diffusion process using great circle distances.";
+        }
 
-         public XMLSyntaxRule[] getSyntaxRules() {
-             return rules;
-         }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-         private final XMLSyntaxRule[] rules = {
-                 new ElementRule(Parameter.class),
-                 new ElementRule(COEFFICIENT,
-                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-         };
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(Parameter.class),
+                new ElementRule(COEFFICIENT,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+        };
 
-         public Class getReturnType() {
-             return MultivariateDiffusionModel.class;
-         }
-     };
+        public Class getReturnType() {
+            return MultivariateDiffusionModel.class;
+        }
+    };
 
     private Parameter precision;
     private Parameter coefficient;

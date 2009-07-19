@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.Binomial;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -50,8 +51,8 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
 
         this.trialsParameter = trialsParameter;
         this.proportionParameter = proportionParameter;
-        addParameter(trialsParameter);
-        addParameter(proportionParameter);
+        addVariable(trialsParameter);
+        addVariable(proportionParameter);
         this.counts = counts;
 
     }
@@ -108,7 +109,7 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
         // DO NOTHING
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // DO NOTHING
     }
 

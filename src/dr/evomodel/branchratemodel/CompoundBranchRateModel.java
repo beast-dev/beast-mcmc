@@ -27,10 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -63,7 +60,7 @@ public class CompoundBranchRateModel extends AbstractModel implements BranchRate
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {

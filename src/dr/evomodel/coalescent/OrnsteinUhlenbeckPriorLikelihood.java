@@ -1,10 +1,7 @@
 package dr.evomodel.coalescent;
 
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
+import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
@@ -43,15 +40,15 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
 
         this.mean = mean;
         if (mean != null) {
-            addParameter(mean);
+            addVariable(mean);
         }
 
         this.sigma = sigma;
-        addParameter(sigma);
+        addVariable(sigma);
 
         this.lambda = lambda;
         if (lambda != null) {
-            addParameter(lambda);
+            addVariable(lambda);
         }
     }
 
@@ -305,7 +302,7 @@ public class OrnsteinUhlenbeckPriorLikelihood extends AbstractModelLikelihood {
         makeDirty();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         makeDirty();
     }
 

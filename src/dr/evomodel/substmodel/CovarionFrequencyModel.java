@@ -12,7 +12,7 @@ public class CovarionFrequencyModel extends FrequencyModel {
         super(dataType, frequencyParameter);
 
         this.hiddenFrequencies = hiddenFrequencies;
-        addParameter(hiddenFrequencies);
+        addVariable(hiddenFrequencies);
     }
 
     public double[] getFrequencies() {

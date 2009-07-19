@@ -28,6 +28,7 @@ package dr.evomodel.indel;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -51,10 +52,10 @@ public class TKF91Model extends IndelModel {
         super(TKF91_MODEL);
 
         this.lengthDistParameter = lengthDistParameter;
-        addParameter(lengthDistParameter);
+        addVariable(lengthDistParameter);
 
         this.deathRateParameter = deathRateParameter;
-        addParameter(deathRateParameter);
+        addVariable(deathRateParameter);
 
         setUnits(units);
     }
@@ -87,7 +88,7 @@ public class TKF91Model extends IndelModel {
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

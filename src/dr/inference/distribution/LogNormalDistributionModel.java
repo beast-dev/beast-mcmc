@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
@@ -66,13 +67,13 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         this.meanParameter = meanParameter;
         this.scaleParameter = stdevParameter;
         this.offset = offset;
-        addParameter(meanParameter);
+        addVariable(meanParameter);
         if (isMeanInRealSpace) {
             meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         } else {
             meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         }
-        addParameter(stdevParameter);
+        addVariable(stdevParameter);
         stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
@@ -87,13 +88,13 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         this.meanParameter = meanParameter;
         this.scaleParameter = scaleParameter;
         this.offset = offset;
-        addParameter(meanParameter);
+        addVariable(meanParameter);
         if (isMeanInRealSpace) {
             meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         } else {
             meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         }
-        addParameter(this.scaleParameter);
+        addVariable(this.scaleParameter);
         this.scaleParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
@@ -214,7 +215,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

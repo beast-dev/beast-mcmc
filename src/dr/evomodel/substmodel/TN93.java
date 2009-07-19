@@ -78,8 +78,8 @@ public class TN93 extends AbstractNucleotideModel {
         super(TN93_MODEL, freqModel);
         this.kappa1Parameter = kappa1Parameter;
         this.kappa2Parameter = kappa2Parameter;
-        addParameter(kappa1Parameter);
-        addParameter(kappa2Parameter);
+        addVariable(kappa1Parameter);
+        addVariable(kappa2Parameter);
         kappa1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         kappa2Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         updateIntermediates = true;

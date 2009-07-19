@@ -26,8 +26,8 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
         super(name);
         this.knotLocations = knotLocations;
         this.knotValues = knotValues;
-        addParameter(knotLocations);
-        addParameter(knotValues);
+        addVariable(knotLocations);
+        addVariable(knotValues);
         this.degree = degree;
         updateBasis = true;
 
@@ -128,7 +128,7 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
 
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         updateBasis = true;
     }
 

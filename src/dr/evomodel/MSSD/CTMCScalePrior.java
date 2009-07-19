@@ -2,10 +2,7 @@ package dr.evomodel.MSSD;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -81,7 +78,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {

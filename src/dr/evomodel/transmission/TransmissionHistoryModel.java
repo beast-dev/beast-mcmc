@@ -37,6 +37,7 @@ import dr.evoxml.XMLUnits;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
         }
 
         if (parameter != null) {
-            addParameter(parameter);
+            addVariable(parameter);
         }
 
         TransmissionEvent transmissionEvent = new TransmissionEvent(donor, recipient, parameter);
@@ -114,7 +115,7 @@ public class TransmissionHistoryModel extends AbstractModel implements TreeColou
     /**
      * Called when a parameter changes.
      */
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     public int getTransmissionEventCount() {

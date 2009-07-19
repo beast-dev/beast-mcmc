@@ -39,10 +39,10 @@ public class MutationDeathModel extends AbstractSubstitutionModel {
         this.dataType = dT;
         this.mutationRate = mutationRate;
 
-        addParameter(delParameter);
+        addVariable(delParameter);
         delParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        addParameter(mutationRate);
+        addVariable(mutationRate);
 //        addModel(freqModel);
         if (evoModel != null) {
             addModel(evoModel.getFrequencyModel());

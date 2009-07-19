@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
 import org.w3c.dom.Document;
@@ -64,7 +65,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         this.meanParameter = meanParameter;
         this.offset = offset;
 
-        addParameter(meanParameter);
+        addVariable(meanParameter);
         meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
@@ -125,7 +126,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

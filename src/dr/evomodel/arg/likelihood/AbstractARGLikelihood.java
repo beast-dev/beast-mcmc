@@ -16,9 +16,6 @@ import dr.evomodel.arg.ARGModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.*;
 
-import java.util.Set;
-import java.util.HashSet;
-
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
@@ -174,10 +171,10 @@ public abstract class AbstractARGLikelihood extends AbstractModelLikelihood impl
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

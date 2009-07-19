@@ -1,7 +1,7 @@
 /*
  * SampleStateModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -28,10 +28,7 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Bounds;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.Vector;
@@ -74,11 +71,11 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 //		stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
 
         this.muParameter = muParameter;
-        addParameter(muParameter);
+        addVariable(muParameter);
         muParameter.addBounds(new Parameter.DefaultBounds(1000.0, 0.0, 1));
 
         this.proportionParameter = proportionParameter;
-        addParameter(proportionParameter);
+        addVariable(proportionParameter);
         proportionParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, proportionParameter.getDimension()));
 
         proportionParameter.setParameterValue(0, (0.5));
@@ -88,20 +85,20 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
         if (categoryCount > 1) {
             for (int i = 0; i < categoryCount; i++) {
-                Parameter p = ((YangCodonModel) substitutionModels.elementAt(i)).getParameter(0);
+                Parameter p = (Parameter) ((YangCodonModel) substitutionModels.elementAt(i)).getVariable(0);
                 Parameter lower = null;
                 Parameter upper = null;
 
                 if (i == 0) {
-                    upper = ((YangCodonModel) substitutionModels.elementAt(i + 1)).getParameter(0);
+                    upper = (Parameter) ((YangCodonModel) substitutionModels.elementAt(i + 1)).getVariable(0);
                     p.addBounds(new omegaBounds(lower, upper));
                 } else {
                     if (i == (categoryCount - 1)) {
-                        lower = ((YangCodonModel) substitutionModels.elementAt(i - 1)).getParameter(0);
+                        lower = (Parameter) ((YangCodonModel) substitutionModels.elementAt(i - 1)).getVariable(0);
                         p.addBounds(new omegaBounds(lower, upper));
                     } else {
-                        upper = ((YangCodonModel) substitutionModels.elementAt(i + 1)).getParameter(0);
-                        lower = ((YangCodonModel) substitutionModels.elementAt(i - 1)).getParameter(0);
+                        upper = (Parameter) ((YangCodonModel) substitutionModels.elementAt(i + 1)).getVariable(0);
+                        lower = (Parameter) ((YangCodonModel) substitutionModels.elementAt(i - 1)).getVariable(0);
                         p.addBounds(new omegaBounds(lower, upper));
                     }
                 }
@@ -189,7 +186,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
     }
 
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         /*if(categoryCount > 1){
               for(int i = 0; i < categoryCount; i++){
                   if(parameter == classSizes[i] && i == 0) // proportions have changed
@@ -301,7 +298,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         /**
          * @return the upper limit of this hypervolume in the given dimension.
          */
-        public double getUpperLimit(int dimension) {
+        public Double getUpperLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("omega parameters have wrong dimension " + dimension);
@@ -316,7 +313,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         /**
          * @return the lower limit of this hypervolume in the given dimension.
          */
-        public double getLowerLimit(int dimension) {
+        public Double getLowerLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("omega parameters have wrong dimension " + dimension);
@@ -353,7 +350,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         /**
          * @return the upper limit of this hypervolume in the given dimension.
          */
-        public double getUpperLimit(int dimension) {
+        public Double getUpperLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("class size parameters have wrong dimension " + dimension);
@@ -366,7 +363,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         /**
          * @return the lower limit of this hypervolume in the given dimension.
          */
-        public double getLowerLimit(int dimension) {
+        public Double getLowerLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("class size parameters have wrong dimension " + dimension);

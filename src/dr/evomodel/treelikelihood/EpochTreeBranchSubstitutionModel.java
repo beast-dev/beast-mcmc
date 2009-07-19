@@ -6,6 +6,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class EpochTreeBranchSubstitutionModel extends TreeBranchSubstitutionMode
         this.transitionTimesParameter = transitionTimes;
         this.transitionTimes = transitionTimesParameter.getParameterValues();
 
-        addParameter(transitionTimes);
+        addVariable(transitionTimes);
 
         for (SubstitutionModel model : modelList)
             addModel(model);
@@ -145,12 +146,12 @@ public class EpochTreeBranchSubstitutionModel extends TreeBranchSubstitutionMode
         return matrixCount;
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        super.handleParameterChangedEvent(parameter, index, type);
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        super.handleVariableChangedEvent(variable, index, type);
 
-        if (parameter == transitionTimesParameter) {
+        if (variable == transitionTimesParameter) {
             transitionTimes = transitionTimesParameter.getParameterValues();
-            fireModelChanged(parameter, index);
+            fireModelChanged(variable, index);
         }
     }
 

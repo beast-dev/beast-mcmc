@@ -25,8 +25,8 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
+import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -85,10 +85,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         double logL = 0.0;
 
-        for (Statistic statistic : dataList) {
-            for (int j = Math.max(0, from); j < Math.min(statistic.getDimension(), to); j++) {
+        for (Attribute<double[]> data : dataList) {
 
-                double value = statistic.getStatisticValue(j) - offset;
+            for (int j = Math.max(0, from); j < Math.min(data.getAttributeValue().length, to); j++) {
+
+                double value = data.getAttributeValue()[j] - offset;
                 if (offset > 0.0 && value < 0.0) {
                     // fixes a problem with the offset on exponential distributions not
                     // actually bounding the distribution. This only performs this check
@@ -100,6 +101,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
                 logL += distribution.logPdf(value);
             }
+
         }
         return logL;
     }

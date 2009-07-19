@@ -68,12 +68,12 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
             newValue = oldValue + 1 + roll - windowSize;
 
             if (newValue > parameter.getBounds().getUpperLimit(index))
-                newValue = 2 * (int) parameter.getBounds().getUpperLimit(index) - newValue;
+                newValue = 2 * (int)(double)parameter.getBounds().getUpperLimit(index) - newValue;
         } else {
             newValue = oldValue - 1 - roll;
 
             if (newValue < parameter.getBounds().getLowerLimit(index))
-                newValue = 2 * (int) parameter.getBounds().getLowerLimit(index) - newValue;
+                newValue = 2 * (int)(double)parameter.getBounds().getLowerLimit(index) - newValue;
         }
 
         parameter.setParameterValue(index, newValue);
@@ -139,7 +139,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
             if (xo.hasChildNamed(UPDATE_INDEX)) {
-                XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
+                XMLObject cxo = xo.getChild(UPDATE_INDEX);
                 Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
                 return new RandomWalkIntegerOperator(parameter, updateIndex, windowSize, weight);
             }

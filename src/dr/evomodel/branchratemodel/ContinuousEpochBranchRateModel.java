@@ -1,7 +1,5 @@
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 
 /**
@@ -18,7 +16,7 @@ public class ContinuousEpochBranchRateModel extends RateEpochBranchRateModel {
 	public ContinuousEpochBranchRateModel(Parameter[] timeParameters, Parameter[] rateParameters, Parameter rootHeight) {
 		super(timeParameters, rateParameters);
 		this.rootHeight = rootHeight;
-		addParameter(rootHeight);
+		addVariable(rootHeight);
 		normalizationKnown = false;
 	}
 

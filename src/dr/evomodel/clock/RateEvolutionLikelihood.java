@@ -33,6 +33,7 @@ import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.logging.Logger;
 
@@ -66,7 +67,7 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
 
         this.rootRateParameter = rootRateParameter;
         rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, 1));
-        addParameter(rootRateParameter);
+        addVariable(rootRateParameter);
 
         if (rootRateParameter.getDimension() != 1) {
             throw new IllegalArgumentException("The root rate parameter must be of dimension 1");
@@ -89,7 +90,7 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
         }
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
     }
 

@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.DummyModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.distributions.*;
 import dr.xml.*;
 
@@ -59,12 +56,12 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     private final MultivariateDistribution distribution;
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-        super(new DummyModel());
+        super(new DefaultModel());
         this.distribution = distribution;
     }
 
-    public void addData(Parameter data) {
-        ((DummyModel) getModel()).addParameter(data);
+    public void addData(Variable.D data) {
+        ((DefaultModel) getModel()).addVariable(data);
         dataList.add(data);
     }
 
@@ -73,14 +70,14 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 //        return getId() + "(" + calculateLogLikelihood() + ")";
 //    }
 
-    protected ArrayList<Parameter> dataList = new ArrayList<Parameter>();
+    protected ArrayList<Variable.D> dataList = new ArrayList<Variable.D>();
 
 
     protected double calculateLogLikelihood() {
         double logL = 0.0;
 
-        for (Parameter parameter : dataList) {
-            logL += distribution.logPdf(parameter.getParameterValues());
+        for (Variable.D variable : dataList) {
+            logL += distribution.logPdf(variable.peekValues());
         }
         return logL;
     }

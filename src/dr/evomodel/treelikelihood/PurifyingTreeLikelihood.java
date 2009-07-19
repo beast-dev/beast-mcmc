@@ -76,10 +76,10 @@ public class PurifyingTreeLikelihood extends AbstractTreeLikelihood {
             addModel(frequencyModel);
 
             this.proportionParameter = proportionParameter;
-            addParameter(proportionParameter);
+            addVariable(proportionParameter);
 
             this.lambdaParameter = lambdaParameter;
-            addParameter(lambdaParameter);
+            addVariable(lambdaParameter);
 
             integrateAcrossCategories = siteModel.integrateAcrossCategories();
 

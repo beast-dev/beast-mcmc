@@ -34,6 +34,7 @@ import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Alexei Drummond
@@ -83,7 +84,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         addModel(model);
         addModel(tree);
         addModel(this.rateCategoryParameter);
-        addParameter(rateCategoryParameter);
+        addVariable(rateCategoryParameter);
 
         setupRates();
     }
@@ -98,7 +99,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         }
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         setupRates();
     }
 

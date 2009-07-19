@@ -37,7 +37,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id: CompoundParameter.java,v 1.13 2005/06/14 10:40:34 rambaut Exp $
  */
-public class CompoundParameter extends Parameter.Abstract implements ParameterListener {
+public class CompoundParameter extends Parameter.Abstract implements VariableListener {
 
     public static final String COMPOUND_PARAMETER = "compoundParameter";
 
@@ -277,11 +277,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
     // Parameter listener interface
     // ****************************************************************
 
-    public void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         int dim = 0;
         for (Parameter parameter1 : uniqueParameters) {
-            if (parameter == parameter1) {
+            if (variable == parameter1) {
                 fireParameterChangedEvent(dim + index, type);
                 break;
             }
@@ -295,11 +295,11 @@ public class CompoundParameter extends Parameter.Abstract implements ParameterLi
 
     private class CompoundBounds implements Bounds {
 
-        public double getUpperLimit(int dim) {
+        public Double getUpperLimit(int dim) {
             return parameters.get(dim).getBounds().getUpperLimit(pindex.get(dim));
         }
 
-        public double getLowerLimit(int dim) {
+        public Double getLowerLimit(int dim) {
             return parameters.get(dim).getBounds().getLowerLimit(pindex.get(dim));
         }
 

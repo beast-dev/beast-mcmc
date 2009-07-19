@@ -30,6 +30,7 @@ import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * This interface provides methods that describe a demographic model.
@@ -59,7 +60,7 @@ public abstract class DemographicModel extends AbstractModel implements Units {
         // no intermediates need to be recalculated...
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

@@ -46,37 +46,37 @@ public class CovarionGTR extends AbstractCovarionDNAModel {
 
         super(GTR_COVARION_MODEL, dataType, hiddenRates, switchingRates, freqModel);
         if (rateACParameter != null) {
-            addParameter(rateACParameter);
+            addVariable(rateACParameter);
             rateACParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateACParameter = rateACParameter;
         }
 
         if (rateAGParameter != null) {
-            addParameter(rateAGParameter);
+            addVariable(rateAGParameter);
             rateAGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateAGParameter = rateAGParameter;
         }
 
         if (rateATParameter != null) {
-            addParameter(rateATParameter);
+            addVariable(rateATParameter);
             rateATParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateATParameter = rateATParameter;
         }
 
         if (rateCGParameter != null) {
-            addParameter(rateCGParameter);
+            addVariable(rateCGParameter);
             rateCGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateCGParameter = rateCGParameter;
         }
 
         if (rateCTParameter != null) {
-            addParameter(rateCTParameter);
+            addVariable(rateCTParameter);
             rateCTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateCTParameter = rateCTParameter;
         }
 
         if (rateGTParameter != null) {
-            addParameter(rateGTParameter);
+            addVariable(rateGTParameter);
             rateGTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateGTParameter = rateGTParameter;
         }

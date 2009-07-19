@@ -64,7 +64,7 @@ public class ConstantPopulationModel extends DemographicModel {
         constantPopulation = new ConstantPopulation(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         setUnits(units);
     }

@@ -32,6 +32,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
@@ -120,11 +121,11 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		if (tree instanceof TreeModel) {
 			addModel((TreeModel) tree);
 		}
-		addParameter(popSizeParameter);
-		addParameter(precisionParameter);
-		addParameter(lambdaParameter);
+		addVariable(popSizeParameter);
+		addVariable(precisionParameter);
+		addVariable(lambdaParameter);
 		if (betaParameter != null)
-			addParameter(betaParameter);
+			addVariable(betaParameter);
 
 		setupIntervals();
 		coalescentIntervals = new double[fieldLength];
@@ -327,7 +328,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	}
 
-	protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type){
+	protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
 		likelihoodKnown = false;
 	}
 

@@ -70,7 +70,7 @@ public class ScaledPiecewiseModel extends DemographicModel {
 
         this.N0Parameter = N0Parameter;
         this.treeModel = treeModel;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
 
         setUnits(units);

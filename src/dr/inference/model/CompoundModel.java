@@ -113,16 +113,12 @@ public class CompoundModel implements Model {
 		return true;
 	}
 	
-	public int getParameterCount() { return 0; }
+	public int getVariableCount() { return 0; }
 		
-	public Parameter getParameter(int index) {
+	public Variable getVariable(int index) {
 		throw new IllegalArgumentException("Compound models don't have parameters");
 	}
-	
-	public Parameter getParameter(String name) {
-		throw new IllegalArgumentException("Compound models don't have parameters");
-	}
-	
+		
 	// **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************

@@ -12,6 +12,7 @@ import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.GammaFunction;
 
 /**
@@ -68,8 +69,8 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         addModel(treeModel);
         addModel(siteModel);
         addModel(this.branchRateModel);
-        addParameter(mu);
-        addParameter(lam);
+        addVariable(mu);
+        addVariable(lam);
 
         nodeCount = treeModel.getNodeCount();
         stateCount = patterns.getDataType().getStateCount();
@@ -230,11 +231,11 @@ abstract public class AbstractObservationProcess extends AbstractModel {
             nodePatternInclusionKnown = false;
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (parameter == mu || parameter == lam) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == mu || variable == lam) {
             weightKnown = false;
         } else {
-            System.err.println("AbstractObservationProcess: Got unexpected parameter changed event. (Parameter = " + parameter + ")");
+            System.err.println("AbstractObservationProcess: Got unexpected parameter changed event. (Parameter = " + variable + ")");
         }
     }
 

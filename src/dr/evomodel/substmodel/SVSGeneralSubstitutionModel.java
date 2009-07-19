@@ -25,7 +25,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         super(dataType, freqModel, parameter, 1);
 
         rateIndicator = indicator;
-        addParameter(rateIndicator);
+        addVariable(rateIndicator);
     }
 
     protected SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {

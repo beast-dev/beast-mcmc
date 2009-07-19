@@ -29,9 +29,8 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.evomodel.beagle.substmodel.SubstitutionModel;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * An abstract base class for substitution models.
@@ -115,7 +114,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();

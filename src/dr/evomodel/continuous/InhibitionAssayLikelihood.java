@@ -48,8 +48,8 @@ Parameter precision) {
 
         addModel(treeModel);
 
-        addParameter(dataParameter);
-        addParameter(precision);
+        addVariable(dataParameter);
+        addVariable(precision);
 
         N = treeModel.getExternalNodeCount();
 
@@ -103,10 +103,10 @@ Parameter precision) {
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         likelihoodKnown = false;
     }
@@ -474,7 +474,7 @@ Parameter precision) {
 //					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
 //					for(int i : missingIndices) {
 //						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
-//						missingParameter.addParameter(thisParameter);
+//						missingParameter.addVariable(thisParameter);
 //					}*/
 //					replaceParameter(cxo, missingParameter);
 //				}

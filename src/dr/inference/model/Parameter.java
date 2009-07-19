@@ -76,14 +76,14 @@ public interface Parameter extends Statistic, Variable<Double> {
      *
      * @param listener the listener
      */
-    void addParameterListener(ParameterListener listener);
+    void addParameterListener(VariableListener listener);
 
     /**
      * removes a parameter listener.
      *
      * @param listener the listener
      */
-    void removeParameterListener(ParameterListener listener);
+    void removeParameterListener(VariableListener listener);
 
     /**
      * stores the state of this parameter for subsquent restore
@@ -125,12 +125,12 @@ public interface Parameter extends Statistic, Variable<Double> {
      *
      * @param bounds to add
      */
-    void addBounds(Bounds bounds);
+    void addBounds(Bounds<Double> bounds);
 
     /**
      * @return the intersection of all bounds added to this parameter
      */
-    Bounds getBounds();
+    Bounds<Double> getBounds();
 
     /**
      * Adds an extra dimension at the given index
@@ -190,25 +190,20 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
             if (listeners != null) {
-                for (ParameterListener listener : listeners) {
-                    listener.parameterChangedEvent(this, index, type);
-                }
-            }
-            if (variableListeners != null) {
-                for (VariableListener listener : variableListeners) {
+                for (VariableListener listener : listeners) {
                     listener.variableChangedEvent(this, index, type);
                 }
             }
         }
 
-        public void addParameterListener(ParameterListener listener) {
+        public final void addParameterListener(VariableListener listener) {
             if (listeners == null) {
-                listeners = new ArrayList<ParameterListener>();
+                listeners = new ArrayList<VariableListener>();
             }
             listeners.add(listener);
         }
 
-        public void removeParameterListener(ParameterListener listener) {
+        public final void removeParameterListener(VariableListener listener) {
             if (listeners != null) {
                 listeners.remove(listener);
             }
@@ -273,7 +268,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         public boolean isWithinBounds() {
-            Bounds bounds = getBounds();
+            Bounds<Double> bounds = getBounds();
             for (int i = 0; i < getDimension(); i++) {
                 if (getParameterValue(i) < bounds.getLowerLimit(i) ||
                         getParameterValue(i) > bounds.getUpperLimit(i)) {
@@ -302,6 +297,14 @@ public interface Parameter extends Statistic, Variable<Double> {
             setParameterValue(index, value);
         }
 
+        public Double[] getValues() {
+            Double[] copyOfValues = new Double[getDimension()];
+            for (int i = 0; i < getDimension(); i++) {
+                copyOfValues[i] = getValue(i);
+            }
+            return copyOfValues;
+        }      
+
         /**
          * @return the size of this variable - i.e. the length of the vector
          */
@@ -314,8 +317,8 @@ public interface Parameter extends Statistic, Variable<Double> {
          *
          * @param listener the listener
          */
-        public void addVariableListener(VariableListener listener) {
-            variableListeners.add(listener);
+        public final void addVariableListener(VariableListener listener) {
+            addParameterListener(listener);
         }
 
         /**
@@ -323,8 +326,8 @@ public interface Parameter extends Statistic, Variable<Double> {
          *
          * @param listener the listener
          */
-        public void removeVariableListener(VariableListener listener) {
-            variableListeners.remove(listener);
+        public final void removeVariableListener(VariableListener listener) {
+            removeParameterListener(listener);
         }
 
         /**
@@ -338,7 +341,7 @@ public interface Parameter extends Statistic, Variable<Double> {
          * restores the stored state of this parameter
          */
         public void restoreVariableValues() {
-            storeParameterValues();
+            restoreParameterValues();
         }
 
         /**
@@ -390,8 +393,7 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         private boolean isValid = true;
 
-        private ArrayList<ParameterListener> listeners;
-        private ArrayList<VariableListener> variableListeners;
+        private ArrayList<VariableListener> listeners;
     }
 
 
@@ -440,7 +442,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             setId(id);
         }
 
-        public void addBounds(Bounds boundary) {
+        public void addBounds(Bounds<Double> boundary) {
             if (bounds == null) {
                 bounds = new IntersectionBounds(getDimension());
             }
@@ -483,7 +485,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             return values;
         }
 
-        public Bounds getBounds() {
+        public Bounds<Double> getBounds() {
             if (bounds == null) {
                 throw new NullPointerException(getParameterName() + " parameter: Bounds not set");
             }
@@ -614,11 +616,11 @@ public interface Parameter extends Statistic, Variable<Double> {
         private IntersectionBounds bounds = null;
 
         public void addBounds(double lower, double upper) {
-            addBounds(new DefaultBounds(upper, lower, 1));
+            addBounds(new DefaultBounds(upper, lower, getDimension()));
         }
     }
 
-    class DefaultBounds implements Bounds {
+    class DefaultBounds implements Bounds<Double> {
 
         public DefaultBounds(double upper, double lower, int dimension) {
 
@@ -653,11 +655,11 @@ public interface Parameter extends Statistic, Variable<Double> {
             this.lowers = lowers;
         }
 
-        public double getUpperLimit(int i) {
+        public Double getUpperLimit(int i) {
             return uppers[i];
         }
 
-        public double getLowerLimit(int i) {
+        public Double getLowerLimit(int i) {
             return lowers[i];
         }
 

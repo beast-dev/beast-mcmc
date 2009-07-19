@@ -50,10 +50,10 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         this.frequencies = frequencies;
         this.hiddenFrequencies = hiddenFrequencies;
 
-        addParameter(alpha);
-        addParameter(switchRate);
-        addParameter(frequencies);
-        addParameter(hiddenFrequencies);
+        addVariable(alpha);
+        addVariable(switchRate);
+        addVariable(frequencies);
+        addVariable(hiddenFrequencies);
         setupUnnormalizedQMatrix();
     }
 

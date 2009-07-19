@@ -113,7 +113,7 @@ public class TreeLogAnalyser {
                     analysis.export(exportStream, minSupport, maxExport, verbose);
                 } else {
                     if (verbose) {
-                        analysis.report(0.05);
+                        analysis.report(0.05, (int)(minSupport+.5));
                     } else {
                         final String name = files.size() > 1 ? "combined" : files.get(0).toString();
                         analysis.shortReport(name, tree, drawHeader[0]);
@@ -130,7 +130,7 @@ public class TreeLogAnalyser {
                     final Reader[] readers = {new FileReader(file)};
                     TreeTraceAnalysis analysis = TreeTraceAnalysis.analyzeLogFile(readers, burnin, verbose);
                     if (verbose) {
-                        analysis.report();
+                        analysis.report((int)(minSupport+.5));
                     } else {
                         analysis.shortReport(file.toString(), tree, drawHeader[0]);
                         drawHeader[0] = false;

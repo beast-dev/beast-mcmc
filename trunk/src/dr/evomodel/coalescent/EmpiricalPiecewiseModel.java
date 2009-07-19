@@ -91,10 +91,10 @@ public class EmpiricalPiecewiseModel extends DemographicModel {
         this.intervalWidths = intervalWidths;
         this.populationSizesParameter = populationSizesParameter;
 
-        addParameter(tauParameter);
-        addParameter(lagParameter);
-        addParameter(bParameter);
-        addParameter(populationSizesParameter);
+        addVariable(tauParameter);
+        addVariable(lagParameter);
+        addVariable(bParameter);
+        addVariable(populationSizesParameter);
         tauParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, tauParameter.getDimension()));
         lagParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, lagParameter.getDimension()));
         bParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, bParameter.getDimension()));
@@ -135,7 +135,7 @@ public class EmpiricalPiecewiseModel extends DemographicModel {
         // no intermediates need to be recalculated...
     }
 
-//	protected void handleParameterChangedEvent(Parameter parameter, int index) {
+//	protected void handleVariableChangedEvent(Parameter parameter, int index) {
 //
 //		// no intermediates need to be recalculated...
 //	}

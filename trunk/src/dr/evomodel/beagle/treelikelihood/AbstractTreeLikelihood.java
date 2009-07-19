@@ -32,6 +32,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
 /**
@@ -143,10 +144,10 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

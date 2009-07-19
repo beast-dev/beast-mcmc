@@ -32,17 +32,17 @@ package dr.inference.model;
  *
  * @author Alexei Drummond
  */
-public interface Bounds {
+public interface Bounds<V> {
 	
 	/**
 	 * @return the upper limit of this hypervolume in the given dimension.
 	 */
-	double getUpperLimit(int dimension);
+	V getUpperLimit(int dimension);
 		
 	/**
 	 * @return the lower limit of this hypervolume in the given dimension.
 	 */
-	double getLowerLimit(int dimension);
+	V getLowerLimit(int dimension);
 
 	/**
 	 * @return the dimensionality of this hypervolume.

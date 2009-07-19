@@ -46,14 +46,14 @@ public class SequenceErrorModel extends TipPartialsModel {
 
         if (baseErrorRateParameter != null) {
             this.baseErrorRateParameter = baseErrorRateParameter;
-            addParameter(this.baseErrorRateParameter);
+            addVariable(this.baseErrorRateParameter);
         } else {
             this.baseErrorRateParameter = null;
         }
 
         if (ageRelatedErrorRateParameter != null) {
             this.ageRelatedErrorRateParameter = ageRelatedErrorRateParameter;
-            addParameter(ageRelatedErrorRateParameter);
+            addVariable(ageRelatedErrorRateParameter);
         } else {
             this.ageRelatedErrorRateParameter = null;
         }

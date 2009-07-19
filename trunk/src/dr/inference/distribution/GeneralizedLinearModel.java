@@ -50,7 +50,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         this.dependentParam = dependentParam;
 
         if (dependentParam != null) {
-            addParameter(dependentParam);
+            addVariable(dependentParam);
             N = dependentParam.getDimension();
         } else
             N = 0;
@@ -76,10 +76,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         if (designMatrix.size() != independentParam.size())
             throw new RuntimeException("Independent variables and their design matrices are out of sync");
-        addParameter(effect);
-        addParameter(matrix);
+        addVariable(effect);
+        addVariable(matrix);
         if(delta != null)
-            addParameter(delta);
+            addVariable(delta);
         numIndependentVariables++;
         System.out.println("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
     }
@@ -202,7 +202,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         scaleDesign = new int[design.getDimension()];
         for(int i=0; i<scaleDesign.length; i++)
             scaleDesign[i] = (int) design.getParameterValue(i);
-        addParameter(scaleParameter);
+        addVariable(scaleParameter);
     }
 
 /*	// **************************************************************
@@ -264,7 +264,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        fireModelChanged();
     }
 

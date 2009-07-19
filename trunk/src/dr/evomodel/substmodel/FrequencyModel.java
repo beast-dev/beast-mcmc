@@ -31,6 +31,7 @@ import dr.evoxml.DataTypeUtils;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -73,7 +74,7 @@ public class FrequencyModel extends AbstractModel {
         }
 
         this.frequencyParameter = frequencyParameter;
-        addParameter(frequencyParameter);
+        addVariable(frequencyParameter);
         frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencyParameter.getDimension()));
         this.dataType = dataType;
     }
@@ -134,7 +135,7 @@ public class FrequencyModel extends AbstractModel {
         // no intermediates need recalculating....
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need recalculating....
     }
 

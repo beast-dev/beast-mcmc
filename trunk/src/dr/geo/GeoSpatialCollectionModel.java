@@ -28,6 +28,7 @@ package dr.geo;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.List;
 
@@ -54,14 +55,14 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
         storedValidPointLogLikelihood = new boolean[dim];
         likelihoodKnown = false;
 
-        addParameter(points);
+        addVariable(points);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // No submodels; do nothing
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // Mark appropriate dim as invalid
         validPointLogLikelihood[index / GeoSpatialDistribution.dimPoint] = false;
         likelihoodKnown = false;

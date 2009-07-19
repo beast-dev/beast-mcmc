@@ -1,12 +1,11 @@
 package dr.inference.model;
 
 import dr.xml.*;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard
  */
-public class DuplicatedParameter extends Parameter.Abstract implements ParameterListener {
+public class DuplicatedParameter extends Parameter.Abstract implements VariableListener {
 
     public static final String DUPLICATED_PARAMETER = "duplicatedParameter";
     public static final String COPIES = "copies";
@@ -95,11 +94,11 @@ public class DuplicatedParameter extends Parameter.Abstract implements Parameter
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void parameterChangedEvent(Parameter parameter, int index, ChangeType type) {
-        if (parameter == dupParameter) {
+    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+        if (variable == dupParameter) {
             updateDuplication();
         } else {
-            System.err.println("Called by " + parameter.getId());
+            System.err.println("Called by " + variable.getId());
             throw new RuntimeException("Not yet implemented.");
         }
     }
@@ -146,7 +145,7 @@ public class DuplicatedParameter extends Parameter.Abstract implements Parameter
     private final Parameter parameter;
     private Parameter dupParameter;
     private int copies;
-    private Bounds bounds;
-    private Bounds originalBounds;
+    private Bounds<Double> bounds;
+    private Bounds<Double> originalBounds;
 
 }

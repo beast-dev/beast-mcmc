@@ -29,7 +29,7 @@ public class MixtureCartogramDiffusionModel extends CartogramDiffusionModel {
         Logger.getLogger("dr.evomodel.continuous").info(
                 "\tMixture: " + mixture.getId()
         );
-        addParameter(mixture);
+        addVariable(mixture);
     }
 
     public void addMapping(CartogramMapping mapping) {

@@ -27,6 +27,7 @@ package dr.evomodel.coalescent.structure;
 
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
@@ -61,7 +62,7 @@ public class ConstantMigrationModel extends MigrationModel {
 
         this.demeCount = demeCount;
         this.migrationParameter = migrationParameter;
-        addParameter(migrationParameter);
+        addVariable(migrationParameter);
         migrationParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, migrationParameter.getDimension()));
     }
 
@@ -79,7 +80,7 @@ public class ConstantMigrationModel extends MigrationModel {
     }
 
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         colourChangeMatrix = null;
     }
 

@@ -9,10 +9,7 @@ import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.NodePosteriorTreeLikelihood;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 /**
@@ -49,7 +46,7 @@ public class AvgPosteriorIBDReporter extends AbstractModel implements NodeAttrib
         this.branchRateModel = branchRateModel;
         addModel(this.branchRateModel);
         this.mutationParameter = mutationParameter;
-        addParameter(this.mutationParameter);
+        addVariable(this.mutationParameter);
         this.likelihoodReporter = likelihoodReporter;
         this.probabilities = new double[substitutionModel.getStateCount() * substitutionModel.getStateCount()];
     }
@@ -259,11 +256,11 @@ public class AvgPosteriorIBDReporter extends AbstractModel implements NodeAttrib
         }
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (parameter == mutationParameter) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == mutationParameter) {
             weightsKnown = false;
         } else {
-            System.err.println("Weird call back to IBDReporter from " + parameter.getParameterName());
+            System.err.println("Weird call back to IBDReporter from " + variable.getVariableName());
         }
     }
 

@@ -97,10 +97,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
 
     // **************************************************************

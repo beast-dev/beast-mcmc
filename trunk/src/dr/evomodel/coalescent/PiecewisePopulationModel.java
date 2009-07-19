@@ -69,10 +69,10 @@ public class PiecewisePopulationModel extends DemographicModel {
         }
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
 
-        //addParameter(epochLengths);
+        //addVariable(epochLengths);
         //epochLengths.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, epochLengths.getDimension()));
 
         setUnits(units);
@@ -96,10 +96,10 @@ public class PiecewisePopulationModel extends DemographicModel {
 
         this.N0Parameter = N0Parameter;
         this.growthRatesParameter = growthRatesParameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, N0Parameter.getDimension()));
 
-        addParameter(growthRatesParameter);
+        addVariable(growthRatesParameter);
         growthRatesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, growthRatesParameter.getDimension()));
 
         setUnits(units);

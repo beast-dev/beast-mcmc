@@ -27,6 +27,7 @@ package dr.evomodel.arg;
 
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -42,7 +43,7 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood {
 
         this.probabilities = probs;
 
-        addParameter(probs);
+        addVariable(probs);
         addModel(arg);
     }
 
@@ -93,7 +94,7 @@ public class HierarchicalPartitionLikelihood extends ARGPartitionLikelihood {
 
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index,
+    protected void handleVariableChangedEvent(Variable variable, int index,
                                                ChangeType type) {
         // I'm lazy, so I compute after each step :)
     }

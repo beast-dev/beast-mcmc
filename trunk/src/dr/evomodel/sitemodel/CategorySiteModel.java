@@ -30,6 +30,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
@@ -66,11 +67,11 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
         addModel(substitutionModel);
 
         this.muParameter = muParameter;
-        addParameter(muParameter);
+        addVariable(muParameter);
         muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.rateParameter = rateParameter;
-        addParameter(rateParameter);
+        addVariable(rateParameter);
         rateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, rateParameter.getDimension()));
 
         states = stateString;
@@ -237,11 +238,11 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (parameter == rateParameter) {
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == rateParameter) {
             ratesKnown = false;
         }
-        listenerHelper.fireModelChanged(this, parameter, index);
+        listenerHelper.fireModelChanged(this, variable, index);
     }
 
     protected void storeState() {

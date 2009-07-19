@@ -3,6 +3,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.InverseGaussianDistribution;
 import dr.xml.*;
@@ -61,8 +62,8 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         this.meanParameter = meanParameter;
         this.shapeParameter = shapeParameter;
         this.offset = offset;
-        addParameter(meanParameter);
-        addParameter(shapeParameter);
+        addVariable(meanParameter);
+        addVariable(shapeParameter);
         this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         this.shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
@@ -164,7 +165,7 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         // no intermediates need to be recalculated...
     }
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 
@@ -261,4 +262,4 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
     private final Parameter shapeParameter;
     private final double offset;
 
-}   
+}

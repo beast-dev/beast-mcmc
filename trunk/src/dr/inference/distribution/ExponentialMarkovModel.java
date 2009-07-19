@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.distributions.GammaDistribution;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,12 +58,12 @@ public class ExponentialMarkovModel extends AbstractModelLikelihood {
         this.reverse = reverse;
         this.shape = shape;
 
-        addParameter(chainParameter);
+        addVariable(chainParameter);
         chainParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, chainParameter.getDimension()));
     }
 
     public Parameter getChainParameter() {
-        return getParameter(0);
+        return (Parameter)getVariable(0);
     }
 
     // *****************************************************************
@@ -73,7 +74,7 @@ public class ExponentialMarkovModel extends AbstractModelLikelihood {
         // no intermediates need to be recalculated...
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

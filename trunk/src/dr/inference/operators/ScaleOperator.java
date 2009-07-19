@@ -27,6 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -55,23 +56,23 @@ public class ScaleOperator extends AbstractCoercableOperator {
     private Parameter indicator;
     private double indicatorOnProb;
 
-    public ScaleOperator(Parameter parameter, double scale) {
+    public ScaleOperator(Variable variable, double scale) {
 
-        this(parameter, scale, CoercionMode.COERCION_ON, 1.0);
+        this(variable, scale, CoercionMode.COERCION_ON, 1.0);
     }
 
-    public ScaleOperator(Parameter parameter, double scale, CoercionMode mode, double weight) {
+    public ScaleOperator(Variable variable, double scale, CoercionMode mode, double weight) {
 
-        this(parameter, false, 0, scale, mode, null, 1.0, false);
+        this(variable, false, 0, scale, mode, null, 1.0, false);
         setWeight(weight);
     }
 
-    public ScaleOperator(Parameter parameter, boolean scaleAll, int degreesOfFreedom, double scale,
+    public ScaleOperator(Variable variable, boolean scaleAll, int degreesOfFreedom, double scale,
                          CoercionMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);
 
-        this.parameter = parameter;
+        this.variable = variable;
         this.indicator = indicator;
         this.indicatorOnProb = indicatorOnProb;
         this.scaleAll = scaleAll;
@@ -84,8 +85,8 @@ public class ScaleOperator extends AbstractCoercableOperator {
     /**
      * @return the parameter this operator acts on.
      */
-    public Parameter getParameter() {
-        return parameter;
+    public Variable getVariable() {
+        return variable;
     }
 
     /**
@@ -97,8 +98,8 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
         double logq;
 
-        final Bounds bounds = parameter.getBounds();
-        final int dim = parameter.getDimension();
+        final Bounds<Double> bounds = variable.getBounds();
+        final int dim = variable.getSize();
 
         if (scaleAllIndependently) {
             // update all dimensions independently.
@@ -106,7 +107,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             for (int i = 0; i < dim; i++) {
 
                 final double scaleOne = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
-                final double value = scaleOne * parameter.getParameterValue(i);
+                final double value = scaleOne * variable.getValue(i);
 
                 logq -= Math.log(scaleOne);
 
@@ -114,7 +115,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
                     throw new OperatorFailedException("proposed value outside boundaries");
                 }
 
-                parameter.setParameterValue(i, value);
+                variable.setValue(i, value);
 
             }
         } else if (scaleAll) {
@@ -130,12 +131,12 @@ public class ScaleOperator extends AbstractCoercableOperator {
             // Must first set all parameters first and check for boundries later for the operator to work
             // correctly with dependent parameters such as tree node heights.
             for (int i = 0; i < dim; i++) {
-                parameter.setParameterValue(i, parameter.getParameterValue(i) * scale);
+                variable.setValue(i, variable.getValue(i) * scale);
             }
 
             for (int i = 0; i < dim; i++) {
-                if (parameter.getParameterValue(i) < parameter.getBounds().getLowerLimit(i) ||
-                        parameter.getParameterValue(i) > parameter.getBounds().getUpperLimit(i)) {
+                if (variable.getValue(i) < variable.getBounds().getLowerLimit(i) ||
+                        variable.getValue(i) > variable.getBounds().getUpperLimit(i)) {
                     throw new OperatorFailedException("proposed value outside boundaries");
                 }
             }
@@ -176,15 +177,15 @@ public class ScaleOperator extends AbstractCoercableOperator {
                 index = MathUtils.nextInt(dim);
             }
 
-            final double oldValue = parameter.getParameterValue(index);
+            final double oldValue = variable.getValue(index);
 
             if (oldValue == 0) {
                 Logger.getLogger("dr.inference").warning("The " + SCALE_OPERATOR +
                         " for " +
-                        parameter.getParameterName()
+                        variable.getVariableName()
                         + " has failed since the parameter has a value of 0.0." +
                         "\nTo fix this problem, initalize the value of " +
-                        parameter.getParameterName() + " to be a positive real number"
+                        variable.getVariableName() + " to be a positive real number"
                 );
                 throw new OperatorFailedException("");
             }
@@ -194,7 +195,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
                 throw new OperatorFailedException("proposed value outside boundaries");
             }
 
-            parameter.setParameterValue(index, newValue);
+            variable.setValue(index, newValue);
 
             // provides a hook for subclasses
             cleanupOperation(newValue, oldValue);
@@ -215,7 +216,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "scale(" + parameter.getParameterName() + ")";
+        return "scale(" + variable.getVariableName() + ")";
     }
 
     public double getCoercableParameter() {
@@ -329,12 +330,12 @@ public class ScaleOperator extends AbstractCoercableOperator {
     };
 
     public String toString() {
-        return "scaleOperator(" + parameter.getParameterName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
+        return "scaleOperator(" + variable.getVariableName() + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
     }
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
+    private Variable<Double> variable = null;
     private boolean scaleAll = false;
     private boolean scaleAllIndependently = false;
     private int degreesOfFreedom = 0;

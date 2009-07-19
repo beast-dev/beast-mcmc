@@ -48,8 +48,8 @@ public class ARGCoalescentLikelihood extends VeryOldCoalescentLikelihood {
 		this.recomRate = recomRate;
 		this.arg = arg;
 		this.ancestralRestriction = ancestralRestriction;
-		addParameter(popSize);
-		addParameter(recomRate);
+		addVariable(popSize);
+		addVariable(recomRate);
 
 		addModel(arg);
 		intervals = new ArrayList<CoalescentInterval>(arg.getNodeCount());

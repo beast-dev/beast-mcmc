@@ -28,7 +28,6 @@ package dr.evomodel.beagle.substmodel;
 import dr.evolution.datatype.*;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 /**
  * Yang model of codon evolution
@@ -73,12 +72,12 @@ public class GY94CodonModel extends BaseSubstitutionModel
         this.geneticCode = codonDataType.getGeneticCode();
         
 		this.omegaParameter = omegaParameter;
-		addParameter(omegaParameter);
+		addVariable(omegaParameter);
 		omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
 				omegaParameter.getDimension()));
 
 		this.kappaParameter = kappaParameter;
-		addParameter(kappaParameter);
+		addVariable(kappaParameter);
 		kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
 				kappaParameter.getDimension()));
 

@@ -29,6 +29,7 @@ import dr.evomodel.arg.ARGModel.Node;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
@@ -50,7 +51,7 @@ public class ARGRatePrior extends AbstractModelLikelihood {
         this.logNormalSigma = sigma;
 
         addModel(arg);
-        addParameter(sigma);
+        addVariable(sigma);
 
     }
 
@@ -134,7 +135,7 @@ public class ARGRatePrior extends AbstractModelLikelihood {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index,
+    protected void handleVariableChangedEvent(Variable variable, int index,
                                                ChangeType type) {
     }
 

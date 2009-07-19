@@ -1,7 +1,7 @@
 /*
  * GTR.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,8 +25,8 @@
 
 package dr.evomodel.beagle.substmodel;
 
-import dr.inference.model.Parameter;
 import dr.evolution.datatype.Nucleotides;
+import dr.inference.model.Parameter;
 
 /**
  * General Time Reversible model of nucleotide evolution
@@ -67,37 +67,37 @@ public class GTR extends BaseSubstitutionModel {
         super("GTR", Nucleotides.INSTANCE, freqModel);
 
         if (rateACParameter != null) {
-            addParameter(rateACParameter);
+            addVariable(rateACParameter);
             rateACParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateACParameter = rateACParameter;
         }
 
         if (rateAGParameter != null) {
-            addParameter(rateAGParameter);
+            addVariable(rateAGParameter);
             rateAGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateAGParameter = rateAGParameter;
         }
 
         if (rateATParameter != null) {
-            addParameter(rateATParameter);
+            addVariable(rateATParameter);
             rateATParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateATParameter = rateATParameter;
         }
 
         if (rateCGParameter != null) {
-            addParameter(rateCGParameter);
+            addVariable(rateCGParameter);
             rateCGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateCGParameter = rateCGParameter;
         }
 
         if (rateCTParameter != null) {
-            addParameter(rateCTParameter);
+            addVariable(rateCTParameter);
             rateCTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateCTParameter = rateCTParameter;
         }
 
         if (rateGTParameter != null) {
-            addParameter(rateGTParameter);
+            addVariable(rateGTParameter);
             rateGTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
             this.rateGTParameter = rateGTParameter;
         }

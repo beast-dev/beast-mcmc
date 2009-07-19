@@ -4,10 +4,7 @@ import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MachineAccuracy;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
@@ -53,7 +50,7 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
         Ksquared = stateCount * stateCount;
 
         rates = parameter;
-        addParameter(rates);
+        addVariable(rates);
 
         eigenInitialised = false;
     }
@@ -97,7 +94,7 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
         assert false; // no submodels
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         updateMatrix = true;
         ratesChanged();
     }

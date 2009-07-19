@@ -1,7 +1,6 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -427,7 +426,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
 					for(int i : missingIndices) {
 						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
-						missingParameter.addParameter(thisParameter);
+						missingParameter.addVariable(thisParameter);
 					}*/
                     ParameterParser.replaceParameter(cxo, missingParameter);
                 }

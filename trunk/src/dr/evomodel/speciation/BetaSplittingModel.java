@@ -28,6 +28,7 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.GammaFunction;
 import dr.xml.*;
 
@@ -48,7 +49,7 @@ public class BetaSplittingModel extends BranchingModel {
         super(BETA_SPLITTING_MODEL);
 
         this.phiParameter = phiParameter;
-        addParameter(phiParameter);
+        addVariable(phiParameter);
         phiParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         N = tree.getExternalNodeCount();
         logProbs = new double[N + 1][N + 1];
@@ -118,7 +119,7 @@ public class BetaSplittingModel extends BranchingModel {
     // XMLElement IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         //System.out.println("parameter changed:" + parameter.getParameterName());
         makeSplitProbs(logProbs);
     }

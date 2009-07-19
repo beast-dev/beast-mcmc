@@ -136,9 +136,9 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
         if (tree instanceof TreeModel) {
             addModel((TreeModel)tree);
         }
-        addParameter(popSizeParameter);
+        addVariable(popSizeParameter);
 
-        addParameter(groupSizeParameter);
+        addVariable(groupSizeParameter);
 
         setupIntervals();
 

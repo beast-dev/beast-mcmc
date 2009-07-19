@@ -3,6 +3,7 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Vector;
 import cern.colt.bitvector.BitVector;
 
@@ -16,7 +17,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
                                        Parameter parameter, Parameter indicators, boolean considerConnectedness) {
         super(name, dataType, rootFreqModel, parameter);
         this.indicators = indicators;
-        addParameter(indicators);
+        addVariable(indicators);
         this.considerConnectedness = considerConnectedness;
     }
 
@@ -29,10 +30,10 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         return rates;
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (parameter == infinitesimalRates && indicators.getParameterValue(index) == 0)
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == infinitesimalRates && indicators.getParameterValue(index) == 0)
             return;  // ignore, does not affect likelihood
-        super.handleParameterChangedEvent(parameter, index, type);
+        super.handleVariableChangedEvent(variable, index, type);
     }
 
     public Parameter getIndicators() {

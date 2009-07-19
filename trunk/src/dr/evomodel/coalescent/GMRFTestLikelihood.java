@@ -39,12 +39,12 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 		statsParameter = statParameter;
 		betaParameter = inBeta;
 		fieldLength = popSizeParameter.getDimension();
-		addParameter(popSizeParameter);
-		addParameter(precisionParameter);
-		addParameter(lambdaParameter);
-		addParameter(intervalsParameter);
-		addParameter(statsParameter);
-		addParameter(betaParameter);
+		addVariable(popSizeParameter);
+		addVariable(precisionParameter);
+		addVariable(lambdaParameter);
+		addVariable(intervalsParameter);
+		addVariable(statsParameter);
+		addVariable(betaParameter);
 
 		setupGMRFWeights();
 	}

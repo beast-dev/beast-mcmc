@@ -30,6 +30,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -87,15 +88,15 @@ public class PseudoCodonModel extends AbstractModel {
 
         this.muParameter = muParameter;
         muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addParameter(muParameter);
+        addVariable(muParameter);
 
         this.omegaParameter = omegaParameter;
         omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addParameter(omegaParameter);
+        addVariable(omegaParameter);
 
         this.kappaParameter = kappaParameter;
         kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addParameter(kappaParameter);
+        addVariable(kappaParameter);
 
         excludeStopCodons = true;
 
@@ -111,7 +112,7 @@ public class PseudoCodonModel extends AbstractModel {
         calculateSubstitutionModel();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // parameter changed!
         calculateSubstitutionModel();
     }

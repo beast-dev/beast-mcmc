@@ -6,7 +6,7 @@ import dr.xml.*;
  * @author Marc A. Suchard
  */
 
-public class MaskedParameter extends Parameter.Abstract implements ParameterListener {
+public class MaskedParameter extends Parameter.Abstract implements VariableListener {
 
     public static final String MASKED_PARAMETER = "maskedParameter";
     public static final String MASKING = "mask";
@@ -103,12 +103,12 @@ public class MaskedParameter extends Parameter.Abstract implements ParameterList
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void parameterChangedEvent(Parameter parameter, int index, ChangeType type) {
-        if (parameter == maskParameter) {
+    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+        if (variable == maskParameter) {
             updateMask();
         }
         else {
-            System.err.println("Called by "+parameter.getId());
+            System.err.println("Called by "+variable.getId());
             throw new RuntimeException("Not yet implemented.");
         }
     }

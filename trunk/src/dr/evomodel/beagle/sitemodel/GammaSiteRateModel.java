@@ -28,12 +28,9 @@ package dr.evomodel.beagle.sitemodel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.distributions.GammaDistribution;
-import dr.xml.*;
 import dr.evomodel.beagle.substmodel.SubstitutionModel;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-
-import java.util.logging.Logger;
 
 /**
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
@@ -90,7 +87,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
 
         this.muParameter = muParameter;
         if (muParameter != null) {
-            addParameter(muParameter);
+            addVariable(muParameter);
             muParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
 
@@ -98,7 +95,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
         if (shapeParameter != null) {
             this.categoryCount = gammaCategoryCount;
 
-            addParameter(shapeParameter);
+            addVariable(shapeParameter);
             shapeParameter.addBounds(new Parameter.DefaultBounds(1.0E3, 0.0, 1));
         } else {
             this.categoryCount = 1;
@@ -108,7 +105,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
         if (invarParameter != null) {
             this.categoryCount += 1;
 
-            addParameter(invarParameter);
+            addVariable(invarParameter);
             invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
 
@@ -160,21 +157,21 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
     }
 
     public void setMutationRateParameter(Parameter parameter) {
-        if (muParameter != null) removeParameter(muParameter);
+        if (muParameter != null) removeVariable(muParameter);
         muParameter = parameter;
-        if (muParameter != null) addParameter(muParameter);
+        if (muParameter != null) addVariable(muParameter);
     }
 
     public void setAlphaParameter(Parameter parameter) {
-        if (shapeParameter != null) removeParameter(shapeParameter);
+        if (shapeParameter != null) removeVariable(shapeParameter);
         shapeParameter = parameter;
-        if (shapeParameter != null) addParameter(shapeParameter);
+        if (shapeParameter != null) addVariable(shapeParameter);
     }
 
     public void setPInvParameter(Parameter parameter) {
-        if (invarParameter != null) removeParameter(invarParameter);
+        if (invarParameter != null) removeVariable(invarParameter);
         invarParameter = parameter;
-        if (invarParameter != null) addParameter(invarParameter);
+        if (invarParameter != null) addVariable(invarParameter);
     }
 
     // *****************************************************************
@@ -284,15 +281,15 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (parameter == shapeParameter) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == shapeParameter) {
             ratesKnown = false;
-        } else if (parameter == invarParameter) {
+        } else if (variable == invarParameter) {
             ratesKnown = false;
         } else {
             // is the muParameter and nothing needs to be done
         }
-        listenerHelper.fireModelChanged(this, parameter, index);
+        listenerHelper.fireModelChanged(this, variable, index);
     }
 
     protected void storeState() {

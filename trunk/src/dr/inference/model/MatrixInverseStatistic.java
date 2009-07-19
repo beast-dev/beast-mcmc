@@ -6,7 +6,7 @@ import dr.xml.*;
 /**
  * @author Marc A. Suchard
  */
-public class MatrixInverseStatistic extends Statistic.Abstract implements ParameterListener {
+public class MatrixInverseStatistic extends Statistic.Abstract implements VariableListener {
 
     public static final String INVERSE_STATISTIC = "matrixInverse";
 
@@ -32,7 +32,7 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Parame
         return inverse[x][y];
     }
 
-    public void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         inverseKnown = false;
     }
 

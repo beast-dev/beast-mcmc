@@ -32,10 +32,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
+import dr.inference.model.*;
 import dr.math.Binomial;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
@@ -169,12 +166,12 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
     // No parameters to respond to
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     // **************************************************************

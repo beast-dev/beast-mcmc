@@ -1,15 +1,40 @@
+/*
+ * RateVarianceScaleOperator.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.operators;
 
-import dr.inference.operators.*;
-import dr.inference.model.Parameter;
-import dr.inference.model.Bounds;
-import dr.evomodel.tree.TreeModel;
-import dr.math.MathUtils;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Bounds;
+import dr.inference.model.Parameter;
+import dr.inference.operators.*;
+import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A special operator for scaling the variance of the autocorrelated clock model
@@ -44,16 +69,16 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
         //Scale the variance
         double oldValue = variance.getParameterValue(0);
         double newValue = scale * oldValue;
-        double logq= - Math.log(scale);
+        double logq = -Math.log(scale);
 
-        final Bounds bounds = variance.getBounds();
+        final Bounds<Double> bounds = variance.getBounds();
         if (newValue < bounds.getLowerLimit(0) || newValue > bounds.getUpperLimit(0)) {
             throw new OperatorFailedException("proposed value outside boundaries");
         }
         variance.setParameterValue(0, newValue);
 
         //Scale the rates of the tree accordingly
-        NodeRef root =  tree.getRoot();
+        NodeRef root = tree.getRoot();
         final int index = root.getNumber();
 
         List<NodeRef> listNode = new ArrayList<NodeRef>();
@@ -61,7 +86,7 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
 
         final double rateScale = Math.sqrt(scale);
 
-        for( NodeRef node : listNode){
+        for (NodeRef node : listNode) {
 
             oldValue = tree.getNodeRate(node);
             newValue = oldValue * rateScale;
@@ -70,16 +95,16 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
         }
 
         //  According to the hastings ratio in the scale Operator
-        logq += (listNode.size()  - 2) * Math.log(rateScale);
+        logq += (listNode.size() - 2) * Math.log(rateScale);
 
         return logq;
     }
 
-    void getSubtree(List<NodeRef> listNode, NodeRef parent){
+    void getSubtree(List<NodeRef> listNode, NodeRef parent) {
 
         listNode.add(parent);
         int nbChildren = tree.getChildCount(parent);
-        for (int c=0; c < nbChildren; c++ ){
+        for (int c = 0; c < nbChildren; c++) {
             getSubtree(listNode, tree.getChild(parent, c));
         }
     }
@@ -157,7 +182,7 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-           CoercionMode mode = CoercionMode.parseMode(xo);
+            CoercionMode mode = CoercionMode.parseMode(xo);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -198,7 +223,7 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-				new ElementRule(TreeModel.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(Parameter.class),
         };
 

@@ -1,3 +1,28 @@
+/*
+ * VariableDemographicModel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
@@ -5,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -54,9 +80,15 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         LINEAR("linear"),
         EXPONENTIAL("exponential"),
         STEPWISE("stepwise");
-        
-        Type(String name) { this.name = name; }
-        public String toString() { return name; } 
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return name;
+        }
+
         String name;
     }
 
@@ -88,21 +120,21 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         this.mid = mid;
 
         if (popSizes != events) {
-        	
-        	popSizeParameter.setDimension(events);
-        	System.err.println("WARNING: resetting parameter size of parameter " + popSizeParameter.getParameterName() + 
-        			" in variable demographic model to " + events);
-        	
+
+            popSizeParameter.setDimension(events);
+            System.err.println("WARNING: resetting parameter size of parameter " + popSizeParameter.getParameterName() +
+                    " in variable demographic model to " + events);
+
             //throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
             //        ") must be the same as the number of internal nodes in the tree. (" + events + ")");
         }
 
         if (nIndicators != events - 1) {
-        	indicatorParameter.setDimension(events);
-        	System.err.println("WARNING: resetting parameter size of parameter " + indicatorParameter.getParameterName() + 
-        			" in variable demographic model to " + (events - 1));
-        	
-        	//throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
+            indicatorParameter.setDimension(events);
+            System.err.println("WARNING: resetting parameter size of parameter " + indicatorParameter.getParameterName() +
+                    " in variable demographic model to " + (events - 1));
+
+            //throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
             //        + nIndicators + " != " + (events - 1) + ")");
         }
 
@@ -112,8 +144,8 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             addModel(t);
         }
 
-        addParameter(indicatorParameter);
-        addParameter(popSizeParameter);
+        addVariable(indicatorParameter);
+        addVariable(popSizeParameter);
     }
 
     public int nLoci() {
@@ -172,9 +204,9 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         fireModelChanged(this);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         //System.out.println("parm changed: " + parameter);
-        super.handleParameterChangedEvent(parameter, index, type);
+        super.handleVariableChangedEvent(variable, index, type);
         if (demoFunction != null) {
             if (demoFunction == savedDemoFunction) {
                 demoFunction = new VDdemographicFunction(demoFunction);
@@ -243,7 +275,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
 
             return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type,
-                                                logSpace, useMid);
+                    logSpace, useMid);
 
         }
 

@@ -1,7 +1,7 @@
 /*
  * AbstractModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -38,7 +38,7 @@ import java.util.ArrayList;
  * @author Andrew Rambaut
  * @version $Id: AbstractModel.java,v 1.13 2006/08/17 15:30:08 rambaut Exp $
  */
-public abstract class AbstractModel implements Model, ModelListener, ParameterListener, StatisticList, MPISerializable {
+public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, MPISerializable {
 
     /**
      * @param name Model Name
@@ -72,28 +72,28 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
         return models.get(i);
     }
 
-    public final void addParameter(Parameter parameter) {
-        parameters.add(parameter);
-        parameter.addParameterListener(this);
+    public final void addVariable(Variable variable) {
+        variables.add(variable);
+        variable.addVariableListener(this);
 
         // parameters are also statistics
-        addStatistic(parameter);
+        if (variable instanceof Statistic) addStatistic((Statistic) variable);
     }
 
-    public final void removeParameter(Parameter parameter) {
-        parameters.remove(parameter);
-        parameter.removeParameterListener(this);
+    public final void removeVariable(Variable variable) {
+        variables.remove(variable);
+        variable.removeVariableListener(this);
 
         // parameters are also statistics
-        removeStatistic(parameter);
+        if (variable instanceof Statistic) removeStatistic((Statistic) variable);
     }
 
     /**
      * @param parameter
      * @return true of the given parameter is contained in this model
      */
-    public final boolean hasParameter(Parameter parameter) {
-        return parameters.contains(parameter);
+    public final boolean hasVariable(Variable parameter) {
+        return variables.contains(parameter);
     }
 
     /**
@@ -129,30 +129,12 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    public final int getParameterCount() {
-        return parameters.size();
+    public final int getVariableCount() {
+        return variables.size();
     }
 
-    public final Parameter getParameter(int i) {
-        return parameters.get(i);
-    }
-
-    /**
-     * @return the parameter of the component that is called name
-     */
-    public final Parameter getParameter(String name) {
-
-        final int n = getParameterCount();
-
-        for (int i = 0; i < n; i++) {
-            final Parameter parameter = getParameter(i);
-            if (parameter.getParameterName().equals(name)) {
-                return parameter;
-            }
-        }
-
-        return null;
-        //throw new IllegalArgumentException("Parameter named " + name + " not found.");
+    public final Variable getVariable(int i) {
+        return variables.get(i);
     }
 
     // **************************************************************
@@ -167,10 +149,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
             ((AbstractModel) model).sendState(toRank);
         }
         // Send current model parameters
-        for (Parameter parameter : parameters) {
-            ((Parameter.Abstract) parameter).sendState(toRank);
+        for (Variable variable : variables) {
+            if (variable instanceof Parameter.Abstract) ((Parameter.Abstract) variable).sendState(toRank);
         }
-
     }
 
 
@@ -180,7 +161,6 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
         for (Model model : models) {
             ((AbstractModel) model).sendState(toRank);
         }
-
     }
 
     public void receiveStateNoParameters(int fromRank) {
@@ -194,8 +174,9 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
             ((AbstractModel) model).receiveState(fromRank);
         }
         // Send current model parameters
-        for (Parameter parameter : parameters) {
-            ((Parameter.Abstract) parameter).receiveState(fromRank);
+        for (Variable variable : variables) {
+            if (variable instanceof Parameter.Abstract)
+                ((Parameter.Abstract) variable).receiveState(fromRank);
         }
 
 
@@ -226,12 +207,12 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
     abstract protected void handleModelChangedEvent(Model model, Object object, int index);
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    public final void parameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        handleParameterChangedEvent(parameter, index, type);
-        listenerHelper.fireModelChanged(this, parameter, index);
+    public final void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        handleVariableChangedEvent(variable, index, type);
+        listenerHelper.fireModelChanged(this, variable, index);
     }
 
     /**
@@ -242,7 +223,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected abstract void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type);
+    protected abstract void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type);
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -256,8 +237,8 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
                 m.storeModelState();
             }
 
-            for (Parameter parameter : parameters) {
-                parameter.storeParameterValues();
+            for (Variable variable : variables) {
+                variable.storeVariableValues();
             }
 
             storeState();
@@ -269,8 +250,8 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
         if (!isValidState) {
             //System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
 
-            for (Parameter parameter : parameters) {
-                parameter.restoreParameterValues();
+            for (Variable variable : variables) {
+                variable.restoreVariableValues();
             }
             for (Model m : models) {
                 m.restoreModelState();
@@ -287,8 +268,8 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
         if (!isValidState) {
             //System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());
 
-            for (Parameter parameter : parameters) {
-                parameter.acceptParameterValues();
+            for (Variable variable : variables) {
+                variable.acceptVariableValues();
             }
 
             for (Model m : models) {
@@ -407,7 +388,7 @@ public abstract class AbstractModel implements Model, ModelListener, ParameterLi
     protected Model.ListenerHelper listenerHelper = new Model.ListenerHelper();
 
     private final ArrayList<Model> models = new ArrayList<Model>();
-    private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    private final ArrayList<Variable> variables = new ArrayList<Variable>();
     private final ArrayList<Statistic> statistics = new ArrayList<Statistic>();
 
     private final String name;

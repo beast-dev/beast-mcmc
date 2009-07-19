@@ -8,10 +8,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evomodel.coalescent.VDdemographicFunction;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
+import dr.inference.model.*;
 import dr.inference.operators.Scalable;
 import dr.inference.operators.OperatorFailedException;
 import dr.util.Attributable;
@@ -86,15 +83,15 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         this.bmp = bmp;
         this.nonConstRootPopulation = nonConstRootPopulation;
 
-        addParameter(sppSplitPopulations);
+        addVariable(sppSplitPopulations);
 
         addModel(species);
 
         if( coalPointsPops != null ) {
             assert coalPointsIndicator != null;
 
-            addParameter(coalPointsPops);
-            addParameter(coalPointsIndicator);
+            addVariable(coalPointsPops);
+            addVariable(coalPointsIndicator);
 
             final double[][] pts = species.getPopTimesSingle();
 
@@ -977,8 +974,8 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if (verbose) System.out.println(" SPtree: parameter changed " + parameter.getId());
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (verbose) System.out.println(" SPtree: parameter changed " + variable.getId());
 
         nodePropsReady = false;
         anyChange = true;

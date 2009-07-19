@@ -79,7 +79,7 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
      */
     public final double doOperation() throws OperatorFailedException {
         final int dim = parameter.getDimension();
-        final Bounds bounds = parameter.getBounds();
+        final Bounds<Double> bounds = parameter.getBounds();
         double hastingsRatio = 0;
 
         int checkStart = 0, checkEnd = dim;

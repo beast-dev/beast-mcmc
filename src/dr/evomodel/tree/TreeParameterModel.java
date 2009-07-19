@@ -32,6 +32,7 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * This class maintains a parameter of length equal to the number of nodes in the tree.
@@ -80,7 +81,7 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
         }
 
         addModel(tree);
-        addParameter(parameter);
+        addVariable(parameter);
 
         rootNodeNumber = tree.getRoot().getNumber();
         storedRootNodeNumber = rootNodeNumber;
@@ -92,7 +93,7 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
         }
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         int nodeNumber = getNodeNumberFromParameterIndex(index);
 
         NodeRef node = tree.getNode(nodeNumber);
@@ -133,12 +134,12 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
     }
 
     private int getNodeNumberFromParameterIndex(int parameterIndex) {
-        if (!includeRoot && parameterIndex >= rootNodeNumber) return parameterIndex + 1;
+        if (!includeRoot && parameterIndex >= tree.getRoot().getNumber()) return parameterIndex + 1;
         return parameterIndex;
     }
 
     private int getParameterIndexFromNodeNumber(int nodeNumber) {
-        if (!includeRoot && nodeNumber > rootNodeNumber) return nodeNumber - 1;
+        if (!includeRoot && nodeNumber > tree.getRoot().getNumber()) return nodeNumber - 1;
         return nodeNumber;
     }
 

@@ -53,28 +53,28 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     /**
      * Constructor.
      */
-    public NormalDistributionModel(Parameter meanParameter, Parameter stdevParameter) {
+    public NormalDistributionModel(Variable<Double> mean, Variable<Double> stdev) {
 
         super(NORMAL_DISTRIBUTION_MODEL);
 
-        this.meanParameter = meanParameter;
-        this.stdevParameter = stdevParameter;
-        addVariable(meanParameter);
-        meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        addVariable(stdevParameter);
-        stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.mean = mean;
+        this.stdev = stdev;
+        addVariable(mean);
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        addVariable(stdev);
+        stdev.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     public NormalDistributionModel(Parameter meanParameter, Parameter scale, boolean isPrecision) {
         super(NORMAL_DISTRIBUTION_MODEL);
         this.hasPrecision = isPrecision;
-        this.meanParameter = meanParameter;
+        this.mean = meanParameter;
         addVariable(meanParameter);
         meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         if (isPrecision) {
-            this.precisionParameter = scale;
+            this.precision = scale;
         } else {
-            this.stdevParameter = scale;
+            this.stdev = scale;
         }
         addVariable(scale);
         scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
@@ -82,17 +82,17 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     public double getStdev() {
         if (hasPrecision)
-            return 1.0 / Math.sqrt(precisionParameter.getParameterValue(0));
-        return stdevParameter.getParameterValue(0);
+            return 1.0 / Math.sqrt(precision.getValue(0));
+        return stdev.getValue(0);
     }
 
-    public Parameter getMeanParameter() {
-        return meanParameter;
+    public Variable<Double> getMean() {
+        return mean;
     }
 
-    public Parameter getPrecisionParameter() {
+    public Variable<Double> getPrecision() {
         if (hasPrecision)
-            return precisionParameter;
+            return precision;
         return null;
     }
 
@@ -117,14 +117,14 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     public double mean() {
-        return meanParameter.getParameterValue(0);
+        return mean.getValue(0);
     }
 
     public double variance() {
         if (hasPrecision)
-            return 1.0 / precisionParameter.getParameterValue(0);
-        double stdev = stdevParameter.getParameterValue(0);
-        return stdev * stdev;
+            return 1.0 / precision.getValue(0);
+        double sd = stdev.getValue(0);
+        return sd * sd;
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -185,7 +185,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
             Parameter stdevParam;
             Parameter precParam;
 
-            XMLObject cxo = (XMLObject) xo.getChild(MEAN);
+            XMLObject cxo = xo.getChild(MEAN);
             if (cxo.getChild(0) instanceof Parameter) {
                 meanParam = (Parameter) cxo.getChild(Parameter.class);
             } else {
@@ -194,7 +194,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
             if (xo.getChild(STDEV) != null) {
 
-                cxo = (XMLObject) xo.getChild(STDEV);
+                cxo = xo.getChild(STDEV);
                 if (cxo.getChild(0) instanceof Parameter) {
                     stdevParam = (Parameter) cxo.getChild(Parameter.class);
                 } else {
@@ -204,7 +204,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
                 return new NormalDistributionModel(meanParam, stdevParam);
             }
 
-            cxo = (XMLObject) xo.getChild(PREC);
+            cxo = xo.getChild(PREC);
             if (cxo.getChild(0) instanceof Parameter) {
                 precParam = (Parameter) cxo.getChild(Parameter.class);
             } else {
@@ -261,9 +261,9 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     // Private instance variables
     // **************************************************************
 
-    private Parameter meanParameter;
-    private Parameter stdevParameter;
-    private Parameter precisionParameter;
+    private Variable<Double> mean;
+    private Variable<Double> stdev;
+    private Variable<Double> precision;
     private boolean hasPrecision = false;
 
 }

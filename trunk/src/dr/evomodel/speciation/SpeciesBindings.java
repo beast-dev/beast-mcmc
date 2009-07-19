@@ -29,10 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.util.HeapSort;
 import dr.xml.*;
 import jebl.util.FixedBitSet;
@@ -113,6 +110,8 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         dirty_pp = true;
+
+        addStatistic(new SpeciesLimits());
     }
 
     public int nSpecies() {
@@ -311,7 +310,7 @@ public class SpeciesBindings extends AbstractModel {
         private CoalInfo[] savedcList;
         private boolean dirty;
         private boolean wasBacked;
-        private double popFactor;
+        private final double popFactor;
 
         GeneTreeInfo(TreeModel tree, double popFactor) {
             this.tree = tree;
@@ -436,6 +435,93 @@ public class SpeciesBindings extends AbstractModel {
         }
     }
 
+    public class SpeciesLimits extends Statistic.Abstract {
+        int nDim;
+        int c[][];
+
+        SpeciesLimits() {
+            super("SpeciationBounds");
+
+            nDim = 0;
+
+            final int nsp = species.length;
+
+            c = new int[nsp + 1][nsp + 1];
+            for(int k = 0; k < nsp + 1; ++k) {
+                c[k][0] = 1;
+                c[k][k] = 1;
+            }
+            for(int k = 0; k < nsp + 1; ++k) {
+                for(int j = 1; j < k; ++j) {
+                    c[k][j] = c[k - 1][j - 1] + c[k - 1][j];
+                }
+            }
+
+            for(int k = 0; k <= (int) (nsp / 2); ++k) {
+                nDim += c[nsp][k];
+            }
+
+        }
+
+        public int getDimension() {
+            return nDim;
+        }
+
+        private double boundOnRoot() {
+            double bound = Double.MAX_VALUE;
+            final int nsp = species.length;
+            for(GeneTreeInfo g : getGeneTrees()) {
+                for(CoalInfo ci : g.getCoalInfo()) {
+                    if( ci.sinfo[0].cardinality() == nsp || ci.sinfo[1].cardinality() == nsp ) {
+                        bound = Math.min(bound, ci.ctime);
+                        break;
+                    }
+                }
+            }
+            return bound;
+        }
+
+        public double getStatisticValue(int dim) {
+            if( dim == 0 ) {
+                return boundOnRoot();
+            }
+
+            final int nsp = species.length;
+            int r = 0;
+            int k;
+            for(k = 0; k <= (int) (nsp / 2); ++k) {
+                final int i = c[nsp][k];
+                if( dim < r + i ) {
+                    break;
+                }
+                r += i;
+            }
+
+            // Classic index -> select k of nsp subset
+
+            // number of species in set is k
+            int n = dim - r;
+            FixedBitSet in = new FixedBitSet(nsp),
+                    out = new FixedBitSet(nsp);
+            int fr = nsp;
+            for(int i = 0; i < nsp; ++i) {
+                if( k == 0 ) {
+                    out.set(i);
+                } else {
+                    if( n < c[fr - 1][k - 1] ) {
+                        in.set(i);
+                        k -= 1;
+                    } else {
+                        out.set(i);
+                        n -= c[fr - 1][k];
+                    }
+                    fr -= 1;
+                }
+            }
+            return speciationUpperBound(in, out);
+        }
+    }
+
     public static final String PLOIDY = "ploidy";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -454,7 +540,7 @@ public class SpeciesBindings extends AbstractModel {
                 }
             }
 
-            final XMLObject xogt = (XMLObject) xo.getChild(GENE_TREES);
+            final XMLObject xogt = xo.getChild(GENE_TREES);
             final int nTrees = xogt.getChildCount();
             final TreeModel[] trees = new TreeModel[nTrees];
             double[] popFactors = new double[nTrees];
@@ -477,9 +563,10 @@ public class SpeciesBindings extends AbstractModel {
             }
         }
 
-        ElementRule treeWithPloidy = new ElementRule("tree",
-                new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
-                        new ElementRule(TreeModel.class)});
+        /* Can't be tree because XML parser supports usage of global tags only as main tags */
+        ElementRule treeWithPloidy = new ElementRule("gtree",
+                                new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
+                                new ElementRule(TreeModel.class)}, 0, Integer.MAX_VALUE);
         XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -487,7 +574,10 @@ public class SpeciesBindings extends AbstractModel {
                     new ElementRule(SPinfo.class, 2, Integer.MAX_VALUE),
                     // new ElementRule(GENE_TREES, someTree,  1, Integer.MAX_VALUE )
                     new ElementRule(GENE_TREES,
-                            new XMLSyntaxRule[]{new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)}),
+                            new  XMLSyntaxRule[]{
+                                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE),
+                                    treeWithPloidy
+                            } ) ,
             };
         }
 

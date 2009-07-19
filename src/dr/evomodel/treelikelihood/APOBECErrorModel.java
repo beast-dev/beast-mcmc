@@ -1,6 +1,5 @@
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.util.TaxonList;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -40,11 +39,11 @@ public class APOBECErrorModel extends TipPartialsModel {
         this.type = type;
 
         this.hypermutationRateParameter = hypermutationRateParameter;
-        addParameter(this.hypermutationRateParameter);
+        addVariable(this.hypermutationRateParameter);
 
 
         this.hypermuationIndicatorParameter = hypermuationIndicatorParameter;
-        addParameter(this.hypermuationIndicatorParameter);
+        addVariable(this.hypermuationIndicatorParameter);
 
         addStatistic(new TaxonHypermutatedStatistic());
     }

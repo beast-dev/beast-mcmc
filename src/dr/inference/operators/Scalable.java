@@ -67,7 +67,7 @@ public interface Scalable {
                 parameter.setParameterValue(i, parameter.getParameterValue(i) * factor);
             }
 
-            final Bounds bounds = parameter.getBounds();
+            final Bounds<Double> bounds = parameter.getBounds();
 
             for (int i = 0; i < dimension; i++) {
                 final double value = parameter.getParameterValue(i);

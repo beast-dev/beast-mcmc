@@ -30,10 +30,7 @@ import dr.evolution.coalescent.structure.StructuredCoalescent;
 import dr.evolution.coalescent.structure.StructuredIntervalList;
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -93,10 +90,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood {
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
     }
 

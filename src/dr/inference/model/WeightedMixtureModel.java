@@ -19,13 +19,13 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         super(MIXTURE_MODEL);
         this.likelihoodList = likelihoodList;
         this.mixtureWeights = mixtureWeights;
-        addParameter(mixtureWeights);
+        addVariable(mixtureWeights);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {

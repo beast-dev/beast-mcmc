@@ -25,7 +25,7 @@ public class UCLikelihood extends RateEvolutionLikelihood {
         this.isLogSpace = isLogSpace;
         this.variance = variance;
 
-        addParameter(variance);
+        addVariable(variance);
     }
 
     /**

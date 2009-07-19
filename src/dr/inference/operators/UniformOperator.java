@@ -57,7 +57,7 @@ public class UniformOperator extends SimpleMCMCOperator {
     public final double doOperation() {
 
         final int index = MathUtils.nextInt(parameter.getDimension());
-        final Bounds bounds = parameter.getBounds();
+        final Bounds<Double> bounds = parameter.getBounds();
         final double lower = bounds.getLowerLimit(index);
         final double upper = bounds.getUpperLimit(index);
         final double newValue = (MathUtils.nextDouble() * (upper - lower)) + lower;

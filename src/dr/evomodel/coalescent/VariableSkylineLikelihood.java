@@ -31,6 +31,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -91,8 +92,8 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
             addModel((TreeModel) tree);
         }
 
-        addParameter(indicatorParameter);
-        addParameter(popSizeParameter);
+        addVariable(indicatorParameter);
+        addVariable(popSizeParameter);
 
         setupIntervals();
     }
@@ -319,8 +320,8 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
         groupsValid = true;
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        super.handleParameterChangedEvent(parameter, index, type);
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        super.handleVariableChangedEvent(variable, index, type);
 //        if( parameter == indicatorParameter || parameter == popSizeParameter ) {
         groupsValid = false;
 //        }

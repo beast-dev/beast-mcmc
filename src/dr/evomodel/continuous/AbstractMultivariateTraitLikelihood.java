@@ -76,7 +76,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
 
         if (traitParameter != null)
-            addParameter(traitParameter);
+            addVariable(traitParameter);
 
         this.reportAsMultivariate = reportAsMultivariate;
 
@@ -231,10 +231,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     // **************************************************************
-    // ParameterListener IMPLEMENTATION
+    // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         // All parameter changes are handled first by the treeModel
         if (!cacheBranches)
@@ -479,7 +479,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
 					for(int i : missingIndices) {
 						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
-						missingParameter.addParameter(thisParameter);
+						missingParameter.addVariable(thisParameter);
 					}*/
                     ParameterParser.replaceParameter(cxo, missingParameter);
                 }

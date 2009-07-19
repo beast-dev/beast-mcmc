@@ -19,7 +19,7 @@ public class MapDiffusionModel extends MultivariateDiffusionModel {
 		super();
 		this.map = map;
 		this.graphRate = graphRate;
-		addParameter(graphRate);
+		addVariable(graphRate);
 		initializationReport();
 	}
 

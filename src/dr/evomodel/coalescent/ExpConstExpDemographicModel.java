@@ -77,23 +77,23 @@ public class ExpConstExpDemographicModel extends DemographicModel {
         expConstExp = new ExpConstExpDemographic(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.N1Parameter = N1Parameter;
-        addParameter(N1Parameter);
+        addVariable(N1Parameter);
         N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.growthRateParameter = growthRateParameter;
-        addParameter(growthRateParameter);
+        addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.MIN_VALUE, 1));
 
         this.timeParameter = timeParameter;
-        addParameter(timeParameter);
+        addVariable(timeParameter);
         timeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.MIN_VALUE, 1));
 
         this.relTimeParameter = relTimeParameter;
-        addParameter(relTimeParameter);
+        addVariable(relTimeParameter);
         relTimeParameter.addBounds(new Parameter.DefaultBounds(1.0, Double.MIN_VALUE, 1));
 
         setUnits(units);

@@ -1,7 +1,7 @@
 /*
  * AbstractSubstitutionModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,6 +29,7 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.MachineAccuracy;
 
 import java.util.LinkedList;
@@ -52,12 +53,12 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
 
     protected FrequencyModel freqModel;
     protected double[] relativeRates;
-    
-    public double[] getRelativeRates() {
-		return relativeRates;
-	}
 
-	protected double[] storedRelativeRates;
+    public double[] getRelativeRates() {
+        return relativeRates;
+    }
+
+    protected double[] storedRelativeRates;
 
     protected int stateCount;
     protected int rateCount;
@@ -117,7 +118,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
         frequenciesChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // relativeRates changed
         updateMatrix = true;
         ratesChanged();
@@ -411,10 +412,10 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     private double q[][];
 
     public double[][] getQ() {
-		return q;
-	}
+        return q;
+    }
 
-	protected synchronized double[][] popiexp() {
+    protected synchronized double[][] popiexp() {
 
         if (iexpPool.size() == 0) {
             iexpPool.add(new double[stateCount][stateCount]);

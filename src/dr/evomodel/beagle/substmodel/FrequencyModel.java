@@ -25,19 +25,14 @@
 
 package dr.evomodel.beagle.substmodel;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evoxml.DataTypeUtils;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.inference.model.Variable;
 import dr.evomodel.beagle.parsers.FrequencyModelParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import java.text.NumberFormat;
-import java.util.logging.Logger;
 
 /**
  * A model of equlibrium frequencies
@@ -71,7 +66,7 @@ public class FrequencyModel extends AbstractModel {
         }
 
         this.frequencyParameter = frequencyParameter;
-        addParameter(frequencyParameter);
+        addVariable(frequencyParameter);
         frequencyParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencyParameter.getDimension()));
         this.dataType = dataType;
     }
@@ -132,7 +127,7 @@ public class FrequencyModel extends AbstractModel {
         // no intermediates need recalculating....
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need recalculating....
     }
 

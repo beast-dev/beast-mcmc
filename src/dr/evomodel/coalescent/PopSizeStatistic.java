@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.inference.model.Statistic;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
@@ -48,7 +49,7 @@ public class PopSizeStatistic extends Statistic.Abstract {
     }
 
     public int getDimension() {
-        return 2 + model.getParameterCount();
+        return 2 + model.getVariableCount();
     }
 
     /**
@@ -57,7 +58,7 @@ public class PopSizeStatistic extends Statistic.Abstract {
     public double getStatisticValue(int dim) {
         if (dim == 0) return model.getDemographicFunction().getDemographic(time);
         if (dim == 1) return model.getDemographicFunction().getIntensity(time);
-        return model.getParameter(dim - 2).getParameterValue(0);
+        return ((Variable<Double>)model.getVariable(dim - 2)).getValue(0);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

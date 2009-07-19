@@ -6,24 +6,24 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class DummyModel extends AbstractModelLikelihood {
+public class DefaultModel extends AbstractModelLikelihood {
 
     public static final String DUMMY_MODEL = "dummyModel";
 
-    public DummyModel() {
+    public DefaultModel() {
         super(DUMMY_MODEL);
     }
 
-    public DummyModel(Parameter parameter) {
+    public DefaultModel(Parameter parameter) {
         super(DUMMY_MODEL);
-        addParameter(parameter);
+        addVariable(parameter);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
     }
 
@@ -67,11 +67,11 @@ public class DummyModel extends AbstractModelLikelihood {
         public Object parseXMLObject(XMLObject xo) {
 
 //           Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            DummyModel likelihood = new DummyModel();
+            DefaultModel likelihood = new DefaultModel();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
-                likelihood.addParameter(parameter);
+                likelihood.addVariable(parameter);
             }
 
             return likelihood;

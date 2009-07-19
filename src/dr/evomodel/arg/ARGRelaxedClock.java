@@ -32,6 +32,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.xml.*;
 
@@ -59,7 +60,7 @@ public class ARGRelaxedClock extends AbstractModel implements BranchRateModel {
         globalRateParameter = rate;
 
         addModel(arg);
-        addParameter(rate);
+        addVariable(rate);
     }
 
     protected void acceptState() {
@@ -71,7 +72,7 @@ public class ARGRelaxedClock extends AbstractModel implements BranchRateModel {
     }
 
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, ChangeType type) {
         //do nothing
     }
 

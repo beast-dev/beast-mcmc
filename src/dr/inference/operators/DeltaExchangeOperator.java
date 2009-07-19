@@ -117,7 +117,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
             }
 
         }
-        Bounds bounds = parameter.getBounds();
+        Bounds<Double> bounds = parameter.getBounds();
 
         if (scalar1 < bounds.getLowerLimit(dim1) ||
                 scalar1 > bounds.getUpperLimit(dim1) ||

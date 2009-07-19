@@ -61,7 +61,7 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
 		if (tree instanceof TreeModel) {
 			addModel((TreeModel)tree);
 		}
-		addParameter(popSizeParameter);
+		addVariable(popSizeParameter);
 		setupIntervals();
 
 		addStatistic(new DeltaStatistic());

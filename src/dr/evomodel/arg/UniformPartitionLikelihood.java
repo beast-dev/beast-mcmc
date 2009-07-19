@@ -27,7 +27,7 @@ package dr.evomodel.arg;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -166,7 +166,7 @@ public class UniformPartitionLikelihood extends ARGPartitionLikelihood implement
         //has no submodels
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index,
+    protected void handleVariableChangedEvent(Variable variable, int index,
                                                ChangeType type) {
         //has no parameters
     }

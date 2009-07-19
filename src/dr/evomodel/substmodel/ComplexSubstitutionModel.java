@@ -13,6 +13,7 @@ import dr.inference.loggers.MatrixEntryColumn;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
@@ -52,7 +53,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 throw new RuntimeException("Dimension of '" + infinitesimalRates.getId() + "' ("
                         + infinitesimalRates.getDimension() + ") must equal " + rateCount);
             }
-            addParameter(infinitesimalRates);
+            addVariable(infinitesimalRates);
         }
 
 
@@ -67,7 +68,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         super.handleModelChangedEvent(model, object, index);
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        if (!updateMatrix) {
             updateMatrix = true;
 //            fireModelChanged();

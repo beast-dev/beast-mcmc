@@ -27,10 +27,7 @@ package dr.evomodel.coalescent.structure;
 
 import dr.evolution.coalescent.structure.MetaPopulation;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -69,7 +66,7 @@ public class MetaPopulationModel extends AbstractModel implements MetaPopulation
         if (populationProportions != null) {
 
             // Single demographic, each with a different weight
-            addParameter(populationProportions);
+            addVariable(populationProportions);
             populationProportions.addBounds(new Parameter.DefaultBounds(1.0, 0.0, populationProportions.getDimension()));
             populationCount = populationProportions.getDimension() + 1;
             // Add copies of the demographicModel to the array
@@ -165,7 +162,7 @@ public class MetaPopulationModel extends AbstractModel implements MetaPopulation
     protected void acceptState() {
     } // no additional state needs accepting
 
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // nothing to do
     }
 

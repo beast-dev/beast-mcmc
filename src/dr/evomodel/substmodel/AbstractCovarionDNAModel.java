@@ -49,8 +49,8 @@ abstract public class AbstractCovarionDNAModel extends AbstractSubstitutionModel
             throw new IllegalArgumentException("switching rate parameter must have " +
                     switchingClassCount + " rates for " + hiddenClassCount + " classes");
         }
-        addParameter(switchingRates);
-        addParameter(hiddenClassRates);
+        addVariable(switchingRates);
+        addVariable(hiddenClassRates);
         constructRateMatrixMap();
     }
 

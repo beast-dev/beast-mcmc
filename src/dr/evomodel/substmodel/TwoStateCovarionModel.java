@@ -57,8 +57,8 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
         alpha = alphaParameter;
         this.switchingParameter = switchingParameter;
 
-        addParameter(alpha);
-        addParameter(switchingParameter);
+        addVariable(alpha);
+        addVariable(switchingParameter);
         setupRelativeRates();
     }
 

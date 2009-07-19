@@ -28,10 +28,7 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Bounds;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.Vector;
@@ -76,28 +73,28 @@ public class SampleStateAndCategoryModel extends AbstractModel
         //	stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
 
         this.muParameter = muParameter;
-        addParameter(muParameter);
+        addVariable(muParameter);
         muParameter.addBounds(new Parameter.DefaultBounds(1000.0, 0.0, 1));
 
         this.categoriesParameter = categoriesParameter;
-        addParameter(categoriesParameter);
+        addVariable(categoriesParameter);
 
         if (categoryCount > 1) {
             for (int i = 0; i < categoryCount; i++) {
-                Parameter p = ((YangCodonModel) substitutionModels.elementAt(i)).getParameter(0);
+                Parameter p = (Parameter)((YangCodonModel) substitutionModels.elementAt(i)).getVariable(0);
                 Parameter lower = null;
                 Parameter upper = null;
 
                 if (i == 0) {
-                    upper = ((YangCodonModel) substitutionModels.elementAt(i + 1)).getParameter(0);
+                    upper = (Parameter)((YangCodonModel) substitutionModels.elementAt(i + 1)).getVariable(0);
                     p.addBounds(new omegaBounds(lower, upper));
                 } else {
                     if (i == (categoryCount - 1)) {
-                        lower = ((YangCodonModel) substitutionModels.elementAt(i - 1)).getParameter(0);
+                        lower = (Parameter)((YangCodonModel) substitutionModels.elementAt(i - 1)).getVariable(0);
                         p.addBounds(new omegaBounds(lower, upper));
                     } else {
-                        upper = ((YangCodonModel) substitutionModels.elementAt(i + 1)).getParameter(0);
-                        lower = ((YangCodonModel) substitutionModels.elementAt(i - 1)).getParameter(0);
+                        upper = (Parameter)((YangCodonModel) substitutionModels.elementAt(i + 1)).getVariable(0);
+                        lower = (Parameter)((YangCodonModel) substitutionModels.elementAt(i - 1)).getVariable(0);
                         p.addBounds(new omegaBounds(lower, upper));
                     }
                 }
@@ -221,9 +218,9 @@ public class SampleStateAndCategoryModel extends AbstractModel
         listenerHelper.fireModelChanged(this, object, index);
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-        if (parameter == categoriesParameter) // instructs TreeLikelihood to set update flag for this pattern
+        if (variable == categoriesParameter) // instructs TreeLikelihood to set update flag for this pattern
             listenerHelper.fireModelChanged(this, this, index);
     }
 
@@ -326,7 +323,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
         /**
          * @return the upper limit of this hypervolume in the given dimension.
          */
-        public double getUpperLimit(int dimension) {
+        public Double getUpperLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("omega parameters have wrong dimension " + dimension);
@@ -341,7 +338,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
         /**
          * @return the lower limit of this hypervolume in the given dimension.
          */
-        public double getLowerLimit(int dimension) {
+        public Double getLowerLimit(int dimension) {
 
             if (dimension != 0)
                 throw new RuntimeException("omega parameters have wrong dimension " + dimension);

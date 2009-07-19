@@ -77,7 +77,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 
 		fieldLength += covariateData.getDimension();
 
-		addParameter(covariateData); // this can have missing values for imputation
+		addVariable(covariateData); // this can have missing values for imputation
 
 	}
 

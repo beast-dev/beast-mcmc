@@ -67,19 +67,19 @@ public class ExponentialSawtoothModel extends DemographicModel {
         expSaw = new ExponentialSawtooth(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.MIN_VALUE, 1));
 
         this.growthRateParameter = growthRateParameter;
-        addParameter(growthRateParameter);
+        addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, -Double.MAX_VALUE, 1));
 
         this.wavelengthParameter = wavelengthParameter;
-        addParameter(wavelengthParameter);
+        addVariable(wavelengthParameter);
         wavelengthParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.MIN_VALUE, 1));
 
         this.offsetParameter = offsetParameter;
-        addParameter(offsetParameter);
+        addVariable(offsetParameter);
         offsetParameter.addBounds(new Parameter.DefaultBounds(1.0, -1.0, 1));
 
         setUnits(units);

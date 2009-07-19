@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.UniformDistribution;
 import dr.xml.*;
@@ -54,10 +55,10 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
         super(UNIFORM_DISTRIBUTION_MODEL);
 
         this.lowerParameter = lowerParameter;
-        addParameter(lowerParameter);
+        addVariable(lowerParameter);
         lowerParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         this.upperParameter = upperParameter;
-        addParameter(upperParameter);
+        addVariable(upperParameter);
         upperParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
     }
 
@@ -123,7 +124,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
         // no intermediates need to be recalculated...
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

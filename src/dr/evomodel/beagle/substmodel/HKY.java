@@ -28,11 +28,7 @@ package dr.evomodel.beagle.substmodel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
-import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 
 /**
@@ -65,7 +61,7 @@ public class HKY extends BaseSubstitutionModel {
         super("HKY", Nucleotides.INSTANCE, freqModel);
 
         this.kappaParameter = kappaParameter;
-        addParameter(kappaParameter);
+        addVariable(kappaParameter);
         kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         addStatistic(tsTvStatistic);

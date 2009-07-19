@@ -6,6 +6,7 @@ import dr.evomodel.beagle.substmodel.FrequencyModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Andrew Rambaut
@@ -48,7 +49,7 @@ public class HomogenousBranchSiteModel extends AbstractModel implements BranchSi
         fireModelChanged();
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     }
 
     protected void storeState() {

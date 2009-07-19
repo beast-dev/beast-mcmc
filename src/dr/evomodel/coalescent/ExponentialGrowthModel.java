@@ -73,11 +73,11 @@ public class ExponentialGrowthModel extends DemographicModel {
         exponentialGrowth = new ExponentialGrowth(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
         this.growthRateParameter = growthRateParameter;
-        addParameter(growthRateParameter);
+        addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, 1));
 
         this.usingGrowthRate = usingGrowthRate;

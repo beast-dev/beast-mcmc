@@ -1,9 +1,6 @@
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -32,7 +29,7 @@ public class RandomWalkModel extends AbstractModelLikelihood {
         if (logScale)
             lower = 0.0;
 
-        addParameter(data);
+        addVariable(data);
         if (data instanceof CompoundParameter) {
             CompoundParameter cp = (CompoundParameter) data;
             for (int i = 0; i < cp.getNumberOfParameters(); i++) {
@@ -74,7 +71,7 @@ public class RandomWalkModel extends AbstractModelLikelihood {
         likelihoodKnown = false;
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
     }
 

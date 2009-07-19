@@ -27,6 +27,7 @@ package dr.inference.distribution;
 
 import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
+import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -71,10 +72,10 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
         double logL = 0.0;
 
-        for (Statistic statistic : dataList) {
-            for (int j = Math.max(0, from); j < Math.min(statistic.getDimension(), to); j++) {
+        for (Attribute<double[]> data : dataList) {
+            for (int j = Math.max(0, from); j < Math.min(data.getAttributeValue().length, to); j++) {
 
-                double value = statistic.getStatisticValue(j);
+                double value = data.getAttributeValue()[j];
                 logL += logPDF(value);
             }
         }

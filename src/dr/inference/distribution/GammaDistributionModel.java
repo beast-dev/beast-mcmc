@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
 import org.w3c.dom.Document;
@@ -47,28 +48,28 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     /**
      * Construct a constant mutation rate model.
      */
-    public GammaDistributionModel(Parameter shapeParameter, Parameter scaleParameter) {
+    public GammaDistributionModel(Variable<Double> shape, Variable<Double> scale) {
 
         super(GAMMA_DISTRIBUTION_MODEL);
 
-        this.shapeParameter = shapeParameter;
-        this.scaleParameter = scaleParameter;
-        addParameter(shapeParameter);
-        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addParameter(scaleParameter);
-        scaleParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.shape = shape;
+        this.scale = scale;
+        addVariable(shape);
+        shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        addVariable(scale);
+        scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     /**
      * Construct a constant mutation rate model.
      */
-    public GammaDistributionModel(Parameter shapeParameter) {
+    public GammaDistributionModel(Variable.D shape) {
 
         super(GAMMA_DISTRIBUTION_MODEL);
 
-        this.shapeParameter = shapeParameter;
-        addParameter(shapeParameter);
-        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.shape = shape;
+        addVariable(shape);
+        shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     // *****************************************************************
@@ -125,7 +126,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         // no intermediates need to be recalculated...
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 
@@ -151,19 +152,19 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     // **************************************************************
 
     private double getShape() {
-        return shapeParameter.getParameterValue(0);
+        return shape.getValue(0);
     }
 
     private double getScale() {
-        if (scaleParameter == null) return (1.0 / getShape());
-        return scaleParameter.getParameterValue(0);
+        if (scale == null) return (1.0 / getShape());
+        return scale.getValue(0);
     }
 
     // **************************************************************
     // Private instance variables
     // **************************************************************
 
-    private Parameter shapeParameter = null;
-    private Parameter scaleParameter = null;
+    private Variable<Double> shape = null;
+    private Variable<Double> scale = null;
 }
 

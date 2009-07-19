@@ -96,10 +96,10 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            int lower = (int) parameter.getBounds().getLowerLimit(0);
+            int lower = (int)(double)parameter.getBounds().getLowerLimit(0);
             if (xo.hasAttribute("lower")) lower = xo.getIntegerAttribute("lower");
 
-            int upper = (int) parameter.getBounds().getUpperLimit(0);
+            int upper = (int)(double)parameter.getBounds().getUpperLimit(0);
             if (xo.hasAttribute("upper")) upper = xo.getIntegerAttribute("upper");
 
             if (upper == lower || lower == (int) Double.NEGATIVE_INFINITY || upper == (int) Double.POSITIVE_INFINITY) {

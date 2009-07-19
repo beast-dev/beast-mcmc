@@ -32,6 +32,7 @@ import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.Set;
 
@@ -158,7 +159,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         // no intermediates need to be recalculated...
     }
 
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need to be recalculated...
     }
 

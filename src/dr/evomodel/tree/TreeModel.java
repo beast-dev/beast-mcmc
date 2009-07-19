@@ -163,9 +163,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Called when a parameter changes.
      */
-    public void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        final Node node = getNodeOfParameter(parameter);
-        pushTreeChangedEvent(node, parameter, index);
+    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        final Node node = getNodeOfParameter((Parameter)variable);
+        pushTreeChangedEvent(node, (Parameter)variable, index);
     }
 
     private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
@@ -1057,7 +1057,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             leftChild = rightChild = null;
 
             heightParameter = new Parameter.Default(tree.getNodeHeight(node));
-            addParameter(heightParameter);
+            addVariable(heightParameter);
 
             number = node.getNumber();
             taxon = tree.getNodeTaxon(node);
@@ -1086,7 +1086,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
                     rateParameter.setId("node" + getNumber() + ".rate");
                 }
                 rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-                addParameter(rateParameter);
+                addVariable(rateParameter);
             }
         }
 
@@ -1121,7 +1121,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
                 traitParameters.put(name, trait);
 
                 if (firesTreeEvents) {
-                    addParameter(trait);
+                    addVariable(trait);
                 }
             }
         }
@@ -1278,7 +1278,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             nodeHeightParameter = parameter;
         }
 
-        public double getUpperLimit(int i) {
+        public Double getUpperLimit(int i) {
 
             Node node = getNodeOfParameter(nodeHeightParameter);
             if (node.isRoot()) {
@@ -1288,7 +1288,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             }
         }
 
-        public double getLowerLimit(int i) {
+        public Double getLowerLimit(int i) {
 
             Node node = getNodeOfParameter(nodeHeightParameter);
             if (node.isExternal()) {

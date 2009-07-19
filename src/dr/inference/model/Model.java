@@ -84,26 +84,26 @@ public interface Model extends Identifiable {
 	Model getModel(int i);
 
 	/**
-	 * @return the total number of parameters in this model
+	 * @return the total number of variable in this model
 	 */
-	int getParameterCount();
+	int getVariableCount();
 	
 	/**
-	 * @return the ith parameter
+	 * @return the ith variable
 	 */
-	Parameter getParameter(int i);
+	Variable getVariable(int i);
 	
 	/**
-	 * @return the parameter of the component with a given name
+	 * @return the variable of the component with a given name
 	 */
-	Parameter getParameter(String name);
+	//Parameter getParameter(String name);
 	
 	/**
 	 * @return the name of this model
 	 */
 	String getModelName();
 
-	/**
+    /**
 	 * A helper class for storing listeners and firing events.
 	 */
 	public class ListenerHelper {

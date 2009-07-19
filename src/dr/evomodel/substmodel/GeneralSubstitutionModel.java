@@ -71,7 +71,7 @@ public class GeneralSubstitutionModel extends AbstractSubstitutionModel
 
         ratesParameter = parameter;
         if (ratesParameter != null) {
-            addParameter(ratesParameter);
+            addVariable(ratesParameter);
             ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
         }
         setRatesRelativeTo(relativeTo);

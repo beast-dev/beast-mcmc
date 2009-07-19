@@ -34,6 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.*;
@@ -66,7 +67,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         addModel(treeModel);
 
         this.globalRateParameter = globalRateParameter;
-        addParameter(globalRateParameter);
+        addVariable(globalRateParameter);
     }
 
     private void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean relative) throws Tree.MissingTaxonException {
@@ -75,14 +76,14 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         for (int i = tips.nextSetBit(0); i >= 0; i = tips.nextSetBit(i + 1)) {
             localTipClocks.put(i, clock);
         }
-        addParameter(rateParameter); 
+        addVariable(rateParameter);
     }
 
     private void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean relative, boolean includeStem) throws Tree.MissingTaxonException {
         BitSet tips = getTipsForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, relative, tips, includeStem);
         localCladeClocks.put(tips, clock);
-        addParameter(rateParameter);
+        addVariable(rateParameter);
     }
 
     /**
@@ -122,7 +123,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         updateNodeClocks = true;
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

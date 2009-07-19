@@ -31,6 +31,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * A class that calculates the rate of evolution based on of the mass and temperature
@@ -67,9 +68,9 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
 
         // don't add rate parameter, cause that is what you are changing!
         // you don't care if it changes
-        addParameter(massParameter);
-        addParameter(temperatureParameter);
-        addParameter(scaleParameter);
+        addVariable(massParameter);
+        addVariable(temperatureParameter);
+        addVariable(scaleParameter);
 
     }
 
@@ -81,13 +82,13 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
         // no submodels so nothing to do
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-        if ((parameter == massParameter) || (parameter == temperatureParameter)) {
+        if ((variable == massParameter) || (variable == temperatureParameter)) {
             if (index == -1) {
                 calculateAllRates();
             } else calculateRate(index);
-        } else if (parameter == scaleParameter) {
+        } else if (variable == scaleParameter) {
             calculateAllRates();
         } else {
             throw new RuntimeException("unknown parameter changed in " + UNIVERSAL_CLOCK);

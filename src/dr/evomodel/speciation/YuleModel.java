@@ -53,7 +53,7 @@ public class YuleModel extends SpeciationModel {
         super(YULE_MODEL, units);
 
         this.birthRateParameter = birthRateParameter;
-        addParameter(birthRateParameter);
+        addVariable(birthRateParameter);
         birthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 

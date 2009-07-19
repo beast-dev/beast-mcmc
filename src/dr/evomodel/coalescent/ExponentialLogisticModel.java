@@ -88,23 +88,23 @@ public class ExponentialLogisticModel extends DemographicModel {
         exponentialLogistic = new ExponentialLogistic(units);
 
         this.N0Parameter = N0Parameter;
-        addParameter(N0Parameter);
+        addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.logisticGrowthParameter = logisticGrowthParameter;
-        addParameter(logisticGrowthParameter);
+        addVariable(logisticGrowthParameter);
         logisticGrowthParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.logisticShapeParameter = logisticShapeParameter;
-        addParameter(logisticShapeParameter);
+        addVariable(logisticShapeParameter);
         logisticShapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.exponentialGrowthParameter = exponentialGrowthParameter;
-        addParameter(exponentialGrowthParameter);
+        addVariable(exponentialGrowthParameter);
         exponentialGrowthParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.transistionTimeParameter = transistionTimeParameter;
-        addParameter(transistionTimeParameter);
+        addVariable(transistionTimeParameter);
         transistionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.alpha = alpha;

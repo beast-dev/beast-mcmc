@@ -39,6 +39,7 @@ public class TracerApp extends MultiDocApplication {
 
 
             } catch (Exception e) {
+                //
             }
 
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));

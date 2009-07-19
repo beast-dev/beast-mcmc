@@ -158,7 +158,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(LIKELIHOOD,
                         new XMLSyntaxRule[]{
@@ -172,10 +172,10 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
     };
 
-    private Distribution likelihood;
-    private Distribution prior;
+    private final Distribution likelihood;
+    private final Distribution prior;
     private boolean isLog = false;
 
-    private List<Statistic> dataList;
-    private Parameter meanParameter;
+    private final List<Statistic> dataList;
+    private final Parameter meanParameter;
 }

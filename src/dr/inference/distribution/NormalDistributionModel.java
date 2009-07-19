@@ -73,6 +73,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         if (isPrecision) {
             this.precision = scale;
+            this.stdev = null;  // todo why not keep the name scale to avoid confusion??
         } else {
             this.stdev = scale;
         }
@@ -131,7 +132,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return pdfFunction;
     }
 
-    private UnivariateFunction pdfFunction = new UnivariateFunction() {
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
         }
@@ -221,7 +222,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MEAN,
                         new XMLSyntaxRule[]{
                                 new XORRule(
@@ -261,8 +262,8 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     // Private instance variables
     // **************************************************************
 
-    private Variable<Double> mean;
-    private Variable<Double> stdev;
+    private final Variable<Double> mean;
+    private final Variable<Double> stdev;
     private Variable<Double> precision;
     private boolean hasPrecision = false;
 

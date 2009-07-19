@@ -1,7 +1,7 @@
 /*
  * RandomLocalClockModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,10 +29,12 @@ import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -65,9 +67,11 @@ public class RandomLocalClockModel extends AbstractModel
 
         this.ratesAreMultipliers = ratesAreMultipliers;
 
-        if (rateIndicatorParameter.getDimension() != treeModel.getNodeCount() - 1) {
-            throw new IllegalArgumentException("The rate category parameter must be of length nodeCount-1");
-        }
+        indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, false);
+        rates = new TreeParameterModel(treeModel, ratesParameter, false);
+
+        rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
+        ratesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension()));
 
         for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
             rateIndicatorParameter.setParameterValue(i, 0.0);
@@ -76,18 +80,16 @@ public class RandomLocalClockModel extends AbstractModel
 
         this.meanRateParameter = meanRateParameter;
 
-
         addModel(treeModel);
         this.treeModel = treeModel;
 
-        addParameter(rateIndicatorParameter);
-        addParameter(ratesParameter);
-        if (meanRateParameter != null) addParameter(meanRateParameter);
+        addModel(indicators);
+        addModel(rates);
+        if (meanRateParameter != null) addVariable(meanRateParameter);
 
         unscaledBranchRates = new double[treeModel.getNodeCount()];
 
-        indicatorName = rateIndicatorParameter.getParameterName();
-        Logger.getLogger("dr.evomodel").info("  indicator trait name is '" + indicatorName + "'");
+        Logger.getLogger("dr.evomodel").info("  indicator parameter name is '" + rateIndicatorParameter.getId() + "'");
 
         recalculateScaleFactor();
     }
@@ -98,7 +100,7 @@ public class RandomLocalClockModel extends AbstractModel
      * @return the raw real-valued variable at this node
      */
     public final double getVariable(TreeModel tree, NodeRef node) {
-        return tree.getNodeRate(node);
+        return rates.getNodeValue(tree, node);
     }
 
     /**
@@ -108,7 +110,7 @@ public class RandomLocalClockModel extends AbstractModel
      *         function looking down the tree.
      */
     public final boolean isVariableSelected(TreeModel tree, NodeRef node) {
-        return tree.getNodeTrait(node, indicatorName) > 0.5;
+        return indicators.getNodeValue(tree, node) > 0.5;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -116,7 +118,7 @@ public class RandomLocalClockModel extends AbstractModel
         fireModelChanged();
     }
 
-    protected final void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         recalculateScaleFactor();
         fireModelChanged();
     }
@@ -294,6 +296,6 @@ public class RandomLocalClockModel extends AbstractModel
     // the mean rate across all the tree, if null then mean rate is scaled to 1.0
     private Parameter meanRateParameter;
 
-    // the name of the trait used to indicate the branch rate changes
-    private final String indicatorName;
+    private TreeParameterModel indicators;
+    private TreeParameterModel rates;
 }

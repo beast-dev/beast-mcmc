@@ -22,7 +22,7 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
     public static final String KNOT_VALUES = "knotValues";
     public static final String DEGREE = "degree";
 
-    public SplineBasis(String name, Parameter knotLocations, Parameter knotValues, int degree) {
+    public SplineBasis(String name, Variable<Double> knotLocations, Variable<Double> knotValues, int degree) {
         super(name);
         this.knotLocations = knotLocations;
         this.knotValues = knotValues;
@@ -31,7 +31,7 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
         this.degree = degree;
         updateBasis = true;
 
-        n = knotValues.getDimension();
+        n = knotValues.getSize();
         h = new double[n - 1];
         deltaY = new double[n - 1];
 
@@ -43,27 +43,31 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
 
         StringBuilder buffer = new StringBuilder();
         buffer.append("Constructing spline basis:\n");
-        buffer.append("\tDegree: " + degree + "\n");
-        buffer.append("\tRange: [" + getLowerBound() + ", " + getUpperBound() + "\n");
+        buffer.append("\tDegree: ").append(degree).append("\n");
+        buffer.append("\tRange: [").append(getLowerBound()).append(", ").append(getUpperBound()).append("\n");
 
         Logger.getLogger("dr.math").info(buffer.toString());
 
+    }
+
+    public int getDegree() {
+        return degree;
     }
 
     public double evaluate(double location) {
         calculateBasis();
 
         int i = 0;
-        double xi   = knotLocations.getParameterValue(i);
+        double xi   = knotLocations.getValue(i);
 
         while( xi < location) {
             i++;
-            xi = knotLocations.getParameterValue(i);
-        }
+            xi = knotLocations.getValue(i);
+        } // TODO Keep a sorted list of knotLocations for a O(log N) tree search.
                                    
-        double xip1 = knotLocations.getParameterValue(i+1);
-        double yi   = knotValues.getParameterValue(i);
-        double yip1 = knotValues.getParameterValue(i+1);
+        double xip1 = knotLocations.getValue(i+1);
+        double yi   = knotValues.getValue(i);
+        double yip1 = knotValues.getValue(i+1);
         double zi   = z.get(i);
         double zip1 = z.get(i+1);
         double hi   = xip1 - xi;
@@ -93,8 +97,11 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
     private void calculateBasis() {
         if (updateBasis) {
 
-            double[] x = knotLocations.getParameterValues();
-            double[] y = knotValues.getParameterValues();
+            Double[] x = knotLocations.getValues();
+            Double[] y = knotValues.getValues();
+
+            rangeMin = x[0];
+            rangeMax = x[x.length-1];
 
             for (int i = 0; i < n - 1; i++) {
                 h[i] = x[i + 1] - x[i];
@@ -225,10 +232,10 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
 
     private int degree;
     private int n;
-    private Parameter knotLocations;
-    private Parameter knotValues;
-    private double[] splineCoefficients;
-    private double[] storedSplineCoefficients;
+    private Variable<Double> knotLocations;
+    private Variable<Double> knotValues;
+//    private double[] splineCoefficients;
+//    private double[] storedSplineCoefficients;
     private boolean updateBasis;
     private double rangeMax;
     private double rangeMin;

@@ -41,7 +41,11 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
         splineBasis = new SplineBasis(getId(),new Variable.D(values), new Variable.D(density), degree);
     }
 
-    @Override
+    public SplineInterpolatedLikelihood(String fileName) {
+    	super(fileName);
+	}
+
+	@Override
     protected double logPDF(double x) {
         return splineBasis.evaluate(x);
     }

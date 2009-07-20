@@ -122,21 +122,18 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
 
         if (popSizes != events) {
 
-            System.err.println("WARNING: resetting parameter size of parameter " + popSizeParameter.getParameterName() +
+            System.err.println("INFO: resetting length of parameter " + popSizeParameter.getParameterName() +
                     "(size " + popSizeParameter.getSize() + ") in variable demographic model to " + events);
             popSizeParameter.setDimension(events);
-
-            //throw new IllegalArgumentException("Dimension of population parameter (" + popSizes +
-            //        ") must be the same as the number of internal nodes in the tree. (" + events + ")");
+            popSizeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, popSizeParameter.getDimension()));
         }
 
         if (nIndicators != events - 1) {
-             System.err.println("WARNING: resetting parameter size of parameter " + indicatorParameter.getParameterName() +
+            System.err.println("INFO: resetting length of parameter " + indicatorParameter.getParameterName() +
                     " in variable demographic model to " + (events - 1));
 
-            indicatorParameter.setDimension(events);
-            //throw new IllegalArgumentException("Dimension of indicator parameter must one less than the number of internal nodes in the tree. ("
-            //        + nIndicators + " != " + (events - 1) + ")");
+            indicatorParameter.setDimension(events - 1);
+            indicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, indicatorParameter.getDimension()));
         }
 
         this.trees = trees;

@@ -46,6 +46,7 @@ Benchmark results:
 	2.5GHz PowerMac Quad G5 Java 1.5.0_06: 52.46 minutes
 	2.3GHz Xserve G5 Java 1.4.2_09: 60.05 minutes
 
+    2.93GHz Intel Core 2 Duo iMac 24", Java 1.6.0_13: 16.56 minutes
     2.53GHz Intel Core 2 Duo MacBook Pro, Java 1.6.0_07: 18.95/18.88 minutes
     2.53GHz Intel Core 2 Duo MacBook Pro, Java 1.5.0_16: 51.33 minutes
 

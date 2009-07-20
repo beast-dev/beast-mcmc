@@ -303,7 +303,7 @@ public interface Parameter extends Statistic, Variable<Double> {
                 copyOfValues[i] = getValue(i);
             }
             return copyOfValues;
-        }      
+        }
 
         /**
          * @return the size of this variable - i.e. the length of the vector
@@ -506,7 +506,7 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void setDimension(int dim) {
 
-            assert storedValues == null && bounds == null : "Can't change dimension after store has been called!";
+            assert storedValues == null && bounds == null : "Can't change dimension after store has been called! storedValues=" + storedValues + " bounds=" + bounds;
             //if (!hasBeenStored) {
 
             int oldDim = getDimension();

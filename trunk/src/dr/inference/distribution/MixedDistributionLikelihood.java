@@ -1,18 +1,19 @@
 package dr.inference.distribution;
 
-import dr.inference.model.Statistic;
+import dr.inference.model.CompoundModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.CompoundModel;
+import dr.inference.model.Statistic;
 import dr.xml.*;
-import org.w3c.dom.Element;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class that returns the log likelihood of a multidimensional statistic
  * being distributed according to a mixture of parametric distributions, where
  * the distribution membership of each element is determined by a separate vector
  * of indices.
+ *
  * @author Alexei Drummond
  * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
@@ -31,18 +32,18 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         // To cater for that, they need to be returned as the "Model" of this likelyhood so that their state is correctly
         // restored when an operation involving their parameters fails.
 
-        super(new CompoundModel("MixedeDistributions"));
+        super(new CompoundModel("MixedDistributions"));
 
-        final CompoundModel cm = (CompoundModel)this.getModel();
-        for( ParametricDistributionModel m : distributions ) {
-          cm.addModel(m);
+        final CompoundModel cm = (CompoundModel) this.getModel();
+        for (ParametricDistributionModel m : distributions) {
+            cm.addModel(m);
         }
 
         this.distributions = distributions;
         this.data = data;
         this.indicators = indicators;
 
-        if (indicators.getDimension() == data.getDimension()-1) {
+        if (indicators.getDimension() == data.getDimension() - 1) {
             impliedOne = true;
         } else if (indicators.getDimension() != data.getDimension()) {
             throw new IllegalArgumentException();
@@ -55,6 +56,7 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
 
     /**
      * Calculate the log likelihood of the current state.
+     *
      * @return the log likelihood.
      */
     public final double calculateLogLikelihood() {
@@ -68,10 +70,10 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
                 if (j == 0) {
                     index = 1;
                 } else {
-                    index = (int)indicators.getStatisticValue(j-1);
+                    index = (int) indicators.getStatisticValue(j - 1);
                 }
             } else {
-                index = (int)indicators.getStatisticValue(j);
+                index = (int) indicators.getStatisticValue(j);
             }
 
             logL += distributions[index].logPdf(data.getStatisticValue(j));
@@ -81,11 +83,11 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
     }
 
     /**
-	 * Overridden to always return false.
-	 */
-	protected boolean getLikelihoodKnown() {
-		return false;
-	}
+     * Overridden to always return false.
+     */
+    protected boolean getLikelihoodKnown() {
+        return false;
+    }
 
     // **************************************************************
     // XMLElement IMPLEMENTATION
@@ -101,18 +103,20 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD; }
+        public String getParserName() {
+            return MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD;
+        }
 
         public Object parseXMLObject(XMLObject xo) {
 
-            XMLObject cxo0 = (XMLObject)xo.getChild(DISTRIBUTION0);
-            ParametricDistributionModel model0 = (ParametricDistributionModel)cxo0.getChild(ParametricDistributionModel.class);
+            XMLObject cxo0 = xo.getChild(DISTRIBUTION0);
+            ParametricDistributionModel model0 = (ParametricDistributionModel) cxo0.getChild(ParametricDistributionModel.class);
 
-            XMLObject cxo1 = (XMLObject)xo.getChild(DISTRIBUTION1);
-            ParametricDistributionModel model1 = (ParametricDistributionModel)cxo1.getChild(ParametricDistributionModel.class);
+            XMLObject cxo1 = xo.getChild(DISTRIBUTION1);
+            ParametricDistributionModel model1 = (ParametricDistributionModel) cxo1.getChild(ParametricDistributionModel.class);
 
-            Statistic data = (Statistic)((XMLObject)xo.getChild(DATA)).getChild(Statistic.class);
-            Statistic indicators = (Statistic)((XMLObject)xo.getChild(INDICATORS)).getChild(Statistic.class);
+            Statistic data = (Statistic) ((XMLObject) xo.getChild(DATA)).getChild(Statistic.class);
+            Statistic indicators = (Statistic) ((XMLObject) xo.getChild(INDICATORS)).getChild(Statistic.class);
 
             ParametricDistributionModel[] models = {model0, model1};
 
@@ -123,22 +127,26 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         // AbstractXMLObjectParser implementation
         //************************************************************************
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
         private final XMLSyntaxRule[] rules = {
-            new ElementRule(DISTRIBUTION0,
-                new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
-            new ElementRule(DISTRIBUTION1,
-                new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
-            new ElementRule(DATA, new XMLSyntaxRule[] {new ElementRule(Statistic.class)}),
-            new ElementRule(INDICATORS, new XMLSyntaxRule[] {new ElementRule(Statistic.class)}),
+                new ElementRule(DISTRIBUTION0,
+                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
+                new ElementRule(DISTRIBUTION1,
+                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
+                new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
+                new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
         };
 
         public String getParserDescription() {
             return "Calculates the likelihood of some data given some mix of parametric distributions.";
         }
 
-        public Class getReturnType() { return Likelihood.class; }
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
     };
 
     private final ParametricDistributionModel[] distributions;
@@ -149,7 +157,7 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
     public Model[] getUniqueModels() {
         Model[] m = new Model[distributions[0] == distributions[1] ? 1 : 2];
         m[0] = distributions[0];
-        if( m.length > 1 ) m[1] = distributions[1];
+        if (m.length > 1) m[1] = distributions[1];
         return m;
     }
 }

@@ -218,7 +218,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     // Other event types are ignored (probably trait changes).
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
-            }
+            } else
+                throw new RuntimeException("Assertion failed: Tree model changed event fired without TreeChangedEvent object");
 
         } else if (model == branchRateModel) {
             if (object instanceof TreeModel.Node) {

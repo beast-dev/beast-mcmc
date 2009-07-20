@@ -40,8 +40,8 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
     public Parameter localClockRatesStatistic = null;
 
     private final BeautiOptions options;
-    private final PartitionClockModel model;
-    private final PartitionTreeModel tree;
+    private final PartitionClockModel model;    
+	private final PartitionTreeModel tree;
 
     public PartitionClockModelTreeModelLink(BeautiOptions options, PartitionClockModel model, PartitionTreeModel tree) {
         this.options = options;
@@ -295,6 +295,13 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
                 
     }
     /////////////////////////////////////////////////////////////
+    public PartitionClockModel getPartitionClockModel() {
+		return model;
+	}
+
+	public PartitionTreeModel getPartitionTreeTree() {
+		return tree;
+	}
 
     public Parameter getParameter(String name) {
 

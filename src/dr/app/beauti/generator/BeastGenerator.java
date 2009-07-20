@@ -58,6 +58,7 @@ import dr.inference.xml.LoggerParser;
 import dr.inferencexml.PriorParsers;
 import dr.util.Attribute;
 import dr.util.Version;
+import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.io.Writer;
@@ -489,7 +490,7 @@ public class BeastGenerator extends Generator {
                 }
 
                 Attribute[] attributes = {
-                        new Attribute.Default<Double>("value", date.getTimeValue()),
+                        new Attribute.Default<Double>(ParameterParser.VALUE, date.getTimeValue()),
                         new Attribute.Default<String>("direction", date.isBackwards() ? "backwards" : "forwards"),
                         new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
                         /*,
@@ -1531,9 +1532,10 @@ public class BeastGenerator extends Generator {
 
                 case UNCORRELATED_EXPONENTIAL:
                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+//                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     //        		writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                     for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                    	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                         writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
                     }
 
@@ -1541,27 +1543,32 @@ public class BeastGenerator extends Generator {
                 case UNCORRELATED_LOGNORMAL:
                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+//                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     //                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                     for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                    	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                         writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
                     }
 
                     break;
                 case AUTOCORRELATED_LOGNORMAL:
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "branchRates.var");
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+//                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "branchRates.var");
+//                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     //                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                     for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                        writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.rootRate");
+                    	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "branchRates.var");
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "treeModel.rootRate");
+                        writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                         writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
                     }
                     break;
                 case RANDOM_LOCAL_CLOCK:
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + "rateChanges");
+//                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+//                    writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + "rateChanges");
                     //                writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,  "covariance");
                     for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                    	writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + tree.getPrefix() + "rateChanges");
+                        writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                         writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
                     }
                     break;
@@ -1644,17 +1651,17 @@ public class BeastGenerator extends Generator {
             for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
-                        writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
                     case UNCORRELATED_LOGNORMAL:
                     case RANDOM_LOCAL_CLOCK:
-                        writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
-                        writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     default:
@@ -1696,17 +1703,17 @@ public class BeastGenerator extends Generator {
                 for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:
-                            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case UNCORRELATED_EXPONENTIAL:
                         case UNCORRELATED_LOGNORMAL:
                         case RANDOM_LOCAL_CLOCK:
-                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
-                            writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
                             break;
 
                         default:

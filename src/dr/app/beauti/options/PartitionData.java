@@ -44,10 +44,6 @@ public class PartitionData {
     private int toSite;
     private int every = 1;
 
-    //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
-    // BeastGenerator.checkOptions()
-    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
-
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
@@ -135,14 +131,6 @@ public class PartitionData {
 
     public int getEvery() {
         return every;
-    }
-
-    public void setPloidyType(PloidyType ploidyType) {
-        this.ploidyType = ploidyType;
-    }
-
-    public PloidyType getPloidyType() {
-        return ploidyType;
     }
 
     public int getSiteCount() {

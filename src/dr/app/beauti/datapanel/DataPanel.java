@@ -94,23 +94,23 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableColumn col = dataTable.getColumnModel().getColumn(6);
+        TableColumn col = dataTable.getColumnModel().getColumn(5);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
-        col = dataTable.getColumnModel().getColumn(5);
-        comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        col.setCellRenderer(comboBoxRenderer);
+//        col = dataTable.getColumnModel().getColumn(5);
+//        comboBoxRenderer = new ComboBoxRenderer();
+//        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+//        col.setCellRenderer(comboBoxRenderer);
 
         if (ALLOW_UNLINKED_TREES) {
-            col = dataTable.getColumnModel().getColumn(7);
+            col = dataTable.getColumnModel().getColumn(6);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             col.setCellRenderer(comboBoxRenderer);
 
-            col = dataTable.getColumnModel().getColumn(8);
+            col = dataTable.getColumnModel().getColumn(7);
             comboBoxRenderer = new ComboBoxRenderer();
             comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             col.setCellRenderer(comboBoxRenderer);
@@ -214,27 +214,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireDataChanged() {
+        options.updatePartitionClockTreeLinks();
+        
         frame.setDirty();
     }
 
     private void modelsChanged() {
         Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
-        TableColumn col = dataTable.getColumnModel().getColumn(6);
+        TableColumn col = dataTable.getColumnModel().getColumn(5);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
 
-        modelArray = PloidyType.values();
-        col = dataTable.getColumnModel().getColumn(5);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+//        modelArray = PloidyType.values();
+//        col = dataTable.getColumnModel().getColumn(5);
+//        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
 
         if (ALLOW_UNLINKED_TREES) {
             modelArray = options.getPartitionClockModels().toArray();
-            col = dataTable.getColumnModel().getColumn(7);
+            col = dataTable.getColumnModel().getColumn(6);
             col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
 
             modelArray = options.getPartitionTreeModels().toArray();
-            col = dataTable.getColumnModel().getColumn(8);
+            col = dataTable.getColumnModel().getColumn(7);
             col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
         }
+        
     }
 
     public void selectionChanged() {
@@ -494,7 +497,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Ploidy", "Partition Model", "Clock Model", "Partition Tree"};
+        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model", "Clock Model", "Partition Tree"};
         String[] columnNames2 = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model"};
 
         public DataTableModel() {
@@ -527,12 +530,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 4:
                     return partition.getAlignment().getDataType().getDescription();
                 case 5:
-                    return partition.getPloidyType();
-                case 6:
+//                    return partition.getPloidyType();
+//                case 6:
                     return partition.getPartitionSubstitutionModel().getName();
-                case 7:
+                case 6:
                     return partition.getPartitionClockModel().getName();
-                case 8:
+                case 7:
                     return partition.getPartitionTreeModel().getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
@@ -549,15 +552,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     }
                     break;
                 case 5:
-                    partition.setPloidyType((PloidyType) aValue);
-                    break;
-                case 6:
+//                    partition.setPloidyType((PloidyType) aValue);
+//                    break;
+//                case 6:
                     partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
                     break;
-                case 7:
+                case 6:
                     partition.setPartitionClockModel((PartitionClockModel) aValue);
                     break;
-                case 8:
+                case 7:
                     partition.setPartitionTreeModel((PartitionTreeModel) aValue);
                     break;
             }
@@ -571,16 +574,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 0:// name
                     editable = true;
                     break;
-                case 5:// ploidy type selection menu
+//                case 5:// ploidy type selection menu
+//                    editable = true;
+//                    break;
+                case 5:// subsitution model selection menu
                     editable = true;
                     break;
-                case 6:// subsitution model selection menu
+                case 6:// clock model selection menu
                     editable = true;
                     break;
-                case 7:// clock model selection menu
-                    editable = true;
-                    break;
-                case 8:// tree selection menu
+                case 7:// tree selection menu
                     editable = true;
                     break;
                 default:

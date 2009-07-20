@@ -65,6 +65,12 @@ public class BranchRatesModelGenerator extends Generator {
 
         setModelPrefix(model.getPrefix());
         String treePrefix = tree.getPrefix();
+        
+        PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
+        if (clockTree == null) {
+        	throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName() 
+        			+ ", tree model = " + tree.getName());
+        }        
 
         Attribute[] attributes;
         int categoryCount = 0;
@@ -79,7 +85,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeComment("The strict clock (Uniform rates across branches)");
                 writer.writeOpenTag(
                         StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + BranchRateModel.BRANCH_RATES)}
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES)}
                 );
                 writeParameter("rate", "clock.rate", model, writer);
                 writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
@@ -137,7 +143,7 @@ public class BranchRatesModelGenerator extends Generator {
                 } else {
                     categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
                 }
-                writeParameter(tree.getParameter("branchRates.categories"), categoryCount, writer);
+                writeParameter(clockTree.getParameter("branchRates.categories"), categoryCount, writer);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                 writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
@@ -225,7 +231,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
 //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
 //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
-                writeParameter("variance", "branchRates.var", model, writer);
+                writeParameter("variance", "branchRates.var", clockTree, writer);
 
                 writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
                 

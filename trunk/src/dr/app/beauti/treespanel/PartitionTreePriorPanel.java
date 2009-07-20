@@ -70,7 +70,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, TreesPanel parent) {
+    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, TreesPanel parent) {    	
+    	super(12, 8);
 
         this.partitionTreePrior = partitionTreePrior;
         this.treesPanel = parent;
@@ -161,10 +162,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             treesPanel.updateShareSameTreePriorChanged();
         } else {
             treesPanel.shareSameTreePriorCheck.setEnabled(true);
-//            treesPanel.updateShareSameTreePriorChanged();
+            treesPanel.shareSameTreePriorCheck.setSelected(true);
+            treesPanel.updateShareSameTreePriorChanged();
         }
-
-
+        
+        getOptions();
+        
+        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
+        
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
 //        fireTableDataChanged();
@@ -193,7 +198,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedIndex(partitionTreePrior.getSkyrideSmoothing());
 
-        setupPanel();
+//        setupPanel();
 
         settingOptions = false;
 

@@ -129,7 +129,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         // hard code get(0)
         double popSizeValue = options.getParameter("constant.popSize", options.getPartitionSubstitutionModels().get(0)).initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
-                new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(popSizeValue))});
+                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS)}, true);
@@ -157,7 +157,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-                    new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
                     new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
                     new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
 
@@ -168,7 +168,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
-                    new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
                     new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
                     new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
 
@@ -187,7 +187,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-                    new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial)),
+                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
                     new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
                     new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
 
@@ -254,7 +254,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
-                new Attribute.Default<String>(AttributeParser.VALUE, Double.toString(para.initial))}, true);
+                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial))}, true);
 
         writer.writeCloseTag(DistributionModelParser.MEAN);
 
@@ -298,7 +298,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
             // Needs special treatment - you have to generate "NS" ones and 2(N-1) zeros, where N is the number of species.
             // N "1", 2(N-1) "0"
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(AttributeParser.VALUE, getIndicatorsParaValue())}, true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(ParameterParser.VALUE, getIndicatorsParaValue())}, true);
 
             writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
 
@@ -322,7 +322,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     // <parameter id="stsigma" value="1" />
                     new Attribute.Default<String>(XMLParser.ID, SpeciesTreeBMPrior.STSIGMA.toLowerCase()),
-                    new Attribute.Default<String>(AttributeParser.VALUE, "1")}, true);
+                    new Attribute.Default<String>(ParameterParser.VALUE, "1")}, true);
 
             writer.writeCloseTag(SpeciesTreeBMPrior.STSIGMA);
 

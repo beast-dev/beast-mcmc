@@ -14,6 +14,7 @@ import dr.evomodelxml.HKYParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
+import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 /**
@@ -58,7 +59,7 @@ public class PartitionModelGenerator extends Generator {
                             ParameterParser.PARAMETER,
                             new Attribute[]{
                                     new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                    new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
+                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")
                             },
                             true
                     );
@@ -216,7 +217,7 @@ public class PartitionModelGenerator extends Generator {
                         ParameterParser.PARAMETER,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                new Attribute.Default<String>("value", "0.25 0.25 0.25 0.25")
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")
                         }, true);
                 break;
             case EMPIRICAL:

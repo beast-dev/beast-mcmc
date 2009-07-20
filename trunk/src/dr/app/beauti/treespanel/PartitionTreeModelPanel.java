@@ -30,6 +30,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.options.*;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.datatype.PloidyType;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.tree.NeighborJoiningTree;
@@ -52,8 +53,9 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 8096349200725353543L;
 
-	private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
+	private JComboBox ploidyTypeCombo = new JComboBox(PloidyType.values());
 	
+	private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());	
 	private JComboBox userTreeCombo = new JComboBox();
 
 //	private BeautiFrame frame = null;
@@ -64,9 +66,18 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final PartitionTreeModel partitionTreeModel;
 
     public PartitionTreeModelPanel(PartitionTreeModel partitionTreeModel, BeautiOptions options) {
+    	super(12, 18);
 
 		this.partitionTreeModel = partitionTreeModel;
 		this.options = options;
+		
+		PanelUtils.setupComponent(ploidyTypeCombo);
+		ploidyTypeCombo.addItemListener( new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
+//                        setupPanel();
+                    }
+                }
+        );
 
         PanelUtils.setupComponent(startingTreeCombo);
         startingTreeCombo.addItemListener( new ItemListener() {
@@ -94,6 +105,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 	private void setupPanel() {
         
 		removeAll();
+		
+		if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+     	   || (!options.shareSameTreePrior && partitionTreeModel != null
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+			
+			addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
+		} 
 		                
         addComponentWithLabel("Starting Tree:", startingTreeCombo);
         
@@ -125,6 +144,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         }
 
         settingOptions = true;
+        
+        if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+     	   || (!options.shareSameTreePrior && partitionTreeModel != null
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+        	        	
+        	ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
+        }
 
         startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
         
@@ -145,6 +172,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     public void getOptions(BeautiOptions options) {
     	if (settingOptions) return;
     	
+    	if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+     	   || (!options.shareSameTreePrior && partitionTreeModel != null
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+    		
+        	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
+        }
+
     	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
     	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
     }

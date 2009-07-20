@@ -159,6 +159,7 @@ public class BeautiOptions extends ModelOptions {
 //        partitionModels.clear();
 //        partitionTreeModels.clear();
 //        partitionTreePriors.clear();
+        partitionClockTreeLinks.clear();
         activedSameTreePrior = null;
         shareSameTreePrior = true;
 
@@ -237,15 +238,11 @@ public class BeautiOptions extends ModelOptions {
             prior.selectParameters(parameters);
         }
 
-        for (PartitionClockModel model : getPartitionClockModels()) {
-            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
-                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-                
-                clockTree.selectParameters(parameters);
-                clockTree.selectStatistics(parameters);
-            }
+        for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
+        	clockTree.selectParameters(parameters);
+            clockTree.selectStatistics(parameters);
         }
-
+        
         if (isSpeciesAnalysis()) { // species
             selectParametersForSpecies(parameters);
         }
@@ -383,12 +380,8 @@ public class BeautiOptions extends ModelOptions {
             prior.selectOperators(ops);
         }
 
-        for (PartitionClockModel model : getPartitionClockModels()) {
-            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
-                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-
-                clockTree.selectOperators(ops);
-            }
+        for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
+            clockTree.selectOperators(ops);
         }
 
         if (isSpeciesAnalysis()) { // species
@@ -600,6 +593,35 @@ public class BeautiOptions extends ModelOptions {
         }
 
         return activeTrees;
+    }
+    
+    // ++++++++++++++ Partition Clock Model ++++++++++++++    
+    public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {    	
+    	return partitionClockTreeLinks;
+    }
+    
+    public PartitionClockModelTreeModelLink getPartitionClockTreeLink(PartitionClockModel model, PartitionTreeModel tree) {    	
+    	for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
+        	if (clockTree.getPartitionClockModel().equals(model) && clockTree.getPartitionTreeTree().equals(tree)) {
+        		return clockTree;        		
+        	} 
+        }
+    	
+    	return null;
+    }
+    
+    public void updatePartitionClockTreeLinks() {
+    	partitionClockTreeLinks.clear();
+    	
+    	for (PartitionClockModel model : getPartitionClockModels()) {
+            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
+                
+                if (!partitionClockTreeLinks.contains(clockTree)) {
+                	partitionClockTreeLinks.add(clockTree);
+                }
+            }
+        }    	
     }
 
     // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
@@ -1402,6 +1424,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
     // Substitution Model
 //    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();

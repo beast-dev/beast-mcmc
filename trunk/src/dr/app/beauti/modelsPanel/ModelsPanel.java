@@ -133,13 +133,13 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(addModelAction);
-        actionPanel1.setRemoveAction(removeModelAction);
+//        ActionPanel actionPanel1 = new ActionPanel(false);
+//        actionPanel1.setAddAction(addModelAction);
+//        actionPanel1.setRemoveAction(removeModelAction);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+//        controlPanel1.add(actionPanel1);
 
         ItemListener comboListener = new ItemListener() {
             public void itemStateChanged(ItemEvent event) {
@@ -171,7 +171,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                         boolean fixed = fixedSubstitutionRateCheck.isSelected();
                         substitutionRateLabel.setEnabled(fixed);
                         substitutionRateField.setEnabled(fixed);
-                        fireModelsChanged();
+//                        fireModelsChanged();
                     }
                 }
         );
@@ -295,6 +295,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireModelsChanged() {
+        options.updatePartitionClockTreeLinks();
         frame.setDirty();
     }
 
@@ -315,25 +316,25 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         fireModelsChanged();
     }
 
-    public void removeSelection() {
-        int selRow = modelTable.getSelectedRow();
-        if (!isUsed(selRow)) {
-            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);
-            options.getPartitionSubstitutionModels().remove(model);
-        }
-
-        modelTableModel.fireTableDataChanged();
-        int n = options.getPartitionSubstitutionModels().size();
-        if (selRow >= n) {
-            selRow--;
-        }
-        modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        if (n == 0) {
-            setCurrentModel(null);
-        }
-
-        fireModelsChanged();
-    }
+//    public void removeSelection() {
+//        int selRow = modelTable.getSelectedRow();
+//        if (!isUsed(selRow)) {
+//            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);
+//            options.getPartitionSubstitutionModels().remove(model);
+//        }
+//
+//        modelTableModel.fireTableDataChanged();
+//        int n = options.getPartitionSubstitutionModels().size();
+//        if (selRow >= n) {
+//            selRow--;
+//        }
+//        modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//        if (n == 0) {
+//            setCurrentModel(null);
+//        }
+//
+//        fireModelsChanged();
+//    }
 
     private void selectionChanged() {
 
@@ -510,9 +511,9 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 
     }
 
-    Action addModelAction = new AbstractAction("+") {
-        public void actionPerformed(ActionEvent ae) {
-            createModel();
-        }
-    };
+//    Action addModelAction = new AbstractAction("+") {
+//        public void actionPerformed(ActionEvent ae) {
+//            createModel();
+//        }
+//    };
 }

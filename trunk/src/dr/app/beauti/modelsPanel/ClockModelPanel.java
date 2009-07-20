@@ -85,6 +85,7 @@ public class ClockModelPanel extends OptionsPanel {
     }
 
     private void fireDataChanged() {
+        options.updatePartitionClockTreeLinks();
         frame.setDirty();
     }
 

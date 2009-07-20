@@ -46,7 +46,7 @@ public class DesignMatrix extends MatrixParameter {
             int dim = 0;
 
             if (xo.hasAttribute(FORM)) {
-                String type = (String) xo.getStringAttribute(FORM);
+                String type = xo.getStringAttribute(FORM);
                 if (type.compareTo("J") == 0) {
                    int rowDim = xo.getAttribute(ROW_DIMENSION,1);
                     int colDim = xo.getAttribute(COL_DIMENSION,1);

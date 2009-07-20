@@ -25,8 +25,6 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.Statistic;
-import dr.math.distributions.Distribution;
 import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -82,7 +80,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
         return logL;
     }
 
-    private double logPDF(double value) {
+    protected double logPDF(double value) {
         return 0.0;
     }
 
@@ -94,7 +92,7 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
         throw new RuntimeException("Not implemented yet!");
     }
 
-    private final double[] values;
-    private final double[] density;
+    protected final double[] values;
+    protected final double[] density;
 }
 

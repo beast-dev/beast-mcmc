@@ -32,6 +32,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
+import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
@@ -491,9 +492,18 @@ public class TreePriorGenerator extends Generator {
 	                new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
 	            }
 	        );
-	
-	        writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES); 
-	        writeParameter(prior.getParameter(VariableDemographicModel.demoElementName + ".popSize"), -1, writer); // not need dimension
+	        
+	        Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
+	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+	        popSize.initial = populationMean.initial;
+	        
+	        writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
+	        writer.writeComment("popSize value = populationMean value");
+	        writer.writeTag(ParameterParser.PARAMETER,
+	                new Attribute[]{ // not need dimension
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"),
+	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
+//	        writeParameter(popSize, -1, writer); 
 	        writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 	
 	        writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
@@ -504,13 +514,19 @@ public class TreePriorGenerator extends Generator {
 	        
 	        if (options.shareSameTreePrior) {
 	            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-		            writer.writeOpenTag(VariableDemographicModel.POP_TREE);
+		            writer.writeOpenTag(VariableDemographicModel.POP_TREE, new Attribute[]{
+			                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
+			            }
+			        );
 		            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, model.getPrefix()
 		            		+ TreeModel.TREE_MODEL), true);
 		            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
 	            }
 	        } else {//TODO correct for not sharing same prior?
-	        	writer.writeOpenTag(VariableDemographicModel.POP_TREE);
+	        	writer.writeOpenTag(VariableDemographicModel.POP_TREE, new Attribute[]{
+		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
+	            	}
+	        	);
 	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, prior.getTreeModel().getPrefix()
 	            		+ TreeModel.TREE_MODEL), true);
 	            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
@@ -541,10 +557,11 @@ public class TreePriorGenerator extends Generator {
 	                        //,new Attribute.Default<String>("elementwise", "true")
 	                });
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
+	        writer.writeComment("prefer populationMean value = 1");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMean"),
-	                        new Attribute.Default<String>("value", "1")}, true);
+	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.initial))}, true);
 	        writer.writeCloseTag(DistributionModelParser.MEAN);
 	        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
     	}

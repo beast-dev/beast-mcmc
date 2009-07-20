@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -44,7 +45,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public static final String POPULATION_SIZES = "populationSizes";
     public static final String INDICATOR_PARAMETER = "indicators";
     public static final String POPULATION_TREES = "trees";
-    private static final String PLOIDY = "ploidy";
+    private static final String PLOIDY = SpeciesBindings.PLOIDY;
     public static String POP_TREE = "ptree";
 
     public static final String LOG_SPACE = "logUnits";

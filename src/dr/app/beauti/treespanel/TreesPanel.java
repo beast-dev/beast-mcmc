@@ -80,7 +80,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private BeautiFrame frame = null;
     private BeautiOptions options = null;
 
-    private JScrollPane scrollPane = new JScrollPane();
+	private JScrollPane scrollPane = new JScrollPane();
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
@@ -139,13 +139,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(addTreeAction);
-        actionPanel1.setRemoveAction(removeTreeAction);
+//        ActionPanel actionPanel1 = new ActionPanel(false);
+//        actionPanel1.setAddAction(addTreeAction);
+//        actionPanel1.setRemoveAction(removeTreeAction);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+//        controlPanel1.add(actionPanel1);
     
         setCurrentModelAndPrior(null);
 
@@ -228,28 +228,29 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireTreePriorsChanged() {
+        options.updatePartitionClockTreeLinks();
         frame.setDirty();        
     }
     
-    public void removeSelection() {
-        int selRow = treesTable.getSelectedRow();
-        if (!isUsed(selRow)) {
-            PartitionTreeModel model = options.getPartitionTreeModels().get(selRow);
-            options.getPartitionTreeModels().remove(model);
-        }
-
-        treesTableModel.fireTableDataChanged();
-        int n = options.getPartitionTreeModels().size();
-        if (selRow >= n) {
-            selRow--;
-        }
-        treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        if (n == 0) {
-            setCurrentModelAndPrior(null);
-        }
-
-        fireTreePriorsChanged();
-    }
+//    public void removeSelection() {
+//        int selRow = treesTable.getSelectedRow();
+//        if (!isUsed(selRow)) {
+//            PartitionTreeModel model = options.getPartitionTreeModels().get(selRow);
+//            options.getPartitionTreeModels().remove(model);
+//        }
+//
+//        treesTableModel.fireTableDataChanged();
+//        int n = options.getPartitionTreeModels().size();
+//        if (selRow >= n) {
+//            selRow--;
+//        }
+//        treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//        if (n == 0) {
+//            setCurrentModelAndPrior(null);
+//        }
+//
+//        fireTreePriorsChanged();
+//    }
         
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
@@ -264,45 +265,45 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private void createTree() {
-        if (generateTreeDialog == null) {
-            generateTreeDialog = new GenerateTreeDialog(frame);
-        }
-
-        int result = generateTreeDialog.showDialog(options);
-        if (result != JOptionPane.CANCEL_OPTION) {
-            GenerateTreeDialog.MethodTypes methodType = generateTreeDialog.getMethodType();
-            PartitionData partition = generateTreeDialog.getDataPartition();
-
-            Patterns patterns = new Patterns(partition.getAlignment());
-            DistanceMatrix distances = new F84DistanceMatrix(patterns);
-            Tree tree;
-            TemporalRooting temporalRooting;
-
-            switch (methodType) {
-                case NJ:
-                    tree = new NeighborJoiningTree(distances);
-                    temporalRooting = new TemporalRooting(tree);
-                    tree = temporalRooting.findRoot(tree);
-                    break;
-                case UPGMA:
-                    tree = new UPGMATree(distances);
-                    temporalRooting = new TemporalRooting(tree);
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown method type");
-            }
-
-            tree.setId(generateTreeDialog.getName());
-            options.userTrees.add(tree);
-            treesTableModel.fireTableDataChanged();
-            int row = options.userTrees.size() - 1;
-            treesTable.getSelectionModel().setSelectionInterval(row, row);
-        }
-
-        fireTreePriorsChanged();
-
-    }
+//    private void createTree() {
+//        if (generateTreeDialog == null) {
+//            generateTreeDialog = new GenerateTreeDialog(frame);
+//        }
+//
+//        int result = generateTreeDialog.showDialog(options);
+//        if (result != JOptionPane.CANCEL_OPTION) {
+//            GenerateTreeDialog.MethodTypes methodType = generateTreeDialog.getMethodType();
+//            PartitionData partition = generateTreeDialog.getDataPartition();
+//
+//            Patterns patterns = new Patterns(partition.getAlignment());
+//            DistanceMatrix distances = new F84DistanceMatrix(patterns);
+//            Tree tree;
+//            TemporalRooting temporalRooting;
+//
+//            switch (methodType) {
+//                case NJ:
+//                    tree = new NeighborJoiningTree(distances);
+//                    temporalRooting = new TemporalRooting(tree);
+//                    tree = temporalRooting.findRoot(tree);
+//                    break;
+//                case UPGMA:
+//                    tree = new UPGMATree(distances);
+//                    temporalRooting = new TemporalRooting(tree);
+//                    break;
+//                default:
+//                    throw new IllegalArgumentException("unknown method type");
+//            }
+//
+//            tree.setId(generateTreeDialog.getName());
+//            options.userTrees.add(tree);
+//            treesTableModel.fireTableDataChanged();
+//            int row = options.userTrees.size() - 1;
+//            treesTable.getSelectionModel().setSelectionInterval(row, row);
+//        }
+//
+//        fireTreePriorsChanged();
+//
+//    }
 
     
     /**
@@ -374,25 +375,58 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 		this.isCheckedTipDate = isCheckedTipDate;
 	}
     
+    public BeautiOptions getOptions() {
+		return options;
+	}
+
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
         settingOptions = true;
         
-        PartitionTreeModelPanel tmp = treeModelPanels.get(currentTreeModel);
-        if (tmp != null) {
-        	tmp.setOptions();
-        }
+//        PartitionTreeModelPanel tmp = treeModelPanels.get(currentTreeModel);
+//        if (tmp != null) {
+//        	tmp.setOptions();
+//        }
+//        
+//        PartitionTreePriorPanel tpp = treePriorPanels.get(currentTreePrior);
+//        if (tpp != null) {
+//        	tpp.setOptions();
+//        	
+//	        if (isCheckedTipDate) { 
+//	        	tpp.removeCertainPriorFromTreePriorCombo();
+//	    	} else {
+//	    		tpp.recoveryTreePriorCombo();    		
+//	    	}
+//        }
+        Set<PartitionTreeModel> models = treeModelPanels.keySet();        
         
-        PartitionTreePriorPanel tpp = treePriorPanels.get(currentTreePrior);
-        if (tpp != null) {
-        	tpp.setOptions();
+        for (PartitionTreeModel model : models) {
+        	if (model != null) {
+        		treeModelPanels.get(model).setOptions();
+        	}
+     	}
+        
+        if (options.shareSameTreePrior) {        	       	
+        	PartitionTreePriorPanel ptpp = treePriorPanels.get(options.activedSameTreePrior);
+        	if (ptpp != null) {
+        		ptpp.setOptions();
+        	}
         	
-	        if (isCheckedTipDate) { 
-	        	tpp.removeCertainPriorFromTreePriorCombo();
-	    	} else {
-	    		tpp.recoveryTreePriorCombo();    		
-	    	}
+        } else {
+        	for (PartitionTreeModel model : models) {
+            	PartitionTreePriorPanel ptpp = treePriorPanels.get(model.getPartitionTreePrior());
+            	
+            	if (ptpp != null) {
+            		ptpp.setOptions(); 
+            		
+            		if (isCheckedTipDate) { 
+        	        	ptpp.removeCertainPriorFromTreePriorCombo();
+        	    	} else {
+        	    		ptpp.recoveryTreePriorCombo();    		
+        	    	}
+            	}
+         	}
         }
         
         settingOptions = false;
@@ -582,11 +616,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     }
     
-    Action addTreeAction = new AbstractAction("+") {
-        public void actionPerformed(ActionEvent ae) {
-        	createTree();
-        }
-    };
+//    Action addTreeAction = new AbstractAction("+") {
+//        public void actionPerformed(ActionEvent ae) {
+//        	createTree();
+//        }
+//    };
     
 //    public class CreateTreeAction extends AbstractAction {
 //        public CreateTreeAction() {

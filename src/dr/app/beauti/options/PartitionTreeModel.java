@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
 import java.util.ArrayList;
@@ -47,6 +48,11 @@ public class PartitionTreeModel extends ModelOptions {
     private Tree userStartingTree = null;
 
     private boolean fixedTree = false;
+
+    //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
+    // BeastGenerator.checkOptions()
+    private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
+
 
     public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
@@ -180,6 +186,14 @@ public class PartitionTreeModel extends ModelOptions {
 
     public void setUserStartingTree(Tree userStartingTree) {
         this.userStartingTree = userStartingTree;
+    }
+
+    public void setPloidyType(PloidyType ploidyType) {
+        this.ploidyType = ploidyType;
+    }
+
+    public PloidyType getPloidyType() {
+        return ploidyType;
     }
 
     public String getName() {

@@ -237,10 +237,10 @@ public class BeautiFrame extends DocumentFrame {
     public void doDelete() {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
             dataPanel.removeSelection();
-        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-            modelsPanel.removeSelection();
-        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
-        	treesPanel.removeSelection();
+//        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
+//            modelsPanel.removeSelection();
+//        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
+//        	treesPanel.removeSelection();
         } else {
             throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }
@@ -739,6 +739,7 @@ public class BeautiFrame extends DocumentFrame {
                     
                 }
             }
+            beautiOptions.updatePartitionClockTreeLinks();
         }
     }
 

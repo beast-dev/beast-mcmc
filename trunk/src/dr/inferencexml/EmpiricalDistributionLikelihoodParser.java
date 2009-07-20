@@ -26,6 +26,7 @@
 package dr.inferencexml;
 
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
+import dr.inference.distribution.SplineInterpolatedLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -39,6 +40,8 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String DATA = "data";
     public static final String FROM = "from";
     public static final String TO = "to";
+    public static final String SPLINE_INTERPOLATION = "splineInterpolation";
+    public static final String DEGREE = "degree";
 
 
     public String getParserName() {
@@ -49,7 +52,17 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
 
         String fileName = xo.getStringAttribute(FILE_NAME);
 
-        EmpiricalDistributionLikelihood likelihood = new EmpiricalDistributionLikelihood(fileName);
+        boolean splineInterpolation = xo.getAttribute(SPLINE_INTERPOLATION,false);
+        int degree = xo.getAttribute(DEGREE,3); // Default is cubic-spline
+
+        EmpiricalDistributionLikelihood likelihood;
+
+        if (splineInterpolation) {
+            if( degree < 1 )
+                throw new XMLParseException("Spline degree must be greater than zero!");
+            likelihood = new SplineInterpolatedLikelihood(fileName);
+        } else
+            likelihood = new EmpiricalDistributionLikelihood(fileName);
 
         XMLObject cxo1 = xo.getChild(DATA);
         final int from = cxo1.getAttribute(FROM, -1);
@@ -86,6 +99,8 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(FILE_NAME),
+            AttributeRule.newBooleanRule(SPLINE_INTERPOLATION,true),
+            AttributeRule.newIntegerRule(DEGREE,true),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),

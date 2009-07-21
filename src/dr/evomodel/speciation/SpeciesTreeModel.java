@@ -1,17 +1,16 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
-import dr.evolution.io.NewickImporter;
 import dr.evomodel.coalescent.VDdemographicFunction;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
 import dr.inference.model.*;
-import dr.inference.operators.Scalable;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.Scalable;
 import dr.util.Attributable;
 import dr.util.HeapSort;
 import dr.xml.*;

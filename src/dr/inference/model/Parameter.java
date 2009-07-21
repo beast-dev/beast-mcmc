@@ -271,8 +271,8 @@ public interface Parameter extends Statistic, Variable<Double> {
         public boolean isWithinBounds() {
             Bounds<Double> bounds = getBounds();
             for (int i = 0; i < getDimension(); i++) {
-                if (getParameterValue(i) < bounds.getLowerLimit(i) ||
-                        getParameterValue(i) > bounds.getUpperLimit(i)) {
+                final double value = getParameterValue(i);
+                if ( value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
                     return false;
                 }
             }

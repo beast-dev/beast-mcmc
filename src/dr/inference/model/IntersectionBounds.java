@@ -96,5 +96,5 @@ public class IntersectionBounds implements Bounds<Double> {
     }
 
     private ArrayList<Bounds<Double>> bounds = null;
-    private int dimension;
+    private final int dimension;
 }

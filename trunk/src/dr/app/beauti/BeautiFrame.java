@@ -944,7 +944,7 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        // todo save last dir, sync import and out directory, offer stem as default
+        // todo offer stem as default
 
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Generate BEAST File...", "xml", "beast");
         chooser.setFileFilter(filter);

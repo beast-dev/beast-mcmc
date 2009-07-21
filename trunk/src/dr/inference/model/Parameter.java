@@ -527,13 +527,15 @@ public interface Parameter extends Statistic, Variable<Double> {
 
             if( bounds != null ) {
                 assert oldDim < dim :  "Can't decrease dimension when bounds are set";
-                for(int k = 0; k < oldDim; ++k) {
+                for(int k = 1; k < oldDim; ++k) {
                     assert ((double)bounds.getLowerLimit(k) == bounds.getLowerLimit(0)) &&
                             ((double)bounds.getUpperLimit(k) == bounds.getUpperLimit(0) ) :
                             "Can't change dimension when bounds are not all equal";
                 }
+                final double low = bounds.getLowerLimit(0);
+                final double high = bounds.getUpperLimit(0);
                 bounds = null;
-                addBounds(bounds.getLowerLimit(0), bounds.getUpperLimit(0));
+                addBounds(low, high);
             }
         }
 

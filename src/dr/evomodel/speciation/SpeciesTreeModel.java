@@ -1,6 +1,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
@@ -33,6 +34,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
     public static final String BMPRIOR = "bmPrior";
     public static final String CONST_ROOT_POPULATION = "constantRoot";
+    public static final String CONSTANT_POPULATION = "constantPopulation";
 
     private final SimpleTree spTree;
     private final SpeciesBindings species;
@@ -56,6 +58,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     private final String spIndexAttrName = "spi";
     private final boolean bmp;
     private final boolean nonConstRootPopulation;
+    private final boolean constantPopulation;
 
     private class NodeProperties {
         final int speciesIndex;
@@ -71,7 +74,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
     SpeciesTreeModel(SpeciesBindings species, Parameter sppSplitPopulations,
                      Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree,
-                     boolean bmp, boolean nonConstRootPopulation) {
+                     boolean bmp, boolean nonConstRootPopulation, boolean constantPopulation) {
         super(SPECIES_TREE);
 
         this.species = species;
@@ -82,6 +85,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         this.bmp = bmp;
         this.nonConstRootPopulation = nonConstRootPopulation;
+        this.constantPopulation = constantPopulation;
 
         addVariable(sppSplitPopulations);
 
@@ -89,6 +93,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
         if( coalPointsPops != null ) {
             assert coalPointsIndicator != null;
+            assert !constantPopulation;
 
             addVariable(coalPointsPops);
             addVariable(coalPointsIndicator);
@@ -155,6 +160,10 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
                 }
             }
         }
+    }
+
+    public boolean constPopulation() {
+        return constantPopulation;
     }
 
     // Is gene tree compatible with species tree
@@ -529,7 +538,6 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
                 nprop.spSet.union(p.spSet);
             }
         }
-        //} else { spset = frozenset((data.speciesSet.argmax(),)) }
 
         if( args == null ) {
             return nprop;
@@ -700,10 +708,22 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
             final int iHere = setDemographics(getChild(nodeID, 0), pStart, 0, pops, pointsList);
             pEnd = setDemographics(getChild(nodeID, 1), iHere + 1, 1, pops, pointsList);
-            final int i = nSpecies + iHere * 2;
-            p0 = pops[i] + pops[i + 1];
+            if( constantPopulation ) {
+               final int i = nSpecies + iHere;
+               p0 = pops[i];
+            } else {
+               final int i = nSpecies + iHere * 2;
+               p0 = pops[i] + pops[i + 1];
+            }
         }
 
+        if( constantPopulation ) {
+            double[] xs = {};
+            double[] ys = {p0};
+
+           nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
+            // new ConstantPopulation(p0, getUnits());
+        } else {
         final double t0 = getNodeHeight(nodeID);
 
         Points[] p = pointsList != null ? pointsList[nodeID.getNumber()] : null;
@@ -759,6 +779,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             }
 
             nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
+        }
         }
         return pEnd;
     }
@@ -881,6 +902,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             }
 
             {
+                assert ! constantPopulation; // not implemented yet
                 int[] pos = {0};
                 setInitialSplitPopulations(tree, tree.getRoot(), pos);
             }
@@ -1300,9 +1322,15 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return new Parameter.Default(dim, value);
     }
 
-    private static Parameter createSplitPopulationsParameter(SpeciesBindings spb, double value, boolean root) {
-        // one per species leaf (ns) + 2 per internal node (2*(ns-1)) + optionally one for the root
-        final int dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
+    private static Parameter createSplitPopulationsParameter(SpeciesBindings spb, double value, boolean root, boolean constPop) {
+        int dim ;
+        if( constPop ) {
+            // one per node
+           dim = 2 * spb.nSpecies() - 1;
+        } else {
+          // one per species leaf (ns) + 2 per internal node (2*(ns-1)) + optionally one for the root
+          dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
+        }
         return new Parameter.Default(dim, value);
     }
 
@@ -1314,7 +1342,9 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             Parameter coalPointsPops = null;
             Parameter coalPointsIndicators = null;
             final Boolean cr = xo.getAttribute(CONST_ROOT_POPULATION, false);
-            final Boolean bmp = xo.getAttribute(BMPRIOR, true);
+            final Boolean cp = xo.getAttribute(CONSTANT_POPULATION, false);
+
+            final Boolean bmp = xo.getAttribute(BMPRIOR, false);
             {
                 XMLObject cxo = xo.getChild(COALESCENT_POINTS_POPULATIONS);
                 if( cxo != null ) {
@@ -1335,27 +1365,28 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
                 }
             }
 
-            XMLObject cxo = xo.getChild(SPP_SPLIT_POPULATIONS);
+            final XMLObject cxo = xo.getChild(SPP_SPLIT_POPULATIONS);
 
             final double value = cxo.getAttribute(Attributable.VALUE, 1.0);
             final boolean nonConstRootPopulation = coalPointsPops == null && !cr;
-            final Parameter sppSplitPopulations = createSplitPopulationsParameter(spb, value, nonConstRootPopulation);
+            final Parameter sppSplitPopulations = createSplitPopulationsParameter(spb, value, nonConstRootPopulation, cp);
             ParameterParser.replaceParameter(cxo, sppSplitPopulations);
 
             final Parameter.DefaultBounds bounds =
                     new Parameter.DefaultBounds(Double.MAX_VALUE, 0, sppSplitPopulations.getDimension());
             sppSplitPopulations.addBounds(bounds);
 
-            Tree startTree = (Tree) xo.getChild(Tree.class);
+            final Tree startTree = (Tree) xo.getChild(Tree.class);
 
             return new SpeciesTreeModel(spb, sppSplitPopulations, coalPointsPops, coalPointsIndicators, startTree, bmp,
-                    nonConstRootPopulation);
+                    nonConstRootPopulation, cp);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
                     AttributeRule.newBooleanRule(BMPRIOR, true),
                     AttributeRule.newBooleanRule(CONST_ROOT_POPULATION, true),
+                     AttributeRule.newBooleanRule(CONSTANT_POPULATION, true),
                     new ElementRule(SpeciesBindings.class),
                     // A starting tree. Can be very minimal, i.e. no branch lengths and not resolved
                     new ElementRule(Tree.class, true),

@@ -47,7 +47,7 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  * @author joseph
  *         Date: 24/02/2008
  */
-public class BirthDeathGernhard08Model extends SpeciationModel {
+public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 

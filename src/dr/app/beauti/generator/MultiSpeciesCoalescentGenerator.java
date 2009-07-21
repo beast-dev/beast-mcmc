@@ -95,7 +95,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
      *
      * @param writer
      */
-    public void writeMultiSpeciesCoalescent(XMLWriter writer) {
+    public void writeSTARBEAST(XMLWriter writer) {
         writeSpeciesTree(writer);
         writeSpeciesTreeModel(writer);
         writeSpeciesTreeLikelihood(writer);
@@ -109,8 +109,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         writer.writeOpenTag(SpeciesBindings.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindings.GENE_TREES)});
 
         // generate gene trees regarding each data partition
-        for (PartitionSubstitutionModel partitionModel : options.getPartitionSubstitutionModels()) {
-            writer.writeIDref(TreeModel.TREE_MODEL, partitionModel.getName() + "." + TreeModel.TREE_MODEL);
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
         }
 
         writer.writeCloseTag(SpeciesBindings.GENE_TREES);
@@ -121,12 +121,12 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         writer.writeComment("Species Tree: Provides Per branch demographic function");
 
         writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_TREE),
-                new Attribute.Default<String>(SpeciesTreeModel.BMPRIOR, "true")});
+                new Attribute.Default<String>(SpeciesTreeModel.CONST_ROOT_POPULATION, "true")});
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
-
+                
         //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
         // hard code get(0)
-        double popSizeValue = options.getPartitionSubstitutionModels().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
 
@@ -236,7 +236,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         // speciesCoalescent id="coalescent"
         writer.writeOpenTag(TreePartitionCoalescent.SPECIES_COALESCENT, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, COALESCENT)});
+                new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT)});
 
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);

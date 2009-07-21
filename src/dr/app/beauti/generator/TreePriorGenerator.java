@@ -424,7 +424,7 @@ public class TreePriorGenerator extends Generator {
 
 	            break;
 	            
-    		default:
+    		default: // include SPECIES_YULE, SPECIES_BIRTH_DEATH
 	            // generate a coalescent process
 	            writer.writeComment("Generate a coalescent likelihood");
 	            writer.writeOpenTag(
@@ -659,11 +659,11 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
 
             writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".popSize");
+            writer.writeText(VariableDemographicModel.demoElementName + ".popSize1");
             writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
 
             writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".indicators");
+            writer.writeText(VariableDemographicModel.demoElementName + ".indicators1");
             writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
 
             writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
@@ -711,10 +711,12 @@ public class TreePriorGenerator extends Generator {
         }
 
     }
-
-    public void writeDemographicReference(PartitionTreePrior prior, XMLWriter writer) {
-        setModelPrefix(prior.getPrefix());
-
+    
+    // id is written in writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer)
+    public void writePriorLikelihoodReference(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+        //tree model prefix
+    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
+    	
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
@@ -732,19 +734,26 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
                 break;
-            case SPECIES_YULE:
-            case SPECIES_BIRTH_DEATH:
+//            case SPECIES_YULE:
+//            case SPECIES_BIRTH_DEATH:
                 // do not need
 //				for (PartitionSubstitutionModel model : models) {
 //            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + COALESCENT);
 //            	}
-                break;
-            default:
+//                break;
+            default: // include SPECIES_YULE, SPECIES_BIRTH_DEATH
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
         }
-
+        
+    }
+    
+    public void writeEBSPVariableDemographicReference(PartitionTreePrior prior, XMLWriter writer) {
+        
+        setModelPrefix(prior.getPrefix());
+        	
         //TODO: make suitable for *BEAST
-        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {
+        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {  
+        	
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);

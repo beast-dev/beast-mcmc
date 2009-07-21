@@ -1,7 +1,7 @@
 /*
  * SpeciationLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -80,10 +80,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         this.speciationModel = speciationModel;
         this.exclude = exclude;
 
-        if( tree instanceof Model ) {
+        if (tree instanceof Model) {
             addModel((Model) tree);
         }
-        if( speciationModel != null ) {
+        if (speciationModel != null) {
             addModel(speciationModel);
         }
     }
@@ -135,7 +135,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     }
 
     public final double getLogLikelihood() {
-        if( !likelihoodKnown ) {
+        if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -153,7 +153,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      * @return the log likelihood
      */
     private double calculateLogLikelihood() {
-        if( exclude != null ) {
+        if (exclude != null) {
             return speciationModel.calculateTreeLogLikelihood(tree, exclude);
         }
 
@@ -170,7 +170,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     public final dr.inference.loggers.LogColumn[] getColumns() {
 
         String columnName = getId();
-        if( columnName == null ) columnName = getModelName() + ".likelihood";
+        if (columnName == null) columnName = getModelName() + ".likelihood";
 
         return new dr.inference.loggers.LogColumn[]{
                 new LikelihoodColumn(columnName)
@@ -220,39 +220,39 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         public Object parseXMLObject(XMLObject xo) {
 
             XMLObject cxo = (XMLObject) xo.getChild(MODEL);
-            SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
+            SpeciationModel specModel = (SpeciationModel) cxo.getChild(UltrametricSpeciationModel.class);
 
             cxo = (XMLObject) xo.getChild(TREE);
             Tree tree = (Tree) cxo.getChild(Tree.class);
 
             Set<Taxon> excludeTaxa = null;
 
-            if( xo.hasChildNamed(INCLUDE) ) {
+            if (xo.hasChildNamed(INCLUDE)) {
                 excludeTaxa = new HashSet<Taxon>();
-                for(int i = 0; i < tree.getTaxonCount(); i++) {
+                for (int i = 0; i < tree.getTaxonCount(); i++) {
                     excludeTaxa.add(tree.getTaxon(i));
                 }
 
                 cxo = (XMLObject) xo.getChild(INCLUDE);
-                for(int i = 0; i < cxo.getChildCount(); i++) {
+                for (int i = 0; i < cxo.getChildCount(); i++) {
                     TaxonList taxonList = (TaxonList) cxo.getChild(i);
-                    for(int j = 0; j < taxonList.getTaxonCount(); j++) {
+                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
                         excludeTaxa.remove(taxonList.getTaxon(j));
                     }
                 }
             }
 
-            if( xo.hasChildNamed(EXCLUDE) ) {
+            if (xo.hasChildNamed(EXCLUDE)) {
                 excludeTaxa = new HashSet<Taxon>();
                 cxo = (XMLObject) xo.getChild(EXCLUDE);
-                for(int i = 0; i < cxo.getChildCount(); i++) {
+                for (int i = 0; i < cxo.getChildCount(); i++) {
                     TaxonList taxonList = (TaxonList) cxo.getChild(i);
-                    for(int j = 0; j < taxonList.getTaxonCount(); j++) {
+                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
                         excludeTaxa.add(taxonList.getTaxon(j));
                     }
                 }
             }
-            if( excludeTaxa != null ) {
+            if (excludeTaxa != null) {
                 Logger.getLogger("dr.evomodel").info("Speciation model excluding " + excludeTaxa.size() + " taxa from prior - " +
                         (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining.");
             }
@@ -278,7 +278,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(MODEL, new XMLSyntaxRule[]{
-                        new ElementRule(SpeciationModel.class)
+                        new ElementRule(UltrametricSpeciationModel.class)
                 }),
                 new ElementRule(TREE, new XMLSyntaxRule[]{
                         new ElementRule(Tree.class)

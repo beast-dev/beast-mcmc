@@ -63,8 +63,9 @@ public class BeautiTesterConfig {
         BeautiOptions beautiOptions = new BeautiOptions();
 
         beautiOptions.fileNameStem = "";
+        beautiOptions.treeFileName.clear();
         beautiOptions.substTreeLog = false;
-        beautiOptions.substTreeFileName = null;
+        beautiOptions.substTreeFileName.clear();
 
         // MCMC options
         beautiOptions.chainLength = 100;
@@ -244,7 +245,7 @@ public class BeautiTesterConfig {
 
     public void generate(String name, BeautiOptions beautiOptions) {
         beautiOptions.logFileName = name + ".log";
-        beautiOptions.treeFileName = name + ".trees";
+//        beautiOptions.treeFileName = name + ".trees";
 
         System.out.println("Generating: " + name);
         String fileName = name + ".xml";

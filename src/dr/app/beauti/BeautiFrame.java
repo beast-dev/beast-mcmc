@@ -832,15 +832,12 @@ public class BeautiFrame extends DocumentFrame {
         } else {
             tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
         }
-        
-//        beautiOptions.
-        
+               
         setStatusMessage();
     }
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
-    	//TODO: wait for new implementation in BEAST
-    	   	
+    	//TODO: wait for new implementation in BEAST    	   	
 	    if (DataPanel.ALLOW_UNLINKED_TREES) {
 			treesPanel.setCheckedTipDate(isChecked);
 		} else {

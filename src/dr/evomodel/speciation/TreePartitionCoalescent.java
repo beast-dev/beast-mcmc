@@ -44,7 +44,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         checkCompatibility = false;
     }
 
-    // override this for efficiency, otherwise the overriden makeDirty, which results in additional overhead is called
+    // override this for efficiency, otherwise the overridden makeDirty, which results in additional overhead is called
     public void modelRestored(Model model) {
         super.makeDirty();
     }
@@ -82,12 +82,17 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         double logl = 0;
         int[] info = {0, 0};
         for( SpeciesBindings.GeneTreeInfo geneTree : species.getGeneTrees() ) {
-            logl += treeLogLikelihood(geneTree, spTree.getRoot(), info, geneTree.popFactor());
+            final double v = treeLogLikelihood(geneTree, spTree.getRoot(), info, geneTree.popFactor());
+            assert ! Double.isNaN(v);
+//           if( Double.isNaN(v) ) {
+//               double x = 0;              
+//           }
+            logl += v;
         }
-
+        ccc += 1;
         return logl;
     }
-
+    int ccc = 0;
     private final boolean verbose = false;
 
     private double treeLogLikelihood(SpeciesBindings.GeneTreeInfo geneTree, NodeRef node, int[] info, double popFactor) {
@@ -141,7 +146,9 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         final boolean isRoot = spTree.isRoot(node);
 
         // Upper limit
-        final double stopTime = isRoot ? Double.MAX_VALUE : (t0 + spTree.getBranchLength(node));
+        // use of (t0 + spTree.getBranchLength(node)) caused problem since there was a tiny difference
+        // between those (supposedly equal) values. we should track where the discrepancy comes from.
+        final double stopTime = isRoot ? Double.MAX_VALUE : spTree.getNodeHeight(spTree.getParent(node));
 
         // demographic function is 0 based (relative to node height)
         // time away from node
@@ -170,26 +177,30 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         }
 
         while( nLineages > 1 ) {
+//            if ( !( indexInClist < cList.length ) ) {
+//                System.err.println( indexInClist ) ;
+//            }
             assert ( indexInClist < cList.length );
 
             final double nextT = cList[indexInClist].ctime;
 
-            if( nextT > stopTime ) {
+            // while rare they can be equal
+            if( nextT >= stopTime ) {
                 break;
             }
 
             if( nonEmptyIntersection(cList[indexInClist].sinfo, subspeciesSet) ) {
                 final double time = nextT - t0;
+                if( time > 0 ) {
+                    final double interval = demog.getIntegral(lastTime, time);
+                    lastTime = time;
 
-                final double interval = demog.getIntegral(lastTime, time);
-                lastTime = time;
+                    final int nLineageOver2 = (nLineages * (nLineages - 1)) / 2;
+                    like -= nLineageOver2 * interval;
 
-                final int nLineageOver2 = (nLineages * (nLineages - 1)) / 2;
-                like -= nLineageOver2 * interval;
-
-                final double pop = demog.getDemographic(time);
-                like -= Math.log(pop);
-
+                    final double pop = demog.getDemographic(time);  assert( pop > 0 );
+                    like -= Math.log(pop);
+                }
                 --nLineages;
             }
             ++indexInClist;
@@ -216,7 +227,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
     public void modelChangedEvent(Model model, Object object, int index) {
         //super.modelChangedEvent(model, object, index);
-        // not the above for efficiency, otherwise the overriden makeDirty, which results in additional overhead is called.
+        // not the above for efficiency, otherwise the overridden makeDirty, which results in additional overhead is called.
         super.makeDirty();
         
         if( model == spTree ) {

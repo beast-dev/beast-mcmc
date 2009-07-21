@@ -5,7 +5,9 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Joseph Heled
@@ -235,17 +237,41 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
             times[0] = 0.0;
             times[tot] = Double.POSITIVE_INFINITY;
 
-            values[0] = logSpace ? Math.exp(popSizes[0]) : popSizes[0];
+            final boolean xx = type == VariableDemographicModel.Type.LINEAR && !logSpace && false;
+            if( xx ) {
+                double[] a = alltimes;
+                if(mid) {
+                    a = new double[alltimes.length];
+                    for(int k = 0; k < a.length; ++k) {
+                        a[k] = ((alltimes[k] + (k > 0 ? alltimes[k-1] : 0))/2);
+                    }
+                }
+                bestLinearFit(a, popSizes, indicatorParameter, times, values); 
+                for(int n = 0; n < intervals.length; ++n) {
+                    intervals[n] = times[n+1] - times[n];
+                }
+                for(int n = 0; n < values.length; ++n) {
+                    if( values[n] <= 0 ) { 
+                        values[n] = 1e-30;
+                    }
+                }
+            }
 
-            int n = 0;
-            for (int k = 0; k < nd && n + 1 < tot; ++k) {
 
-                if (indicatorParameter[k] > 0) {
-                    times[n + 1] = mid ? ((alltimes[k] + (k > 0 ? alltimes[k - 1] : 0)) / 2) : alltimes[k];
+            if( !xx ) {
 
-                    values[n + 1] = logSpace ? Math.exp(popSizes[k + 1]) : popSizes[k + 1];
-                    intervals[n] = times[n + 1] - times[n];
-                    ++n;
+                values[0] = logSpace ? Math.exp(popSizes[0]) : popSizes[0];
+
+                int n = 0;
+                for(int k = 0; k < nd && n+1 < tot; ++k) {
+
+                    if( indicatorParameter[k] > 0 ) {
+                        times[n+1] = mid ? ((alltimes[k] + (k > 0 ? alltimes[k-1] : 0))/2) : alltimes[k];
+
+                        values[n+1] = logSpace ? Math.exp(popSizes[k+1]) : popSizes[k+1];
+                        intervals[n] = times[n+1] - times[n];
+                        ++n;
+                    }
                 }
             }
             dirty = false;
@@ -254,6 +280,111 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         /*System.out.println("after setup " + (was ? "(dirty)" : "") + " , alltimes " + Arrays.toString(alltimes)
        + " times " + Arrays.toString(times) + " values " + Arrays.toString(values) +
    " inds " + Arrays.toString(indicatorParameter.getParameterValues())) ;*/
+    }
+    
+    private int ti2f(int i,int j) {
+       return (i==0) ? j : 2*i + j + 1;
+    }
+
+    private void
+    bestLinearFit(double[] xs, double[] ys, double[] use, double[] ot, double[] oz) {
+
+        assert (xs.length+1) == ys.length;
+        assert ys.length == use.length + 2 || ys.length == use.length + 1;
+
+        int N = ys.length;
+        if( N == 2  ) {
+            // cheaper
+            assert xs.length == ot.length;
+            assert ys.length == oz.length;
+            System.arraycopy(xs, 0, ot, 0, xs.length);
+            System.arraycopy(ys, 0, oz, 0, ys.length);
+            //return new VDdemographicFunction(xs, ys, getUnits());
+        }
+
+        List<Integer> iv = new ArrayList<Integer>(2);
+        iv.add(0);
+        for(int k = 0; k < N-1; ++k) {
+            if( use[k] > 0 ) {
+                iv.add(k+1);
+            }
+        }
+       // iv.add(N-1);
+
+        double[] ati = new double[xs.length + 1];
+        ati[0] = 0.0;
+        System.arraycopy(xs, 0, ati, 1, xs.length);
+        int n = iv.size();
+
+        double[] a = new double[3*n];
+        double[] v = new double[n];
+
+        for(int k = 0; k < n-1; ++k) {
+            int i0 = iv.get(k);
+            int i1 = iv.get(k+1);
+
+            double u0 = ati[i0];
+            double u1 = ati[i1] - ati[i0];
+            // on last interval add data for last point
+//            if( i1 == N-1 ) {
+//                i1 += 1;
+//            }
+
+            final int l = ti2f(k,k);
+            final int l1 = ti2f(k+1,k);
+
+            for(int j = i0; j < i1; ++j) {
+                double t = ati[j];
+                double y = ys[j];
+
+                double z = (t - u0)/u1;
+                v[k] += y * (1-z);
+
+                a[l] += (1-z)*(1-z);
+                a[l+1] += z * (1-z);
+
+                a[l1] += z * (1-z);
+                a[l1+1] += z*z;
+                v[k+1] += y * z;
+            }
+        }
+
+        {
+            int k = n-1;
+            int i0 = iv.get(k);
+            int i1 = ys.length;
+            final int l = ti2f(k,k);
+            for(int j = i0; j < i1; ++j) {
+              a[l] += 1;
+              v[k] += ys[j];
+            }
+        }
+
+        for(int k = 0; k < n-1; ++k) {
+
+            final double r = a[ti2f(k+1, k)] / a[ti2f(k,k)];
+            for(int j = k; j < k+3; ++j) {
+                a[ti2f((k+1) , j)] -=  a[ti2f(k, j)] * r;
+            }
+            v[k+1] -= v[k] * r;
+        }
+        if( oz.length != n ) {
+            n = 3;
+        }
+        assert oz.length == n;
+        //double[] oz = new double[n];
+        for(int k = n-1; k > 0; --k) {
+            oz[k] = v[k]/a[ti2f(k, k)];
+            v[k-1] -= a[ti2f((k-1) , k)] * oz[k];
+        }
+
+        oz[0] = v[0]/a[ti2f(0,0)];
+        // first and last in ot are reserved
+        assert ot.length-2 == iv.size()-1;
+
+        for(int j = 1; j < ot.length-1; ++j) {
+            ot[j] = ati[iv.get(j)];
+        }
     }
 
     private int getIntervalIndexStep(final double t) {
@@ -319,7 +450,10 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
 
     private double intensityLinInterval(double start, double end, int index) {
         final double dx = end - start;
-
+        if( dx == 0 ) {
+            return 0;
+        }
+        
         final double popStart = values[index];
         final double popDiff = (index < values.length - 1) ? values[index + 1] - popStart : 0.0;
         if (popDiff == 0.0) {

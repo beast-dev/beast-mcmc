@@ -9,6 +9,7 @@ import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.priorsPanel.PriorType;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
@@ -27,11 +28,11 @@ public abstract class Generator {
 
 	protected static final String COALESCENT = "coalescent";
 	public static final String SP_TREE = "sptree";
-	protected static final String SPECIATION_LIKE = "speciationlike";
-	public static final String SPLIT_POPS = "splitPops"; 
+	protected static final String SPECIATION_LIKE = "speciation.likelihood";
+	public static final String SPLIT_POPS = "splitPopSize"; 
 	protected static final String PDIST = "pdist";
-	protected static final String STP = "stp";
-	protected static final String SPOPS = "spops";
+//	protected static final String STP = "stp";
+	protected static final String SPOPS = TraitGuesser.Traits.TRAIT_SPECIES + "." + "popSize";
 	
     protected final BeautiOptions options;
     

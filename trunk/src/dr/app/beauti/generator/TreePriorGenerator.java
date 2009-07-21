@@ -493,16 +493,14 @@ public class TreePriorGenerator extends Generator {
 	            }
 	        );
 	        
-	        Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
-	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
-	        popSize.initial = populationMean.initial;
+//	        Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
+//	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+//	        popSize.initial = populationMean.initial;
 	        
 	        writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
-	        writer.writeComment("popSize value = populationMean value");
+//	        writer.writeComment("popSize value = populationMean value");
 	        writer.writeTag(ParameterParser.PARAMETER,
-	                new Attribute[]{ // not need dimension
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"),
-	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"), true);
 //	        writeParameter(popSize, -1, writer); 
 	        writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
 	
@@ -557,11 +555,14 @@ public class TreePriorGenerator extends Generator {
 	                        //,new Attribute.Default<String>("elementwise", "true")
 	                });
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
-	        writer.writeComment("prefer populationMean value = 1");
+	        
+	        writer.writeComment("prefer populationMean value = 1");	        
+	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMean"),
 	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.initial))}, true);
+	        
 	        writer.writeCloseTag(DistributionModelParser.MEAN);
 	        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
     	}
@@ -630,14 +631,15 @@ public class TreePriorGenerator extends Generator {
 
     }
 
-    void writeAnalysisToCSVfile(PartitionTreePrior prior, XMLWriter writer) {
+    void writeEBSPAnalysisToCSVfile(PartitionTreePrior prior, XMLWriter writer) {
 
         String logFileName = options.logFileName;
 
         if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {
             writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + "demographic.analysis"),
-                    new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1)}
+                    new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1),
+                    new Attribute.Default<Boolean>(VariableDemographicModel.USE_MIDPOINTS, true)}
             );
 
             writer.writeOpenTag(EBSPAnalysis.LOG_FILE_NAME);
@@ -645,9 +647,11 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(EBSPAnalysis.LOG_FILE_NAME);
 
             writer.writeOpenTag(EBSPAnalysis.TREE_FILE_NAMES);
-            writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
-            writer.writeText(options.treeFileName);
-            writer.writeCloseTag(EBSPAnalysis.TREE_LOG);
+	            for (String treeFN : options.treeFileName) {
+		            writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
+		            writer.writeText(treeFN);
+		            writer.writeCloseTag(EBSPAnalysis.TREE_LOG);
+	            }
             writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
 
             writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
@@ -655,11 +659,11 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
 
             writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".popSize" + 1);
+            writer.writeText(VariableDemographicModel.demoElementName + ".popSize");
             writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
 
             writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".indicators" + 1);
+            writer.writeText(VariableDemographicModel.demoElementName + ".indicators");
             writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
 
             writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
@@ -667,7 +671,7 @@ public class TreePriorGenerator extends Generator {
             writer.writeOpenTag(CSVExporter.CSV_EXPORT,
                     new Attribute[]{
                             new Attribute.Default<String>(CSVExporter.FILE_NAME,
-                                    logFileName.subSequence(0, logFileName.length() - 4) + ".csv"),
+                                    logFileName.subSequence(0, logFileName.length() - 4) + ".csv"), //.log
                             new Attribute.Default<String>(CSVExporter.SEPARATOR, ",")
                     });
             writer.writeOpenTag(CSVExporter.COLUMNS);

@@ -128,11 +128,11 @@ public class BeautiOptions extends ModelOptions {
     public void reset() {
         fileNameStem = "untitled";
         logFileName = null;
-        treeFileName = null;
-        mapTreeLog = false;
-        mapTreeFileName = null;
+//        mapTreeLog = false;
+//        mapTreeFileName = null;
+        treeFileName.clear();
         substTreeLog = false;
-        substTreeFileName = null;
+        substTreeFileName.clear();
 
         // Data options
         allowDifferentTaxa = false;
@@ -143,7 +143,6 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         dataPartitions.clear();
-//        userTrees.clear(); // moved into PartitionData 
 
         selecetedTraits.clear();
 
@@ -152,10 +151,7 @@ public class BeautiOptions extends ModelOptions {
         datesDirection = FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
-//        startingTreeType = StartingTreeType.RANDOM; // moved into PartitionTreeModels
-//        userStartingTree = null; // moved into PartitionTreeModels
 
-//        clockModels.clear();
 //        partitionModels.clear();
 //        partitionTreeModels.clear();
 //        partitionTreePriors.clear();
@@ -167,18 +163,7 @@ public class BeautiOptions extends ModelOptions {
         meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
-//        nodeHeightPrior = TreePrior.CONSTANT;
-//        parameterization = GROWTH_RATE;
-//        skylineGroupCount = 10;
-//        skylineModel = CONSTANT_SKYLINE;
-//        skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
-//        extendedSkylineModel = VariableDemographicModel.LINEAR;
-//        multiLoci = false;
-//        birthDeathSamplingProportion = 1.0;
-//        fixedTree = false;
-
         units = Units.Type.SUBSTITUTIONS;
-//        clockType = ClockType.STRICT_CLOCK;
 
         // Operator schedule options
         coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
@@ -194,27 +179,6 @@ public class BeautiOptions extends ModelOptions {
         generateCSV = true;  // until/if a button
         samplePriorOnly = false;
 
-//        localClockRateChangesStatistic = null;
-//        localClockRatesStatistic = null;
-
-//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-//        	model.localClockRateChangesStatistic = null;
-//        	model.localClockRatesStatistic = null;
-//        } // not necessary because partitionModels.clear();
-
-    }
-
-    private double round(double value, int sf) {
-        NumberFormatter formatter = new NumberFormatter(sf);
-        try {
-            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
-        } catch (ParseException e) {
-            return value;
-        }
-    }
-
-    public Parameter getParameter(String name, PartitionSubstitutionModel model) {
-        return model.getParameter(name);
     }
 
     /**
@@ -358,7 +322,6 @@ public class BeautiOptions extends ModelOptions {
         return parameters;
     }
 
-
     /**
      * return an list of operators that are required
      *
@@ -437,6 +400,10 @@ public class BeautiOptions extends ModelOptions {
 
         return ops;
     }
+    
+    public boolean hasData() {
+        return dataPartitions.size() > 0;
+    }
 
     public boolean isFixedSubstitutionRate() {
         return fixedSubstitutionRate;
@@ -445,6 +412,73 @@ public class BeautiOptions extends ModelOptions {
     public double getMeanSubstitutionRate() {
         return meanSubstitutionRate;
     }
+
+    private double round(double value, int sf) {
+        NumberFormatter formatter = new NumberFormatter(sf);
+        try {
+            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
+        } catch (ParseException e) {
+            return value;
+        }
+    }
+
+    private void selectParametersForSpecies(List<Parameter> params) {
+
+        params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+
+        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+        }
+
+//    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
+
+        //TODO: more
+
+    }
+ 
+    private void selectOperatorsForSpecies(List<Operator> ops) {
+
+        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+
+        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+        }
+
+        ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
+
+        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
+        //TODO: more
+    }
+
+    public boolean isSpeciesAnalysis() {
+        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+    }
+
+    public List<String> getSpeciesList() {
+        List<String> species = new ArrayList<String>();
+        String sp;
+
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
+
+                if (!species.contains(sp)) {
+                    species.add(sp);
+                }
+            }
+            return species;
+        } else {
+            return null;
+        }
+    } 
+
 
     // ++++++++++++++ Partition Substitution Model ++++++++++++++ 
 //    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
@@ -659,7 +693,6 @@ public class BeautiOptions extends ModelOptions {
 
     }
 
-
     /**
      * return a list of parameters that are required
      *
@@ -767,23 +800,6 @@ public class BeautiOptions extends ModelOptions {
 ////
 ////        params.add(getParameter("treeModel.rootHeight"));
 //    }
-    private void selectParametersForSpecies(List<Parameter> params) {
-
-        params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-
-        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-        }
-
-//    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-
-        //TODO: more
-
-    }
-
 
 //    private void selectStatistics(List<Parameter> params) {
 //
@@ -970,22 +986,6 @@ public class BeautiOptions extends ModelOptions {
 ////        }
 //
 //    }
-    private void selectOperatorsForSpecies(List<Operator> ops) {
-
-        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-
-        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-        }
-
-        ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-
-        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
-        //TODO: more
-    }
 
     /**
      * Read options from a file
@@ -1361,40 +1361,6 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public boolean hasData() {
-        return dataPartitions.size() > 0;
-    }
-
-    public boolean isSpeciesAnalysis() {
-        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES.toString());
-    }
-
-    public List<String> getSpeciesList() {
-        List<String> species = new ArrayList<String>();
-        String sp;
-
-        if (taxonList != null) {
-            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = taxonList.getTaxon(i);
-                sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
-
-                if (!species.contains(sp)) {
-                    species.add(sp);
-                }
-            }
-            return species;
-        } else {
-            return null;
-        }
-    }
-
-    public String fileNameStem = MCMCPanel.fileNameStem;
-    public String logFileName = null;
-    public String treeFileName = null;
-    public boolean mapTreeLog = false;
-    public String mapTreeFileName = null;
-    public boolean substTreeLog = false;
-    public String substTreeFileName = null;
 
     // Data options
     public boolean allowDifferentTaxa = false;
@@ -1444,23 +1410,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean unlinkPartitionRates = true;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
-//    public ClockType clockType = ClockType.STRICT_CLOCK; 
-
-//    public TreePrior nodeHeightPrior = TreePrior.CONSTANT;
-//    public int parameterization = GROWTH_RATE;
-//    public int skylineGroupCount = 10;
-//    public int skylineModel = CONSTANT_SKYLINE;
-//    public int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
-    // AR - this seems to be set to taxonCount - 1 so we don't need to
-    // have a settable variable...
-    // public int skyrideIntervalCount = 1;
-//    public String extendedSkylineModel = VariableDemographicModel.LINEAR;
-//    public boolean multiLoci = false;
-//    public double birthDeathSamplingProportion = 1.0;
-//    public boolean fixedTree = false;
-
-//    public StartingTreeType startingTreeType = StartingTreeType.RANDOM;
-//    public Tree userStartingTree = null;    
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
@@ -1476,14 +1425,22 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
-
+    public String fileNameStem = MCMCPanel.fileNameStem;
+    public String logFileName = null;
+//    public boolean mapTreeLog = false;
+//    public String mapTreeFileName = null;
+//    public String treeFileName = null;
+    public List<String> treeFileName = new ArrayList<String>();
+    public boolean substTreeLog = false;
+//    public String substTreeFileName = null;
+    public List<String> substTreeFileName = new ArrayList<String>();
+    
+    
+    
     @Override
     public String getPrefix() {
         // TODO Auto-generated method stub
         return null;
     }
-
-//    public Parameter localClockRateChangesStatistic = null;
-//    public Parameter localClockRatesStatistic = null;
 
 }

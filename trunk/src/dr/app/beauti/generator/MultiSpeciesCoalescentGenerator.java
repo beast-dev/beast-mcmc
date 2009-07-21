@@ -42,7 +42,6 @@ import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.DistributionModelParser;
 import dr.util.Attribute;
-import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.util.List;

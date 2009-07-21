@@ -30,6 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Represents a multi-dimensional continuous parameter.
@@ -505,18 +506,35 @@ public interface Parameter extends Statistic, Variable<Double> {
          * dimensions, then the value of the first dimension is copied into the new dimensions.
          */
         public void setDimension(int dim) {
+            final int oldDim = getDimension();
+            if( oldDim == dim ) {
+               return;
+            }
 
-            assert storedValues == null && bounds == null : "Can't change dimension after store has been called! storedValues=" + storedValues + " bounds=" + bounds;
-            //if (!hasBeenStored) {
+            assert storedValues == null :
+                    "Can't change dimension after store has been called! storedValues=" +
+                            Arrays.toString(storedValues) + " bounds=" + bounds;
 
-            int oldDim = getDimension();
 
             double[] newValues = new double[dim];
+            // copy over new values
             System.arraycopy(values, 0, newValues, 0, oldDim);
+            // fill new values with first item
             for (int i = oldDim; i < dim; i++) {
                 newValues[i] = values[0];
             }
             values = newValues;
+
+            if( bounds != null ) {
+                assert oldDim < dim :  "Can't decrease dimension when bounds are set";
+                for(int k = 0; k < oldDim; ++k) {
+                    assert ((double)bounds.getLowerLimit(k) == bounds.getLowerLimit(0)) &&
+                            ((double)bounds.getUpperLimit(k) == bounds.getUpperLimit(0) ) :
+                            "Can't change dimension when bounds are not all equal";
+                }
+                bounds = null;
+                addBounds(bounds.getLowerLimit(0), bounds.getUpperLimit(0));
+            }
         }
 
         /**
@@ -525,6 +543,8 @@ public interface Parameter extends Statistic, Variable<Double> {
          * @param value value to save at end of new array
          */
         public void addDimension(int index, double value) {
+            assert bounds == null;
+
             final int n = values.length;
             double[] newValues = new double[n + 1];
             System.arraycopy(values, 0, newValues, 0, index);
@@ -541,10 +561,12 @@ public interface Parameter extends Statistic, Variable<Double> {
          * @param index Index of dimension to lose
          */
         public double removeDimension(int index) {
-            final int n = values.length;
-            double value = values[index];
+            assert bounds == null;
 
-            double[] newValues = new double[n - 1];
+            final int n = values.length;
+            final double value = values[index];
+
+            final double[] newValues = new double[n - 1];
             System.arraycopy(values, 0, newValues, 0, index);
             System.arraycopy(values, index, newValues, index - 1, n - index);
             values = newValues;
@@ -597,7 +619,8 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         protected final void adoptValues(Parameter source) {
-
+            // todo bug ? bounds not adopted?
+            
             if (getDimension() != source.getDimension()) {
                 throw new RuntimeException("The two parameters don't have the same number of dimensions");
             }

@@ -88,6 +88,9 @@ public class Coalescent implements MultivariateFunction, Units {
             final double finishTime = startTime + duration;
 
             final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+            if( intervalArea == 0 && duration != 0 ) {
+               return Double.NEGATIVE_INFINITY; 
+            }
             final int lineageCount = intervals.getLineageCount(i);
 
             final double kChoose2 = Binomial.choose2(lineageCount);

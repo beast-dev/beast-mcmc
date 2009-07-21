@@ -1,23 +1,14 @@
 package dr.evolution.util;
 
+import dr.math.MathUtils;
+import dr.xml.*;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-
-import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
 
 public class RandomTaxaSample extends Taxa {
 
@@ -43,7 +34,7 @@ public class RandomTaxaSample extends Taxa {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newIntegerRule(SAMPLE),
 				new ElementRule(Taxa.class),
 		};
@@ -101,7 +92,7 @@ public class RandomTaxaSample extends Taxa {
 						write.write("<taxa id=\"randomTaxaSample\">\n" );
 
 						for(int i = 0; i < n ;i++){
-							write.write("\t<taxon idref=\"" + sample.getTaxonId(i).toString() + "\"/>\n");
+							write.write("\t<taxon idref=\"" + sample.getTaxonId(i) + "\"/>\n");
 						}
 
 						write.write("</taxa id=\"randomTaxaSample\">\n");
@@ -114,7 +105,7 @@ public class RandomTaxaSample extends Taxa {
 					Logger.getLogger("dr.evomodel").info("<taxa id=\"randomTaxaSample\">");
 
 					for(int i = 0; i < n ;i++){
-						Logger.getLogger("dr.evomodel").info("\t<taxon idref=\" " + sample.getTaxonId(i).toString() + " \"> ");
+						Logger.getLogger("dr.evomodel").info("\t<taxon idref=\" " + sample.getTaxonId(i) + " \"> ");
 					}
 					Logger.getLogger("dr.evomodel").info("</taxa id=\"randomTaxaSample\">");
 

@@ -313,6 +313,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 options.selecetedTraits.add(name);
             }
             options.traitTypes.put(name, type);
+            
             traitsTableModel.fireTableDataChanged();
             int row = options.selecetedTraits.size() - 1;
             traitsTable.getSelectionModel().setSelectionInterval(row, row);
@@ -332,6 +333,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTableModel.fireTableDataChanged();
         int row = options.selecetedTraits.size() - 1;
         traitsTable.getSelectionModel().setSelectionInterval(row, row);
+        
+        fireTraitsChanged();
     }
 
     private void removeTrait() {

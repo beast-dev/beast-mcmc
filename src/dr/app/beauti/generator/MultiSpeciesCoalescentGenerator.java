@@ -127,7 +127,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
         // hard code get(0)
-        double popSizeValue = options.getParameter("constant.popSize", options.getPartitionSubstitutionModels().get(0)).initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionSubstitutionModels().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
 

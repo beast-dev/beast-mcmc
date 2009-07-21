@@ -436,11 +436,11 @@ public class BeastGenerator extends Generator {
         if (options.generateCSV) {
             if (options.shareSameTreePrior) { // Share Same Tree Prior
                 treePriorGenerator.setModelPrefix("");
-                treePriorGenerator.writeAnalysisToCSVfile(options.activedSameTreePrior, writer);
+                treePriorGenerator.writeEBSPAnalysisToCSVfile(options.activedSameTreePrior, writer);
             } else { // no species
                 for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                     treePriorGenerator.setModelPrefix(prior.getName() + "."); // partitionName.constant
-                    treePriorGenerator.writeAnalysisToCSVfile(prior, writer);
+                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
                 }
             }
         }
@@ -1629,6 +1629,7 @@ public class BeastGenerator extends Generator {
         }
 
         // gene tree log
+        //TODO make code consistent to MCMCPanel 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             String treeFileName;
             if (options.substTreeLog) {

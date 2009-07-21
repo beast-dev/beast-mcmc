@@ -215,15 +215,17 @@
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}"> 
                 	<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
-                	<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
-                	<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
-                    <include name="test/dr/evomodel/operators/**/NNITest.java" />
-                	<include name="test/dr/evomodel/speciation/**/*Test.java" />
+                	<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
+                	<include name="test/dr/evomodel/coalescent/**/*Test.java" />
                 	<!-- <include name="test/dr/evomodel/substmodel/**/*Test.java" /> -->
                 	<include name="test/dr/evomodel/substmodel/**/BinaryCovarionModelTest.java" />
                 	<include name="test/dr/evomodel/substmodel/**/CovarionHKYTest.java" />
                 	<include name="test/dr/evomodel/substmodel/**/HKYTest.java" />
                 	<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
+                	<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
+                	<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
+                	<include name="test/dr/evomodel/operators/**/NNITest.java" />
+                	<include name="test/dr/evomodel/speciation/**/*Test.java" />
                 	<include name="test/dr/inference/**/*Test.java"/>
                 	<include name="test/dr/distibutions/**/*Test.java"/>
                </fileset>

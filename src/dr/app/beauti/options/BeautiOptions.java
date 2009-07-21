@@ -103,7 +103,7 @@ public class BeautiOptions extends ModelOptions {
         createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
                 "Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
         createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator",
                 TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -421,7 +421,8 @@ public class BeautiOptions extends ModelOptions {
             return value;
         }
     }
-
+    
+    // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
     private void selectParametersForSpecies(List<Parameter> params) {
 
         params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));

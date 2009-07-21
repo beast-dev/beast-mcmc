@@ -649,7 +649,7 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(trait);
 
         if (options.isSpeciesAnalysis()) { // species
-            multiSpeciesCoalescentGenerator.writeMultiSpeciesCoalescent(writer);
+            multiSpeciesCoalescentGenerator.writeSTARBEAST(writer);
         }
 
     }
@@ -1287,7 +1287,7 @@ public class BeastGenerator extends Generator {
 
         if (options.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
+            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
             if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
                 writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
@@ -1299,11 +1299,22 @@ public class BeastGenerator extends Generator {
         }
 
         writeParameterPriors(writer);
-
-        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            treePriorGenerator.writeDemographicReference(prior, writer);
+        
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+        	PartitionTreePrior prior;
+        	if (options.shareSameTreePrior) {
+        		prior = options.activedSameTreePrior;        		
+        	} else {
+        		prior = model.getPartitionTreePrior();
+        	}
+        	treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
+            writer.writeText("");
         }
-
+        
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+        	treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
+        }
+        
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihood.PRIOR);
@@ -1311,7 +1322,7 @@ public class BeastGenerator extends Generator {
         if (options.hasData()) {
             // write likelihood block
             writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
-
+            
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
@@ -1468,7 +1479,7 @@ public class BeastGenerator extends Generator {
 
         if (options.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, COALESCENT);
+            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
             if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
                 writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);

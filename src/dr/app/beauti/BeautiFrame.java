@@ -805,51 +805,6 @@ public class BeautiFrame extends DocumentFrame {
         setAllOptions();
     }
 
-    public void setupSpeciesAnalysis() {
-        dataPanel.selectAll();
-        dataPanel.unlinkModels();
-        //TODO tree
-        for (PartitionSubstitutionModel model : beautiOptions.getPartitionSubstitutionModels()) {
-//        	model.initAllParametersAndOperators();
-        }
-
-        int i = tabbedPane.indexOfTab("Trees");
-        tabbedPane.removeTabAt(i);
-        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
-        speciesTreesPanel.getOptions(beautiOptions);
-
-        beautiOptions.initSpeciesParametersAndOperators();
-        beautiOptions.fileNameStem = "LogStem";
-
-        setStatusMessage();
-    }
-
-    public void removeSepciesAnalysisSetup() {
-        int i = tabbedPane.indexOfTab("Trees");
-        tabbedPane.removeTabAt(i);
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
-            tabbedPane.insertTab("Trees", null, treesPanel, "", i);
-        } else {
-            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
-        }
-               
-        setStatusMessage();
-    }
-
-    public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
-    	//TODO: wait for new implementation in BEAST    	   	
-	    if (DataPanel.ALLOW_UNLINKED_TREES) {
-			treesPanel.setCheckedTipDate(isChecked);
-		} else {
-			if (isChecked) {
-				oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
-				oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
-			} else {
-				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
-			}
-		}    	
-    }
-    
     private void importMultiTraits(final File file) throws IOException {
 //        if( beautiOptions.taxonList == null ) {
 //             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",
@@ -897,7 +852,48 @@ public class BeautiFrame extends DocumentFrame {
                     "Error Loading file", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    public void setupSpeciesAnalysis() {
+        dataPanel.selectAll();
+        dataPanel.unlinkAll();
+        
+        int i = tabbedPane.indexOfTab("Trees");
+        tabbedPane.removeTabAt(i);
+        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
+        speciesTreesPanel.getOptions(beautiOptions);
 
+        beautiOptions.initSpeciesParametersAndOperators();
+        beautiOptions.fileNameStem = "LogStem";
+
+        setStatusMessage();
+    }
+
+    public void removeSepciesAnalysisSetup() {
+        int i = tabbedPane.indexOfTab("Trees");
+        tabbedPane.removeTabAt(i);
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+            tabbedPane.insertTab("Trees", null, treesPanel, "", i);
+        } else {
+            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
+        }
+               
+        setStatusMessage();
+    }
+
+    public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
+    	//TODO: wait for new implementation in BEAST    	   	
+	    if (DataPanel.ALLOW_UNLINKED_TREES) {
+			treesPanel.setCheckedTipDate(isChecked);
+		} else {
+			if (isChecked) {
+				oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
+				oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+			} else {
+				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+			}
+		}    	
+    }
+    
     private void setStatusMessage() {
         String message = "";
         if (beautiOptions.dataPartitions.size() > 0) {

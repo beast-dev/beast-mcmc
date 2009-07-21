@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  */
-public class RandomLocalYuleModel extends SpeciationModel implements NodeAttributeProvider, RandomLocalTreeVariable {
+public class RandomLocalYuleModel extends UltrametricSpeciationModel implements NodeAttributeProvider, RandomLocalTreeVariable {
 
     public static final String YULE_MODEL = "randomLocalYuleModel";
     public static String MEAN_RATE = "meanRate";

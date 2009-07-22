@@ -360,6 +360,7 @@ public class PartitionModelGenerator extends Generator {
             case DataType.NUCLEOTIDES:
 
 // THIS IS DONE BY ALLMUS logging in BeastGenerator
+// single partition use clock.rate, no "mu"; multi-partition use "allmus"
 //                if (codonPartitionCount > 1) {
 //
 //                    for (int i = 1; i <= codonPartitionCount; i++) {

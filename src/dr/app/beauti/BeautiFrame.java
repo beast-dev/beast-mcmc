@@ -857,6 +857,8 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel.selectAll();
         dataPanel.unlinkAll();
         
+        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.SPECIES_YULE);
+        
         int i = tabbedPane.indexOfTab("Trees");
         tabbedPane.removeTabAt(i);
         tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
@@ -869,6 +871,8 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public void removeSepciesAnalysisSetup() {
+        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.CONSTANT);
+        
         int i = tabbedPane.indexOfTab("Trees");
         tabbedPane.removeTabAt(i);
         if (DataPanel.ALLOW_UNLINKED_TREES) {

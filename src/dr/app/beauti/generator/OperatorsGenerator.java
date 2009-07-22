@@ -262,11 +262,15 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperator.UP);
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(UpDownOperator.UP);
-
-        writer.writeOpenTag(UpDownOperator.DOWN);
-        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
+        
+        writer.writeOpenTag(UpDownOperator.DOWN);	        
+        if (operator.tag == null) {
+	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());	        
+        } else {
+        	writer.writeIDref(operator.tag,  operator.idref);
+        }
         writer.writeCloseTag(UpDownOperator.DOWN);
-
+        
         writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
     }
 

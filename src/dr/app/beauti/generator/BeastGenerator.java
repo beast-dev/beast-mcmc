@@ -86,7 +86,7 @@ public class BeastGenerator extends Generator {
     private final TreeModelGenerator treeModelGenerator;
     private final BranchRatesModelGenerator branchRatesModelGenerator;
     private final OperatorsGenerator operatorsGenerator;
-    private final MultiSpeciesCoalescentGenerator multiSpeciesCoalescentGenerator;
+    private final STARBEASTGenerator starEASTGeneratorGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -101,7 +101,7 @@ public class BeastGenerator extends Generator {
 
         operatorsGenerator = new OperatorsGenerator(options, components);
 
-        multiSpeciesCoalescentGenerator = new MultiSpeciesCoalescentGenerator(options, components);
+        starEASTGeneratorGenerator = new STARBEASTGenerator(options, components);
     }
 
     /**
@@ -643,13 +643,13 @@ public class BeastGenerator extends Generator {
 
         // write sub-tags for species
         if (options.isSpeciesAnalysis()) { // species
-            multiSpeciesCoalescentGenerator.writeMultiSpecies(taxonList, writer);
+        	starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
         } // end write sub-tags for species
 
         writer.writeCloseTag(trait);
 
         if (options.isSpeciesAnalysis()) { // species
-            multiSpeciesCoalescentGenerator.writeSTARBEAST(writer);
+        	starEASTGeneratorGenerator.writeSTARBEAST(writer);
         }
 
     }
@@ -1492,12 +1492,17 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
 
-            if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+            if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-            } else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
+            } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+            } else {
+            	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
             }
+            
+            //Species Tree: tmrcaStatistic
+            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {

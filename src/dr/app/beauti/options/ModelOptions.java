@@ -92,6 +92,12 @@ public abstract class ModelOptions {
 //        Parameter parameter2 = getParameter(parameterName2);
         operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
+    
+    public void createTagOperator(String key, String name, String description, String parameterName, String tag, String idref, 
+    		OperatorType type, double tuning, double weight) {
+    	Parameter parameter = getParameter(parameterName);
+      operators.put(key, new Operator(name, description, parameter, tag, idref, type, tuning, weight));
+  }
 
     public void createScaleOperator(String parameterName, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);

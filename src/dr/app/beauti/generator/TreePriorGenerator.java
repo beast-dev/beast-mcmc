@@ -423,8 +423,12 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeCloseTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD);
 
 	            break;
-	            
-    		default: // include SPECIES_YULE, SPECIES_BIRTH_DEATH
+	        
+    		case SPECIES_YULE:
+            case SPECIES_BIRTH_DEATH:
+            	break;
+            	
+    		default: 
 	            // generate a coalescent process
 	            writer.writeComment("Generate a coalescent likelihood");
 	            writer.writeOpenTag(
@@ -574,9 +578,7 @@ public class TreePriorGenerator extends Generator {
 
         switch (prior.getNodeHeightPrior()) {
 
-            case CONSTANT:
-            case SPECIES_YULE:
-            case SPECIES_BIRTH_DEATH:
+            case CONSTANT:            
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "constant.popSize");
                 break;
             case EXPONENTIAL:
@@ -627,6 +629,11 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
                 break;
+            case SPECIES_YULE:
+            case SPECIES_BIRTH_DEATH:
+            	break;
+            default:
+                throw new RuntimeException("No tree prior has been specified so cannot refer to it");
         }
 
     }
@@ -734,13 +741,10 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
                 break;
-//            case SPECIES_YULE:
-//            case SPECIES_BIRTH_DEATH:
+            case SPECIES_YULE:
+            case SPECIES_BIRTH_DEATH:
                 // do not need
-//				for (PartitionSubstitutionModel model : models) {
-//            			writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD,  model.getName() + "." + COALESCENT);
-//            	}
-//                break;
+                break;
             default: // include SPECIES_YULE, SPECIES_BIRTH_DEATH
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
         }

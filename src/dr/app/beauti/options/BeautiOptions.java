@@ -96,11 +96,11 @@ public class BeautiOptions extends ModelOptions {
         createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator",
                 TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         // species tree Yule
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
                 "Speices tree: Yule process birth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         // species tree Birth Death
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
+        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
                 "Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
                 "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
@@ -119,6 +119,39 @@ public class BeautiOptions extends ModelOptions {
         createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
 
         createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
+        
+        // species tree Yule
+        createTagOperator("upDownYuleSpeciesTree", "Yule birth rate and species tree", "Scales Yule birth rate inversely to the species tree", 
+        		TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, 100);
+        createOperator("upDownYuleSTPop", "Yule birth rate and species tree population size", 
+        		"Scales Yule birth rate inversely to the species tree population size", 
+                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, 100);
+        
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+	        createOperator(tree.getPrefix() + "upDownYuleGeneTree", "Species tree Yule and heights", 
+	        		"Scales Yule birth rate inversely to the gene tree", 
+	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, 100);
+        }
+        // species tree Birth Death
+        createTagOperator("upDownBirthDeathSpeciesTree", "Birth death and species tree", 
+        		"Scales birth death BminusD rate inversely to the species tree", 
+        		TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
+        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, 100);
+        createOperator("upDownBirthDeathSTPop", "Yule birth rate and species tree population size", 
+        		"Scales birth death BminusD rate inversely to the species tree population size", 
+                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, 100);
+        
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+	        createOperator(tree.getPrefix() + "upDownBirthDeathGeneTree", "Species tree Yule and heights", 
+	        		"Scales birth death BminusD rate inversely to the gene tree", 
+	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, 100);
+        }
+        
         //TODO: more
     }
 
@@ -427,10 +460,10 @@ public class BeautiOptions extends ModelOptions {
 
         params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
-        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+        } else if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
         }
 
@@ -444,11 +477,25 @@ public class BeautiOptions extends ModelOptions {
 
         ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
-        if (speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (speciesTreePrior == TreePrior.SPECIES_YULE) {
+            
+            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
+            ops.add(getOperator("upDownBirthDeathSTPop"));
+            
+            for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
+            }
+        } else if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+            
+            ops.add(getOperator("upDownYuleSpeciesTree"));
+            ops.add(getOperator("upDownYuleSTPop"));
+            
+            for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            	ops.add(getOperator(tree.getPrefix() + "upDownYuleGeneTree"));
+            }
         }
 
         ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
@@ -1387,7 +1434,6 @@ public class BeautiOptions extends ModelOptions {
 
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
     public final String POP_MEAN = "popMean";
-    public TreePrior speciesTreePrior = TreePrior.SPECIES_YULE;
 
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();

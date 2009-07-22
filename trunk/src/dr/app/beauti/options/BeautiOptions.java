@@ -93,7 +93,7 @@ public class BeautiOptions extends ModelOptions {
         double spWeights = 5.0;
         double spTuning = 0.9;
 
-        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Speices tree: population hyper parameter operator",
+        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
                 TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         // species tree Yule
         createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
@@ -105,10 +105,10 @@ public class BeautiOptions extends ModelOptions {
         createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
                 "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
-        createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Speices tree: population size operator",
+        createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
                 TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Speices tree: tree node operator");
+        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
 
         createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
 

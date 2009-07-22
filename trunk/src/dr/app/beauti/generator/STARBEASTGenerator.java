@@ -31,9 +31,12 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.*;
+import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.YuleModelParser;
+import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evoxml.XMLUnits;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -42,6 +45,7 @@ import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.DistributionModelParser;
 import dr.util.Attribute;
+import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.util.List;
@@ -50,12 +54,12 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class MultiSpeciesCoalescentGenerator extends Generator {
+public class STARBEASTGenerator extends Generator {
 
     private int numOfSpecies; // used in private String getIndicatorsParaValue()
     BeautiOptions options;
 
-    public MultiSpeciesCoalescentGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public STARBEASTGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         this.options = options;
     }
@@ -99,6 +103,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         writeSpeciesTree(writer);
         writeSpeciesTreeModel(writer);
         writeSpeciesTreeLikelihood(writer);
+        writeSpeciesTreeRootHeight(writer);
         writeGeneUnderSpecies(writer);
     }
 
@@ -144,7 +149,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
 
         writer.writeComment("Species Tree: tree prior");
 
-        if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree: Birth Death Model");
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
@@ -174,7 +179,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
-        } else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
+        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
             writer.writeOpenTag(YuleModel.YULE_MODEL, new Attribute[]{
@@ -193,6 +198,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
 
             writer.writeCloseTag(YuleModel.YULE_MODEL);
+        } else {
+        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
         }
 
     }
@@ -201,7 +208,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
         writer.writeComment("Species Tree: Likelihood of species tree");
 
-        if (options.speciesTreePrior == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree: Birth Death Model");
 
             writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -211,7 +218,7 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);
             writer.writeCloseTag(SpeciationLikelihood.MODEL);
 
-        } else if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
+        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
             writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -220,6 +227,8 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
             writer.writeOpenTag(SpeciationLikelihood.MODEL);
             writer.writeIDref(YuleModel.YULE_MODEL, YuleModelParser.YULE);
             writer.writeCloseTag(SpeciationLikelihood.MODEL);
+        } else {
+        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
         }
 
         // <sp> tree
@@ -230,6 +239,28 @@ public class MultiSpeciesCoalescentGenerator extends Generator {
         writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
     }
 
+    private void writeSpeciesTreeRootHeight(XMLWriter writer) {
+    	writer.writeComment("Species Tree: tmrcaStatistic");
+    	
+    	writer.writeOpenTag(TMRCAStatistic.TMRCA_STATISTIC, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT),
+                new Attribute.Default<String>(AttributeParser.NAME, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT)});
+    	
+    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+
+        writer.writeOpenTag(TMRCAStatistic.MRCA);
+        writer.writeOpenTag(TaxaParser.TAXA);
+
+        for (String eachSp : options.getSpeciesList()) {
+        	writer.writeIDref(SpeciesBindings.SP, eachSp);
+        }
+        
+        writer.writeCloseTag(TaxaParser.TAXA);
+        writer.writeCloseTag(TMRCAStatistic.MRCA);
+        writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+    	
+    }
+    
     private void writeGeneUnderSpecies(XMLWriter writer) {
 
         writer.writeComment("Species Tree: Coalescent likelihood for gene trees under species tree");

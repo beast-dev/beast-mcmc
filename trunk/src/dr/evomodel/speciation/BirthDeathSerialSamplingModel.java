@@ -34,7 +34,7 @@ import dr.inference.model.Variable;
 import java.util.Set;
 
 /**
- * Beginning of tree prior for birth-death + serial sampling + modern sample. More Tanja magic...
+ * Beginning of tree prior for birth-death + serial sampling + extant sample proportion. More Tanja magic...
  *
  * @author Alexei Drummond
  */
@@ -51,7 +51,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     // serial sampling rate
     Variable<Double> psi;
 
-    // sampling proportion
+    // extant sampling proportion
     Variable<Double> p;
 
     public BirthDeathSerialSamplingModel(
@@ -92,56 +92,62 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
     }
 
-    public double p0(double t) {
 
-        double c1 = c1();
-        double c2 = c2();
+    public static double p0(double b, double d, double p, double psi, double t) {
+        double c1 = c1(b, d, psi);
+        double c2 = c2(b, d, p, psi);
 
         double expc1trc2 = Math.exp(-c1 * t) * ((1.0 - c2) / (1.0 + c2));
 
-        double p0 = birth() + death() + psi() + c1 * ((expc1trc2 - 1.0) / (expc1trc2 + 1.0));
+        return (b + d + psi + c1 * ((expc1trc2 - 1.0) / (expc1trc2 + 1.0))) / (2.0 * b);
+    }
 
-        System.out.println("p0(" + t + ")=" + p0);
+    public static double p1(double b, double d, double p, double psi, double t) {
+        double c1 = c1(b, d, psi);
+        double c2 = c2(b, d, p, psi);
+        double c3 = c3(b, d, p, psi);
+        double pc2 = 1.0 + c2;
+        double mc2 = 1.0 - c2;
+        double numerator = -4.0 * p * c1 * c1;
+        double denominator = c3 * (2.0 + Math.exp(-c1 * t) * (mc2 / pc2) + Math.exp(c1 * t) * (pc2 / mc2));
+        return numerator / denominator;
+    }
 
-        return p0;
+    public double p0(double t) {
+        return p0(birth(), death(), p(), psi(), t);
     }
 
     public double p1(double t) {
-        double c1 = c1();
-        double c2 = c2();
-        double c3 = c3();
-        double pc2 = 1.0 + c2;
-        double mc2 = 1.0 - c2;
-        double numerator = -4.0 * p() * c1 * c1;
-        double denominator = c3 * (2.0 + Math.exp(-c1 * t) * (mc2 / pc2) + Math.exp(c1 * t) * (pc2 / mc2));
-        return numerator / denominator;
+        return p1(birth(), death(), p(), psi(), t);
     }
 
     public double q(double s, double t) {
         return psi() * p0(s) * p1(t) / p1(s);
     }
 
+    private static double c1(double b, double d, double ss) {
+        return Math.abs(Math.sqrt(Math.pow(b - d - ss, 2.0) + 4.0 * b * ss));
+    }
+
+    private static double c2(double b, double d, double p, double ss) {
+        return -(b - d - 2.0 * b * p - ss) / c1(b, d, ss);
+    }
+
+    private static double c3(double b, double d, double p, double ss) {
+        return 4.0 * b * (p * (d + b * (p - 1.0) + ss) - ss);
+    }
+
+
     private double c1() {
-
-        double b = birth();
-        double s = psi();
-
-        return Math.abs(Math.sqrt(Math.pow(b - death() - s, 2.0) + 4.0 * b * s));
+        return c1(birth(), death(), psi());
     }
 
     private double c2() {
-
-        double b = birth();
-
-        return -(b - death() - 2.0 * b * p() - psi()) / c1();
+        return c2(birth(), death(), p(), psi());
     }
 
     private double c3() {
-
-        double b = birth();
-        double s = psi();
-
-        return 4.0 * b * (p() * (death() + b * (p() - 1.0) + s) - s);
+        return c3(birth(), death(), p(), psi());
     }
 
 
@@ -186,23 +192,23 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             }
         }
 
+        System.out.println("m = " + m);
+        System.out.println("n = " + n);
+
         double x1 = tree.getNodeHeight(tree.getRoot());
         double c1 = c1();
-        System.out.println("c1=" + c1);
         double c2 = c2();
-        System.out.println("c2=" + c2);
         double c3 = c3();
-        System.out.println("c3=" + c3);
         double b = birth();
 
 
-        double top = 4.0 * c1 + (c2 - 1.0) * p();
+        double top = 4.0 * c1 * (c2 - 1.0) * p();
         double bottom = c3 * (1.0 - c2 + (1.0 + c2) * Math.exp(c1 * x1));
-        System.out.println("top=" + top);
-        System.out.println("bottom=" + bottom);
+        //System.out.println("top=" + top);
+        //System.out.println("bottom=" + bottom);
 
         double logL = Math.log(n * b * top / bottom);
-        System.out.println("logL=" + logL);
+        //System.out.println("logL=" + logL);
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             double x = tree.getNodeHeight(tree.getInternalNode(i));
 

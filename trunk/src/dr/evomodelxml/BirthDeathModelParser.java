@@ -58,7 +58,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-        final String s = xo.getAttribute(TREE_TYPE, BirthDeathGernhard08Model.TreeType.IGNORE.toString());
+        final String s = xo.getAttribute(TREE_TYPE, BirthDeathGernhard08Model.TreeType.UNSCALED.toString());
         BirthDeathGernhard08Model.TreeType treeType = BirthDeathGernhard08Model.TreeType.valueOf(s);
 
         Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);

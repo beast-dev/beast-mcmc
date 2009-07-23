@@ -48,6 +48,12 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  *         Date: 24/02/2008
  */
 public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
+    public enum TreeType {
+        IGNORE,
+        TIMESONLY,
+        ORIENTED,
+        LABLED,
+    }
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
@@ -61,6 +67,8 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
      */
     Parameter sampleProbability;
 
+    private TreeType type;
+
     /**
      * rho *
      */
@@ -68,13 +76,15 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
     public BirthDeathGernhard08Model(Parameter birthDiffRateParameter,
                                      Parameter relativeDeathRateParameter,
                                      Parameter sampleProbability,
+                                     TreeType type,
                                      Type units) {
 
-        this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, sampleProbability, units);
+        this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, sampleProbability, type, units);
     }
 
     BirthDeathGernhard08Model(String modelName,
                               Parameter birthDiffRateParameter, Parameter relativeDeathRateParameter, Parameter sampleProbability,
+                              TreeType type,
                               Type units) {
 
         super(modelName, units);
@@ -92,6 +102,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
             addVariable(sampleProbability);
             sampleProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
+        this.type = type;
     }
 
     public double getR() {
@@ -106,8 +117,18 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         return sampleProbability != null ? sampleProbability.getParameterValue(0) : 1.0;
     }
 
+    private double logCoeff(int taxonCount) {
+        switch( type ) {
+            case IGNORE: break;
+            case TIMESONLY: return logGamma(taxonCount + 1);
+            case ORIENTED: return Math.log(taxonCount);
+            case LABLED:  return (taxonCount-1)*Math.log(2.0) - logGamma(taxonCount);
+        }
+       return 0.0;
+    }
+
     public double logTreeProbability(int taxonCount) {
-        return logGamma(taxonCount + 1) +
+        return logCoeff(taxonCount) +
                 (taxonCount - 1) * Math.log(getR() * getRho()) + taxonCount * Math.log(1 - getA());
     }
 

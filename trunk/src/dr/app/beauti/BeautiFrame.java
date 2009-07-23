@@ -24,6 +24,7 @@ import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.SpeciesTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.util.BeastImporter;
 import dr.app.beauti.util.NexusApplicationImporter;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;

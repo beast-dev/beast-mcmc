@@ -1,4 +1,4 @@
-package dr.app.beauti;
+package dr.app.beauti.util;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;

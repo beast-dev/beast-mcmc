@@ -26,6 +26,7 @@
 package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
+import dr.app.beauti.util.CommandLineBeauti;
 import dr.util.Version;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.Utils;

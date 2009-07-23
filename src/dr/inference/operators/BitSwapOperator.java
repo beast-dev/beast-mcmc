@@ -59,10 +59,10 @@ public class BitSwapOperator extends SimpleMCMCOperator {
     public static final String BIT_SWAP_OPERATOR = "bitSwapOperator";
     public static final String RADIUS = "radius";
 
-    private Parameter data;
-    private Parameter indicators;
+    private final Parameter data;
+    private final Parameter indicators;
     private final boolean impliedOne;
-    private int radius;
+    private final int radius;
 
     public BitSwapOperator(Parameter data, Parameter indicators, int radius, double weight) {
         this.data = data;
@@ -237,7 +237,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(RADIUS),
                 new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),

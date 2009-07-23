@@ -56,7 +56,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, BirthDeathGernhard08Model.TreeType.IGNORE, units);
+        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, BirthDeathGernhard08Model.TreeType.UNSCALED, units);
     }
 
     //************************************************************************

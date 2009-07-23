@@ -55,18 +55,18 @@ public class BeastImporter {
         TaxonList taxa = null;
 
         List children = root.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            Element child = (Element)children.get(i);
+        for(Object aChildren : children) {
+            Element child = (Element) aChildren;
 
-            if (child.getName().equalsIgnoreCase(TaxaParser.TAXA)) {
-                if (taxa == null) {
+            if( child.getName().equalsIgnoreCase(TaxaParser.TAXA) ) {
+                if( taxa == null ) {
                     taxa = readTaxa(child);
                     taxonLists.add(taxa);
                 } else {
                     taxonLists.add(readTaxa(child));
                 }
-            } else  if (child.getName().equalsIgnoreCase(AlignmentParser.ALIGNMENT)) {
-                if (taxa == null) {
+            } else if( child.getName().equalsIgnoreCase(AlignmentParser.ALIGNMENT) ) {
+                if( taxa == null ) {
                     throw new Importer.ImportException("taxa not defined");
                 }
                 alignments.add(readAlignment(child, taxa));
@@ -78,10 +78,10 @@ public class BeastImporter {
         Taxa taxa = new Taxa();
 
         List children = e.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            Element child = (Element)children.get(i);
+        for(Object aChildren : children) {
+            Element child = (Element) aChildren;
 
-            if (child.getName().equalsIgnoreCase(TaxonParser.TAXON)) {
+            if( child.getName().equalsIgnoreCase(TaxonParser.TAXON) ) {
                 taxa.addTaxon(readTaxon(child));
             }
         }
@@ -95,13 +95,13 @@ public class BeastImporter {
         Taxon taxon = new Taxon(id);
 
         List children = e.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            Element child = (Element)children.get(i);
+        for(Object aChildren : children) {
+            Element child = (Element) aChildren;
 
-            if (child.getName().equalsIgnoreCase("date")) {
+            if( child.getName().equalsIgnoreCase("date") ) {
                 Date date = readDate(child);
                 taxon.setAttribute("date", date);
-            } else if (child.getName().equalsIgnoreCase("attr")) {
+            } else if( child.getName().equalsIgnoreCase("attr") ) {
                 String name = e.getAttributeValue("name");
                 String value = e.getAttributeValue("value");
                 taxon.setAttribute(name, value);
@@ -114,10 +114,10 @@ public class BeastImporter {
         SimpleAlignment alignment = new SimpleAlignment();
 
         List children = e.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            Element child = (Element)children.get(i);
+        for(Object aChildren : children) {
+            Element child = (Element) aChildren;
 
-            if (child.getName().equalsIgnoreCase("sequence")) {
+            if( child.getName().equalsIgnoreCase("sequence") ) {
                 alignment.addSequence(readSequence(child, taxa));
             }
         }
@@ -134,9 +134,8 @@ public class BeastImporter {
         Taxon taxon = taxa.getTaxon(index);
 
         String seq = e.getTextTrim();
-        Sequence sequence = new Sequence(taxon, seq);
 
-        return sequence;
+        return new Sequence(taxon, seq);
     }
 
     private Date readDate(Element e) throws Importer.ImportException {

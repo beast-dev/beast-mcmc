@@ -71,7 +71,7 @@ public class BirthDeathLikelihoodTest extends TestCase {
         //death rate
         double d = 0.5;
 
-        double correct = -3.534621219768513 + Math.log(2.0);
+        double correct = -3.534621219768513; // + Math.log(2.0);
 
         birthDeathLikelihoodTester(tree, b - d, d / b, correct);
     }
@@ -82,11 +82,11 @@ public class BirthDeathLikelihoodTest extends TestCase {
         Parameter b = new Parameter.Default("b", birthRate, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", deathRate, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, Units.Type.YEARS);
+        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.ORIENTED,
+                Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bd.like");
 
-        assertEquals(logL, likelihood.getLogLikelihood());
-
+        assertEquals(logL, likelihood.getLogLikelihood(),1e-14);
     }
 
     public static Test suite() {

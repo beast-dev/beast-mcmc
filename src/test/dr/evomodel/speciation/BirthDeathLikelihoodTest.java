@@ -65,10 +65,15 @@ public class BirthDeathLikelihoodTest extends TestCase {
 
     public void testBirthDeathLikelihood() {
 
-        // birth rate = 1.0
-        // death rate = 0.5
-        birthDeathLikelihoodTester(tree, 0.5, 0.5, -3.534621219768513);
+        //birth rate
+        double b = 1.0;
 
+        //death rate
+        double d = 0.5;
+
+        double correct = -3.534621219768513 + Math.log(2.0);
+
+        birthDeathLikelihoodTester(tree, b - d, d / b, correct);
     }
 
     private void birthDeathLikelihoodTester(

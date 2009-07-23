@@ -83,7 +83,6 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
     public void testBirthDeathLikelihood() {
 
         likelihoodTester(tree, 1, 0.5, -3.534621219768513);
-
     }
 
     private void likelihoodTester(Tree tree, double birthRate, double deathRate, double logL) {

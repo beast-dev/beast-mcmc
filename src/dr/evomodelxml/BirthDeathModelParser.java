@@ -44,6 +44,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
     public static final String SAMPLE_RATE = "sampleRate";
+    public static final String TREE_TYPE = "type";
 
     public static final String BIRTH_DEATH = "birthDeath";
     public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".BminusDRate";
@@ -57,6 +58,9 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
+        final String s = xo.getAttribute(TREE_TYPE, BirthDeathGernhard08Model.TreeType.IGNORE.toString());
+        BirthDeathGernhard08Model.TreeType treeType = BirthDeathGernhard08Model.TreeType.valueOf(s);
+
         Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
         Parameter sampleParameter = xo.hasChildNamed(SAMPLE_RATE) ?
@@ -64,7 +68,8 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Using Gernhard08 birth-death model on tree: Gernhard T (2008) J Theor Biol, In press");
 
-        return new BirthDeathGernhard08Model(birthParameter, deathParameter, sampleParameter, units);
+
+        return new BirthDeathGernhard08Model(birthParameter, deathParameter, sampleParameter, treeType, units);
     }
 
     //************************************************************************
@@ -84,6 +89,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(TREE_TYPE, true),
             new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

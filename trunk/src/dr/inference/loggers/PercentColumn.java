@@ -10,7 +10,7 @@ package dr.inference.loggers;
  *         Date: 4/06/2008
  */
 public class PercentColumn extends NumberColumn {
-    private NumberColumn column;
+    private final NumberColumn column;
 
     public PercentColumn(NumberColumn col) {
         super(col.getLabel());

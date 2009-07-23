@@ -43,9 +43,9 @@ public class RPNcalculatorStatistic extends Statistic.Abstract {
     public static String VARIABLE = "variable";
     public static String EXPRESSION = "expression";
 
-    private RPNexpressionCalculator[] expressions;
-    private String[] names;
-    private Map<String, Statistic> variables;
+    private final RPNexpressionCalculator[] expressions;
+    private final String[] names;
+    private final Map<String, Statistic> variables;
 
     RPNexpressionCalculator.GetVariable vars = new RPNexpressionCalculator.GetVariable() {
         public double get(String name) {
@@ -128,7 +128,7 @@ public class RPNcalculatorStatistic extends Statistic.Abstract {
 
 		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+		private final XMLSyntaxRule[] rules = {
 			new ElementRule(EXPRESSION,
 				new XMLSyntaxRule[] { new ElementRule(String.class) }, 1, Integer.MAX_VALUE),
             new ElementRule(VARIABLE,

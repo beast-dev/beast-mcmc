@@ -8,7 +8,7 @@ package dr.inference.loggers;
  */
 
 public class BooleanColumn implements LogColumn {
-    private NumberColumn column;
+    private final NumberColumn column;
 
     public BooleanColumn(NumberColumn column) {
         this.column = column;

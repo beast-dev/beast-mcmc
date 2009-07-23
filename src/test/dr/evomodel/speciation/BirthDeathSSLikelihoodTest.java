@@ -60,8 +60,18 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,(3:1.0,4:1.0):1.0);");
+        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:2.0);");
         tree = (FlexibleTree) importer.importTree(null);
+    }
+
+    public void testP0() {
+
+        assertEquals(BirthDeathSerialSamplingModel.p0(1.0, 0.5, 1.0, 0.0, 1.0), 0.28236670080320814);
+    }
+
+    public void testP1() {
+        assertEquals(BirthDeathSerialSamplingModel.p1(1.0, 0.5, 1.0, 0.0, 1.0), 0.31236180503535266);
+
     }
 
     public void testPureBirthLikelihood() {
@@ -72,7 +82,7 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
 
     public void testBirthDeathLikelihood() {
 
-        //likelihoodTester(tree, 1, 0.5, -4.6709502021405465);
+        likelihoodTester(tree, 1, 0.5, -3.534621219768513);
 
     }
 

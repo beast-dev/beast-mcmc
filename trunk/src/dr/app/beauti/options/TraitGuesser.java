@@ -131,7 +131,11 @@ public class TraitGuesser {
             id = t.indexOf(seperator);
 
             if (id < 0) {
-                throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+            	if (i == 0) {
+            		throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+            	} else {
+            		return label + seperator + traitAnalysisType.toString();
+            	}
             }
 
             t = t.substring(id + 1);

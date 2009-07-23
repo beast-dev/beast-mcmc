@@ -64,14 +64,17 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
         tree = (FlexibleTree) importer.importTree(null);
     }
 
-    public void testP0() {
+    final double birthRate = 1.0;
+    final double deathRate = 0.5;
+    final double p = 1.0;
+    final double psi = 0.0;
 
-        assertEquals(BirthDeathSerialSamplingModel.p0(1.0, 0.5, 1.0, 0.0, 1.0), 0.28236670080320814);
+    public void testP0() {
+        assertEquals(BirthDeathSerialSamplingModel.p0(birthRate, deathRate, p, psi, 1.0), 0.28236670080320814);
     }
 
     public void testP1() {
-        assertEquals(BirthDeathSerialSamplingModel.p1(1.0, 0.5, 1.0, 0.0, 1.0), 0.31236180503535266);
-
+        assertEquals(BirthDeathSerialSamplingModel.p1(birthRate, deathRate, p, psi, 1.0), 0.31236180503535266);
     }
 
     public void testPureBirthLikelihood() {
@@ -81,21 +84,20 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
     }
 
     public void testBirthDeathLikelihood() {
-
-        likelihoodTester(tree, 1, 0.5, -3.534621219768513);
+        likelihoodTester(tree, birthRate, deathRate, -3.534621219768513);
     }
 
     private void likelihoodTester(Tree tree, double birthRate, double deathRate, double logL) {
 
         Variable<Double> b = new Variable.D("b", birthRate);
         Variable<Double> d = new Variable.D("d", deathRate);
-        Variable<Double> psi = new Variable.D("psi", 0.0);
-        Variable<Double> p = new Variable.D("p", 1.0);
+        Variable<Double> psi = new Variable.D("psi", this.psi);
+        Variable<Double> p = new Variable.D("p", this.p);
 
         SpeciationModel speciationModel = new BirthDeathSerialSamplingModel(b, d, psi, p, Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bdss.like");
 
-        assertEquals(likelihood.getLogLikelihood(), logL);
+        assertEquals(logL, likelihood.getLogLikelihood());
     }
 
     public static Test suite() {

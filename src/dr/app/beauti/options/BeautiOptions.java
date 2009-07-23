@@ -123,33 +123,33 @@ public class BeautiOptions extends ModelOptions {
         // species tree Yule
         createTagOperator("upDownYuleSpeciesTree", "Yule birth rate and species tree", "Scales Yule birth rate inversely to the species tree", 
         		TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
-        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, 100);
+        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
         createOperator("upDownYuleSTPop", "Yule birth rate and species tree population size", 
         		"Scales Yule birth rate inversely to the species tree population size", 
                 this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, 100);
+                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
         
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
 	        createOperator(tree.getPrefix() + "upDownYuleGeneTree", "Species tree Yule and heights", 
 	        		"Scales Yule birth rate inversely to the gene tree", 
 	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, 100);
+	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
         }
         // species tree Birth Death
         createTagOperator("upDownBirthDeathSpeciesTree", "Birth death and species tree", 
         		"Scales birth death BminusD rate inversely to the species tree", 
         		TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
-        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, 100);
+        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
         createOperator("upDownBirthDeathSTPop", "Yule birth rate and species tree population size", 
         		"Scales birth death BminusD rate inversely to the species tree population size", 
                 this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, 100);
+                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
         
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
 	        createOperator(tree.getPrefix() + "upDownBirthDeathGeneTree", "Species tree Yule and heights", 
 	        		"Scales birth death BminusD rate inversely to the gene tree", 
 	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, 100);
+	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
         }
         
         //TODO: more

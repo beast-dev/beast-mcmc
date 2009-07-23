@@ -49,24 +49,24 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     /**
      * Constructor.
      */
-    public ExponentialDistributionModel(Parameter meanParameter) {
+    public ExponentialDistributionModel(Variable<Double> mean) {
 
-        this(meanParameter, 0.0);
+        this(mean, 0.0);
     }
 
 
     /**
      * Constructor.
      */
-    public ExponentialDistributionModel(Parameter meanParameter, double offset) {
+    public ExponentialDistributionModel(Variable<Double> mean, double offset) {
 
         super(EXPONENTIAL_DISTRIBUTION_MODEL);
 
-        this.meanParameter = meanParameter;
+        this.mean = mean;
         this.offset = offset;
 
-        addVariable(meanParameter);
-        meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        addVariable(mean);
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     // *****************************************************************
@@ -152,14 +152,14 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     // **************************************************************
 
     private double getMean() {
-        return meanParameter.getParameterValue(0);
+        return mean.getValue(0);
     }
 
     // **************************************************************
     // Private instance variables
     // **************************************************************
 
-    private Parameter meanParameter = null;
+    private Variable<Double> mean = null;
     private double offset = 0.0;
 
 }

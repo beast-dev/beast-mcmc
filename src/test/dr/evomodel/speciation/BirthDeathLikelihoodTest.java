@@ -40,11 +40,10 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * YuleModel Tester.
+ * Birth-Death tester.
  *
  * @author Alexei Drummond
  * @version 1.0
- * @since <pre>08/26/2007</pre>
  */
 public class BirthDeathLikelihoodTest extends TestCase {
 
@@ -66,7 +65,9 @@ public class BirthDeathLikelihoodTest extends TestCase {
 
     public void testBirthDeathLikelihood() {
 
-        birthDeathLikelihoodTester(tree, 1.0, 0.5, -4.6709502021405465);
+        // birth rate = 1.0
+        // death rate = 0.5
+        birthDeathLikelihoodTester(tree, 0.5, 0.5, -3.534621219768513);
 
     }
 

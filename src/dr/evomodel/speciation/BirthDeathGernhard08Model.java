@@ -52,7 +52,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         UNSCALED,     // no coeff
         TIMESONLY,    // n!
         ORIENTED,     // n
-        LABLED,       // 2^(n-1)/(n-1)!
+        LABELED,        // 2^(n-1)/(n-1)!
     }
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
@@ -122,7 +122,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
             case UNSCALED: break;
             case TIMESONLY: return logGamma(taxonCount + 1);
             case ORIENTED: return Math.log(taxonCount);
-            case LABLED:  return (taxonCount-1)*Math.log(2.0) - logGamma(taxonCount);
+            case LABELED:  return (taxonCount-1)*Math.log(2.0) - logGamma(taxonCount);
         }
         return 0.0;
     }

@@ -411,6 +411,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         	PartitionTreePriorPanel ptpp = treePriorPanels.get(options.activedSameTreePrior);
         	if (ptpp != null) {
         		ptpp.setOptions();
+        		
+        		if (isCheckedTipDate) { 
+    	        	ptpp.removeCertainPriorFromTreePriorCombo();
+    	    	} else {
+    	    		ptpp.recoveryTreePriorCombo();    		
+    	    	}
         	}
         	
         } else {

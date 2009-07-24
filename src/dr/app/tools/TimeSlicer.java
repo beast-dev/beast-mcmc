@@ -36,13 +36,14 @@ public class TimeSlicer {
     public static final String PRECISION_STRING = "precision";
     public static final String RATE_STRING = "rate";
 
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
+    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise, double mrsd) {
 
         this.traits = traits;
         traitCount = traits.length;
         this.slices = slices;
         sliceCount = 1;
         doSlices = false;
+        mostRecentSamplingDate = mrsd;
 
         if (slices != null) {
             sliceCount = slices.length;
@@ -77,6 +78,15 @@ public class TimeSlicer {
         output(outFileName,summaryOnly,OutputFormat.XML, 0.80);
     }
 
+
+    //KML stuff
+    Element KMLElement = new Element("kml");
+    //KMLElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
+    Element documentElement = new Element("Document");
+    Element documentNameElement = new Element("name");
+    Element folderElement = new Element("Folder");
+    Element folderNameElement = new Element("name");
+
     public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue) {
 
         resultsStream = System.out;
@@ -89,6 +99,22 @@ public class TimeSlicer {
                 System.exit(-1);
             }
         }
+
+        //KML stuff
+        documentNameElement.addContent("continuousDiffusion");
+        documentElement.addContent(documentNameElement);
+        folderNameElement.addContent("suface HPD regions");
+        folderElement.addContent(folderNameElement);
+
+        String kmlOutputFile = "continuousDiffusion"+hpdValue+".kml";
+        try {
+            kmlResultsStream = new PrintStream(new File(kmlOutputFile));
+        } catch (IOException e) {
+                System.err.println("Error opening file: "+kmlOutputFile);
+                System.exit(-1);
+        }
+
+
 
         if (!summaryOnly) {
             outputHeader(traits);
@@ -108,6 +134,19 @@ public class TimeSlicer {
                     summarizeSlice(i,slices[i], outputFormat, hpdValue);
             }
         }
+
+        if (locationToKML) {
+            documentElement.addContent(folderElement);
+            KMLElement.addContent(documentElement);
+            XMLOutputter kmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
+            try {
+                kmlOutputter.output(KMLElement,kmlResultsStream);
+            } catch (IOException e) {
+                System.err.println("IO Exception encountered: "+e.getMessage());
+                System.exit(-1);
+            }
+        }
+
     }
 
     enum OutputFormat {
@@ -121,6 +160,15 @@ public class TimeSlicer {
     public static final String NAME = "name";
     public static final String DENSITY_VALUE = "density";
     public static final String SLICE_VALUE = "time";
+    //only when the trait is location, we will write full KML
+    public static final String LOCATION = "location";
+    public boolean locationToKML = false;
+    public static final String STYLE = "Style";
+    public static final String ID = "id";
+    public static final String WIDTH = "0.5";
+    String startHPDColor = "00F1D6"; //blue=B36600
+    String endHPDColor = "00FF00"; //red=0000FF
+    String opacity = "9f";
 
     private void addDimInfo(Element element, int j, int dim) {
         if (dim > 1)
@@ -145,6 +193,15 @@ public class TimeSlicer {
                 if (isNumber) {
                     Element traitElement = new Element(TRAIT);
                     traitElement.setAttribute(NAME,traits[traitIndex]);
+
+                    //KML stuff
+                    Element styleElement = new Element(STYLE);
+                    if (traits[traitIndex].equals(LOCATION)) {
+                        locationToKML = true;
+                        constructPolygonStyleElement(styleElement, sliceValue);
+                        documentElement.addContent(styleElement);
+                    }
+
                     int count = thisTrait.size();
                     double[][] x = new double[dim][count];
                     for(int i=0; i<count; i++) {
@@ -180,10 +237,19 @@ public class TimeSlicer {
                             KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
                             regionElement.addContent(coords.toXML());
                             traitElement.addContent(regionElement);
-                        }
+
+                            // only if the trait is location we will write KML
+                            if ((traitElement.getAttributeValue(NAME)).equals(LOCATION)) {
+                                //because KML polygons require long,lat,alt we need to switch lat and long first
+                                coords.switchXY();
+                                 Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
+                                folderElement.addContent(placemarkElement);
+                            }
+                       }
 
                     }
                     sliceElement.addContent(traitElement);
+                    
                 } // else skip
             }
 
@@ -194,10 +260,73 @@ public class TimeSlicer {
                 System.err.println("IO Exception encountered: "+e.getMessage());
                 System.exit(-1);
             }
+
         } else {
             throw new RuntimeException("Only XML output is implemented");
         }
 
+    }
+
+    private void constructPolygonStyleElement(Element styleElement, double sliceValue){
+        double date = mostRecentSamplingDate - sliceValue;
+        styleElement.setAttribute(ID,REGIONS_ELEMENT+date+"_style");
+            Element lineStyle = new Element("LineStyle");
+                Element width = new Element("width");
+                width.addContent(WIDTH);
+            lineStyle.addContent(width);
+            Element polyStyle = new Element("PolyStyle");
+                Element color = new Element("color");
+                double[] minMax = new double[2];
+                minMax[0] = slices[0];
+                minMax[1] = slices[(slices.length-1)];
+                String colorString = getKMLColor(sliceValue,minMax,endHPDColor,startHPDColor);
+                color.addContent(opacity+colorString);
+                Element outline = new Element("outline");
+                outline.addContent("0");
+            polyStyle.addContent(color);
+            polyStyle.addContent(outline);
+        styleElement.addContent(lineStyle);
+        styleElement.addContent(polyStyle);
+    }
+
+    private Element generatePlacemarkElementWithPolygon(double sliceValue, KMLCoordinates coords, int sliceInteger){
+        double date = mostRecentSamplingDate - sliceValue;
+        Element placemarkElement  = new Element("Placemark");
+
+        Element visibility = new Element("visibility");
+        visibility.addContent("1");
+        placemarkElement.addContent(visibility);
+
+        Element timeSpan = new Element("TimeSpan");
+            Element begin = new Element("begin");
+            begin.addContent(Double.toString(date));
+        timeSpan.addContent(begin);
+        if (sliceInteger > 0) {
+            Element end = new Element("end");
+            end.addContent(Double.toString(mostRecentSamplingDate-slices[(sliceInteger-1)]));
+            timeSpan.addContent(end);
+        }
+        placemarkElement.addContent(timeSpan);
+
+        Element style = new Element("styleUrl");
+        style.addContent("#"+REGIONS_ELEMENT+date+"_style");
+        placemarkElement.addContent(style);
+
+        Element polygonElement  = new Element("Polygon");
+        Element altitudeMode = new Element("altitudeMode");
+        altitudeMode.addContent("clampToGround");
+        polygonElement.addContent(altitudeMode);
+        Element tessellate = new Element("tessellate");
+        tessellate.addContent("1");
+        polygonElement.addContent(tessellate);
+        Element outerBoundaryIs = new Element("outerBoundaryIs");
+        Element LinearRing = new Element("LinearRing");
+        LinearRing.addContent(coords.toXML());
+        outerBoundaryIs.addContent(LinearRing);
+        polygonElement.addContent(outerBoundaryIs);
+        placemarkElement.addContent(polygonElement);
+
+        return placemarkElement;
     }
 
     private void outputHeader(String[] traits) {
@@ -440,6 +569,7 @@ public class TimeSlicer {
     private boolean doSlices;
     private int treesRead = 0;
     private int treesAnalyzed = 0;
+    private double mostRecentSamplingDate;
 
 //    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 //
@@ -494,6 +624,7 @@ public class TimeSlicer {
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
     private PrintStream resultsStream;
+    private PrintStream kmlResultsStream;
 
 
     private final static Version version = new BeastVersion();
@@ -567,21 +698,44 @@ public class TimeSlicer {
         return null;
     }
 
-     private static String[] parseVariableLengthStringArray(String inString) {
+    private static String[] parseVariableLengthStringArray(String inString) {
 
-        List<String> returnList = new ArrayList<String>();
-        StringTokenizer st = new StringTokenizer(inString,",");
-        while(st.hasMoreTokens()) {
-            returnList.add(st.nextToken());           
+       List<String> returnList = new ArrayList<String>();
+       StringTokenizer st = new StringTokenizer(inString,",");
+       while(st.hasMoreTokens()) {
+           returnList.add(st.nextToken());
+       }
+
+       if (returnList.size()>0) {
+           String[] stringArray = new String[returnList.size()];
+           stringArray = returnList.toArray(stringArray);
+           return stringArray;
+       }
+       return null;
+   }
+
+    private static double[] parseFileWithArray(String file) {
+        List<Double> returnList = new ArrayList<Double>();
+        try{
+            BufferedReader readerTimes = new BufferedReader(new FileReader(file));
+            String line = readerTimes.readLine();
+            while (line != null && !line.equals("")) {
+                returnList.add(Double.valueOf(line));
+                line = readerTimes.readLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading " + file);
+            System.exit(1);
         }
 
         if (returnList.size()>0) {
-            String[] stringArray = new String[returnList.size()];
-            stringArray = returnList.toArray(stringArray);
-            return stringArray;
+            double[] doubleArray = new double[returnList.size()];
+            for(int i=0; i<doubleArray.length; i++)
+                doubleArray[i] = returnList.get(i);
+            return doubleArray;
         }
         return null;
-    }
+   }
 
     public static void main(String[] args) throws IOException {
 
@@ -598,8 +752,10 @@ public class TimeSlicer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.angle]"),
+                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
                         new Arguments.StringOption("slice","time","specifies an slice time-list [default=none]"),
+                        new Arguments.StringOption("fileSlice","fileTimes","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
+                        new Arguments.RealOption("mrsd","specifies the most recent sampling data in fractional years to rescale time [default=0]"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.StringOption("noise", new String[]{"false","true"}, false,
                                 "add true noise [default = true])"),
@@ -630,6 +786,11 @@ public class TimeSlicer {
             burnin = arguments.getIntegerOption("burnin");
         }
 
+        double mrsd = 0;
+        if (arguments.hasOption("mrsd")) {
+            mrsd = arguments.getRealOption("mrsd");
+        }
+
         double hpdValue = 0.80;
         if (arguments.hasOption("hpd")) {
             int intValue = arguments.getIntegerOption("hpd");
@@ -642,6 +803,11 @@ public class TimeSlicer {
 
         String[] traitNames = null;
         double[] sliceTimes = null;
+
+        String sliceFileString = arguments.getStringOption("fileSlice");
+        if (sliceFileString != null) {
+            sliceTimes = parseFileWithArray(sliceFileString);
+        }
 
         try {
 
@@ -703,9 +869,95 @@ public class TimeSlicer {
             }
         }
 
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise);
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise, mrsd);
         timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue);
 
         System.exit(0);
+    }
+    public static String getKMLColor(double value, double[] minMaxMedian, String startColor, String endColor) {
+
+        startColor = startColor.toLowerCase();
+        String startBlue = startColor.substring(0,2);
+        String startGreen = startColor.substring(2,4);
+        String startRed = startColor.substring(4,6);
+
+        endColor =  endColor.toLowerCase();
+        String endBlue = endColor.substring(0,2);
+        String endGreen = endColor.substring(2,4);
+        String endRed = endColor.substring(4,6);
+
+        double proportion = (value - minMaxMedian[0])/(minMaxMedian[1] - minMaxMedian[0]);
+
+        // generate an array with hexadecimal code for each RGB entry number
+        String[] colorTable = new String[256];
+
+        int colorTableCounter = 0;
+
+        for (int a = 0; a < 10; a++) {
+
+            for (int b = 0; b < 10; b++) {
+
+                colorTable[colorTableCounter] = a + "" + b;
+                colorTableCounter ++;
+            }
+
+            for(int c = (int)('a'); c<6+(int)('a'); c++) {
+                colorTable[colorTableCounter] = a + "" + (char)c;
+                colorTableCounter ++;
+            }
+
+        }
+        for(int d = (int)('a'); d<6+(int)('a'); d++) {
+
+            for (int e = 0; e < 10; e++) {
+
+                colorTable[colorTableCounter] = (char) d + "" + e;
+                colorTableCounter ++;
+            }
+
+            for(int f = (int)('a'); f<6+(int)('a'); f++) {
+                colorTable[colorTableCounter] = (char) d + "" + (char) f;
+                colorTableCounter ++;
+            }
+
+        }
+
+
+        int startBlueInt = 0;
+        int startGreenInt = 0;
+        int startRedInt = 0;
+
+        int endBlueInt = 0;
+        int endGreenInt = 0;
+        int endRedInt = 0;
+
+        for (int i = 0; i < colorTable.length; i ++) {
+
+            if (colorTable[i].equals(startBlue)) {startBlueInt = i; }
+            if (colorTable[i].equals(startGreen)) {startGreenInt = i; }
+            if (colorTable[i].equals(startRed)) {startRedInt = i; }
+            if (colorTable[i].equals(endBlue)) {endBlueInt = i; }
+            if (colorTable[i].equals(endGreen)) {endGreenInt = i; }
+            if (colorTable[i].equals(endRed)) {endRedInt = i; }
+
+        }
+
+        int blueInt = startBlueInt + (int) Math.round((endBlueInt-startBlueInt)*proportion);
+        int greenInt = startGreenInt + (int) Math.round((endGreenInt-startGreenInt)*proportion);
+        int redInt = startRedInt + (int) Math.round((endRedInt-startRedInt)*proportion);
+
+        String blue = null;
+        String green =  null;
+        String red = null;
+
+        for (int j = 0; j < colorTable.length; j ++) {
+
+            if (j == blueInt) {blue = colorTable[j]; }
+            if (j == greenInt) {green = colorTable[j]; }
+            if (j == redInt) {red = colorTable[j]; }
+
+        }
+
+        return blue+green+red;
     }
 }

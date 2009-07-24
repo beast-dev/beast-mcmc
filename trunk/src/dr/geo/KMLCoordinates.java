@@ -46,6 +46,13 @@ public class KMLCoordinates {
         length = x.length;       
     }
 
+    public void switchXY(){
+        double[] tempX = x;
+        x = y;
+        y = tempX;
+
+    }
+
     public Element toXML() {
         Element thisElement = new Element(COORDINATES);
         StringBuffer bf = new StringBuffer();

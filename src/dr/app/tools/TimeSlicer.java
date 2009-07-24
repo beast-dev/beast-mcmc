@@ -13,6 +13,9 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.KMLCoordinates;
 import dr.geo.contouring.ContourPath;
+import dr.geo.contouring.ContourMode;
+import dr.geo.contouring.ContourMaker;
+import dr.geo.contouring.ContourWithR;
 import dr.inference.trace.TraceDistribution;
 
 import java.io.*;
@@ -36,7 +39,8 @@ public class TimeSlicer {
     public static final String PRECISION_STRING = "precision";
     public static final String RATE_STRING = "rate";
 
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute, boolean trueNoise, double mrsd) {
+    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute,
+                      boolean trueNoise, double mrsd, ContourMode contourMode) {
 
         this.traits = traits;
         traitCount = traits.length;
@@ -44,6 +48,7 @@ public class TimeSlicer {
         sliceCount = 1;
         doSlices = false;
         mostRecentSamplingDate = mrsd;
+        this.contourMode = contourMode;
 
         if (slices != null) {
             sliceCount = slices.length;
@@ -100,12 +105,14 @@ public class TimeSlicer {
             }
         }
 
+        // TODO Should ONLY worry about KML stuff if KML is output format
         //KML stuff
         documentNameElement.addContent("continuousDiffusion");
         documentElement.addContent(documentNameElement);
         folderNameElement.addContent("suface HPD regions");
         folderElement.addContent(folderNameElement);
 
+        // TODO add command-line options for KML outputname!
         String kmlOutputFile = "continuousDiffusion"+hpdValue+".kml";
         try {
             kmlResultsStream = new PrintStream(new File(kmlOutputFile));
@@ -135,6 +142,7 @@ public class TimeSlicer {
             }
         }
 
+        // TODO Should ONLY worry about KML stuff if KML is output format
         if (locationToKML) {
             documentElement.addContent(folderElement);
             KMLElement.addContent(documentElement);
@@ -229,8 +237,16 @@ public class TimeSlicer {
                         traitElement.addContent(statsElement);                        
                     }
                     if (isBivariate) {
-                        KernelDensityEstimator2D kde = new KernelDensityEstimator2D(x[0], x[1]);
-                        ContourPath[] paths = kde.getContourPaths(hpdValue);
+                        
+                        ContourMaker contourMaker;
+                        if (contourMode == ContourMode.JAVA)
+                            contourMaker = new KernelDensityEstimator2D(x[0],x[1]);
+                        else if (contourMode == ContourMode.R)
+                            contourMaker = new ContourWithR(x[0],x[1]);
+                        else
+                            throw new RuntimeException("Unimplemented ContourModel!");
+
+                        ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
                         for(ContourPath path : paths) {
                             Element regionElement = new Element(REGIONS_ELEMENT);                            
                             regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
@@ -570,6 +586,7 @@ public class TimeSlicer {
     private int treesRead = 0;
     private int treesAnalyzed = 0;
     private double mostRecentSamplingDate;
+    private ContourMode contourMode;
 
 //    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 //
@@ -766,6 +783,9 @@ public class TimeSlicer {
                         new Arguments.StringOption("format", new String[]{"XML"}, false,
                                 "summary output format [default = XML]"),
                         new Arguments.IntegerOption("hpd","mass (1 - 99%) to include in HPD regions [default = 80]"),
+                        new Arguments.StringOption("mode", new String[]{"java","R"}, false,
+                                "contouring model [default = java]"),
+                        
                 });
 
         try {
@@ -846,6 +866,13 @@ public class TimeSlicer {
         if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
             summaryOnly = true;
 
+        String modeString = arguments.getStringOption("mode");
+        ContourMode contourMode = ContourMode.JAVA;
+        if (modeString != null) {
+            if (modeString.compareToIgnoreCase("R") == 0 && ContourWithR.processWithR) 
+                contourMode = ContourMode.R;                            
+        }
+
 //        String summaryFormat = arguments.getStringOption("format");
         OutputFormat outputFormat = OutputFormat.XML;
 
@@ -869,11 +896,15 @@ public class TimeSlicer {
             }
         }
 
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise, mrsd);
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise, mrsd, contourMode);
         timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue);
 
         System.exit(0);
     }
+
+
+
+
     public static String getKMLColor(double value, double[] minMaxMedian, String startColor, String endColor) {
 
         startColor = startColor.toLowerCase();

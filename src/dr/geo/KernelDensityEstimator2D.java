@@ -9,6 +9,7 @@ import dr.stats.DiscreteStatistics;
 import dr.geo.contouring.ContourGenerator;
 import dr.geo.contouring.ContourAttrib;
 import dr.geo.contouring.ContourPath;
+import dr.geo.contouring.ContourMaker;
 
 import java.util.Arrays;
 
@@ -18,7 +19,7 @@ import java.util.Arrays;
  * @author Philippe Lemey
  */
 
-public class KernelDensityEstimator2D {
+public class KernelDensityEstimator2D implements ContourMaker {
 
 //    kde2d =
 //    function (x, y, h, n = 25, lims = c(range(x), range(y)))

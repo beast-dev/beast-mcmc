@@ -213,7 +213,23 @@ public class BeautiOptions extends ModelOptions {
         samplePriorOnly = false;
 
     }
-
+    
+    public void selectTaxonSetsStatistics(List<Parameter> params) {
+    	
+        if (taxonSets != null) {
+            for (Taxa taxonSet : taxonSets) {
+                Parameter statistic = statistics.get(taxonSet);
+                if (statistic == null) {
+                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistics.put(taxonSet, statistic);
+                }
+                params.add(statistic);
+            }
+        } else {
+            System.err.println("TaxonSets are null");
+        }
+    }
+    
     /**
      * return an list of parameters that are required
      *
@@ -222,7 +238,7 @@ public class BeautiOptions extends ModelOptions {
     public ArrayList<Parameter> selectParameters() {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-
+        
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectParameters(parameters);
         }
@@ -246,6 +262,8 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentParameters(this, parameters);
 
+        selectTaxonSetsStatistics(parameters);
+        
         selectComponentStatistics(this, parameters);
 
         boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;

@@ -216,6 +216,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 tipDateSamplingLabel.setEnabled(enabled);
 
                 frame.removeSpecifiedTreePrior(enabled);
+                options.fixedSubstitutionRate = !enabled;
             }
         });
 

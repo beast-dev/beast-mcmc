@@ -1,5 +1,5 @@
 /*
- * UniformRootPrior.java
+ * UniformNodeHeightPrior.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -29,6 +29,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.*;
 import dr.math.Polynomial;
+import dr.math.MathUtils;
+import dr.math.LogTricks;
 import dr.xml.*;
 
 import java.util.*;
@@ -48,12 +50,19 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: UniformRootPrior.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
-public class UniformRootPrior extends AbstractModelLikelihood {
+public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
 
     public static final String UNIFORM_ROOT_PRIOR = "uniformRootPrior";
+    public static final String UNIFORM_NODE_HEIGHT_PRIOR = "uniformNodeHeightPrior";
     public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
+    public static final String ANALYTIC = "analytic";
+    public static final String MC_SAMPLE = "mcSampleSize";
+
+    public static final int MAX_ANALYTIC_TIPS = 60; // TODO Determine this value!
+    public static final int DEFAULT_MC_SAMPLE = 100000;
+
 
     private static final double tolerance = 1E-6;
 
@@ -63,23 +72,29 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     private double maxRootHeight;
 
     private boolean isNicholls;
-    private boolean usePolynomial;
+    private boolean useAnalytic;
+    private int mcSampleSize;
 
     Set<Double> tipDates = new TreeSet<Double>();
     List<Double> reversedTipDateList = new ArrayList<Double>();
     Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
 
-    public UniformRootPrior(Tree tree, boolean usePolynomial) {
-        this(UNIFORM_ROOT_PRIOR, tree, usePolynomial);
+    public UniformNodeHeightPrior(Tree tree, boolean useAnalytic) {
+        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, useAnalytic, DEFAULT_MC_SAMPLE);
     }
 
-    private UniformRootPrior(String name, Tree tree, boolean usePolynomial) {
+    private UniformNodeHeightPrior(Tree tree, boolean useAnalytic, int mcSampleSize) {
+        this(UNIFORM_NODE_HEIGHT_PRIOR,tree,useAnalytic,mcSampleSize);
+    }
+
+    private UniformNodeHeightPrior(String name, Tree tree, boolean useAnalytic, int mcSampleSize) {
 
         super(name);
 
         this.tree = tree;
         this.isNicholls = false;
-        this.usePolynomial = usePolynomial;
+        this.useAnalytic = useAnalytic;
+        this.mcSampleSize = mcSampleSize;
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
@@ -93,7 +108,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         if (tipDates.size() == 1) {
             // the tips are contemporaneous so these are constant...
             k = tree.getInternalNodeCount() - 1;
-            Logger.getLogger("dr.evomodel").info("Uniform Root Prior, Intervals = " + (k + 1));
+            Logger.getLogger("dr.evomodel").info("Uniform Node Height Prior, Intervals = " + (k + 1));
 
             logFactorialK = logFactorial(k);
         } else {
@@ -113,6 +128,12 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
             for (Double date : pruneDates)
                 reversedTipDateList.remove(date);
+
+            if (!useAnalytic) {
+                logLikelihoods = new double[mcSampleSize];
+                drawNodeHeights = new double[tree.getNodeCount()][mcSampleSize];
+                minNodeHeights = new double[tree.getNodeCount()];
+            }
         }
 
         // Leading coefficient on tree polynomial is X = (# internal nodes)!
@@ -125,11 +146,11 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     }
 
-    public UniformRootPrior(Tree tree, double maxRootHeight) {
-        this(UNIFORM_ROOT_PRIOR, tree, maxRootHeight);
+    public UniformNodeHeightPrior(Tree tree, double maxRootHeight) {
+        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, maxRootHeight);
     }
 
-    private UniformRootPrior(String name, Tree tree, double maxRootHeight) {
+    private UniformNodeHeightPrior(String name, Tree tree, double maxRootHeight) {
 
         super(name);
 
@@ -141,7 +162,7 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
     }
 
-    UniformRootPrior(String name) {
+    UniformNodeHeightPrior(String name) {
         super(name);
     }
 
@@ -239,13 +260,13 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
 
-        return calculateLogLikelihood();
+//        return calculateLogLikelihood();
 
-//        if (!likelihoodKnown) {
-//        	logLikelihood = calculateLogLikelihood();
-//        	likelihoodKnown = true;
-//        }
-//        return logLikelihood;
+        if (!likelihoodKnown) {
+        	logLikelihood = calculateLogLikelihood();
+        	likelihoodKnown = true;
+        }
+        return logLikelihood;
     }
 
     public final void makeDirty() {
@@ -276,27 +297,17 @@ public class UniformRootPrior extends AbstractModelLikelihood {
 
             if (k > 0) {
                 // the tips are contemporaneous
-//                logLike = logFactorialK - (double) k * Math.log(rootHeight);
-                // Try new prior.... should behave the same.
-                tmpLogLikelihood = 0;
-                recursivelyComputeDensity(tree, tree.getRoot(), 0);
-                logLike = tmpLogLikelihood;
-
+                logLike = logFactorialK - (double) k * Math.log(rootHeight);
+                
             } else {
                 // TODO Rewrite description above to discuss this new prior
-                if (usePolynomial) {
-                    if (!treePolynomialKnown) {
-                        polynomialType = Polynomial.Type.LOG_DOUBLE;
-                        treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
-//                        System.err.println("poly1: "+treePolynomial);
-//                        System.err.println("eval = "+treePolynomial.logEvaluate(rootHeight));
-//                        System.err.println("last: "+treePolynomial.getCoefficientString(0));
-//                        Polynomial test = recursivelyComputePolynomial(tree,tree.getRoot(),Polynomial.Type.LOG_DOUBLE).getPolynomial();
-//                        System.err.println("poly2: "+test);
-//                        System.err.println("eval = "+test.logEvaluate(rootHeight));
-//                        System.err.println("last: "+test.getCoefficientString(0));
+                if (useAnalytic) {
 
-//                        System.exit(-1);
+//                    long startTime1 = System.nanoTime();
+
+                    if (!treePolynomialKnown) {
+//                        polynomialType = Polynomial.Type.LOG_DOUBLE; // TODO Check that Polynomial.Type.DOUBLE works
+                        treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
                         treePolynomialKnown = true;
                     }
 
@@ -309,11 +320,38 @@ public class UniformRootPrior extends AbstractModelLikelihood {
                             logLike = Double.NEGATIVE_INFINITY;
                         }
                     }
+
+//                    long stopTime1 = System.nanoTime();
+
+
                 } else {
-                    // Try new prior!
-                    tmpLogLikelihood = 0;
-                    recursivelyComputeDensity(tree, tree.getRoot(), 0);
-                    logLike = tmpLogLikelihood;
+
+//                     //Try new prior!
+//                    tmpLogLikelihood = 0;
+//                    recursivelyComputeDensity(tree, tree.getRoot(), 0);
+//                    logLike = tmpLogLikelihood;
+
+//                    long startTime2 = System.nanoTime();
+
+                   // Copy over current root height
+                    final double[] drawRootHeight = drawNodeHeights[tree.getRoot().getNumber()];
+                    Arrays.fill(drawRootHeight,rootHeight); // TODO Only update when rootHeight changes
+
+                    // Determine min heights for each node in tree
+                    recursivelyFindNodeMinHeights(tree,tree.getRoot()); // TODO Only update when topology changes
+
+                    // Simulate from prior
+                    Arrays.fill(logLikelihoods,0.0);
+                    recursivelyComputeMCIntegral(tree, tree.getRoot(), tree.getRoot().getNumber()); // TODO Only update when topology or rootHeight changes
+
+                    // Take average
+                    logLike = -LogTricks.logSum(logLikelihoods) + Math.log(mcSampleSize);
+
+//                    long stopTime2 = System.nanoTime();
+
+//                System.err.println("logLike  : "+logLike+ "    "+(stopTime1-startTime1));
+//                System.err.println("logLike2 : "+logLike2+"    "+(stopTime2-startTime2));
+
                 }
             }
 
@@ -343,6 +381,57 @@ public class UniformRootPrior extends AbstractModelLikelihood {
             // Do nothing
         }
         return minHeight;
+    }
+
+    private double recursivelyFindNodeMinHeights(Tree tree, NodeRef node) {
+
+        double minHeight;
+
+        if (tree.isExternal(node))
+            minHeight = tree.getNodeHeight(node);
+        else {
+            double minHeightChild0 = recursivelyFindNodeMinHeights(tree, tree.getChild(node,0));
+            double minHeightChild1 = recursivelyFindNodeMinHeights(tree, tree.getChild(node,1));
+            minHeight = (minHeightChild0 > minHeightChild1) ? minHeightChild0 : minHeightChild1;
+        }
+
+        minNodeHeights[node.getNumber()] = minHeight;
+        return minHeight;        
+    }
+
+    private void recursivelyComputeMCIntegral(Tree tree, NodeRef node, int parentNodeNumber) {
+
+        if (tree.isExternal(node))
+            return;
+
+        final int nodeNumber = node.getNumber();
+
+        if (!tree.isRoot(node)) {
+
+            final double[] drawParentHeight = drawNodeHeights[parentNodeNumber];
+            final double[] drawThisNodeHeight = drawNodeHeights[nodeNumber];
+            final double minHeight = minNodeHeights[nodeNumber];
+
+            final boolean twoChild = (tree.isExternal(tree.getChild(node,0)) && tree.isExternal(tree.getChild(node,1)));
+
+            for(int i=0; i<mcSampleSize; i++) {
+
+                final double diff = drawParentHeight[i] - minHeight;
+                if (diff <= 0) {
+                    logLikelihoods[i] = Double.NEGATIVE_INFINITY;
+                    break;
+                }
+
+                if (!twoChild)
+                    drawThisNodeHeight[i] = MathUtils.nextDouble() * diff + minHeight;
+
+                logLikelihoods[i] += Math.log(diff);
+            }
+        }
+
+        recursivelyComputeMCIntegral(tree, tree.getChild(node,0), nodeNumber);
+        recursivelyComputeMCIntegral(tree, tree.getChild(node,1), nodeNumber);
+
     }
 
     private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
@@ -533,20 +622,38 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return UNIFORM_ROOT_PRIOR;
+            return UNIFORM_NODE_HEIGHT_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[] {UNIFORM_ROOT_PRIOR, UNIFORM_NODE_HEIGHT_PRIOR};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            Logger.getLogger("dr.evomodel").info("\nConstructing a uniform node height prior:");
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             if (xo.hasAttribute(MAX_ROOT_HEIGHT)) {
                 // the Nicholls & Gray variant
                 double maxRootHeight = xo.getDoubleAttribute(MAX_ROOT_HEIGHT);
-                return new UniformRootPrior(treeModel, maxRootHeight);
+                Logger.getLogger("dr.evomodel").info("\tUsing joint variant with a max root height = "+maxRootHeight+"\n");
+                return new UniformNodeHeightPrior(treeModel, maxRootHeight);
             } else {
-                boolean usePolynomial = xo.getBooleanAttribute("polynomial");
-                // the Bloomquist & Suchard variant
-                return new UniformRootPrior(treeModel, usePolynomial);
+                 // the Bloomquist & Suchard variant or Welch, Rambaut & Suchard variant
+                boolean useAnalytic = xo.getAttribute(ANALYTIC,true);
+                Logger.getLogger("dr.evomodel").info("\tUsing conditional variant with "+(useAnalytic ? "analytic" : "Monte Carlo integrated")+" expressions");
+                Logger.getLogger("dr.evomodel").info("\tPlease reference:");
+                Logger.getLogger("dr.evomodel").info("\t\t (1) Welch, Rambaut and Suchard (in preparation) and");
+                Logger.getLogger("dr.evomodel").info("\t\t (2) Bloomquist and Suchard (in press) Systematic Biology\n");
+                if (useAnalytic) {
+//                    if( treeModel.getExternalNodeCount() > MAX_ANALYTIC_TIPS)
+//                        throw new XMLParseException("Analytic evaluation of UniformNodeHeight is unreliable for > "+MAX_ANALYTIC_TIPS+" taxa");
+                    int mcSampleSize = xo.getAttribute(MC_SAMPLE,DEFAULT_MC_SAMPLE);
+                    return new UniformNodeHeightPrior(treeModel,useAnalytic,mcSampleSize);
+                }
+
+                return new UniformNodeHeightPrior(treeModel, useAnalytic);
             }
         }
 
@@ -567,8 +674,9 @@ public class UniformRootPrior extends AbstractModelLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("polynomial", true),
+                AttributeRule.newBooleanRule(ANALYTIC, true),
                 AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT, true),
+                AttributeRule.newIntegerRule(MC_SAMPLE,true),
                 new ElementRule(TreeModel.class)
         };
     };
@@ -591,5 +699,9 @@ public class UniformRootPrior extends AbstractModelLikelihood {
     //    private Iterator<Polynomial.Type> typeIterator = EnumSet.allOf(Polynomial.Type.class).iterator();
     //    private Polynomial.Type polynomialType = typeIterator.next();
     private Polynomial.Type polynomialType;
+
+    private double[] logLikelihoods;
+    private double[][] drawNodeHeights;
+    private double[] minNodeHeights;
 
 }

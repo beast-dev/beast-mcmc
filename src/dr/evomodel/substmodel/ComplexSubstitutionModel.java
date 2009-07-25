@@ -16,6 +16,8 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -38,6 +40,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public static final String NORMALIZATION = "normalize";
     public static final String MAX_CONDITION_NUMBER = "maxConditionNumber";
     public static final String CONNECTED = "mustBeConnected";
+    public static final String MAX_ITERATIONS = "maxIterations";
+    public static final String CHECK_CONDITIONING = "checkConditioning";
 
 
     public ComplexSubstitutionModel(String name, DataType dataType,
@@ -244,22 +248,41 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         makeValid(amat, stateCount);
 
         // compute eigenvalues and eigenvectors
-        EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(amat));
+//        EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(amat));
+
+       RobustEigenDecomposition eigenDecomp;
+        try {
+            eigenDecomp = new RobustEigenDecomposition(new DenseDoubleMatrix2D(amat), maxIterations);
+        } catch (ArithmeticException ae) {
+            System.err.println(ae.getMessage());
+            wellConditioned = false;
+            System.err.println("amat = \n"+new Matrix(amat));
+            return;
+        }
 
         DoubleMatrix2D eigenV = eigenDecomp.getV();
         DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
         DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
         DoubleMatrix2D eigenVInv;
 
-        if (alegbra.cond(eigenV) > maxConditionNumber) {
-            wellConditioned = false;
-            return;
+        //if (checkConditioning && alegbra.cond(eigenV) > maxConditionNumber) {
+        if (checkConditioning) {
+            RobustSingularValueDecomposition svd;
+            try {
+                svd = new RobustSingularValueDecomposition(eigenV, maxIterations);
+            } catch (ArithmeticException ae) {
+                System.err.println(ae.getMessage());
+                wellConditioned = false;
+                return;
+            }
+            if (svd.cond() > maxConditionNumber) {                
+                wellConditioned = false;
+                return;
+            }
         }
-//        updateMatrix = false;
 
         try {
             eigenVInv = alegbra.inverse(eigenV);
-//            wellConditioned = true;
         } catch (IllegalArgumentException e) {
             wellConditioned = false;
             return;
@@ -397,8 +420,16 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     }
 
+    public void setMaxIterations(int max) {
+        maxIterations = max;
+    }
+
     public void setMaxConditionNumber(double max) {
         maxConditionNumber = max;
+    }
+
+    public void setCheckConditioning(boolean check) {
+        checkConditioning = check;
     }
 
     private static DoubleMatrix2D blockDiagonalExponential(double distance, DoubleMatrix2D mat) {
@@ -487,11 +518,20 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             model.setNormalization(doNormalization);
             sb.append("\tNormalized: "+doNormalization+"\n");
 
-            double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER,1000);
-            model.setMaxConditionNumber(maxConditionNumber);
-            sb.append("\tMax. condition number: "+maxConditionNumber+"\n");
+            boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING,true);
+            model.setCheckConditioning(checkConditioning);
+
+            if (checkConditioning) {
+                double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER,1000);
+                model.setMaxConditionNumber(maxConditionNumber);
+                sb.append("\tMax. condition number: "+maxConditionNumber+"\n");
+            }
+
+            int maxIterations = xo.getAttribute(MAX_ITERATIONS,1000);
+            model.setMaxIterations(maxIterations);
+            sb.append("\tMax iterations: "+maxIterations+"\n");
             
-            sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in preparation)\n");
+            sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in submission)\n");
 
             Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
             return model;
@@ -532,6 +572,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 AttributeRule.newBooleanRule(NORMALIZATION,true),
                 AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER,true),
                 AttributeRule.newBooleanRule(CONNECTED,true),
+                AttributeRule.newIntegerRule(MAX_ITERATIONS,true),
+                AttributeRule.newBooleanRule(CHECK_CONDITIONING,true),
         };
 
     };
@@ -559,6 +601,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     EigenvalueDecomposition storedEigenDecomp;
 
     private double maxConditionNumber = 1000;
+
+    private int maxIterations = 1000;
+
+    private boolean checkConditioning = true;
 
     public Model getModel() {
         return this;

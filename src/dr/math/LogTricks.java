@@ -18,6 +18,14 @@ public class LogTricks {
             return x + StrictMath.log1p(StrictMath.exp(temp));
     }
 
+    public static double logSum(double[] x) {
+        double sum = x[0];
+        final int len = x.length;
+        for(int i=1; i<len; i++)
+            sum = logSumNoCheck(sum,x[i]);
+        return sum;
+    }
+
     public static double logSum(double x, double y) {
         final double temp = y - x;
         if (temp > NATS || x < logLimit)

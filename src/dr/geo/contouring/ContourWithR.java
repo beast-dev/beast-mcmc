@@ -81,7 +81,7 @@ public class ContourWithR implements ContourMaker {
 
     private RVector contourList = null;
 
-    private static final String[] rArgs = {"--no-save"};
+    private static final String[] rArgs = {"--no-save", "--max-vsize=1G"};
 
     private static final String[] rBootCommands = {
             "library(MASS)",

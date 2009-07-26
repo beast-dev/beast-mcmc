@@ -71,7 +71,8 @@ public class BirthDeathLikelihoodTest extends TestCase {
         //death rate
         double d = 0.5;
 
-        double correct = -3.534621219768513; // + Math.log(2.0);
+        // correct value for oriented trees
+        double correct = -3.534621219768513;
 
         birthDeathLikelihoodTester(tree, b - d, d / b, correct);
     }
@@ -86,7 +87,7 @@ public class BirthDeathLikelihoodTest extends TestCase {
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bd.like");
 
-        assertEquals(logL, likelihood.getLogLikelihood(),1e-14);
+        assertEquals(logL, likelihood.getLogLikelihood(), 1e-14);
     }
 
     public static Test suite() {

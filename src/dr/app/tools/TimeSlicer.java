@@ -12,10 +12,7 @@ import dr.util.Version;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.KMLCoordinates;
-import dr.geo.contouring.ContourPath;
-import dr.geo.contouring.ContourMode;
-import dr.geo.contouring.ContourMaker;
-import dr.geo.contouring.ContourWithR;
+import dr.geo.contouring.*;
 import dr.inference.trace.TraceDistribution;
 
 import java.io.*;
@@ -35,12 +32,42 @@ import org.jdom.output.Format;
 public class TimeSlicer {
 
     public static final String sep = "\t";
-
     public static final String PRECISION_STRING = "precision";
     public static final String RATE_STRING = "rate";
 
+    public static final String SLICE_ELEMENT = "slice";
+    public static final String REGIONS_ELEMENT = "hpdRegion";
+    public static final String TRAIT = "trait";
+    public static final String NAME = "name";
+    public static final String DENSITY_VALUE = "density";
+    public static final String SLICE_VALUE = "time";
+    
+    public static final String STYLE = "Style";
+    public static final String ID = "id";
+    public static final String WIDTH = "0.5";
+    public static final String startHPDColor = "00F1D6"; //blue=B36600
+    public static final String endHPDColor = "00FF00"; //red=0000FF
+    public static final String opacity = "9f";
+
+    public static final String BURNIN = "burnin";
+    public static final String SLICE = "slice";
+    public static final String FILE_SLICE = "fileSlice";
+    public static final String MRSD = "mrsd";
+    public static final String HELP = "help";
+    public static final String NOISE = "noise";
+    public static final String IMPUTE = "impute";
+    public static final String SUMMARY = "summary";
+    public static final String FORMAT = "format";
+    public static final String MODE = "mode";
+    public static final String NORMALIZATION = "normalization";
+    public static final String HPD = "hpd";
+
+    public static final String[] falseTrue = new String[] {"false","true"};
+
+
     public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute,
-                      boolean trueNoise, double mrsd, ContourMode contourMode) {
+                      boolean trueNoise, double mrsd, ContourMode contourMode,
+                      Normalization normalize) {
 
         this.traits = traits;
         traitCount = traits.length;
@@ -66,7 +93,7 @@ public class TimeSlicer {
         }
 
         try {
-            readAndAnalyzeTrees(treeFileName, burnin, traits, slices, impute, trueNoise);
+            readAndAnalyzeTrees(treeFileName, burnin, traits, slices, impute, trueNoise, normalize);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
             System.exit(-1);
@@ -157,49 +184,38 @@ public class TimeSlicer {
 
     }
 
+    enum Normalization {
+        LENGTH,
+        HEIGHT,
+        NONE
+    }
+
     enum OutputFormat {
         TAB,
         KML,
         XML
     }
 
-    public static final String SLICE_ELEMENT = "slice";
-    public static final String REGIONS_ELEMENT = "hpdRegion";
-    public static final String TRAIT = "trait";
-    public static final String NAME = "name";
-    public static final String DENSITY_VALUE = "density";
-    public static final String SLICE_VALUE = "time";
-    //only when the trait is location, we will write full KML
-    public static final String LOCATION = "location";
-    public boolean locationToKML = false;
-    public static final String STYLE = "Style";
-    public static final String ID = "id";
-    public static final String WIDTH = "0.5";
-    String startHPDColor = "00F1D6"; //blue=B36600
-    String endHPDColor = "00FF00"; //red=0000FF
-    String opacity = "9f";
+    public static <T extends Enum<T>> String[] enumNamesToStringArray(T[] values) {
+        int i = 0;
+        String[] result = new String[values.length];
+        for (T value: values) {
+            result[i++] = value.name();
+        }
+        return result;
+    }
+
+
 
     private void addDimInfo(Element element, int j, int dim) {
         if (dim > 1)
             element.setAttribute("dim",Integer.toString(j+1));
     }
 
-    private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
+    private void summarizeSliceTrait(Element sliceElement, int slice, List<Trait> thisTrait, int traitIndex, double sliceValue,
+                                     OutputFormat outputFormat,
+                                     double hpdValue) {
 
-        if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.KML) {
-
-            Element sliceElement = null;
-
-            if (outputFormat == OutputFormat.XML) {
-                sliceElement = new Element(SLICE_ELEMENT);
-                sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
-            }
-
-            List<List<Trait>> thisSlice = values.get(slice);
-            int traitCount = thisSlice.size();
-
-            for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
-                List<Trait> thisTrait = thisSlice.get(traitIndex);
                 boolean isNumber = thisTrait.get(0).isNumber();
                 boolean isMultivariate = thisTrait.get(0).isMultivariate();
                 int dim = thisTrait.get(0).getValue().length;
@@ -249,12 +265,14 @@ public class TimeSlicer {
                     }
 
                     if (isBivariate) {
-                        
+
                         ContourMaker contourMaker;
                         if (contourMode == ContourMode.JAVA)
                             contourMaker = new KernelDensityEstimator2D(x[0],x[1]);
                         else if (contourMode == ContourMode.R)
                             contourMaker = new ContourWithR(x[0],x[1]);
+                        else if (contourMode == ContourMode.SNYDER)
+                            contourMaker = new ContourWithSynder(x[0],x[1]);
                         else
                             throw new RuntimeException("Unimplemented ContourModel!");
 
@@ -281,18 +299,36 @@ public class TimeSlicer {
                     }
                     if (outputFormat == OutputFormat.XML)
                         sliceElement.addContent(traitElement);
-                    
+
                 } // else skip
+
+    }
+
+    private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
+
+        if (outputFormat == OutputFormat.TAB)
+            throw new RuntimeException("Only XML/KML output is implemented");
+
+            Element sliceElement = null;
+
+            if (outputFormat == OutputFormat.XML) {
+                sliceElement = new Element(SLICE_ELEMENT);
+                sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+            }
+
+            List<List<Trait>> thisSlice = values.get(slice);
+            int traitCount = thisSlice.size();
+
+            for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
+
+                summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+                                     outputFormat,
+                                     hpdValue);
             }
 
             if(outputFormat == OutputFormat.XML) {
                 rootElement.addContent(sliceElement);
             }
-
-        } else {
-            throw new RuntimeException("Only XML/KML output is implemented");
-        }
-
     }
 
     private void constructPolygonStyleElement(Element styleElement, double sliceValue){
@@ -413,7 +449,9 @@ public class TimeSlicer {
 //    }
 
     private void readAndAnalyzeTrees(String treeFileName, int burnin,
-                                     String[] traits, double[] slices, boolean impute, boolean trueNoise) throws IOException, Importer.ImportException {
+                                     String[] traits, double[] slices,
+                                     boolean impute, boolean trueNoise, Normalization normalize)
+            throws IOException, Importer.ImportException {
 
         int totalTrees = 10000;
         int totalStars = 0;
@@ -439,7 +477,7 @@ public class TimeSlicer {
             Tree treeTime = importer1.importNextTree();
             treesRead++;
             if (totalTrees > burnin)
-               analyzeTree(treeTime, traits, slices, impute, trueNoise);
+               analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize);
 
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
@@ -525,19 +563,21 @@ public class TimeSlicer {
        resultsStream.print(sb);            
     }
 
-    private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
+    private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute,
+                             boolean trueNoise, Normalization normalize) {
 
         double[][] precision = null;
 
         if (impute) {
-            Object o = treeTime.getAttribute("precision");
-            double treelength = 0;
-            for (int a = 0; a < treeTime.getNodeCount(); a++) {
-                NodeRef node = treeTime.getNode(a);
-                if (!(treeTime.isRoot(node))) {
-                    treelength += treeTime.getBranchLength(node);
-                }
+
+            Object o = treeTime.getAttribute(PRECISION_STRING);
+            double treeNormalization = 1; // None
+            if (normalize == Normalization.LENGTH) {
+                treeNormalization = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
+            } else if (normalize == Normalization.HEIGHT) {
+                treeNormalization = treeTime.getNodeHeight(treeTime.getRoot());
             }
+
             if (o != null) {
                 Object[] array = (Object[]) o;
                 int dim = (int) Math.sqrt(1 + 8 * array.length) / 2;
@@ -545,7 +585,7 @@ public class TimeSlicer {
                 int c = 0;
                 for (int i = 0; i < dim; i++) {
                     for (int j = i; j < dim; j++) {
-                        precision[j][i] = precision[i][j] = ((Double) array[c++])*treelength;
+                        precision[j][i] = precision[i][j] = ((Double) array[c++])*treeNormalization;
                     }
                 }
             }
@@ -779,9 +819,19 @@ public class TimeSlicer {
 
     public static void main(String[] args) throws IOException {
 
-
         String inputFileName = null;
         String outputFileName = null;
+        String[] traitNames = null;
+        double[] sliceTimes = null;
+        OutputFormat outputFormat = OutputFormat.XML;
+        boolean impute = false;
+        boolean trueNoise = true;
+        boolean summaryOnly = false;
+        ContourMode contourMode = ContourMode.SNYDER;
+        Normalization normalize = Normalization.LENGTH;
+        int burnin = -1;
+        double mrsd = 0;
+        double hpdValue = 0.80;
 
 //        if (args.length == 0) {
 //          // TODO Make flash GUI
@@ -791,23 +841,25 @@ public class TimeSlicer {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
-                        new Arguments.StringOption("slice","time","specifies an slice time-list [default=none]"),
-                        new Arguments.StringOption("fileSlice","fileTimes","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
-                        new Arguments.RealOption("mrsd","specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.StringOption("noise", new String[]{"false","true"}, false,
+                        new Arguments.StringOption(SLICE,"time","specifies an slice time-list [default=none]"),
+                        new Arguments.StringOption(FILE_SLICE,"fileTimes","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
+                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.Option(HELP, "option to print this message"),
+                        new Arguments.StringOption(NOISE, falseTrue, false,
                                 "add true noise [default = true])"),
-                        new Arguments.StringOption("impute", new String[]{"false", "true"}, false,
+                        new Arguments.StringOption(IMPUTE, falseTrue, false,
                                 "impute trait at time-slice [default = false]"),
-                        new Arguments.StringOption("summary", new String[]{"false","true"}, false,
+                        new Arguments.StringOption(SUMMARY, falseTrue, false,
                                 "compute summary statistics [default = false]"),
-                        new Arguments.StringOption("format", new String[]{"XML","KML"}, false,
+                        new Arguments.StringOption(FORMAT, enumNamesToStringArray(OutputFormat.values()),false,
                                 "summary output format [default = XML]"),
-                        new Arguments.IntegerOption("hpd","mass (1 - 99%) to include in HPD regions [default = 80]"),
-                        new Arguments.StringOption("mode", new String[]{"java","R"}, false,
-                                "contouring model [default = java]"),
+                        new Arguments.IntegerOption(HPD,"mass (1 - 99%) to include in HPD regions [default = 80]"),
+                        new Arguments.StringOption(MODE,enumNamesToStringArray(ContourMode.values()), false,
+                                "contouring model [default = synder]"),
+                        new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
+                                "tree normalization [default = length"),
                         
                 });
 
@@ -819,40 +871,37 @@ public class TimeSlicer {
             System.exit(1);
         }
 
-        if (arguments.hasOption("help")) {
+        if (arguments.hasOption(HELP)) {
             printUsage(arguments);
             System.exit(0);
         }
 
-        int burnin = -1;
-        if (arguments.hasOption("burnin")) {
-            burnin = arguments.getIntegerOption("burnin");
-        }
+        try { // Make sense of arguments
 
-        double mrsd = 0;
-        if (arguments.hasOption("mrsd")) {
-            mrsd = arguments.getRealOption("mrsd");
-        }
-
-        double hpdValue = 0.80;
-        if (arguments.hasOption("hpd")) {
-            int intValue = arguments.getIntegerOption("hpd");
-            if (intValue < 1 || intValue > 99) {
-                progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
-                System.exit(-1);
+            String sliceFileString = arguments.getStringOption(FILE_SLICE);
+            if (sliceFileString != null) {
+                sliceTimes = parseFileWithArray(sliceFileString);
             }
-            hpdValue = intValue / 100.0;
-        }
 
-        String[] traitNames = null;
-        double[] sliceTimes = null;
 
-        String sliceFileString = arguments.getStringOption("fileSlice");
-        if (sliceFileString != null) {
-            sliceTimes = parseFileWithArray(sliceFileString);
-        }
+            if (arguments.hasOption(BURNIN)) {
+                burnin = arguments.getIntegerOption(BURNIN);
+            }
 
-        try {
+
+            if (arguments.hasOption(MRSD)) {
+                mrsd = arguments.getRealOption(MRSD);
+            }
+
+
+            if (arguments.hasOption(HPD)) {
+                int intValue = arguments.getIntegerOption(HPD);
+                if (intValue < 1 || intValue > 99) {
+                    progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
+                    System.exit(-1);
+                }
+                hpdValue = intValue / 100.0;
+            }
 
             String traitString = arguments.getStringOption(TRAIT);
             if (traitString != null) {
@@ -863,45 +912,45 @@ public class TimeSlicer {
                 traitNames[0] = "location.rate";
             }
 
-            String sliceString = arguments.getStringOption("slice");
+            String sliceString = arguments.getStringOption(SLICE);
             if (sliceString != null) {
                 sliceTimes = parseVariableLengthDoubleArray(sliceString);
             }
-                       
+
+            String imputeString = arguments.getStringOption(IMPUTE);
+            if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
+                impute = true;
+
+            String noiseString = arguments.getStringOption(NOISE);
+            if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
+                trueNoise = false;
+
+            String summaryString = arguments.getStringOption(SUMMARY);
+            if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
+                summaryOnly = true;
+
+            String modeString = arguments.getStringOption(MODE);
+            if (modeString != null) {
+                contourMode = ContourMode.valueOf(modeString.toUpperCase());
+                if (contourMode == ContourMode.R && !ContourWithR.processWithR)
+                    contourMode = ContourMode.SNYDER;
+            }
+
+            String normalizeString = arguments.getStringOption(NORMALIZATION);
+            if (normalizeString != null) {
+                normalize = Normalization.valueOf(normalizeString.toUpperCase());
+            }
+
+            String summaryFormat = arguments.getStringOption(FORMAT);
+            if (summaryFormat != null) {
+                outputFormat = OutputFormat.valueOf(summaryFormat.toUpperCase());
+            }
         } catch (Arguments.ArgumentException e) {
             progressStream.println(e);
             printUsage(arguments);
             System.exit(-1);
         }
 
-        String imputeString = arguments.getStringOption("impute");
-        boolean impute = false;
-        if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
-            impute = true;
-
-        String noiseString = arguments.getStringOption("noise");
-        boolean trueNoise = true;
-        if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
-            trueNoise = false;
-
-        String summaryString = arguments.getStringOption("summary");
-        boolean summaryOnly = false;
-        if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
-            summaryOnly = true;
-
-        String modeString = arguments.getStringOption("mode");
-        ContourMode contourMode = ContourMode.JAVA;
-        if (modeString != null) {
-            if (modeString.compareToIgnoreCase("R") == 0 && ContourWithR.processWithR) 
-                contourMode = ContourMode.R;                            
-        }
-
-        String summaryFormat = arguments.getStringOption("format");
-        OutputFormat outputFormat = OutputFormat.XML;
-        if (summaryFormat != null) {
-            if (summaryFormat.compareToIgnoreCase("KML") == 0)
-                outputFormat = OutputFormat.KML;
-        }
 
         final String[] args2 = arguments.getLeftoverArguments();
 
@@ -923,7 +972,8 @@ public class TimeSlicer {
             }
         }
 
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute, trueNoise, mrsd, contourMode);
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute,
+                trueNoise, mrsd, contourMode, normalize);
         timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue);
 
         System.exit(0);

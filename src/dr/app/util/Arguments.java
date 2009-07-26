@@ -406,7 +406,7 @@ public class Arguments {
 					if (o.options != null) {
 						boolean found = false;
                         for (String option1 : o.options) {
-                            if (option1.equals(o.value)) {
+                            if ((!caseSensitive && option1.equalsIgnoreCase(o.value)) || option1.equals(o.value)) {
                                 found = true;
                                 break;
                             }

@@ -83,14 +83,9 @@ public class TimeSlicer {
         output(outFileName,summaryOnly,OutputFormat.XML, 0.80);
     }
 
-
-    //KML stuff
-    Element KMLElement = new Element("kml");
-    //KMLElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
-    Element documentElement = new Element("Document");
-    Element documentNameElement = new Element("name");
-    Element folderElement = new Element("Folder");
-    Element folderNameElement = new Element("name");
+    private Element rootElement;
+    private Element documentElement;
+    private Element folderElement;
 
     public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue) {
 
@@ -105,24 +100,6 @@ public class TimeSlicer {
             }
         }
 
-        // TODO Should ONLY worry about KML stuff if KML is output format
-        //KML stuff
-        documentNameElement.addContent("continuousDiffusion");
-        documentElement.addContent(documentNameElement);
-        folderNameElement.addContent("suface HPD regions");
-        folderElement.addContent(folderNameElement);
-
-        // TODO add command-line options for KML outputname!
-        String kmlOutputFile = "continuousDiffusion"+hpdValue+".kml";
-        try {
-            kmlResultsStream = new PrintStream(new File(kmlOutputFile));
-        } catch (IOException e) {
-                System.err.println("Error opening file: "+kmlOutputFile);
-                System.exit(-1);
-        }
-
-
-
         if (!summaryOnly) {
             outputHeader(traits);
 
@@ -134,21 +111,44 @@ public class TimeSlicer {
 
             }
         } else { // Output summaries
+
+            if (outputFormat == OutputFormat.XML) {
+                rootElement = new Element("xml");
+
+            } else if (outputFormat == OutputFormat.KML) {
+                Element folderNameElement = new Element("name");
+                folderNameElement.addContent("surface HPD regions");
+
+                folderElement = new Element("Folder");
+                //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
+                folderElement.addContent(folderNameElement);
+
+                Element documentNameElement = new Element("name");
+                String documentName = outFileName;
+                if (documentName == null)
+                    documentName = "default";
+                if (documentName.endsWith(".kml"))
+                    documentName = documentName.replace(".kml","");
+                documentNameElement.addContent(documentName);
+
+                documentElement = new Element("Document");
+                documentElement.addContent(documentNameElement);
+                documentElement.addContent(folderElement);
+
+                rootElement = new Element("kml");
+                rootElement.addContent(documentElement);
+            }
+
             if (slices == null)
                 summarizeSlice(0,Double.NaN, outputFormat, hpdValue);
             else {
                 for(int i=0; i<slices.length; i++)
                     summarizeSlice(i,slices[i], outputFormat, hpdValue);
             }
-        }
 
-        // TODO Should ONLY worry about KML stuff if KML is output format
-        if (locationToKML) {
-            documentElement.addContent(folderElement);
-            KMLElement.addContent(documentElement);
-            XMLOutputter kmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
+            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
             try {
-                kmlOutputter.output(KMLElement,kmlResultsStream);
+                xmlOutputter.output(rootElement,resultsStream);
             } catch (IOException e) {
                 System.err.println("IO Exception encountered: "+e.getMessage());
                 System.exit(-1);
@@ -159,6 +159,7 @@ public class TimeSlicer {
 
     enum OutputFormat {
         TAB,
+        KML,
         XML
     }
 
@@ -185,9 +186,14 @@ public class TimeSlicer {
 
     private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
 
-        if (outputFormat == OutputFormat.XML) {
-            Element sliceElement = new Element(SLICE_ELEMENT);
-            sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+        if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.KML) {
+
+            Element sliceElement = null;
+
+            if (outputFormat == OutputFormat.XML) {
+                sliceElement = new Element(SLICE_ELEMENT);
+                sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+            }
 
             List<List<Trait>> thisSlice = values.get(slice);
             int traitCount = thisSlice.size();
@@ -199,13 +205,15 @@ public class TimeSlicer {
                 int dim = thisTrait.get(0).getValue().length;
                 boolean isBivariate = isMultivariate && dim == 2;
                 if (isNumber) {
-                    Element traitElement = new Element(TRAIT);
-                    traitElement.setAttribute(NAME,traits[traitIndex]);
 
-                    //KML stuff
-                    Element styleElement = new Element(STYLE);
-                    if (traits[traitIndex].equals(LOCATION)) {
-                        locationToKML = true;
+                    Element traitElement = null;
+                    if (outputFormat == OutputFormat.XML) {
+                        traitElement = new Element(TRAIT);
+                        traitElement.setAttribute(NAME,traits[traitIndex]);
+                    }
+
+                    if (outputFormat == OutputFormat.KML) {
+                        Element styleElement = new Element(STYLE);
                         constructPolygonStyleElement(styleElement, sliceValue);
                         documentElement.addContent(styleElement);
                     }
@@ -218,24 +226,28 @@ public class TimeSlicer {
                         for(int j=0; j<dim; j++)
                             x[j][i] = value[j];
                     }
-                    // Compute marginal means and standard deviations
-                    for(int j=0; j<dim; j++) {
-                        TraceDistribution trace = new TraceDistribution(x[j]);
-                        Element statsElement = new Element("stats");
-                        addDimInfo(statsElement,j,dim);
-                        StringBuffer sb = new StringBuffer();
-                        sb.append(KMLCoordinates.NEWLINE);
-                        sb.append(String.format(KMLCoordinates.FORMAT,
-                                trace.getMean())).append(KMLCoordinates.SEPERATOR);
-                        sb.append(String.format(KMLCoordinates.FORMAT,
-                                trace.getStdError())).append(KMLCoordinates.SEPERATOR);
-                        sb.append(String.format(KMLCoordinates.FORMAT,
-                                trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
-                        sb.append(String.format(KMLCoordinates.FORMAT,
-                                trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
-                        statsElement.addContent(sb.toString());
-                        traitElement.addContent(statsElement);                        
+
+                    if (outputFormat == OutputFormat.XML) {
+                        // Compute marginal means and standard deviations
+                        for (int j = 0; j < dim; j++) {
+                            TraceDistribution trace = new TraceDistribution(x[j]);
+                            Element statsElement = new Element("stats");
+                            addDimInfo(statsElement, j, dim);
+                            StringBuffer sb = new StringBuffer();
+                            sb.append(KMLCoordinates.NEWLINE);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getMean())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getStdError())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
+                            statsElement.addContent(sb.toString());
+                            traitElement.addContent(statsElement);
+                        }
                     }
+
                     if (isBivariate) {
                         
                         ContourMaker contourMaker;
@@ -248,37 +260,37 @@ public class TimeSlicer {
 
                         ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
                         for(ContourPath path : paths) {
-                            Element regionElement = new Element(REGIONS_ELEMENT);                            
-                            regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
+
                             KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
-                            regionElement.addContent(coords.toXML());
-                            traitElement.addContent(regionElement);
+                            if(outputFormat == OutputFormat.XML) {
+                                Element regionElement = new Element(REGIONS_ELEMENT);
+                                regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
+                                regionElement.addContent(coords.toXML());
+                                traitElement.addContent(regionElement);
+                            }
 
                             // only if the trait is location we will write KML
-                            if ((traitElement.getAttributeValue(NAME)).equals(LOCATION)) {
+                            if(outputFormat == OutputFormat.KML){
                                 //because KML polygons require long,lat,alt we need to switch lat and long first
                                 coords.switchXY();
-                                 Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
+                                Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
                                 folderElement.addContent(placemarkElement);
                             }
                        }
 
                     }
-                    sliceElement.addContent(traitElement);
+                    if (outputFormat == OutputFormat.XML)
+                        sliceElement.addContent(traitElement);
                     
                 } // else skip
             }
 
-            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
-            try {
-                xmlOutputter.output(sliceElement,resultsStream);
-            } catch (IOException e) {
-                System.err.println("IO Exception encountered: "+e.getMessage());
-                System.exit(-1);
+            if(outputFormat == OutputFormat.XML) {
+                rootElement.addContent(sliceElement);
             }
 
         } else {
-            throw new RuntimeException("Only XML output is implemented");
+            throw new RuntimeException("Only XML/KML output is implemented");
         }
 
     }
@@ -565,6 +577,10 @@ public class TimeSlicer {
                                         outputRateWarning = false;
                                     }
                                 }
+                                if (trueNoise && precision == null) {
+                                    progressStream.println("Error: not precision available for imputation with correct noise!");
+                                    System.exit(-1);
+                                }
                                 trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
                                         slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
                             }
@@ -603,7 +619,7 @@ public class TimeSlicer {
             System.exit(-1);
         }
 
-        int dim = precision.length;
+        int dim = nodeTrait.getDim();
         double[] nodeValue = nodeTrait.getValue();
         double[] parentValue = parentTrait.getValue();
 
@@ -641,8 +657,6 @@ public class TimeSlicer {
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
     private PrintStream resultsStream;
-    private PrintStream kmlResultsStream;
-
 
     private final static Version version = new BeastVersion();
 
@@ -653,7 +667,7 @@ public class TimeSlicer {
 
         arguments.printUsage(commandName, "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: " + commandName + " test.trees out.txt");
+        progressStream.println("  Example: " + commandName + " test.trees out.kml");
         progressStream.println();
     }
 
@@ -780,7 +794,7 @@ public class TimeSlicer {
                                 "impute trait at time-slice [default = false]"),
                         new Arguments.StringOption("summary", new String[]{"false","true"}, false,
                                 "compute summary statistics [default = false]"),
-                        new Arguments.StringOption("format", new String[]{"XML"}, false,
+                        new Arguments.StringOption("format", new String[]{"XML","KML"}, false,
                                 "summary output format [default = XML]"),
                         new Arguments.IntegerOption("hpd","mass (1 - 99%) to include in HPD regions [default = 80]"),
                         new Arguments.StringOption("mode", new String[]{"java","R"}, false,
@@ -873,8 +887,12 @@ public class TimeSlicer {
                 contourMode = ContourMode.R;                            
         }
 
-//        String summaryFormat = arguments.getStringOption("format");
+        String summaryFormat = arguments.getStringOption("format");
         OutputFormat outputFormat = OutputFormat.XML;
+        if (summaryFormat != null) {
+            if (summaryFormat.compareToIgnoreCase("KML") == 0)
+                outputFormat = OutputFormat.KML;
+        }
 
         final String[] args2 = arguments.getLeftoverArguments();
 

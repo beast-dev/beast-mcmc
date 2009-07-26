@@ -48,7 +48,7 @@ public class ScoreMatrix {
     public ScoreMatrix(SiteModel siteModel, double time) {
         this.siteModel = siteModel;
 
-        logp = ((GammaSiteModel)siteModel).getSubstitutionModel().getFrequencyModel().getFrequencies();
+        logp = siteModel.getSubstitutionModel().getFrequencyModel().getFrequencies();
 
         for (int i = 0; i < logp.length; i++) {
             logp[i] = Math.log(logp[i]);

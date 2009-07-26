@@ -52,20 +52,20 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         UNSCALED,     // no coeff
         TIMESONLY,    // n!
         ORIENTED,     // n
-        LABELED,        // 2^(n-1)/(n-1)!
+        LABELED,      // 2^(n-1)/(n-1)!
     }
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
-    Parameter relativeDeathRateParameter;
+    private Parameter relativeDeathRateParameter;
     /**
      * mu/lambda *
      */
-    Parameter birthDiffRateParameter;
+    private Parameter birthDiffRateParameter;
     /**
      * lambda - mu *
      */
-    Parameter sampleProbability;
+    private Parameter sampleProbability;
 
     private TreeType type;
 

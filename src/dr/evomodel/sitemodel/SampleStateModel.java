@@ -70,7 +70,6 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
 //		stateCount = ((SubstitutionModel)substitutionModels.elementAt(0)).getDataType().getStateCount();
 
-        this.muParameter = muParameter;
         addVariable(muParameter);
         muParameter.addBounds(new Parameter.DefaultBounds(1000.0, 0.0, 1));
 
@@ -231,10 +230,10 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(MUTATION_RATE);
+            XMLObject cxo = xo.getChild(MUTATION_RATE);
             Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(PROPORTIONS);
+            cxo = xo.getChild(PROPORTIONS);
             Parameter proportionParameter = (Parameter) cxo.getChild(Parameter.class);
 
             Vector<Object> subModels = new Vector<Object>();
@@ -265,7 +264,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MUTATION_RATE,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(PROPORTIONS,
@@ -276,7 +275,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
     private class omegaBounds implements Bounds {
 
-        private Parameter lowerOmega, upperOmega;
+        private final Parameter lowerOmega, upperOmega;
 
         public omegaBounds(Parameter lowerOmega, Parameter upperOmega) {
 
@@ -336,9 +335,9 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
     class classSizeBounds implements Bounds {
 
-        private Parameter catProportionUnder;
-        private Parameter catProportionAbove;
-        private Parameter catProportion;
+        private final Parameter catProportionUnder;
+        private final Parameter catProportionAbove;
+        private final Parameter catProportion;
 
         public classSizeBounds(Parameter catProportion, Parameter catProportionUnder, Parameter catProportionAbove) {
 
@@ -380,19 +379,14 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
 
     }
 
-    /**
-     * mutation rate parameter
-     */
-    private Parameter muParameter;
-
-    private Vector substitutionModels;
+    private final Vector substitutionModels;
 
     /**
      * class size parameters
      */
-    private Parameter proportionParameter;
+    private final Parameter proportionParameter;
 
-    private int categoryCount;
+    private final int categoryCount;
 
 //	private int stateCount;
 }

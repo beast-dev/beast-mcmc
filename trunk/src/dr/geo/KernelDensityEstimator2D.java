@@ -183,12 +183,21 @@ public class KernelDensityEstimator2D implements ContourMaker {
         return seq;
     }
 
+    private double margin = 0.1;
+
     private void setupLims() {
         lims = new double[4];
         lims[0] = DiscreteStatistics.min(x);
         lims[1] = DiscreteStatistics.max(x);
         lims[2] = DiscreteStatistics.min(y);
         lims[3] = DiscreteStatistics.max(y);
+
+        double xDelta = (lims[1] - lims[0]) * margin;
+        double yDelta = (lims[3] - lims[2]) * margin;
+        lims[0] -= xDelta;
+        lims[1] += xDelta;
+        lims[2] -= yDelta;
+        lims[3] += yDelta;
     }
 
     private void setupH() {
@@ -233,6 +242,8 @@ public class KernelDensityEstimator2D implements ContourMaker {
         System.exit(-1);
 
     }
+
+    public double[] getLims() { return lims; }
 
     private double[] x; // x coordinates
     private double[] y; // y coordinates

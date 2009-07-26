@@ -325,16 +325,18 @@ public class TimeSlicer {
         visibility.addContent("1");
         placemarkElement.addContent(visibility);
 
-        Element timeSpan = new Element("TimeSpan");
-            Element begin = new Element("begin");
-            begin.addContent(Double.toString(date));
-        timeSpan.addContent(begin);
-        if (sliceInteger > 0) {
-            Element end = new Element("end");
-            end.addContent(Double.toString(mostRecentSamplingDate-slices[(sliceInteger-1)]));
-            timeSpan.addContent(end);
+        if (sliceCount > 1) {
+            Element timeSpan = new Element("TimeSpan");
+                Element begin = new Element("begin");
+                begin.addContent(Double.toString(date));
+                timeSpan.addContent(begin);
+            if (sliceInteger > 1) {
+                 Element end = new Element("end");
+                end.addContent(Double.toString(mostRecentSamplingDate-slices[(sliceInteger-1)]));
+                timeSpan.addContent(end);
+            }
+            placemarkElement.addContent(timeSpan);
         }
-        placemarkElement.addContent(timeSpan);
 
         Element style = new Element("styleUrl");
         style.addContent("#"+REGIONS_ELEMENT+date+"_style");
@@ -529,6 +531,13 @@ public class TimeSlicer {
 
         if (impute) {
             Object o = treeTime.getAttribute("precision");
+            double treelength = 0;
+            for (int a = 0; a < treeTime.getNodeCount(); a++) {
+                NodeRef node = treeTime.getNode(a);
+                if (!(treeTime.isRoot(node))) {
+                    treelength += treeTime.getBranchLength(node);
+                }
+            }
             if (o != null) {
                 Object[] array = (Object[]) o;
                 int dim = (int) Math.sqrt(1 + 8 * array.length) / 2;
@@ -536,7 +545,7 @@ public class TimeSlicer {
                 int c = 0;
                 for (int i = 0; i < dim; i++) {
                     for (int j = i; j < dim; j++) {
-                        precision[j][i] = precision[i][j] = (Double) array[c++];
+                        precision[j][i] = precision[i][j] = ((Double) array[c++])*treelength;
                     }
                 }
             }

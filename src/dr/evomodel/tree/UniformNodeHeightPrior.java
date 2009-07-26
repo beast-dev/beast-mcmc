@@ -140,9 +140,13 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
         // To keep X > 10E-40, should use log-space polynomials for more than ~30 tips
         if (tree.getExternalNodeCount() < 30) {
             polynomialType = Polynomial.Type.DOUBLE; // Much faster
+        } else if (tree.getExternalNodeCount() < 45){
+            polynomialType = Polynomial.Type.LOG_DOUBLE;
         } else {
+//            polynomialType = Polynomial.Type.APDOUBLE;
             polynomialType = Polynomial.Type.LOG_DOUBLE;
         }
+        Logger.getLogger("dr.evomodel").info("Using "+polynomialType+" polynomials!");
 
     }
 
@@ -306,7 +310,6 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 //                    long startTime1 = System.nanoTime();
 
                     if (!treePolynomialKnown) {
-//                        polynomialType = Polynomial.Type.LOG_DOUBLE; // TODO Check that Polynomial.Type.DOUBLE works
                         treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
                         treePolynomialKnown = true;
                     }
@@ -349,9 +352,6 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 
 //                    long stopTime2 = System.nanoTime();
 
-//                System.err.println("logLike  : "+logLike+ "    "+(stopTime1-startTime1));
-//                System.err.println("logLike2 : "+logLike2+"    "+(stopTime2-startTime2));
-
                 }
             }
 
@@ -359,6 +359,40 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
             return logLike;
         }
     }
+
+//    Map<Double,Integer> boxCounts;
+//
+//    private double recursivelyComputeMarcDensity(Tree tree, NodeRef node, double rootHeight) {
+//        if (tree.isExternal(node))
+//            return tree.getNodeHeight(node);
+//
+////        double thisHeight = tree.getNodeHeight(node);
+////        double thisHeight = rootHeight;
+//        double heightChild1 = recursivelyComputeMarcDensity(tree, tree.getChild(node, 0), rootHeight);
+//        double heightChild2 = recursivelyComputeMarcDensity(tree, tree.getChild(node, 1), rootHeight);
+//        double minHeight = (heightChild1 > heightChild2) ? heightChild1 : heightChild2;
+//
+//        if (!tree.isRoot(node)) {
+//            double diff = rootHeight - minHeight;
+//            if (diff <= 0)
+//                tmpLogLikelihood = Double.NEGATIVE_INFINITY;
+//            else
+//                tmpLogLikelihood -= Math.log(diff);
+//
+//            Integer count = boxCounts.get(minHeight);
+//            if (count == null) {
+//                boxCounts.put(minHeight,1);
+////                System.err.println("new height: "+minHeight);
+//            } else {
+//                boxCounts.put(minHeight,count+1);
+////                System.err.println("old height: "+minHeight);
+//            }
+//            // TODO Could do the logFactorial right here
+//        } else {
+//            // Do nothing
+//        }
+//        return minHeight;
+//    }
 
 
     private double recursivelyComputeDensity(Tree tree, NodeRef node, double parentHeight) {
@@ -434,11 +468,18 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 
     }
 
+    private static final double INV_PRECISION = 10;
+
+    private static double round(double x) {
+        return Math.round(x * INV_PRECISION) / INV_PRECISION;
+    }
+
     private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
 
         if (tree.isExternal(node)) {
             double[] value = new double[]{1.0};
-            return new TipLabeledPolynomial(value, tree.getNodeHeight(node), type, true);
+            double height = round(tree.getNodeHeight(node)); // Should help in numerical stability        
+            return new TipLabeledPolynomial(value, height, type, true);
         }
 
         TipLabeledPolynomial childPolynomial1 = recursivelyComputePolynomial(tree, tree.getChild(node, 0), type);

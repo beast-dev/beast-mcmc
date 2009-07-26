@@ -263,13 +263,13 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(SUBSTITUTION_MODEL);
+            XMLObject cxo = xo.getChild(SUBSTITUTION_MODEL);
             SubstitutionModel substitutionModel = (SubstitutionModel) cxo.getChild(SubstitutionModel.class);
 
-            cxo = (XMLObject) xo.getChild(MUTATION_RATE);
+            cxo = xo.getChild(MUTATION_RATE);
             Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(RATE_PARAMETER);
+            cxo = xo.getChild(RATE_PARAMETER);
             Parameter rateParam = null;
             int relativeTo = 0;
             if (cxo != null) {
@@ -277,7 +277,7 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
                 relativeTo = cxo.getIntegerAttribute(RELATIVE_TO);
             }
 
-            cxo = (XMLObject) xo.getChild(CATEGORIES);
+            cxo = xo.getChild(CATEGORIES);
             String categories = "";
             String states = "";
             if (cxo != null) {
@@ -305,7 +305,7 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                         new ElementRule(SubstitutionModel.class)
                 }),
@@ -331,24 +331,24 @@ public class CategorySiteModel extends AbstractModel implements SiteModel {
     /**
      * mutation rate parameter
      */
-    private Parameter muParameter;
+    private final Parameter muParameter;
 
     /**
      * rates parameter
      */
-    private Parameter rateParameter;
+    private final Parameter rateParameter;
 
     private boolean ratesKnown;
 
-    private int categoryCount;
+    private final int categoryCount;
 
-    private double[] categoryRates;
+    private final double[] categoryRates;
 
 
-    private int[] categoryWeights;
-    private int[] categories;
-    private String states;
-    private int siteCount;
+    private final int[] categoryWeights;
+    private final int[] categories;
+    private final String states;
+    private final int siteCount;
     private int relativeTo = 0;
 
 }

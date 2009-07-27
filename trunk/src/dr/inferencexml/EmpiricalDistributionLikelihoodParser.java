@@ -42,6 +42,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String TO = "to";
     public static final String SPLINE_INTERPOLATION = "splineInterpolation";
     public static final String DEGREE = "degree";
+    public static final String INVERSE = "inverse";
 
 
     public String getParserName() {
@@ -55,14 +56,16 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
         boolean splineInterpolation = xo.getAttribute(SPLINE_INTERPOLATION,false);
         int degree = xo.getAttribute(DEGREE,3); // Default is cubic-spline
 
+        boolean inverse = xo.getAttribute(INVERSE,false);
+
         EmpiricalDistributionLikelihood likelihood;
 
         if (splineInterpolation) {
             if( degree < 1 )
                 throw new XMLParseException("Spline degree must be greater than zero!");
-            likelihood = new SplineInterpolatedLikelihood(fileName);
+            likelihood = new SplineInterpolatedLikelihood(fileName,degree,inverse);
         } else
-            likelihood = new EmpiricalDistributionLikelihood(fileName);
+            likelihood = new EmpiricalDistributionLikelihood(fileName,inverse);
 
         XMLObject cxo1 = xo.getChild(DATA);
         final int from = cxo1.getAttribute(FROM, -1);
@@ -101,6 +104,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
             AttributeRule.newStringRule(FILE_NAME),
             AttributeRule.newBooleanRule(SPLINE_INTERPOLATION,true),
             AttributeRule.newIntegerRule(DEGREE,true),
+            AttributeRule.newBooleanRule(INVERSE,true),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),

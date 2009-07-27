@@ -438,7 +438,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    private void unlinkTrees() { // reuse previous PartitionTreePrior
+    public void unlinkTrees() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);

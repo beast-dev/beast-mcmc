@@ -14,7 +14,7 @@ import dr.inference.model.Statistic;
 public class TreeDispersionStatistic extends Statistic.Abstract implements TreeStatistic {
 
     public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
-    public static final String BOOLEAN_OPTION = "booleanOption";
+    public static final String BOOLEAN_OPTION = "greatCircleDistance";
 
     public TreeDispersionStatistic(String name, TreeModel tree, SampledMultivariateTraitLikelihood traitLikelihood,
                                    boolean genericOption) {
@@ -41,24 +41,40 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
      */
     public double getStatisticValue(int dim) {
 
-        String traitName = traitLikelihood.getTraitName();
+        String traitName = traitLikelihood.getTraitName();        
+        double treelength = 0;
+        double treeDistance = 0;
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
-
             double[] trait = tree.getMultivariateNodeTrait(node, traitName);
 
             if (node != tree.getRoot()) {
 
-                double branchLength = tree.getBranchLength(node);
-                // or
-                double diffusionRate = traitLikelihood.getRescaledBranchLength(node);
+                double[] parentTrait = tree.getMultivariateNodeTrait(tree.getParent(node), traitName);
+                treelength += tree.getBranchLength(node);
 
-                if (genericOption)
-                    ;
+                if (genericOption) {
+                    treeDistance += getKilometerGreatCircleDistance(trait,parentTrait);
+                } else {
+                    treeDistance += getNativeDistance(trait,parentTrait);
+                }
+
             }
         }
-        return 666;
+        return treeDistance/treelength;
+    }
+
+    private double getNativeDistance(double[] location1, double[] location2) {
+        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
+    }
+    private double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
+        double R = 6371; // km
+        double dLat = Math.toRadians(location2[0]-location1[0]);
+        double dLon = Math.toRadians(location2[1]-location1[1]);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(location1[0])) * Math.cos(Math.toRadians(location2[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

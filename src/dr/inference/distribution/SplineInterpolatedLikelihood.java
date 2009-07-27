@@ -34,20 +34,41 @@ import dr.inference.model.Variable;
  */
 public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihood {
 
-    public SplineInterpolatedLikelihood(String fileName, int degree) {
-        super(fileName);
+    public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse) {
+        super(fileName, inverse);
 
-        // Set-up spline basis, could be degree = 1 for linear interpolation
-        splineBasis = new SplineBasis(getId(),new Variable.D(values), new Variable.D(density), degree);
+         // Set-up spline basis, could be degree = 1 for linear interpolation
+//        splineBasis = new SplineBasis(getId(),new Variable.D(values), new Variable.D(density), degree);
+
+        // Something is wrong with the spline basis routines...  just do simple linear interpolation
+
     }
 
-    public SplineInterpolatedLikelihood(String fileName) {
-    	super(fileName);
-	}
-
-	@Override
+    @Override
     protected double logPDF(double x) {
-        return splineBasis.evaluate(x);
+//        return splineBasis.evaluate(x);
+
+        final int len = values.length;
+
+        if (x < values[0] || x > values[len - 1])
+            return Double.NEGATIVE_INFINITY;
+
+        double rtnValue = 0;
+
+        for(int i=1; i<len; i++) {
+            if (values[i] > x) { // first largest point
+                final double diffValue = values[i] - values[i-1];
+                final double diffDensity = density[i] - density[i-1];
+                rtnValue = density[i] - (values[i]-x) / diffValue * diffDensity;
+                break;
+            }
+        }
+
+        rtnValue = Math.log(rtnValue);
+        if (inverse)
+            rtnValue *= -1;
+  
+        return rtnValue;
     }
 
     private SplineBasis splineBasis = null;

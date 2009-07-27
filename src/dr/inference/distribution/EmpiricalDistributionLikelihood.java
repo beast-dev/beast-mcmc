@@ -29,11 +29,18 @@ import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.StringTokenizer;
+
 /**
  * A class that returns the log likelihood of a set of data (statistics)
  * being distributed according to a distribution generated empirically from some data.
  *
  * @author Andrew Rambaut
+ * @author Marc Suchard
  * @version $Id:$
  */
 
@@ -44,13 +51,42 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
     private int from = -1;
     private int to = Integer.MAX_VALUE;
 
-    public EmpiricalDistributionLikelihood(String fileName) {
+    public EmpiricalDistributionLikelihood(String fileName, boolean inverse) {
         super(null);
 
-        // Load data
-        values = null;
-        density = null;
+        readFile(fileName);
+
+        this.inverse = inverse;    
     }
+
+    protected void readFile(String fileName) {
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+
+            String line1 = reader.readLine();
+            StringTokenizer st = new StringTokenizer(line1," ");
+            values = new double[st.countTokens()];
+            for(int i=0; i<values.length; i++)
+                values[i] = Double.valueOf(st.nextToken());
+            String line2 = reader.readLine();
+            st = new StringTokenizer(line2," ");
+            density = new double[st.countTokens()];
+            for(int i=0; i<density.length; i++)
+                density[i] = Double.valueOf(st.nextToken());
+
+            reader.close();
+
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: "+fileName);
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println("IO exception reading: "+fileName);
+            System.exit(-1);
+        }
+
+    }
+
 
     public void setRange(int from, int to) {
         this.from = from;
@@ -92,7 +128,9 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
         throw new RuntimeException("Not implemented yet!");
     }
 
-    protected final double[] values;
-    protected final double[] density;
+    protected  double[] values;
+    protected  double[] density;
+
+    protected boolean inverse;
 }
 

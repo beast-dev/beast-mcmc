@@ -1,5 +1,5 @@
 #labels Phase-Design,Featured
-#A description of the default priors on each parameter of the standard models in BEAUti
+A description of the default priors on each parameter of the standard models in BEAUti
 
 = Introduction =
 

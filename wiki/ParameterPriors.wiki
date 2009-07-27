@@ -1,0 +1,9 @@
+#labels Phase-Design,Featured
+#A description of the default priors on each parameter of the standard models in BEAUti
+
+= Introduction =
+
+The aim is to provide every parameter with a proper and reasonable prior. This document is to describe our choices and the rationale behind each.
+
+
+= Details =

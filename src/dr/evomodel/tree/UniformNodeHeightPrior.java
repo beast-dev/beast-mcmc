@@ -59,6 +59,7 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
     public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
     public static final String ANALYTIC = "analytic";
     public static final String MC_SAMPLE = "mcSampleSize";
+    public static final String MARGINAL = "marginal";
 
     public static final int MAX_ANALYTIC_TIPS = 60; // TODO Determine this value!
     public static final int DEFAULT_MC_SAMPLE = 100000;
@@ -73,27 +74,29 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 
     private boolean isNicholls;
     private boolean useAnalytic;
+    private boolean useMarginal;
     private int mcSampleSize;
 
     Set<Double> tipDates = new TreeSet<Double>();
     List<Double> reversedTipDateList = new ArrayList<Double>();
     Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
 
-    public UniformNodeHeightPrior(Tree tree, boolean useAnalytic) {
-        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, useAnalytic, DEFAULT_MC_SAMPLE);
+    public UniformNodeHeightPrior(Tree tree, boolean useAnalytic, boolean marginal) {
+        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, useAnalytic, DEFAULT_MC_SAMPLE, marginal);
     }
 
     private UniformNodeHeightPrior(Tree tree, boolean useAnalytic, int mcSampleSize) {
-        this(UNIFORM_NODE_HEIGHT_PRIOR,tree,useAnalytic,mcSampleSize);
+        this(UNIFORM_NODE_HEIGHT_PRIOR,tree,useAnalytic,mcSampleSize, false);
     }
 
-    private UniformNodeHeightPrior(String name, Tree tree, boolean useAnalytic, int mcSampleSize) {
+    private UniformNodeHeightPrior(String name, Tree tree, boolean useAnalytic, int mcSampleSize, boolean marginal) {
 
         super(name);
 
         this.tree = tree;
         this.isNicholls = false;
         this.useAnalytic = useAnalytic;
+        this.useMarginal = marginal;
         this.mcSampleSize = mcSampleSize;
 
         if (tree instanceof TreeModel) {
@@ -308,31 +311,34 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
                 if (useAnalytic) {
 
 //                    long startTime1 = System.nanoTime();
+                    if (useMarginal) {
 
-                    if (!treePolynomialKnown) {
-                        treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
-                        treePolynomialKnown = true;
-                    }
-
-                    logLike = -treePolynomial.logEvaluate(rootHeight);
-
-                    if (Double.isNaN(logLike)) {
-                        // Try using Horner's method
-                        logLike = -treePolynomial.logEvaluateHorner(rootHeight);
-                        if (Double.isNaN(logLike)) {
-                            logLike = Double.NEGATIVE_INFINITY;
+                        if (!treePolynomialKnown) {
+                            treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
+                            treePolynomialKnown = true;
                         }
+
+                        logLike = -treePolynomial.logEvaluate(rootHeight);
+
+                        if (Double.isNaN(logLike)) {
+                            // Try using Horner's method
+                            logLike = -treePolynomial.logEvaluateHorner(rootHeight);
+                            if (Double.isNaN(logLike)) {
+                                logLike = Double.NEGATIVE_INFINITY;
+                            }
+                        }
+                    } else {
+
+                        tmpLogLikelihood = 0;
+                        recursivelyComputeDensity(tree, tree.getRoot(), 0);
+                        logLike = tmpLogLikelihood;
+
                     }
 
 //                    long stopTime1 = System.nanoTime();
 
 
                 } else {
-
-//                     //Try new prior!
-//                    tmpLogLikelihood = 0;
-//                    recursivelyComputeDensity(tree, tree.getRoot(), 0);
-//                    logLike = tmpLogLikelihood;
 
 //                    long startTime2 = System.nanoTime();
 
@@ -683,18 +689,21 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
             } else {
                  // the Bloomquist & Suchard variant or Welch, Rambaut & Suchard variant
                 boolean useAnalytic = xo.getAttribute(ANALYTIC,true);
+                boolean marginal = xo.getAttribute(MARGINAL,true);
                 Logger.getLogger("dr.evomodel").info("\tUsing conditional variant with "+(useAnalytic ? "analytic" : "Monte Carlo integrated")+" expressions");
+                if (useAnalytic)
+                    Logger.getLogger("dr.evomodel").info("\t\tSubvariant: "+(marginal ? "marginal" : "conditional"));
                 Logger.getLogger("dr.evomodel").info("\tPlease reference:");
                 Logger.getLogger("dr.evomodel").info("\t\t (1) Welch, Rambaut and Suchard (in preparation) and");
                 Logger.getLogger("dr.evomodel").info("\t\t (2) Bloomquist and Suchard (in press) Systematic Biology\n");
-                if (useAnalytic) {
+                if (!useAnalytic) {
 //                    if( treeModel.getExternalNodeCount() > MAX_ANALYTIC_TIPS)
 //                        throw new XMLParseException("Analytic evaluation of UniformNodeHeight is unreliable for > "+MAX_ANALYTIC_TIPS+" taxa");
                     int mcSampleSize = xo.getAttribute(MC_SAMPLE,DEFAULT_MC_SAMPLE);
                     return new UniformNodeHeightPrior(treeModel,useAnalytic,mcSampleSize);
                 }
 
-                return new UniformNodeHeightPrior(treeModel, useAnalytic);
+                return new UniformNodeHeightPrior(treeModel, useAnalytic, marginal);
             }
         }
 
@@ -718,6 +727,7 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
                 AttributeRule.newBooleanRule(ANALYTIC, true),
                 AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT, true),
                 AttributeRule.newIntegerRule(MC_SAMPLE,true),
+                AttributeRule.newBooleanRule(MARGINAL,true),
                 new ElementRule(TreeModel.class)
         };
     };

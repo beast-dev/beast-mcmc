@@ -166,6 +166,32 @@ public class TreePriorGenerator extends Generator {
 	
 	            // write logistic t50 socket
 	            writer.writeOpenTag(LogisticGrowthModel.TIME_50);
+	            
+	            if (options.taxonSets == null || options.taxonSets.size() < 1) { 
+            		writer.writeComment("No calibration");
+		            dr.app.beauti.options.Parameter para = prior.getParameter("logistic.t50");
+		            
+		            double initRootHeight;
+		            if (options.shareSameTreePrior) {
+		            	initRootHeight = getRandomStartingTreeInitialRootHeight(options.getPartitionTreeModels().get(0)); // Initialise initRootHeight
+		            	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+		            		double tmpRootHeight = getRandomStartingTreeInitialRootHeight(tree);
+		                    if (initRootHeight < tmpRootHeight) {
+		                    	initRootHeight = tmpRootHeight;
+		                    }
+		                }		            	
+		            } else {
+		            	initRootHeight = getRandomStartingTreeInitialRootHeight(prior.getTreeModel());
+		            }
+		            
+		            if (initRootHeight <= para.initial) {
+		            	para.initial = initRootHeight / 2; // para.initial has to < initRootHeight
+		            }
+	            } else {
+	            	writer.writeComment("Has calibration");
+	            	//TODO
+	            }
+	            
 	            writeParameter("logistic.t50", prior, writer);
 	            writer.writeCloseTag(LogisticGrowthModel.TIME_50);
 	
@@ -345,6 +371,18 @@ public class TreePriorGenerator extends Generator {
     	        writer.writeCloseTag("lessThan");
     	        writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
     	        writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+    	        
+    	        writer.writeOpenTag(
+	                    CoalescentLikelihood.COALESCENT_LIKELIHOOD,
+	                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT)}
+	            );
+	            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+	            writeNodeHeightPriorModelRef(prior, writer);
+	            writer.writeCloseTag(CoalescentLikelihood.MODEL);
+	            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
+	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
+	            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 	            
     	        break;
 	            
@@ -745,7 +783,7 @@ public class TreePriorGenerator extends Generator {
             case SPECIES_BIRTH_DEATH:
                 // do not need
                 break;
-            default: // include SPECIES_YULE, SPECIES_BIRTH_DEATH
+            default: 
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
         }
         

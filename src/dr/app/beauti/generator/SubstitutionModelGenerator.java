@@ -21,9 +21,9 @@ import dr.xml.XMLParser;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionModelGenerator extends Generator {
+public class SubstitutionModelGenerator extends Generator {
 
-    public PartitionModelGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public SubstitutionModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

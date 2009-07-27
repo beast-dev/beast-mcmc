@@ -11,6 +11,9 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.priorsPanel.PriorType;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
@@ -297,4 +300,27 @@ public abstract class Generator {
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
+    
+    protected double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
+    	dr.app.beauti.options.Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+    	
+    	if (rootHeight.priorType != PriorType.NONE) {
+    		return rootHeight.initial;
+    	} else {
+    		List<SiteList> siteLists = new ArrayList<SiteList>();
+    		
+    		for (PartitionData partition : model.getAllPartitionData()) {
+    			SiteList sl = (SiteList) partition.getAlignment();
+    			if (!siteLists.contains(sl)) {
+    				siteLists.add(sl);
+    			}
+    		}
+    		
+    		Patterns mergePartternsTree = new Patterns(siteLists);
+    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
+    		
+    		return dm.getMeanDistance();
+    	}   	
+		
+    }
 }

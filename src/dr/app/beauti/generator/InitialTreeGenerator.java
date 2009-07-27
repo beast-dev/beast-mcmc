@@ -94,37 +94,28 @@ public class InitialTreeGenerator extends Generator {
             case RANDOM:
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
-                rootHeight = model.getParameter("treeModel.rootHeight");
-                if (rootHeight.priorType != PriorType.NONE) {
-                    writer.writeOpenTag(
-                            CoalescentSimulator.COALESCENT_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + rootHeight.initial)
-                            }
-                    );
-                } else {
-                	List<SiteList> siteLists = new ArrayList<SiteList>();
+                               	
+            	if (options.taxonSets == null || options.taxonSets.size() < 1) { 
+            		
+            		double initRootHeight = getRandomStartingTreeInitialRootHeight(model);                	
                 	
-                	for (PartitionData partition : model.getAllPartitionData()) {
-                		SiteList sl = (SiteList) partition.getAlignment();
-                		if (!siteLists.contains(sl)) {
-                			siteLists.add(sl);
-                		}
-                	}
-                	
-                	Patterns mergePartternsTree = new Patterns(siteLists);
-                	JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
-                	double meanDistance = dm.getMeanDistance();
-                	
-                	writer.writeOpenTag(
-                            CoalescentSimulator.COALESCENT_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                    new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + meanDistance)
-                            }
-                    );
-                }
+            		writer.writeComment("No calibration");
+	            	writer.writeOpenTag(
+	                        CoalescentSimulator.COALESCENT_TREE,
+	                        new Attribute[]{
+	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+	                                new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + initRootHeight)
+	                        }
+	                );
+            	} else {
+            		writer.writeComment("Has calibration");
+            		writer.writeOpenTag(
+	                        CoalescentSimulator.COALESCENT_TREE,
+	                        new Attribute[]{
+	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
+	                        }
+	                );
+            	}
                 
                 String taxaId;
                 if (options.allowDifferentTaxa) {

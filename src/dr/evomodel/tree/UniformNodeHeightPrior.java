@@ -314,15 +314,18 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
                     if (useMarginal) {
 
                         if (!treePolynomialKnown) {
-                            treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
+//                            treePolynomial = recursivelyComputePolynomial(tree, tree.getRoot(), polynomialType).getPolynomial();
+                            treePolynomials = constructRootPolyonmials(tree,polynomialType); // Each polynomial is of lower degree
                             treePolynomialKnown = true;
                         }
 
-                        logLike = -treePolynomial.logEvaluate(rootHeight);
+//                        logLike = -treePolynomial.logEvaluate(rootHeight);
+                        logLike = -treePolynomials[0].logEvaluate(rootHeight) - treePolynomials[1].logEvaluate(rootHeight);
 
                         if (Double.isNaN(logLike)) {
                             // Try using Horner's method
-                            logLike = -treePolynomial.logEvaluateHorner(rootHeight);
+//                            logLike = -treePolynomial.logEvaluateHorner(rootHeight); // TODO this could be causing the problem!!
+                            logLike = -treePolynomials[0].logEvaluateHorner(rootHeight) - treePolynomials[1].logEvaluateHorner(rootHeight);
                             if (Double.isNaN(logLike)) {
                                 logLike = Double.NEGATIVE_INFINITY;
                             }
@@ -480,6 +483,14 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
         return Math.round(x * INV_PRECISION) / INV_PRECISION;
     }
 
+    private Polynomial[] constructRootPolyonmials(Tree tree, Polynomial.Type type) {
+        NodeRef root = tree.getRoot();
+        return new Polynomial[] {
+                recursivelyComputePolynomial(tree,tree.getChild(root,0),type).getPolynomial(),
+                recursivelyComputePolynomial(tree,tree.getChild(root,1),type).getPolynomial()
+        };
+    }
+
     private TipLabeledPolynomial recursivelyComputePolynomial(Tree tree, NodeRef node, Polynomial.Type type) {
 
         if (tree.isExternal(node)) {
@@ -493,12 +504,8 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
         // TODO The partialPolynomial below *should* be cached in an efficient reuse scheme (at least for arbitrary precision)
         TipLabeledPolynomial polynomial = childPolynomial1.multiply(childPolynomial2);
         // See AbstractTreeLikelihood for an example of how to flag cached polynomials for re-evaluation
-//        System.err.println("B> "+polynomial);
         if (!tree.isRoot(node)) {
             polynomial = polynomial.integrateWithLowerBound(polynomial.label);
-//            System.err.println("<A "+polynomial);
-        } else {
-//            System.err.println("<= ROOT");
         }
 
         return polynomial;
@@ -744,6 +751,7 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
     private boolean treePolynomialKnown = false;
     private boolean storedTreePolynomialKnown = false;
     private Polynomial treePolynomial;
+    private Polynomial[] treePolynomials;
     private Polynomial storedTreePolynomial;
 
     private double tmpLogLikelihood;

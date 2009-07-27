@@ -856,7 +856,12 @@ public class BeautiFrame extends DocumentFrame {
     
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
-        dataPanel.unlinkAll();
+        dataPanel.unlinkModels();
+        dataPanel.unlinkTrees();
+        
+        if (beautiOptions.getPartitionClockModels().size() > 1) {
+        	dataPanel.linkClocks();
+        }
         
         beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.SPECIES_YULE);
         

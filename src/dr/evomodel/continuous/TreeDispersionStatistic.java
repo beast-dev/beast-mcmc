@@ -6,6 +6,7 @@ import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.inference.model.Statistic;
+import dr.evolution.continuous.SphericalPolarCoordinates;
 
 /**
  * @author Marc Suchard
@@ -51,11 +52,14 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
 
             if (node != tree.getRoot()) {
 
+                SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(trait[0], trait[1]);
                 double[] parentTrait = tree.getMultivariateNodeTrait(tree.getParent(node), traitName);
+                SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(parentTrait[0], parentTrait[1]);
                 treelength += tree.getBranchLength(node);
 
                 if (genericOption) {
-                    treeDistance += getKilometerGreatCircleDistance(trait,parentTrait);
+                    //treeDistance += getKilometerGreatCircleDistance(trait,parentTrait);
+                    treeDistance += coord1.distance(coord2);                    
                 } else {
                     treeDistance += getNativeDistance(trait,parentTrait);
                 }
@@ -68,14 +72,14 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
     private double getNativeDistance(double[] location1, double[] location2) {
         return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
     }
-    private double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
-        double R = 6371; // km
-        double dLat = Math.toRadians(location2[0]-location1[0]);
-        double dLon = Math.toRadians(location2[1]-location1[1]);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(location1[0])) * Math.cos(Math.toRadians(location2[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
+//    private double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
+//        double R = 6371; // km
+//        double dLat = Math.toRadians(location2[0]-location1[0]);
+//        double dLon = Math.toRadians(location2[1]-location1[1]);
+//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(location1[0])) * Math.cos(Math.toRadians(location2[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+//        return R * c;
+//    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

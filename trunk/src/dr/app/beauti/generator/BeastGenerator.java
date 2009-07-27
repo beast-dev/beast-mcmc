@@ -81,7 +81,7 @@ public class BeastGenerator extends Generator {
 
     private final TreePriorGenerator treePriorGenerator;
     private final TreeLikelihoodGenerator treeLikelihoodGenerator;
-    private final PartitionModelGenerator partitionModelGenerator;
+    private final SubstitutionModelGenerator substitutionModelGenerator;
     private final InitialTreeGenerator initialTreeGenerator;
     private final TreeModelGenerator treeModelGenerator;
     private final BranchRatesModelGenerator branchRatesModelGenerator;
@@ -91,7 +91,7 @@ public class BeastGenerator extends Generator {
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
 
-        partitionModelGenerator = new PartitionModelGenerator(options, components);
+        substitutionModelGenerator = new SubstitutionModelGenerator(options, components);
         treePriorGenerator = new TreePriorGenerator(options, components);
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options, components);
 
@@ -348,7 +348,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Substitution Model ++++++++++++++++++
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            partitionModelGenerator.writeSubstitutionModel(model, writer);
+            substitutionModelGenerator.writeSubstitutionModel(model, writer);
             writer.writeText("");
         }
 
@@ -358,7 +358,7 @@ public class BeastGenerator extends Generator {
         boolean writeMuParameters = options.getTotalActivePartitionSubstitutionModelCount() > 1;
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            partitionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
+            substitutionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
             writer.writeText("");
         }
 
@@ -366,7 +366,7 @@ public class BeastGenerator extends Generator {
             // allMus is global
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allMus")});
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-                partitionModelGenerator.writeMuParameterRefs(model, writer);
+                substitutionModelGenerator.writeMuParameterRefs(model, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
             writer.writeText("");
@@ -1534,7 +1534,7 @@ public class BeastGenerator extends Generator {
 //	    }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            partitionModelGenerator.writeLog(writer, model);
+            substitutionModelGenerator.writeLog(writer, model);
         }
 
         if (hasCodonOrUserPartitions()) {

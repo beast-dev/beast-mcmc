@@ -338,9 +338,9 @@ public class BeastGenerator extends Generator {
 //        } else { // Different Tree Models
         for (PartitionClockModel model : options.getPartitionClockModels()) {
 //        		branchRatesModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
-            for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                branchRatesModelGenerator.writeBranchRatesModel(model, tree, writer);
-            }
+//            for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+//            }
             writer.writeText("");
         }
 //        }

@@ -42,7 +42,7 @@ public class PartitionTreeModel extends ModelOptions {
     private final BeautiOptions options;
     private String name;
     private PartitionTreePrior treePrior;
-    private List<PartitionData> allPartitionData;
+    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
@@ -57,8 +57,8 @@ public class PartitionTreeModel extends ModelOptions {
     public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
         this.name = partition.getName();
-
-        allPartitionData = new ArrayList<PartitionData>();
+        
+        allPartitionData.clear();
         addPartitionData(partition);
 
         initTreeModelParaAndOpers();

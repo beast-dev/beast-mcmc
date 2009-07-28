@@ -651,10 +651,10 @@ public class BeautiFrame extends DocumentFrame {
             }
             for (PartitionData partition : partitions) {
                 beautiOptions.dataPartitions.add(partition);
-                //TODO Cannot load Substitution Model and Tree Model from BEAST file yet
-                if (model != null) {
+                
+                if (model != null) {//TODO Cannot load Substitution Model and Tree Model from BEAST file yet                
                     partition.setPartitionSubstitutionModel(model);
-//                    beautiOptions.addPartitionSubstitutionModel(model);
+                    model.addPartitionData(partition);
                     
                     // use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
@@ -741,6 +741,7 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
             beautiOptions.updatePartitionClockTreeLinks();
+            beautiOptions.updateFixedRateClockModel();
         }
     }
 
@@ -863,6 +864,7 @@ public class BeautiFrame extends DocumentFrame {
         	dataPanel.linkClocks();
         }
         
+        beautiOptions.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
         beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.SPECIES_YULE);
         
         int i = tabbedPane.indexOfTab("Trees");

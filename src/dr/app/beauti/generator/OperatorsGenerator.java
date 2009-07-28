@@ -3,9 +3,21 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockType;
+import dr.app.beauti.options.FixRateType;
 import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionClockModelTreeModelLink;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.RandomLocalClockModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.clock.ACLikelihood;
+import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
@@ -15,9 +27,18 @@ import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciesTreeModel;
+import dr.evomodel.tree.RateCovarianceStatistic;
+import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.DiscretizedBranchRatesParser;
+import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.YuleModelParser;
+import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.SumStatistic;
 import dr.inference.operators.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -38,6 +59,7 @@ public class OperatorsGenerator extends Generator {
      * Write the operator schedule XML block.
      *
      * @param operators the list of operators
+     * @param starEASTGeneratorGenerator 
      * @param writer    the writer
      */
     public void writeOperatorSchedule(List<Operator> operators, XMLWriter writer) {
@@ -70,7 +92,11 @@ public class OperatorsGenerator extends Generator {
             	writeOperator(operator, writer);
             }
         }
-
+        
+        if (options.isSpeciesAnalysis()) {
+        	writeUpDownOperatorAllRatesTrees(writer);
+        }
+        
         writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
     }
 
@@ -459,6 +485,66 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(),  TraitGuesser.Traits.TRAIT_SPECIES.toString());
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  Generator.SP_TREE);
         writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
+    }
+    
+    
+    private void writeUpDownOperatorAllRatesTrees(XMLWriter writer) {
+    	writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, 0.75),
+                        getWeightAttribute(30) // TODO allow change?
+                }
+        );
+
+        writer.writeOpenTag(UpDownOperator.UP);
+        
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+			if (!model.isFixedRate()) {
+				switch (model.getClockType()) {
+	            case STRICT_CLOCK:	
+	            case RANDOM_LOCAL_CLOCK:
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");	
+	                break;
+
+	            case UNCORRELATED_EXPONENTIAL:	            	
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);		 
+	            	break;
+	            	
+	            case UNCORRELATED_LOGNORMAL:	                
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+	                break;
+
+	            case AUTOCORRELATED_LOGNORMAL:
+	                //TODO	                
+	                break;
+
+	            default:
+	                throw new IllegalArgumentException("Unknown clock model");
+				}
+			}
+        }
+        
+        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+        }
+
+        writer.writeCloseTag(UpDownOperator.UP);
+        
+        writer.writeOpenTag(UpDownOperator.DOWN);	        
+        
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+        	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
+        }
+        
+        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);        
+
+        writer.writeCloseTag(UpDownOperator.DOWN);
+        
+        writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
     }
 
     private Attribute getWeightAttribute(double weight) {

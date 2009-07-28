@@ -47,8 +47,8 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     public static final String TREE_TYPE = "type";
 
     public static final String BIRTH_DEATH = "birthDeath";
-    public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".BminusDRate";
-    public static final String RELATIVE_DEATH_RATE_PARAM_NAME = BIRTH_DEATH + ".DoverB";
+    public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".meanGrowthRate";
+    public static final String RELATIVE_DEATH_RATE_PARAM_NAME = BIRTH_DEATH + "." + RELATIVE_DEATH_RATE;
 
     public String getParserName() {
         return BIRTH_DEATH_MODEL;

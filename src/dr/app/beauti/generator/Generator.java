@@ -77,14 +77,14 @@ public abstract class Generator {
      * @param id    the id
      * @param value the value
      */
-    public void fixParameter(Parameter parameter, double value) {
-//        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
-        if (parameter == null) {
-            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
-        }
-        parameter.isFixed = true;
-        parameter.initial = value;
-    }
+//    public void fixParameter(Parameter parameter, double value) {
+////        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+//        if (parameter == null) {
+//            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
+//        }
+//        parameter.isFixed = true;
+//        parameter.initial = value;
+//    }
 
 
     /**

@@ -44,6 +44,7 @@ import org.w3c.dom.Element;
 public class GammaDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     public static final String GAMMA_DISTRIBUTION_MODEL = "gammaDistributionModel";
+    public static final String ONE_P_GAMMA_DISTRIBUTION_MODEL = "onePGammaDistributionModel";
 
     /**
      * Construct a constant mutation rate model.
@@ -56,8 +57,10 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         this.scale = scale;
         addVariable(shape);
         shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        addVariable(scale);
-        scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        if (scale != null) {
+            addVariable(scale);
+            scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
     }
 
     /**

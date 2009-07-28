@@ -116,7 +116,7 @@ public interface Likelihood extends Loggable, Identifiable {
 		protected abstract double calculateLogLikelihood();
 
 		public String toString() {
-            return getClass().getName() + "(" + logLikelihood + ")";
+                        return getClass().getName() + "(" + getLogLikelihood() + ")";
 		}
 
         static public String getPrettyName(Likelihood l) {

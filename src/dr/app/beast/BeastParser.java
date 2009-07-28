@@ -294,6 +294,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
         addXMLObjectParser(dr.inferencexml.DistributionModelParser.EXPONENTIAL_DISTRIBUTION_PARSER);
         addXMLObjectParser(dr.inferencexml.DistributionModelParser.GAMMA_DISTRIBUTION_PARSER);
+        addXMLObjectParser(dr.inferencexml.DistributionModelParser.ONE_P_GAMMA_DISTRIBUTION_MODEL);
         addXMLObjectParser(dr.inference.distribution.NormalDistributionModel.PARSER);
         addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
         addXMLObjectParser(dr.inference.distribution.InverseGaussianDistributionModel.PARSER);

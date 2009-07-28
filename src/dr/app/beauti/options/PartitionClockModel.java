@@ -41,15 +41,16 @@ public class PartitionClockModel extends ModelOptions {
     private final BeautiOptions options;
     private String name;
 
-    private List<PartitionData> allPartitionData;
+    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
+    private boolean isFixedRate = true;
 
     public PartitionClockModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
         this.name = partition.getName();
 
-        allPartitionData = new ArrayList<PartitionData>();
+        allPartitionData.clear();
         addPartitionData(partition);
 
         initClockModelParaAndOpers();
@@ -98,31 +99,34 @@ public class PartitionClockModel extends ModelOptions {
     public void selectParameters(List<Parameter> params) {    	    	
         if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move
-            boolean fixed = options.isFixedSubstitutionRate();
+            boolean fixed = isFixedRate;
             Parameter rateParam;
 
             switch (clockType) {
                 case STRICT_CLOCK:
                     rateParam = getParameter("clock.rate");
                     rateParam.isFixed = fixed;
+                    if (fixed) rateParam.initial = options.getMeanSubstitutionRate();
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
                     rateParam = getParameter(ClockType.UCED_MEAN);
                     rateParam.isFixed = fixed;
+                    if (fixed) rateParam.initial = options.getMeanSubstitutionRate();
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_LOGNORMAL:
                     rateParam = getParameter(ClockType.UCLD_MEAN);
                     rateParam.isFixed = fixed;
+                    if (fixed) rateParam.initial = options.getMeanSubstitutionRate();
                     if (!fixed) params.add(rateParam);
                     params.add(getParameter(ClockType.UCLD_STDEV));
                     break;
 
                 case AUTOCORRELATED_LOGNORMAL:                    
-//                    rateParam = getParameter("treeModel.rootRate");
+//                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
 //                    rateParam.isFixed = fixed;
 //                    if (!fixed) params.add(rateParam);
 //                    
@@ -132,6 +136,7 @@ public class PartitionClockModel extends ModelOptions {
                 case RANDOM_LOCAL_CLOCK:
                     rateParam = getParameter("clock.rate");
                     rateParam.isFixed = fixed;
+                    if (fixed) rateParam.initial = options.getMeanSubstitutionRate();
                     if (!fixed) params.add(rateParam);
                     break;
 
@@ -150,72 +155,47 @@ public class PartitionClockModel extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if (!options.isFixedSubstitutionRate()) {
+            if (isFixedRate) {
+            	switch (clockType) {
+	                case STRICT_CLOCK:	
+	                case UNCORRELATED_EXPONENTIAL:
+	                case AUTOCORRELATED_LOGNORMAL: 
+	                case RANDOM_LOCAL_CLOCK:
+	                	// no parameter to operator on
+	                    break;      
+	
+	                case UNCORRELATED_LOGNORMAL:	
+	                    ops.add(getOperator(ClockType.UCLD_STDEV));
+	                    break;
+	
+	                default:
+	                    throw new IllegalArgumentException("Unknown clock model");
+            	}
+            } else {                
                 switch (clockType) {
-                    case STRICT_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-//                        ops.add(getOperator("upDownRateHeights"));
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:
-                        ops.add(getOperator(ClockType.UCED_MEAN));
-//                        ops.add(getOperator("upDownUCEDMeanHeights"));
-//                        addBranchRateCategories(ops);
-                        break;
-
-                    case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator(ClockType.UCLD_MEAN));
-                        ops.add(getOperator(ClockType.UCLD_STDEV));
-//                        ops.add(getOperator("upDownUCLDMeanHeights"));
-//                        addBranchRateCategories(ops);
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:                       
-//                        ops.add(getOperator("scaleRootRate"));
-//                        ops.add(getOperator("scaleOneRate"));
-//                        ops.add(getOperator("scaleAllRates"));
-//                        ops.add(getOperator("scaleAllRatesIndependently"));
-////                        ops.add(getOperator("upDownAllRatesHeights"));
-////                        ops.add(getOperator("upDownNodeRatesHeights"));
-//                        ops.add(getOperator("branchRates.var"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-//                        ops.add(getOperator("upDownRateHeights"));
-//                        addRandomLocalClockOperators(ops);
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            } else {
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        // no parameter to operator on
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:
-//                        addBranchRateCategories(ops);
-                        break;
-
-                    case UNCORRELATED_LOGNORMAL:
-//                        addBranchRateCategories(ops);
-                        ops.add(getOperator(ClockType.UCLD_STDEV));
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:                        
-//                        ops.add(getOperator("scaleOneRate"));
-//                        ops.add(getOperator("scaleAllRatesIndependently"));                        
-//                        ops.add(getOperator("branchRates.var"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-//                        addRandomLocalClockOperators(ops);
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
+	                case STRICT_CLOCK:
+	                    ops.add(getOperator("clock.rate"));	
+	                    break;
+	
+	                case UNCORRELATED_EXPONENTIAL:
+	                    ops.add(getOperator(ClockType.UCED_MEAN));
+	                    break;
+	
+	                case UNCORRELATED_LOGNORMAL:
+	                    ops.add(getOperator(ClockType.UCLD_MEAN));
+	                    ops.add(getOperator(ClockType.UCLD_STDEV));
+	                    break;
+	
+	                case AUTOCORRELATED_LOGNORMAL:                       
+	                	//TODO
+	                    break;
+	
+	                case RANDOM_LOCAL_CLOCK:
+	                    ops.add(getOperator("clock.rate"));
+	                    break;
+	
+	                default:
+	                    throw new IllegalArgumentException("Unknown clock model");
                 }
             }
         }
@@ -247,7 +227,15 @@ public class PartitionClockModel extends ModelOptions {
         return clockType;
     }
 
+	public void setFixedRate(boolean isFixedRate) {
+		this.isFixedRate = isFixedRate;
+	}
 
+	public boolean isFixedRate() {
+		return isFixedRate;
+	}
+	
+	
     public String getName() {
         return name;
     }
@@ -292,4 +280,5 @@ public class PartitionClockModel extends ModelOptions {
         }
         return prefix;
     }
+
 }

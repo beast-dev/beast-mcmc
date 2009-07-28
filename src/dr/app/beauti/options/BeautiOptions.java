@@ -121,36 +121,36 @@ public class BeautiOptions extends ModelOptions {
         createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
         
         // species tree Yule
-        createTagOperator("upDownYuleSpeciesTree", "Yule birth rate and species tree", "Scales Yule birth rate inversely to the species tree", 
-        		TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
-        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
-        createOperator("upDownYuleSTPop", "Yule birth rate and species tree population size", 
-        		"Scales Yule birth rate inversely to the species tree population size", 
-                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
-        
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-	        createOperator(tree.getPrefix() + "upDownYuleGeneTree", "Species tree Yule and heights", 
-	        		"Scales Yule birth rate inversely to the gene tree", 
-	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
-        }
-        // species tree Birth Death
-        createTagOperator("upDownBirthDeathSpeciesTree", "Birth death and species tree", 
-        		"Scales birth death BminusD rate inversely to the species tree", 
-        		TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
-        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
-        createOperator("upDownBirthDeathSTPop", "Yule birth rate and species tree population size", 
-        		"Scales birth death BminusD rate inversely to the species tree population size", 
-                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
-        
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-	        createOperator(tree.getPrefix() + "upDownBirthDeathGeneTree", "Species tree Yule and heights", 
-	        		"Scales birth death BminusD rate inversely to the gene tree", 
-	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
-	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
-        }
+//        createTagOperator("upDownYuleSpeciesTree", "Yule birth rate and species tree", "Scales Yule birth rate inversely to the species tree", 
+//        		TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+//        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
+//        createOperator("upDownYuleSTPop", "Yule birth rate and species tree population size", 
+//        		"Scales Yule birth rate inversely to the species tree population size", 
+//                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+//                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
+//        
+//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+//	        createOperator(tree.getPrefix() + "upDownYuleGeneTree", "Species tree Yule and heights", 
+//	        		"Scales Yule birth rate inversely to the gene tree", 
+//	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+//	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
+//        }
+//        // species tree Birth Death
+//        createTagOperator("upDownBirthDeathSpeciesTree", "Birth death and species tree", 
+//        		"Scales birth death BminusD rate inversely to the species tree", 
+//        		TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
+//        		SpeciesTreeModel.SPECIES_TREE, Generator.SP_TREE, OperatorType.UP_DOWN, 0.75, branchWeights);
+//        createOperator("upDownBirthDeathSTPop", "Yule birth rate and species tree population size", 
+//        		"Scales birth death BminusD rate inversely to the species tree population size", 
+//                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+//                this.getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS), OperatorType.UP_DOWN, 0.75, branchWeights);
+//        
+//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+//	        createOperator(tree.getPrefix() + "upDownBirthDeathGeneTree", "Species tree Yule and heights", 
+//	        		"Scales birth death BminusD rate inversely to the gene tree", 
+//	                this.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+//	                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
+//        }
         
         //TODO: more
     }
@@ -192,7 +192,8 @@ public class BeautiOptions extends ModelOptions {
         activedSameTreePrior = null;
         shareSameTreePrior = true;
 
-        fixedSubstitutionRate = true;
+//        fixedSubstitutionRate = true;
+        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
         meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
@@ -266,10 +267,11 @@ public class BeautiOptions extends ModelOptions {
         
         selectComponentStatistics(this, parameters);
 
-        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
+//        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
         // add all Parameter (with prefix) into parameters list     
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            parameters.addAll(model.getParameters(multiplePartitions));
+//            parameters.addAll(model.getParameters(multiplePartitions));
+        	parameters.addAll(model.getParameters());
         }
 
 
@@ -282,7 +284,7 @@ public class BeautiOptions extends ModelOptions {
         double initialRate = 1;
 
 
-        if (isFixedSubstitutionRate()) {
+        if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION || rateOptionClockModel == FixRateType.FIX_MEAN) {
             double rate = getMeanSubstitutionRate();
 
             growthRateMaximum = 1E6 * rate;
@@ -404,27 +406,27 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
-        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
+//        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
 
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             ops.addAll(model.getOperators());
         }
 
-        if (multiplePartitions) {
-            Operator deltaMuOperator = getOperator("deltaMu");
-
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
-            }
-
-            ops.add(deltaMuOperator);
-        }
+//        if (multiplePartitions) {
+//            Operator deltaMuOperator = getOperator("deltaMu");
+//
+//            // update delta mu operator weight
+//            deltaMuOperator.weight = 0.0;
+//            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
+//                deltaMuOperator.weight += pm.getCodonPartitionCount();
+//            }
+//
+//            ops.add(deltaMuOperator);
+//        }
 
         double initialRootHeight = 1;
 
-        if (isFixedSubstitutionRate()) {
+        if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION || rateOptionClockModel == FixRateType.FIX_MEAN) {
             double rate = getMeanSubstitutionRate();
 
             if (hasData()) {
@@ -456,9 +458,38 @@ public class BeautiOptions extends ModelOptions {
         return dataPartitions.size() > 0;
     }
 
-    public boolean isFixedSubstitutionRate() {
-        return fixedSubstitutionRate;
+//    public boolean isFixedSubstitutionRate() {
+//        return fixedSubstitutionRate;
+//    }
+    public void updateFixedRateClockModel() {
+    	if (getPartitionClockModels().size() > 0) {
+    		
+	    	if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION) {
+	    		// fix rate of 1st partition
+	    		for (PartitionClockModel model : getPartitionClockModels()) {
+	    			if (getPartitionClockModels().indexOf(model) < 1) {
+	    				model.setFixedRate(true);
+	    			} else {
+	    				model.setFixedRate(false);
+	    			}
+	            }
+	    		
+	    	} else if (rateOptionClockModel == FixRateType.FIX_MEAN) {
+	    		// TODO check
+	    		for (PartitionClockModel model : getPartitionClockModels()) {
+	    			model.setFixedRate(true);
+	            }
+	    		
+	    	} else {
+	    		// estimate all rate
+	    		for (PartitionClockModel model : getPartitionClockModels()) {
+	    			model.setFixedRate(false);
+	            }
+	    		
+	    	}
+    	}
     }
+    
 
     public double getMeanSubstitutionRate() {
         return meanSubstitutionRate;
@@ -499,21 +530,21 @@ public class BeautiOptions extends ModelOptions {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             
-            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
-            ops.add(getOperator("upDownBirthDeathSTPop"));
-            
-            for (PartitionTreeModel tree : getPartitionTreeModels()) {
-            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
-            }
+//            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
+//            ops.add(getOperator("upDownBirthDeathSTPop"));
+//            
+//            for (PartitionTreeModel tree : getPartitionTreeModels()) {
+//            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
+//            }
         } else if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
             
-            ops.add(getOperator("upDownYuleSpeciesTree"));
-            ops.add(getOperator("upDownYuleSTPop"));
-            
-            for (PartitionTreeModel tree : getPartitionTreeModels()) {
-            	ops.add(getOperator(tree.getPrefix() + "upDownYuleGeneTree"));
-            }
+//            ops.add(getOperator("upDownYuleSpeciesTree"));
+//            ops.add(getOperator("upDownYuleSTPop"));
+//            
+//            for (PartitionTreeModel tree : getPartitionTreeModels()) {
+//            	ops.add(getOperator(tree.getPrefix() + "upDownYuleGeneTree"));
+//            }
         }
 
         ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
@@ -1470,7 +1501,8 @@ public class BeautiOptions extends ModelOptions {
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
 
-    public boolean fixedSubstitutionRate = true;
+    public FixRateType rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION; 
+//    public boolean fixedSubstitutionRate = true;
     public double meanSubstitutionRate = 1.0;
     public boolean unlinkPartitionRates = true;
 
@@ -1499,7 +1531,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
 //    public String substTreeFileName = null;
     public List<String> substTreeFileName = new ArrayList<String>();
-    
     
     
     @Override

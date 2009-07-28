@@ -48,12 +48,12 @@ public class BeautiTester {
 
         beautiOptions = btc.createOptions();
         btc.importFromFile("examples/Dengue4.env.nex", beautiOptions, false);
-        beautiOptions.fixedSubstitutionRate = false;
+//        beautiOptions.fixedSubstitutionRate = false;
         btc.buildNucModels("tests/den_", beautiOptions);
 
         beautiOptions = btc.createOptions();
         btc.importFromFile("examples/Dengue4.env.nex", beautiOptions, true);
-        beautiOptions.fixedSubstitutionRate = false;
+//        beautiOptions.fixedSubstitutionRate = false;
         btc.buildAAModels("tests/den_", beautiOptions);
 
         btc.closeScriptWriter();

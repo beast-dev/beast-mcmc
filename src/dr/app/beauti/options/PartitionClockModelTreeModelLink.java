@@ -106,9 +106,6 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
         createOperator("upDownAllRatesHeights", "All rates and heights", "Scales all rates inversely to node heights of the tree", 
         		this.getParameter("treeModel.allRates"), tree.getParameter("treeModel.allInternalNodeHeights"), 
         		OperatorType.UP_DOWN, 0.75, branchWeights);        
-//        createOperator("upDownNodeRatesHeights", "Node rates and heights",
-//                "Scales all rates inversely to all rates heights of the tree", model.getParameter("treeModel.nodeRates"),
-//                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, branchWeights);
 
         // These are statistics which could have priors on...        
         // #meanRate = #Relaxed Clock Model * #Tree Model
@@ -136,7 +133,8 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
 		
 		if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move
-            boolean fixed = options.isFixedSubstitutionRate();
+            boolean fixed = (options.rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION 
+            		|| options.rateOptionClockModel == FixRateType.FIX_MEAN); //TODO wrong?
             Parameter rateParam;
 
             switch (model.getClockType()) { 
@@ -159,50 +157,13 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
         	
-            if (!options.isFixedSubstitutionRate()) {
-                switch (model.getClockType()) {
-                    case STRICT_CLOCK:
-                        ops.add(getOperator("upDownRateHeights"));
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:
-                        ops.add(getOperator("upDownUCEDMeanHeights"));
-                        addBranchRateCategories(ops);
-                        break;
-
-                    case UNCORRELATED_LOGNORMAL:
-                        ops.add(getOperator("upDownUCLDMeanHeights"));
-                        addBranchRateCategories(ops);
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:
-                    	ops.add(getOperator("scaleRootRate"));
-                        ops.add(getOperator("scaleOneRate"));
-                        ops.add(getOperator("scaleAllRates"));
-                        ops.add(getOperator("scaleAllRatesIndependently"));
-                        ops.add(getOperator("branchRates.var"));
-                    	ops.add(getOperator("upDownAllRatesHeights"));
-//                        ops.add(getOperator("upDownNodeRatesHeights"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator("upDownRateHeights"));
-                        addRandomLocalClockOperators(ops);
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            } else {
-                switch (model.getClockType()) {
+            if (model.isFixedRate()) {
+            	switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         // no parameter to operator on
                         break;
 
-                    case UNCORRELATED_EXPONENTIAL:
-                        addBranchRateCategories(ops);
-                        break;
-
+                    case UNCORRELATED_EXPONENTIAL:  
                     case UNCORRELATED_LOGNORMAL:
                         addBranchRateCategories(ops);                       
                         break;
@@ -220,6 +181,39 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
                     default:
                         throw new IllegalArgumentException("Unknown clock model");
                 }
+            } else {
+            	switch (model.getClockType()) {
+	                case STRICT_CLOCK:
+	                    ops.add(getOperator("upDownRateHeights"));
+	                    break;
+	
+	                case UNCORRELATED_EXPONENTIAL:
+	                    ops.add(getOperator("upDownUCEDMeanHeights"));
+	                    addBranchRateCategories(ops);
+	                    break;
+	
+	                case UNCORRELATED_LOGNORMAL:
+	                    ops.add(getOperator("upDownUCLDMeanHeights"));
+	                    addBranchRateCategories(ops);
+	                    break;
+	
+	                case AUTOCORRELATED_LOGNORMAL:
+	                	ops.add(getOperator("scaleRootRate"));
+	                    ops.add(getOperator("scaleOneRate"));
+	                    ops.add(getOperator("scaleAllRates"));
+	                    ops.add(getOperator("scaleAllRatesIndependently"));
+	                    ops.add(getOperator("branchRates.var"));
+	                	ops.add(getOperator("upDownAllRatesHeights"));
+	                    break;
+	
+	                case RANDOM_LOCAL_CLOCK:
+	                    ops.add(getOperator("upDownRateHeights"));
+	                    addRandomLocalClockOperators(ops);
+	                    break;
+	
+	                default:
+	                    throw new IllegalArgumentException("Unknown clock model");
+	            }
             }
         }
     }

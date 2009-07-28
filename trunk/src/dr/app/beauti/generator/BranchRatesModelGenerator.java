@@ -83,11 +83,7 @@ public class BranchRatesModelGenerator extends Generator {
 		                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES)}
 		                );
                 	
-                	if (activeTrees.indexOf(tree) < 1) {
-	                	if (options.isFixedSubstitutionRate()) {
-		                    fixParameter(model.getParameter("clock.rate"), options.getMeanSubstitutionRate());
-		                }		
-		                
+                	if (activeTrees.indexOf(tree) < 1) {	                	
 		                writeParameter("rate", "clock.rate", model, writer);
 		                
                 	} else {                		
@@ -130,10 +126,7 @@ public class BranchRatesModelGenerator extends Generator {
 	
 						writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 	
-						if (activeTrees.indexOf(tree) < 1) {
-							if (options.isFixedSubstitutionRate()) {
-								fixParameter(model.getParameter(ClockType.UCED_MEAN), options.getMeanSubstitutionRate());
-							}
+						if (activeTrees.indexOf(tree) < 1) {							
 							writeParameter("mean", ClockType.UCED_MEAN, model, writer);
 						} else {
 							writeParameterRef("mean", modelPrefix + ClockType.UCED_MEAN, writer);
@@ -147,9 +140,6 @@ public class BranchRatesModelGenerator extends Generator {
 										new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
 	
 						if (activeTrees.indexOf(tree) < 1) {
-							if (options.isFixedSubstitutionRate()) {
-								fixParameter(model.getParameter(ClockType.UCLD_MEAN), options.getMeanSubstitutionRate());
-							}
 							writeParameter("mean", ClockType.UCLD_MEAN, model, writer);
 							writeParameter("stdev", ClockType.UCLD_STDEV, model, writer);
 						} else {
@@ -249,8 +239,10 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(ACLikelihood.AC_LIKELIHOOD, attributes);
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 	
-	                if (options.isFixedSubstitutionRate()) {
-	                    fixParameter(tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE), options.getMeanSubstitutionRate());//"treeModel.rootRate"
+	                if (model.isFixedRate()) { //TODO
+	                    Parameter para = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
+	                    para.isFixed = true;
+	                    para.initial = options.getMeanSubstitutionRate();
 	                }
 	
 	                writer.writeOpenTag(RateEvolutionLikelihood.RATES,
@@ -280,7 +272,7 @@ public class BranchRatesModelGenerator extends Generator {
 	
 	                writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
 	                
-	                if (!options.isFixedSubstitutionRate()) {
+	                if (!model.isFixedRate()) {//TODO
 		              	writer.writeText("");
 			            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
 			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL 
@@ -365,9 +357,6 @@ public class BranchRatesModelGenerator extends Generator {
 	                writeParameterRef("rateIndicator", modelPrefix + treePrefix + ClockType.LOCAL_CLOCK + ".changes", writer);
 	                
 	                if (activeTrees.indexOf(tree) < 1) {
-		                if (options.isFixedSubstitutionRate()) {
-		                    fixParameter(model.getParameter("clock.rate"), options.getMeanSubstitutionRate());
-		                }
 		                writeParameter("clockRate", "clock.rate", model, writer);
 	                } else {
 	                	writeParameterRef("clockRate", modelPrefix + "clock.rate", writer);

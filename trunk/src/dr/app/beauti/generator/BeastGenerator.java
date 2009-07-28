@@ -355,7 +355,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
         //++++++++++++++++ Site Model ++++++++++++++++++
-        boolean writeMuParameters = options.getTotalActivePartitionSubstitutionModelCount() > 1;
+        boolean writeMuParameters = hasCodon(); //options.getTotalActivePartitionSubstitutionModelCount() > 1;
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
@@ -1537,7 +1537,7 @@ public class BeastGenerator extends Generator {
             substitutionModelGenerator.writeLog(writer, model);
         }
 
-        if (hasCodonOrUserPartitions()) {
+        if (hasCodon()) {
             writer.writeIDref(ParameterParser.PARAMETER, "allMus");
         }
 
@@ -1882,8 +1882,14 @@ public class BeastGenerator extends Generator {
      * @return true either if the options have more than one partition or any partition is
      *         broken into codon positions.
      */
-    private boolean hasCodonOrUserPartitions() {
-        final List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels();
-        return (models.size() > 1 || models.get(0).getCodonPartitionCount() > 1);
+    private boolean hasCodon() {
+//        final List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels();
+//        return (models.size() > 1 || models.get(0).getCodonPartitionCount() > 1);
+    	for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            if (model.getCodonPartitionCount() > 1) {
+            	return true;
+            }
+        }
+        return false;
     }
 }

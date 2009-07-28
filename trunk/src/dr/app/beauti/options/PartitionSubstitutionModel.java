@@ -44,7 +44,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     private DataType dataType;
     private String name;
 
-    private List<PartitionData> allPartitionData;
+    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
@@ -65,7 +65,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
         this(options, partition.getName(), partition.getAlignment().getDataType());
 
-        allPartitionData = new ArrayList<PartitionData>();
+        allPartitionData.clear();
         addPartitionData(partition);
     }
 
@@ -372,8 +372,9 @@ public class PartitionSubstitutionModel extends ModelOptions {
      * @param includeRelativeRates true if relative rate parameters should be added
      * @return a list of parameters that are required
      */
-    List<Parameter> getParameters(boolean includeRelativeRates) {
-
+    List<Parameter> getParameters() {
+    	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
+    	
         List<Parameter> params = new ArrayList<Parameter>();
 
         switch (dataType.getType()) {
@@ -437,9 +438,11 @@ public class PartitionSubstitutionModel extends ModelOptions {
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }
-                    if (includeRelativeRates) {
+                    
+                    if (includeRelativeRates) {//TODO fix mean
                         params.add(getParameter("mu"));
                     }
+                    
                 }
                 break;
 
@@ -560,7 +563,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
         }
         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
-
+    
     ///////////////////////////////////////////////////////
 
     public Parameter getParameter(String name) {

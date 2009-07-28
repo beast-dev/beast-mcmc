@@ -30,8 +30,10 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.components.SequenceErrorType;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.FixRateType;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.components.RealNumberField;
@@ -54,6 +56,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -83,10 +87,12 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
     // Overall model parameters ////////////////////////////////////////////////////////////////////////
 
     String overallParas = "Overall substitution model(s) parameters:";
-    JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
-    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
+    JComboBox rateOptionCombo = new JComboBox(FixRateType.values());
+//    JCheckBox fixedSubstitutionRateCheck = new JCheckBox("Fix mean substitution rate:");
+//    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField substitutionRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
-
+    
+    
     //    JComboBox clockModelCombo = new JComboBox(ClockType.values());
     ClockModelPanel clockModelPanel = null;
 
@@ -106,7 +112,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         super();
 
         this.frame = parent;
-
+               
         modelTableModel = new ModelTableModel();
         modelTable = new JTable(modelTableModel);
 
@@ -156,45 +162,47 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
 //        PanelUtils.setupComponent(clockModelCombo);
 //        clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
 //        clockModelCombo.addItemListener(comboListener);
-
-        PanelUtils.setupComponent(fixedSubstitutionRateCheck);
-        fixedSubstitutionRateCheck.setSelected(true);
-        fixedSubstitutionRateCheck.setToolTipText(
+        
+        PanelUtils.setupComponent(rateOptionCombo);        
+        rateOptionCombo.addItemListener(
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
+                    	substitutionRateField.setEnabled((FixRateType) rateOptionCombo.getSelectedItem() != FixRateType.ESTIMATE);                    	
+                    }
+                }
+        );
+        rateOptionCombo.setToolTipText(
                 "<html>Select this option to fix the substitution rate<br>" +
                         "rather than try to infer it. If this option is<br>" +
                         "turned off then either the sequences should have<br>" +
                         "dates or the tree should have sufficient calibration<br>" +
-                        "informations specified as priors.</html>");
-        fixedSubstitutionRateCheck.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        boolean fixed = fixedSubstitutionRateCheck.isSelected();
-                        substitutionRateLabel.setEnabled(fixed);
-                        substitutionRateField.setEnabled(fixed);
-//                        fireModelsChanged();
-                    }
-                }
-        );
+                        "informations specified as priors.</html>");//TODO Alexei
+        
+        
+        PanelUtils.setupComponent(substitutionRateField);
         substitutionRateField.setValue(1.0);
         substitutionRateField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 frame.setDirty();
             }
         });
-        substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
+        substitutionRateField.setToolTipText("<html>Enter the fixed mean rate or 1st partition rate here.</html>");
         substitutionRateField.setEnabled(true);
-
+        
         setCurrentModel(null);
 
         OptionsPanel panel = new OptionsPanel(10, 20);
         panel.addSeparator();
 
         panel.addLabel(overallParas);
-        panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+        panel.addComponentWithLabel("Sequence Error Model :", errorModelCombo);
 //        panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
+        panel.addComponentWithLabel("Choose Fix Rate Option :", rateOptionCombo);
+        
         substitutionRateField.setColumns(10);
-        panel.addComponents(fixedSubstitutionRateCheck, substitutionRateField);
+        panel.addComponentWithLabel("Fixed mean / 1st partition rate :", substitutionRateField);
+        
         panel.addSeparator();
 
         clockModelPanel = new ClockModelPanel(frame);
@@ -228,8 +236,8 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         add(splitPane1, BorderLayout.CENTER);
 
         comp = new SequenceErrorModelComponentOptions();
-    }
-
+    }    
+       
     public void setOptions(BeautiOptions options) {
 
         if (DEBUG) {
@@ -264,11 +272,12 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
-
-        fixedSubstitutionRateCheck.setSelected(options.fixedSubstitutionRate);
-        substitutionRateField.setValue(options.meanSubstitutionRate);
-        substitutionRateField.setEnabled(options.fixedSubstitutionRate);
-
+        
+        rateOptionCombo.setSelectedItem(options.rateOptionClockModel);
+        substitutionRateField.setValue(options.meanSubstitutionRate);   
+        
+        fireModelsChanged();
+        
         validate();
         repaint();
     }
@@ -285,17 +294,19 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
-        options.fixedSubstitutionRate = fixedSubstitutionRateCheck.isSelected();
-
+        options.rateOptionClockModel = (FixRateType) rateOptionCombo.getSelectedItem();       
         options.meanSubstitutionRate = substitutionRateField.getValue();
 
         if (clockModelPanel != null) {
             clockModelPanel.getOptions(options);
         }
+        
+        fireModelsChanged();
     }
 
     private void fireModelsChanged() {
         options.updatePartitionClockTreeLinks();
+        options.updateFixedRateClockModel();
         frame.setDirty();
     }
 

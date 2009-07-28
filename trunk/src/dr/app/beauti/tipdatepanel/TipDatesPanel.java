@@ -31,6 +31,7 @@ import dr.app.beauti.components.TipDateSamplingComponentOptions;
 import dr.app.beauti.components.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.options.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
@@ -216,7 +217,13 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 tipDateSamplingLabel.setEnabled(enabled);
 
                 frame.removeSpecifiedTreePrior(enabled);
-                options.fixedSubstitutionRate = !enabled;
+                
+                if (enabled) {
+                	options.rateOptionClockModel = FixRateType.ESTIMATE;
+                } else {
+                	options.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+                }
+                
             }
         });
 

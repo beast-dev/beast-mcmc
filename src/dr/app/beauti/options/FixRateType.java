@@ -28,9 +28,9 @@ package dr.app.beauti.options;
  * @author Walter Xie
  */
 public enum FixRateType {
-	FIX_FIRST_PARTITION("Fix First Partition Rate"),
-	FIX_MEAN("Fix Mean Rate"),
-    ESTIMATE("Estimate Overall Rate");
+	FIX_FIRST_PARTITION("Fix First Partition Rate"), // 1st PartitionClockModel.isFixedRate = true, the rest = false;
+	FIX_MEAN("Fix Mean Rate"), // all PartitionClockModel.isFixedRate = true;
+    ESTIMATE("Estimate Overall Rate"); // all PartitionClockModel.isFixedRate = false;
     
 	FixRateType(String name) {
         this.name = name;

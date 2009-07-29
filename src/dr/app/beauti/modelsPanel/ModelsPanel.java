@@ -167,7 +167,12 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         rateOptionCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-                    	substitutionRateField.setEnabled((FixRateType) rateOptionCombo.getSelectedItem() != FixRateType.ESTIMATE);                    	
+                    	if (ev.getStateChange() == ItemEvent.SELECTED) {
+	                    	substitutionRateField.setEnabled((FixRateType) rateOptionCombo.getSelectedItem() != FixRateType.ESTIMATE);  
+	                    	if ((FixRateType) rateOptionCombo.getSelectedItem() == FixRateType.FIX_MEAN) {
+	                    		JOptionPane.showMessageDialog(rateOptionCombo, "Fix mean rate function is only working for single locus in this realse.");
+	                    	}
+                    	}
                     }
                 }
         );

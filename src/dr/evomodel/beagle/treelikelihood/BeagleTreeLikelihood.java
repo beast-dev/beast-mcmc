@@ -93,23 +93,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             this.tipCount = treeModel.getExternalNodeCount();
 
-            Map<String, Object> configuration = new HashMap<String, Object>();
-            configuration.put(BeagleFactory.STATE_COUNT, stateCount);
-            configuration.put(BeagleFactory.PREFER_SINGLE_PRECISION, preferSinglePrecision);
-            configuration.put(BeagleFactory.DEVICE_NUMBER, deviceNumber);
-
-            beagle = BeagleFactory.loadBeagleInstance(configuration);
-
-            // override use preference on useAmbiguities based on actual ability of the likelihood core
-//            if (!beagle.canHandleTipPartials()) {
-//                useAmbiguities = false;
-//            }
-//            if (!beagle.canHandleTipStates()){
-//                useAmbiguities = true;
-//            }
-
-            //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
-
             internalNodeCount = nodeCount - tipCount;
 
             int compactPartialsCount = tipCount;
@@ -122,18 +105,24 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             partialsCount += 2 * categoryCount * internalNodeCount;
             int matrixCount = 2 * categoryCount * (nodeCount - 1);
 
-            beagle.initialize(
+            // override use preference on useAmbiguities based on actual ability of the likelihood core
+//            if (!beagle.canHandleTipPartials()) {
+//                useAmbiguities = false;
+//            }
+//            if (!beagle.canHandleTipStates()){
+//                useAmbiguities = true;
+//            }
+
+            //           dynamicRescaling = likelihoodCore.canHandleDynamicRescaling();
+
+            beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
                     partialsCount,
                     compactPartialsCount,
                     stateCount,
                     patternCount,
                     categoryCount,
-                    matrixCount,
-                    null,
-                    0,
-                    0,
-                    0
+                    matrixCount
             );
 
             partialBufferIndicators = new int[partialsCount];

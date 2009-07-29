@@ -794,7 +794,9 @@ public class TreePriorGenerator extends Generator {
         setModelPrefix(prior.getPrefix());
         	
         //TODO: make suitable for *BEAST
-        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {  
+        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) { 
+        	
+        	writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT); // only 1 coalescent
         	
             writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
 

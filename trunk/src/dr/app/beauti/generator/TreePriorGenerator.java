@@ -779,6 +779,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
                 break;
+            case EXTENDED_SKYLINE:
+            	// only 1 coalescent, so write it in writeEBSPVariableDemographicReference
             case SPECIES_YULE:
             case SPECIES_BIRTH_DEATH:
                 // do not need

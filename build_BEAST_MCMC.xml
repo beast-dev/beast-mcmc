@@ -10,13 +10,14 @@
 	<property name="build" location="bin" />
 	<property name="lib" location="lib" />
 	<property name="dist" location="bin/dist" />
-	
+
 	<property name="main_class_BEAST" value="dr.app.beast.BeastMain" />
 	<property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp" />
-    <property name="report"  value="${build}/junitreport"/>
-	
+	<property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp" />
+	<property name="report"  value="${build}/junitreport"/>
+
 	<path id="classpath">
-	    <fileset dir="${lib}" includes="**/*.jar"/>
+		<fileset dir="${lib}" includes="**/*.jar"/>
 	</path>
 
 	<!-- start -->
@@ -27,30 +28,31 @@
 	<target name="clean">
 		<delete dir="bin" />
 	</target>
-	
+
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="build_all_BEAST" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff">
 	</target>
-	
+
 	<!-- clean previous build, compile Java source code, and Juint test, and make the beast.jar and beauti.jar -->
 	<target name="build_jar_all_BEAST" depends="clean,compile-all,junit,dist_all_BEAST"
         description="Clean and Build all run-time stuff">
 	</target>
-	
+
 	<!-- No JUnit Test, clean previous build, compile Java source code, and make the beast.jar and beauti.jar -->
 	<target name="build_jar_all_BEAST_NoJUnitTest" depends="clean,compile-all,dist_all_BEAST"
         description="Clean and Build all run-time stuff">
 	</target>
-	
+
 	<!-- compile Java source code -->
 	<target name="compile-all" depends="init">
 		<mkdir dir="${build}" />
-		
+
 		<!-- Compile the java code from ${src} into ${build} /bin -->
 		<javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
 			<include name="dr/app/beast/**" />
 			<include name="dr/app/beauti/**" />
+			<include name="dr/app/tracer/**"/>
 			<include name="dr/app/oldbeauti/**" />
 			<include name="dr/app/seqgen/**" />
 			<include name="dr/app/tools/**" />
@@ -77,7 +79,7 @@
 		</javac>
 		<echo message="Successfully complied." />
 	</target>
-	
+
 	<!-- make the beast.jar and beauti.jar -->
 	<target name="dist_all_BEAST" depends="compile-all" description="create BEAST + BEAUTI jar">
 		<!-- Create the distribution directory -->
@@ -189,57 +191,101 @@
 			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 		</jar>
+
+		<!-- Put everything in ${build} into the tracer.jar file -->
+		<jar jarfile="${dist}/tracer.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Main-Class" value="${main_class_TRACER}" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/tracer/**/*.class" />
+				<include name="dr/app/util/**/*.class" />
+				<include name="dr/evolution/alignment/**/*.class" />
+				<include name="dr/evolution/coalescent/**/*.class" />
+				<include name="dr/evolution/colouring/**/*.class" />
+				<include name="dr/evolution/datatype/**/*.class" />
+				<include name="dr/evolution/distance/**/*.class" />
+				<include name="dr/evolution/io/**/*.class" />
+				<include name="dr/evolution/parsimony/**/*.class" />
+				<include name="dr/evolution/sequence/**/*.class" />
+				<include name="dr/evolution/tree/**/*.class" />
+				<include name="dr/evolution/util/**/*.class" />
+				<include name="dr/gui/chart/**/*.class" />
+				<include name="dr/inference/**/*.class" />
+				<include name="dr/math/**/*.class" />
+				<include name="dr/matrix/**/*.class" />
+				<include name="dr/stats/**/*.class" />
+				<include name="dr/util/**/*.class" />
+				<include name="dr/xml/**/*.class" />
+				<include name="dr/java16compat/**/*.class" />
+			</fileset>
+			<fileset dir="${src}">
+				<include name="dr/app/tracer/**/*.png" />
+				<include name="dr/app/tracer/**/*.gif" />
+				<include name="dr/app/tracer/**/*.tiff" />
+				<include name="org/virion/jam/**/*.png" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
+			<zipgroupfileset dir="${lib}" includes="itext-1.4.5.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar" />
+		</jar>
 	</target>
-	
+
 	<!-- run beast.jar -->
 	<target name="run_BEAST">
 		<java jar="${dist}/beast.jar" fork="true" />
 	</target>
-	
+
 	<!-- run beauti.jar -->
 	<target name="run_BEAUTI">
 		<java jar="${dist}/beauti.jar" fork="true" />
 	</target>
-	
+
+	<!-- run tracer.jar -->
+	<target name="run_TRACER">
+		<java jar="${dist}/tracer.jar" fork="true" />
+	</target>
+
 	<!-- JUnit test -->
-    <target name="junit">
-        <mkdir dir="${report}"/>
-        <junit printsummary="yes">
-            <classpath>
-                <path refid="classpath"/>
-            	<path location="${build}"/>
-            </classpath>
-        	
-            <formatter type="xml"/>
-            
-            <batchtest fork="yes" todir="${report}">
-                <fileset dir="${src}"> 
-                	<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
-                	<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
-                	<include name="test/dr/evomodel/coalescent/**/*Test.java" />
-                	<!-- <include name="test/dr/evomodel/substmodel/**/*Test.java" /> -->
-                	<include name="test/dr/evomodel/substmodel/**/BinaryCovarionModelTest.java" />
-                	<include name="test/dr/evomodel/substmodel/**/CovarionHKYTest.java" />
-                	<include name="test/dr/evomodel/substmodel/**/HKYTest.java" />
-                	<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
-                	<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
-                	<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
-                	<include name="test/dr/evomodel/operators/**/NNITest.java" />
-                	<include name="test/dr/evomodel/speciation/**/*Test.java" />
-                	<include name="test/dr/inference/**/*Test.java"/>
-                	<include name="test/dr/distibutions/**/*Test.java"/>
-               </fileset>
-            </batchtest>
-        </junit>
-    	<echo message="JUnit test finished." />
-    </target>
-    
-    <target name="junitreport">
-        <junitreport todir="${report}">
-            <fileset dir="${report}" includes="*.xml"/>
-            <report format="frames" todir="${report}"/>
-        </junitreport>
-    	<echo message="JUnit test report finished." />
-    </target>
-	
+	<target name="junit">
+		<mkdir dir="${report}" />
+		<junit printsummary="yes">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${build}" />
+			</classpath>
+
+			<formatter type="xml" />
+
+			<batchtest fork="yes" todir="${report}">
+				<fileset dir="${src}">
+					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
+					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
+					<include name="test/dr/evomodel/coalescent/**/*Test.java" />
+					<!-- <include name="test/dr/evomodel/substmodel/**/*Test.java" /> -->
+					<include name="test/dr/evomodel/substmodel/**/BinaryCovarionModelTest.java" />
+					<include name="test/dr/evomodel/substmodel/**/CovarionHKYTest.java" />
+					<include name="test/dr/evomodel/substmodel/**/HKYTest.java" />
+					<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
+					<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
+					<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
+					<include name="test/dr/evomodel/operators/**/NNITest.java" />
+					<include name="test/dr/evomodel/speciation/**/*Test.java" />
+					<include name="test/dr/inference/**/*Test.java"/>
+					<include name="test/dr/distibutions/**/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+		<echo message="JUnit test finished." />
+	</target>
+
+	<target name="junitreport">
+		<junitreport todir="${report}">
+			<fileset dir="${report}" includes="*.xml"/>
+			<report format="frames" todir="${report}"/>
+		</junitreport>
+		<echo message="JUnit test report finished." />
+	</target>
+
 </project>

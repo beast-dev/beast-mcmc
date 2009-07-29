@@ -892,6 +892,13 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
+    public void setupEBSP() {
+    	dataPanel.selectAll();
+    	dataPanel.unlinkAll();
+    	
+    	setAllOptions();
+    }
+    
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
     	//TODO: wait for new implementation in BEAST    	   	
 	    if (DataPanel.ALLOW_UNLINKED_TREES) {

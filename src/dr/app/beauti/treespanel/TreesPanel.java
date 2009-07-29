@@ -77,8 +77,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    private CreateTreeAction createTreeAction = new CreateTreeAction();
     private TreeDisplayPanel treeDisplayPanel;
 
-    private BeautiFrame frame = null;
-    private BeautiOptions options = null;
+    private BeautiFrame frame = null;    
+	private BeautiOptions options = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
     private JTable treesTable = null;
@@ -482,7 +482,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
     
- 
+    public BeautiFrame getFrame() {
+		return frame;
+	}
     
     public JComponent getExportableComponent() {
         return treeDisplayPanel;

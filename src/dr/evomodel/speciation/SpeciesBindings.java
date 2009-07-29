@@ -548,8 +548,10 @@ public class SpeciesBindings extends AbstractModel {
             for (int nt = 0; nt < trees.length; ++nt) {
                 Object child = xogt.getChild(nt);
                 if (!(child instanceof TreeModel)) {
-                    child = xogt.getChild(TreeModel.class);
-                    popFactors[nt] = xogt.getDoubleAttribute(PLOIDY);
+                    assert    child instanceof XMLObject;
+                    popFactors[nt] = ((XMLObject)child).getDoubleAttribute(PLOIDY);
+                    child = ((XMLObject)child).getChild(TreeModel.class);
+
                 } else {
                     popFactors[nt] = -1;
                 }
@@ -575,7 +577,7 @@ public class SpeciesBindings extends AbstractModel {
                     // new ElementRule(GENE_TREES, someTree,  1, Integer.MAX_VALUE )
                     new ElementRule(GENE_TREES,
                             new  XMLSyntaxRule[]{
-                                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE),
+                                    new ElementRule(TreeModel.class, 0, Integer.MAX_VALUE),
                                     treeWithPloidy
                             } ) ,
             };

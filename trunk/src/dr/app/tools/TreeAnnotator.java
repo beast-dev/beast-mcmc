@@ -38,6 +38,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.contouring.ContourPath;
+import dr.geo.contouring.ContourMaker;
+import dr.geo.contouring.ContourWithSynder;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
@@ -954,17 +956,9 @@ public class TreeAnnotator {
             } else { // do not use R
 
 
-                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-//                double thresholdDensity = kde.findLevelCorrespondingToMass(hpd);
-//                ContourGenerator contour = new ContourGenerator(kde.getXGrid(), kde.getYGrid(), kde.getKDE(),
-//                        new ContourAttrib[]{new ContourAttrib(thresholdDensity)});
-//
-//                ContourPath[] paths = null;
-//                try {
-//                    paths = contour.getContours();
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
+//                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
+                ContourMaker kde = new ContourWithSynder(values[0],values[1],N);
+
                 ContourPath[] paths = kde.getContourPaths(hpd);
 
                 tree.setNodeAttribute(node, preLabel + postLabel + "_modality", paths.length);

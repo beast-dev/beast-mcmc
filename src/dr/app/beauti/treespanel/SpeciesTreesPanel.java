@@ -28,7 +28,10 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.util.PanelUtils;
+
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -43,57 +46,41 @@ import java.util.EnumSet;
  * @author Walter Xie
  * @version $Id: SpeciesTreesPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SpeciesTreesPanel extends BeautiPanel {
+public class SpeciesTreesPanel extends OptionsPanel {
 
-    private OptionsPanel optionsPanel = new OptionsPanel(30, 50);
-    public JComboBox treePriorCombo;
+	private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePrior.SPECIES_YULE, TreePrior.SPECIES_BIRTH_DEATH).toArray());
+    
+    private final PartitionTreePrior partitionTreePrior;
+    private boolean settingOptions = false;
 
-    private BeautiFrame frame = null;
-    private BeautiOptions options = null;
-
-    public SpeciesTreesPanel(BeautiFrame parent) {
-
-        this.frame = parent;
-
-        setOpaque(false);
-        optionsPanel.setOpaque(false);
-        setLayout(new BorderLayout());
-    	setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-
-
-    	treePriorCombo = new JComboBox(EnumSet.range(TreePrior.SPECIES_YULE, TreePrior.SPECIES_BIRTH_DEATH).toArray());
-        optionsPanel.addComponentWithLabel("Species Tree Prior:", treePriorCombo);
+    public SpeciesTreesPanel(PartitionTreePrior partitionTreePrior) {
+    	super(12, 28); 	
+       
+    	this.partitionTreePrior = partitionTreePrior;
+    	PanelUtils.setupComponent(treePriorCombo);    	
+    	addComponentWithLabel("Species Tree Prior:", treePriorCombo);
 
         treePriorCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-                        fireTreePriorsChanged();
+//                        fireTreePriorsChanged();
                     }
                 }
         );
 
-        optionsPanel.addSeparator();
+//        addSeparator();
 
-        optionsPanel.addLabel("Note: *BEAST only needs to select the prior for species tree.");
+        addLabel("Note: *BEAST only needs to select the prior for species tree.");
+        
+        validate();
+        repaint();
 
-        add(optionsPanel, BorderLayout.NORTH);
-
-    }
-
-    private void fireTreePriorsChanged() {
-        if (!settingOptions) {
-            frame.setDirty();
-        }
-    }
-
-    private boolean settingOptions = false;
-
-    public void setOptions(BeautiOptions options) {
-        this.options = options;
-
+    }    
+   
+    public void setOptions() {
         settingOptions = true;
 
-        treePriorCombo.setSelectedItem(options.activedSameTreePrior.getNodeHeightPrior());
+        treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
 
         settingOptions = false;
 
@@ -101,14 +88,10 @@ public class SpeciesTreesPanel extends BeautiPanel {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
-        options.activedSameTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
-
-//        if (options.nodeHeightPrior == ) {
-//
-//        } else if (options.nodeHeightPrior == ) {
-//
-//        }
+    public void getOptions() {
+    	if (settingOptions) return;
+    	
+    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
     }
 
 	// @Override
@@ -116,8 +99,4 @@ public class SpeciesTreesPanel extends BeautiPanel {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-
-
-
 }

@@ -82,9 +82,7 @@ public class InitialTreeGenerator extends Generator {
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, which may be 1 of many aligments using this tree.");
-                writer.writeTag(AlignmentParser.ALIGNMENT,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, 
-                        		model.getAllPartitionData().get(0).getAlignment().getId())}, true);
+                writer.writeIDref(AlignmentParser.ALIGNMENT, model.getAllPartitionData().get(0).getAlignment().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
@@ -152,8 +150,7 @@ public class InitialTreeGenerator extends Generator {
 
                 writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
 
-                writer.writeTag(TaxaParser.TAXA,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
+                writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
                 if (statistic.isNodeHeight) {
                     if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                         writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
@@ -233,7 +230,7 @@ public class InitialTreeGenerator extends Generator {
         );
 
         if (tree.getChildCount(node) == 0) {
-            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, tree.getNodeTaxon(node).getId())}, true);
+        	writer.writeIDref(TaxonParser.TAXON, tree.getNodeTaxon(node).getId());
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeNode(tree, tree.getChild(node, i), writer);

@@ -158,11 +158,9 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
         
         if (partitionTreeModel.getUserStartingTree() != null) {
-        	userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree());
+        	userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
         }
         
-//        userStartingTree =
-
         setupPanel();
 
         settingOptions = false;

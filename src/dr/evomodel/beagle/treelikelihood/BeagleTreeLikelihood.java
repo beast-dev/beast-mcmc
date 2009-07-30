@@ -133,6 +133,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             storedMatrixIndicators = new int[nodeCount];
             rootBufferIndicies = new int[categoryCount];
             storedRootBufferIndicies = new int[categoryCount];
+            scaleFactorBufferIndicators = new int[nodeCount];
+            storedScaleFactorBufferIndicators = new int[nodeCount];
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
@@ -281,6 +283,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
         System.arraycopy(matrixIndicators, 0, storedMatrixIndicators, 0, matrixIndicators.length);
         System.arraycopy(rootBufferIndicies, 0, storedRootBufferIndicies, 0, rootBufferIndicies.length);
+        System.arraycopy(scaleFactorBufferIndicators, 0, storedScaleFactorBufferIndicators, 0, scaleFactorBufferIndicators.length);
         super.storeState();
 
     }
@@ -304,6 +307,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         tmp = storedRootBufferIndicies;
         storedRootBufferIndicies = rootBufferIndicies;
         rootBufferIndicies = tmp;
+
+        tmp = storedScaleFactorBufferIndicators;
+        storedScaleFactorBufferIndicators = scaleFactorBufferIndicators;
+        scaleFactorBufferIndicators = tmp;
 
         super.restoreState();
 
@@ -338,7 +345,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         operationCount = 0;
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root, null);
+        traverse(treeModel, root, null, doRescale);
+        doRescale = false;
 
         if (updateSubstitutionModel) {
             // we are currently assuming a homogenous model...
@@ -363,7 +371,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
         beagle.updateTransitionMatrices(0, matrixUpdateIndices, null, null, edgeLengths, branchUpdateCount);
 
-        beagle.updatePartials(operations, operationCount, false);
+        beagle.updatePartials(operations, operationCount, false); // TODO Change 'false' to doRescale
 
         nodeEvaluationCount += operationCount;
 
@@ -378,10 +386,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //        if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
 //
 //            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+//            doRescale = true;
 //            updateAllNodes();
 //            branchUpdateCount = 0;
 //            operationCount = 0;
-//            traverse(treeModel, root, null);
+//            traverse(treeModel, root, null, doRescale);
+//            doRescale = false;
 //            beagle.updatePartials(operations, operationCount,true);
 //            beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, patternLogLikelihoods);
 //
@@ -409,7 +419,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Traverse the tree calculating partial likelihoods.
      */
-    private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber) {
+    private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber, boolean rescale) {
 
         boolean update = false;
 
@@ -451,11 +461,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
             final int[] op1 = new int[] { -1 };
-            final boolean update1 = traverse(tree, child1, op1);
+            final boolean update1 = traverse(tree, child1, op1, rescale);
 
             NodeRef child2 = tree.getChild(node, 1);
             final int[] op2 = new int[] { -1 };
-            final boolean update2 = traverse(tree, child2, op2);
+            final boolean update2 = traverse(tree, child2, op2, rescale);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -463,8 +473,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 int x = operationCount * 6;
                 // first flip the partialBufferIndicators
                 partialBufferIndicators[nodeNum] = internalNodeCount - partialBufferIndicators[nodeNum];
+
+//                if (rescale)
+//                    ; // TODO Update scaleFactorIndicators; indicators should change when rescale is going
+//                      // TODO to be called, i.e. one first call and whenever there was an under/over-flow
+
                 operations[x] = nodeNum + partialBufferIndicators[child1.getNumber()];
-                operations[x + 1] = 0;
+                operations[x + 1] = 0; // TODO Handle scaleFactorIndicators
                 operations[x + 2] = child1.getNumber() + partialBufferIndicators[child1.getNumber()]; // source node 1
                 operations[x + 3] = child1.getNumber() + matrixIndicators[child1.getNumber()]; // source matrix 1
                 operations[x + 4] = child2.getNumber() + partialBufferIndicators[child2.getNumber()]; // source node 2
@@ -500,9 +515,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int[] storedMatrixIndicators;
     private int[] rootBufferIndicies;
     private int[] storedRootBufferIndicies;
+    private int[] scaleFactorBufferIndicators;
+    private int[] storedScaleFactorBufferIndicators;
 
     private final int tipCount;
     private final int internalNodeCount;
+
+    private boolean doRescale = true; // Rescale on first call
 
 
     /**

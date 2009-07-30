@@ -22,6 +22,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String TREE_LIKELIHOOD = TreeLikelihood.TREE_LIKELIHOOD;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String DEVICE_NUMBER = "deviceNumber";
+    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
 
     public String getParserName() {
         return TREE_LIKELIHOOD;
@@ -30,8 +32,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int deviceNumber = xo.getAttribute(BeagleFactory.DEVICE_NUMBER,1) - 1;
-        boolean preferSinglePrecision = xo.getAttribute(BeagleFactory.PREFER_SINGLE_PRECISION,false);
+        int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
+        boolean preferSinglePrecision = xo.getAttribute(PREFER_SINGLE_PRECISION,false);
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -73,8 +75,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-            AttributeRule.newIntegerRule(BeagleFactory.DEVICE_NUMBER,true),
-            AttributeRule.newBooleanRule(BeagleFactory.PREFER_SINGLE_PRECISION, true),
+            AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
+            AttributeRule.newBooleanRule(PREFER_SINGLE_PRECISION, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),

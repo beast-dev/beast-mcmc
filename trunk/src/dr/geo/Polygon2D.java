@@ -256,11 +256,11 @@ public class Polygon2D {
 
         double area = 0;
         //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
-        for (int i = 0; i < length + 1; i++) {
+        for (int i = 0; i < length; i++) {
             area += (x[i]*y[i+1] - x[i+1]*y[i]);
         }
 
-        return (area/2);
+        return (Math.abs(area/2));
     }
 
     private static boolean isInsideClip(Point2D p, Side side, Rectangle2D boundingBox) {

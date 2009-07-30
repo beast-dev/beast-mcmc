@@ -367,7 +367,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         nodeEvaluationCount += operationCount;
 
-        beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, null, null,  patternLogLikelihoods);
+        beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, new int[0], new int[0],  patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {

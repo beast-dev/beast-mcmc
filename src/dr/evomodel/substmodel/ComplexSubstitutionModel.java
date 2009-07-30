@@ -265,7 +265,20 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
         DoubleMatrix2D eigenVInv;
 
-        //if (checkConditioning && alegbra.cond(eigenV) > maxConditionNumber) {
+        // A better (?) approach to checking diagonalizability comes from:
+        //
+        // J. Gentle (2007) Matrix Algebra
+        //
+        // Diagonalizbility Theorem: A matrix A is (complex) diagonalizable iff all distinct eigenvalues \lambda_l
+        // with algebraic multiplicity m_l are semi-simple, i.e.
+        //
+        //          rank(A - \lambda_l I) = n - m_l
+        //
+        // Equivalently (?), eigenV must be non-singular.
+        //
+        // SVD is needed to numerically approximate the rank of a matrix, so we can check Algrebra.rank()
+        // or Algebra.cond() with almost equal amounts of work.  I don't know which is more reliable. -- MAS
+        
         if (checkConditioning) {
             RobustSingularValueDecomposition svd;
             try {

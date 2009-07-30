@@ -127,12 +127,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             partialBufferIndicators = new int[nodeCount];
             storedPartialBufferIndicators = new int[nodeCount];
-            eigenIndicators = new int[categoryCount];
-            storedEigenIndicators = new int[categoryCount];
+//            eigenIndicators = new int[categoryCount];
+//            storedEigenIndicators = new int[categoryCount];
             matrixIndicators = new int[nodeCount];
             storedMatrixIndicators = new int[nodeCount];
-            rootBufferIndicies = new int[categoryCount];
-            storedRootBufferIndicies = new int[categoryCount];
+//            rootBufferIndicies = new int[1];
+//            storedRootBufferIndicies = new int[1];
             scaleFactorBufferIndicators = new int[nodeCount];
             storedScaleFactorBufferIndicators = new int[nodeCount];
 
@@ -280,9 +280,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected void storeState() {
 
         System.arraycopy(partialBufferIndicators, 0, storedPartialBufferIndicators, 0, partialBufferIndicators.length);
-        System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
+//        System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
         System.arraycopy(matrixIndicators, 0, storedMatrixIndicators, 0, matrixIndicators.length);
-        System.arraycopy(rootBufferIndicies, 0, storedRootBufferIndicies, 0, rootBufferIndicies.length);
+//        System.arraycopy(rootBufferIndicies, 0, storedRootBufferIndicies, 0, rootBufferIndicies.length);
         System.arraycopy(scaleFactorBufferIndicators, 0, storedScaleFactorBufferIndicators, 0, scaleFactorBufferIndicators.length);
         super.storeState();
 
@@ -296,17 +296,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         storedPartialBufferIndicators = partialBufferIndicators;
         partialBufferIndicators = tmp;
 
-        tmp = storedEigenIndicators;
-        storedEigenIndicators = eigenIndicators;
-        eigenIndicators = tmp;
+//        tmp = storedEigenIndicators;
+//        storedEigenIndicators = eigenIndicators;
+//        eigenIndicators = tmp;
 
         tmp = storedMatrixIndicators;
         storedMatrixIndicators = matrixIndicators;
         matrixIndicators = tmp;
 
-        tmp = storedRootBufferIndicies;
-        storedRootBufferIndicies = rootBufferIndicies;
-        rootBufferIndicies = tmp;
+//        tmp = storedRootBufferIndicies;
+//        storedRootBufferIndicies = rootBufferIndicies;
+//        rootBufferIndicies = tmp;
 
         tmp = storedScaleFactorBufferIndicators;
         storedScaleFactorBufferIndicators = scaleFactorBufferIndicators;
@@ -334,7 +334,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (matrixUpdateIndices == null) {
             matrixUpdateIndices = new int[nodeCount];
             branchLengths = new double[nodeCount];
-            edgeLengths = new double[nodeCount];
         }
 
         if (operations == null) {
@@ -352,7 +351,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // we are currently assuming a homogenous model...
             EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
             beagle.setEigenDecomposition(
-                    0, // we are only dealing with a single matrix over all categories
+                    0, // eigenIndex - we are only dealing with a single matrix over all categories
                     ed.getEigenVectors(),
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
@@ -362,20 +361,25 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         double[] categoryProportions = this.siteRateModel.getCategoryProportions();
         double[] frequencies = branchSiteModel.getStateFrequencies(0);
 
-        int k = 0;
-        for (int i = 0; i < categoryCount; i++) {
-            for (int j = 0; j < nodeCount; j++) {
-                edgeLengths[k] = categoryRates[i] * branchLengths[j];
-                k++;
-            }
-        }
-        beagle.updateTransitionMatrices(0, matrixUpdateIndices, null, null, edgeLengths, branchUpdateCount);
+        beagle.setCategoryRates(categoryRates);
+
+        beagle.updateTransitionMatrices(
+                0, // eigenIndex - we are only dealing with a single matrix over all categories
+                matrixUpdateIndices,
+                null,
+                null,
+                branchLengths,
+                branchUpdateCount);
 
         beagle.updatePartials(operations, operationCount, false); // TODO Change 'false' to doRescale
 
         nodeEvaluationCount += operationCount;
 
-        beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, new int[0], new int[0],  patternLogLikelihoods);
+//        rootBufferIndicies[0] = root.getNumber();
+
+        int rootIndex = root.getNumber() + partialBufferIndicators[root.getNumber()];
+        
+        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryProportions, frequencies, new int[0], new int[0],  patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -478,7 +482,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //                    ; // TODO Update scaleFactorIndicators; indicators should change when rescale is going
 //                      // TODO to be called, i.e. one first call and whenever there was an under/over-flow
 
-                operations[x] = nodeNum + partialBufferIndicators[child1.getNumber()];
+                operations[x] = nodeNum + partialBufferIndicators[nodeNum];
                 operations[x + 1] = 0; // TODO Handle scaleFactorIndicators
                 operations[x + 2] = child1.getNumber() + partialBufferIndicators[child1.getNumber()]; // source node 1
                 operations[x + 3] = child1.getNumber() + matrixIndicators[child1.getNumber()]; // source matrix 1
@@ -500,7 +504,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // **************************************************************
 
     private int[] matrixUpdateIndices;
-    private double[] edgeLengths;
     private double[] branchLengths;
     private int branchUpdateCount;
 
@@ -509,12 +512,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private int[] partialBufferIndicators;
     private int[] storedPartialBufferIndicators;
-    private int[] eigenIndicators;
-    private int[] storedEigenIndicators;
+//    private int[] eigenIndicators;
+//    private int[] storedEigenIndicators;
     private int[] matrixIndicators;
     private int[] storedMatrixIndicators;
-    private int[] rootBufferIndicies;
-    private int[] storedRootBufferIndicies;
+//    private int[] rootBufferIndicies;
+//    private int[] storedRootBufferIndicies;
     private int[] scaleFactorBufferIndicators;
     private int[] storedScaleFactorBufferIndicators;
 

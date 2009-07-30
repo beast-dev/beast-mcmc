@@ -28,8 +28,10 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.speciation.*;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -112,12 +114,33 @@ public class STARBEASTGenerator extends Generator {
         writer.writeComment("Collection of Gene Trees");
 
         writer.writeOpenTag(SpeciesBindings.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindings.GENE_TREES)});
-
-        // generate gene trees regarding each data partition
+        
+        boolean isSameAllPloidyType = true;
+        PloidyType checkSamePloidyType = options.getPartitionTreeModels().get(0).getPloidyType();
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
+        	if (checkSamePloidyType != model.getPloidyType()) {
+        		isSameAllPloidyType = false;
+        		break;
+        	}
         }
-
+        
+        if (isSameAllPloidyType) {
+	        // generate gene trees regarding each data partition
+	        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+	            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
+	        }
+        } else {
+        	// give ploidy
+	        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+	            writer.writeOpenTag(SpeciesBindings.GTREE, new Attribute[]{
+		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
+		            }
+		        );
+	            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
+	            writer.writeCloseTag(SpeciesBindings.GTREE);
+	        }
+        }
+        
         writer.writeCloseTag(SpeciesBindings.GENE_TREES);
     }
 

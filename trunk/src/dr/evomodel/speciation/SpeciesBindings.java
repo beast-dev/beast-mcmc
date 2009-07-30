@@ -46,6 +46,7 @@ public class SpeciesBindings extends AbstractModel {
     public static final String SPECIES = "species";
     public static final String SP = "sp";
     public static final String GENE_TREES = "geneTrees";
+    public static final String GTREE = "gtree";
 
     // all gene trees
     private final GeneTreeInfo[] geneTrees;
@@ -566,7 +567,7 @@ public class SpeciesBindings extends AbstractModel {
         }
 
         /* Can't be tree because XML parser supports usage of global tags only as main tags */
-        ElementRule treeWithPloidy = new ElementRule("gtree",
+        ElementRule treeWithPloidy = new ElementRule(GTREE,
                                 new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
                                 new ElementRule(TreeModel.class)}, 0, Integer.MAX_VALUE);
         XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};

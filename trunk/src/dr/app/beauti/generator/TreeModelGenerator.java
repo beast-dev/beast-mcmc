@@ -67,15 +67,13 @@ public class TreeModelGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+            	writer.writeIDref("tree", modelPrefix + STARTING_TREE);
                 break;
             case UPGMA:
-                writer.writeTag(UPGMATreeParser.UPGMA_TREE,
-                        new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+            	writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
                 break;
             case RANDOM:
-                writer.writeTag(CoalescentSimulator.COALESCENT_TREE,
-                        new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + STARTING_TREE), true);
+            	writer.writeIDref(CoalescentSimulator.COALESCENT_TREE, modelPrefix + STARTING_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -174,10 +172,8 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeText("");
 //            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
 //                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});
-//            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + TreeModelParser.NODE_RATES), true);
-//            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.IDREF, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
+//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + TreeModelParser.NODE_RATES);
+//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
     }

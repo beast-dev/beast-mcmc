@@ -105,50 +105,40 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
-                writer.writeTag(MergePatternsParser.MERGE_PATTERNS,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, substModel.getPrefix(num) + partition.getName() + "."
-                                + SitePatternsParser.PATTERNS)}, true);
+            	writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, substModel.getPrefix(num) + partition.getName() + "."
+                                + SitePatternsParser.PATTERNS);
             } else {
-                writer.writeTag(SitePatternsParser.PATTERNS,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, partition.getName() + "."
-                                + SitePatternsParser.PATTERNS)}, true);
+            	writer.writeIDref(SitePatternsParser.PATTERNS, partition.getName() + "." + SitePatternsParser.PATTERNS);
             }
         } else {
             // We just need to use the dummy alignment
-            writer.writeTag(AlignmentParser.ALIGNMENT,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, partition.getAlignment().getId())}, true);
+        	writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
         }
 
-        writer.writeTag(TreeModel.TREE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, treeModel.getPrefix() + TreeModel.TREE_MODEL)}, true);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
 
         if (num > 0) {
-            writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, substModel.getPrefix(num) + SiteModel.SITE_MODEL)}, true);
+        	writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
         } else {
-            writer.writeTag(GammaSiteModel.SITE_MODEL,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, substModel.getPrefix() + SiteModel.SITE_MODEL)}, true);
+        	writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
-                writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, clockModel.getPrefix() + treeModel.getPrefix() 
-                        		+ BranchRateModel.BRANCH_RATES)}, true);
+            	writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix() + treeModel.getPrefix() 
+                        		+ BranchRateModel.BRANCH_RATES);
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
-                writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, clockModel.getPrefix() + treeModel.getPrefix() 
-                        		+ BranchRateModel.BRANCH_RATES)}, true);
+            	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, clockModel.getPrefix() + treeModel.getPrefix() 
+                        		+ BranchRateModel.BRANCH_RATES);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-                writer.writeTag(ACLikelihood.AC_LIKELIHOOD,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, clockModel.getPrefix() + treeModel.getPrefix() 
-                        		+ BranchRateModel.BRANCH_RATES)}, true);
+            	writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, clockModel.getPrefix() + treeModel.getPrefix() 
+                        		+ BranchRateModel.BRANCH_RATES);
                 break;
 
             default:
@@ -156,11 +146,9 @@ public class TreeLikelihoodGenerator extends Generator {
         }
 
         /*if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         } else {
-            writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+           writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         }*/
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);

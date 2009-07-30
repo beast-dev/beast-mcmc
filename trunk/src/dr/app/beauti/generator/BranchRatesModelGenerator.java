@@ -277,12 +277,10 @@ public class BranchRatesModelGenerator extends Generator {
 			            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
 			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL 
 			                    		  + "." + "allRates")});
-			            writer.writeTag(ParameterParser.PARAMETER,
-			                      new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
-			                    		  + TreeModelParser.NODE_RATES), true);
-			            writer.writeTag(ParameterParser.PARAMETER,
-			                      new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
-			                    		  + RateEvolutionLikelihood.ROOTRATE), true);
+			            writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+			                    		  + TreeModelParser.NODE_RATES);
+			            writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+			                    		  + RateEvolutionLikelihood.ROOTRATE);
 			            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 	                }
 	                

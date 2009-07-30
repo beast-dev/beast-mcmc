@@ -107,13 +107,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 		removeAll();
 		
 		if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
      	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
+     	   || options.isSpeciesAnalysis()) {
 			
 			addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
-		} 
-		                
+		} 		     
+		
         addComponentWithLabel("Starting Tree:", startingTreeCombo);
         
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
@@ -130,7 +131,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
             userTreeCombo.setEnabled(true);
         }
-        
+		
 //		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
 		validate();
@@ -146,13 +147,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         settingOptions = true;
         
         if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
      	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
+     	   || options.isSpeciesAnalysis()) {
         	        	
         	ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
-
+        
         startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
         
         if (partitionTreeModel.getUserStartingTree() != null) {
@@ -173,9 +175,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     	if (settingOptions) return;
     	
     	if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)
+        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
      	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE)))) {
+     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
+     	   || options.isSpeciesAnalysis()) {
     		
         	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
         }

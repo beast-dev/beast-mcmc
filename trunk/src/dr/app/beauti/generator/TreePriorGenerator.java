@@ -302,10 +302,7 @@ public class TreePriorGenerator extends Generator {
 
             writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
             if (initialPopSize != null) {
-                writer.writeTag(ParameterParser.PARAMETER,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + initialPopSize),
-                        }, true);
+            	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + initialPopSize);
             } else {
                 writeParameter(modelPrefix + "initialDemo.popSize", 1, 100.0, Double.NaN, Double.NaN, writer);
             }
@@ -345,7 +342,7 @@ public class TreePriorGenerator extends Generator {
 	            writeNodeHeightPriorModelRef(prior, writer);
 	            writer.writeCloseTag(SpeciationLikelihood.MODEL);
 	            writer.writeOpenTag(SpeciationLikelihood.TREE);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(SpeciationLikelihood.TREE);
 	
 	            writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
@@ -380,7 +377,7 @@ public class TreePriorGenerator extends Generator {
 	            writeNodeHeightPriorModelRef(prior, writer);
 	            writer.writeCloseTag(CoalescentLikelihood.MODEL);
 	            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 	            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 	            
@@ -413,7 +410,7 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
 	
 	            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 	
 	            writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
@@ -455,7 +452,7 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeCloseTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
 	
 	            writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_TREE);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_TREE);
 	
 	            writer.writeCloseTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD);
@@ -477,7 +474,7 @@ public class TreePriorGenerator extends Generator {
 	            writeNodeHeightPriorModelRef(prior, writer);
 	            writer.writeCloseTag(CoalescentLikelihood.MODEL);
 	            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + TreeModel.TREE_MODEL), true);
+	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
 	            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
         }
@@ -558,8 +555,7 @@ public class TreePriorGenerator extends Generator {
 			                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
 			            }
 			        );
-		            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, model.getPrefix()
-		            		+ TreeModel.TREE_MODEL), true);
+		            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
 		            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
 	            }
 	        } else {//TODO correct for not sharing same prior?
@@ -567,8 +563,7 @@ public class TreePriorGenerator extends Generator {
 		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
 	            	}
 	        	);
-	            writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, prior.getTreeModel().getPrefix()
-	            		+ TreeModel.TREE_MODEL), true);
+	        	writer.writeIDref(TreeModel.TREE_MODEL, prior.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
 	        }
 	        
@@ -578,7 +573,7 @@ public class TreePriorGenerator extends Generator {
 	
 	        writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT));
 	        writer.writeOpenTag(CoalescentLikelihood.MODEL);
-	        writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + VariableDemographicModel.demoElementName), true);
+	        writer.writeIDref(tagName, modelPrefix + VariableDemographicModel.demoElementName);
 	        writer.writeCloseTag(CoalescentLikelihood.MODEL);
 	        writer.writeComment("Take population Tree from demographic");
 	        writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
@@ -588,8 +583,7 @@ public class TreePriorGenerator extends Generator {
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationSizeChanges"),
 	                        new Attribute.Default<String>("elementwise", "true")
 	                });
-	        writer.writeTag(ParameterParser.PARAMETER,
-	                new Attribute.Default<String>(XMLParser.IDREF, modelPrefix + VariableDemographicModel.demoElementName + ".indicators"), true);
+	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + VariableDemographicModel.demoElementName + ".indicators");
 	        writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 	        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
 	                new Attribute[]{

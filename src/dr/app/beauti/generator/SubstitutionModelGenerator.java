@@ -11,6 +11,8 @@ import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
+import dr.evoxml.AlignmentParser;
+import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
@@ -193,18 +195,12 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
         	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
-//        		for (PartitionData partition : model.getAllPartitionData()) { //?
-//        			if (model.getCodonHeteroPattern().equals("112")) {
-//        				
-//        			} else {
-//        				
-//        			}
-//        		}
-        		//TODO
-        		throw new IllegalArgumentException("It is not developed yet, using pattern list!");
-        	} else {
-        		for (PartitionData partition : model.getAllPartitionData()) {
-        			writer.writeIDref(SitePatternsParser.PATTERNS, partition.getName() + "." + SitePatternsParser.PATTERNS);
+        		for (PartitionData partition : model.getAllPartitionData()) { //?
+        			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
+        		}   		
+        	} else { 
+        		for (PartitionData partition : model.getAllPartitionData()) { //?
+        			writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
         		}
         	}
         }

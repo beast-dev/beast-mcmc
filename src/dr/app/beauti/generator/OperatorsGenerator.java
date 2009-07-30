@@ -534,14 +534,14 @@ public class OperatorsGenerator extends Generator {
         
         writer.writeOpenTag(UpDownOperator.DOWN);	        
         
+        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
+        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);        
+
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
         	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
         }
         
-        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
-        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
-        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);        
-
         writer.writeCloseTag(UpDownOperator.DOWN);
         
         writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);

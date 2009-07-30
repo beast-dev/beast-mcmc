@@ -12,6 +12,7 @@ import dr.util.Version;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.KMLCoordinates;
+import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.inference.trace.TraceDistribution;
 
@@ -19,6 +20,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.awt.geom.Point2D;
 
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -38,6 +40,7 @@ public class TimeSlicer {
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
     public static final String TRAIT = "trait";
+    public static final String LOCATIONTRAIT = "location";
     public static final String NAME = "name";
     public static final String DENSITY_VALUE = "density";
     public static final String SLICE_VALUE = "time";
@@ -181,6 +184,20 @@ public class TimeSlicer {
                 System.exit(-1);
             }
         }
+// writes out dispersal rate summaries for the whole tree, there is a beast xml statistic that can do this now
+//        if (containsLocation) {
+//            try{
+//                PrintWriter dispersalRateFile = new PrintWriter(new FileWriter("dispersalRates.log"), true);
+//                dispersalRateFile.print("state"+"\t"+"dispersalRate(native units)"+"\t"+"dispersalRate(great circle distance, km)\r");
+//                for(int x = 0; x < dispersalrates.size(); x++ ) {
+//                    dispersalRateFile.print(x+"\t"+dispersalrates.get(x)+"\r");
+//                }
+//
+//            } catch (IOException e) {
+//                System.err.println("IO Exception encountered: "+e.getMessage());
+//                System.exit(-1);
+//            }
+//        }
 
     }
 
@@ -266,6 +283,10 @@ public class TimeSlicer {
 
                     if (isBivariate) {
 
+                        //for testing how much points are within the polygons
+                        double numberOfPointsInPolygons = 0;
+                        double totalArea = 0;
+
                         ContourMaker contourMaker;
                         if (contourMode == ContourMode.JAVA)
                             contourMaker = new KernelDensityEstimator2D(x[0],x[1]);
@@ -292,9 +313,18 @@ public class TimeSlicer {
                                 //because KML polygons require long,lat,alt we need to switch lat and long first
                                 coords.switchXY();
                                 Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
+                                //testing how many points are within the polygon
+                                Element testElement = new Element("test");
+                                testElement.addContent(coords.toXML());
+                                Polygon2D testPolygon = new Polygon2D(testElement);
+                                totalArea += testPolygon.calculateArea();
+                                numberOfPointsInPolygons += getNumberOfPointsInPolygon(x,testPolygon);
+
                                 folderElement.addContent(placemarkElement);
                             }
                        }
+                       //testing how many points are within the polygon
+                       System.out.println(sliceValue+"\t"+(mostRecentSamplingDate-sliceValue)+"\t"+paths.length+"\t"+numberOfPointsInPolygons/count+"\t"+totalArea);
 
                     }
                     if (outputFormat == OutputFormat.XML)
@@ -302,6 +332,16 @@ public class TimeSlicer {
 
                 } // else skip
 
+    }
+
+    public static int getNumberOfPointsInPolygon(double[][] pointsArray, Polygon2D testPolygon) {
+        int numberOfPointsInPolygon = 0;
+        for (int x = 0; x < pointsArray[0].length; x++){
+            if (testPolygon.containsPoint2D(new Point2D.Double(pointsArray[1][x],pointsArray[0][x]))){
+                numberOfPointsInPolygon++;
+            }
+        }
+        return numberOfPointsInPolygon;
     }
 
     private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
@@ -591,6 +631,10 @@ public class TimeSlicer {
             }
         }
 
+        //used to obtain dispersal rates
+        double treeNativeDistance = 0;
+        double treeKilometerGreatCircleDistance = 0;
+
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
             NodeRef node = treeTime.getNode(x);
@@ -599,6 +643,16 @@ public class TimeSlicer {
 
                 double nodeHeight = treeTime.getNodeHeight(node);
                 double parentHeight = treeTime.getNodeHeight(treeTime.getParent(node));
+
+//  employed to get dispersal rates across the whole tree
+//                if (containsLocation){
+//
+//                    Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
+//                    Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
+//                    treeNativeDistance += getNativeDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
+//                    treeKilometerGreatCircleDistance += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
+//
+//                }
 
                 for (int i = 0; i < sliceCount; i++) {
 
@@ -639,9 +693,30 @@ public class TimeSlicer {
                 }
             }
         }
+//  employed to get dispersal rates across the whole tree
+//        if (containsLocation) {
+//           double treelength = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
+//            double dispersalNativeRate = treeNativeDistance/treelength;
+//            double dispersalKilometerRate = treeKilometerGreatCircleDistance/treelength;
+            //System.out.println(dispersalNativeRate+"\t"+dispersalKilometerRate);
+//            dispersalrates.add(dispersalNativeRate+"\t"+dispersalKilometerRate);
+//        }
+
         treesAnalyzed++;
 
     }
+//  employed to get dispersal rates across the whole tree
+//    private static double getNativeDistance(double[] location1, double[] location2) {
+//        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
+//    }
+//    private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
+//        double R = 6371; // km
+//        double dLat = Math.toRadians(location2[0]-location1[0]);
+//        double dLon = Math.toRadians(location2[1]-location1[1]);
+//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(location1[0])) * Math.cos(Math.toRadians(location2[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+//        return R * c;
+//    }
 
     private int traitCount;
     private int sliceCount;
@@ -652,6 +727,9 @@ public class TimeSlicer {
     private int treesAnalyzed = 0;
     private double mostRecentSamplingDate;
     private ContourMode contourMode;
+//  employed to get dispersal rates across the whole tree
+//    private static boolean containsLocation = false;
+//    private static ArrayList dispersalrates = new ArrayList();
 
 //    private void run(List<Tree> trees, String[] traits, double[] slices, boolean impute, boolean trueNoise) {
 //
@@ -906,7 +984,14 @@ public class TimeSlicer {
             String traitString = arguments.getStringOption(TRAIT);
             if (traitString != null) {
                 traitNames = parseVariableLengthStringArray(traitString);
+//employed to get dispersal rates across the whole tree
+//                for (int y = 0; y < traitNames.length; y++) {
+//                    if (traitNames[y].equals(LOCATIONTRAIT)){
+//                       containsLocation =  true;
+//                    }
+//                }
             }
+
             if (traitNames == null) {
                 traitNames = new String[1];
                 traitNames[0] = "location.rate";

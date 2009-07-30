@@ -94,15 +94,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             internalNodeCount = nodeCount - tipCount;
 
+            useAmbiguities = true; // @todo temporary overide
+            
             int compactPartialsCount = tipCount;
-            int partialsCount = 0;
             if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
-                partialsCount = tipCount;
             }
-            partialsCount += 2 * categoryCount * internalNodeCount;
-            int matrixCount = 2 * categoryCount * (nodeCount - 1);
+            int partialsCount = tipCount + 2 * internalNodeCount;
+            int matrixCount = 2 * nodeCount;
 
             // override use preference on useAmbiguities based on actual ability of the likelihood core
 //            if (!beagle.canHandleTipPartials()) {
@@ -120,15 +120,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     compactPartialsCount,
                     stateCount,
                     patternCount,
-                    1,            // eigenBufferCount
+                    2,            // eigenBufferCount
                     matrixCount,
                     categoryCount
             );
 
             partialBufferIndicators = new int[nodeCount];
             storedPartialBufferIndicators = new int[nodeCount];
-//            eigenIndicators = new int[categoryCount];
-//            storedEigenIndicators = new int[categoryCount];
+            eigenIndicators = new int[1];
+            storedEigenIndicators = new int[1];
             matrixIndicators = new int[nodeCount];
             storedMatrixIndicators = new int[nodeCount];
 //            rootBufferIndicies = new int[1];
@@ -258,7 +258,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == siteRateModel) {
 
-            updateSubstitutionModel = true;
             updateSiteModel = true;
             updateAllNodes();
 
@@ -280,7 +279,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected void storeState() {
 
         System.arraycopy(partialBufferIndicators, 0, storedPartialBufferIndicators, 0, partialBufferIndicators.length);
-//        System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
+        System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
         System.arraycopy(matrixIndicators, 0, storedMatrixIndicators, 0, matrixIndicators.length);
 //        System.arraycopy(rootBufferIndicies, 0, storedRootBufferIndicies, 0, rootBufferIndicies.length);
         System.arraycopy(scaleFactorBufferIndicators, 0, storedScaleFactorBufferIndicators, 0, scaleFactorBufferIndicators.length);
@@ -296,9 +295,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         storedPartialBufferIndicators = partialBufferIndicators;
         partialBufferIndicators = tmp;
 
-//        tmp = storedEigenIndicators;
-//        storedEigenIndicators = eigenIndicators;
-//        eigenIndicators = tmp;
+        tmp = storedEigenIndicators;
+        storedEigenIndicators = eigenIndicators;
+        eigenIndicators = tmp;
 
         tmp = storedMatrixIndicators;
         storedMatrixIndicators = matrixIndicators;
@@ -350,21 +349,22 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (updateSubstitutionModel) {
             // we are currently assuming a homogenous model...
             EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
+
+            eigenIndicators[0] = 1 - eigenIndicators[0];
             beagle.setEigenDecomposition(
-                    0, // eigenIndex - we are only dealing with a single matrix over all categories
+                    eigenIndicators[0],
                     ed.getEigenVectors(),
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
         }
 
-        double[] categoryRates = this.siteRateModel.getCategoryRates();
-        double[] categoryProportions = this.siteRateModel.getCategoryProportions();
-        double[] frequencies = branchSiteModel.getStateFrequencies(0);
-
-        beagle.setCategoryRates(categoryRates);
+        if (updateSiteModel) {
+            double[] categoryRates = this.siteRateModel.getCategoryRates();
+            beagle.setCategoryRates(categoryRates);
+        }
 
         beagle.updateTransitionMatrices(
-                0, // eigenIndex - we are only dealing with a single matrix over all categories
+                eigenIndicators[0], 
                 matrixUpdateIndices,
                 null,
                 null,
@@ -379,7 +379,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         int rootIndex = root.getNumber() + partialBufferIndicators[root.getNumber()];
         
-        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryProportions, frequencies, new int[0], new int[0],  patternLogLikelihoods);
+        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+        double[] frequencies = branchSiteModel.getStateFrequencies(0);
+
+        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies, new int[0], new int[0],  patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -447,8 +450,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
 
-            // first flip the matrixIndicator
-            matrixIndicators[nodeNum] = internalNodeCount - matrixIndicators[nodeNum];
+            // first flip the matrixIndicator: can take either 0 or nodeCount
+            matrixIndicators[nodeNum] = nodeCount - matrixIndicators[nodeNum];
 
             // then set which matrix to update
             matrixUpdateIndices[branchUpdateCount] = nodeNum + matrixIndicators[nodeNum];
@@ -475,7 +478,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (update1 || update2) {
 
                 int x = operationCount * 6;
-                // first flip the partialBufferIndicators
+                // first flip the partialBufferIndicators: can take either 0 or internalNodeCount
                 partialBufferIndicators[nodeNum] = internalNodeCount - partialBufferIndicators[nodeNum];
 
 //                if (rescale)
@@ -512,8 +515,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private int[] partialBufferIndicators;
     private int[] storedPartialBufferIndicators;
-//    private int[] eigenIndicators;
-//    private int[] storedEigenIndicators;
+    private int[] eigenIndicators;
+    private int[] storedEigenIndicators;
     private int[] matrixIndicators;
     private int[] storedMatrixIndicators;
 //    private int[] rootBufferIndicies;

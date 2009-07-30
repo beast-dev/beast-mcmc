@@ -40,8 +40,6 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -90,6 +88,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             addModel(this.branchRateModel);
 
             this.categoryCount = this.siteRateModel.getCategoryCount();
+            this.eigenBufferCount = 1;
 
             this.tipCount = treeModel.getExternalNodeCount();
 
@@ -121,16 +120,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     compactPartialsCount,
                     stateCount,
                     patternCount,
-                    categoryCount,
-                    matrixCount
+                    1,            // eigenBufferCount
+                    matrixCount,
+                    categoryCount
             );
 
-            partialBufferIndicators = new int[partialsCount];
-            storedPartialBufferIndicators = new int[partialsCount];
+            partialBufferIndicators = new int[nodeCount];
+            storedPartialBufferIndicators = new int[nodeCount];
             eigenIndicators = new int[categoryCount];
             storedEigenIndicators = new int[categoryCount];
-            matrixIndicators = new int[matrixCount];
-            storedMatrixIndicators = new int[matrixCount];
+            matrixIndicators = new int[nodeCount];
+            storedMatrixIndicators = new int[nodeCount];
             rootBufferIndicies = new int[categoryCount];
             storedRootBufferIndicies = new int[categoryCount];
 
@@ -324,8 +324,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             patternLogLikelihoods = new double[patternCount];
         }
 
-        if (branchUpdateIndices == null) {
-            branchUpdateIndices = new int[nodeCount];
+        if (matrixUpdateIndices == null) {
+            matrixUpdateIndices = new int[nodeCount];
             branchLengths = new double[nodeCount];
             edgeLengths = new double[nodeCount];
         }
@@ -361,36 +361,36 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 k++;
             }
         }
-        beagle.updateTransitionMatrices(0, branchUpdateIndices, null, null, edgeLengths, branchUpdateCount);
+        beagle.updateTransitionMatrices(0, matrixUpdateIndices, null, null, edgeLengths, branchUpdateCount);
 
         beagle.updatePartials(operations, operationCount, false);
 
         nodeEvaluationCount += operationCount;
 
-        beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, patternLogLikelihoods);
+        beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, null, null,  patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
             logL += patternLogLikelihoods[i] * patternWeights[i];
         }
 
-        // Attempt dynamic rescaling if over/under-flow
-        if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
-
-            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
-            updateAllNodes();
-            branchUpdateCount = 0;
-            operationCount = 0;
-            traverse(treeModel, root, null);
-            beagle.updatePartials(operations, operationCount,true);
-            beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, patternLogLikelihoods);
-
-            logL = 0.0;
-            for (int i = 0; i < patternCount; i++) {
-                logL += patternLogLikelihoods[i] * patternWeights[i];
-            }
-
-        }
+//        // Attempt dynamic rescaling if over/under-flow
+//        if (logL == Double.NaN || logL == Double.POSITIVE_INFINITY ) {
+//
+//            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+//            updateAllNodes();
+//            branchUpdateCount = 0;
+//            operationCount = 0;
+//            traverse(treeModel, root, null);
+//            beagle.updatePartials(operations, operationCount,true);
+//            beagle.calculateRootLogLikelihoods(rootBufferIndicies, categoryProportions, frequencies, patternLogLikelihoods);
+//
+//            logL = 0.0;
+//            for (int i = 0; i < patternCount; i++) {
+//                logL += patternLogLikelihoods[i] * patternWeights[i];
+//            }
+//
+//        }
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -404,17 +404,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         //********************************************************************
 
         return logL;
-    }
-
-    private int getPartialsBufferIndex(int nodeIndex, int category, int indicator) {
-        if (nodeIndex < tipCount) {
-            return tipCount;
-        }
-
-        return tipCount +
-                (indicator * internalNodeCount * categoryCount) +
-                (internalNodeCount * category) +
-                (nodeIndex - tipCount);
     }
 
     /**
@@ -444,7 +433,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
 
-            branchUpdateIndices[branchUpdateCount] = nodeNum;
+            // first flip the matrixIndicator
+            matrixIndicators[nodeNum] = internalNodeCount - matrixIndicators[nodeNum];
+
+            // then set which matrix to update
+            matrixUpdateIndices[branchUpdateCount] = nodeNum + matrixIndicators[nodeNum];
+
             branchLengths[branchUpdateCount] = branchTime;
             branchUpdateCount++;
 
@@ -466,12 +460,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                int x = operationCount * 5;
-                operations[x] = nodeNum;
-                operations[x + 1] = child1.getNumber(); // source node 1
-                operations[x + 2] = child1.getNumber(); // source matrix 1
-                operations[x + 3] = child2.getNumber(); // source node 2
-                operations[x + 4] = child2.getNumber(); // source matrix 2
+                int x = operationCount * 6;
+                // first flip the partialBufferIndicators
+                partialBufferIndicators[nodeNum] = internalNodeCount - partialBufferIndicators[nodeNum];
+                operations[x] = nodeNum + partialBufferIndicators[child1.getNumber()];
+                operations[x + 1] = 0;
+                operations[x + 2] = child1.getNumber() + partialBufferIndicators[child1.getNumber()]; // source node 1
+                operations[x + 3] = child1.getNumber() + matrixIndicators[child1.getNumber()]; // source matrix 1
+                operations[x + 4] = child2.getNumber() + partialBufferIndicators[child2.getNumber()]; // source node 2
+                operations[x + 5] = child2.getNumber() + matrixIndicators[child2.getNumber()]; // source matrix 2
 
                 operationCount ++;
 
@@ -487,7 +484,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private int[] branchUpdateIndices;
+    private int[] matrixUpdateIndices;
     private double[] edgeLengths;
     private double[] branchLengths;
     private int branchUpdateCount;
@@ -531,6 +528,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * the number of rate categories
      */
     protected int categoryCount;
+
+    /**
+     * the number of Eigen buffers
+     */
+    protected int eigenBufferCount;
 
     /**
      * an array used to transfer tip partials

@@ -1,15 +1,6 @@
 package dr.math.distributions;
 
 import dr.math.UnivariateFunction;
-import dr.math.GammaFunction;
-import dr.math.matrixAlgebra.Vector;
-import dr.stats.DiscreteStatistics;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.StringTokenizer;
 
 /**
  * @author Marc Suchard

@@ -41,12 +41,8 @@ public class BetaKDEDistribution extends KernelDensityEstimatorDistribution {
      protected void setBandWidth(Double bandWidth) {
          if (bandWidth == null) {
          // Default bandwidth
-//                double mu = DiscreteStatistics.mean(sample);
-//                double sigma = DiscreteStatistics.stdev(sample);
-             this.bandWidth = Math.pow(N,-0.2);
-//                                Math.pow(
-//                                    sigma * Math.pow(2*mu*mu*sigma*sigma + 3.0*(1.0-sigma*sigma)*(1.0-sigma*sigma)*N, -0.2)
-//                                         ,2);
+            double sigma = DiscreteStatistics.stdev(sample);
+            this.bandWidth = sigma * Math.pow(N,-0.4); // Renault & Scaillet (2004); Chen (1999)
          } else
              this.bandWidth = bandWidth;
      }

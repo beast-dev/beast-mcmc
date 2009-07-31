@@ -68,6 +68,7 @@ public class LogCombiner {
         boolean firstTree = true;
         int stateCount = 0;
         int stateStep = -1;
+        int columnCount = 0;
 
         String[] titles = null;
 
@@ -176,37 +177,59 @@ public class LogCombiner {
 
                 while (line != null) {
                     String[] parts = line.split("\\s");
-                    int state = Integer.parseInt(parts[0]);
 
-                    if (stateStep < 0 && state > 0) {
-                        stateStep = state;
+                    int state = -1;
+
+                    boolean skip = false;
+                    try {
+                        state = Integer.parseInt(parts[0]);
+                    } catch (NumberFormatException nfe) {
+                        skip = true;
                     }
 
-                    if (state >= burnin) {
-                        if (stateStep > 0) {
-                            stateCount += stateStep;
+                    if (!skip) {
+                        if (stateStep < 0 && state > 0) {
+                            stateStep = state;
+                            columnCount = parts.length;
                         }
 
-                        if (resample < 0 || stateCount % resample == 0) {
-                            writer.print(stateCount);
+                        // if the columnCount is not the same then perhaps the line is corrupt so skip it.
+                        if (state >= burnin && parts.length == columnCount) {
                             for (int j = 1; j < parts.length; j++) {
-                                String value = parts[j];
-
-                                if (useScale) {
-                                    if (titles[j].equals("clock.rate") || titles[j].startsWith("skyline.popSize")) {
-                                        value = reformatNumbers(value, convertToDecimal, true, 1.0 / scale);
-                                    } else if (titles[j].equals("treeModel.rootHeight")) {
-                                        value = reformatNumbers(value, convertToDecimal, true, scale);
-                                    }
-                                } else {
-                                    value = reformatNumbers(value, convertToDecimal, false, 1.0);
+                                try {
+                                    // attempt to convert the column value...
+                                    double value = Double.valueOf(parts[j]);
+                                } catch (NumberFormatException nfe) {
+                                    skip = true;
+                                    break;
                                 }
-                                writer.print("\t" + value);
                             }
-                            writer.println();
+
+                            if (!skip) {
+                                if (stateStep > 0) {
+                                    stateCount += stateStep;
+                                }
+                                if (resample < 0 || stateCount % resample == 0) {
+                                    writer.print(stateCount);
+                                    for (int j = 1; j < parts.length; j++) {
+                                        String value = parts[j];
+
+                                        if (useScale) {
+                                            if (titles[j].equals("clock.rate") || titles[j].startsWith("skyline.popSize")) {
+                                                value = reformatNumbers(value, convertToDecimal, true, 1.0 / scale);
+                                            } else if (titles[j].equals("treeModel.rootHeight")) {
+                                                value = reformatNumbers(value, convertToDecimal, true, scale);
+                                            }
+                                        } else  if (convertToDecimal) {
+                                            value = reformatNumbers(value, convertToDecimal, false, 1.0);
+                                        }
+                                        writer.print("\t" + value);
+                                    }
+                                    writer.println();
+                                }
+                            }
                         }
                     }
-
                     line = reader.readLine();
                     //lineCount++;
                 }

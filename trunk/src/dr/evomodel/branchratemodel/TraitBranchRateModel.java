@@ -46,17 +46,30 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
 
     public static final String TRAIT_BRANCH_RATES = "traitBranchRates";
     public static final String TRAIT = "trait";
+    public static final String DIMENSION = "dimension";
     public static final String RATE = "rate";
     public static final String RATIO = "ratio";
 
     private final String trait;
+    private final int dimension;
     private final Parameter rateParameter;
     private final Parameter ratioParameter;
+
+    public TraitBranchRateModel(String trait, int dimension) {
+        super(TRAIT_BRANCH_RATES);
+
+        this.trait = trait;
+        this.dimension = dimension;
+
+        this.rateParameter = null;
+        this.ratioParameter = null;
+    }
 
     public TraitBranchRateModel(String trait, Parameter rateParameter, Parameter ratioParameter) {
         super(TRAIT_BRANCH_RATES);
 
         this.trait = trait;
+        dimension = 0;
         this.rateParameter = rateParameter;
         this.ratioParameter = ratioParameter;
 
@@ -92,28 +105,41 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
             throw new IllegalArgumentException("Root does not have a valid rate");
         }
 
-        double scale = 1.0;
-        double ratio = 1.0;
-
-        if (rateParameter != null) {
-            scale = rateParameter.getParameterValue(0);
-        }
-
-        if (ratioParameter != null) {
-            ratio = ratioParameter.getParameterValue(0);
-        }
-
+        double rate = 1.0;
         TreeModel treeModel = (TreeModel) tree;
 
-        // get the log rate for the node and its parent
-        double rate1 = ratio * treeModel.getMultivariateNodeTrait(node, trait)[0];
-        double rate2 = ratio * treeModel.getMultivariateNodeTrait(parent, trait)[0];
+        if (rateParameter != null) {
+            double scale = 1.0;
+            double ratio = 1.0;
 
-        if (rate1 == rate2) {
-            return scale * Math.exp(rate1);
+            if (rateParameter != null) {
+                scale = rateParameter.getParameterValue(0);
+            }
+
+            if (ratioParameter != null) {
+                ratio = ratioParameter.getParameterValue(0);
+            }
+
+
+            // get the log rate for the node and its parent
+            double rate1 = ratio * treeModel.getMultivariateNodeTrait(node, trait)[0];
+            double rate2 = ratio * treeModel.getMultivariateNodeTrait(parent, trait)[0];
+
+            if (rate1 == rate2) {
+                return scale * Math.exp(rate1);
+            }
+
+            rate = scale * (Math.exp(rate2) - Math.exp(rate1)) / (rate2 - rate1);
+        } else {
+            double rate1 =  treeModel.getMultivariateNodeTrait(node, trait)[dimension];
+            double rate2 =  treeModel.getMultivariateNodeTrait(parent, trait)[dimension];
+
+            if (rate1 == rate2) {
+                return Math.exp(rate1);
+            }
+
+            rate = (Math.exp(rate2) - Math.exp(rate1)) / (rate2 - rate1);
         }
-
-        double rate = scale * (Math.exp(rate2) - Math.exp(rate1)) / (rate2 - rate1);
 
         return rate;
     }
@@ -135,13 +161,22 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String trait = xo.getStringAttribute(TRAIT);
+            int dimension = 0;
+            if (xo.hasAttribute(DIMENSION)) {
+                dimension = xo.getIntegerAttribute(DIMENSION) - 1;
+            }
+
 
             Logger.getLogger("dr.evomodel").info("Using trait, " + trait + ", as log rate estimates.");
 
-            Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
-            Parameter ratioParameter = (Parameter) xo.getElementFirstChild(RATIO);
+            if (xo.hasChildNamed(RATE)) {
+                Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
+                Parameter ratioParameter = (Parameter) xo.getElementFirstChild(RATIO);
 
-            return new TraitBranchRateModel(trait, rateParameter, ratioParameter);
+                return new TraitBranchRateModel(trait, rateParameter, ratioParameter);
+            } else {
+                return new TraitBranchRateModel(trait, dimension);
+            }
         }
 
         //************************************************************************
@@ -164,6 +199,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
+                AttributeRule.newIntegerRule(DIMENSION, true, "The dimension that supplies the rate"),
                 new ElementRule(RATE, Parameter.class, "The rate parameter", true),
                 new ElementRule(RATIO, Parameter.class, "The ratio parameter", true),
         };

@@ -165,7 +165,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                      PatternList patternList,
                                      int sequenceIndex,
                                      int nodeIndex) {
-        double[] partials = new double[patternCount * stateCount];
+        double[] partials = new double[patternCount * stateCount * categoryCount];
 
         boolean[] stateSet;
 
@@ -183,6 +183,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
                 v++;
             }
+        }
+
+        // if there is more than one category then replicate the partials for each
+        int n = patternCount * stateCount;
+        int k = n;
+        for (int i = 1; i < categoryCount; i++) {
+            System.arraycopy(partials, 0, partials, k, n);
+            k += n;
         }
 
         beagle.setPartials(nodeIndex, partials);

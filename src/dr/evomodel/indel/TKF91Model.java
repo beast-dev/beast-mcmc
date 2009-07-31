@@ -46,7 +46,7 @@ public class TKF91Model extends IndelModel {
     public static final String BIRTH_RATE = "birthRate";
     public static final String DEATH_RATE = "deathRate";
 
-    private Parameter lengthDistParameter, deathRateParameter;
+    private final Parameter lengthDistParameter, deathRateParameter;
 
     public TKF91Model(Parameter lengthDistParameter, Parameter deathRateParameter, Type units) {
         super(TKF91_MODEL);
@@ -143,7 +143,7 @@ public class TKF91Model extends IndelModel {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule("lengthDistribution",
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule("deathRate",

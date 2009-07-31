@@ -357,10 +357,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     ed.getEigenValues());
         }
 
-        if (updateSiteModel) {
+//        if (updateSiteModel) {
             double[] categoryRates = this.siteRateModel.getCategoryRates();
             beagle.setCategoryRates(categoryRates);
-        }
+//        }
 
         beagle.updateTransitionMatrices(
                 eigenIndicators[0], 

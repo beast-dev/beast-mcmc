@@ -960,7 +960,9 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
     public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
         assert scaleFactor > 0;
         if( nDims <= 0 ) {
-            storeState();  // just checks assert really
+            // actually when in an up down with operators on the gene trees the flags
+            // may indicate a change
+            //storeState();  // just checks assert really
             beginTreeEdit();
             final int count = getInternalNodeCount();
             for(int i = 0; i < count; ++i) {

@@ -94,8 +94,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             internalNodeCount = nodeCount - tipCount;
 
-            useAmbiguities = true; // @todo temporary overide
-            
             int compactPartialsCount = tipCount;
             if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
@@ -131,8 +129,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             storedEigenIndicators = new int[1];
             matrixIndicators = new int[nodeCount];
             storedMatrixIndicators = new int[nodeCount];
-//            rootBufferIndicies = new int[1];
-//            storedRootBufferIndicies = new int[1];
             scaleFactorBufferIndicators = new int[nodeCount];
             storedScaleFactorBufferIndicators = new int[nodeCount];
 
@@ -281,7 +277,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         System.arraycopy(partialBufferIndicators, 0, storedPartialBufferIndicators, 0, partialBufferIndicators.length);
         System.arraycopy(eigenIndicators, 0, storedEigenIndicators, 0, eigenIndicators.length);
         System.arraycopy(matrixIndicators, 0, storedMatrixIndicators, 0, matrixIndicators.length);
-//        System.arraycopy(rootBufferIndicies, 0, storedRootBufferIndicies, 0, rootBufferIndicies.length);
         System.arraycopy(scaleFactorBufferIndicators, 0, storedScaleFactorBufferIndicators, 0, scaleFactorBufferIndicators.length);
         super.storeState();
 
@@ -302,10 +297,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         tmp = storedMatrixIndicators;
         storedMatrixIndicators = matrixIndicators;
         matrixIndicators = tmp;
-
-//        tmp = storedRootBufferIndicies;
-//        storedRootBufferIndicies = rootBufferIndicies;
-//        rootBufferIndicies = tmp;
 
         tmp = storedScaleFactorBufferIndicators;
         storedScaleFactorBufferIndicators = scaleFactorBufferIndicators;
@@ -374,8 +365,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.updatePartials(operations, operationCount, false); // TODO Change 'false' to doRescale
 
         nodeEvaluationCount += operationCount;
-
-//        rootBufferIndicies[0] = root.getNumber();
 
         int rootIndex = root.getNumber() + partialBufferIndicators[root.getNumber()];
         
@@ -519,8 +508,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int[] storedEigenIndicators;
     private int[] matrixIndicators;
     private int[] storedMatrixIndicators;
-//    private int[] rootBufferIndicies;
-//    private int[] storedRootBufferIndicies;
     private int[] scaleFactorBufferIndicators;
     private int[] storedScaleFactorBufferIndicators;
 

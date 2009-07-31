@@ -159,14 +159,6 @@ public class BeautiOptions extends ModelOptions {
      * resets the options to the initial conditions
      */
     public void reset() {
-        fileNameStem = "untitled";
-        logFileName = null;
-//        mapTreeLog = false;
-//        mapTreeFileName = null;
-        treeFileName.clear();
-        substTreeLog = false;
-        substTreeFileName.clear();
-
         // Data options
         allowDifferentTaxa = false;
         dataType = null;
@@ -175,24 +167,25 @@ public class BeautiOptions extends ModelOptions {
         taxonList = null;
         taxonSets.clear();
         taxonSetsMono.clear();
-        dataPartitions.clear();
-
-        selecetedTraits.clear();
-
+        
         meanDistance = 1.0;
         datesUnits = YEARS;
         datesDirection = FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
-
+        
+        selecetedTraits.clear();
+        traitTypes.clear();
+        
+        dataPartitions.clear();
 //        partitionModels.clear();
 //        partitionTreeModels.clear();
 //        partitionTreePriors.clear();
         partitionClockTreeLinks.clear();
         activedSameTreePrior = null;
         shareSameTreePrior = true;
+        userTrees.clear();
 
-//        fixedSubstitutionRate = true;
         rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
         meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
@@ -212,7 +205,14 @@ public class BeautiOptions extends ModelOptions {
         performTraceAnalysis = false;
         generateCSV = true;  // until/if a button
         samplePriorOnly = false;
-
+        
+        fileNameStem = MCMCPanel.fileNameStem;
+        logFileName = null;
+//        mapTreeLog = false;
+//        mapTreeFileName = null;
+        treeFileName.clear();
+        substTreeLog = false;
+        substTreeFileName.clear();
     }
     
     public void selectTaxonSetsStatistics(List<Parameter> params) {
@@ -1458,7 +1458,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
@@ -1526,10 +1526,8 @@ public class BeautiOptions extends ModelOptions {
     public String logFileName = null;
 //    public boolean mapTreeLog = false;
 //    public String mapTreeFileName = null;
-//    public String treeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
-//    public String substTreeFileName = null;
     public List<String> substTreeFileName = new ArrayList<String>();
     
     

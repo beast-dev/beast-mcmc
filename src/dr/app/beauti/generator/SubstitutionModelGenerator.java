@@ -7,6 +7,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.BinaryCovarionModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodelxml.BinarySubstitutionModelParser;
@@ -151,7 +152,7 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-        writeParameter(HKYParser.KAPPA, "kappa", model, writer);
+        writeParameter(num, HKYParser.KAPPA, "kappa", model, writer);
         writer.writeCloseTag(NucModelType.HKY.getXMLName());
     }
 
@@ -175,11 +176,11 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModel(writer, model, num);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
 
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-        writeParameter(dr.evomodel.substmodel.GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+        writeParameter(num, dr.evomodel.substmodel.GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+        writeParameter(num, dr.evomodel.substmodel.GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
     }
 
@@ -250,15 +251,16 @@ public class SubstitutionModelGenerator extends Generator {
         
         if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
         	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
-        		//TODO
-        		throw new IllegalArgumentException("It is not developed yet, using pattern list!");
-        	} else {
-        		for (PartitionData partition : model.getAllPartitionData()) {
-        			writer.writeIDref(SitePatternsParser.PATTERNS, partition.getName() + "." + SitePatternsParser.PATTERNS);
+        		for (PartitionData partition : model.getAllPartitionData()) { //?
+        			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
+        		}   		
+        	} else { 
+        		for (PartitionData partition : model.getAllPartitionData()) { //?
+        			writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
         		}
         	}
         }
-//        writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
+        
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
@@ -475,6 +477,12 @@ public class SubstitutionModelGenerator extends Generator {
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
+            
+
+            if (writeMuParameter) {
+                writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            }
+            
         } else {
 
             switch (model.getNucSubstitutionModel()) {
@@ -490,12 +498,14 @@ public class SubstitutionModelGenerator extends Generator {
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
-        }
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+            
 
-        if (writeMuParameter) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            if (writeMuParameter) {
+                writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            }
         }
+        
+        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
@@ -558,7 +568,7 @@ public class SubstitutionModelGenerator extends Generator {
                 writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, "bsimple");
                 break;
             case ModelOptions.BIN_COVARION:
-                writer.writeIDref(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, "bcov");
+                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, "bcov");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");

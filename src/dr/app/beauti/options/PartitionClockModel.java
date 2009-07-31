@@ -67,7 +67,10 @@ public class PartitionClockModel extends ModelOptions {
         this.options = options;
         this.name = name;
 
-        this.allPartitionData = source.allPartitionData;
+        this.allPartitionData.clear();
+        for (PartitionData partition: source.allPartitionData) {
+        	this.allPartitionData.add(partition);			
+		} 
 
         this.clockType = source.clockType;
 

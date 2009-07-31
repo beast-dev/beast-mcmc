@@ -211,9 +211,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
     private void uncheckAllowDifferentTaxa() {
         allowDifferentTaxaCheck.setSelected(false);
         options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+        
+        frame.setDirty();
     }
 
     private void fireDataChanged() {
+    	options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionClockTreeLinks();
         
         frame.setDirty();
@@ -263,7 +266,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         this.options = options;
         allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
 
-        options.updateLinksBetweenPDPCMPSMPTMPTPP();
+//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
 
         modelsChanged();
 
@@ -273,7 +276,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
 
-        options.updateLinksBetweenPDPCMPSMPTMPTPP();
+//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
     }
 
     public JComponent getExportableComponent() {
@@ -289,6 +292,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
+                
+        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
+            uncheckAllowDifferentTaxa();
+        }
+
         if (options.dataPartitions.size() == 0) {
             if (options.isSpeciesAnalysis()) {
                 frame.removeSepciesAnalysisSetup();
@@ -296,10 +304,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
-        }
-
-        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-            uncheckAllowDifferentTaxa();
         }
 
         dataTableModel.fireTableDataChanged();

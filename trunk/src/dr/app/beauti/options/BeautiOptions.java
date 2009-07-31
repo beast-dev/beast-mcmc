@@ -85,7 +85,8 @@ public class BeautiOptions extends ModelOptions {
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
 //              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
         createOperator("deltaMu", "Relative rates",
-                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+//                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
     }
 
@@ -413,16 +414,17 @@ public class BeautiOptions extends ModelOptions {
         }
 
 //        if (multiplePartitions) {
-//            Operator deltaMuOperator = getOperator("deltaMu");
-//
-//            // update delta mu operator weight
-//            deltaMuOperator.weight = 0.0;
-//            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
-//                deltaMuOperator.weight += pm.getCodonPartitionCount();
-//            }
-//
-//            ops.add(deltaMuOperator);
-//        }
+        if (hasCodon()) {
+            Operator deltaMuOperator = getOperator("deltaMu");
+
+            // update delta mu operator weight
+            deltaMuOperator.weight = 0.0;
+            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
+                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            }
+
+            ops.add(deltaMuOperator);
+        }
 
         double initialRootHeight = 1;
 
@@ -457,7 +459,21 @@ public class BeautiOptions extends ModelOptions {
     public boolean hasData() {
         return dataPartitions.size() > 0;
     }
-
+    
+    /**
+     * @return true either if the options have more than one partition or any partition is
+     *         broken into codon positions.
+     */
+    public boolean hasCodon() {
+//        final List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels();
+//        return (models.size() > 1 || models.get(0).getCodonPartitionCount() > 1);
+    	for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+            if (model.getCodonPartitionCount() > 1) {
+            	return true;
+            }
+        }
+        return false;
+    }
 //    public boolean isFixedSubstitutionRate() {
 //        return fixedSubstitutionRate;
 //    }

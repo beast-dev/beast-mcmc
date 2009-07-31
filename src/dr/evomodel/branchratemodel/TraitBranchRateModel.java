@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -40,6 +41,7 @@ import java.util.logging.Logger;
  * Takes the log rates at each node provided by a specified rate and give the branch rate as the average.
  *
  * @author Andrew Rambaut
+ * @author Marc Suchard
  */
 public class TraitBranchRateModel extends AbstractModel implements BranchRateModel {
 
@@ -54,15 +56,18 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     private final int dimension;
     private final Parameter rateParameter;
     private final Parameter ratioParameter;
+    private SampledMultivariateTraitLikelihood traitLikelihood;
 
-    public TraitBranchRateModel(String trait, int dimension) {
+    public TraitBranchRateModel(SampledMultivariateTraitLikelihood traitLikelihood, int dimension) {
         super(TRAIT_BRANCH_RATES);
 
-        this.trait = trait;
+        this.traitLikelihood = traitLikelihood;
+        this.trait = traitLikelihood.getTraitName();
         this.dimension = dimension;
 
         this.rateParameter = null;
         this.ratioParameter = null;
+        addModel(traitLikelihood);
     }
 
     public TraitBranchRateModel(String trait, Parameter rateParameter, Parameter ratioParameter) {
@@ -83,6 +88,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -138,7 +144,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
                 return Math.exp(rate1);
             }
 
-            rate = (Math.exp(rate2) - Math.exp(rate1)) / (rate2 - rate1);
+            rate = (Math.exp(rate2) - Math.exp(rate1)) / (rate2 - rate1); // TODO Should this not be averaged on the log-scale?
         }
 
         return rate;
@@ -160,14 +166,18 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String trait = xo.getStringAttribute(TRAIT);
+            String trait = xo.getAttribute(TRAIT, "");
             int dimension = 0;
             if (xo.hasAttribute(DIMENSION)) {
                 dimension = xo.getIntegerAttribute(DIMENSION) - 1;
             }
 
+            SampledMultivariateTraitLikelihood traitLikelihood = (SampledMultivariateTraitLikelihood)
+                        xo.getChild(SampledMultivariateTraitLikelihood.class);
+            if (traitLikelihood != null)
+                trait = traitLikelihood.getTraitName();
 
-            Logger.getLogger("dr.evomodel").info("Using trait, " + trait + ", as log rate estimates.");
+            Logger.getLogger("dr.evomodel").info("Using trait '" + trait + "' as log rate estimates.");
 
             if (xo.hasChildNamed(RATE)) {
                 Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
@@ -175,7 +185,8 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
 
                 return new TraitBranchRateModel(trait, rateParameter, ratioParameter);
             } else {
-                return new TraitBranchRateModel(trait, dimension);
+
+                return new TraitBranchRateModel(traitLikelihood, dimension);
             }
         }
 
@@ -198,10 +209,11 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
+//                AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
                 AttributeRule.newIntegerRule(DIMENSION, true, "The dimension that supplies the rate"),
                 new ElementRule(RATE, Parameter.class, "The rate parameter", true),
                 new ElementRule(RATIO, Parameter.class, "The ratio parameter", true),
+                new ElementRule(SampledMultivariateTraitLikelihood.class,true),
         };
     };
 

@@ -732,23 +732,36 @@ public class TreePriorGenerator extends Generator {
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
-    public void writeLikelihoodLog(PartitionTreePrior prior, XMLWriter writer) {
+    public void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+    	//tree model prefix
+    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
+    	
+        switch (prior.getNodeHeightPrior()) {
 
-        setModelPrefix(prior.getPrefix());
-
-        if (prior.getNodeHeightPrior() == TreePrior.YULE || prior.getNodeHeightPrior() == TreePrior.BIRTH_DEATH) {
-            writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
-        } else if (prior.getNodeHeightPrior() == TreePrior.SKYLINE) {
-            writer.writeIDref(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyline");
-        } else if (prior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
-            writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
-            // Currently nothing additional needs logging
-        } else if (options.isSpeciesAnalysis()) {
-            // no
-        } else {
-            writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
+            case YULE:
+            case BIRTH_DEATH:
+                writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
+                break;
+            case SKYLINE:
+                writer.writeIDref(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyline");
+//                writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, modelPrefix + "eml1");
+                break;
+            case GMRF_SKYRIDE:
+                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+                break;
+            case LOGISTIC:
+//                writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
+                writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
+                break;
+            case EXTENDED_SKYLINE:
+            	// only 1 coalescent, so write it separately after this method
+            case SPECIES_YULE:
+            case SPECIES_BIRTH_DEATH:
+                // do not need
+                break;
+            default: 
+                writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
         }
-
     }
     
     // id is written in writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer)
@@ -781,8 +794,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             default: 
                 writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
-        }
-        
+        }        
     }
     
     public void writeEBSPVariableDemographicReference(PartitionTreePrior prior, XMLWriter writer) {

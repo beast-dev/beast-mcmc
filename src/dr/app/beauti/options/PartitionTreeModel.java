@@ -75,7 +75,10 @@ public class PartitionTreeModel extends ModelOptions {
         this.options = options;
         this.name = name;
 
-        this.allPartitionData = source.allPartitionData;
+        this.allPartitionData.clear();
+        for (PartitionData partition: source.allPartitionData) {
+        	this.allPartitionData.add(partition);			
+		} 
 
         this.startingTreeType = source.startingTreeType;
         this.userStartingTree = source.userStartingTree;

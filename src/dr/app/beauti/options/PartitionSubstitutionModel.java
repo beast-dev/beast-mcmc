@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.evolution.datatype.DataType;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -78,8 +79,11 @@ public class PartitionSubstitutionModel extends ModelOptions {
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
-
-        this.allPartitionData = source.allPartitionData;
+        
+        this.allPartitionData.clear();
+        for (PartitionData partition: source.allPartitionData) {
+        	this.allPartitionData.add(partition);			
+		}        
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -352,7 +356,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     operators.add(getOperator("CP1.pInv"));
-                    operators.add(getOperator("CP2.alpha"));
+                    operators.add(getOperator("CP2.pInv"));
                     operators.add(getOperator("CP3.pInv"));
                 } else if (codonHeteroPattern.equals("112")) {
                     operators.add(getOperator("CP1+2.pInv"));

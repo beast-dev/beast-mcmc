@@ -94,7 +94,7 @@ public class PartitionData {
     }
 
     public PartitionSubstitutionModel getPartitionSubstitutionModel() {
-        return model;
+        return this.model;
     }
 
     public void setPartitionClockModel(PartitionClockModel clockModel) {

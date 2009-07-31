@@ -42,6 +42,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.clock.ACLikelihood;
+import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesTreeBMPrior;
@@ -299,7 +300,7 @@ public class BeastGenerator extends Generator {
 //        	treeModelGenerator.writeTreeModel(writer);
 //        } else { // Different Tree Models
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-//        		treeModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
+//        		treeModelGenerator.setModelPrefix(model.getPrefix()); // treemodel.treeModel
             treeModelGenerator.writeTreeModel(model, writer);
             writer.writeText("");
         }
@@ -1601,15 +1602,23 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeLikelihoodLog(options.activedSameTreePrior, writer);
-//        } else { // no species        	
+        // coalescentLikelihood
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+        	PartitionTreePrior prior;
+        	if (options.shareSameTreePrior) {
+        		prior = options.activedSameTreePrior;        		
+        	} else {
+        		prior = model.getPartitionTreePrior();
+        	}
+        	treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+            writer.writeText("");
+        }       
+        
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
-            treePriorGenerator.writeLikelihoodLog(prior, writer);
+        	if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) 
+        		writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
         }
-//	    }
+        
         writer.writeCloseTag(LoggerParser.LOG);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);

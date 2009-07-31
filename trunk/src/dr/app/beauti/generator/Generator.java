@@ -63,14 +63,6 @@ public abstract class Generator {
 		this.modelPrefix = modelPrefix;
 	}
 	
-//    public PartitionSubstitutionModel getModel() {
-//		return model;
-//	}
-
-//	public void setModel(PartitionSubstitutionModel model) {
-//		this.model = model;
-//		setModelPrefix(model.getName() + ".");
-//	}
     /**
      * fix a parameter
      *
@@ -106,7 +98,7 @@ public abstract class Generator {
      * @param writer the writer
      */
     public void writeParameter(String id, ModelOptions options, XMLWriter writer) {
-        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+        Parameter parameter = options.getParameter(id);
         String prefix = options.getPrefix();
         
         if (parameter == null) {
@@ -124,7 +116,7 @@ public abstract class Generator {
     }
     
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
-        dr.app.beauti.options.Parameter parameter = model.getParameter(id);        
+        Parameter parameter = model.getParameter(id);        
         String prefix = model.getPrefix(num);
         
         if (parameter == null) {
@@ -148,7 +140,7 @@ public abstract class Generator {
      * @param writer the writer
      */
     public void writeParameter(String wrapperName, String id, int dimension, XMLWriter writer) {
-    	dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+    	Parameter parameter = options.getParameter(id);
         writer.writeOpenTag(wrapperName);
         writeParameter(parameter, dimension, writer);
         writer.writeCloseTag(wrapperName);
@@ -160,6 +152,12 @@ public abstract class Generator {
      * @param id     the id
      * @param writer the writer
      */
+    public void writeParameter(int num, String wrapperName, String id, PartitionSubstitutionModel model, XMLWriter writer) {
+        writer.writeOpenTag(wrapperName);
+        writeParameter(num, id, model, writer);
+        writer.writeCloseTag(wrapperName);
+    }
+    
     public void writeParameter(String wrapperName, String id, ModelOptions options, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, options, writer);
@@ -174,7 +172,7 @@ public abstract class Generator {
      * @param writer    the writer
      */
     public void writeParameter(Parameter parameter, int dimension, XMLWriter writer) {
-//        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
+//        Parameter parameter = options.getParameter(id);
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
         }
@@ -302,7 +300,7 @@ public abstract class Generator {
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
     
     protected double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
-    	dr.app.beauti.options.Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
     	
     	if (rootHeight.priorType != PriorType.NONE) {
     		return rootHeight.initial;

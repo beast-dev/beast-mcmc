@@ -228,22 +228,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             storedEvalImag = new double[stateCount];
         }
 
-        int i, j, k = 0;
+        int i= 0;
 
-        double[] rates = getRates();
+        storeIntoAmat(getRates());
 
-        // Copy uppper triangle in row-order form
-        for (i = 0; i < stateCount; i++) {
-            for (j = i+1; j < stateCount; j++) {
-                amat[i][j] = rates[k++];
-            }
-        }
-        // Copy lower triangle in column-order form (transposed)
-        for (j = 0; j< stateCount; j++) {
-            for (i = j+1; i < stateCount; i++) {
-                amat[i][j] = rates[k++];
-            }
-        }
 
         makeValid(amat, stateCount);
 
@@ -312,6 +300,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 Double.isInfinite(Eval[i]) || Double.isInfinite(EvalImag[i])) {
                 wellConditioned = false;
                 return;
+            }else if(Math.abs(Eval[i]) < 1e-10){
+                Eval[i] = 0.0;
             }
         }
 
@@ -334,6 +324,23 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 EvalImag[i] /= subst;
             }
         }
+    }
+
+    //store the infinitesimal rates in the vector to a matrix called amat
+    public void storeIntoAmat(double[] rates){
+        int i, j, k = 0;
+        for (i = 0; i < stateCount; i++) {
+            for (j = i+1; j < stateCount; j++) {
+                amat[i][j] = rates[k++];
+            }
+        }
+        // Copy lower triangle in column-order form (transposed)
+        for (j = 0; j< stateCount; j++) {
+            for (i = j+1; i < stateCount; i++) {
+                amat[i][j] = rates[k++];
+            }
+        }
+
     }
 
     private void printDebugSetupMatrix() {
@@ -606,7 +613,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     private boolean storedWellConditioned;
 //    private double[] illConditionedProbabilities;
 
-    private static final double minProb = Property.DEFAULT.tolerance();
+    protected static final double minProb = Property.DEFAULT.tolerance();
     //    private static final double minProb = 1E-20;
     //    private static final double minProb = Property.ZERO.tolerance();
     private static final Algebra alegbra = new Algebra(minProb);

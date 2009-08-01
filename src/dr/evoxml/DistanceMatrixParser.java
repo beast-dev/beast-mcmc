@@ -30,6 +30,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.evolution.distance.SMMDistanceMatrix;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -60,6 +61,9 @@ public class DistanceMatrixParser extends AbstractXMLObjectParser {
         } else if (type.equals(Nucleotides.F84)) {
 	        Logger.getLogger("dr.evoxml").info("Creating F84 distance matrix");
             matrix = new F84DistanceMatrix(patterns);
+        } else if (type.equals("SMM")){
+            Logger.getLogger("dr.evoxml").info("Creating SMM distance matrix");
+            matrix = new SMMDistanceMatrix(patterns);
         } else {
             matrix = new DistanceMatrix(patterns);
         }
@@ -72,7 +76,7 @@ public class DistanceMatrixParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
         new StringAttributeRule(CORRECTION,
             "The type of distance correction used",
-            new String[] { "none", Nucleotides.JC, Nucleotides.F84 }, false),
+            new String[] { "none", Nucleotides.JC, Nucleotides.F84, "SMM" }, false),
         new ElementRule(PatternList.class)
     };
 

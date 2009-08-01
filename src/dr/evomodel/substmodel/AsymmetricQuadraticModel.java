@@ -50,7 +50,7 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
                     Parameter expanConst, Parameter expanLin, Parameter expanQuad,
                     Parameter contractConst, Parameter contractLin, Parameter contractQuad){
         
-        super(MicrosatelliteModelType.ASYMQUAD.getXMLModelName(), microsatellite, freqModel,null);
+        super("AsymmetricQuadraticModel", microsatellite, freqModel,null);
 
 
         //The default setting of the parameters gives the same infinitesimal rates

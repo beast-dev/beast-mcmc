@@ -71,7 +71,9 @@ public class DistanceMatrixParser extends AbstractXMLObjectParser {
         return matrix;
     }
 
-    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
         new StringAttributeRule(CORRECTION,

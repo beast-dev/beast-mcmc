@@ -154,7 +154,6 @@ public class BeastRemote extends BeastMain {
         }
 
         printTitle();
-        printHeader();
 
         System.out.println();
         System.out.println("Random number seed: " + seed);

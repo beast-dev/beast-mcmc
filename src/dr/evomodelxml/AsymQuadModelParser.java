@@ -23,7 +23,6 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
     public static final String EXPANSION_QUAD = "ExpansionQuad";
     public static final String CONTRACTION_QUAD = "ContractionQuad";
     public static final String ESTIMATE = "estimate";
-    //private static boolean estLastProcessedParam;
 
     public String getParserName() {
         return MicrosatelliteModelType.ASYMQUAD.getXMLName();

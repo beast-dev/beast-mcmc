@@ -35,7 +35,7 @@ public class TimeSlicer {
 
     public static final String sep = "\t";
     public static final String PRECISION_STRING = "precision";
-    public static final String RATE_STRING = "rate";
+    public static final String RATE_STRING = "rate"; // TODO the rate used is supposed to be the relaxed diffusion rate, but relaxed clock models will also result in a "rate attribute", we somehow need to distinguis between them!
 
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
@@ -631,9 +631,9 @@ public class TimeSlicer {
             }
         }
 
-        //used to obtain dispersal rates
-        double treeNativeDistance = 0;
-        double treeKilometerGreatCircleDistance = 0;
+//  employed to get dispersal rates across the whole tree
+//        double treeNativeDistance = 0;
+//        double treeKilometerGreatCircleDistance = 0;
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 

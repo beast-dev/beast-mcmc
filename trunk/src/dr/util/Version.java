@@ -39,4 +39,8 @@ public interface Version {
 	String getBuildString();
 
 	String getDateString();
+
+    String[] getCredits();
+
+    String getHTMLCredits();
 }

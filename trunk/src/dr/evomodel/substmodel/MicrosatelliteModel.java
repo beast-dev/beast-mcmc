@@ -116,12 +116,6 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         return probability;
     }
 
-    enum MicrosatelliteModelType{
-        STEPMUT, ASYMQUAD, LINEARBIAS, ONEPHASE, TWOPHASE, COMPLEXM;
-        public final String getXMLModelName() {
-            return name() + "Model";
-        }
-}
-
+ 
    
 }

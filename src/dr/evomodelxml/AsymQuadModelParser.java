@@ -4,7 +4,6 @@ import dr.xml.*;
 import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
-import dr.app.beauti.options.MicrosatelliteModelType;
 
 import java.util.logging.Logger;
 
@@ -22,10 +21,9 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
     public static final String CONTRACTION_LIN = "ContractionLinear";
     public static final String EXPANSION_QUAD = "ExpansionQuad";
     public static final String CONTRACTION_QUAD = "ContractionQuad";
-    public static final String ESTIMATE = "estimate";
 
     public String getParserName() {
-        return MicrosatelliteModelType.ASYMQUAD.getXMLName();
+        return "ASYMQUADModel";
     }
         
 

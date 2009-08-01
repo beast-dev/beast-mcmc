@@ -195,37 +195,13 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST " + version.getVersionString() + ", 2002-2008", 60);
+        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
-        centreLine("by", 60);
-        centreLine("Alexei J. Drummond and Andrew Rambaut", 60);
-        System.out.println();
-        centreLine("Department of Computer Science", 60);
-        centreLine("University of Auckland", 60);
-        centreLine("alexei@cs.auckland.ac.nz", 60);
-        System.out.println();
-        centreLine("Institute of Evolutionary Biology", 60);
-        centreLine("University of Edinburgh", 60);
-        centreLine("a.rambaut@ed.ac.uk", 60);
+        for (String creditLine : version.getCredits()) {
+            centreLine(creditLine, 60);
+        }
         System.out.println();
 
-    }
-
-    public static void printHeader() {
-        System.out.println("Downloads, Help & Resources:\n" +
-                "\thttp://beast.bio.ed.ac.uk/\n" +
-                "\n" +
-                "Source code distributed under the GNU Lesser General Public License:\n" +
-                "\thttp://code.google.com/p/beast-mcmc/\n" +
-                "\n" +
-                "Additional programming & components created by:\n" +
-                "\tRoald Forsberg\n" +
-                "\tGerton Lunter\n" +
-                "\tSidney Markowitz\n" +
-                "\tOliver Pybus\n" +
-                "\n" +
-                "Thanks to (for use of their code):\n" +
-                "\tKorbinian Strimmer");
     }
 
     public static void printUsage(Arguments arguments) {
@@ -327,23 +303,12 @@ public class BeastMain {
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
             String nameString = "BEAST " + version.getVersionString();
-            String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+            String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
+                    "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
-                    "<p>by<br>" +
-                    "Alexei J. Drummond and Andrew Rambaut</p>" +
-                    "<p>Department of Computer Science, University of Auckland<br>" +
-                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                    "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
-                    "<p>Source code distributed under the GNU LGPL:<br>" +
-                    "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
-                    "<p>Model contributions from:<br>" +
-                    "Erik Bloomquist, Roald Forsberg, Joseph Heled, Gerton Lunter, Sidney Markowitz, " +
-                    "Vladimir Minin, Oliver Pybus, Marc Suchard, Jen Tom</p>" +
-                    "<p>Thanks to Korbinian Strimmer for use of his code</p>" +
-                    "</center></html>";
-
+                    version.getHTMLCredits() +
+                    "</div></center></div></html>";
+  
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
 
@@ -376,7 +341,6 @@ public class BeastMain {
         }
 
         printTitle();
-        printHeader();
 
         System.out.println();
         System.out.println("Random number seed: " + seed);
@@ -384,7 +348,11 @@ public class BeastMain {
 
         new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
 
-        System.exit(0);
+        if (!window) {
+            // For applications using the ConsoleApp, we don't want to exit at the end of the main() or
+            // the console is closed on an error without the user being able to see it.
+            System.exit(0);
+        }
     }
 }
 

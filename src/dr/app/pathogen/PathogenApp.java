@@ -50,6 +50,20 @@ public class PathogenApp extends MultiDocApplication {
         public String getBuildString() {
             return "Build r1412";
         }
+
+        public String[] getCredits() {
+            return new String[0];
+        }
+
+        public String getHTMLCredits() {
+            return "<p>by<br>" +
+                    "Andrew Rambaut</p>" +
+                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+                    "<p>Part of the BEAST package:<br>" +
+                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>";
+        }
+
     };
 
     public PathogenApp(String nameString, String aboutString, Icon icon,
@@ -84,12 +98,7 @@ public class PathogenApp extends MultiDocApplication {
             final String versionString = version.getVersionString();
             String aboutString = "<html><center><p>Temporal Signal Investigation Tool<br>" +
                     "Version " + versionString + ", " + version.getDateString() + "</p>" +
-                    "<p>by<br>" +
-                    "Andrew Rambaut</p>" +
-                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                    "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
+                    version.getHTMLCredits() +
                     "</center></html>";
 
             String websiteURLString = "http://beast.bio.ed.ac.uk/";

@@ -147,6 +147,7 @@ public class MCMCPanel extends BeautiPanel {
             public void actionPerformed(ActionEvent e) {
             	options.substTreeLog = substTreeLogCheck.isSelected();
             	updateTreeFileNameList();
+            	substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
                 if (substTreeLogCheck.isSelected()) {
                 	substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
                 } else {
@@ -159,6 +160,7 @@ public class MCMCPanel extends BeautiPanel {
 
         substTreeFileNameField.setColumns(32);
         substTreeFileNameField.setEditable(false);
+        substTreeFileNameField.setEnabled(false);
         optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
 
         java.awt.event.KeyListener listener = new java.awt.event.KeyAdapter() {
@@ -263,7 +265,7 @@ public class MCMCPanel extends BeautiPanel {
 
             substTreeLogCheck.setEnabled(true);
             substTreeLogCheck.setSelected(options.substTreeLog);
-            substTreeFileNameField.setEditable(options.substTreeLog);
+            
         } else {
             fileNameStemField.setText(fileNameStem);
             fileNameStemField.setEnabled(false);

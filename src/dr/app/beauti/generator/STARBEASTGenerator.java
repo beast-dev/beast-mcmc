@@ -298,31 +298,41 @@ public class STARBEASTGenerator extends Generator {
         writer.writeCloseTag(TreePartitionCoalescent.SPECIES_COALESCENT);
 
         // exponentialDistributionModel id="pdist"
-        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, PDIST)});
-
-        writer.writeOpenTag(DistributionModelParser.MEAN);
-
-        Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
-
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
-                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial))}, true);
-
-        writer.writeCloseTag(DistributionModelParser.MEAN);
-
-        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+//        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, new Attribute[]{
+//                new Attribute.Default<String>(XMLParser.ID, PDIST)});
+//
+//        writer.writeOpenTag(DistributionModelParser.MEAN);
+//
+//        Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+//
+//        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+//                new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
+//                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial))}, true);
+//
+//        writer.writeCloseTag(DistributionModelParser.MEAN);
+//
+//        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
 //        if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
-        // new part
+        
+        writer.writeComment("Species tree prior: gama2 + gamma4");
         writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SPOPS)});
-
+        
+        // change exponential + gamma2 into gama2 + gamma4
         // <distribution0>
         writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
+//        writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST); 
+        writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+        writer.writeOpenTag(DistributionModelParser.SHAPE);
+        writer.writeText("2");
+        writer.writeCloseTag(DistributionModelParser.SHAPE);
 
-        writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);
+        writer.writeOpenTag(DistributionModelParser.SCALE);
+        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+        writer.writeCloseTag(DistributionModelParser.SCALE);
 
+        writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);   
         writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
 
         // <distribution1>
@@ -330,7 +340,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
 
         writer.writeOpenTag(DistributionModelParser.SHAPE);
-        writer.writeText("2");
+        writer.writeText("4");
         writer.writeCloseTag(DistributionModelParser.SHAPE);
 
         writer.writeOpenTag(DistributionModelParser.SCALE);

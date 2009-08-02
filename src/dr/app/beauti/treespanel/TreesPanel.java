@@ -76,7 +76,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    private JButton button;
     
 //    private CreateTreeAction createTreeAction = new CreateTreeAction();
-    private TreeDisplayPanel treeDisplayPanel;
+//    private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;    
 	private BeautiOptions options = null;
@@ -85,7 +85,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
-    private GenerateTreeDialog generateTreeDialog = null;    
+//    private GenerateTreeDialog generateTreeDialog = null;    
     private boolean settingOptions = false;
 //    boolean hasAlignment = false;        
     
@@ -155,8 +155,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
         
-        JPanel panel2 = new JPanel(new BorderLayout(0, 0));        
-        panel2.setOpaque(false);
+//        JPanel panel2 = new JPanel(new BorderLayout(0, 0));        
+//        panel2.setOpaque(false);
         
         treeModelPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treeModelPanelParent.setOpaque(false);
@@ -164,12 +164,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         treeModelPanelParent.setBorder(treeModelBorder);
 //        currentTreeModel.setBorder(null);
                
-        panel2.add(treeModelPanelParent, BorderLayout.NORTH);
+//        panel2.add(treeModelPanelParent, BorderLayout.NORTH);
         
-        treeDisplayPanel = new TreeDisplayPanel(parent);
-        panel2.add(treeDisplayPanel, BorderLayout.CENTER);        
+//        treeDisplayPanel = new TreeDisplayPanel(parent);
+//        panel2.add(treeDisplayPanel, BorderLayout.CENTER);        
         
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeModelPanelParent);
         splitPane.setDividerLocation(180);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
@@ -294,7 +294,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             frame.modelSelectionChanged(!isUsed(selRow));
         } else {
         	setCurrentModelAndPrior(null);
-            treeDisplayPanel.setTree(null);
+//            treeDisplayPanel.setTree(null);
         }
     }
 
@@ -495,7 +495,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 	}
     
     public JComponent getExportableComponent() {
-        return treeDisplayPanel;
+//        return treeDisplayPanel;
+    	return this;
     }
     
     private boolean isUsed(int row) {

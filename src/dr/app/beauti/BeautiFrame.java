@@ -88,7 +88,8 @@ public class BeautiFrame extends DocumentFrame {
 
     private BeautiPanel currentPanel;
 
-    private JFileChooser chooser; // make JFileChooser chooser remember previous path
+    private JFileChooser importChooser; // make JFileChooser chooser remember previous path
+    private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
@@ -182,7 +183,8 @@ public class BeautiFrame extends DocumentFrame {
         setSize(new java.awt.Dimension(1024, 768));
 
         // make JFileChooser chooser remember previous path
-        chooser = new JFileChooser(Utils.getCWD());
+        exportChooser = new JFileChooser(Utils.getCWD());
+        importChooser = new JFileChooser(Utils.getCWD());
     }
 
     /**
@@ -305,14 +307,16 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        chooser.setMultiSelectionEnabled(true);
+        importChooser.setMultiSelectionEnabled(true);
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast");
-        chooser.setFileFilter(filter);
+        importChooser.setFileFilter(filter);
+        importChooser.setDialogType(JFileChooser.OPEN_DIALOG);
 
-        int returnVal = chooser.showDialog(this, "Import Aligment...");
+        importChooser.setDialogTitle("Import Aligment...");
+        int returnVal = importChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File[] files = chooser.getSelectedFiles();
+            File[] files = importChooser.getSelectedFiles();
             for (File file : files) {
                 if (file == null || file.getName().equals("")) {
                     JOptionPane.showMessageDialog(this, "Invalid file name",
@@ -968,11 +972,11 @@ public class BeautiFrame extends DocumentFrame {
         // todo offer stem as default
 
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Generate BEAST File...", "xml", "beast");
-        chooser.setFileFilter(filter);
-      
-        final int returnVal = chooser.showSaveDialog(this);
+        exportChooser.setFileFilter(filter);
+
+        final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
-            File file = chooser.getSelectedFile();
+            File file = exportChooser.getSelectedFile();
             try {
                 generate(file);
 

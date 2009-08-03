@@ -1,6 +1,6 @@
-package dr.evomodel.beagle.sitemodel;
+package dr.app.beagle.evomodel.sitemodel;
 
-import dr.evomodel.beagle.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.inference.model.Model;
 
 /**

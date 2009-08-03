@@ -1,4 +1,4 @@
-package dr.evomodel.beagle.substmodel;
+package dr.app.beagle.evomodel.substmodel;
 
 /**
  * @author Andrew Rambaut

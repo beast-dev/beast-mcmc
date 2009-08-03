@@ -1,11 +1,10 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
-import beagle.BeagleFactory;
 import dr.evolution.alignment.PatternList;
-import dr.evomodel.beagle.sitemodel.BranchSiteModel;
-import dr.evomodel.beagle.sitemodel.GammaSiteRateModel;
-import dr.evomodel.beagle.sitemodel.HomogenousBranchSiteModel;
-import dr.evomodel.beagle.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;

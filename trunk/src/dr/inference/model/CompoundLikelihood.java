@@ -106,7 +106,7 @@ public class CompoundLikelihood implements Likelihood {
 			}
 		} else {
 			try {
-                
+
 				List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
 
 				for (Future<Double> result : results) {
@@ -232,6 +232,14 @@ public class CompoundLikelihood implements Likelihood {
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			int threads = xo.getAttribute(THREADS, 0);
+
+            if (System.getProperty("thread_count") != null) {
+                threads = Integer.parseInt(System.getProperty("thread_count"));
+                if (threads < 0 || threads > 1000) {
+                    // put an upper limit here - may be unnecessary?
+                    threads = 0;
+                }
+            }
 
 			CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads);
 

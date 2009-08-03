@@ -229,6 +229,7 @@ public class BeastMain {
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
 //                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
 //                                "in number of states."),
+                        new Arguments.IntegerOption("threads", "the number of computational threads to use (default 1)"),
                         new Arguments.Option("java", "use Java only, no native implementations."),
                         new Arguments.Option("beagle", "use beagle library if available."),
                         new Arguments.Option("help", "option to print this message"),
@@ -266,6 +267,17 @@ public class BeastMain {
             additionalParsers.add("beagle");
         }
 
+        int threadCount = 0;
+        if (arguments.hasOption("threads")) {
+            threadCount = arguments.getIntegerOption("threads");
+            if (threadCount < 0) {
+                printTitle();
+                System.err.println("The the number of threads should be >= 0");
+                System.exit(1);
+            }
+            System.setProperty("thread_count", String.valueOf(threadCount));
+        }
+        
         // (HACK)
         //MCMC.logOps =  arguments.hasOption("logops");
         // MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
@@ -308,7 +320,7 @@ public class BeastMain {
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
-  
+
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
 

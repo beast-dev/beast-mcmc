@@ -46,7 +46,7 @@ public class LikelihoodBenchmarker {
             long endTime = System.nanoTime();
 
             double seconds = (endTime - startTime) * 1E-9;
-            Logger.getLogger("dr.evomodel.beagle").info(
+            Logger.getLogger("dr.app.beagle").info(
                     "Benchmark " + likelihood.getId() + "(" + likelihood.getClass().getName() + "): " +
                             seconds + " sec");
 

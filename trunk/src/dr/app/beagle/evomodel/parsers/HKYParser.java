@@ -1,9 +1,9 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-import dr.evomodel.beagle.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.HKY;
 
 import java.util.logging.Logger;
 

@@ -1,15 +1,9 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
 import dr.inference.model.*;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-import dr.evomodel.beagle.substmodel.HKY;
 
 import java.util.logging.Logger;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Callable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Alexei Drummond

@@ -87,7 +87,7 @@ public class CompoundLikelihood implements Likelihood {
 	}
 
     // todo: remove in release
-    static int DEBUG = 0;
+    static int DEBUG = 0;               
 
 	public double getLogLikelihood() {
 		double logLikelihood = 0.0;
@@ -233,7 +233,7 @@ public class CompoundLikelihood implements Likelihood {
 
 			int threads = xo.getAttribute(THREADS, 0);
 
-            if (System.getProperty("thread_count") != null) {
+            if (xo.getName().equalsIgnoreCase("likelihood") && System.getProperty("thread_count") != null) {
                 threads = Integer.parseInt(System.getProperty("thread_count"));
                 if (threads < 0 || threads > 1000) {
                     // put an upper limit here - may be unnecessary?

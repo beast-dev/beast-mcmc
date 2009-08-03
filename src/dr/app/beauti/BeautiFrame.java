@@ -184,7 +184,16 @@ public class BeautiFrame extends DocumentFrame {
 
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
+        exportChooser.setFileFilter(new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
+
+
         importChooser = new JFileChooser(Utils.getCWD());
+
+        importChooser.setMultiSelectionEnabled(true);
+        importChooser.setFileFilter(new FileNameExtensionFilter(
+                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast"));
+
+        importChooser.setDialogTitle("Import Aligment...");
     }
 
     /**
@@ -307,13 +316,6 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        importChooser.setMultiSelectionEnabled(true);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast");
-        importChooser.setFileFilter(filter);
-        importChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-
-        importChooser.setDialogTitle("Import Aligment...");
         int returnVal = importChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = importChooser.getSelectedFiles();
@@ -970,9 +972,6 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         // todo offer stem as default
-
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Generate BEAST File...", "xml", "beast");
-        exportChooser.setFileFilter(filter);
 
         final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {

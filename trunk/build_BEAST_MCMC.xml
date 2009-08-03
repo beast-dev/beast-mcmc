@@ -14,6 +14,7 @@
 	<property name="main_class_BEAST" value="dr.app.beast.BeastMain" />
 	<property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp" />
 	<property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp" />
+	<property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator" />	
 	<property name="report"  value="${build}/junitreport"/>
 
 	<path id="classpath">
@@ -54,7 +55,7 @@
 			<include name="dr/app/beauti/**" />
 			<include name="dr/app/tracer/**"/>
 			<include name="dr/app/oldbeauti/**" />
-            <include name="dr/app/beagle/**" />
+			<include name="dr/app/beagle/**" />
 			<include name="dr/app/seqgen/**" />
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
@@ -100,7 +101,7 @@
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
 				<include name="dr/evolution/**/*.class" />
-                <exclude name="dr/evomodel/beagle/**" />
+				<exclude name="dr/evomodel/beagle/**" />
 				<include name="dr/evomodel/**/*.class" />
 				<include name="dr/evoxml/**/*.class" />
 				<include name="dr/evomodelxml/**" />
@@ -194,6 +195,46 @@
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 		</jar>
 
+		<jar jarfile="${dist}/treeannotator.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Main-Class" value="${main_class_Annotator}" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/beast/**/*.class" />
+				<include name="dr/app/util/**/*.class" />
+				<include name="dr/app/tools/**/*.class" />
+				<include name="dr/evolution/**/*.class" />
+				<include name="dr/evomodel/**/*.class" />
+				<include name="dr/evoxml/**/*.class" />
+				<include name="dr/evomodelxml/**" />
+				<include name="dr/exporters/**/*.class" />
+				<include name="dr/gui/tree/**/*.class" />
+				<include name="dr/inference/**/*.class" />
+				<include name="dr/math/**/*.class" />
+				<include name="dr/matrix/**/*.class" />
+				<include name="dr/stats/**/*.class" />
+				<include name="dr/util/**/*.class" />
+				<include name="dr/xml/**/*.class" />
+				<include name="org/virion/jam/**/*.class" />
+			</fileset>
+			<fileset dir="">
+				<include name="images/*.png" />
+			</fileset>
+			<fileset dir="${src}">
+				<include name="dr/**/*.png" />
+				<include name="org/virion/jam/**/*.png" />
+				<include name="dr/**/*.properties" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
+			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar" />
+			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
+			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
+			<zipgroupfileset dir="${lib}" includes="colt.jar" />
+		</jar>
+
 		<!-- Put everything in ${build} into the tracer.jar file -->
 		<jar jarfile="${dist}/tracer.jar">
 			<manifest>
@@ -233,16 +274,16 @@
 			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar" />
 		</jar>
 
-        <!-- Put everything in ${build} into the beast.jar file -->
-        <jar jarfile="${dist}/beast-beagle.jar">
-            <manifest>
-                <attribute name="Built-By" value="${user.name}" />
-            </manifest>
-            <fileset dir="${build}">
-                <include name="dr/app/beagle/**/*.class" />
-            </fileset>
-            <zipgroupfileset dir="${lib}" includes="beagle.jar" />
-        </jar>
+		<!-- Put everything in ${build} into the beast.jar file -->
+		<jar jarfile="${dist}/beast-beagle.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/beagle/**/*.class" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+		</jar>
 
 	</target>
 

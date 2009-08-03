@@ -277,6 +277,10 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
+	            
+	            // initial value for pop mean is the same as what used to be the value for the population size
+	            Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+	            prior.getParameter("constant.popSize").initial = para.initial;
 	
 	            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
 	            writeParameter("constant.popSize", prior, writer);

@@ -1,8 +1,8 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.alignment.PatternList;
 import dr.evoxml.DataTypeUtils;

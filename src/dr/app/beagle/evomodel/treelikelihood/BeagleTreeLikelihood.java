@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.beagle.treelikelihood;
+package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -31,10 +31,10 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.beagle.parsers.TreeLikelihoodParser;
-import dr.evomodel.beagle.sitemodel.BranchSiteModel;
-import dr.evomodel.beagle.sitemodel.SiteRateModel;
-import dr.evomodel.beagle.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;

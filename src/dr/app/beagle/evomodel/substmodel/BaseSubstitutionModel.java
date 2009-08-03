@@ -23,14 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.beagle.substmodel;
+package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 
 /**
  * An abstract base class for substitution models.

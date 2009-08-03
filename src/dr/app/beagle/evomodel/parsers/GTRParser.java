@@ -1,7 +1,7 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-import dr.evomodel.beagle.substmodel.GTR;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

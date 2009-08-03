@@ -23,14 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.beagle.substmodel;
+package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.evomodel.beagle.parsers.FrequencyModelParser;
+import dr.app.beagle.evomodel.parsers.FrequencyModelParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

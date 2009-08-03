@@ -23,14 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.beagle.sitemodel;
+package dr.app.beagle.evomodel.sitemodel;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.GammaDistribution;
-import dr.evomodel.beagle.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 
 /**
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.

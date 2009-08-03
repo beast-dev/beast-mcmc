@@ -1,8 +1,8 @@
-package dr.evomodel.beagle.sitemodel;
+package dr.app.beagle.evomodel.sitemodel;
 
-import dr.evomodel.beagle.substmodel.EigenDecomposition;
-import dr.evomodel.beagle.substmodel.SubstitutionModel;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

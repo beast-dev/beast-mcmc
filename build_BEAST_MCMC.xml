@@ -99,6 +99,7 @@
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
 				<include name="dr/evolution/**/*.class" />
+                <exclude name="dr/evomodel/beagle/**" />
 				<include name="dr/evomodel/**/*.class" />
 				<include name="dr/evoxml/**/*.class" />
 				<include name="dr/evomodelxml/**" />

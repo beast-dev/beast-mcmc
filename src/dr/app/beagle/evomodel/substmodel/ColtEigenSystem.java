@@ -1,4 +1,4 @@
-package dr.evomodel.beagle.substmodel;
+package dr.app.beagle.evomodel.substmodel;
 
 import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import cern.colt.matrix.linalg.Property;

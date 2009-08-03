@@ -1,14 +1,11 @@
-package dr.evomodel.beagle.parsers;
+package dr.app.beagle.evomodel.parsers;
 
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.evomodel.beagle.substmodel.FrequencyModel;
-import dr.evomodel.beagle.substmodel.HKY;
-import dr.evomodel.beagle.substmodel.GY94CodonModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
-
-import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond

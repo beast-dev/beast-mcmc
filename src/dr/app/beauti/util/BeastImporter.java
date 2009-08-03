@@ -149,13 +149,7 @@ public class BeastImporter {
         try {
             return new Date(dateFormat.parse(value), Units.Type.YEARS, origin);
         } catch (ParseException e1) {
-            e1.printStackTrace();
-        }
-        try {
-            return new Date(dateFormat.parse(value), Units.Type.YEARS, origin);
-        } catch (ParseException e1) {
-
-            // do nothing
+            // ignore the parse exception and try it just as a number
         }
 
         // try just parsing it as a number

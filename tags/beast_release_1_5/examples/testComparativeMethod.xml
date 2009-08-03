@@ -1,0 +1,292 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+	<taxa id="taxa">
+		<taxon id="1">  <!-- Rana pipiens -->
+			<attr name="size">6.022</attr>
+		</taxon>
+		<taxon id="2">  <!-- Chrysemys picta -->
+			<attr name="size">5.022</attr>
+		</taxon>
+		<taxon id="3">  <!-- Iguana iguana -->
+			<attr name="size">5.503</attr>
+		</taxon>
+		<taxon id="4">  <!-- Gekko sp. -->
+			<attr name="size">5.696</attr>
+		</taxon>
+		<taxon id="5">  <!-- Varanus sp. -->
+			<attr name="size">4.875</attr>
+		</taxon>
+		<taxon id="6">  <!-- Crocodylus niloticus -->
+			<attr name="size">5.419</attr>
+		</taxon>
+		<taxon id="7">  <!-- Alligator mississippiensis -->
+			<attr name="size">5.218</attr>
+		</taxon>
+		<taxon id="8">  <!-- Scutellosaurus lawleri -->
+			<attr name="size">5.343</attr>
+		</taxon>
+		<taxon id="9">  <!-- Euoplocephalus tutus -->
+			<attr name="size">5.471</attr>
+		</taxon>
+		<taxon id="10">  <!-- Stygimoloch spinifer -->
+			<attr name="size">5.535</attr>
+		</taxon>
+		<taxon id="11">  <!-- Pachycephalosaurid -->
+			<attr name="size">4.811</attr>
+		</taxon>
+		<taxon id="12">  <!-- Psittacosaurus mongoliensis -->
+			<attr name="size">4.364</attr>
+		</taxon>
+		<taxon id="13">  <!-- Protoceratops andrewsi -->
+			<attr name="size">4.278</attr>
+		</taxon>
+		<taxon id="14">  <!-- Triceratops horridus -->
+			<attr name="size">5.884</attr>
+		</taxon>
+		<taxon id="15">  <!-- Einiosaurus procurvicornis -->
+			<attr name="size">5.624</attr>
+		</taxon>
+		<taxon id="16">  <!-- Styracosaurus albertensis -->
+			<attr name="size">5.154</attr>
+		</taxon>
+		<taxon id="17">  <!-- Orodromeus makelai -->
+			<attr name="size">5.105</attr>
+		</taxon>
+		<taxon id="18">  <!-- Hypsilophodon foxii -->
+			<attr name="size">5.421</attr>
+		</taxon>
+		<taxon id="19">  <!-- Tenontosaurus tilletti -->
+			<attr name="size">4.573</attr>
+		</taxon>
+		<taxon id="20">  <!-- Dryosaurus altus -->
+			<attr name="size">5.166</attr>
+		</taxon>
+		<taxon id="21">  <!-- Lambeosaur -->
+			<attr name="size">5.269</attr>
+		</taxon>
+		<taxon id="22">  <!-- Hypacrosaurus stebingeri -->
+			<attr name="size">5.300</attr>
+		</taxon>
+		<taxon id="23">  <!-- Maiasaura peeblesorum -->
+			<attr name="size">5.191</attr>
+		</taxon>
+		<taxon id="24">  <!-- Brachylophosaurus canadensis -->
+			<attr name="size">4.797</attr>
+		</taxon>
+		<taxon id="25">  <!-- Apatosaurus sp. -->
+			<attr name="size">4.871</attr>
+		</taxon>
+		<taxon id="26">  <!-- Herrerasaurus ischigualastensis -->
+			<attr name="size">3.847</attr>
+		</taxon>
+		<taxon id="27">  <!-- Coelophysis bauri -->
+			<attr name="size">4.223</attr>
+		</taxon>
+		<taxon id="28">  <!-- Spinostropheus gautieri -->
+			<attr name="size">4.489</attr>
+		</taxon>
+		<taxon id="29">  <!-- Allosaurus fragilis -->
+			<attr name="size">4.228</attr>
+		</taxon>
+		<taxon id="30">  <!-- Tyrannosaurus rex -->
+			<attr name="size">4.550</attr>
+		</taxon>
+		<taxon id="31">  <!-- Ornithomimid -->
+			<attr name="size">3.749</attr>
+		</taxon>
+		<taxon id="32">  <!-- Oviraptor philoceratops -->
+			<attr name="size">5.211</attr>
+		</taxon>
+		<taxon id="33">  <!-- Troodon formosus -->
+			<attr name="size">3.867</attr>
+		</taxon>
+		<taxon id="34">  <!-- Deinonychus antirrhopus -->
+			<attr name="size">4.112</attr>
+		</taxon>
+		<taxon id="35">  <!-- Confuciusornis sanctus -->
+			<attr name="size">4.717</attr>
+		</taxon>
+		<taxon id="36">  <!-- Hesperornis sp. -->
+			<attr name="size">4.185</attr>
+		</taxon>
+		<taxon id="37">  <!-- Dinornithid -->
+			<attr name="size">4.341</attr>
+		</taxon>
+		<taxon id="38">  <!-- Dromaius novaehollandiae -->
+			<attr name="size">4.462</attr>
+		</taxon>
+		<taxon id="39">  <!-- Struthio camelus -->
+			<attr name="size">4.361</attr>
+		</taxon>
+		<taxon id="40">  <!-- Meleagris gallopavo -->
+			<attr name="size">4.013</attr>
+		</taxon>
+		<taxon id="41">  <!-- Diatryma gigantea -->
+			<attr name="size">4.720</attr>
+		</taxon>
+		<taxon id="42">  <!-- Corvus corax -->
+			<attr name="size">4.529</attr>
+		</taxon>
+		<taxon id="43">  <!-- Dendroica dominica -->
+			<attr name="size">3.950</attr>
+		</taxon>
+		<taxon id="44">  <!-- Ornithorhynchus anatinus -->
+			<attr name="size">5.032</attr>
+		</taxon>
+		<taxon id="45">  <!-- Didelphis virginiana -->
+			<attr name="size">4.663</attr>
+		</taxon>
+		<taxon id="46">  <!-- Oryctolagus cuniculus -->
+			<attr name="size">5.230</attr>
+		</taxon>
+		<taxon id="47">  <!-- Rattus norvegicus -->
+			<attr name="size">5.412</attr>
+		</taxon>
+		<taxon id="48">  <!-- Ateles paniscus -->
+			<attr name="size">5.597</attr>
+		</taxon>
+		<taxon id="49">  <!-- Homo sapiens -->
+			<attr name="size">5.565</attr>
+		</taxon>
+		<taxon id="50">  <!-- Pteropus giganteus -->
+			<attr name="size">4.991</attr>
+		</taxon>
+		<taxon id="51">  <!-- Eptesicus fuscus -->
+			<attr name="size">4.693</attr>
+		</taxon>
+		<taxon id="52">  <!-- Phylloderma stenops -->
+			<attr name="size">4.903</attr>
+		</taxon>
+		<taxon id="53">  <!-- Ursus arctos -->
+			<attr name="size">5.090</attr>
+		</taxon>
+		<taxon id="54">  <!-- Canis familiaris -->
+			<attr name="size">4.865</attr>
+		</taxon>
+		<taxon id="55">  <!-- Canis latrans -->
+			<attr name="size">4.937</attr>
+		</taxon>
+		<taxon id="56">  <!-- Bos taurus -->
+			<attr name="size">5.287</attr>
+		</taxon>
+		<taxon id="57">  <!-- Capra hircus -->
+			<attr name="size">5.034</attr>
+		</taxon>
+	</taxa>
+
+	<newick id="dinosaurTree">
+		(1:0.06174596876,((2:0.05581842054,((3:0.03572435818,(4:0.02323249448,5:0.02323249448):0.012491959):0.01029694352,((6:0.01240273072,7:0.01240273072):0.03272630373,(((8:0.001570417703,9:0.02475192394):0.0005353696713,(((10:0.01284887211,11:0.01275964383):0.008565914741,(12:0.008744371298,(13:0.003497748519,(14:0.005889066384,(15:0.004336494159,16:0.004354339993):0.0007138262284):0.0007138262284):0.008342844045):0.006424436056):0.002587620078,((17:0.01775642743,18:0.008423149674):0.001552572047,(19:0.01106430654,(20:0.002926687537,((21:0.004996783599,22:0.005509846201):0.00553215327,(23:0.004996783599,24:0.005004635866):0.00553215327):0.005674918337):0.001195658933):0.001516880735):0.004104500813):0.00137666492):0.006416385345,(25:0.01645369403,(26:0.001695337293,((27:0.001968375825,28:0.01980867784):0.0007852088513,(29:0.01177813277,((30:0.02319935242,31:0.02319935242):1.784565571e-05,(32:0.01927330817,((33:0.01891639505,34:0.01172459527):1.784565571e-05,(35:0.006602892613,(36:0.01311655695,((37:0.01352700756,(38:0.012491959,39:0.012491959):0.00150708579):0.004025523793,(40:0.01516880735,(41:0.004639870485,(42:0.01315027631,43:0.0131507146):0.001070739343):0.0009636654084):0.002855304914):0.006692120891):0.004211574748):0.001606109014):0.001930255541):0.002337780898):0.002623311389):0.002712539668):0.0009458197527):0.001177813277):0.001017202376):0.001842899629):0.0008922827855):0.009779419151):0.001784565571,(44:0.03426365896,(45:0.02314351943,(((46:0.007796465924,47:0.007796177181):0.004193729092,(48:0.005031726285,49:0.00503352477):0.006959805727):0.005978294663,((50:0.008065613032,(51:0.005119694125,52:0.005121578448):0.002944533192):0.006959805727,((53:0.007495175398,(54:0.0007138262284,55:0.0007138262284):0.00678134917):0.004639870485,(56:0.006067522942,57:0.006067522942):0.006067522942):0.002933061112):0.002944533192):0.005175240156):0.01106430654):0.02337780898):0.004104500813);
+	</newick>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="dinosaurTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="size" rootNode="true" internalNodes="true" leafNodes="true" traitDimension="1">
+			<parameter id="allTraits"/>
+		</nodeTraits>
+        <nodeTraits name="size" rootNode="true" internalNodes="false" leafNodes="false" traitDimension="1">
+			<parameter id="rootTrait"/>
+		</nodeTraits>
+        <nodeTraits name="size" rootNode="false" internalNodes="true" leafNodes="false" traitDimension="1">
+			<parameter id="internalTraits"/>
+		</nodeTraits>
+        <nodeTraits name="size" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+    </treeModel>
+
+    <multivariateNormalPrior id="rootPrior">
+        <meanParameter>
+            <parameter value="0.0"/>
+        </meanParameter>
+        <precisionParameter>
+            <matrixParameter>
+                <parameter value="0.001"/>
+            </matrixParameter>
+        </precisionParameter>
+        <data>
+            <parameter idref="rootTrait"/>
+        </data>
+    </multivariateNormalPrior>
+
+	<multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<matrixParameter id="precisionMatrix">
+				<parameter id="prec.col1" value="2.0"/>
+			</matrixParameter>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<multivariateWishartPrior id="precisionPrior" df="1">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="100.0"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
+
+	<multivariateTraitLikelihood id="traitLikelihood" traitName="size">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="allTraits"/>
+		</traitParameter>
+	</multivariateTraitLikelihood>
+
+
+	 <operators id="operators">
+         <randomWalkOperator windowSize="1.0" weight="10">
+             <parameter idref="internalTraits"/>
+         </randomWalkOperator>
+
+         <precisionGibbsOperator weight="10">
+                    <multivariateTraitLikelihood idref="traitLikelihood"/>
+                    <multivariateWishartPrior idref="precisionPrior"/>
+                </precisionGibbsOperator>
+
+
+         <randomWalkOperator windowSize="1.0" weight="1">
+             <parameter idref="rootTrait"/>
+         </randomWalkOperator>
+
+           	<internalTraitGibbsOperator weight="50">
+              <multivariateTraitLikelihood idref="traitLikelihood"/>
+		</internalTraitGibbsOperator>       
+
+     </operators>
+
+
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
+        <posterior id="posterior">
+            <likelihood id="likelihood">
+                <multivariateTraitLikelihood idref="traitLikelihood"/>
+            </likelihood>
+            <prior id="prior">
+                <multivariateNormalPrior idref="rootPrior"/>
+                <multivariateWishartPrior idref="precisionPrior"/>
+            </prior>
+        </posterior>
+
+
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1000" >
+            <posterior idref="posterior"/>
+            <matrixParameter idref="precisionMatrix"/>
+            <parameter idref="allTraits"/>
+        </log>
+    </mcmc>
+
+
+
+</beast>

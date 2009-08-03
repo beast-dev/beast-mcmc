@@ -170,7 +170,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
                     	if (ev.getStateChange() == ItemEvent.SELECTED) {
 	                    	substitutionRateField.setEnabled((FixRateType) rateOptionCombo.getSelectedItem() != FixRateType.ESTIMATE);  
 	                    	if ((FixRateType) rateOptionCombo.getSelectedItem() == FixRateType.FIX_MEAN) {
-	                    		JOptionPane.showMessageDialog(rateOptionCombo, "Fix mean rate function is only working for single locus in this realse.");
+	                    		JOptionPane.showMessageDialog(rateOptionCombo, "WARNING: 'Fix mean rate' function is only working for single locus in this release.");
 	                    	}
                     	}
                     }
@@ -200,13 +200,13 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         panel.addSeparator();
 
         panel.addLabel(overallParas);
-        panel.addComponentWithLabel("Sequence Error Model :", errorModelCombo);
+        panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
 //        panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
-        panel.addComponentWithLabel("Choose Fix Rate Option :", rateOptionCombo);
+        panel.addComponentWithLabel("Fixed Rate Option:", rateOptionCombo);
         
         substitutionRateField.setColumns(10);
-        panel.addComponentWithLabel("Fixed mean / 1st partition rate :", substitutionRateField);
+        panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", substitutionRateField);
         
         panel.addSeparator();
 

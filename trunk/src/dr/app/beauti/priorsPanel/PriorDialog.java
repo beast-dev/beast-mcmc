@@ -238,7 +238,7 @@ public class PriorDialog {
 
 		if (initialField.getValue() != null) parameter.initial = initialField.getValue();
 
-		optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
+		if (parameter.priorType != PriorType.JEFFREYS_PRIOR) optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
 	}
 
 	private void setupComponents() {

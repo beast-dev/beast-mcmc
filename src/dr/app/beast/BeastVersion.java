@@ -87,9 +87,9 @@ public class BeastVersion implements Version {
                 "\thttp://code.google.com/p/beast-mcmc/",
                 "",
                 "BEAST developers:",
-                "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Philippe Lemey,",
-                "\tGerton Lunter, Sidney Markowitz, Vladimir Minin, Oliver Pybus,",
-                "\tWalter Xie",
+                "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
+                "\tPhilippe Lemey, Gerton Lunter, Sidney Markowitz, Vladimir Minin, ",
+                "\tMichael Defoin Platel, Oliver Pybus, Walter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -109,8 +109,9 @@ public class BeastVersion implements Version {
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
                         "<p>BEAST developers:<br>" +
-                        "Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Philippe Lemey, Gerton Lunter,<br>" +
-                        "Sidney Markowitz, Vladimir Minin, Oliver Pybus, Walter Xie</p>" +
+                        "Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, Philippe Lemey,<br>" +
+                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, Oliver Pybus,<br>" +
+                        "Walter Xie</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

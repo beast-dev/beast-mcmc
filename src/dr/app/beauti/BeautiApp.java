@@ -33,6 +33,8 @@ import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author Andrew Rambaut
@@ -129,7 +131,7 @@ public class BeautiApp extends MultiDocApplication {
                         "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", " + version.getDateString() + "</p>" +
                         "<p>by Alexei J. Drummond, Andrew Rambaut and Walter Xie</p></div>" +
-                                "<hr /><div style=\"font-size:10;\">Part of the BEAST package:" +
+                                "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
                         version.getHTMLCredits() +
                         "</div></center></div></html>";
 

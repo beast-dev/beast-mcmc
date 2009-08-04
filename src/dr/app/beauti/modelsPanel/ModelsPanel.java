@@ -197,7 +197,7 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         setCurrentModel(null);
 
         OptionsPanel panel = new OptionsPanel(10, 20);
-        panel.addSeparator();
+//        panel.addSeparator();
 
         panel.addLabel(overallParas);
         panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
@@ -207,13 +207,13 @@ public class ModelsPanel extends BeautiPanel implements Exportable {
         
         substitutionRateField.setColumns(10);
         panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", substitutionRateField);
-        
-        panel.addSeparator();
+
+//        panel.addSeparator();
 
         clockModelPanel = new ClockModelPanel(frame);
 
         JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, clockModelPanel, panel);
-        splitPane1.setDividerLocation(500);
+        splitPane1.setDividerLocation(400);
         splitPane1.setContinuousLayout(true);
         splitPane1.setBorder(BorderFactory.createEmptyBorder());
         splitPane1.setOpaque(false);

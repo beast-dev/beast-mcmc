@@ -101,19 +101,15 @@ public class BeautiApp extends MultiDocApplication {
                     icon = new ImageIcon(url);
                 }
 
-                final String nameString = "BEAUti";
+                final String nameString = "Old BEAUti";
                 final String versionString = version.getVersionString();
-                String aboutString = "<html><center><p>Bayesian Evolutionary Analysis Utility<br>" +
+                String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
+                        "<div style=\"font-size:12;\"><p>(Old) Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", " + version.getDateString() + "</p>" +
-                        "<p>by<br>" +
-                        "Andrew Rambaut and Alexei J. Drummond</p>" +
-                        "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-                        "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-                        "<p>Department of Computer Science, University of Auckland<br>" +
-                        "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-                        "<p>Part of the BEAST package:<br>" +
-                        "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
-                        "</center></html>";
+                        "<p>by Andrew Rambaut and Alexei J. Drummond</p></div>" +
+                                "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
+                        version.getHTMLCredits() +
+                        "</div></center></div></html>";
 
                 String websiteURLString = "http://beast.bio.ed.ac.uk/";
                 String helpURLString = "http://beast.bio.ed.ac.uk/BEAUti/";

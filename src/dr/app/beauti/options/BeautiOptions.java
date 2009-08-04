@@ -102,9 +102,9 @@ public class BeautiOptions extends ModelOptions {
 
         // species tree Birth Death
         createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
-                "Speices tree: Birth Death Model BminusD rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                "Speices tree: Birth Death model mean growth rate", BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Speices tree: Birth Death Model DoverB rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
+                "Speices tree: Birth Death model relative death rate", BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
         createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
                 TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

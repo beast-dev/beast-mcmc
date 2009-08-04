@@ -120,13 +120,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     eigenBufferHelper.getBufferCount(),            // eigenBufferCount
                     matrixBufferHelper.getBufferCount(),
                     categoryCount,
-                    (useScaleFactors ? scaleBufferHelper.getBufferCount() : 0)
+                    scaleBufferHelper.getBufferCount() // Always allocate; they may become necessary
             );
-
-//            if (useScaleFactors) {
-            // if we are doing dynamic rescaling then flag to do a rescale on the first evaluation
-//                doRescale = true;
-//            }
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
@@ -277,6 +272,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Stores the additional state other than model components
      */
     protected void storeState() {
+        storedUpdateSubstitutionModel = updateSubstitutionModel; // TODO Check is this is really necessary
+        storedUpdateSiteModel = updateSiteModel; // TODO Check is this is really necessary
+
         partialBufferHelper.storeState();
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
@@ -290,8 +288,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Restore the additional stored state
      */
     protected void restoreState() {
-        updateSubstitutionModel = true;
-        updateSiteModel = true;
+        updateSubstitutionModel = storedUpdateSubstitutionModel; // TODO Check is this is really necessary
+        updateSiteModel = storedUpdateSiteModel; // TODO Check is this is really necessary
 
         partialBufferHelper.restoreState();
         eigenBufferHelper.restoreState();
@@ -399,7 +397,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // accumulate all the scaling factors and store them in the additional 'root' buffer
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
 
-            beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies, new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
+            beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
+                    new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
 
             logL = 0.0;
             for (int i = 0; i < patternCount; i++) {
@@ -487,17 +486,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     int n = nodeNum - tipCount;
 
                     if (recomputeScaleFactors) {
-                        // flip the indicator: can take either 0 or (internalNodeCount + 1)
+                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
                         scaleBufferHelper.flipOffset(n);
 
                         // store the index
                         scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+                        operations[x + 1] =  scaleBufferIndices[n]; // Write new scaleFactor
+                        operations[x + 2] = -1;
                     }
 
-                    operations[x + 1] =  scaleBufferIndices[n];
-                    operations[x + 2] =  scaleBufferIndices[n];
-                } else {
                     operations[x + 1] = -1;
+                    operations[x + 2] =  scaleBufferIndices[n]; // Read existing scaleFactor
+                } else {
+                    operations[x + 1] = -1; // Not using scaleFactors
                     operations[x + 2] = -1;
                 }
                 operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
@@ -537,7 +538,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
-//    private boolean doRescale = false;
 
     /**
      * the branch-site model for these sites
@@ -577,11 +577,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Flag to specify that the substitution model has changed
      */
     protected boolean updateSubstitutionModel;
+    protected boolean storedUpdateSubstitutionModel;
 
     /**
      * Flag to specify that the site model has changed
      */
     protected boolean updateSiteModel;
+    protected boolean storedUpdateSiteModel;
 
     private int nodeEvaluationCount = 0;
 

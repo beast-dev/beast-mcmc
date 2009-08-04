@@ -217,6 +217,7 @@ public class BeastMain {
     public static void main(String[] args) throws java.io.IOException {
 
         printTitle();
+
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
@@ -230,8 +231,8 @@ public class BeastMain {
 //                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
 //                                "in number of states."),
                         new Arguments.IntegerOption("threads", "the number of computational threads to use (default 1)"),
-                        new Arguments.Option("java", "use Java only, no native implementations."),
-                        new Arguments.Option("beagle", "use beagle library if available."),
+                        new Arguments.Option("java", "use Java only, no native implementations"),
+                        new Arguments.Option("beagle", "use beagle library if available"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -241,13 +242,11 @@ public class BeastMain {
             System.out.println();
             System.out.println(ae.getMessage());
             System.out.println();
-            printTitle();
             printUsage(arguments);
             System.exit(1);
         }
 
         if (arguments.hasOption("help")) {
-            printTitle();
             printUsage(arguments);
             System.exit(0);
         }
@@ -331,7 +330,6 @@ public class BeastMain {
         if (args2.length > 1) {
             System.err.println("Unknown option: " + args2[1]);
             System.err.println();
-            printTitle();
             printUsage(arguments);
             System.exit(1);
         }
@@ -351,8 +349,6 @@ public class BeastMain {
         if (inputFile != null && working) {
             System.setProperty("user.dir", inputFile.getParent());
         }
-
-        printTitle();
 
         System.out.println();
         System.out.println("Random number seed: " + seed);

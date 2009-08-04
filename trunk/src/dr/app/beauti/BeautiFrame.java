@@ -44,6 +44,7 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
@@ -185,6 +186,7 @@ public class BeautiFrame extends DocumentFrame {
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
         exportChooser.setFileFilter(new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
+        exportChooser.setDialogTitle("Generate BEAST XML File...");
 
 
         importChooser = new JFileChooser(Utils.getCWD());
@@ -192,7 +194,6 @@ public class BeautiFrame extends DocumentFrame {
         importChooser.setMultiSelectionEnabled(true);
         importChooser.setFileFilter(new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast"));
-
         importChooser.setDialogTitle("Import Aligment...");
     }
 
@@ -965,46 +966,36 @@ public class BeautiFrame extends DocumentFrame {
         try {
             generator.checkOptions();
         } catch (IllegalArgumentException iae) {
-            JOptionPane.showMessageDialog(this, iae.getMessage(),
-                    "Unable to generate file",
+            JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to generate file",
                     JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
-        // todo offer stem as default
-
+        // TODO offer stem as default
         final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File file = exportChooser.getSelectedFile();
-            try {
-                generate(file);
-
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
-                        "Unable to generate file",
-                        JOptionPane.ERROR_MESSAGE);
-                return false;
+            
+            int n = JOptionPane.YES_OPTION;
+            
+            if (file.exists()) {
+            	n = JOptionPane.showConfirmDialog(this, file.getName(),
+            		     "Overwrite the exsting file?", JOptionPane.YES_NO_OPTION);            	         
+            }
+            
+            if (n == JOptionPane.YES_OPTION) {            	
+	            try {
+	                generate(file);
+	                
+	            } catch (IOException ioe) {
+	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
+	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+	                return false;
+	            }        
+            } else {
+            	doGenerate();
             }
         }
-
-//        FileDialog dialog = new FileDialog(this,
-//                "Generate BEAST File...",
-//                FileDialog.SAVE);
-//
-//        dialog.setVisible(true);
-//        if (dialog.getFile() != null) {
-//            File file = new File(dialog.getDirectory(), dialog.getFile());
-//
-//            try {
-//                generate(file);
-//
-//            } catch (IOException ioe) {
-//                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
-//                        "Unable to generate file",
-//                        JOptionPane.ERROR_MESSAGE);
-//                return false;
-//            }
-//        }
         
         clearDirty();
         return true;

@@ -1,0 +1,112 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="map">0 100</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="map">0 100</attr>
+		</taxon>
+		<taxon id="C">
+			<attr name="map">0 100</attr>
+		</taxon>
+		<!--<taxon id="A">-->
+		<!--<attr name="map">0 0</attr>-->
+		<!--</taxon>-->
+		<!--<taxon id="B">-->
+		<!--<attr name="map">0 2</attr>-->
+		<!--</taxon>-->
+		<!--<taxon id="C">-->
+		<!--<attr name="map">0 4</attr>-->
+		<!--</taxon>-->
+	</taxa>
+
+	<newick id="startingTree">
+		((A:1.0,B:1.0):1.0,C:2.0);
+	</newick>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits rootNode="true" internalNodes="true" leafNodes="true" traitDimension="2">
+			<parameter id="allTraits"/>
+		</nodeTraits>
+		<nodeTraits rootNode="true" internalNodes="true" leafNodes="false" traitDimension="2">
+			<parameter id="internalTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+	<!--<multivariateDiscreteDiffusionModel id="diffusionModel"-->
+	<!--xGridDimension="5"-->
+	<!--yGridDimension="5"-->
+	<!--eigenvectorsFileName="eigenvectors.mat.gz"-->
+	<!--eigenvaluesFileName="eigenvalues.mat.gz">-->
+	<!--<parameter id="mapRate" value="0.01" lower="0.0" upper="10.0"/>-->
+	<!--</multivariateDiscreteDiffusionModel>-->
+
+	<mapDiffusionModel id="diffusionModel" grassMapFile="combined.asc">
+		<parameter id="mapRate" value="1.0" lower="0.0" upper="100.0"/>
+		<randomStartingValues>
+			<parameter idref="internalTraits"/>
+		</randomStartingValues>
+	</mapDiffusionModel>
+
+	<multivariateTraitLikelihood id="traitLikelihood" traitName="map" cacheBranches="false">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="allTraits"/>
+		</traitParameter>
+	</multivariateTraitLikelihood>
+
+
+	<operators id="operators">
+
+		<randomWalkOnMapOperator windowSize="1.0" weight="10">
+			<parameter idref="internalTraits"/>
+			<mapDiffusionModel idref="diffusionModel"/>
+		</randomWalkOnMapOperator>
+
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="mapRate"/>
+		</scaleOperator>
+
+	</operators>
+
+	<mcmc id="mcmc" chainLength="100" autoOptimize="true">
+
+		<posterior id="posterior">
+			<likelihood id="likelihood">
+				<multivariateTraitLikelihood idref="traitLikelihood"/>
+			</likelihood>
+		</posterior>
+
+		<operators idref="operators"/>
+
+		<log id="fileLog" logEvery="1000" fileName="testMultivariateTraits.log">
+			<posterior idref="posterior"/>
+			<parameter idref="mapRate"/>
+			<parameter idref="allTraits"/>
+		</log>
+
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+
+	<traceAnalysis fileName="testMultivariateTraits.log"/>
+
+
+</beast>

@@ -50,7 +50,7 @@ public class ConstantPopulation extends DemographicFunction.Abstract
      * @param units
      */
 	public ConstantPopulation(Type units) {
-	
+
 		super(units);
 	}
 

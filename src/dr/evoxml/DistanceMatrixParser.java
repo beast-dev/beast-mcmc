@@ -75,7 +75,7 @@ public class DistanceMatrixParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private final XMLSyntaxRule[] rules = {
         new StringAttributeRule(CORRECTION,
             "The type of distance correction used",
             new String[] { "none", Nucleotides.JC, Nucleotides.F84, "SMM" }, false),

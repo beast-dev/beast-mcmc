@@ -45,7 +45,7 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
     //
 
     public static final String UPGMA_TREE = "upgmaTree";
-    public static final String DISTANCES = "distances";
+    //public static final String DISTANCES = "distances";
     public static final String ROOT_HEIGHT = TreeModelParser.ROOT_HEIGHT;
 
     public String getParserName() {

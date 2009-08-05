@@ -137,7 +137,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
-        tabbedPane.addTab("Models", modelsPanel);
+        tabbedPane.addTab("Subst & Clock Models", modelsPanel);
         if (DataPanel.ALLOW_UNLINKED_TREES) {
             tabbedPane.addTab("Trees", treesPanel);
         } else {

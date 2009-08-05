@@ -1,20 +1,9 @@
 package dr.app.beauti.generator;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorType;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;

@@ -24,19 +24,19 @@
  */
 package dr.app.beauti.util;
 
-import dr.app.beauti.util.NexusApplicationImporter;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -49,8 +49,8 @@ import java.io.*;
  * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class CommandLineBeauti {
-    private BeautiOptions beautiOptions = new BeautiOptions();
-    private BeastGenerator generator = new BeastGenerator(beautiOptions, null);
+    private final BeautiOptions beautiOptions = new BeautiOptions();
+    private final BeastGenerator generator = new BeastGenerator(beautiOptions, null);
 
     public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
 
@@ -85,7 +85,6 @@ public class CommandLineBeauti {
 
         } catch (IOException ioe) {
             System.err.println("Unable to generate file: " + ioe.getMessage());
-            return;
         }
     }
 
@@ -150,7 +149,7 @@ public class CommandLineBeauti {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = (SimpleAlignment) importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = importer.parseCharactersBlock(beautiOptions.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -160,7 +159,7 @@ public class CommandLineBeauti {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = (SimpleAlignment) importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = importer.parseDataBlock(beautiOptions.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }

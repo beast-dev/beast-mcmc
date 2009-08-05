@@ -97,7 +97,7 @@ public class DemographicDialog {
             {0, 3, 4},      // logistic doubling time
             {0, 1, 2},      // expansion
             {0, 1, 3},      // expansion doubling time
-            {0, 1, 2},      // const-exp
+            {0, 7, 2},      // const-exp
             {0, 1, 2, 4},   // const-log
             {0, 1, 2, 7},   // const-exp-const
             {0, 2, 4, 7, 8},// exp-logistic
@@ -575,10 +575,18 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 7) { // ConstExponential Growth
                 title = "Constant-Exponential Growth";
                 ConstExponential demo = new ConstExponential();
+
                 for (int i = 0; i < n; i++) {
-                    demo.setN0(values[0][i]);
-                    demo.setN1(values[1][i]);
-                    demo.setGrowthRate(values[2][i]);
+
+                    double N0 = values[0][i];
+                    double time = values[1][i];
+                    double r = values[2][i];
+
+                    double N1 = N0 * Math.exp(-r * time);
+
+                    demo.setN0(N0);
+                    demo.setN1(N1);
+                    demo.setGrowthRate(r);
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;

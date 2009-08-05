@@ -823,19 +823,22 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
 
     private Double setInitialSplitPopulations(FlexibleTree startTree, NodeRef node, int pos[]) {
         if( ! startTree.isExternal(node) ) {
-            int loc=-1;
+            int loc = -1;
             for(int nc = 0; nc < startTree.getChildCount(node); ++nc ) {
-                Double p = setInitialSplitPopulations(startTree, startTree.getChild(node, nc), pos );
+                final Double p = setInitialSplitPopulations(startTree, startTree.getChild(node, nc), pos);
                 if( nc == 0 ) {
                     loc = pos[0];
                     pos[0] += 1;
                 }
                 if( p != null ) {
-                  sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + 2*loc + nc, p);
+                    if( constantPopulation ) {
+                     //
+                    } else {
+                      sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + 2*loc + nc, p);
+                    }
                 }
             }
         }
-
 
         final String comment = (String)startTree.getNodeAttribute(node, NewickImporter.COMMENT);
         Double p0 = null;
@@ -846,6 +849,10 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             if( startTree.isExternal(node) ) {
               int ns = (Integer)startTree.getNodeAttribute(node, spIndexAttrName);
               sppSplitPopulations.setParameterValueQuietly(ns, p0);
+            } else if( constantPopulation ) {
+                // not tested code !!
+                sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + pos[0], p0);
+                pos[0] += 1;
             }
 
             // if just one value const
@@ -901,7 +908,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
             }
 
             {
-                assert ! constantPopulation; // not implemented yet
+                //assert ! constantPopulation; // not implemented yet
                 int[] pos = {0};
                 setInitialSplitPopulations(tree, tree.getRoot(), pos);
             }

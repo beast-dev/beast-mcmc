@@ -272,9 +272,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Stores the additional state other than model components
      */
     protected void storeState() {
-//        storedUpdateSubstitutionModel = updateSubstitutionModel; // TODO Check is this is really necessary
-//        storedUpdateSiteModel = updateSiteModel; // TODO Check is this is really necessary
-
         partialBufferHelper.storeState();
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
@@ -288,8 +285,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Restore the additional stored state
      */
     protected void restoreState() {
-//        updateSubstitutionModel = storedUpdateSubstitutionModel; // TODO Check is this is really necessary
-        updateSiteModel = true; // TODO Check is this is really necessary
+        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore 
 
         partialBufferHelper.restoreState();
         eigenBufferHelper.restoreState();

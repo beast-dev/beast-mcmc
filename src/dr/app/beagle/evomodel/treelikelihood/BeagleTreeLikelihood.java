@@ -362,7 +362,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         double[] categoryWeights = this.siteRateModel.getCategoryProportions();
         double[] frequencies = branchSiteModel.getStateFrequencies(0);
 
-        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies, new int[0], 1, patternLogLikelihoods);
+        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
+                (useScaleFactors ? new int[] { scaleBufferHelper.getOffsetIndex(internalNodeCount)} : new int[] { Beagle.NONE }),
+                1, patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -370,14 +372,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         // Attempt dynamic rescaling if over/under-flow
-        if (//useScaleFactors &&
-                (logL == Double.NaN || logL == Double.POSITIVE_INFINITY) ) {
-//            doRescale = true;
-//        }
-//
-//        if (doRescale) {
+        if (forceScaling || (logL == Double.NaN || logL == Double.POSITIVE_INFINITY) ) {
+            
             useScaleFactors = true;
             recomputeScaleFactors = true;
+            forceScaling = false;
             System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
             updateAllNodes();
@@ -586,6 +585,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     public int getNodeEvaluationCount() {
         return nodeEvaluationCount;
     }
+
+    private boolean forceScaling = false;
 
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling

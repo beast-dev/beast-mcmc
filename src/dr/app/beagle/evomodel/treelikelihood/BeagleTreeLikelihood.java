@@ -378,7 +378,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         // Attempt dynamic rescaling if over/under-flow
-        if (forceScaling || (logL == Double.NaN || logL == Double.POSITIVE_INFINITY) ) {
+        if (forceScaling || (logL == Double.NaN || logL == Double.POSITIVE_INFINITY || logL == Double.NEGATIVE_INFINITY) ) {
             
             useScaleFactors = true;
             recomputeScaleFactors = true;

@@ -570,7 +570,7 @@ public class SpeciesBindings extends AbstractModel {
         ElementRule treeWithPloidy = new ElementRule(GTREE,
                                 new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
                                 new ElementRule(TreeModel.class)}, 0, Integer.MAX_VALUE);
-        XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};
+        //XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};
 
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
@@ -578,6 +578,7 @@ public class SpeciesBindings extends AbstractModel {
                     // new ElementRule(GENE_TREES, someTree,  1, Integer.MAX_VALUE )
                     new ElementRule(GENE_TREES,
                             new  XMLSyntaxRule[]{
+                                    // start at 0 for only ploidy tree cases
                                     new ElementRule(TreeModel.class, 0, Integer.MAX_VALUE),
                                     treeWithPloidy
                             } ) ,

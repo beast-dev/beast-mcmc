@@ -725,17 +725,17 @@ public class BeastGenerator extends Generator {
             }
         } else {
             //partitionCount = 1;
-            writer.writeComment("The unique patterns site patterns");
-            Alignment alignment = partition.getAlignment();
+//            writer.writeComment("The unique patterns site patterns");
+//            Alignment alignment = partition.getAlignment();
 
-            writer.writeOpenTag(SitePatternsParser.PATTERNS,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS),
-                    }
-            );
-
-            writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
-            writer.writeCloseTag(SitePatternsParser.PATTERNS);
+//            writer.writeOpenTag(SitePatternsParser.PATTERNS,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS),
+//                    }
+//            );
+            writePatternList(partition, 0, 1, writer);
+//            writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+//            writer.writeCloseTag(SitePatternsParser.PATTERNS);
 
 //            for (PartitionData partition : options.dataPartitions) {
 //                if (partition.getPartitionSubstitutionModel() == model) {
@@ -775,14 +775,19 @@ public class BeastGenerator extends Generator {
         writer.writeComment("npatterns=" + patterns.getPatternCount());
 
         List<Attribute> attributes = new ArrayList<Attribute>();
+        
+        // no codon, unique patterns site patterns
+        if (offset == 0 && every == 1) attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS));
+        
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
 
         if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
         }
+        
+        // generate <patterns>
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
-
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }

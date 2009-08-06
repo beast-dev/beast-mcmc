@@ -132,6 +132,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             logger.info("TreeLikelihood using " + coreName + " likelihood core");
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;

@@ -43,12 +43,12 @@ import dr.inference.model.Model;
 import java.util.logging.Logger;
 
 /**
- * TreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
+ * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
+ * @version $Id$
  */
 
 public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
@@ -325,7 +325,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         operationCount = 0;
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root, null);
+        traverse(treeModel, root, null, true);
 
         if (updateSubstitutionModel) {
             // we are currently assuming a homogenous model...
@@ -362,9 +362,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         double[] categoryWeights = this.siteRateModel.getCategoryProportions();
         double[] frequencies = branchSiteModel.getStateFrequencies(0);
 
+        int cumulateScaleBufferIndex = Beagle.NONE;
+        if (useScaleFactors) {
+            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+            beagle.resetScaleFactors(cumulateScaleBufferIndex);
+            beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
+        }
+
         beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
-                (useScaleFactors ? new int[] { scaleBufferHelper.getOffsetIndex(internalNodeCount)} : new int[] { Beagle.NONE }),
-                1, patternLogLikelihoods);
+                new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -376,30 +382,41 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             
             useScaleFactors = true;
             recomputeScaleFactors = true;
-            forceScaling = false;
+            forceScaling = false; // Comment out to debug store/restore with changing scale factors
+
             System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
             updateAllNodes();
             branchUpdateCount = 0;
             operationCount = 0;
-            traverse(treeModel, root, null);
+            traverse(treeModel, root, null, false);
+
+//            beagle.updateTransitionMatrices(    // Should not be necessary, will remove after debugging
+//                     eigenBufferHelper.getOffsetIndex(0),
+//                     matrixUpdateIndices,
+//                     null,
+//                     null,
+//                     branchLengths,
+//                     branchUpdateCount);
 
             beagle.updatePartials(operations, operationCount, -1);
 
+            // flip cumulateScaleBuffer to hold new total
             scaleBufferHelper.flipOffset(internalNodeCount);
-            int cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
 
             // accumulate all the scaling factors and store them in the additional 'root' buffer
+            beagle.resetScaleFactors(cumulateScaleBufferIndex);
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
 
             beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
-                    new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
+                  new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
 
             logL = 0.0;
             for (int i = 0; i < patternCount; i++) {
                 logL += patternLogLikelihoods[i] * patternWeights[i];
             }
-            recomputeScaleFactors = false;
+            recomputeScaleFactors = false; // Only recompute after under/over-flow
         }
 
         //********************************************************************
@@ -419,7 +436,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Traverse the tree calculating partial likelihoods.
      */
-    private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber) {
+    private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber, boolean flip) {
 
         boolean update = false;
 
@@ -443,8 +460,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 throw new RuntimeException("Negative branch length: " + branchTime);
             }
 
-            // first flip the matrixBufferHelper
-            matrixBufferHelper.flipOffset(nodeNum);
+            if (flip)
+                // first flip the matrixBufferHelper
+                matrixBufferHelper.flipOffset(nodeNum);
 
             // then set which matrix to update
             matrixUpdateIndices[branchUpdateCount] = matrixBufferHelper.getOffsetIndex(nodeNum);
@@ -461,19 +479,21 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
             final int[] op1 = new int[] { -1 };
-            final boolean update1 = traverse(tree, child1, op1);
+            final boolean update1 = traverse(tree, child1, op1, flip);
 
             NodeRef child2 = tree.getChild(node, 1);
             final int[] op2 = new int[] { -1 };
-            final boolean update2 = traverse(tree, child2, op2);
+            final boolean update2 = traverse(tree, child2, op2, flip);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
                 int x = operationCount * Beagle.OPERATION_TUPLE_SIZE;
 
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
+                if (flip)
+                    // first flip the partialBufferHelper
+                    partialBufferHelper.flipOffset(nodeNum);
+
                 operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
 
                 if (useScaleFactors) {
@@ -483,18 +503,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     if (recomputeScaleFactors) {
                         // flip the indicator: can take either n or (internalNodeCount + 1) - n
                         scaleBufferHelper.flipOffset(n);
-
                         // store the index
                         scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-                        operations[x + 1] =  scaleBufferIndices[n]; // Write new scaleFactor
-                        operations[x + 2] = -1;
+
+                        operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+                        operations[x + 2] = Beagle.NONE;
+                    } else {
+                        operations[x + 1] = Beagle.NONE;
+                        operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
                     }
 
-                    operations[x + 1] = -1;
-                    operations[x + 2] =  scaleBufferIndices[n]; // Read existing scaleFactor
                 } else {
-                    operations[x + 1] = -1; // Not using scaleFactors
-                    operations[x + 2] = -1;
+                    operations[x + 1] = Beagle.NONE; // Not using scaleFactors
+                    operations[x + 2] = Beagle.NONE;
                 }
                 operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
                 operations[x + 4] = matrixBufferHelper.getOffsetIndex(child1.getNumber()); // source matrix 1
@@ -533,6 +554,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
+    private boolean forceScaling = false; // TODO remove after debugging finished
 
     /**
      * the branch-site model for these sites
@@ -585,8 +607,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     public int getNodeEvaluationCount() {
         return nodeEvaluationCount;
     }
-
-    private boolean forceScaling = false;
 
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling

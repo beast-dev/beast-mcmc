@@ -75,13 +75,13 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
         
         createScaleOperator("branchRates.var", demoTuning, rateWeights);
 
-        createOperator("scaleRootRate", "treeModel.rootRate", "Scales root rate", "treeModel.rootRate", OperatorType.SCALE, 0.75, rateWeights);
+        createOperator("scaleRootRate", "treeModel.rootRate", "Scales root rate", "treeModel.rootRate", OperatorType.SCALE, demoTuning, rateWeights);
         createOperator("scaleOneRate", "treeModel.nodeRates", "Scales one non-root rate", "treeModel.nodeRates", 
-        		OperatorType.SCALE, 0.75, branchWeights);
+        		OperatorType.SCALE, demoTuning, branchWeights);
         createOperator("scaleAllRates", "treeModel.allRates", "Scales all rates simultaneously", "treeModel.allRates",
-                OperatorType.SCALE_ALL, 0.75, rateWeights);
+                OperatorType.SCALE_ALL, demoTuning, rateWeights);
         createOperator("scaleAllRatesIndependently", "treeModel.nodeRates", "Scales all non-root rates independently", "treeModel.nodeRates",
-                OperatorType.SCALE_INDEPENDENTLY, 0.75, rateWeights);
+                OperatorType.SCALE_INDEPENDENTLY, demoTuning, rateWeights);
         
         createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", 
         		"branchRates.categories", OperatorType.SWAP, 1, branchWeights / 3);
@@ -95,17 +95,17 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
          
         createOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
         createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree", model.getParameter(ClockType.UCED_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
         createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, 0.75, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
         
         createOperator("upDownAllRatesHeights", "All rates and heights", "Scales all rates inversely to node heights of the tree", 
         		this.getParameter("treeModel.allRates"), tree.getParameter("treeModel.allInternalNodeHeights"), 
-        		OperatorType.UP_DOWN, 0.75, branchWeights);        
+        		OperatorType.UP_DOWN, demoTuning, branchWeights);        
 
         // These are statistics which could have priors on...        
         // #meanRate = #Relaxed Clock Model * #Tree Model

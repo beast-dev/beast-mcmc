@@ -25,8 +25,7 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import beagle.Beagle;
-import beagle.BeagleFactory;
+import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -81,7 +80,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
-                logger.info("Branch rate model used: " + branchRateModel.getModelName());
+                logger.info("  Branch rate model used: " + branchRateModel.getModelName());
             } else {
                 this.branchRateModel = new DefaultBranchRateModel();
             }
@@ -123,6 +122,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     scaleBufferHelper.getBufferCount() // Always allocate; they may become necessary
             );
 
+            InstanceDetails instanceDetails = beagle.getDetails();
+            ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+
+            logger.info("  Using BEAGLE Resource " + resourceDetails.toString());
+                      
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
                 String id = treeModel.getTaxonId(i);
@@ -285,7 +289,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Restore the additional stored state
      */
     protected void restoreState() {
-        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore 
+        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
         eigenBufferHelper.restoreState();
@@ -379,7 +383,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         // Attempt dynamic rescaling if over/under-flow
         if (forceScaling || (logL == Double.NaN || logL == Double.POSITIVE_INFINITY || logL == Double.NEGATIVE_INFINITY) ) {
-            
+
             useScaleFactors = true;
             recomputeScaleFactors = true;
             forceScaling = false; // Comment out to debug store/restore with changing scale factors

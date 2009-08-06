@@ -162,9 +162,10 @@ public class BeautiFrame extends DocumentFrame {
             }
         });
 
-        JPanel panel = new JPanel(new BorderLayout(6, 6));
+        JPanel panel = new JPanel(new BorderLayout(6, 6));       
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         panel.add(tabbedPane, BorderLayout.CENTER);
+        panel.setPreferredSize(new java.awt.Dimension(800, 600));
 
         getExportAction().setEnabled(false);
         JButton generateButton = new JButton(getExportAction());
@@ -175,9 +176,12 @@ public class BeautiFrame extends DocumentFrame {
         panel2.add(generateButton, BorderLayout.EAST);
 
         panel.add(panel2, BorderLayout.SOUTH);
+        
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setOpaque(false);
 
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-        getContentPane().add(panel, BorderLayout.CENTER);
+        getContentPane().add(scrollPane, BorderLayout.CENTER);
 
         setAllOptions();
 

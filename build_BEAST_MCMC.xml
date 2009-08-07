@@ -343,4 +343,74 @@
 		<echo message="JUnit test report finished." />
 	</target>
 
+	
+	<property name="version" value="1.5.1" />
+	<property name="config" value="release/BEAST_launch4j.xml" />
+	<property name="BEAST_release" value="BEAST v" />
+	<property name="BEAUTi_release" value="BEAUTi v" />
+	<property name="TreeAnnotator_release" value="TreeAnnotator v" />
+	<property name="LogCombiner_release" value="LogCombiner v" />
+	
+	<target name="windows_Release" depends="build_jar_all_BEAST_NoJUnitTest" description="release Windows version of BEAST, BEAUTI">
+		<delete dir="${BEAST_release}${version}" />
+		<!-- Create the release directory -->
+		<mkdir dir="${BEAST_release}${version}" />
+		
+		<property name="launch4j.dir" location="C://Program Files/launch4j" />
+		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" 
+			classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
+	
+		<copy todir="${BEAST_release}${version}/doc">
+		    <fileset dir="doc"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/examples">
+			<fileset dir="examples"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/native">
+			<fileset dir="native"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/scripts">
+			<fileset dir="scripts"/>
+		</copy>
+		
+		<!-- BEAUTi v?.?.?.exe -->
+		<launch4j configFile="${config}"
+		          jar="${dist}/beauti.jar"
+				  outfile="${BEAST_release}${version}/${BEAUTi_release}${version}.exe"
+		          fileVersion="${version}.0"
+		          txtFileVersion="${version}"
+		          productVersion="${version}.0"
+		          txtProductVersion="${version}"/>
+
+		<!-- BEAST v?.?.?.exe -->
+		<launch4j configFile="${config}"
+		        jar="${dist}/beast.jar"
+			    outfile="${BEAST_release}${version}/${BEAST_release}${version}.exe"
+		        fileVersion="${version}.0"
+		        txtFileVersion="${version}"
+		        productVersion="${version}.0"
+		        txtProductVersion="${version}"/>
+		
+		<!-- TreeAnnotator v?.?.?.exe -->
+		<launch4j configFile="${config}"
+				        jar="${dist}/treeannotator.jar"
+					    outfile="${BEAST_release}${version}/${TreeAnnotator_release}${version}.exe"
+				        fileVersion="${version}.0"
+				        txtFileVersion="${version}"
+				        productVersion="${version}.0"
+				        txtProductVersion="${version}"/>
+		
+		
+		<!-- LogCombiner v?.?.?.exe 
+		<launch4j configFile="${config}"
+				        jar="${dist}/beast.jar"
+					    outfile="${BEAST_release}${version}/${LogCombiner_release}${version}.exe"
+				        fileVersion="${version}.0"
+				        txtFileVersion="${version}"
+				        productVersion="${version}.0"
+				        txtProductVersion="${version}"/>	-->	
+		
+	
+	</target>
+	
 </project>

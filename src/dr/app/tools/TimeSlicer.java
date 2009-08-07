@@ -8,13 +8,17 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.continuous.SphericalPolarCoordinates;
 import dr.util.Version;
+import dr.util.HeapSort;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.KMLCoordinates;
 import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.inference.trace.TraceDistribution;
+import dr.evomodel.tree.TreeModel;
+import dr.stats.DiscreteStatistics;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -64,13 +68,14 @@ public class TimeSlicer {
     public static final String MODE = "mode";
     public static final String NORMALIZATION = "normalization";
     public static final String HPD = "hpd";
+    public static final String SDR = "sdr";
 
     public static final String[] falseTrue = new String[] {"false","true"};
 
 
     public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute,
                       boolean trueNoise, double mrsd, ContourMode contourMode,
-                      Normalization normalize) {
+                      Normalization normalize, boolean getSRD) {
 
         this.traits = traits;
         traitCount = traits.length;
@@ -79,6 +84,7 @@ public class TimeSlicer {
         doSlices = false;
         mostRecentSamplingDate = mrsd;
         this.contourMode = contourMode;
+        sdr = getSRD;
 
         if (slices != null) {
             sliceCount = slices.length;
@@ -110,14 +116,14 @@ public class TimeSlicer {
     }
 
     public void output(String outFileName, boolean summaryOnly) {
-        output(outFileName,summaryOnly,OutputFormat.XML, 0.80);
+        output(outFileName,summaryOnly,OutputFormat.XML, 0.80, null);
     }
 
     private Element rootElement;
     private Element documentElement;
     private Element folderElement;
 
-    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue) {
+    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue, String sdrFile) {
 
         resultsStream = System.out;
 
@@ -199,6 +205,65 @@ public class TimeSlicer {
 //            }
 //        }
 
+
+//  <--          attempt to get slice dispersalRates
+            if (sdr) {
+                double[][] sliceTreeDistances = new double[sliceCount][sliceTreeDistanceArrays.size()];
+                double[][] sliceTreeTimes = new double[sliceCount][sliceTreeDistanceArrays.size()];
+                double[][] sliceTreeRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
+                for (int q = 0; q < sliceTreeDistanceArrays.size(); q++){
+                    double[] distanceArray = (double[])sliceTreeDistanceArrays.get(q);
+                    double[] timeArray = (double[])sliceTreeTimeArrays.get(q);
+                    for (int r = 0; r < distanceArray.length; r ++) {
+                        sliceTreeDistances[r][q] = distanceArray[r];
+                        sliceTreeTimes[r][q] = timeArray[r];
+                    }
+                }
+
+                print2DArray(sliceTreeDistances,"sliceTreeDistances.txt");
+                print2DArray(sliceTreeTimes,"sliceTreeTimes.txt");
+
+                if (sliceCount > 1) {
+                    for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
+                        double[] distanceArray = (double[])sliceTreeDistanceArrays.get(s);
+                        double[] timeArray = (double[])sliceTreeTimeArrays.get(s);
+                        for (int t = 0; t <  (sliceCount-1); t++) {
+                            sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
+                            //sliceTreeRates[s][t] = (sliceTreeDistances[t][s] - sliceTreeDistances[t+1][s])/(sliceTreeTimes[t][s] - sliceTreeTimes[t+1][s]);
+                        }
+                        sliceTreeRates[s][sliceCount-1] = (sliceTreeDistances[sliceCount-1][s])/(sliceTreeTimes[sliceCount-1][s]);
+                    }
+                } else {
+                    for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
+                        sliceTreeRates[s][0] = sliceTreeDistances[0][s]/sliceTreeTimes[0][s];
+                    }
+                }
+
+                print2DArray(sliceTreeRates,"sliceTreeRates.txt");
+
+                try{
+                    PrintWriter sliceDispersalRateFile = new PrintWriter(new FileWriter(sdrFile), true);
+                    sliceDispersalRateFile.print("sliceTime"+"\t");
+                    if (mostRecentSamplingDate > 0) {
+                        sliceDispersalRateFile.print("realTime"+"\t");
+                    }
+                    sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"\t"+"hpd low"+"\t"+"hpd up"+"\r");
+                    double[] meanDispersalRates = meanColNoNaN(sliceTreeRates);
+                    double[][] hpdDispersalRates = getArrayHPDintervals(sliceTreeRates);
+                    for (int u = 0; u < sliceCount; u++) {
+                        sliceDispersalRateFile.print(slices[u]+"\t");
+                        if (mostRecentSamplingDate > 0) {
+                            sliceDispersalRateFile.print((mostRecentSamplingDate-slices[u])+"\t");
+                        }
+                        sliceDispersalRateFile.print(meanDispersalRates[u] + "\t"+ hpdDispersalRates[u][0] + "\t" + hpdDispersalRates[u][1]+"\r");
+                    }
+                    sliceDispersalRateFile.close();
+                } catch (IOException e) {
+                    System.err.println("IO Exception encountered: "+e.getMessage());
+                    System.exit(-1);
+                }
+//               attempt to get slice dispersalRates  -->
+            }
     }
 
     enum Normalization {
@@ -635,9 +700,15 @@ public class TimeSlicer {
 //        double treeNativeDistance = 0;
 //        double treeKilometerGreatCircleDistance = 0;
 
+//  <--  attempt to get slice dispersalRates
+        double[] treeSliceTime = new double[sliceCount];
+        double[] treeSliceDistance = new double[sliceCount];
+//       attempt to get slice dispersalRates  -->
+
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
             NodeRef node = treeTime.getNode(x);
+
 
             if (!(treeTime.isRoot(node))) {
 
@@ -655,6 +726,21 @@ public class TimeSlicer {
 //                }
 
                 for (int i = 0; i < sliceCount; i++) {
+
+//  <--          attempt to get slice dispersalRates
+                    if (sdr) {
+                        if (!doSlices ||
+                                (slices[i] <= nodeHeight)
+                                ) {
+                                treeSliceTime[i] += (parentHeight-nodeHeight);
+                                //TreeModel model = new TreeModel(treeTime, true);
+                                //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
+                                Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
+                                Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
+                                treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
+                        }
+                    }
+//       attempt to get slice dispersalRates  -->
 
                     if (!doSlices ||
                             (slices[i] >= nodeHeight && slices[i] < parentHeight)
@@ -688,11 +774,29 @@ public class TimeSlicer {
                                         slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
                             }
                             thisTraitSlice.add(trait);
+
+//  <--          attempt to get slice dispersalRates
+                 //if trait is location
+                            if (sdr){
+                                treeSliceTime[i] += (parentHeight-slices[i]);
+                                Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
+                                treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
+//               attempt to get slice dispersalRates  -->
+                            }
                         }
                     }
                 }
             }
         }
+
+//  <--          attempt to get slice dispersalRates
+        if (sdr){
+            sliceTreeDistanceArrays.add(treeSliceDistance);
+            sliceTreeTimeArrays.add(treeSliceTime);
+        }
+//               attempt to get slice dispersalRates  -->
+        
+
 //  employed to get dispersal rates across the whole tree
 //        if (containsLocation) {
 //           double treelength = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
@@ -709,14 +813,12 @@ public class TimeSlicer {
 //    private static double getNativeDistance(double[] location1, double[] location2) {
 //        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
 //    }
-//    private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
-//        double R = 6371; // km
-//        double dLat = Math.toRadians(location2[0]-location1[0]);
-//        double dLon = Math.toRadians(location2[1]-location1[1]);
-//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(Math.toRadians(location1[0])) * Math.cos(Math.toRadians(location2[0])) * Math.sin(dLon/2) * Math.sin(dLon/2);
-//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-//        return R * c;
-//    }
+//
+   private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
+        SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(location1[0], location1[1]);
+        SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(location2[0], location2[1]);
+        return (coord1.distance(coord2));
+   }
 
     private int traitCount;
     private int sliceCount;
@@ -738,7 +840,14 @@ public class TimeSlicer {
 //        }
 //    }
 
+//  <--  attempt to get slice dispersalRates
+    private ArrayList sliceTreeDistanceArrays = new ArrayList();
+    private ArrayList sliceTreeTimeArrays = new ArrayList();
+//    attempt to get slice dispersalRates  -->
+    private boolean sdr;
+
     private boolean outputRateWarning = true;
+
 
     private Trait imputeValue(Trait nodeTrait, Trait parentTrait, double time, double nodeHeight, double parentHeight, double[][] precision, double rate, boolean trueNoise) {
         if (!nodeTrait.isNumber()) {
@@ -910,6 +1019,9 @@ public class TimeSlicer {
         int burnin = -1;
         double mrsd = 0;
         double hpdValue = 0.80;
+        String outputFileSDR = null;
+        boolean getSDR = false;
+
 
 //        if (args.length == 0) {
 //          // TODO Make flash GUI
@@ -938,7 +1050,8 @@ public class TimeSlicer {
                                 "contouring model [default = synder]"),
                         new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
                                 "tree normalization [default = length"),
-                        
+                        new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
+
                 });
 
         try {
@@ -1030,6 +1143,13 @@ public class TimeSlicer {
             if (summaryFormat != null) {
                 outputFormat = OutputFormat.valueOf(summaryFormat.toUpperCase());
             }
+
+            String sdrString = arguments.getStringOption("sdr");
+            if (sdrString != null) {
+                outputFileSDR = sdrString;
+                getSDR = true;
+            }
+
         } catch (Arguments.ArgumentException e) {
             progressStream.println(e);
             printUsage(arguments);
@@ -1058,8 +1178,8 @@ public class TimeSlicer {
         }
 
         TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute,
-                trueNoise, mrsd, contourMode, normalize);
-        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue);
+                trueNoise, mrsd, contourMode, normalize, getSDR);
+        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
 
         System.exit(0);
     }
@@ -1153,4 +1273,101 @@ public class TimeSlicer {
 
         return blue+green+red;
     }
+
+    private static double[] getHPDInterval(double proportion, double[] array, int[] indices) {
+
+        double returnArray[] = new double[2];
+        double minRange = Double.MAX_VALUE;
+        int hpdIndex = 0;
+
+        int diff = (int)Math.round(proportion * (double)array.length);
+        for (int i = 0; i <= (array.length - diff); i++) {
+            double minValue = array[indices[i]];
+            double maxValue = array[indices[i+diff-1]];
+            double range = Math.abs(maxValue - minValue);
+            if (range < minRange) {
+                minRange = range;
+                hpdIndex = i;
+            }
+        }
+        returnArray[0] = array[indices[hpdIndex]];
+        returnArray[1] = array[indices[hpdIndex+diff-1]];
+        return returnArray;
+    }
+
+    private static void print2DArray(double[][] array, String name) {
+        try {
+            PrintWriter outFile = new PrintWriter(new FileWriter(name), true);
+
+            for (int i = 0; i < array.length; i++) {
+                for (int j = 0; j < array[0].length; j++) {
+                    outFile.print(array[i][j]+"\t");
+                }
+            outFile.println("");
+            }
+            outFile.close();
+
+        } catch(IOException io) {
+           System.err.print("Error writing to file: " + name);
+        }
+    }
+
+    private static double[] meanColNoNaN(double[][] x)    {
+        double[] returnArray = new double[x[0].length];
+
+        for (int i = 0; i < x[0].length; i++) {
+
+         	double m = 0.0;
+        	int lenNoZero = 0;
+
+
+        	for (int j = 0; j < x.length; j++) {
+
+                if (!(((Double)x[j][i]).isNaN())) {
+                    m += x[j][i];
+                    lenNoZero += 1;
+                }
+        	}
+        	returnArray[i] = m / (double) lenNoZero;
+
+        }
+        return returnArray;
+    }
+
+    private static double[][] getArrayHPDintervals(double[][] array) {
+
+        double[][] returnArray = new double[array.length][2];
+
+        for (int col = 0; col < array[0].length; col++) {
+
+            int counter = 0;
+
+            for (int row = 0; row < array.length; row++) {
+
+                if (!(((Double)array[row][col]).isNaN())) {
+                    counter += 1;
+                }
+            }
+            double[] columnNoNaNArray = new double[counter];
+
+            int index = 0;
+            for (int row = 0; row < array.length; row++) {
+
+                if (!(((Double)array[row][col]).isNaN())) {
+                    columnNoNaNArray[index] = array[row][col];
+                    index += 1;
+                }
+            }
+            int[] indices = new int[counter];
+            HeapSort.sort(columnNoNaNArray, indices);
+            double hpdBinInterval[] = getHPDInterval(0.95, columnNoNaNArray, indices);
+
+            returnArray[col][0] = hpdBinInterval[0];
+            returnArray[col][1] = hpdBinInterval[1];
+
+        }
+
+    return returnArray;
+    }
+
 }

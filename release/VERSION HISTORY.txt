@@ -1,0 +1,284 @@
+                    BEAST v1.5.0 2002-2009
+        Bayesian Evolutionary Analysis Sampling Trees
+                              by
+      Alexei J. Drummond, Andrew Rambaut & Marc Suchard
+
+                Department of Computer Science
+                     University of Auckland
+                    alexei@cs.auckland.ac.nz
+
+              Institute of Evolutionary Biology
+                    University of Edinburgh
+                      a.rambaut@ed.ac.uk
+
+               David Geffen School of Medicine
+            University of California, Los Angeles
+                      msuchard@ucla.edu
+
+
+Version History
+Last updated: a.rambaut@ed.ac.uk - 4th August 2009
+	
+Version 1.5.0 released 4th August 2009
+	This is a major new version with numerous new features - see website for 
+	details.
+	
+	Bug Fixes
+		Probably many new bugs have been introduced. 
+	
+================================================================================	
+
+Version 1.4.8 released 27th July 2008
+	New Features:
+		A birth-death model of speciation. This is the model of Tanja Gernhard 
+		(The conditioned reconstructed process, J Theor Biol, 2008).
+		
+		There is now an option to dynamically rescale the likelihoods of trees 
+		to avoid loss of precision. This can avoid problems with large trees 
+		but may affect performance. See on-line documentation for details.
+
+	Bug Fixes:
+		Improvements to how uncorrelated relaxed clocks are sampled. This will 
+		be an improvement more for small trees than large.
+		
+		Fixed a problem setting the number of groups for the Bayesian Skyline 
+		Plot in BEAUti.
+		
+		A warning message is given if a speciation process is selected for 
+		serially-sampled sequences.
+
+		LogCombiner ignores lines starting with a '#' as a comment line.
+		
+		Trees are written with a standard (alphabetical) ordering of taxa to 
+		allow them to be read by AWTY.
+		
+		For writing NEXUS tree files, taxon names with illegal characters (such 
+		as spaces or semicolons) are now quoted.
+		
+		LogCombiner now uses the '.' as the decimal separator irrespective of
+		country or language. This is to standardize with other programs.
+		
+Version 1.4.7 released 1st February 2008
+	New Features:
+		BEAUti can now set nucleotide frequencies to be sampled or equal as well 
+		as the empirically estimated (the previous default).
+		
+		Individual operators can now be turned on and off in BEAUti (for example
+		to sample on a fixed tree topology).
+
+	Bug Fixes:
+		BEAST now generates starting trees with certain taxon constraints that 
+		caused problems before.
+		
+		Some numerical problems with the Expansion and Logistic models have been
+		fixed or at least improved for certain situations.
+	
+		Fixed a problem in which BEAUti's Prior Distribution dialog was freezing
+		when a very large lognormal mean was set.
+		
+		A seed of zero crashed BEAST - seeds must be > 0 now.
+		
+		The command-line version of TreeAnnotator wasn't accepting a target tree
+		file name.
+		
+		Fixed a problem in LogCombiner where if the Run button was pressed 
+		before the user had finished editing a burnin the value was ignored.
+		
+		Fixed an issue with BEAUti running under Mac OS X 10.5 (Leopard) where 
+		the text box for the substitution rate was tiny.
+
+Version 1.4.6 released 26th September 2007
+	Bug Fixes:
+		Fixed a problem in which the lognormal distribution wasn't giving the
+		required distribution as prior.
+		
+		Fixed a problem with TreeAnnotator not completing when finding the 
+		Maximum Clade Credibility tree.
+
+Version 1.4.5 released 31st July 2007
+	Bug Fixes
+		Some monophyletic constraints defined in BEAUti failed to run in BEAST.
+		
+		The priors table didn't update when the tree prior was changed.
+
+Version 1.4.4 released 12th July 2007
+	New Features:
+		Improved speed of relaxed clock by more judicious updating of the 
+		likelihood when rates change on a few branches.
+		
+		Slight improvement in speed calculating the coalescent prior.
+		
+		The taxa and translate lists in NEXUS trees files can now be sorted
+		alphabetically (and this is the default in BEAUti). This will help
+		comparisons of trees files using certain software that assume taxon
+		orders are the same (namely AWTY).
+		
+	Bug Fixes
+		Log normal prior element required meanInRealSpace attribute which
+		prevented older XML file from running without modification. This 
+		attribute is now optional.
+
+Version 1.4.3 released 18th June 2007
+	Bug Fixes
+		The Yule tree prior was wrongly implemented.
+
+		BEAUti did not allow some types of compatable monophyly 
+		constraints.
+		
+		BEAST did not always simulate starting trees with enforced
+		monophyly correctly.
+		
+		BEAST ignored specified offsets for exponential priors on 
+		parameters.
+		
+		BEAUti ignored user specified offsets for gamma distribution 
+		priors on parameters.
+
+Version 1.4.2 released 25th April 2007
+	New Features:
+		Taxon sets can now have monophyly enforced using BEAUti.
+
+		Starting tree is now compatible with monophyly constraints
+		and uniform priors on tMRCAs.
+
+		Relaxed clock statistics (meanRate, etc.) are now in the priors
+		table.
+
+	Bug Fixes
+		Fixed problem with rate estimation under the 2 partition codon
+		specific rates models (including SRD06).
+
+		Fixed problem setting Bayesian Skyline group count in BEAUti.
+
+Version 1.4.1 released 25th January 2007
+	Bug Fixes:
+		BEAUti did not accept the number of skyline groups properly.
+		
+		BEAUti was not able to 'guess dates' using a specified prefix.
+		
+		Fixed a problem using exponential distribution as priors.
+		
+		LogCombiner could mix up taxon labels when combining multiple 
+		tree files. This problem would not affect the reconstruction of
+		skyline plots.
+		
+Version 1.4 released 31th October 2006
+	New Features:
+		Faster likelihood calculations after rejecting a state. Whilst 
+		the improvement in speed will vary, the indications are that
+		this is a significant overall speed improvement.
+				
+		Rates for relaxed clock models can be written embedded in the 
+		tree for later analysis.
+		
+		2 new accessory programs: LogCombiner for combining multiple 
+		runs into single log files and TreeAnnotator which annotates a
+		given target tree with posterior estimates from a BEAST sample
+		of trees.
+		
+		BEAUti can now create TaxonSets and apply prior probability 
+		distributions to the tMRCA of these.
+		
+		BEAUti can now save and load "Template Files" containing model
+		settings but not data.
+		
+		BEAUti can be run non-interactively as a command-line using the 
+		template files.
+	
+		The order of parameters logged in BEAST files created by BEAUti 
+		has been changed to make it easier to compare files with different
+		models in Tracer.
+
+	Bug Fixes:
+		BEAUti did not use the specified fixed substitution rate.
+
+		Fixed a problem using UPGMA as an initial tree - would sometimes
+		give ? in log files instead of posteriors.
+
+		Fixed a problem with BEAUti not loading data when using a non-
+		english operating system.
+
+		Fixed a problem using gamma distribution as priors.
+
+Version 1.3 released 30th August 2005
+	New Features:
+		"Relaxed Clock" models.
+		New prior selection for parameters using BEAUti.
+
+	Bug Fixes:
+		Problem with distributionLikelihood including all data twice
+		resulting in the distributions being too tight.
+
+		Improved error reporting.
+
+Version 1.2 released 24th February 2005
+	New Features:
+		"Bayesian Skyline" demographic model.
+		Logistic demographic model.
+
+Version 1.1.2 released 27th August 2004
+	Bug Fixes:
+		Amino Acid models were not being set correctly
+		resulting in the use of an equal-rates model.
+
+Version 1.1.1 released 24th August 2004
+	New Features:
+		Can now switch autoOptimize on or off for individual 
+		operators. This overrides the setting for the <mcmc>
+		element.
+		
+		Default weights for certain operators have been changed 
+		in BEAUti to improve performance.
+		
+	Bug Fixes:
+		Fixed a bug in BEAUti in which unlinked codon analyses
+		produced non-working XML files.
+
+		Fixed a bug where BEAST wouldn't run certain old XML files
+		throwing a null-pointer exception when writing a log file.
+
+		Doesn't stop with RuntimeException when a state is proposed
+		that has a really bad (underflowing) likelihood.
+
+Version 1.1 released 5th August 2004
+	New Features:
+		An auto-optimize function that removes the need to 
+		perform manual tuning of operators.
+		
+		Improvement in speed of likelihood calculations for
+		nucleotides.  
+		
+		Now includes BEAUTi as part of the BEAST package. In 
+		future these will be distributed together with matching
+		version numbers.
+		
+	Bug Fixes:
+		Various minor problems with parsing XML have been fixed
+
+Version 1.0.3 released 12 July 2003
+	New Features:
+		Improved tree log analyser. Now gives mean node heights 
+		(branch lengths) on trees with a frequency > 100.
+
+	Bug Fixes:
+		Various minor problems with parsing XML have been fixed
+
+Version 1.0.2 released 27 June 2003
+	New Features:
+		Improved tree log analyser. Now gives mean node heights 
+		(branch lengths) on trees with a frequency > 100.
+
+	Bug Fixes:
+		Fixed the wrong coalescent likelihood function introduced 
+		in the last version.
+
+		Various minor problems with parsing XML have been fixed
+		(including GTR model, NormalDistribution and others).
+
+Version 1.0.1 released 23 June 2003
+	This version introduced a 'fix' for the coalescent likelihood 
+	function which turned out to be erroneous. This version should 
+	not be used.
+
+Version 1.0 released 10 June 2003
+	First released version.

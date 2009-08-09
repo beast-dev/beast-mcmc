@@ -1,17 +1,16 @@
 <launch4jConfig>
   <headerType>gui</headerType>
-  <icon>icons/beast.ico</icon>
-  <cmdLine>-window</cmdLine>
+  <icon>icons/utility.ico</icon>
   <jre>
     <minVersion>1.5.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
     <maxHeapSize>1000</maxHeapSize>
   </jre>    
   <versionInfo>
-    <fileDescription>BEAST</fileDescription>    
+    <fileDescription>TreeAnnotator</fileDescription>    
     <copyright>2002-2009</copyright>
-    <productName>BEAST</productName>
-    <internalName>BEAST</internalName>
-    <originalFilename>BEAST.exe</originalFilename>    
+    <productName>TreeAnnotator</productName>
+    <internalName>TreeAnnotator</internalName>
+    <originalFilename>TreeAnnotator.exe</originalFilename>    
   </versionInfo>
 </launch4jConfig>

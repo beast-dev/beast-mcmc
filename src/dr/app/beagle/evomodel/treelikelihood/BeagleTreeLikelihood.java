@@ -40,6 +40,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -52,17 +54,20 @@ import java.util.logging.Logger;
 
 public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
-    /**
-     * Constructor.
-     */
+    // This property is a comma-delimited list of resource numbers (0 == CPU) to
+    // allocate each BEAGLE instance to. If less than the number of instances then
+    // will wrap around.
+    private static String RESOURCE_ORDER_PROPERTY = "beagle_resource_order";
+
+    private static int instanceCount = 0;
+    private static List<Integer> resourceOrder = null;
+
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
                                 BranchSiteModel branchSiteModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
-                                boolean useAmbiguities,
-                                int deviceNumber,
-                                boolean preferSinglePrecision
+                                boolean useAmbiguities
     ) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -110,6 +115,30 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(internalNodeCount + 1, 0);
 
+            // Attempt to get the resource order from the System Property
+            if (resourceOrder == null) {
+                resourceOrder = new ArrayList<Integer>();
+                String r = System.getProperty(RESOURCE_ORDER_PROPERTY);
+                if (r != null) {
+                    String[] parts = r.split(",");
+                    for (String part : parts) {
+                        try {
+                            int n = Integer.parseInt(part.trim());
+                            resourceOrder.add(n);
+                        } catch (NumberFormatException nfe) {
+
+                        }
+                    }
+                }
+
+            }
+
+            int[] resourceList = { };
+            if (resourceOrder.size() != 0) {
+                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };
+            }
+            instanceCount ++;
+
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
                     partialBufferHelper.getBufferCount(),
@@ -119,14 +148,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     eigenBufferHelper.getBufferCount(),            // eigenBufferCount
                     matrixBufferHelper.getBufferCount(),
                     categoryCount,
-                    scaleBufferHelper.getBufferCount() // Always allocate; they may become necessary
+                    scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                    resourceList,
+                    0,
+                    0
             );
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
 
             logger.info("  Using BEAGLE Resource " + resourceDetails.toString());
-                      
+
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
                 String id = treeModel.getTaxonId(i);
@@ -414,7 +446,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
 
             beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
-                  new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
+                    new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
 
             logL = 0.0;
             for (int i = 0; i < patternCount; i++) {

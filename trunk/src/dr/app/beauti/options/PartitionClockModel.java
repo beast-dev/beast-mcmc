@@ -277,7 +277,7 @@ public class PartitionClockModel extends ModelOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionTreeModels().size() > 1) { //|| options.isSpeciesAnalysis()
+        if (options.getPartitionClockModels().size() > 1) { //|| options.isSpeciesAnalysis()
             // There is more than one active partition model
             prefix += getName() + ".";
         }

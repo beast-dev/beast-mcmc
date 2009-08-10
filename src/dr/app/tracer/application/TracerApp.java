@@ -1,5 +1,6 @@
 package dr.app.tracer.application;
 
+import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.Utils;
@@ -21,7 +22,7 @@ public class TracerApp extends MultiDocApplication {
     static public void main(String[] args) {
         boolean lafLoaded = false;
 
-        if (Utils.isMacOSX()) {
+        if (OSType.isMac()) {
             System.setProperty("apple.awt.graphics.UseQuartz", "true");
             System.setProperty("apple.awt.antialiasing","true");
             System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");

@@ -31,11 +31,13 @@ import org.virion.jam.framework.DefaultMenuBarFactory;
 import org.virion.jam.framework.DefaultEditMenuFactory;
 import org.virion.jam.framework.DefaultHelpMenuFactory;
 
+import dr.app.util.OSType;
+
 
 public class BeautiMenuBarFactory extends DefaultMenuBarFactory {
 
 	public BeautiMenuBarFactory() {
-		if (org.virion.jam.mac.Utils.isMacOSX()) {
+		if (OSType.isMac()) {
 			registerMenuFactory(new BeautiMacFileMenuFactory());
 			registerMenuFactory(new DefaultEditMenuFactory());
 			registerMenuFactory(new MacWindowMenuFactory());

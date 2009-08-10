@@ -227,28 +227,28 @@ public class Utils {
         return new File(f);
     }
 
-    enum Platform {
-        WINDOWS,
-        MACOSX,
-        LINUX;
-
-        Platform detect() {
-
-            final String os = System.getProperty("os.name");
-
-            if( os.equals("Linux") ) {
-                return LINUX;
-            }
-            // todo probably wrong, please check on windows
-            if( os.equals("Windows") ) {
-                return WINDOWS;
-            }
-
-            if( System.getProperty("os.name").toLowerCase().startsWith("mac os x") ) {
-                return MACOSX;
-            }
-
-            return null;
-        }
-    }
+//    enum Platform {
+//        WINDOWS,
+//        MACOSX,
+//        LINUX;
+//
+//        Platform detect() {
+//
+//            final String os = System.getProperty("os.name");
+//
+//            if( os.equals("Linux") ) {
+//                return LINUX;
+//            }
+//            // todo probably wrong, please check on windows
+//            if( os.equals("Windows") ) {
+//                return WINDOWS;
+//            }
+//
+//            if( System.getProperty("os.name").toLowerCase().startsWith("mac os x") ) {
+//                return MACOSX;
+//            }
+//
+//            return null;
+//        }
+//    }
 }

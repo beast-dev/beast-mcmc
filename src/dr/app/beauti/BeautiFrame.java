@@ -14,7 +14,8 @@ import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.modelsPanel.ModelsPanel;
+import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
+import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
@@ -22,7 +23,6 @@ import dr.app.beauti.taxonsetspanel.TaxaPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
-import dr.app.beauti.treespanel.SpeciesTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BeastImporter;
 import dr.app.beauti.util.NexusApplicationImporter;
@@ -44,7 +44,6 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
@@ -79,7 +78,8 @@ public class BeautiFrame extends DocumentFrame {
     private TipDatesPanel tipDatesPanel;
     private TraitsPanel traitsPanel;
     private TaxaPanel taxaPanel;
-    private ModelsPanel modelsPanel;
+    private SiteModelsPanel siteModelsPanel;
+    private ClockModelsPanel clockModelsPanel;
     private OldTreesPanel oldTreesPanel;
 //    private SpeciesTreesPanel speciesTreesPanel;
     private TreesPanel treesPanel;
@@ -125,7 +125,8 @@ public class BeautiFrame extends DocumentFrame {
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
-        modelsPanel = new ModelsPanel(this, getDeleteAction());
+        siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
+        clockModelsPanel = new ClockModelsPanel(this);
         oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
@@ -137,7 +138,8 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
-        tabbedPane.addTab("Subst & Clock Models", modelsPanel);
+        tabbedPane.addTab("Site Models", siteModelsPanel);
+        tabbedPane.addTab("Clock Models", clockModelsPanel);
         if (DataPanel.ALLOW_UNLINKED_TREES) {
             tabbedPane.addTab("Trees", treesPanel);
         } else {
@@ -209,7 +211,8 @@ public class BeautiFrame extends DocumentFrame {
         tipDatesPanel.setOptions(beautiOptions);
         traitsPanel.setOptions(beautiOptions);
         taxaPanel.setOptions(beautiOptions);
-        modelsPanel.setOptions(beautiOptions);
+        siteModelsPanel.setOptions(beautiOptions);
+        clockModelsPanel.setOptions(beautiOptions);
 //        if (beautiOptions.isSpeciesAnalysis()) {
 //            speciesTreesPanel.setOptions(beautiOptions);
 //        } else 
@@ -231,7 +234,8 @@ public class BeautiFrame extends DocumentFrame {
         tipDatesPanel.getOptions(beautiOptions);
         traitsPanel.getOptions(beautiOptions);
         taxaPanel.getOptions(beautiOptions);
-        modelsPanel.getOptions(beautiOptions);
+        siteModelsPanel.getOptions(beautiOptions);
+        clockModelsPanel.getOptions(beautiOptions);
 //        if (beautiOptions.isSpeciesAnalysis()) {
 //            speciesTreesPanel.getOptions(beautiOptions);
 //        } else 

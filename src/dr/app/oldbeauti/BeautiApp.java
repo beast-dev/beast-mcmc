@@ -26,6 +26,7 @@
 package dr.app.oldbeauti;
 
 import dr.app.beast.BeastVersion;
+import dr.app.util.OSType;
 import dr.util.Version;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.Utils;
@@ -82,7 +83,7 @@ public class BeautiApp extends MultiDocApplication {
                 developer = true;
             }
 
-	        if (Utils.isMacOSX()) {
+	        if (OSType.isMac()) {
 		        System.setProperty("apple.laf.useScreenMenuBar","true");
 		        System.setProperty("apple.awt.showGrowBox","true");
 		        System.setProperty("apple.awt.graphics.UseQuartz","true");

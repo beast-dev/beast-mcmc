@@ -25,6 +25,7 @@
 
 package dr.app.pathogen;
 
+import dr.app.util.OSType;
 import dr.util.Version;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.Utils;
@@ -75,7 +76,7 @@ public class PathogenApp extends MultiDocApplication {
     static public void main(String[] args) {
 
 
-        if (Utils.isMacOSX()) {
+        if (OSType.isMac()) {
             System.setProperty("apple.laf.useScreenMenuBar","true");
             System.setProperty("apple.awt.showGrowBox","true");
             System.setProperty("apple.awt.graphics.UseQuartz","true");

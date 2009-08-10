@@ -29,6 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.util.OSType;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
@@ -123,6 +124,11 @@ public class MCMCPanel extends BeautiPanel {
         });
         
         optionsPanel.addComponent(addTxt);
+        if (OSType.isWindows()) {
+        	addTxt.setSelected(true);
+        } else {
+        	addTxt.setSelected(false);
+        }
         addTxt.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
             	setOptions(options);

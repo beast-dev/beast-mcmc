@@ -31,8 +31,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int deviceNumber = xo.getAttribute(DEVICE_NUMBER,1) - 1;
-        boolean preferSinglePrecision = xo.getAttribute(PREFER_SINGLE_PRECISION,false);
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -50,9 +48,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 branchSiteModel,
                 siteRateModel,
                 branchRateModel,
-                useAmbiguities,
-                deviceNumber,
-                preferSinglePrecision
+                useAmbiguities
         );
     }
 
@@ -74,8 +70,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-            AttributeRule.newIntegerRule(DEVICE_NUMBER,true),
-            AttributeRule.newBooleanRule(PREFER_SINGLE_PRECISION, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),

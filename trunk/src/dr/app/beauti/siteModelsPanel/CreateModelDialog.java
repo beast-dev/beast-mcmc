@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.modelsPanel;
+package dr.app.beauti.siteModelsPanel;
 
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;

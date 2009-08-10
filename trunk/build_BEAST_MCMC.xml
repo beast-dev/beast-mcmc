@@ -395,6 +395,8 @@
 	<property name="TreeAnnotator_release" value="TreeAnnotator v" />
 	<property name="LogCombiner_release" value="LogCombiner v" />
 	
+	<!-- Need to either install Launch4j under {BEAST workspace}/${release}
+	             or install it in the default directoy and change the location of launch4j.dir -->
 	<target name="windows_Release" depends="build_jar_all_BEAST_NoJUnitTest" 
 								   description="release Windows version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
 		<delete dir="${BEAST_release}${version}" />

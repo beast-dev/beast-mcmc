@@ -63,7 +63,7 @@ public class BranchRatesModelGenerator extends Generator {
      * @param tree
      * @param writer the writer
      */
-    public void writeBranchRatesModel(PartitionClockModel model, XMLWriter writer) {//PartitionTreeModel tree, 
+    public void writeBranchRatesModel(PartitionClockModel model, XMLWriter writer) { 
 
         setModelPrefix(model.getPrefix());        
         

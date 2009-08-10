@@ -30,6 +30,8 @@ import javax.swing.*;
 import org.virion.jam.framework.SingleDocApplication;
 import org.virion.jam.mac.Utils;
 
+import dr.app.util.OSType;
+
 import java.awt.*;
 
 public class TreeStatApp extends SingleDocApplication {
@@ -42,7 +44,7 @@ public class TreeStatApp extends SingleDocApplication {
 
 
 
-        if (Utils.isMacOSX()) {
+        if (OSType.isMac()) {
             if (Utils.getMacOSXVersion().startsWith("10.5")) {
                 System.setProperty("apple.awt.brushMetalLook","true");
             }

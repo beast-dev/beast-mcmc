@@ -33,11 +33,13 @@ import org.virion.jam.framework.DefaultEditMenuFactory;
 import org.virion.jam.framework.DefaultHelpMenuFactory;
 import org.virion.jam.framework.DefaultFileMenuFactory;
 
+import dr.app.util.OSType;
+
 
 public class PathogenMenuBarFactory extends DefaultMenuBarFactory {
 
 	public PathogenMenuBarFactory() {
-		if (org.virion.jam.mac.Utils.isMacOSX()) {
+		if (OSType.isMac()) {
 			registerMenuFactory(new PathogenMacFileMenuFactory());
 			registerMenuFactory(new DefaultEditMenuFactory());
 			registerMenuFactory(new MacWindowMenuFactory());

@@ -27,14 +27,12 @@ package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.util.CommandLineBeauti;
+import dr.app.util.OSType;
 import dr.util.Version;
 import org.virion.jam.framework.*;
-import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author Andrew Rambaut
@@ -87,7 +85,7 @@ public class BeautiApp extends MultiDocApplication {
 
             boolean lafLoaded = false;
 
-            if (Utils.isMacOSX()) {
+            if (OSType.isMac()) {
                 System.setProperty("apple.awt.graphics.UseQuartz", "true");
                 System.setProperty("apple.awt.antialiasing","true");
                 System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");

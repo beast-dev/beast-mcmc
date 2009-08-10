@@ -3,10 +3,12 @@ package dr.app.tracer.application;
 import org.virion.jam.framework.*;
 import org.virion.jam.mac.*;
 
+import dr.app.util.OSType;
+
 public class TracerMenuBarFactory extends DefaultMenuBarFactory {
 
     public TracerMenuBarFactory() {
-        if (org.virion.jam.mac.Utils.isMacOSX()) {
+        if (OSType.isMac()) {
             registerMenuFactory(new TracerMacFileMenuFactory());
             registerMenuFactory(new DefaultEditMenuFactory());
 	        registerMenuFactory(new AnalysisMenuFactory());

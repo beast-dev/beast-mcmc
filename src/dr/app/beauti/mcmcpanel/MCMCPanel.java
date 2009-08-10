@@ -28,7 +28,6 @@ package dr.app.beauti.mcmcpanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import org.virion.jam.components.WholeNumberField;
@@ -61,6 +60,8 @@ public class MCMCPanel extends BeautiPanel {
 
     public static final String fileNameStem = "untitled";
     JTextField fileNameStemField = new JTextField(fileNameStem);
+    
+    private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
     JTextField logFileNameField = new JTextField(fileNameStem + ".log");
     JTextField treeFileNameField = new JTextField(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
@@ -117,6 +118,14 @@ public class MCMCPanel extends BeautiPanel {
             public void keyReleased(KeyEvent e) {
                 options.fileNameStem = fileNameStemField.getText();
                 setOptions(options);
+                frame.setDirty();
+            }
+        });
+        
+        optionsPanel.addComponent(addTxt);
+        addTxt.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+            	setOptions(options);
                 frame.setDirty();
             }
         });
@@ -195,24 +204,28 @@ public class MCMCPanel extends BeautiPanel {
     private void updateTreeFileNameList(){
     	options.treeFileName.clear();
     	options.substTreeFileName.clear();
-    	
+    	String treeFN = "";        
+            
     	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            String treeFN;
-            if (options.substTreeLog) {
+    		if (options.substTreeLog) {
                 treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             } else {
                 treeFN = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
+            if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
             options.treeFileName.add(treeFN);
             
             if (options.substTreeLog) {
-            	options.substTreeFileName.add(options.fileNameStem + "." + tree.getPrefix() 
-            			+ "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
+            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
+            	if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
+            	options.substTreeFileName.add(treeFN);
             }            
         }
     	
     	if (options.isSpeciesAnalysis()) {
-    		options.treeFileName.add(options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME);
+    		treeFN = options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME;
+    		if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
+    		options.treeFileName.add(treeFN);
     		//TODO: species sub tree
     	}
     }
@@ -242,6 +255,7 @@ public class MCMCPanel extends BeautiPanel {
             fileNameStemField.setText(options.fileNameStem);
 
             options.logFileName = options.fileNameStem + ".log";
+            if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";            
             logFileNameField.setText(options.logFileName);
 
 //            if (options.mapTreeFileName == null) {

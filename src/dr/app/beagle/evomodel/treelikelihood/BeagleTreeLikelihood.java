@@ -412,9 +412,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < patternCount; i++) {
             logL += patternLogLikelihoods[i] * patternWeights[i];
         }
-
+ 
         // Attempt dynamic rescaling if over/under-flow
-        if (forceScaling || (logL == Double.NaN || logL == Double.POSITIVE_INFINITY || logL == Double.NEGATIVE_INFINITY) ) {
+        if (forceScaling || Double.isNaN(logL) || Double.isInfinite(logL) ) {
 
             useScaleFactors = true;
             recomputeScaleFactors = true;
@@ -453,6 +453,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 logL += patternLogLikelihoods[i] * patternWeights[i];
             }
             recomputeScaleFactors = false; // Only recompute after under/over-flow
+                  
+            if (Double.isNaN(logL)) {    	
+            	throw new BeagleException("After rescale attempt BeagleTreeLikelihood still returns NaN",
+            			BeagleErrorCode.GENERAL_ERROR.getErrCode());
+            }
         }
 
         //********************************************************************

@@ -42,9 +42,7 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -123,8 +121,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selectionChanged();
             }
         });
-
-
+        
+		dataTable.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					viewAlignmentGivenPD();
+				}
+			}
+		});
+		
         scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -206,6 +211,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
+    }
+    
+    private void viewAlignmentGivenPD() {
+    	PartitionData partitionData = options.dataPartitions.get(dataTable.getSelectedRow());   	
+    	
+    	ViewAlignmentDialog	viewAlignmentDialog = new ViewAlignmentDialog(frame, partitionData);
+	    	
+	    int result = viewAlignmentDialog.showDialog();
+	
+	    if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+	        return;
+	    }
     }
 
     private void uncheckAllowDifferentTaxa() {

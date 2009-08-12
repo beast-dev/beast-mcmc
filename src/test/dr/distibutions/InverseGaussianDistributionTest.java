@@ -50,8 +50,7 @@ public class InverseGaussianDistributionTest extends TestCase {
             invGaussian.setMean(M);
             invGaussian.setShape(S);
 
-            double mean = M;
-            assertEquals(mean, invGaussian.mean(), 1e-10);
+            assertEquals(M, invGaussian.mean(), 1e-10);
         }
     }
 
@@ -79,8 +78,7 @@ public class InverseGaussianDistributionTest extends TestCase {
             invGaussian.setMean(M);
             invGaussian.setShape(S);
 
-            double shape = S;
-            assertEquals(shape, invGaussian.getShape(), 1e-10);
+            assertEquals(S, invGaussian.getShape(), 1e-10);
         }
     }
 
@@ -162,10 +160,10 @@ public class InverseGaussianDistributionTest extends TestCase {
                 270.4264074, 298.867401, 330.2995599, 365.0374679, 403.4287935, 445.8577701,
                 492.7490411, 544.5719101, 601.8450379, 665.141633, 735.0951892, 812.4058252,
                 897.8472917, 992.2747156};
-        for(int i=0; i<shapes.length; i++) {
-            invGaussian.setShape(shapes[i]);
-            for(double p=0.01; p<0.99; p+=0.01) {
-                double q =invGaussian.quantile(p);
+        for (double shape : shapes) {
+            invGaussian.setShape(shape);
+            for (double p = 0.01; p < 0.99; p += 0.01) {
+                double q = invGaussian.quantile(p);
                 double p_hat = invGaussian.cdf(q);
                 assertEquals(p, p_hat, 1.0e-3);
             }

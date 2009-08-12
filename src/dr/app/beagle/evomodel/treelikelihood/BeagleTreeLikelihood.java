@@ -25,7 +25,6 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -43,6 +42,8 @@ import java.util.logging.Logger;
 import java.util.List;
 import java.util.ArrayList;
 
+import beagle.*;
+
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
@@ -57,7 +58,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
-    private static String RESOURCE_ORDER_PROPERTY = "beagle_resource_order";
+    private static String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
@@ -391,7 +392,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         beagle.updatePartials(operations, operationCount, -1);
 
-        nodeEvaluationCount += operationCount;
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalOperationCount += operationCount;
+        }
 
         int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
 
@@ -643,12 +646,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected boolean updateSiteModel;
     protected boolean storedUpdateSiteModel;
 
-    private int nodeEvaluationCount = 0;
-
-    public int getNodeEvaluationCount() {
-        return nodeEvaluationCount;
-    }
-
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling
 //     */
@@ -709,5 +706,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         private int[] indexOffsets;
         private int[] storedIndexOffsets;
+
     }
 }

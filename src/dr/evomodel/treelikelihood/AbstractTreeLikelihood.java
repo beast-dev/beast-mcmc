@@ -44,6 +44,8 @@ import dr.xml.Reportable;
 
 public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
+    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+
     public AbstractTreeLikelihood(String name, PatternList patternList,
                                   TreeModel treeModel) {
 
@@ -292,7 +294,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     public String getReport() {
         getLogLikelihood();
-        return getClass().getName() + "(" + logLikelihood + ")";
+        return getClass().getName() + "(" + logLikelihood + ") total operations = " + totalOperationCount;
 
     }
 
@@ -347,4 +349,5 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
 
+    protected int totalOperationCount = 0;
 }

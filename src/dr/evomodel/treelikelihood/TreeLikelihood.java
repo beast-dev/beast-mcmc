@@ -489,6 +489,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
                 }
 
+                if (COUNT_TOTAL_OPERATIONS) {
+                    totalOperationCount ++;
+                }
+
                 if (parent == null) {
                     // No parent this is the root of the tree -
                     // calculate the pattern likelihoods
@@ -555,7 +559,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (patternList instanceof SitePatterns) {
                 int index = ((SitePatterns)patternList).getPatternIndex(i);
                 if( index >= 0 ) {
-                         return patternLogLikelihoods[index] / patternWeights[index];
+                    return patternLogLikelihoods[index] / patternWeights[index];
                 } else {
                     return 0.0;
                 }
@@ -691,4 +695,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * the LikelihoodCore
      */
     protected LikelihoodCore likelihoodCore;
+
+
+
 }

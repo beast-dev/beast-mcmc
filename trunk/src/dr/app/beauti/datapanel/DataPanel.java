@@ -70,8 +70,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
-    UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
-    LinkAllAction linkAllAction = new LinkAllAction();
+    ShowAction showAction = new ShowAction();
+//    UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
+//    LinkAllAction linkAllAction = new LinkAllAction();
 
     JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
 
@@ -177,16 +178,20 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
 
+            button = new JButton(showAction);
+            showAction.setEnabled(false);
+            PanelUtils.setupComponent(button);
+            toolBar1.add(button);
             // all
-            button = new JButton(unlinkAllAction);
-            unlinkAllAction.setEnabled(false);
-            PanelUtils.setupComponent(button);
-            toolBar1.add(button);
-
-            button = new JButton(linkAllAction);
-            linkAllAction.setEnabled(false);
-            PanelUtils.setupComponent(button);
-            toolBar1.add(button);
+//            button = new JButton(unlinkAllAction);
+//            unlinkAllAction.setEnabled(false);
+//            PanelUtils.setupComponent(button);
+//            toolBar1.add(button);
+//
+//            button = new JButton(linkAllAction);
+//            linkAllAction.setEnabled(false);
+//            PanelUtils.setupComponent(button);
+//            toolBar1.add(button);
         }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
@@ -225,10 +230,24 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionData partition = options.dataPartitions.get(row);
             Alignment alignment = partition.getAlignment();
             AlignmentViewer viewer = new AlignmentViewer();
-            viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));
+            if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
+                viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));
+            } else if (alignment.getDataType().getType() == DataType.AMINO_ACIDS) {
+                viewer.setCellDecorator(new StateCellDecorator(new AminoAcidDecorator(), false));
+            } else {
+                // no colouring
+            }
             viewer.setAlignmentBuffer(new BeautiAlignmentBuffer(alignment));
 
-            frame.setContentPane(viewer);
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setOpaque(false);
+            panel.add(viewer, BorderLayout.CENTER);
+
+            JPanel infoPanel = new JPanel(new BorderLayout());
+            infoPanel.setOpaque(false);
+            panel.add(infoPanel, BorderLayout.SOUTH);
+
+            frame.setContentPane(panel);
             frame.setVisible(true);
         }
 
@@ -283,8 +302,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         unlinkTreesAction.setEnabled(hasSelection);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
 
-        unlinkAllAction.setEnabled(hasSelection);
-        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
+        showAction.setEnabled(hasSelection);
+//        unlinkAllAction.setEnabled(hasSelection);
+//        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
     }
 
     public void setOptions(BeautiOptions options) {
@@ -727,27 +747,36 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class UnlinkAllAction extends AbstractAction {
-        public UnlinkAllAction() {
-            super("Unlink All");
-            setToolTipText("Use this tool to use a different substitution model, different clock model and different tree for each selected data partition");
+    public class ShowAction extends AbstractAction {
+        public ShowAction() {
+            super("Show");
+            setToolTipText("Display the selected alignments");
         }
 
         public void actionPerformed(ActionEvent ae) {
             showAlignment();
+        }
+    }
+
+//    public class UnlinkAllAction extends AbstractAction {
+//        public UnlinkAllAction() {
+//            super("Unlink All");
+//            setToolTipText("Use this tool to use a different substitution model, different clock model and different tree for each selected data partition");
+//        }
+//
+//        public void actionPerformed(ActionEvent ae) {
 //            unlinkAll();
-        }
-    }
-
-    public class LinkAllAction extends AbstractAction {
-        public LinkAllAction() {
-            super("Link All");
-            setToolTipText("Use this tool to set all the selected partitions to the same substitution, clock model and tree");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            showAlignment();
+//        }
+//    }
+//
+//    public class LinkAllAction extends AbstractAction {
+//        public LinkAllAction() {
+//            super("Link All");
+//            setToolTipText("Use this tool to set all the selected partitions to the same substitution, clock model and tree");
+//        }
+//
+//        public void actionPerformed(ActionEvent ae) {
 //            linkAll();
-        }
-    }
+//        }
+//    }
 }

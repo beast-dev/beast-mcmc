@@ -26,17 +26,18 @@ package dr.app.beauti.datapanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
+import dr.app.beauti.alignmentviewer.*;
+import dr.app.beauti.datapanel.BeautiAlignmentBuffer;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.PloidyType;
+import dr.evolution.alignment.Alignment;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -68,7 +69,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
-    
+
     UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
     LinkAllAction linkAllAction = new LinkAllAction();
 
@@ -122,15 +123,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selectionChanged();
             }
         });
-        
-		dataTable.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					viewAlignmentGivenPD();
-				}
-			}
-		});
-		
+
+        dataTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    showAlignment();
+                }
+            }
+        });
+
         scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -175,7 +176,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkTreesAction.setEnabled(false);
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
-            
+
             // all
             button = new JButton(unlinkAllAction);
             unlinkAllAction.setEnabled(false);
@@ -213,37 +214,37 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
     }
-    
-    private void viewAlignmentGivenPD() {
-		PartitionData partitionData = options.dataPartitions.get(dataTable.getSelectedRow());
 
-		ViewAligmentPanel panel = new ViewAligmentPanel(partitionData);
-		
-		final JScrollPane sPane = new JScrollPane(panel);
-		sPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+    private void showAlignment() {
 
-		final JDialog dialog = new JDialog(frame, "View Alignment Given A Partition Data " + partitionData.getName());
-		dialog.setResizable(true);
-		dialog.setPreferredSize(new java.awt.Dimension(1000, 500));
-		dialog.add(sPane);
-		dialog.pack();
-		dialog.setVisible(true);
-		
-		panel.setPreferredSize();
+        int[] selRows = dataTable.getSelectedRows();
+        for (int row : selRows) {
+            JFrame frame = new JFrame();
+            frame.setSize(800, 600);
+
+            PartitionData partition = options.dataPartitions.get(row);
+            Alignment alignment = partition.getAlignment();
+            AlignmentViewer viewer = new AlignmentViewer();
+            viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));
+            viewer.setAlignmentBuffer(new BeautiAlignmentBuffer(alignment));
+
+            frame.setContentPane(viewer);
+            frame.setVisible(true);
+        }
 
     }
 
     private void uncheckAllowDifferentTaxa() {
         allowDifferentTaxaCheck.setSelected(false);
         options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-        
+
         frame.setDirty();
     }
 
     private void fireDataChanged() {
-    	options.updateLinksBetweenPDPCMPSMPTMPTPP();
+        options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionClockTreeLinks();
-        
+
         frame.setDirty();
     }
 
@@ -265,7 +266,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             col = dataTable.getColumnModel().getColumn(7);
             col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
         }
-        
+
     }
 
     public void selectionChanged() {
@@ -281,7 +282,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(hasSelection);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
-        
+
         unlinkAllAction.setEnabled(hasSelection);
         linkAllAction.setEnabled(selRows != null && selRows.length > 1);
     }
@@ -317,7 +318,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
-                
+
         if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
             uncheckAllowDifferentTaxa();
         }
@@ -342,17 +343,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 
     public void unlinkAll() {
-    	unlinkModels();
-    	unlinkClocks();
-    	unlinkTrees();
-	}
-    
+        unlinkModels();
+        unlinkClocks();
+        unlinkTrees();
+    }
+
     public void linkAll() {
-    	linkModels();
-    	linkClocks();
-    	linkTrees();
-	}
-    
+        linkModels();
+        linkClocks();
+        linkTrees();
+    }
+
     public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
@@ -428,7 +429,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 PartitionClockModel newModel = new PartitionClockModel(options, partition);
 
                 partition.setPartitionClockModel(newModel);
-//                options.addPartitionClockModel(newModel);                                     
+//                options.addPartitionClockModel(newModel);
             }
         }
 
@@ -725,7 +726,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             linkTrees();
         }
     }
-    
+
     public class UnlinkAllAction extends AbstractAction {
         public UnlinkAllAction() {
             super("Unlink All");
@@ -733,7 +734,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            unlinkAll();
+            showAlignment();
+//            unlinkAll();
         }
     }
 
@@ -744,7 +746,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            linkAll();
-        }		
+            showAlignment();
+//            linkAll();
+        }
     }
 }

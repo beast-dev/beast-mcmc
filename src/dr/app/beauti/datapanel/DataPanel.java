@@ -36,6 +36,7 @@ import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -214,15 +215,22 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
     
     private void viewAlignmentGivenPD() {
-    	PartitionData partitionData = options.dataPartitions.get(dataTable.getSelectedRow());   	
-    	
-    	ViewAlignmentDialog	viewAlignmentDialog = new ViewAlignmentDialog(frame, partitionData);
-	    	
-	    int result = viewAlignmentDialog.showDialog();
-	
-	    if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-	        return;
-	    }
+		PartitionData partitionData = options.dataPartitions.get(dataTable.getSelectedRow());
+
+		ViewAligmentPanel panel = new ViewAligmentPanel(partitionData);
+		
+		final JScrollPane sPane = new JScrollPane(panel);
+		sPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+		final JDialog dialog = new JDialog(frame, "View Alignment Given A Partition Data " + partitionData.getName());
+		dialog.setResizable(true);
+		dialog.setPreferredSize(new java.awt.Dimension(1000, 500));
+		dialog.add(sPane);
+		dialog.pack();
+		dialog.setVisible(true);
+		
+		panel.setPreferredSize();
+
     }
 
     private void uncheckAllowDifferentTaxa() {

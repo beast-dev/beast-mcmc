@@ -1,5 +1,5 @@
 /*
- * PriorDialog.java
+ * ViewAlignmentDialog.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -32,6 +32,8 @@ import dr.evolution.util.Taxon;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import java.awt.BorderLayout;
 import java.awt.event.*;
 
 
@@ -43,65 +45,35 @@ public class ViewAlignmentDialog {
 
     private JFrame frame;
     
-    private final OptionsPanel optionPanel;
-    
+     private final JScrollPane scrollPane;
+    private final PartitionData partitionData;
 
     public ViewAlignmentDialog(JFrame frame, PartitionData partitionData) {
         this.frame = frame;
+        this.partitionData = partitionData;
                 
-        optionPanel = new OptionsPanel(12, 12);
         
-        JTextField partitionDataNameField = new JTextField(24);
-//        if (partitionData.getName().length() > 23) partitionDataNameField.setColumns(partitionData.getName().length() + 5);
-        partitionDataNameField.setText(partitionData.getName());
-        optionPanel.addComponentWithLabel("Partition data name:", partitionDataNameField);
+        ViewAligmentPanel panel = new ViewAligmentPanel(partitionData);
+                
+        scrollPane = new JScrollPane(panel);
+        scrollPane.setOpaque(false);
         
-        JTextField sequenceTypeField = new JTextField(16);
-        sequenceTypeField.setText(partitionData.getAlignment().getDataType().getDescription());
-        optionPanel.addComponentWithLabel("Sequence Type:", sequenceTypeField);    
-
-//        JTextField alignmentNameField = new JTextField(12);
-//        alignmentNameField.setText(partitionData.getAlignment().getId());
-//        optionPanel.addComponentWithLabel("Alignment name:", alignmentNameField);
+        panel.repaint();                
         
-        JTextField alignmentPartternCountNameField = new JTextField(8);
-        alignmentPartternCountNameField.setText(Integer.toString(partitionData.getAlignment().getSiteCount()));
-        optionPanel.addComponentWithLabel("Number of sites in this alignment:", alignmentPartternCountNameField);
-        
-        if (partitionData.getFromSite() > 0) {
-	        JTextField partitionDataFromField = new JTextField(8);
-	        partitionDataFromField.setText(Integer.toString(partitionData.getFromSite()));
-	        optionPanel.addComponentWithLabel("Site starts from", partitionDataFromField);
-	        
-	        JTextField partitionDataToField = new JTextField(8);
-	        partitionDataToField.setText(Integer.toString(partitionData.getToSite()));
-	        optionPanel.addComponentWithLabel("to", partitionDataToField);
-        }
-        
-        JTextField alignmentTaxonCountNameField = new JTextField(8);
-        alignmentTaxonCountNameField.setText(Integer.toString(partitionData.getAlignment().getTaxonCount()));
-        optionPanel.addComponentWithLabel("Number of taxon in this alignment:", alignmentTaxonCountNameField);
-        
-        JComboBox taxonListCombo = new JComboBox();
-        for (int i = 0; i < partitionData.getAlignment().getTaxonCount(); i++) {
-            Taxon taxon = partitionData.getAlignment().getTaxon(i);
-            taxonListCombo.addItem(taxon.getId());
-        }
-        optionPanel.addComponentWithLabel("Select a taxon in this alignment:", taxonListCombo);
- 
     }
 
     public int showDialog() {
 
-        JOptionPane optionPane = new JOptionPane(optionPanel,
-                JOptionPane.INFORMATION_MESSAGE,
+        JOptionPane optionPane = new JOptionPane(scrollPane,
+                JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
                 null,
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+        optionPane.setPreferredSize(new java.awt.Dimension(600, 300));
 
-        final JDialog dialog = optionPane.createDialog(frame, "View Alignment Given A Partition Data");
+        final JDialog dialog = optionPane.createDialog(frame, "View Alignment Given A Partition Data " + partitionData.getName());
         dialog.pack();
 
         dialog.setVisible(true);

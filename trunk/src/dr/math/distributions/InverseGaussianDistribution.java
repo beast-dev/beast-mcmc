@@ -179,7 +179,7 @@ public class InverseGaussianDistribution implements Distribution {
         }
         else {
             double c=2.0 * shape / m;
-            if (c>=Double.MAX_EXPONENT) {
+            if (c>=0x1.fffffffffffffP+1023) {// Double.MAX_EXPONENT is Java 1.6 feature
                 return Double.POSITIVE_INFINITY;
             }
             return p1 + Math.exp(c) * p2;

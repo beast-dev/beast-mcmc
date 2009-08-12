@@ -309,7 +309,7 @@ Benchmark results:
         </wilsonBalding>
     </operators>
 
-    <mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <coalescentLikelihood idref="coalescent"/>
@@ -350,6 +350,9 @@ Benchmark results:
     </mcmc>
 
     <report>
+        Final likelihood:
+        <treeLikelihood idref="treeLikelihood"/>
+
         Time taken:
         <property name="timer">
             <object idref="mcmc"/>

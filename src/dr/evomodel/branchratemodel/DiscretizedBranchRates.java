@@ -47,7 +47,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     private final ParametricDistributionModel distributionModel;
 
     // The rate categories of each branch
-    final TreeParameterModel rateCategoryParameter;
+    final TreeParameterModel rateCategories;
 
     private final int categoryCount;
     private final double step;
@@ -63,7 +63,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
-        this.rateCategoryParameter = new TreeParameterModel(tree, rateCategoryParameter, false);
+        this.rateCategories = new TreeParameterModel(tree, rateCategoryParameter, false);
 
         categoryCount = (tree.getNodeCount() - 1) * overSampling;
         step = 1.0 / (double) categoryCount;
@@ -82,9 +82,11 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         }
 
         addModel(model);
-        addModel(tree);
-        addModel(this.rateCategoryParameter);
-        addVariable(rateCategoryParameter);
+        // AR - commented out: changes to the tree are handled by model changed events fired by rateCategories
+//        addModel(tree);
+        addModel(rateCategories);
+        // AR - commented out: changes to rateCategoryParameter are handled by model changed events fired by rateCategories
+//        addVariable(rateCategoryParameter);
 
         setupRates();
     }
@@ -93,14 +95,16 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         if (model == distributionModel) {
             setupRates();
             fireModelChanged();
-        } else if (model == rateCategoryParameter) {
-            setupRates();
+        } else if (model == rateCategories) {
+            // AR - commented out: if just the rate categories have changed the rates will be the same
+//            setupRates();
             fireModelChanged(null, index);
         }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        setupRates();
+        // AR - commented out: changes to rateCategoryParameter are handled by model changed events
+//        setupRates();
     }
 
     protected void storeState() {
@@ -117,7 +121,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
-        int rateCategory = (int) Math.round(rateCategoryParameter.getNodeValue(tree, node));
+        int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
 
         return rates[rateCategory];
     }

@@ -59,7 +59,7 @@ public class ArbitraryBranchRates extends DiscretizedBranchRates {
 
     public double getBranchRate(Tree tree, NodeRef node) {
 
-        return rateCategoryParameter.getNodeValue(tree, node);
+        return rateCategories.getNodeValue(tree, node);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

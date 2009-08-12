@@ -39,6 +39,7 @@ import dr.xml.Reportable;
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
  * @author Andrew Rambaut
+ * @author Marc Suchard
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
@@ -158,6 +159,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     // **************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalModelChangedCount++;
         likelihoodKnown = false;
     }
 
@@ -191,7 +194,11 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     }
 
     public final double getLogLikelihood() {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalGetLogLikelihoodCount++;
         if (!likelihoodKnown) {
+            if (COUNT_TOTAL_OPERATIONS)
+                totalcalculateLikelihoodCount++;
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -202,6 +209,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      * Forces a complete recalculation of the likelihood next time getLikelihood is called
      */
     public void makeDirty() {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalMakeDirtyCount++;
         likelihoodKnown = false;
         updateAllNodes();
         updateAllPatterns();
@@ -211,7 +220,16 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     public String getReport() {
         if (hasInitialized) {
-            return getClass().getName() + "(" + getLogLikelihood() + ") total operations = " + totalOperationCount;
+            String rtnValue =  getClass().getName() + "(" + getLogLikelihood() + ")";
+            if (COUNT_TOTAL_OPERATIONS)
+             rtnValue += " total operations = " + totalOperationCount +
+                         " matrix updates = " + totalMatrixUpdateCount + " model changes = " + totalModelChangedCount +
+                         " make dirties = " + totalMakeDirtyCount +
+                         " calculate likelihoods = " + totalcalculateLikelihoodCount +
+                         " get likelihoods = " + totalGetLogLikelihoodCount +
+                         " all rate updates = " + totalRateUpdateAllCount +
+                         " partial rate updates = " + totalRateUpdateSingleCount;
+            return rtnValue;
         } else {
             return getClass().getName() + "(uninitialized)";
         }
@@ -271,5 +289,12 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     protected boolean hasInitialized = false;
 
     protected int totalOperationCount = 0;
+    protected int totalMatrixUpdateCount = 0;
+    protected int totalGetLogLikelihoodCount = 0;
+    protected int totalModelChangedCount = 0;
+    protected int totalMakeDirtyCount = 0;
+    protected int totalcalculateLikelihoodCount = 0;
+    protected int totalRateUpdateAllCount = 0;
+    protected int totalRateUpdateSingleCount = 0;
 
 }

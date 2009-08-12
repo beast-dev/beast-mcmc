@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -25,16 +25,19 @@
 
 package dr.math.distributions;
 
-import dr.math.ErrorFunction;
 import dr.math.UnivariateFunction;
 import dr.math.interfaces.OneVariableFunction;
 import dr.math.iterations.BisectionZeroFinder;
+import dr.math.iterations.NewtonZeroFinder;
 
 /**
  * normal distribution (pdf, cdf, quantile)
  *
  * @author Wai Lok Sibon Li
  * @version $Id: InverseGaussianDistribution.java,v 1.7 2008/04/24 20:26:01 rambaut Exp $
+ *
+ * Reading: Chhikara, R. S., and Folks, J. Leroy, (1989). The
+ * inverse Gaussian distribution: Theory, methodology, and applications. Marcel Dekker, New York.
  */
 public class InverseGaussianDistribution implements Distribution {
     //
@@ -61,7 +64,6 @@ public class InverseGaussianDistribution implements Distribution {
         m = value;
     }
 
-
     public double getShape() {
         return shape;
     }
@@ -70,7 +72,6 @@ public class InverseGaussianDistribution implements Distribution {
         shape = value;
         sd = calculateSD(m, shape);
     }
-
 
     public static double calculateSD(double mean, double shape) {
         return Math.sqrt((mean * mean * mean) / shape);
@@ -126,7 +127,6 @@ public class InverseGaussianDistribution implements Distribution {
         }
     };
 
-
     /**
      * probability density function
      *
@@ -138,7 +138,6 @@ public class InverseGaussianDistribution implements Distribution {
     public static double pdf(double x, double m, double shape) {
         double a = Math.sqrt(shape / (2.0 * Math.PI * x * x * x));
         double b = ((-shape) * (x - m) * (x - m)) / (2.0 * m * m * x);
-
         return a * Math.exp(b);
     }
 
@@ -153,7 +152,6 @@ public class InverseGaussianDistribution implements Distribution {
     public static double logPdf(double x, double m, double shape) {
         double a = Math.sqrt(shape / (2.0 * Math.PI * x * x * x));
         double b = ((-shape) * (x - m) * (x - m)) / (2.0 * m * m * x);
-
         return Math.log(a) + b;
     }
 
@@ -166,22 +164,54 @@ public class InverseGaussianDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double m, double shape) {
-        double a = Math.sqrt(shape / (2.0 * x)) * ((x / m) - 1);
-        double b = (1.0 + ErrorFunction.erf(a));
-        double c = Math.sqrt(shape / (2.0 * x)) * ((x / m) + 1);
-        double d = Math.exp((2.0 * shape) / m) * (1 - ErrorFunction.erf(c));
+        if (x <= 0 || m <= 0 || shape <= 0) {
+            return Double.NaN;
+        }
+        /* Taken from R code, package SuppDists */
+        double a = Math.sqrt(shape / x);
+        double b = x / m;
+        //double p1 = NormalDistribution.cdf(a*(b - 1.0),0.0,1.0);
+        double p1 = NormalDistribution.complicatedCdf(a * (b - 1.0), 0.0, 1.0, false);
+        //double p2 = NormalDistribution.cdf(-a*(b + 1.0),0.0,1.0);
+        double p2 = NormalDistribution.complicatedCdf(-a * (b + 1.0), 0.0, 1.0, false);
+        if (p2 == 0.0) {
+            return p1;
+        }
+        else {
+            double c=2.0 * shape / m;
+            if (c>=Double.MAX_EXPONENT) {
+                return Double.POSITIVE_INFINITY;
+            }
+            return p1 + Math.exp(c) * p2;
+        }
 
-        return 0.5 * b + 0.5 * d;
+        /* Another implementation of the inverse Gaussian cdf that doesn't use the Normal distribution function
+         * Is not as accurate (due to error function issues)
+         */
+//        double a = Math.sqrt(shape / (2.0 * x)) * ((x / m) - 1);
+//        double b = (1.0 + ErrorFunction.erf(a));
+//        double c = Math.sqrt(shape / (2.0 * x)) * ((x / m) + 1);
+//        double d = ((2.0 * shape) / m) + Math.log(1 - ErrorFunction.erf(c));
+//        return 0.5*b + 0.5*Math.exp(d);
     }
 
     /**
      * quantiles (=inverse cumulative density function)
      * <p/>
-     * CURRENTLY NOT IMPLEMENTED PROPERLY. Can be implemented later using a Zero finder function
-     * (See JUnit test for LogNormal distribution for zero finder). Alternatively find out
-     * how they do it with SuppleDists in R (download source code and open the C function which
-     * contains the implementation. Reading: Chhikara, R. S., and Folks, J. Leroy, (1989). The
-     * inverse Gaussian distribution: Theory, methodology, and applications. Marcel Dekker, New York.
+     *
+     * Same implementation as SuppleDists in R.
+     *
+     * Using Whitmore and Yalovsky for an initial guess. Works well for
+	 * large t=lambda/mu > 2 perhaps
+	 * Whitmore, G.A. and Yalovsky, M. (1978). A normalizing logarithmic
+	 * transformation for inverse Gaussian random variables,
+	 * Technometrics 20-2, 207-208
+	 * For small t, with x<0.5 mu, use gamma approx to 1/x -- alpha=1/2 and beta =2/lambda and 1-p
+	 * When x>0.5mu, approx x with gamma for p, and exponentiate -- don't know why this works.
+     *
+     * There are cases  which even this method produces inaccurate results (e.g. when shape = 351). Therefore,
+     * we have a catch that will determine whether or not the result is accurate enough and if not,
+     * then a zerofinder will be used to find a more accurate approximation. 
      *
      * @param z     argument
      * @param m     mean
@@ -189,83 +219,177 @@ public class InverseGaussianDistribution implements Distribution {
      * @return icdf at z
      */
     public static double quantile(double z, double m, double shape) {
-        //System.out.println("rawr! " + z + "\t" + m + "\t" + shape);
+        if(z < 0.01 || z > 0.99) {
+            throw new RuntimeException("Quantile is too low/high to calculate (numerical estimation for extreme values is incomplete");
+        }
 
-//        double a=Math.sqrt(shape/z);
-//        double b=z/m;
-//        double q = NormalDistribution.cdf(a*(b-1.0),0,1);
-//        double p = NormalDistribution.cdf(-a*(b+1.0),0,1);
-        //double q=1.0-pnorm(a*(b-1.0),0,1,true,false);
-        //double p=pnorm(-a*(b+1.0),0,1,true,false);
-
-//        if (z<=0 || m<=0 || shape<=0)
-        //return NA_REAL;
-//            return Double.NaN;
-
-//        if (p==0.0) {
-        //System.out.println("stats\t" + z+"\t"+m+"\t"+shape+"\t"+q);
-//            return q;
+        /* Approximation method used by Mudholkar GS, Natarajan R (1999)
+         * Approximations for the inverse gaussian probabilities and percentiles.
+         * Communications in Statistics - Simulation and Computation 28: 1051 - 1071.
+         */
+        double initialGuess;
+        if (shape / m > 2.0) {
+            initialGuess=(NormalDistribution.quantile(z,0.0,1.0)-0.5*Math.sqrt(m/shape))/Math.sqrt(shape/m);
+            initialGuess=m*Math.exp(initialGuess);
+        }
+        else {
+            initialGuess=shape/(GammaDistribution.quantile(1.0-z,0.5,1.0)*2.0);
+            if (initialGuess > m / 2.0) {		// too large for the gamma approx
+                initialGuess=m*Math.exp(GammaDistribution.quantile(z,0.5,1.0)*0.1);  // this seems to work for the upper tail ???
+            }
+        }
+//        double phi = shape / m;
+//        if(phi>50.0) {
+            // Use Normal Distribution
+//            initialGuess = (NormalDistribution.quantile(z, m,Math.sqrt(m*m*m/shape)));//-0.5*Math.sqrt(m/shape))/Math.sqrt(m*m*m/shape);
 //        }
-//        else {
-//            double c=2.0*shape/m;
-        //if (c>=MAXEXP)
-        //    return NA_REAL;
-//            if (c>=Double.MAX_VALUE || c>=Double.POSITIVE_INFINITY)
-//                return Double.NaN;
-
-        //double returnValue = q-Math.exp(c)*p; //temp variable. delete
-        //System.out.println(z+"\t"+m+"\t"+shape+"\t"+returnValue);
-//            return q-Math.exp(c)*p;
-//        }
-
-        //double x=0;
-        //return x;
-        //throw new RuntimeException("Quantile function for Inverse Gaussian Distribution is not yet implemented");
-
 
         final InverseGaussianDistribution f = new InverseGaussianDistribution(m, shape);
         final double y = z;
-
-
-        //double initialGuess = 0;
-        //if(shape/m > 2.0) {
-        //    initialGuess = (NormalDistribution.quantile(z, 0,1)-0.5*Math.sqrt(m/shape))/Math.sqrt(shape/m);
-        //    initialGuess = m*Math.exp(initialGuess);
-        //    //System.out.println("1");
-        //}
-        //else {
-        //    initialGuess=shape/(GammaDistribution.quantile(1.0-z,0.5,1.0)*2.0);
-        //    //System.out.println("2");
-        //    if(initialGuess > m/2.0) {
-        //        initialGuess=m*Math.exp(GammaDistribution.quantile(z,0.5,1.0)*0.1);
-        //        //System.out.println("3");
-        //        initialGuess = 3.0;
-        //    }
-        //}
-
-
-        /* The NewtonZeroFinder is epic fail */
-        //NewtonZeroFinder zeroFinder = new NewtonZeroFinder(new OneVariableFunction() {
-        //    public double value (double x) {
-        //        return f.cdf(x) - y;
-        //    }
-        //}, initialGuess);
-
-        //if(zeroFinder.getResult()==Double.NaN) {
-
-        //}
-
-        BisectionZeroFinder zeroFinder = new BisectionZeroFinder(new OneVariableFunction() {
-            public double value(double x) {
+        NewtonZeroFinder zeroFinder = new NewtonZeroFinder(new OneVariableFunction() {
+            public double value (double x) {
                 return f.cdf(x) - y;
             }
-            //}, 0.001, 100);
-        }, 0.0001, 100000);
-
+        }, initialGuess);
         zeroFinder.evaluate();
+
+        if(Double.isNaN(zeroFinder.getResult()) || zeroFinder.getPrecision() > 0.000005) {
+            zeroFinder = new NewtonZeroFinder(new OneVariableFunction() {
+                public double value (double x) {
+                    return f.cdf(x) - y;
+                }
+            }, initialGuess);
+            zeroFinder.initializeIterations();
+            int i;
+            double previousPrecision = 0.0, previousResult = Double.NaN;
+            double max = 10000.0, min = 0.00001;
+            for(i=0; i < 50; i++) {
+                zeroFinder.evaluateIteration();
+                double precision = f.cdf(zeroFinder.getResult()) - z;
+                if((previousPrecision > 0 && precision < 0) || (previousPrecision < 0 && precision > 0))  {
+                    max = Math.max(previousResult, zeroFinder.getResult());
+                    min = Math.min(previousResult, zeroFinder.getResult());
+                    max = Math.min(10000.0, max);
+                    break;
+                }
+
+                previousPrecision = precision;
+                previousResult = zeroFinder.getResult();
+
+            }
+            return calculateZeroFinderApproximation(z, m, shape, min, max, initialGuess);
+        }
         return zeroFinder.getResult();
     }
 
+    /** Finds the approximation of the inverse Gaussian quantile using a zero finder
+     * until it converges
+     *
+     * @param z            quantile
+     * @param m            mean
+     * @param shape        shape
+     * @param min          min search value
+     * @param max          max search value
+     * @param initialGuess first guess of the quantile
+     * @return estimated x value at quantile z
+     */
+    private static double calculateZeroFinderApproximation(double z, double m, double shape, double min, double max, double initialGuess) {
+        final InverseGaussianDistribution f = new InverseGaussianDistribution(m, shape);
+        final double y = z;
+        BisectionZeroFinder bisectionZeroFinder = new BisectionZeroFinder(new OneVariableFunction() {
+            public double value(double x) {
+                return f.cdf(x) - y;
+            }
+        }, min, max);
+        bisectionZeroFinder.setInitialValue(initialGuess);
+        bisectionZeroFinder.initializeIterations();
+
+        double bestValue = Double.NaN; /* I found that the converged value is not necesssarily the best */
+        double bestPrecision = 10;
+        double precision = 10;
+        double previousPrecision = 10;
+        int count = 0;
+        while(precision > 0.001 &&  count < 10) {
+            bisectionZeroFinder.evaluateIteration();
+            precision = Math.abs(f.cdf(bisectionZeroFinder.getResult()) - z);
+            if(precision < bestPrecision) {
+                bestPrecision = precision;
+                bestValue = bisectionZeroFinder.getResult();
+            }
+            else if(previousPrecision == precision) {
+                count++;
+            }
+            previousPrecision = precision;
+        }
+        bisectionZeroFinder.finalizeIterations();
+        /* Turns out the final answer is not necessarily the most accurate */
+        //return bisectionZeroFinder.getResult();
+        return bestValue;
+    }
+
+
+    /** Calculates the gamma approximation of the quantile estimate of Inverse Gaussian
+     * Shifted Gamma
+     * (see Mudholkar GS, Natarajan R (1999))
+     * UNUSED METHOD
+     *
+     * @param z     quantile
+     * @param m     mean
+     * @param shape shape
+     * @return approximation of x
+     */
+    private static double calculateShiftedGammaApproximation(double z, double m, double shape) {
+        double a = (3 * m * m) / (4 * shape);
+        double b = (m / 3);
+        double nu  = (8 * shape) / (9 * m);
+        return a * ChiSquareDistribution.quantile(z, nu) + b;
+    }
+
+    /** Calculates the gamma approximation of the quantile estimate of Inverse Gaussian
+     * Shifted Gamma adapted to reciprocal Inverse Gaussian
+     * (see Mudholkar GS, Natarajan R (1999))
+     * UNUSED METHOD
+     *
+     * @param z     quantile
+     * @param m     mean
+     * @param shape shape
+     * @return approximation of x
+     */
+    private static double calculateShiftedGammaApproximationWithRIG(double z, double m, double shape) {
+        double a = (3 * shape + 8 * m)/(4 * shape * (shape + 2 * m));
+        double b = (shape + 3 * m)/(m * (3 * shape + 8 * m));
+        double nu = (8 * Math.pow((shape + 2 * m), 3)) / (m * Math.pow((8 * m + 3 * shape), 2));
+        double y_hat = a * ChiSquareDistribution.quantile(z, nu) + b;
+        return 1 / y_hat;
+    }
+
+    /** Finds the approximation of the inverse Gaussian quantile using a zero finder
+     * given a set number of maximum iterations
+     * UNUSED METHOD
+     *
+     * @param z             quantile
+     * @param m             mean
+     * @param shape         shape
+     * @param numIterations number of iterations used to approximate value
+     * @param min           min search value
+     * @param max           max search value
+     * @return estimated x value at quantile z
+     */
+    private static double calculateZeroFinderApproximation(double z, double m, double shape, int numIterations, double min, double max) {
+        final InverseGaussianDistribution f = new InverseGaussianDistribution(m, shape);
+        final double y = z;
+        BisectionZeroFinder bisectionZeroFinder = new BisectionZeroFinder(new OneVariableFunction() {
+            public double value(double x) {
+                return f.cdf(x) - y;
+            }
+        }, min, max);
+        //}, 0.0001, 100000);
+
+        bisectionZeroFinder.setMaximumIterations(numIterations);
+        bisectionZeroFinder.evaluate();
+        return bisectionZeroFinder.getResult();
+    }
+    
     /**
      * mean
      *

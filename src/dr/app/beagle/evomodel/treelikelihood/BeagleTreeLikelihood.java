@@ -243,7 +243,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.setTipStates(nodeIndex, states);
     }
 
-
     // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
@@ -278,8 +277,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         } else if (model == branchRateModel) {
             if (index == -1) {
+                if (COUNT_TOTAL_OPERATIONS)
+                    totalRateUpdateAllCount++;
                 updateAllNodes();
             } else {
+                if (COUNT_TOTAL_OPERATIONS)
+                    totalRateUpdateSingleCount++;
                 updateNode(treeModel.getNode(index));
             }
 
@@ -390,6 +393,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 branchLengths,
                 branchUpdateCount);
 
+        if (COUNT_TOTAL_OPERATIONS)
+               totalMatrixUpdateCount += branchUpdateCount;        
+
         beagle.updatePartials(operations, operationCount, -1);
 
         if (COUNT_TOTAL_OPERATIONS) {
@@ -429,6 +435,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             branchUpdateCount = 0;
             operationCount = 0;
             traverse(treeModel, root, null, false);
+
+            if (COUNT_TOTAL_OPERATIONS) {
+                totalOperationCount += operationCount;
+            }
 
 //            beagle.updateTransitionMatrices(    // Should not be necessary, will remove after debugging
 //                     eigenBufferHelper.getOffsetIndex(0),

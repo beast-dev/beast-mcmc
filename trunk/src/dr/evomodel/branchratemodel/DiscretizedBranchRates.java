@@ -95,7 +95,7 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             fireModelChanged();
         } else if (model == rateCategoryParameter) {
             setupRates();
-            fireModelChanged();
+            fireModelChanged(null, index);
         }
     }
 

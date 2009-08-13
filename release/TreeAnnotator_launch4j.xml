@@ -1,6 +1,10 @@
 <launch4jConfig>
   <headerType>gui</headerType>
   <icon>icons/utility.ico</icon>
+  <classPath>
+  	<mainClass>dr.app.tools.TreeAnnotator</mainClass>
+  	<cp>./lib/beast.jar</cp>
+  </classPath>
   <jre>
     <minVersion>1.5.0</minVersion>
     <initialHeapSize>256</initialHeapSize>

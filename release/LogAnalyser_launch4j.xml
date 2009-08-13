@@ -1,8 +1,8 @@
 <launch4jConfig>
-  <headerType>gui</headerType>
+  <headerType>console</headerType>
   <icon>icons/utility.ico</icon>
   <classPath>
-  	<mainClass>dr.app.tools.LogCombiner</mainClass>
+  	<mainClass>dr.app.tools.LogAnalyser</mainClass>
   	<cp>./lib/beast.jar</cp>
   </classPath>
   <jre>
@@ -11,10 +11,10 @@
     <maxHeapSize>1000</maxHeapSize>
   </jre>    
   <versionInfo>
-    <fileDescription>LogCombiner</fileDescription>    
+    <fileDescription>LogAnalyser</fileDescription>    
     <copyright>2002-2009</copyright>
-    <productName>LogCombiner</productName>
-    <internalName>LogCombiner</internalName>
-    <originalFilename>LogCombiner.exe</originalFilename>    
+    <productName>LogAnalyser</productName>
+    <internalName>LogAnalyser</internalName>
+    <originalFilename>LogAnalyser.exe</originalFilename>    
   </versionInfo>
 </launch4jConfig>

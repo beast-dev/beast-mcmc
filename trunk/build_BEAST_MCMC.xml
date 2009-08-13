@@ -444,7 +444,10 @@
 		<delete dir="${BEAST_release}${version}" />
 		<!-- Create the release directory -->
 		<mkdir dir="${BEAST_release}${version}" />
-
+	
+		<copy todir="${BEAST_release}${version}/bin">
+			<fileset dir="scripts" excludes="*.cmd"/>
+		</copy>
 		<copy todir="${BEAST_release}${version}/doc">
 			<fileset dir="doc"/>
 		</copy>
@@ -456,10 +459,7 @@
 		</copy>		
 		<copy file="${release}/icons/beast.png" todir="${BEAST_release}${version}/images"/>
 		<copy file="${release}/icons/beauti.png" todir="${BEAST_release}${version}/images"/>
-		<copy file="${release}/icons/utility.png" todir="${BEAST_release}${version}/images"/>
-		<copy todir="${BEAST_release}${version}">
-			<fileset dir="scripts" excludes="*.cmd"/>
-		</copy>
+		<copy file="${release}/icons/utility.png" todir="${BEAST_release}${version}/images"/>		
 		<copy file="${dist}/beauti.jar" todir="${BEAST_release}${version}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${BEAST_release}${version}/lib"/>
 		<copy file="${dist}/beast-beagle.jar" todir="${BEAST_release}${version}/lib"/>

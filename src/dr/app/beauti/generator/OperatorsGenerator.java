@@ -19,6 +19,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.ExchangeOperator;
@@ -93,7 +94,7 @@ public class OperatorsGenerator extends Generator {
             }
         }
         
-        if (options.isSpeciesAnalysis()) {
+        if (options.isSpeciesAnalysis() || options.isEBSPSharingSamePrior()) {
         	writeUpDownOperatorAllRatesTrees(writer);
         }
         
@@ -528,15 +529,20 @@ public class OperatorsGenerator extends Generator {
         	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
         } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
         	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-        }
+        } // nothing for EBSP
 
         writer.writeCloseTag(UpDownOperator.UP);
         
         writer.writeOpenTag(UpDownOperator.DOWN);	        
         
-        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
-        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
-        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);        
+        if (options.isSpeciesAnalysis()) {
+	        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
+	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);   
+        } else if (options.isEBSPSharingSamePrior()) {
+        	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".populationMean");
+	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".popSize");   
+        }
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
         	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");

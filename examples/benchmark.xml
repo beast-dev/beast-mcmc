@@ -309,7 +309,7 @@ Benchmark results:
         </wilsonBalding>
     </operators>
 
-    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <coalescentLikelihood idref="coalescent"/>

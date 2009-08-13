@@ -158,7 +158,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
 
-            logger.info("  Using BEAGLE Resource " + resourceDetails.toString());
+            if (resourceDetails != null) {
+            logger.info("  Using BEAGLE resource " + resourceDetails.toString());
+            } else {
+                logger.info("  No external BEAGLE resources available, using Java implementation");
+            }
+            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList

@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.app.beagle.evomodel.parsers.GeneralSubstitutionModelParser;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -38,12 +38,6 @@ import dr.xml.*;
  * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
  */
 public class GeneralSubstitutionModel extends BaseSubstitutionModel {
-
-    public static final String GENERAL_SUBSTITUTION_MODEL = "generalSubstitutionModel";
-    public static final String DATA_TYPE = "dataType";
-    public static final String RATES = "rates";
-    public static final String RELATIVE_TO = "relativeTo";
-    public static final String FREQUENCIES = "frequencies";
 
     /**
      * the rate which the others are set relative to
@@ -57,7 +51,7 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      */
     public GeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
 
-        super(GENERAL_SUBSTITUTION_MODEL, dataType, freqModel,
+        super(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, dataType, freqModel,
                 new DefaultEigenSystem(dataType.getStateCount()));
 
         ratesParameter = parameter;
@@ -130,71 +124,6 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      * Parses an element from an DOM document into a DemographicModel. Recognises
      * ConstantPopulation and ExponentialGrowth.
      */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return GENERAL_SUBSTITUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter ratesParameter;
-
-            XMLObject cxo = xo.getChild(FREQUENCIES);
-            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-            DataType dataType = freqModel.getDataType();
-
-            cxo = xo.getChild(RATES);
-
-            int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
-            if (relativeTo < 0) throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
-
-            ratesParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
-
-            if (ratesParameter == null) {
-
-                if (rateCount == 1) {
-                    // simplest model for binary traits...
-                } else {
-                    throw new XMLParseException("No rates parameter found in " + getParserName());
-                }
-            } else if (ratesParameter.getDimension() != rateCount - 1) {
-                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions.");
-            }
-
-            return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A general reversible model of sequence substitution for any data type.";
-        }
-
-        public Class getReturnType() {
-            return SubstitutionModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(FREQUENCIES, FrequencyModel.class),
-                new ElementRule(RATES,
-                        new XMLSyntaxRule[]{
-                                AttributeRule.newIntegerRule(RELATIVE_TO, false, "The index of the implicit rate (value 1.0)" +
-                                        " that all other rates are relative to. In DNA this is usually G<->T (6)"),
-                                new ElementRule(Parameter.class, true)}
-                )
-        };
-
-    };
 
     protected Parameter ratesParameter = null;
 }

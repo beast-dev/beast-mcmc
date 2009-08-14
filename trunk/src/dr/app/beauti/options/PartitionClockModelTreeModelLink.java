@@ -132,9 +132,13 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
 		getParameter("treeModel.allRates");
 		
 		if (options.hasData()) {
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = (options.rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION 
-            		|| options.rateOptionClockModel == FixRateType.FIX_MEAN); //TODO wrong?
+            // if not fixed then do mutation rate move and up/down move            
+            boolean fixed;//TODO wrong?
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+            	fixed = true;
+            } else {
+            	fixed = !model.isEstimatedRate();
+            }            
             Parameter rateParam;
 
             switch (model.getClockType()) { 
@@ -157,31 +161,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
         	
-            if (model.isFixedRate()) {
-            	switch (model.getClockType()) {
-                    case STRICT_CLOCK:
-                        // no parameter to operator on
-                        break;
-
-                    case UNCORRELATED_EXPONENTIAL:  
-                    case UNCORRELATED_LOGNORMAL:
-                        addBranchRateCategories(ops);                       
-                        break;
-
-                    case AUTOCORRELATED_LOGNORMAL:                        
-                        ops.add(getOperator("scaleOneRate"));
-                        ops.add(getOperator("scaleAllRatesIndependently"));                        
-                        ops.add(getOperator("branchRates.var"));
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        addRandomLocalClockOperators(ops);
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            } else {
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && model.isEstimatedRate()) {
             	switch (model.getClockType()) {
 	                case STRICT_CLOCK:
 	                    ops.add(getOperator("upDownRateHeights"));
@@ -214,6 +194,30 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
 	                default:
 	                    throw new IllegalArgumentException("Unknown clock model");
 	            }
+            } else {
+            	switch (model.getClockType()) {
+	                case STRICT_CLOCK:
+	                    // no parameter to operator on
+	                    break;
+	
+	                case UNCORRELATED_EXPONENTIAL:  
+	                case UNCORRELATED_LOGNORMAL:
+	                    addBranchRateCategories(ops);                       
+	                    break;
+	
+	                case AUTOCORRELATED_LOGNORMAL:                        
+	                    ops.add(getOperator("scaleOneRate"));
+	                    ops.add(getOperator("scaleAllRatesIndependently"));                        
+	                    ops.add(getOperator("branchRates.var"));
+	                    break;
+	
+	                case RANDOM_LOCAL_CLOCK:
+	                    addRandomLocalClockOperators(ops);
+	                    break;
+	
+	                default:
+	                    throw new IllegalArgumentException("Unknown clock model");
+            	}
             }
         }
     }

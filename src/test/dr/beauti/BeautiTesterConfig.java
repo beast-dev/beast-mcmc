@@ -90,7 +90,7 @@ public class BeautiTesterConfig {
         beautiOptions.units = Units.Type.SUBSTITUTIONS;
         beautiOptions.maximumTipHeight = 0.0;
 
-        beautiOptions.meanSubstitutionRate = 1.0;
+//        beautiOptions.meanSubstitutionRate = 1.0;
 //        beautiOptions.fixedSubstitutionRate = true;
         
         generator = new BeastGenerator(beautiOptions, null);

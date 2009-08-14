@@ -88,6 +88,8 @@ public class BeautiOptions extends ModelOptions {
 //                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
         		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+        
+        
     }
 
     public void initSpeciesParametersAndOperators() {
@@ -155,8 +157,8 @@ public class BeautiOptions extends ModelOptions {
         shareSameTreePrior = true;
         userTrees.clear();
 
-        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-        meanSubstitutionRate = 1.0;
+//        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+//        meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
         units = Units.Type.SUBSTITUTIONS;
@@ -182,6 +184,8 @@ public class BeautiOptions extends ModelOptions {
         treeFileName.clear();
         substTreeLog = false;
         substTreeFileName.clear();
+        
+        clockModelOptions = new ClockModelOptions(this);
     }
     
     public void selectTaxonSetsStatistics(List<Parameter> params) {
@@ -253,8 +257,8 @@ public class BeautiOptions extends ModelOptions {
         double initialRate = 1;
 
 
-        if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION || rateOptionClockModel == FixRateType.FIX_MEAN) {
-            double rate = getMeanSubstitutionRate();
+        if (clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+            double rate = clockModelOptions.getMeanRelativeRate();
 
             growthRateMaximum = 1E6 * rate;
             birthRateMaximum = 1E6 * rate;
@@ -396,8 +400,8 @@ public class BeautiOptions extends ModelOptions {
 
         double initialRootHeight = 1;
 
-        if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION || rateOptionClockModel == FixRateType.FIX_MEAN) {
-            double rate = getMeanSubstitutionRate();
+        if (clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+            double rate = clockModelOptions.getMeanRelativeRate();
 
             if (hasData()) {
                 initialRootHeight = meanDistance / rate;
@@ -445,40 +449,35 @@ public class BeautiOptions extends ModelOptions {
 //    public boolean isFixedSubstitutionRate() {
 //        return fixedSubstitutionRate;
 //    }
-    public void updateFixedRateClockModel() {
-    	if (getPartitionClockModels().size() > 0) {
-    		
-	    	if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION) {
-	    		// fix rate of 1st partition
-	    		for (PartitionClockModel model : getPartitionClockModels()) {
-	    			if (getPartitionClockModels().indexOf(model) < 1) {
-	    				model.setFixedRate(true);
-	    			} else {
-	    				model.setFixedRate(false);
-	    			}
-	            }
-	    		
-	    	} else if (rateOptionClockModel == FixRateType.FIX_MEAN) {
-	    		// TODO check
-	    		for (PartitionClockModel model : getPartitionClockModels()) {
-	    			model.setFixedRate(true);
-	            }
-	    		
-	    	} else {
-	    		// estimate all rate
-	    		for (PartitionClockModel model : getPartitionClockModels()) {
-	    			model.setFixedRate(false);
-	            }
-	    		
-	    	}
-    	}
-    }
+//    public void updateFixedRateClockModel() {
+//    	if (getPartitionClockModels().size() > 0) {
+//    		
+//	    	if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION) {
+//	    		// fix rate of 1st partition
+//	    		for (PartitionClockModel model : getPartitionClockModels()) {
+//	    			if (getPartitionClockModels().indexOf(model) < 1) {
+//	    				model.setFixedRate(true);
+//	    			} else {
+//	    				model.setFixedRate(false);
+//	    			}
+//	            }
+//	    		
+//	    	} else if (rateOptionClockModel == FixRateType.FIX_MEAN) {
+//	    		// TODO check
+//	    		for (PartitionClockModel model : getPartitionClockModels()) {
+//	    			model.setFixedRate(true);
+//	            }
+//	    		
+//	    	} else {
+//	    		// estimate all rate
+//	    		for (PartitionClockModel model : getPartitionClockModels()) {
+//	    			model.setFixedRate(false);
+//	            }
+//	    		
+//	    	}
+//    	}
+//    }
     
-
-    public double getMeanSubstitutionRate() {
-        return meanSubstitutionRate;
-    }
-
     private double round(double value, int sf) {
         NumberFormatter formatter = new NumberFormatter(sf);
         try {
@@ -1488,9 +1487,9 @@ public class BeautiOptions extends ModelOptions {
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
 
-    public FixRateType rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION; 
+//    public FixRateType rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION; 
 //    public boolean fixedSubstitutionRate = true;
-    public double meanSubstitutionRate = 1.0;
+//    public double meanSubstitutionRate = 1.0;
     public boolean unlinkPartitionRates = true;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
@@ -1517,7 +1516,8 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
     
-    
+    public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
+        
     @Override
     public String getPrefix() {
         // TODO Auto-generated method stub

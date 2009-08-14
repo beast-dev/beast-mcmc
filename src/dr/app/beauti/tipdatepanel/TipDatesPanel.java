@@ -32,6 +32,7 @@ import dr.app.beauti.components.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.options.FixRateType;
+import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
@@ -219,9 +220,12 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 frame.removeSpecifiedTreePrior(enabled);
                 
                 if (enabled) {
-                	options.rateOptionClockModel = FixRateType.ESTIMATE;
+                	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
+                	for (PartitionClockModel model : options.getPartitionClockModels()) {
+        	        	 model.setEstimatedRate(true);
+        	        }
                 } else {
-                	options.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+                	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
                 }
                 
             }

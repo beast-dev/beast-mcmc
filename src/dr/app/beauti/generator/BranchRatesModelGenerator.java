@@ -239,10 +239,10 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(ACLikelihood.AC_LIKELIHOOD, attributes);
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 	
-	                if (model.isFixedRate()) { //TODO
+	                if (!model.isEstimatedRate()) { //TODO move to options or panel select method
 	                    Parameter para = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
 	                    para.isFixed = true;
-	                    para.initial = options.getMeanSubstitutionRate();
+	                    para.initial = model.getRate();
 	                }
 	
 	                writer.writeOpenTag(RateEvolutionLikelihood.RATES,
@@ -272,7 +272,7 @@ public class BranchRatesModelGenerator extends Generator {
 	
 	                writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
 	                
-	                if (!model.isFixedRate()) {//TODO
+	                if (model.isEstimatedRate()) {//TODO
 		              	writer.writeText("");
 			            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
 			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL 

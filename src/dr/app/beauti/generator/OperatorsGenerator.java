@@ -500,7 +500,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperator.UP);
         
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-			if (!model.isFixedRate()) {
+			if (model.isEstimatedRate()) {
 				switch (model.getClockType()) {
 	            case STRICT_CLOCK:	
 	            case RANDOM_LOCAL_CLOCK:

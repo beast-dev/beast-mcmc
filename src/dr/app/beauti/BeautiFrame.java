@@ -758,7 +758,7 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
             beautiOptions.updatePartitionClockTreeLinks();
-            beautiOptions.updateFixedRateClockModel();
+//            beautiOptions.updateFixedRateClockModel();
         }
     }
 

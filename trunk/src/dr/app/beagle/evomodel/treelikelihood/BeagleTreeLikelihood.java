@@ -322,6 +322,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
         scaleBufferHelper.storeState();
+        
+        if (useScaleFactors && !alwaysRescale) { // Only store when actually used and need to be restored
+        	storedUseScaleFactors = useScaleFactors;
+        	System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
+        }
 
         super.storeState();
 
@@ -337,6 +342,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
         scaleBufferHelper.restoreState();
+        
+        useScaleFactors = storedUseScaleFactors; // this is only useful on a restore immediate after the transition to rescaling;
+        									     // most datasets will hit rescaling on FIRST evaluation
+        
+        if (useScaleFactors && !alwaysRescale) {
+        	int[] tmp = storedScaleBufferIndices;
+        	storedScaleBufferIndices = scaleBufferIndices;
+        	scaleBufferIndices = tmp;
+        }
 
         super.restoreState();
 
@@ -361,6 +375,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             matrixUpdateIndices = new int[nodeCount];
             branchLengths = new double[nodeCount];
             scaleBufferIndices = new int[internalNodeCount];
+            storedScaleBufferIndices = new int[internalNodeCount];
         }
 
         if (operations == null) {
@@ -379,7 +394,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         traverse(treeModel, root, null, true);
 
         if (updateSubstitutionModel) {
-            // we are currently assuming a homogenous model...
+            // we are currently assuming a homogeneous model...
             EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
 
             eigenBufferHelper.flipOffset(0);
@@ -609,6 +624,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private double[] branchLengths;
     private int branchUpdateCount;
     private int[] scaleBufferIndices;
+    private int[] storedScaleBufferIndices;
 
     private int[] operations;
     private int operationCount;
@@ -625,6 +641,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean recomputeScaleFactors = false;
     private boolean forceScaling = false; // TODO remove after debugging finished
     private boolean alwaysRescale = false;
+    
+    private boolean storedUseScaleFactors = false;
 
     /**
      * the branch-site model for these sites

@@ -288,8 +288,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
             ratesKnown = false;
         } else if (variable == invarParameter) {
             ratesKnown = false;
+        } else if (variable == muParameter) {
+            ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
         } else {
-            // is the muParameter and nothing needs to be done
+        	throw new RuntimeException("Unknown variable in GammaSiteRateModel.handleVariableChangedEvent");
         }
         listenerHelper.fireModelChanged(this, variable, index);
     }

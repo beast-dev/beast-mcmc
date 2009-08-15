@@ -101,6 +101,6 @@ public class DistributionLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return Likelihood.class;
+        return DistributionLikelihood.class;
     }
 }

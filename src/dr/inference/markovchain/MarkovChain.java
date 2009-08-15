@@ -143,8 +143,8 @@ public final class MarkovChain {
 
         boolean usingFullEvaluation = true;
         // set ops count in mcmc element instead
-//        if (fullEvaluationCount == 0) // Temporary solution until full code review
-//        	usingFullEvaluation = false;
+        if (fullEvaluationCount == 0) // Temporary solution until full code review
+            usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
         while (!pleaseStop && (currentState < (currentLength + length))) {

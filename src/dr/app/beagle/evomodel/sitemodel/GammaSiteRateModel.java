@@ -208,12 +208,8 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
                 calculateCategoryRates();
             }
         }
-        double mu = 1.0;
-        if (muParameter != null) {
-            mu = muParameter.getParameterValue(0);
-        }
 
-        return categoryRates[category] * mu;
+        return categoryRates[category];
     }
 
     public double getProportionForCategory(int category) {
@@ -268,6 +264,12 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
             categoryProportions[cat] = propVariable;
         }
 
+        if (muParameter != null) { // Moved multiplication by mu to here; it also
+                                   // needed by double[] getCategoryRates() -- previously ignored
+            double mu = muParameter.getParameterValue(0);
+             for (int i=0; i < categoryCount; i++)
+                categoryRates[i] *= mu;
+        }
 
         ratesKnown = true;
     }

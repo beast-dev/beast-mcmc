@@ -134,7 +134,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             }
 
-            int[] resourceList = { };
+            int[] resourceList = { 1 };
             if (resourceOrder.size() != 0) {
                 resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };
             }

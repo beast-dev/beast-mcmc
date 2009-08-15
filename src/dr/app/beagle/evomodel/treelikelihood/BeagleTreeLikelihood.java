@@ -367,6 +367,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
         }
 
+        if (alwaysRescale) {
+            useScaleFactors = true;
+            recomputeScaleFactors = true;
+        }
+
         branchUpdateCount = 0;
         operationCount = 0;
 
@@ -415,6 +420,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         if (useScaleFactors) {
+
+            if (alwaysRescale)
+                scaleBufferHelper.flipOffset(internalNodeCount);
+
             cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
             beagle.resetScaleFactors(cumulateScaleBufferIndex);
             beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
@@ -429,7 +438,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
  
         // Attempt dynamic rescaling if over/under-flow
-        if (forceScaling || Double.isNaN(logL) || Double.isInfinite(logL) ) {
+        if ( !alwaysRescale && (forceScaling || Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
             useScaleFactors = true;
             recomputeScaleFactors = true;
@@ -615,6 +624,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
     private boolean forceScaling = false; // TODO remove after debugging finished
+    private boolean alwaysRescale = false;
 
     /**
      * the branch-site model for these sites

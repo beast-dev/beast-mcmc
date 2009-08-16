@@ -18,6 +18,7 @@ import beagle.Beagle;
 
 /**
  * @author Marc Suchard
+ * @author Andrew Rambaut
  */
 
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements NodeAttributeProvider {
@@ -25,10 +26,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
+                                              boolean alwaysRescale,
                                                DataType dataType,
                                             String tag) {
 
-        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities);
+        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, alwaysRescale);
 
         this.dataType = dataType;
         this.tag = tag;

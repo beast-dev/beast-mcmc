@@ -157,6 +157,12 @@ public class FrequencyModel extends AbstractModel {
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() {
+            return new String[] {
+                    getParserName(),"beast_"+getParserName()
+            };
+        }
+
         public String getParserName() {
             return FREQUENCY_MODEL;
         }

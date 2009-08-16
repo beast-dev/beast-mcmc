@@ -87,6 +87,12 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() {
+            return new String[] {
+                    getParserName(),"beast_"+getParserName()
+            };
+        }
+
         public String getParserName() {
             return SVS_GENERAL_SUBSTITUTION_MODEL;
         }

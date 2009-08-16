@@ -257,6 +257,12 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
      */
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() {
+            return new String[] {
+                    getParserName(),"beast_"+getParserName()
+            };
+        }
+
         public String getParserName() {
             return RECONSTRUCTING_TREE_LIKELIHOOD;
         }

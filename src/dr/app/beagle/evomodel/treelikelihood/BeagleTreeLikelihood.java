@@ -114,7 +114,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new BufferIndexHelper(internalNodeCount + 1, 0);
+            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -190,6 +190,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             throw new RuntimeException(mte.toString());
         }
         hasInitialized = true;
+    }
+
+    protected int getScaleBufferCount() {
+        return internalNodeCount + 1;
     }
 
     /**
@@ -629,18 +633,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int[] operations;
     private int operationCount;
 
-    private BufferIndexHelper partialBufferHelper;
+    protected BufferIndexHelper partialBufferHelper;
     private BufferIndexHelper eigenBufferHelper;
-    private BufferIndexHelper matrixBufferHelper;
-    private BufferIndexHelper scaleBufferHelper;
+    protected BufferIndexHelper matrixBufferHelper;
+    protected BufferIndexHelper scaleBufferHelper;
 
-    private final int tipCount;
-    private final int internalNodeCount;
+    protected final int tipCount;
+    protected final int internalNodeCount;
 
-    private boolean useScaleFactors = false;
+    protected boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
     private boolean forceScaling = false; // TODO remove after debugging finished
-    private boolean alwaysRescale = false;
+    private boolean alwaysRescale = true;
     
     private boolean storedUseScaleFactors = false;
 
@@ -695,7 +699,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //     */
 //    private boolean dynamicRescaling = false;
 
-    private class BufferIndexHelper {
+    protected class BufferIndexHelper {
         /**
          *
          * @param maxIndexValue the number of possible input values for the index

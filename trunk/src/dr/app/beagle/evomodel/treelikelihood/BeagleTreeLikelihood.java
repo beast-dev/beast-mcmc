@@ -68,7 +68,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 BranchSiteModel branchSiteModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
-                                boolean useAmbiguities
+                                boolean useAmbiguities,
+                                boolean alwaysRescale
     ) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -127,7 +128,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                             int n = Integer.parseInt(part.trim());
                             resourceOrder.add(n);
                         } catch (NumberFormatException nfe) {
-
+                            System.err.println("Invalid entry '"+part+"' in "+RESOURCE_ORDER_PROPERTY);
                         }
                     }
                 }
@@ -182,6 +183,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     }
                 }
             }
+
+            this.alwaysRescale = alwaysRescale;
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
@@ -329,6 +332,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         
         if (useScaleFactors && !alwaysRescale) { // Only store when actually used and need to be restored
         	storedUseScaleFactors = useScaleFactors;
+          storedRecomputeScaleFactors = recomputeScaleFactors;
         	System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
         }
 
@@ -351,6 +355,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         									     // most datasets will hit rescaling on FIRST evaluation
         
         if (useScaleFactors && !alwaysRescale) {
+          recomputeScaleFactors = storedRecomputeScaleFactors;
         	int[] tmp = storedScaleBufferIndices;
         	storedScaleBufferIndices = scaleBufferIndices;
         	scaleBufferIndices = tmp;
@@ -457,11 +462,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
  
         // Attempt dynamic rescaling if over/under-flow
-        if ( !alwaysRescale && (forceScaling || Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
+        if ( !alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
             useScaleFactors = true;
             recomputeScaleFactors = true;
-            forceScaling = false; // Comment out to debug store/restore with changing scale factors
 
             System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
@@ -501,9 +505,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
             recomputeScaleFactors = false; // Only recompute after under/over-flow
                   
-            if (Double.isNaN(logL)) {    	
-            	throw new BeagleException("After rescale attempt BeagleTreeLikelihood still returns NaN",
-            			BeagleErrorCode.GENERAL_ERROR.getErrCode());
+            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+                logL = Double.NEGATIVE_INFINITY;
+                // TODO Discussion pt:
+                // There are several reasons for poor calculation:
+                // (1) a bug in BEAGLE (BAD)
+                // (2) no rescaling is insufficient (BEAST should throw error), or
+                // (3) BSSVS can return -\infty if the chain is not connected (should pass along -\infty)
             }
         }
 
@@ -643,10 +651,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     protected boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
-    private boolean forceScaling = false; // TODO remove after debugging finished
-    private boolean alwaysRescale = true;
+    private boolean alwaysRescale = false;
     
     private boolean storedUseScaleFactors = false;
+    private boolean storedRecomputeScaleFactors = false;
 
     /**
      * the branch-site model for these sites

@@ -32,6 +32,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return true;
     }
 
-    private Parameter indicatorsParameter;
+    private final Parameter indicatorsParameter;
 
 }

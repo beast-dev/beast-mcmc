@@ -663,7 +663,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
             }
 
             if (getLastDelimiter() != ';') {
-                throw new BadFormatException("Expecting ';' after sequences data");
+                throw new BadFormatException("Expecting ';' after sequences data, has '"
+                        + (char)getLastDelimiter() + "' in line " + getLineNumber());
             }
 
         }

@@ -65,5 +65,5 @@ public class CachedDistributionLikelihood extends AbstractModelLikelihood {
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    private DistributionLikelihood likelihood;
+    private final DistributionLikelihood likelihood;
 }

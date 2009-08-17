@@ -13,8 +13,8 @@ public class CachedDistributionLikelihoodParser extends AbstractXMLObjectParser 
 
     public static final String MODEL_NAME = "cachedPrior";
 
-    public static final String RATE_BLOCK = "rates";
-    public static final String INDICATOR_BLOCK = "indicators";
+   // public static final String RATE_BLOCK = "rates";
+    //public static final String INDICATOR_BLOCK = "indicators";
 
     public String getParserName() {
         return MODEL_NAME;
@@ -22,12 +22,12 @@ public class CachedDistributionLikelihoodParser extends AbstractXMLObjectParser 
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = xo.hasId() ? xo.getId() : MODEL_NAME;
+        final String name = xo.hasId() ? xo.getId() : MODEL_NAME;
 
-        DistributionLikelihood likelihood = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-        Variable variable = (Variable) xo.getChild(Variable.class);
+        final DistributionLikelihood likelihood = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        final Variable variable = (Variable) xo.getChild(Variable.class);
 
-        Logger logger = Logger.getLogger("dr.inference");
+        final Logger logger = Logger.getLogger("dr.inference");
         logger.info("Constructing a cache around likelihood '" + likelihood.getId() + "', signal = " + variable.getVariableName());
 
         return new dr.inference.distribution.CachedDistributionLikelihood(name, likelihood, variable);

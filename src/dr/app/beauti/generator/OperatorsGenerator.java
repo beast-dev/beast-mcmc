@@ -4,20 +4,14 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.FixRateType;
+import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionClockModelTreeModelLink;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.RelativeRatesType;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TreePrior;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.RandomLocalClockModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.clock.ACLikelihood;
-import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
@@ -28,18 +22,11 @@ import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
-import dr.evomodelxml.DiscretizedBranchRatesParser;
-import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.YuleModelParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
 import dr.inference.operators.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -313,9 +300,9 @@ public class OperatorsGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-        if (operator.getName().equals("Relative rates")) {
+        if (operator.getName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
-            int[] parameterWeights = options.getPartitionWeights();
+            int[] parameterWeights = options.getPartitionCodonWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];
@@ -330,6 +317,25 @@ public class OperatorsGenerator extends Generator {
                         }
                 );
             }
+            
+        } else if (operator.getName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
+        	
+        	int[] parameterWeights = options.getPartitionCodonWeights();
+
+            if (parameterWeights != null && parameterWeights.length > 1) {
+                String pw = "" + parameterWeights[0];
+                for (int i = 1; i < parameterWeights.length; i++) {
+                    pw += " " + parameterWeights[i];
+                }
+                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                        new Attribute[]{
+                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
+                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, pw),
+                                getWeightAttribute(operator.weight)
+                        }
+                );
+            } 
+            
         } else {
             writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
                     new Attribute[]{

@@ -440,7 +440,6 @@ public class BranchRatesModelGenerator extends Generator {
 	        	
 	        case UNCORRELATED_LOGNORMAL:
 	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.UCLD_MEAN);
-	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.UCLD_STDEV);
 	        	break;
 	
 	        case AUTOCORRELATED_LOGNORMAL:
@@ -452,5 +451,78 @@ public class BranchRatesModelGenerator extends Generator {
 	            throw new IllegalArgumentException("Unknown clock model");
 		}
 	}
+	
+	public void writeLog(PartitionClockModel model, XMLWriter writer) {
+		setModelPrefix(model.getPrefix());    
+        
+        switch (model.getClockType()) {
+            case STRICT_CLOCK:
+            case RANDOM_LOCAL_CLOCK:
+            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                break;
+
+            case UNCORRELATED_EXPONENTIAL:
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                break;
+                
+            case UNCORRELATED_LOGNORMAL:
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                break;
+                
+            case AUTOCORRELATED_LOGNORMAL:
+// TODO                
+                break;
+                
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+    
+	}
+	
+	public void writeLogStatistic(PartitionClockModel model, XMLWriter writer) {
+		setModelPrefix(model.getPrefix());    
+        
+        switch (model.getClockType()) {
+            case STRICT_CLOCK:
+            	break;
+
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
+                }
+                break;
+                
+            case AUTOCORRELATED_LOGNORMAL:
+// TODO
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "branchRates.var");
+                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "treeModel.rootRate");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
+                }
+                break;
+                
+            case RANDOM_LOCAL_CLOCK:            	
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
+                    
+                    writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + tree.getPrefix() + "rateChanges");                        
+                }
+                break;
+                
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+    
+	}
+
+
 
 }

@@ -117,6 +117,7 @@ public class OperatorsGenerator extends Generator {
                 break;
             case UP_DOWN:
                 writeUpDownOperator(operator, writer);
+                break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
             	writeUpDownOperatorAllRatesTrees(operator, writer);
                 break;

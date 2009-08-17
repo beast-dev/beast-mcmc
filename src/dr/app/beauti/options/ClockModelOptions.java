@@ -64,7 +64,9 @@ public class ClockModelOptions extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {    	    	
-        
+//    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+// TODO       	
+//        }
     }
 
     /**
@@ -73,7 +75,10 @@ public class ClockModelOptions extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-        
+    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+    		Operator deltaOperator = getOperator("deltaAllClockRates");
+    		ops.add(deltaOperator);
+    	}
     }
 
 	

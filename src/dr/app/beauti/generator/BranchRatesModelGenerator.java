@@ -425,4 +425,32 @@ public class BranchRatesModelGenerator extends Generator {
 
     }
 
+	public void writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer) {
+		setModelPrefix(model.getPrefix());        
+		
+		switch (model.getClockType()) {
+	        case STRICT_CLOCK:
+	        case RANDOM_LOCAL_CLOCK:
+	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "clock.rate");
+	            break;
+	
+	        case UNCORRELATED_EXPONENTIAL:
+	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.UCED_MEAN);
+	        	break;
+	        	
+	        case UNCORRELATED_LOGNORMAL:
+	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.UCLD_MEAN);
+	        	writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.UCLD_STDEV);
+	        	break;
+	
+	        case AUTOCORRELATED_LOGNORMAL:
+	        	//TODO
+	        	throw new IllegalArgumentException("Autocorrelated Relaxed Clock, writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer)");
+//	        	break;
+	
+	        default:
+	            throw new IllegalArgumentException("Unknown clock model");
+		}
+	}
+
 }

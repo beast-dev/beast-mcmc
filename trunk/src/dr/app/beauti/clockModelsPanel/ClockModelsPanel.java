@@ -69,7 +69,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     DataTableModel dataTableModel = null;
     
 //    JComboBox rateOptionCombo = new JComboBox(FixRateType.values());
-    JCheckBox estimateRelatieRateCheck = new JCheckBox("Estimate relatie rate: mean =");
+    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:: mean =");
 //    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
     
@@ -127,12 +127,12 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		// clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
 		// clockModelCombo.addItemListener(comboListener);
 
-		PanelUtils.setupComponent(estimateRelatieRateCheck);
-		estimateRelatieRateCheck.setSelected(true);
-		estimateRelatieRateCheck.addItemListener(new ItemListener() {
+		PanelUtils.setupComponent(fixedMeanRateCheck);
+		fixedMeanRateCheck.setSelected(true);
+		fixedMeanRateCheck.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent ev) {				
-				meanRateField.setEnabled(estimateRelatieRateCheck.isSelected());
-				if (estimateRelatieRateCheck.isSelected()) {
+				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
+				if (fixedMeanRateCheck.isSelected()) {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
 		        } else {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
@@ -141,7 +141,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				frame.setDirty();				
 			}
 		});
-		estimateRelatieRateCheck.setToolTipText("<html>Select this option to fix the substitution rate<br>"
+		fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the substitution rate<br>"
 						+ "rather than try to infer it. If this option is<br>"
 						+ "turned off then either the sequences should have<br>"
 						+ "dates or the tree should have sufficient calibration<br>"
@@ -167,7 +167,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
 		// panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 		meanRateField.setColumns(10);
-		panel.addComponents(estimateRelatieRateCheck, meanRateField);
+		panel.addComponents(fixedMeanRateCheck, meanRateField);
 //		panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", meanRateField);
 
 		modelPanelParent.add(panel);
@@ -213,7 +213,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
       
-        estimateRelatieRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
+        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
         meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());  
         
         settingOptions = false;
@@ -240,7 +240,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     	SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
-        if (estimateRelatieRateCheck.isSelected()) {
+        if (fixedMeanRateCheck.isSelected()) {
         	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
         } else {
         	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
@@ -331,14 +331,14 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {                
                 case 2:// Check box
-                	if (estimateRelatieRateCheck.isSelected()) {
+                	if (fixedMeanRateCheck.isSelected()) {
                 		editable = false;
                 	} else {
                 		editable = true;
                 	}
                     break;
                 case 3:
-                	if (estimateRelatieRateCheck.isSelected()) {
+                	if (fixedMeanRateCheck.isSelected()) {
                 		editable = false;
                 	} else if ((Boolean) getValueAt(row, 2)) {
                 		editable = false;    	        	
@@ -407,9 +407,9 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn); 
             
-            if (estimateRelatieRateCheck.isSelected() && aColumn > 1) {
+            if (fixedMeanRateCheck.isSelected() && aColumn > 1) {
             	renderer.setForeground(Color.gray);
-            } else if (!estimateRelatieRateCheck.isSelected() && aColumn == 3 && (Boolean) aTable.getValueAt(aRow, 2)) {
+            } else if (!fixedMeanRateCheck.isSelected() && aColumn == 3 && (Boolean) aTable.getValueAt(aRow, 2)) {
             	renderer.setForeground(Color.gray);
             } else {
             	renderer.setForeground(Color.black);

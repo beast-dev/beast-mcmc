@@ -100,6 +100,23 @@ public class ClockModelOptions extends ModelOptions {
 		return meanRelativeRate;
 	}
 
+	public int[] getPartitionClockWeights() {
+		int[] weights = new int[options.getPartitionClockModels().size()]; // use List?
+
+		int k = 0;
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			for (PartitionData partition : model.getAllPartitionData()) {
+				int n = partition.getSiteCount();
+				weights[k] += n;
+			}
+			k += 1;
+		}
+
+		assert (k == weights.length);
+
+		return weights;
+	}	
+    
 	@Override
 	public String getPrefix() {
 		// TODO Auto-generated method stub

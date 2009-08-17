@@ -157,8 +157,8 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
      */
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
-        	
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && model.isEstimatedRate()) {
+        	// for isEstimatedRate() = false, write nothing on up part of upDownOp
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) {//&& model.isEstimatedRate()) {
             	switch (model.getClockType()) {
 	                case STRICT_CLOCK:
 	                    ops.add(getOperator("upDownRateHeights"));

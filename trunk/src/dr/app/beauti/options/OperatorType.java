@@ -37,6 +37,7 @@ public enum OperatorType {
     RANDOM_WALK_REFLECTING("randomWalkReflecting"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
+    UP_DOWN_ALL_RATES_HEIGHTS("upDownAllRatesHeights"),
     SCALE_ALL(ScaleOperator.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     CENTERED_SCALE("centeredScale"),

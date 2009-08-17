@@ -92,11 +92,7 @@ public class OperatorsGenerator extends Generator {
             	
             	writeOperator(operator, writer);
             }
-        }
-        
-        if (options.isSpeciesAnalysis() || options.isEBSPSharingSamePrior()) {
-        	writeUpDownOperatorAllRatesTrees(writer);
-        }
+        }  
         
         writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
     }
@@ -121,6 +117,8 @@ public class OperatorsGenerator extends Generator {
                 break;
             case UP_DOWN:
                 writeUpDownOperator(operator, writer);
+            case UP_DOWN_ALL_RATES_HEIGHTS:
+            	writeUpDownOperatorAllRatesTrees(operator, writer);
                 break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
@@ -489,11 +487,11 @@ public class OperatorsGenerator extends Generator {
     }
     
     
-    private void writeUpDownOperatorAllRatesTrees(XMLWriter writer) {
+    private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
     	writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, 0.75),
-                        getWeightAttribute(30) // TODO allow change?
+                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        getWeightAttribute(operator.weight)
                 }
         );
 

@@ -89,7 +89,10 @@ public class BeautiOptions extends ModelOptions {
         		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
         
-        
+        // only available for *BEAST and EBSP
+        createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights", "Scales all rates inversely to node heights of the tree", 
+        		demoTuning, branchWeights);        
+
     }
 
     public void initSpeciesParametersAndOperators() {
@@ -216,6 +219,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectParameters(parameters);
         }
+        clockModelOptions.selectParameters(parameters);
 
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
             tree.selectParameters(parameters);
@@ -360,6 +364,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectOperators(ops);
         }
+        clockModelOptions.selectOperators(ops);
 
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
             tree.selectOperators(ops);
@@ -377,6 +382,11 @@ public class BeautiOptions extends ModelOptions {
             selectOperatorsForSpecies(ops);
         }
 
+        //up down all rates and trees operator only available for *BEAST and EBSP
+        if (isSpeciesAnalysis() || isEBSPSharingSamePrior()) {
+        	ops.add(getOperator("upDownAllRatesHeights")); 
+        }
+        
         selectComponentOperators(this, ops);
 
 //        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;

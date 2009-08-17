@@ -103,9 +103,6 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
         
-        createOperator("upDownAllRatesHeights", "All rates and heights", "Scales all rates inversely to node heights of the tree", 
-        		this.getParameter("treeModel.allRates"), tree.getParameter("treeModel.allInternalNodeHeights"), 
-        		OperatorType.UP_DOWN, demoTuning, branchWeights);        
 
         // These are statistics which could have priors on...        
         // #meanRate = #Relaxed Clock Model * #Tree Model
@@ -183,7 +180,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
 	                    ops.add(getOperator("scaleAllRates"));
 	                    ops.add(getOperator("scaleAllRatesIndependently"));
 	                    ops.add(getOperator("branchRates.var"));
-	                	ops.add(getOperator("upDownAllRatesHeights"));
+//	                	ops.add(getOperator("upDownAllRatesHeights"));
 	                    break;
 	
 	                case RANDOM_LOCAL_CLOCK:

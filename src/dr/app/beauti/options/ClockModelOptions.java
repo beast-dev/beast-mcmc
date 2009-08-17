@@ -52,7 +52,7 @@ public class ClockModelOptions extends ModelOptions {
     	
         createParameter("allClockRates", "All the relative rates regarding clock models");
     	
-        createOperator("deltaAllClockRates", "deltaAllClockRates",
+        createOperator("deltaAllClockRates", RelativeRatesType.CLOCK_RELATIVE_RATES.toString(),
         		"Delta exchange operator for all the relative rates regarding clock models", "allClockRates",      		 
         		OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
     	

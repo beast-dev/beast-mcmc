@@ -78,14 +78,13 @@ public class BeautiOptions extends ModelOptions {
         double rateWeights = 3.0;
 
         // A vector of relative rates across all partitions...
-        createParameter("allMus", "All the relative rates");
+        createParameter("allMus", "All the relative rates regarding codon positions");
 
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
 //              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
-        createOperator("deltaMu", "Relative rates",
-//                "Changes partition relative rates relative to each other maintaining their mean", "allMus",
+        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
         		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
         
@@ -570,7 +569,11 @@ public class BeautiOptions extends ModelOptions {
     } 
 
     public boolean isEBSPSharingSamePrior() {
-        return (shareSameTreePrior && activedSameTreePrior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
+    	if (activedSameTreePrior == null) {
+    		return false;
+    	} else {
+    		return (shareSameTreePrior && activedSameTreePrior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
+    	}
     }
 
     // ++++++++++++++ Partition Substitution Model ++++++++++++++ 
@@ -624,7 +627,7 @@ public class BeautiOptions extends ModelOptions {
      * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
      * are strictly in the same order as the 'mu' relative rates are listed.
      */
-    public int[] getPartitionWeights() {
+    public int[] getPartitionCodonWeights() {
         int[] weights = new int[getTotalActivePartitionSubstitutionModelCount()];
 
         int k = 0;

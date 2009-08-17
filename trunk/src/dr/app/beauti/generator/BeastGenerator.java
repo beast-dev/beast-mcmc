@@ -308,7 +308,7 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
-        //++++++++++++++++ Tree Prior ++++++++++++++++++
+        //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
 //	        treePriorGenerator.setModelPrefix("");
 //        	treePriorGenerator.writeTreePrior(options.activedSameTreePrior, writer);
@@ -345,7 +345,15 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 //        }
-
+        // write allClockRate for fix mean option in clock model panel
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+        	writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
+        	for (PartitionClockModel model : options.getPartitionClockModels()) {
+        		branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+            }
+            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeText("");
+        }
 
         //++++++++++++++++ Substitution Model ++++++++++++++++++
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -363,7 +371,7 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
-        if (writeMuParameters) {
+        if (writeMuParameters) { // write allMus for codon model
             // allMus is global
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allMus")});
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -1597,6 +1605,10 @@ public class BeastGenerator extends Generator {
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
             }
+        }
+        
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+        	writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);

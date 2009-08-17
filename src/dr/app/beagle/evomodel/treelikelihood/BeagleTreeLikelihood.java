@@ -514,7 +514,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 // TODO Discussion pt:
                 // There are several reasons for poor calculation:
                 // (1) a bug in BEAGLE (BAD)
-                // (2) no rescaling is insufficient (BEAST should throw error), or
+                // (2) no rescaling is sufficient (BEAGLE should throw error), or
                 // (3) BSSVS can return -\infty if the chain is not connected (should pass along -\infty)
             }
         }

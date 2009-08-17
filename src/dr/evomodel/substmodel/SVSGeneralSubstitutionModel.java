@@ -3,6 +3,10 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.*;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
+import dr.inference.model.Model;
+import dr.inference.model.Likelihood;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.xml.*;
 
 /**
@@ -13,7 +17,8 @@ import dr.xml.*;
  * @version $Id: SVSGeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 msuchard Exp $
  */
 
-public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements BayesianStochasticSearchVariableSelection {
+public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
+        BayesianStochasticSearchVariableSelection {
 
     public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
     public static final String INDICATOR = "rateIndicator";
@@ -36,34 +41,90 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return rateIndicator;
     }
 
-    public boolean validState() {
+      public boolean validState() {
+        return !updateMatrix || checkFullyConnected();
+    }
+
+
+    /**
+     * Get the model.
+     *
+     * @return the model.
+     */
+    public Model getModel() {
+        return this;
+    }
+
+    /**
+     * Get the log likelihood.
+     *
+     * @return the log likelihood.
+     */
+    public double getLogLikelihood() {
+        if (updateMatrix) {
+            if (!checkFullyConnected()) {
+                System.err.println("SVSGeneralSubstitutionModel is not fully connected.");
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+        return 0;
+    }
+
+    private boolean checkFullyConnected() {
+        if (probability == null)
+            probability = new double[stateCount*stateCount];
+
+        getTransitionProbabilities(1.0,probability);
+        final int length = stateCount*stateCount;
+        for(int i=0; i<length; i++) {
+            if(probability[i] == 0)
+                return false;
+        }
         return true;
     }
 
-    public boolean myIsValid() {
-        boolean valid = true;
-        //	setupMatrix();
-        updateMatrix = true;
-        int stateCount = dataType.getStateCount();
-        int stateCountSquare = stateCount * stateCount;
-        double[] probs = new double[stateCountSquare];
-        getTransitionProbabilities(1.0, probs);
-        for (int i = 0; valid && i < stateCountSquare; i++) {
-            if (probs[i] == 0)
-                valid = false; // must be fully connected
+    /**
+     * Forces a complete recalculation of the likelihood next time getLikelihood is called
+     */
+    public void makeDirty() {
+       updateMatrix = true;
+    }
+
+    /**
+     * @return A detailed name of likelihood for debugging.
+     */
+    public String prettyName() {
+        return "SVSGeneralSubstitutionModel-connectedness";
+    }
+
+      // **************************************************************
+    // Loggable IMPLEMENTATION
+    // **************************************************************
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
         }
 
-        return valid;
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
+
+    private double[] probability = null;
 
     protected void setupRelativeRates() {
 
         for (int i = 0; i < relativeRates.length; i++) {
             relativeRates[i] = ratesParameter.getParameterValue(i) * rateIndicator.getParameterValue(i);
         }
-
     }
-
 
     void normalize(double[][] matrix, double[] pi) {
         double subst = 0.0;
@@ -102,7 +163,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             Parameter ratesParameter;
             Parameter indicatorParameter;
 
-            XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+            XMLObject cxo = xo.getChild(FREQUENCIES);
             FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             DataType dataType = null;
@@ -122,7 +183,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
             if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
 
-            cxo = (XMLObject) xo.getChild(RATES);
+            cxo = xo.getChild(RATES);
 
             ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
@@ -143,16 +204,16 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
                 throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
             }
 
-            cxo = (XMLObject) xo.getChild(INDICATOR);
+            cxo = xo.getChild(INDICATOR);
 
             indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            if (indicatorParameter.getDimension() != ratesParameter.getDimension())
+            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
                 throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
             if (xo.hasChildNamed(ROOT_FREQ)) {
 
-                cxo = (XMLObject) xo.getChild(ROOT_FREQ);
+                cxo = xo.getChild(ROOT_FREQ);
                 FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
                 if (dataType != rootFreq.getDataType()) {

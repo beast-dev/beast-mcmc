@@ -77,6 +77,7 @@ public abstract class ModelOptions {
 	protected static final double treeWeights = 15.0;
 	protected static final double rateWeights = 3.0;
 	
+	//+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
@@ -108,7 +109,13 @@ public abstract class ModelOptions {
         Parameter parameter = getParameter(parameterName);
         operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE_ALL, 0.75, weight));
     }
+    
+    public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
+    	final Parameter parameter = new Parameter(paraName, description);
+        operators.put(paraName, new Operator(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS, tuning, weight));
+    }
 
+    //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public Parameter createParameter(String name, String description) {
         final Parameter parameter = new Parameter(name, description);
         parameters.put(name, parameter);
@@ -130,6 +137,7 @@ public abstract class ModelOptions {
         p.priorType = PriorType.JEFFREYS_PRIOR;
     }
 
+  //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public Parameter createStatistic(String name, String description, boolean isDiscrete) {
         final Parameter parameter = new Parameter(name, description, isDiscrete);
         parameters.put(name, parameter);
@@ -140,6 +148,7 @@ public abstract class ModelOptions {
         parameters.put(name, new Parameter(name, description, lower, upper));
     }
 
+    //+++++++++++++++++++ Methods ++++++++++++++++++++++++++++++++
     public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
         if (parameter == null) {

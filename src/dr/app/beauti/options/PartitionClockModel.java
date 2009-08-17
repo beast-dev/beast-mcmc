@@ -109,27 +109,28 @@ public class PartitionClockModel extends ModelOptions {
             } else {
             	fixed = !isEstimatedRate;
             }
-            Parameter rateParam;
+            Parameter rateParam = null;
 
             switch (clockType) {
                 case STRICT_CLOCK:
+                case RANDOM_LOCAL_CLOCK:
                     rateParam = getParameter("clock.rate");
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;
+//                    if (fixed) rateParam.initial = rate;      
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
                     rateParam = getParameter(ClockType.UCED_MEAN);
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;
+                    if (fixed) rateParam.initial = rate;      
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_LOGNORMAL:
                     rateParam = getParameter(ClockType.UCLD_MEAN);
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;
+                    if (fixed) rateParam.initial = rate;      
                     if (!fixed) params.add(rateParam);
                     params.add(getParameter(ClockType.UCLD_STDEV));
                     break;
@@ -142,17 +143,10 @@ public class PartitionClockModel extends ModelOptions {
 //                    params.add(getParameter("branchRates.var"));
                     break;
 
-                case RANDOM_LOCAL_CLOCK:
-                    rateParam = getParameter("clock.rate");
-                    rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;
-                    if (!fixed) params.add(rateParam);
-                    break;
-
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
-            }
-           
+            }   
+            if (fixed) rateParam.initial = rate;   
         }
     }
 
@@ -167,6 +161,7 @@ public class PartitionClockModel extends ModelOptions {
             if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && isEstimatedRate) {
             	switch (clockType) {
 	                case STRICT_CLOCK:
+	                case RANDOM_LOCAL_CLOCK:
 	                    ops.add(getOperator("clock.rate"));	
 	                    break;
 	
@@ -182,11 +177,7 @@ public class PartitionClockModel extends ModelOptions {
 	                case AUTOCORRELATED_LOGNORMAL:                       
 	                	//TODO
 	                    break;
-	
-	                case RANDOM_LOCAL_CLOCK:
-	                    ops.add(getOperator("clock.rate"));
-	                    break;
-	
+		
 	                default:
 	                    throw new IllegalArgumentException("Unknown clock model");
                 }

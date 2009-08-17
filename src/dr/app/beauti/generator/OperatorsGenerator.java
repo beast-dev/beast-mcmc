@@ -273,7 +273,10 @@ public class OperatorsGenerator extends Generator {
         );
 
         writer.writeOpenTag(UpDownOperator.UP);
-        writeParameter1Ref(writer, operator);
+        // for isEstimatedRate() = false, write nothing on up part of upDownOp
+        if (!operator.parameter1.isFixed) {
+        	writeParameter1Ref(writer, operator);
+        }
         writer.writeCloseTag(UpDownOperator.UP);
         
         writer.writeOpenTag(UpDownOperator.DOWN);	        
@@ -320,7 +323,7 @@ public class OperatorsGenerator extends Generator {
             
         } else if (operator.getName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
         	
-        	int[] parameterWeights = options.getPartitionCodonWeights();
+        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];

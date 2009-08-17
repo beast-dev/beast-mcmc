@@ -979,7 +979,9 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        // TODO offer stem as default
+        // offer stem as default
+        exportChooser.setSelectedFile(new File(beautiOptions.fileNameStem + ".xml"));
+
         final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File file = exportChooser.getSelectedFile();

@@ -557,7 +557,7 @@ public class BeastGenerator extends Generator {
             case DataType.COVARION:
 
                 // TODO make this work
-                throw new RuntimeException("TO DO!");
+//                throw new RuntimeException("TO DO!");
 
                 //switch (partition.getPartitionSubstitutionModel().binarySubstitutionModel) {
                 //    case ModelOptions.BIN_COVARION:
@@ -565,9 +565,9 @@ public class BeastGenerator extends Generator {
                 //        break;
                 //
                 //    default:
-                //        description = alignment.getDataType().getDescription();
+                        description = alignment.getDataType().getDescription();
                 //}
-                //break;
+                break;
 
             default:
                 description = alignment.getDataType().getDescription();

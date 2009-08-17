@@ -460,6 +460,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < patternCount; i++) {
             logL += patternLogLikelihoods[i] * patternWeights[i];
         }
+
+        if  (alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL))) {
+            logL = Double.NEGATIVE_INFINITY; // TODO Why is BEAGLE returning +\infty???
+        }
  
         // Attempt dynamic rescaling if over/under-flow
         if ( !alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {

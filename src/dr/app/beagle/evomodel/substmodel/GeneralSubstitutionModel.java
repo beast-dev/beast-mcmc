@@ -35,7 +35,7 @@ import dr.app.beagle.evomodel.parsers.GeneralSubstitutionModelParser;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralSubstitutionModel.java,v 1.37 2006/05/05 03:05:10 alexei Exp $
+ * @author Marc Suchard
  */
 public class GeneralSubstitutionModel extends BaseSubstitutionModel {
 

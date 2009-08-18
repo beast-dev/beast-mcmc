@@ -39,13 +39,15 @@ public class ClockModelOptions extends ModelOptions {
 	// Instance variables
     private final BeautiOptions options;
    
-    private FixRateType rateOptionClockModel = FixRateType.FIX_MEAN; 
+    private FixRateType rateOptionClockModel = FixRateType.ESTIMATE; 
     private double meanRelativeRate = 1.0;
 
     public ClockModelOptions(BeautiOptions options) {    	
     	this.options = options;
                
         initGlobalClockModelParaAndOpers();
+        
+        fixRateOfFirstClockPartition(); //TODO correct?
     }
     
     private void initGlobalClockModelParaAndOpers() {
@@ -77,6 +79,10 @@ public class ClockModelOptions extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
     	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
     		Operator deltaOperator = getOperator("deltaAllClockRates");
+    		
+            // update delta clock operator weight
+    		deltaOperator.weight = options.getPartitionClockModels().size();
+            
     		ops.add(deltaOperator);
     	}
     }
@@ -116,6 +122,28 @@ public class ClockModelOptions extends ModelOptions {
 
 		return weights;
 	}	
+	
+	public void fixRateOfFirstClockPartition() {
+		this.rateOptionClockModel = FixRateType.ESTIMATE;
+		// fix rate of 1st partition
+		int i = 0;
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			if (i < 1) {
+				model.setEstimatedRate(false);
+			} else {
+				model.setEstimatedRate(true);
+			}
+			i = i + 1;
+        }
+	}
+	
+	public void estimateAllRates() {
+		this.rateOptionClockModel = FixRateType.ESTIMATE;
+		
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			model.setEstimatedRate(true);
+        }
+	}
     
 	@Override
 	public String getPrefix() {

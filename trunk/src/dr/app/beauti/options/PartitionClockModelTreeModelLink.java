@@ -132,7 +132,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
             // if not fixed then do mutation rate move and up/down move            
             boolean fixed;//TODO wrong?
             if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            	fixed = true;
+            	fixed = false;
             } else {
             	fixed = !model.isEstimatedRate();
             }            

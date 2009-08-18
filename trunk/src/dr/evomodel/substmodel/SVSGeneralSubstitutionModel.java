@@ -1,10 +1,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.inference.model.Parameter;
-import dr.inference.model.Model;
-import dr.inference.model.Likelihood;
+import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.xml.*;
@@ -45,6 +42,11 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return !updateMatrix || connectedAndWellConditioned();
     }
 
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == rateIndicator && rateIndicator.getParameterValue(index) == 0)
+            return; // Does not affect likelihood
+        super.handleVariableChangedEvent(variable,index,type);
+    }
 
     /**
      * Get the model.

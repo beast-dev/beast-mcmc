@@ -69,7 +69,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     DataTableModel dataTableModel = null;
     
 //    JComboBox rateOptionCombo = new JComboBox(FixRateType.values());
-    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:: mean =");
+    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:   mean =");
 //    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
     
@@ -128,14 +128,23 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		// clockModelCombo.addItemListener(comboListener);
 
 		PanelUtils.setupComponent(fixedMeanRateCheck);
-		fixedMeanRateCheck.setSelected(true);
+		fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
 		fixedMeanRateCheck.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent ev) {				
+			public void itemStateChanged(ItemEvent ev) {
+				if (fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2) {
+					JOptionPane.showMessageDialog(frame, "It must have multi-clock rates to fix mean substitution rate!",
+	                        "Validation Of Fix Mean Rate",
+	                        JOptionPane.WARNING_MESSAGE);
+					fixedMeanRateCheck.setSelected(false);
+					return;
+				} 
+				
 				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 				if (fixedMeanRateCheck.isSelected()) {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
 		        } else {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
+		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
 				
 				frame.setDirty();				

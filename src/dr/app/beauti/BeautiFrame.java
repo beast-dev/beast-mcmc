@@ -707,6 +707,8 @@ public class BeautiFrame extends DocumentFrame {
                         partition.setPartitionClockModel(pcm);
 //                        beautiOptions.addPartitionClockModel(pcm);
                     }
+                	beautiOptions.clockModelOptions.fixRateOfFirstClockPartition();                	
+                	
                 } else {// only this works                    
                 	for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
                         if (psm.getDataType() == alignment.getDataType()) { // use same substitution model in beginning
@@ -754,7 +756,7 @@ public class BeautiFrame extends DocumentFrame {
                         partition.setPartitionClockModel(pcm);
 //                        beautiOptions.addPartitionClockModel(pcm);
                     }
-                    
+                	beautiOptions.clockModelOptions.fixRateOfFirstClockPartition();
                 }
             }
             beautiOptions.updatePartitionClockTreeLinks();

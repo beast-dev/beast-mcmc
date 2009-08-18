@@ -263,6 +263,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     private void fireDataChanged() {
         options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionClockTreeLinks();
+        
+        options.clockModelOptions.fixRateOfFirstClockPartition(); //TODO correct?
 
         frame.setDirty();
     }

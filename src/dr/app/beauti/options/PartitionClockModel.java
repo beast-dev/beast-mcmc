@@ -105,7 +105,7 @@ public class PartitionClockModel extends ModelOptions {
             // if not fixed then do mutation rate move and up/down move
             boolean fixed;
             if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            	fixed = true;
+            	fixed = false;
             } else {
             	fixed = !isEstimatedRate;
             }
@@ -116,7 +116,7 @@ public class PartitionClockModel extends ModelOptions {
                 case RANDOM_LOCAL_CLOCK:
                     rateParam = getParameter("clock.rate");
                     rateParam.isFixed = fixed;
-//                    if (fixed) rateParam.initial = rate;      
+                    if (fixed) rateParam.initial = rate;      
                     if (!fixed) params.add(rateParam);
                     break;
 
@@ -146,7 +146,7 @@ public class PartitionClockModel extends ModelOptions {
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
             }   
-            if (fixed) rateParam.initial = rate;   
+//            if (fixed) rateParam.initial = rate;   
         }
     }
 

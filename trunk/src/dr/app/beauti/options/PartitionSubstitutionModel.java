@@ -114,17 +114,17 @@ public class PartitionSubstitutionModel extends ModelOptions {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        createParameter("frequencies", "base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1.frequencies", "base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP2.frequencies", "base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameter("CP3.frequencies", "base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("frequencies", "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1.frequencies", "base frequencies for codon position 1", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP2.frequencies", "base frequencies for codon position 2", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameter("CP3.frequencies", "base frequencies for codon position 3", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createScaleParameter("kappa", "HKY transition-transversion parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1.kappa", "HKY transition-transversion parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP2.kappa", "HKY transition-transversion parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("kappa", "HKY transition-transversion parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.kappa", "HKY transition-transversion parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.kappa", "HKY transition-transversion parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
 //        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -135,43 +135,43 @@ public class PartitionSubstitutionModel extends ModelOptions {
         // create the relative rate parameters for the GTR rate matrix
         for (int j = 0; j < 5; j++) {
             createScaleParameter(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+            		PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
             for (int i = 1; i <= 3; i++) {
 
                 createScaleParameter(
                         "CP" + i + "." + GTR_RATE_NAMES[j],
                         "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                        SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
             }
             createScaleParameter("CP1+2." + GTR_RATE_NAMES[j],
                     "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                    SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         }
 
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("hfrequencies", "Binary Covarion frequencies of the hidden rates", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
+        createParameter("hfrequencies", "Binary Covarion frequencies of the hidden rates", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.alpha", "Binary Covarion rate of evolution in slow mode", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameter("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
 
-        createParameter("alpha", "gamma shape parameter", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP1.alpha", "gamma shape parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP2.alpha", "gamma shape parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameter("CP3.alpha", "gamma shape parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameter("alpha", "gamma shape parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameter("CP1.alpha", "gamma shape parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameter("CP2.alpha", "gamma shape parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameter("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameter("CP3.alpha", "gamma shape parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
 
-        createParameter("pInv", "proportion of invariant sites parameter", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP1.pInv", "proportion of invariant sites parameter for codon position 1", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP2.pInv", "proportion of invariant sites parameter for codon position 2", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", NONE, 0.5, 0.0, 1.0);
-        createParameter("CP3.pInv", "proportion of invariant sites parameter for codon position 3", NONE, 0.5, 0.0, 1.0);
+        createParameter("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameter("CP1.pInv", "proportion of invariant sites parameter for codon position 1", PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameter("CP2.pInv", "proportion of invariant sites parameter for codon position 2", PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameter("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameter("CP3.pInv", "proportion of invariant sites parameter for codon position 3", PriorScaleType.NONE, 0.5, 0.0, 1.0);
 
-        createParameter("mu", "relative rate parameter", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP1.mu", "relative rate parameter for codon position 1", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP2.mu", "relative rate parameter for codon position 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("CP3.mu", "relative rate parameter for codon position 3", SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1.mu", "relative rate parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP2.mu", "relative rate parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter("CP3.mu", "relative rate parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);

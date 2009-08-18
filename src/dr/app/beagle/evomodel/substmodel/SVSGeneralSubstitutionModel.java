@@ -35,7 +35,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == indicatorsParameter && indicatorsParameter.getParameterValue(index) == 0)
+        if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
             return; // Does not affect likelihood
         super.handleVariableChangedEvent(variable,index,type);
     }

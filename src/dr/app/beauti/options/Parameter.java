@@ -41,7 +41,7 @@ public class Parameter {
     public Parameter(String name, String description) {
         this.baseName = name;
         this.description = description;
-        this.scale = BeautiOptions.NONE;
+        this.scale = PriorScaleType.NONE;
         this.isNodeHeight = false;
         this.isStatistic = false;
         this.taxa = null;
@@ -51,7 +51,7 @@ public class Parameter {
         this.upper = Double.NaN;
     }
 
-    public Parameter(String name, String description, int scale,
+    public Parameter(String name, String description, PriorScaleType scale,
                      double initial, double lower, double upper) {
         this.baseName = name;
         this.description = description;
@@ -79,7 +79,7 @@ public class Parameter {
         this.isNodeHeight = true;
         this.isStatistic = true;
         this.priorType = PriorType.NONE;
-        this.scale = BeautiOptions.TIME_SCALE;
+        this.scale = PriorScaleType.TIME_SCALE;
         this.priorEdited = false;
         this.lower = 0.0;
         this.upper = Double.MAX_VALUE;
@@ -98,7 +98,7 @@ public class Parameter {
         this.isStatistic = true;
         this.isDiscrete = isDiscrete;
         this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scale = BeautiOptions.NONE;
+        this.scale = PriorScaleType.NONE;
         this.priorEdited = false;
         this.initial = Double.NaN;
         this.lower = Double.NaN;
@@ -115,7 +115,7 @@ public class Parameter {
         this.isStatistic = true;
         this.isDiscrete = false;
         this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scale = BeautiOptions.NONE;
+        this.scale = PriorScaleType.NONE;
         this.priorEdited = false;
         this.initial = Double.NaN;
         this.lower = lower;
@@ -136,7 +136,7 @@ public class Parameter {
         this.isNodeHeight = isNodeHeight;
         this.isStatistic = false;
         this.priorType = PriorType.NONE;
-        this.scale = BeautiOptions.TIME_SCALE;
+        this.scale = PriorScaleType.TIME_SCALE;
         this.priorEdited = false;
         this.lower = lower;
         this.upper = upper;
@@ -198,7 +198,7 @@ public class Parameter {
     public PriorType priorType;
     public boolean priorFixed = false;
     public boolean priorEdited;
-    public final int scale;
+    public PriorScaleType scale;
     public double lower;
     public double upper;
 

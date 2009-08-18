@@ -382,7 +382,8 @@ public class BeautiOptions extends ModelOptions {
         }
 
         //up down all rates and trees operator only available for *BEAST and EBSP
-        if (isSpeciesAnalysis() || isEBSPSharingSamePrior()) {
+        if (clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && 
+        		(isSpeciesAnalysis() || isEBSPSharingSamePrior())) {
         	ops.add(getOperator("upDownAllRatesHeights")); 
         }
         

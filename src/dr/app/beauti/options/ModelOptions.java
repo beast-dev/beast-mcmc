@@ -46,8 +46,7 @@ public abstract class ModelOptions {
     public static final int DAYS = 2;
     public static final int FORWARDS = 0;
     public static final int BACKWARDS = 1;
-    public static final int NONE = -1;
-
+    
     public static final int BIN_SIMPLE = 0;
     public static final int BIN_COVARION = 1;
 
@@ -59,16 +58,17 @@ public abstract class ModelOptions {
     public static final int SKYRIDE_UNIFORM_SMOOTHING = 0;
     public static final int SKYRIDE_TIME_AWARE_SMOOTHING = 1;
 
-    public static final int TIME_SCALE = 0;
-    public static final int GROWTH_RATE_SCALE = 1;
-    public static final int BIRTH_RATE_SCALE = 2;
-    public static final int SUBSTITUTION_RATE_SCALE = 3;
-    public static final int LOG_STDEV_SCALE = 4;
-    public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
-    public static final int T50_SCALE = 6;
-    public static final int UNITY_SCALE = 7;
-    public static final int ROOT_RATE_SCALE = 8;
-    public static final int LOG_VAR_SCALE = 9;
+//    public static final int NONE = -1;
+//    public static final int TIME_SCALE = 0;
+//    public static final int GROWTH_RATE_SCALE = 1;
+//    public static final int BIRTH_RATE_SCALE = 2;
+//    public static final int SUBSTITUTION_RATE_SCALE = 3;
+//    public static final int LOG_STDEV_SCALE = 4;
+//    public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
+//    public static final int T50_SCALE = 6;
+//    public static final int UNITY_SCALE = 7;
+//    public static final int ROOT_RATE_SCALE = 8;
+//    public static final int LOG_VAR_SCALE = 9;
 
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
@@ -122,7 +122,7 @@ public abstract class ModelOptions {
         return parameter;
     }
 
-    public Parameter createParameter(String name, String description, int scale, double value, double lower, double upper) {
+    public Parameter createParameter(String name, String description, PriorScaleType scale, double value, double lower, double upper) {
         final Parameter parameter = new Parameter(name, description, scale, value, lower, upper);
         parameters.put(name, parameter);
         return parameter;
@@ -132,7 +132,7 @@ public abstract class ModelOptions {
         parameters.put(name, new Parameter(name, description, isNodeHeight, value, lower, upper));
     }
 
-    public void createScaleParameter(String name, String description, int scale, double value, double lower, double upper) {
+    public void createScaleParameter(String name, String description, PriorScaleType scale, double value, double lower, double upper) {
         Parameter p = createParameter(name, description, scale, value, lower, upper);
         p.priorType = PriorType.JEFFREYS_PRIOR;
     }

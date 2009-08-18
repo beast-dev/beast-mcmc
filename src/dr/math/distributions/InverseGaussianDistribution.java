@@ -171,9 +171,9 @@ public class InverseGaussianDistribution implements Distribution {
         double a = Math.sqrt(shape / x);
         double b = x / m;
         //double p1 = NormalDistribution.cdf(a*(b - 1.0),0.0,1.0);
-        double p1 = NormalDistribution.complicatedCdf(a * (b - 1.0), 0.0, 1.0, false);
+        double p1 = NormalDistribution.cdf(a * (b - 1.0), 0.0, 1.0, false);
         //double p2 = NormalDistribution.cdf(-a*(b + 1.0),0.0,1.0);
-        double p2 = NormalDistribution.complicatedCdf(-a * (b + 1.0), 0.0, 1.0, false);
+        double p2 = NormalDistribution.cdf(-a * (b + 1.0), 0.0, 1.0, false);
         if (p2 == 0.0) {
             return p1;
         }

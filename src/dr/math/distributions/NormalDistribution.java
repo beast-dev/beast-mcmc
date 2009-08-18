@@ -201,7 +201,7 @@ public class NormalDistribution implements Distribution {
      * @param log_p is p logged
      * @return cdf at x
      */
-    public static double complicatedCdf(double x, double mu, double sigma, boolean log_p) {
+    public static double cdf(double x, double mu, double sigma, boolean log_p) {
         boolean i_tail=false;
         double p, cp = Double.NaN;
         

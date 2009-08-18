@@ -112,7 +112,7 @@ public class NormalDistributionTest extends TestCase {
             double m = Math.random() * 10;
             double s = Math.random() * 10;
             
-            double a = NormalDistribution.complicatedCdf(x, m, s, false);
+            double a = NormalDistribution.cdf(x, m, s, false);
             double b =NormalDistribution.cdf(x, m, s);
             
             assertEquals(a, b, 1.0e-8);

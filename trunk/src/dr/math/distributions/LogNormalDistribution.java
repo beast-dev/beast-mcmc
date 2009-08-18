@@ -142,7 +142,8 @@ public class LogNormalDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double M, double S) {
-        return NormalDistribution.cdf(Math.log(x), M, S);
+        return NormalDistribution.cdf(Math.log(x), M, S, false);
+        //return NormalDistribution.cdf(Math.log(x), M, S);
     }
 
     /**

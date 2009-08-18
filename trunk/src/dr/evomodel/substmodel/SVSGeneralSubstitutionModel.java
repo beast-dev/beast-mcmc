@@ -41,8 +41,8 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return rateIndicator;
     }
 
-      public boolean validState() {
-        return !updateMatrix || checkFullyConnected();
+    public boolean validState() {
+        return !updateMatrix || connectedAndWellConditioned();
     }
 
 
@@ -62,25 +62,19 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public double getLogLikelihood() {
         if (updateMatrix) {
-            if (!checkFullyConnected()) {
-                System.err.println("SVSGeneralSubstitutionModel is not fully connected.");
+            if (!connectedAndWellConditioned()) {
                 return Double.NEGATIVE_INFINITY;
             }
         }
         return 0;
     }
 
-    private boolean checkFullyConnected() {
+    private boolean connectedAndWellConditioned() {
         if (probability == null)
             probability = new double[stateCount*stateCount];
 
         getTransitionProbabilities(1.0,probability);
-        final int length = stateCount*stateCount;
-        for(int i=0; i<length; i++) {
-            if(probability[i] == 0)
-                return false;
-        }
-        return true;
+        return Utils.connectedAndWellConditioned(probability);
     }
 
     /**

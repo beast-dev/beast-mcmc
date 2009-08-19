@@ -57,6 +57,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     public static final String SCALING_FACTOR = "scalingFactor";
     public static final String SCALING_THRESHOLD = "scalingThreshold";
     public static final String FORCE_JAVA_CORE = "forceJavaCore";
+    public static final String FORCE_RESCALING = "forceRescaling";
 
     /**
      * Constructor.
@@ -69,7 +70,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                           boolean useAmbiguities,
                           boolean allowMissingTaxa,
                           boolean storePartials,
-                          boolean forceJavaCore) {
+                          boolean forceJavaCore,
+                          boolean forceRescaling) {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
@@ -198,6 +200,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             for (int i = 0; i < intNodeCount; i++) {
                 likelihoodCore.createNodePartials(extNodeCount + i);
             }
+
+            if (forceRescaling) {
+                likelihoodCore.setUseScaling(true);
+                logger.info("  Forcing use of partials rescaling.");
+            }
+
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
@@ -598,13 +606,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             TipPartialsModel tipPartialsModel = (TipPartialsModel) xo.getChild(TipPartialsModel.class);
 
+            boolean forceRescaling = xo.getAttribute(FORCE_RESCALING,false);
+
             return new TreeLikelihood(
                     patternList,
                     treeModel,
                     siteModel,
                     branchRateModel,
                     tipPartialsModel,
-                    useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore);
+                    useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore, forceRescaling);
         }
 
         //************************************************************************
@@ -628,6 +638,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(FORCE_JAVA_CORE, true),
+                AttributeRule.newBooleanRule(FORCE_RESCALING,true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

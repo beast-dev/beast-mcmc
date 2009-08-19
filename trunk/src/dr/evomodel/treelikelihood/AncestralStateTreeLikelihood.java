@@ -46,8 +46,9 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                                         SiteModel siteModel, BranchRateModel branchRateModel,
                                         boolean useAmbiguities, boolean storePartials,
                                         DataType dataType,
-                                        String tag) {
-        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, false);
+                                        String tag,
+                                        boolean forceRescaling) {
+        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, false, forceRescaling);
         this.dataType = dataType;
         this.tag = tag;
 
@@ -283,8 +284,10 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             // default tag is RECONSTRUCTION_TAG
             String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
 
+            boolean forceRescaling = xo.getAttribute(TreeLikelihood.FORCE_RESCALING,false);
+
             return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
-                    branchRateModel, useAmbiguities, storePartials, dataType, tag);
+                    branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling);
         }
 
         //************************************************************************
@@ -307,6 +310,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                 AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
                 AttributeRule.newBooleanRule(STORE_PARTIALS, true),
                 AttributeRule.newStringRule(TAG_NAME, true),
+                AttributeRule.newBooleanRule(TreeLikelihood.FORCE_RESCALING,true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

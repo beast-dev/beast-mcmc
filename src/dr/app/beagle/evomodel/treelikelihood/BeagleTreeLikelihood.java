@@ -69,7 +69,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
                                 boolean useAmbiguities,
-                                boolean alwaysRescale
+                                PartialsRescalingScheme rescalingScheme
     ) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -184,7 +184,23 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            this.alwaysRescale = alwaysRescale;
+            switch(rescalingScheme) {
+                case NONE:
+                    alwaysRescale = false;
+                    allowRescale = false;
+                    break;
+                case ALWAYS_RESCALE:
+                    alwaysRescale = true;
+                    allowRescale = true;
+                    break;
+                case DYNAMIC_RESCALING:
+                    alwaysRescale = false;
+                    allowRescale = true;
+                    break;
+                default:
+                    throw new RuntimeException("Unknown PartialsRescalingScheme in BeagleTreeLikelihood.");                    
+            }
+            logger.info("  Partials scaling scheme used: " + rescalingScheme.getText());
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
@@ -465,7 +481,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
  
         // Attempt dynamic rescaling if over/under-flow
-        if ( !alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
+        if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
             useScaleFactors = true;
             recomputeScaleFactors = true;
@@ -655,6 +671,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected boolean useScaleFactors = false;
     private boolean recomputeScaleFactors = false;
     private boolean alwaysRescale = false;
+    private boolean allowRescale = true;
     
     private boolean storedUseScaleFactors = false;
 

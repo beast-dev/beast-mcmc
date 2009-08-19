@@ -6,6 +6,7 @@ import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -47,7 +48,13 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
 
-        boolean alwaysRescale = xo.getAttribute(TreeLikelihoodParser.ALWAYS_RESCALE,false);
+        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
+        if (xo.hasAttribute(TreeLikelihoodParser.SCALING_SCHEME)) {
+            scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(TreeLikelihoodParser.SCALING_SCHEME));
+            if (scalingScheme == null)
+                throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(TreeLikelihoodParser.SCALING_SCHEME)+"' in "+
+                "AncestralBeagleTreeLikelihood object '"+xo.getId());
+        }
 
 //        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
         return new BeagleTreeLikelihood(
@@ -57,7 +64,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
-                alwaysRescale
+                scalingScheme
 //                ,dataType,
 //                tag
         );
@@ -83,6 +90,6 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
-            AttributeRule.newBooleanRule(TreeLikelihoodParser.ALWAYS_RESCALE,true)
+            AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
     };
 }

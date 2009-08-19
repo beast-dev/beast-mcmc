@@ -19,4 +19,13 @@ public enum PartialsRescalingScheme {
     }
 
     private final String text;
+
+    public static PartialsRescalingScheme parseFromString(String text) {
+        for(PartialsRescalingScheme scheme : PartialsRescalingScheme.values()) {
+            if (scheme.getText().compareToIgnoreCase(text) == 0)
+                return scheme;
+        }
+        return null;
+    }
+
 }

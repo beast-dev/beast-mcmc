@@ -5,6 +5,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -23,7 +24,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String DEVICE_NUMBER = "deviceNumber";
     public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
-    public static final String ALWAYS_RESCALE = "alwaysRescale";
+    public static final String SCALING_SCHEME = "scalingScheme";
 
     public String getParserName() {
         return TREE_LIKELIHOOD;
@@ -43,7 +44,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        boolean alwaysRescale = xo.getAttribute(ALWAYS_RESCALE,false);
+        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
+        if (xo.hasAttribute(SCALING_SCHEME)) {
+            scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
+            if (scalingScheme == null)
+                throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
+                "BeagleTreeLikelihood object '"+xo.getId());
+
+        }
 
         return new BeagleTreeLikelihood(
                 patternList,
@@ -52,7 +60,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
-                alwaysRescale
+                scalingScheme
         );
     }
 
@@ -78,6 +86,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
-            AttributeRule.newBooleanRule(ALWAYS_RESCALE,true),
+            AttributeRule.newStringRule(SCALING_SCHEME,true),
     };
 }

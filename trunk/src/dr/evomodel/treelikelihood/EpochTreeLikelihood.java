@@ -31,7 +31,7 @@ public class EpochTreeLikelihood extends TreeLikelihood {
                           boolean allowMissingTaxa,
                           boolean storePartials,
                           boolean forceJavaCore) {
-		    super(patternList,  treeModel, siteModel, branchRateModel, tipPartialsModel,useAmbiguities,allowMissingTaxa,storePartials,forceJavaCore);
+		    super(patternList,  treeModel, siteModel, branchRateModel, tipPartialsModel,useAmbiguities,allowMissingTaxa,storePartials,forceJavaCore, false);
 
 	    }
 

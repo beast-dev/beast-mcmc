@@ -345,7 +345,8 @@ public class AncestralSequenceAnnotator {
                 rateModel,
                 false, true,
                 alignment.getDataType(),
-                TAG);
+                TAG,
+                false);
 
         logger.setUseParentHandlers(useParentHandlers);
 

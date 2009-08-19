@@ -104,11 +104,26 @@ public class PartitionClockModel extends ModelOptions {
         if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move
             boolean fixed;
+            double selectedRate;
             if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
             	fixed = false;
-            } else {
+            	selectedRate = options.clockModelOptions.getMeanRelativeRate();
+            	
+            } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) { 
+            	// fix ?th partition
             	fixed = !isEstimatedRate;
+            	if (fixed) {
+            		selectedRate = rate;
+            	} else {
+            		selectedRate = options.clockModelOptions.getAverageRate();
+            	}
+            	
+            } else {
+            	// calibration: all isEstimatedRate = true
+            	fixed = false;
+            	selectedRate = 1; //TODO calibration            	
             }
+            
             Parameter rateParam = null;
 
             switch (clockType) {
@@ -116,21 +131,21 @@ public class PartitionClockModel extends ModelOptions {
                 case RANDOM_LOCAL_CLOCK:
                     rateParam = getParameter("clock.rate");
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;      
+                    rateParam.initial = selectedRate;      
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
                     rateParam = getParameter(ClockType.UCED_MEAN);
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;      
+                    rateParam.initial = selectedRate;      
                     if (!fixed) params.add(rateParam);
                     break;
 
                 case UNCORRELATED_LOGNORMAL:
                     rateParam = getParameter(ClockType.UCLD_MEAN);
                     rateParam.isFixed = fixed;
-                    if (fixed) rateParam.initial = rate;      
+                    rateParam.initial = selectedRate;      
                     if (!fixed) params.add(rateParam);
                     params.add(getParameter(ClockType.UCLD_STDEV));
                     break;
@@ -138,6 +153,7 @@ public class PartitionClockModel extends ModelOptions {
                 case AUTOCORRELATED_LOGNORMAL:                    
 //                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
 //                    rateParam.isFixed = fixed;
+//                	  rateParam.initial = selectedRate;      
 //                    if (!fixed) params.add(rateParam);
 //                    
 //                    params.add(getParameter("branchRates.var"));
@@ -146,7 +162,8 @@ public class PartitionClockModel extends ModelOptions {
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
             }   
-//            if (fixed) rateParam.initial = rate;   
+//            if (fixed) rateParam.initial = rate;  
+            rateParam.priorEdited = true;
         }
     }
 
@@ -158,7 +175,8 @@ public class PartitionClockModel extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && isEstimatedRate) {
+            if (  (!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN)) 
+            		&& isEstimatedRate) {
             	switch (clockType) {
 	                case STRICT_CLOCK:
 	                case RANDOM_LOCAL_CLOCK:

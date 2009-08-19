@@ -102,8 +102,42 @@ public class ClockModelOptions extends ModelOptions {
 		this.meanRelativeRate = meanRelativeRate;
 	}
 
-	public double getMeanRelativeRate() {
+	// FixRateType.FIX_MEAN
+	public double getMeanRelativeRate() { 
 		return meanRelativeRate;
+	}
+	
+	// FixRateType.ESTIMATE
+	public double getAverageRate() { //TODO average per tree, but how to control the estimate clock => tree?
+		double averageRate = 0;
+		double count = 0;
+		
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			if (!model.isEstimatedRate()) {
+				averageRate = averageRate + model.getRate();
+				count = count + 1;
+			}
+		}
+		
+		if (count > 0) {
+			averageRate = averageRate / count;
+		}
+		
+		return averageRate;
+	}
+	
+	// Calibration Series Data
+	public double getAverageRateForCalibrationSeriesData() {
+		double averageRate = 0;
+		//TODO
+		return averageRate;
+	}
+	
+	// Calibration TMRCA
+	public double getAverageRateForCalibrationTMRCA() {
+		double averageRate = 0;
+		//TODO
+		return averageRate;
 	}
 
 	public int[] getPartitionClockWeights() {

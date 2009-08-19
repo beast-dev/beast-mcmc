@@ -328,12 +328,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         partialBufferHelper.storeState();
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
-        scaleBufferHelper.storeState();
         
-        if (useScaleFactors && !alwaysRescale) { // Only store when actually used and need to be restored
-        	storedUseScaleFactors = useScaleFactors;
-          storedRecomputeScaleFactors = recomputeScaleFactors;
-        	System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
+        if (useScaleFactors) { // Only store when actually used
+            storedUseScaleFactors = useScaleFactors;
+            scaleBufferHelper.storeState();
+            System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
         }
 
         super.storeState();
@@ -349,16 +348,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         partialBufferHelper.restoreState();
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
-        scaleBufferHelper.restoreState();
         
-        useScaleFactors = storedUseScaleFactors; // this is only useful on a restore immediate after the transition to rescaling;
-        									     // most datasets will hit rescaling on FIRST evaluation
-        
-        if (useScaleFactors && !alwaysRescale) {
-          recomputeScaleFactors = storedRecomputeScaleFactors;
-        	int[] tmp = storedScaleBufferIndices;
-        	storedScaleBufferIndices = scaleBufferIndices;
-        	scaleBufferIndices = tmp;
+        useScaleFactors = storedUseScaleFactors;
+        if (useScaleFactors ) {
+            scaleBufferHelper.restoreState();
+            int[] tmp = storedScaleBufferIndices;
+            storedScaleBufferIndices = scaleBufferIndices;
+            scaleBufferIndices = tmp;
         }
 
         super.restoreState();
@@ -449,8 +445,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 scaleBufferHelper.flipOffset(internalNodeCount);
 
             cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-            beagle.resetScaleFactors(cumulateScaleBufferIndex);
-            beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
+
+            if (alwaysRescale) { // Only needs to be done if the scalings change
+                beagle.resetScaleFactors(cumulateScaleBufferIndex);
+                beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
+            }
         }
 
         beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
@@ -658,7 +657,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean alwaysRescale = false;
     
     private boolean storedUseScaleFactors = false;
-    private boolean storedRecomputeScaleFactors = false;
 
     /**
      * the branch-site model for these sites

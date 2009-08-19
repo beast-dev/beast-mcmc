@@ -26,11 +26,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
-                                              boolean alwaysRescale,
+                                              PartialsRescalingScheme scalingScheme,
                                                DataType dataType,
                                             String tag) {
 
-        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, alwaysRescale);
+        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme);
 
         this.dataType = dataType;
         this.tag = tag;

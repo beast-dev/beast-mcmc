@@ -142,12 +142,14 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 				if (fixedMeanRateCheck.isSelected()) {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
+		        	options.clockModelOptions.estimateAllRates();
 		        } else {
 		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
 		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
-				
-				frame.setDirty();				
+							
+				frame.setDirty();
+				frame.repaint();
 			}
 		});
 		fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the substitution rate<br>"

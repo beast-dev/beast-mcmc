@@ -135,7 +135,7 @@ public class BeautiOptions extends ModelOptions {
         // Data options
         allowDifferentTaxa = false;
         dataType = null;
-        dataReset = true;
+//        dataReset = true;
 
         taxonList = null;
         taxonSets.clear();
@@ -283,7 +283,7 @@ public class BeautiOptions extends ModelOptions {
         double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
 
         for (Parameter param : parameters) {
-            if (dataReset) param.priorEdited = false;
+//            if (dataReset) param.priorEdited = false;
 
             if (!param.priorEdited) {
                 switch (param.scale) {
@@ -346,7 +346,7 @@ public class BeautiOptions extends ModelOptions {
             }
         }
 
-        dataReset = false;
+//        dataReset = false;
 
         return parameters;
     }
@@ -712,9 +712,7 @@ public class BeautiOptions extends ModelOptions {
 
         // # tree prior = 1 or # tree model
         if (shareSameTreePrior) {
-            if (activedSameTreePrior == null) {
-                return activeTrees;
-            } else {
+            if (activedSameTreePrior != null) {
                 activeTrees.add(activedSameTreePrior);
             }
         } else {
@@ -1462,7 +1460,7 @@ public class BeautiOptions extends ModelOptions {
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
-    public boolean dataReset = true;
+//    public boolean dataReset = true;
 
     public Taxa taxonList = null;
 

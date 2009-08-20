@@ -56,7 +56,7 @@ public class OperatorsGenerator extends Generator {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
 //        if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
         // TODO: multi-prior, currently simplify to share same prior case
-        if (options.shareSameTreePrior && options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
+        if (options.shareSameTreePrior && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
             operatorAttributes = new Attribute[2];
             operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {
@@ -532,12 +532,13 @@ public class OperatorsGenerator extends Generator {
 				}
 			}
         }
-        
-        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
-        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
-        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
-        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-        } // nothing for EBSP
+        if (options.isSpeciesAnalysis()) {
+	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+	        } 
+        }// nothing for EBSP
 
         writer.writeCloseTag(UpDownOperator.UP);
         

@@ -53,7 +53,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
     private final PartitionTreePrior partitionTreePrior;
     private boolean settingOptions = false;
 
-    public SpeciesTreesPanel(PartitionTreePrior partitionTreePrior) {
+    public SpeciesTreesPanel(final PartitionTreePrior partitionTreePrior) {
     	super(12, 28); 	
        
     	this.partitionTreePrior = partitionTreePrior;
@@ -63,7 +63,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
         treePriorCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-//                        fireTreePriorsChanged();
+                    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
                     }
                 }
         );
@@ -91,7 +91,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
     public void getOptions() {
     	if (settingOptions) return;
     	
-    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
+//    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
     }
 
 	// @Override

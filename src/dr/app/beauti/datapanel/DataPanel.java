@@ -352,6 +352,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
+            frame.setAllOptions();
         }
 
         dataTableModel.fireTableDataChanged();
@@ -383,8 +384,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
-                PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition.getName(), model);
+//                PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition.getName(), model);
 //                options.addPartitionSubstitutionModel(newModel);
+            	PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition);
                 partition.setPartitionSubstitutionModel(newModel);
             }
         }
@@ -449,7 +451,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionClockModel model = partition.getPartitionClockModel();
             if (!model.getName().equals(partition.getName())) {
                 PartitionClockModel newModel = new PartitionClockModel(options, partition);
-
                 partition.setPartitionClockModel(newModel);
 //                options.addPartitionClockModel(newModel);
             }
@@ -498,15 +499,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName())) {
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
-//                PartitionTreePrior newPrior = new PartitionTreePrior(options, newTree);
-
-                newTree.setPartitionTreePrior(options.activedSameTreePrior); // default is sharing same prior
+                
+                // this prevents partition not broken, and used for unsharing tree prior only, 
+                // because sharing uses shareSameTreePrior, unsharing uses getPartitionTreePrior
+//                newTree.setPartitionTreePrior(newPrior); // important
+                
                 partition.setPartitionTreeModel(newTree);
-
-//                options.addPartitionTreeModel(newTree);
-                options.shareSameTreePrior = true; // default is sharing same prior
-            }
+//                options.addPartitionTreeModel(newTree);                
+            } 
         }
+        
+        options.linkTreePriors(frame.getCurrentPartitionTreePrior());
+        options.shareSameTreePrior = true; // default is sharing same prior       
 
         modelsChanged();
 
@@ -531,7 +535,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                options.addPartitionTreeModel(model);
             }
             PartitionTreePrior prior = model.getPartitionTreePrior();
-            options.activedSameTreePrior = prior;
+            options.linkTreePriors(prior);
             options.shareSameTreePrior = true;
 
             for (int row : selRows) {

@@ -172,7 +172,7 @@ public class STARBEASTGenerator extends Generator {
 
         writer.writeComment("Species Tree: tree prior");
 
-        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree: Birth Death Model");
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
@@ -202,7 +202,7 @@ public class STARBEASTGenerator extends Generator {
             writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
-        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
             writer.writeOpenTag(YuleModel.YULE_MODEL, new Attribute[]{
@@ -222,7 +222,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeCloseTag(YuleModel.YULE_MODEL);
         } else {
-        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
+        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
         }
 
     }
@@ -231,7 +231,7 @@ public class STARBEASTGenerator extends Generator {
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
         writer.writeComment("Species Tree: Likelihood of species tree");
 
-        if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree: Birth Death Model");
 
             writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -241,7 +241,7 @@ public class STARBEASTGenerator extends Generator {
             writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);
             writer.writeCloseTag(SpeciationLikelihood.MODEL);
 
-        } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
             writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -251,7 +251,7 @@ public class STARBEASTGenerator extends Generator {
             writer.writeIDref(YuleModel.YULE_MODEL, YuleModelParser.YULE);
             writer.writeCloseTag(SpeciationLikelihood.MODEL);
         } else {
-        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
+        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
         }
 
         // <sp> tree

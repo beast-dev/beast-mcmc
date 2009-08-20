@@ -203,7 +203,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
     
     public void updateShareSameTreePriorChanged() {
-    	options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
+//    	options.shareSameTreePrior = shareSameTreePriorCheck.isSelected();
 //    	fireShareSameTreePriorChanged ();
     	
     	if (shareSameTreePriorCheck.isSelected()) {
@@ -231,7 +231,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private void updateTreePriorBorder() {
     	if (options.isSpeciesAnalysis()) { 
     		treePriorBorder.setTitle("Species tree prior used to start all gene tree models");
-    	} else if (options.shareSameTreePrior) {
+    	} else if (options.isShareSameTreePrior()) {
         	treePriorBorder.setTitle("Tree prior shared by all tree models");
         } else {
         	treePriorBorder.setTitle("Tree Prior - " + currentTreeModel.getPartitionTreePrior().getName());
@@ -426,7 +426,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         	
         settingOptions = true;
         
-        shareSameTreePriorCheck.setSelected(options.shareSameTreePrior);
+        shareSameTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
         
         for (PartitionTreeModel model : treeModelPanels.keySet()) {
         	if (model != null) {

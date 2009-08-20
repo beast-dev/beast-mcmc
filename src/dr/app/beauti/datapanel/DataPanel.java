@@ -510,7 +510,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
         
         options.linkTreePriors(frame.getCurrentPartitionTreePrior());
-        options.shareSameTreePrior = true; // default is sharing same prior       
+//        options.shareSameTreePrior = true; // default is sharing same prior       
 
         modelsChanged();
 
@@ -536,7 +536,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
             PartitionTreePrior prior = model.getPartitionTreePrior();
             options.linkTreePriors(prior);
-            options.shareSameTreePrior = true;
+//            options.shareSameTreePrior = true;
 
             for (int row : selRows) {
                 PartitionData partition = options.dataPartitions.get(row);

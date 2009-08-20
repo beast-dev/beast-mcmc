@@ -58,18 +58,6 @@ public abstract class ModelOptions {
     public static final int SKYRIDE_UNIFORM_SMOOTHING = 0;
     public static final int SKYRIDE_TIME_AWARE_SMOOTHING = 1;
 
-//    public static final int NONE = -1;
-//    public static final int TIME_SCALE = 0;
-//    public static final int GROWTH_RATE_SCALE = 1;
-//    public static final int BIRTH_RATE_SCALE = 2;
-//    public static final int SUBSTITUTION_RATE_SCALE = 3;
-//    public static final int LOG_STDEV_SCALE = 4;
-//    public static final int SUBSTITUTION_PARAMETER_SCALE = 5;
-//    public static final int T50_SCALE = 6;
-//    public static final int UNITY_SCALE = 7;
-//    public static final int ROOT_RATE_SCALE = 8;
-//    public static final int LOG_VAR_SCALE = 9;
-
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
 

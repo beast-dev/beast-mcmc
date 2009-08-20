@@ -52,7 +52,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
-
+    private JComboBox parameterizationCombo1 = new JComboBox(new String[]{
+            "Doubling Time"});
     private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
             "Piecewise-constant", "Piecewise-linear"});
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
@@ -93,7 +94,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             	partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());                
             }
         });
-                
+        
+        PanelUtils.setupComponent(parameterizationCombo1);
+        parameterizationCombo1.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	partitionTreePrior.setParameterization(parameterizationCombo1.getSelectedIndex());       
+            }
+        });
+        
         PanelUtils.setupComponent(groupCountField);
         groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
 			public void keyTyped(java.awt.event.KeyEvent ev) {
@@ -138,10 +146,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
         if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
-                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC || 
+//                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC || //TODO Issue 93
                 treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
-            addComponentWithLabel("Parameterization for growth:", parameterizationCombo);//TODO Issue 93
-        
+            addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+            
+        } else if (treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC) {//TODO Issue 93
+        	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
+        	partitionTreePrior.setParameterization(parameterizationCombo1.getSelectedIndex());
+
         } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
             groupCountField.setColumns(6);
             addComponentWithLabel("Number of groups:", groupCountField);

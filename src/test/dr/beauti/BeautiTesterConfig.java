@@ -26,8 +26,8 @@
 package test.dr.beauti;
 
 import dr.app.beauti.util.NexusApplicationImporter;
-import dr.app.beauti.enumTypes.AminoAcidModelType;
-import dr.app.beauti.enumTypes.NucModelType;
+import dr.evomodel.substmodel.AminoAcidModelType;
+import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.*;
 import dr.evolution.alignment.Alignment;

@@ -21,48 +21,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.evomodel.substmodel;
 
 /**
  * @author Alexei Drummond
  */
-public enum AminoAcidModelType {
+public enum NucModelType {
 
-    BLOSUM_62("Blosum62", "blosum62"),
-    DAYHOFF("Dayhoff", "dayhoff"),
-    JTT("JTT"),
-    MT_REV_24("mtREV"),
-    CP_REV_45("cpREV"),
-    WAG("WAG");
+    JC, HKY, GTR;
 
-    AminoAcidModelType(String displayName) {
-        this(displayName, displayName);
+    public final String getXMLName() {
+        return name() + "Model";
     }
-
-    AminoAcidModelType(String displayName, String xmlName) {
-        this.displayName = displayName;
-        this.xmlName = xmlName;
-    }
-
-    public String toString() {
-        return displayName;
-    }
-
-
-    public String getXMLName() {
-        return xmlName;
-    }
-
-    public static String[] xmlNames() {
-
-        AminoAcidModelType[] values = values();
-
-        String[] xmlNames = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            xmlNames[i] = values[i].getXMLName();
-        }
-        return xmlNames;
-    }
-
-    String displayName, xmlName;
 }

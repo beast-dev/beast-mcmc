@@ -23,7 +23,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.TaxonList;
 
 /**

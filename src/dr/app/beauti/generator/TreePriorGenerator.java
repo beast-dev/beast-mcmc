@@ -26,6 +26,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.StartingTreeType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;

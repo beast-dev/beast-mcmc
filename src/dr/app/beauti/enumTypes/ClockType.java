@@ -21,48 +21,32 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond
  */
-public enum AminoAcidModelType {
+public enum ClockType {
 
-    BLOSUM_62("Blosum62", "blosum62"),
-    DAYHOFF("Dayhoff", "dayhoff"),
-    JTT("JTT"),
-    MT_REV_24("mtREV"),
-    CP_REV_45("cpREV"),
-    WAG("WAG");
+    STRICT_CLOCK("Strict Clock"),
+    UNCORRELATED_EXPONENTIAL("Relaxed Clock: Uncorrelated Exp"),
+    UNCORRELATED_LOGNORMAL("Relaxed Clock: Uncorrelated Lognormal"),
+    AUTOCORRELATED_LOGNORMAL("Relaxed Clock: Autocorrelated Lognormal"),
+    RANDOM_LOCAL_CLOCK("Random local clock model");
 
-    AminoAcidModelType(String displayName) {
-        this(displayName, displayName);
-    }
 
-    AminoAcidModelType(String displayName, String xmlName) {
+    ClockType(String displayName) {
         this.displayName = displayName;
-        this.xmlName = xmlName;
     }
 
     public String toString() {
         return displayName;
     }
 
+    private final String displayName;
 
-    public String getXMLName() {
-        return xmlName;
-    }
-
-    public static String[] xmlNames() {
-
-        AminoAcidModelType[] values = values();
-
-        String[] xmlNames = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            xmlNames[i] = values[i].getXMLName();
-        }
-        return xmlNames;
-    }
-
-    String displayName, xmlName;
+    final public static String LOCAL_CLOCK = "localClock";
+    final public static String UCED_MEAN = "uced.mean";
+    final public static String UCLD_MEAN = "ucld.mean";
+    final public static String UCLD_STDEV = "ucld.stdev";
 }

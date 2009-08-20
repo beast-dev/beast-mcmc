@@ -1,6 +1,9 @@
 package dr.app.beauti.components;
 
 import dr.app.beauti.util.XMLWriter;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.evolution.util.Taxon;

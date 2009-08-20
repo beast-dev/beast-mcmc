@@ -23,6 +23,8 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.enumTypes.OperatorType;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut

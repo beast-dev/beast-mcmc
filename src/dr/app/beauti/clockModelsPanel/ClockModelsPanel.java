@@ -29,10 +29,10 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.components.SequenceErrorType;
+import dr.app.beauti.enumTypes.SequenceErrorType;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.FixRateType;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.util.PanelUtils;
 
@@ -159,6 +159,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 						+ "informations specified as priors.</html>");// TODO Alexei
 
 		PanelUtils.setupComponent(meanRateField);
+		meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 		meanRateField.setValue(1.0);
 		meanRateField.addKeyListener(new java.awt.event.KeyAdapter() {
 			public void keyTyped(java.awt.event.KeyEvent ev) {

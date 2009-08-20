@@ -25,18 +25,13 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.TreePriorType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 
@@ -47,6 +42,8 @@ import java.util.EnumSet;
  * @version $Id: SpeciesTreesPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SpeciesTreesPanel extends OptionsPanel {
+
+	private static final long serialVersionUID = -2768091530149898538L;
 
 	private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH).toArray());
     

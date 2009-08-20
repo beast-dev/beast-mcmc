@@ -1,4 +1,4 @@
-package dr.app.beauti.priorsPanel;
+package dr.app.beauti.enumTypes;
 
 import dr.app.beauti.options.Parameter;
 

@@ -21,32 +21,25 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
-public enum ClockType {
-
-    STRICT_CLOCK("Strict Clock"),
-    UNCORRELATED_EXPONENTIAL("Relaxed Clock: Uncorrelated Exp"),
-    UNCORRELATED_LOGNORMAL("Relaxed Clock: Uncorrelated Lognormal"),
-    AUTOCORRELATED_LOGNORMAL("Relaxed Clock: Autocorrelated Lognormal"),
-    RANDOM_LOCAL_CLOCK("Random local clock model");
-
-
-    ClockType(String displayName) {
-        this.displayName = displayName;
+public enum FixRateType {
+	TIME_CALIBRATED("Time is calibrated"), // 
+	RATE_CALIBRATED("Rate is calibrated"), //
+	FIX_MEAN("Estimate relative Rate By Fixing Mean"), // 
+    ESTIMATE("Estimate Overall or ?th Partition Rate"); // 
+    
+	FixRateType(String name) {
+        this.name = name;
     }
 
     public String toString() {
-        return displayName;
+        return name;
     }
 
-    private final String displayName;
-
-    final public static String LOCAL_CLOCK = "localClock";
-    final public static String UCED_MEAN = "uced.mean";
-    final public static String UCLD_MEAN = "ucld.mean";
-    final public static String UCLD_STDEV = "ucld.stdev";
+    private final String name;
 }

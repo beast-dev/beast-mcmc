@@ -27,7 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockType;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.CoalescentSimulator;

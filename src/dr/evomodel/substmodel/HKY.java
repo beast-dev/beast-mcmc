@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 

@@ -26,9 +26,9 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
-import dr.app.beauti.options.AminoAcidModelType;
-import dr.app.beauti.options.FrequencyPolicy;
-import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.enumTypes.AminoAcidModelType;
+import dr.app.beauti.enumTypes.FrequencyPolicyType;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
@@ -52,7 +52,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
-    private JComboBox frequencyCombo = new JComboBox(FrequencyPolicy.values());
+    private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 
     private JComboBox heteroCombo = new JComboBox(
             new String[]{"None", "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
@@ -116,7 +116,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                model.setFrequencyPolicy((FrequencyPolicy) frequencyCombo.getSelectedItem());
+                model.setFrequencyPolicy((FrequencyPolicyType) frequencyCombo.getSelectedItem());
             }
         });
         frequencyCombo.setToolTipText("<html>Select the policy for determining the base frequencies.</html>");

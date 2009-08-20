@@ -1,6 +1,7 @@
 package dr.app.beauti.components;
 
 import dr.app.beauti.util.XMLWriter;
+import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.evomodel.treelikelihood.SequenceErrorModel;

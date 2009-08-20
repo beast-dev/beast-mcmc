@@ -21,27 +21,23 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond
  */
-public enum TreePriorType {
+public enum StartingTreeType {
 
-    CONSTANT("Coalescent: Constant Size"),
-    EXPONENTIAL("Coalescent: Exponential Growth"),
-    LOGISTIC("Coalescent: Logistic Growth"),
-    EXPANSION("Coalescent: Expansion Growth"),
-    SKYLINE("Coalescent: Bayesian Skyline"),
-    EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline"),
-    GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
-    YULE("Speciation: Yule Process"),
-    BIRTH_DEATH("Speciation: Birth-Death Process"),
-    SPECIES_YULE("Species Tree: Yule Process"),
-    SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
+    RANDOM("randomly generated"),
+    USER("user-specified"),
+    UPGMA("UPGMA generated");
 
-    TreePriorType(String name) {
+    StartingTreeType(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String toString() {

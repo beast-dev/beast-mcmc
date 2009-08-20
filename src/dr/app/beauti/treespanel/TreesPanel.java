@@ -26,19 +26,12 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.*;
 import dr.app.beauti.options.*;
-import dr.app.tools.TemporalRooting;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.DataType;
-import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.distance.F84DistanceMatrix;
-import dr.evolution.tree.NeighborJoiningTree;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.UPGMATree;
 
 import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
@@ -54,10 +47,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 
 /**

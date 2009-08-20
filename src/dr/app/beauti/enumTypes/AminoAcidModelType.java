@@ -21,25 +21,48 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond
- * @author Walter Xie
  */
-public enum FixRateType {
-	TIME_CALIBRATED("Time is calibrated"), // 
-	RATE_CALIBRATED("Rate is calibrated"), //
-	FIX_MEAN("Estimate relative Rate By Fixing Mean"), // 
-    ESTIMATE("Estimate Overall or ?th Partition Rate"); // 
-    
-	FixRateType(String name) {
-        this.name = name;
+public enum AminoAcidModelType {
+
+    BLOSUM_62("Blosum62", "blosum62"),
+    DAYHOFF("Dayhoff", "dayhoff"),
+    JTT("JTT"),
+    MT_REV_24("mtREV"),
+    CP_REV_45("cpREV"),
+    WAG("WAG");
+
+    AminoAcidModelType(String displayName) {
+        this(displayName, displayName);
+    }
+
+    AminoAcidModelType(String displayName, String xmlName) {
+        this.displayName = displayName;
+        this.xmlName = xmlName;
     }
 
     public String toString() {
-        return name;
+        return displayName;
     }
 
-    private final String name;
+
+    public String getXMLName() {
+        return xmlName;
+    }
+
+    public static String[] xmlNames() {
+
+        AminoAcidModelType[] values = values();
+
+        String[] xmlNames = new String[values.length];
+        for (int i = 0; i < values.length; i++) {
+            xmlNames[i] = values[i].getXMLName();
+        }
+        return xmlNames;
+    }
+
+    String displayName, xmlName;
 }

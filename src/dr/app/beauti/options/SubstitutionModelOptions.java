@@ -25,6 +25,9 @@ package dr.app.beauti.options;
 
 import java.util.List;
 
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.RelativeRatesType;
+
 
 /**
  * @author Alexei Drummond

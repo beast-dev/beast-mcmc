@@ -21,16 +21,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond
  */
-public enum FrequencyPolicy {
+public enum FrequencyPolicyType {
 
-    ESTIMATED("Estimated"), EMPIRICAL("Empirical"), ALLEQUAL("All equal");
+    ESTIMATED("Estimated"), 
+    EMPIRICAL("Empirical"), 
+    ALLEQUAL("All equal");
 
-    FrequencyPolicy(String displayName) {
+    FrequencyPolicyType (String displayName) {
         this.displayName = displayName;
     }
 

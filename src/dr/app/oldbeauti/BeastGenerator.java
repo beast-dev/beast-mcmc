@@ -27,9 +27,9 @@ package dr.app.oldbeauti;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.generator.InitialTreeGenerator;
-import dr.app.beauti.options.AminoAcidModelType;
-import dr.app.beauti.options.ClockType;
-import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.enumTypes.AminoAcidModelType;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;

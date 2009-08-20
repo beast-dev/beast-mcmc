@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.app.beauti.options.AminoAcidModelType;
+import dr.app.beauti.enumTypes.AminoAcidModelType;
 import dr.evolution.datatype.AminoAcids;
 import dr.inference.model.Parameter;
 import dr.xml.*;

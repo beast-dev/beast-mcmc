@@ -68,91 +68,91 @@ public class PriorOptions extends ModelOptions {
     public void selectParameters(List<Parameter> params) {    	    	
 
 
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            double rate = options.clockModelOptions.getMeanRelativeRate();
-
-            growthRateMaximum = 1E6 * rate;
-            birthRateMaximum = 1E6 * rate;
-
-            if (options.hasData()) {
-                initialRootHeight = meanDistance / rate;
-
-                initialRootHeight = round(initialRootHeight, 2);
-            }
-
-        } else {
-            if (maximumTipHeight > 0) {
-                initialRootHeight = maximumTipHeight * 10.0;
-            }
-
-            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
-        }
-
-        double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
-
-        for (Parameter param : params) {
-//            if (dataReset) param.priorEdited = false;
-
-            if (!param.priorEdited) {
-                switch (param.scale) {
-                    case TIME_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-                        param.initial = initialRootHeight;
-                        break;
-                    case T50_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-                        param.initial = initialRootHeight / 5.0;
-                        break;
-                    case GROWTH_RATE_SCALE:
-                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
-                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
-                        break;
-                    case BIRTH_RATE_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
-                        break;
-                    case SUBSTITUTION_RATE_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
-                        param.initial = initialRate;
-                        break;
-                    case LOG_STDEV_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
-                        break;
-                    case SUBSTITUTION_PARAMETER_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
-                        break;
-
-                    case UNITY_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = 1.0;
-                        break;
-
-                    case ROOT_RATE_SCALE:
-                        param.initial = initialRate;
-                        param.gammaAlpha = 0.5;
-                        param.gammaBeta = param.initial / 0.5;
-                        break;
-
-                    case LOG_VAR_SCALE:
-                        param.initial = initialRate;
-                        param.gammaAlpha = 2.0;
-                        param.gammaBeta = param.initial / 2.0;
-                        break;
-
-                }
-                if (param.isNodeHeight) {
-                    param.lower = maximumTipHeight;
-                    param.uniformLower = maximumTipHeight;
-                    param.uniformUpper = timeScaleMaximum;
-                    param.initial = initialRootHeight;
-                }
-            }
-        }
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+//            double rate = options.clockModelOptions.getMeanRelativeRate();
+//
+//            growthRateMaximum = 1E6 * rate;
+//            birthRateMaximum = 1E6 * rate;
+//
+//            if (options.hasData()) {
+//                initialRootHeight = meanDistance / rate;
+//
+//                initialRootHeight = round(initialRootHeight, 2);
+//            }
+//
+//        } else {
+//            if (maximumTipHeight > 0) {
+//                initialRootHeight = maximumTipHeight * 10.0;
+//            }
+//
+//            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
+//        }
+//
+//        double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
+//
+//        for (Parameter param : params) {
+////            if (dataReset) param.priorEdited = false;
+//
+//            if (!param.priorEdited) {
+//                switch (param.scale) {
+//                    case TIME_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
+//                        param.initial = initialRootHeight;
+//                        break;
+//                    case T50_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
+//                        param.initial = initialRootHeight / 5.0;
+//                        break;
+//                    case GROWTH_RATE_SCALE:
+//                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
+//                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
+//                        break;
+//                    case BIRTH_RATE_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
+//                        break;
+//                    case SUBSTITUTION_RATE_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
+//                        param.initial = initialRate;
+//                        break;
+//                    case LOG_STDEV_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
+//                        break;
+//                    case SUBSTITUTION_PARAMETER_SCALE:
+//                        param.uniformLower = Math.max(0.0, param.lower);
+//                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
+//                        break;
+//
+//                    case UNITY_SCALE:
+//                        param.uniformLower = 0.0;
+//                        param.uniformUpper = 1.0;
+//                        break;
+//
+//                    case ROOT_RATE_SCALE:
+//                        param.initial = initialRate;
+//                        param.gammaAlpha = 0.5;
+//                        param.gammaBeta = param.initial / 0.5;
+//                        break;
+//
+//                    case LOG_VAR_SCALE:
+//                        param.initial = initialRate;
+//                        param.gammaAlpha = 2.0;
+//                        param.gammaBeta = param.initial / 2.0;
+//                        break;
+//
+//                }
+//                if (param.isNodeHeight) {
+//                    param.lower = maximumTipHeight;
+//                    param.uniformLower = maximumTipHeight;
+//                    param.uniformUpper = timeScaleMaximum;
+//                    param.initial = initialRootHeight;
+//                }
+//            }
+//        }
 
 //        dataReset = false;
         
@@ -167,26 +167,26 @@ public class PriorOptions extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         double initialRootHeight = 1;
 
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            double rate = options.clockModelOptions.getMeanRelativeRate();
-
-            if (options.hasData()) {
-                initialRootHeight = meanDistance / rate;
-                initialRootHeight = round(initialRootHeight, 2);
-            }
-
-        } else {
-            if (maximumTipHeight > 0) {
-                initialRootHeight = maximumTipHeight * 10.0;
-            }
-        }
-
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            Operator op = tree.getOperator("subtreeSlide");
-            if (!op.tuningEdited) {
-                op.tuning = initialRootHeight / 10.0;
-            }
-        }
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+//            double rate = options.clockModelOptions.getMeanRelativeRate();
+//
+//            if (options.hasData()) {
+//                initialRootHeight = meanDistance / rate;
+//                initialRootHeight = round(initialRootHeight, 2);
+//            }
+//
+//        } else {
+//            if (maximumTipHeight > 0) {
+//                initialRootHeight = maximumTipHeight * 10.0;
+//            }
+//        }
+//
+//        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+//            Operator op = tree.getOperator("subtreeSlide");
+//            if (!op.tuningEdited) {
+//                op.tuning = initialRootHeight / 10.0;
+//            }
+//        }
     }
     
     /////////////////////////////////////////////////////////////

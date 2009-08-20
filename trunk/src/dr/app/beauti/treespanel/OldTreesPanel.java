@@ -31,7 +31,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.StartingTreeType;
-import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.TreePriorType;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
@@ -149,7 +149,7 @@ public class OldTreesPanel extends BeautiPanel {
             }
         };
 
-        treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+        treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(
@@ -301,24 +301,24 @@ public class OldTreesPanel extends BeautiPanel {
         treePriorPanel.removeAll();
 
         treePriorPanel.addComponentWithLabel("Tree Prior:", treePriorCombo);
-        if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
-                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC ||
-                treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
+        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL ||
+                treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC ||
+                treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
             treePriorPanel.addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
             button.setEnabled(true);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
             groupCountField.setColumns(6);
             treePriorPanel.addComponentWithLabel("Number of groups:", groupCountField);
             treePriorPanel.addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
             button.setEnabled(true);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH) {
         	button.setEnabled(true);
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
             treePriorPanel.addComponentWithLabel("Type:", extendedBayesianSkylineCombo);
             button.setEnabled(true);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
             button.setEnabled(true);        
         } else {
@@ -387,16 +387,16 @@ public class OldTreesPanel extends BeautiPanel {
     }
 
     public void getOptions(BeautiOptions options) {
-//        options.nodeHeightPrior = (TreePrior) treePriorCombo.getSelectedItem();
+//        options.nodeHeightPrior = (TreePriorType) treePriorCombo.getSelectedItem();
 //
-//        if (options.nodeHeightPrior == TreePrior.SKYLINE) {
+//        if (options.nodeHeightPrior == TreePriorType.SKYLINE) {
 //            Integer groupCount = groupCountField.getValue();
 //            if (groupCount != null) {
 //                options.skylineGroupCount = groupCount;
 //            } else {
 //                options.skylineGroupCount = 5;
 //            }
-//        } else if (options.nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+//        } else if (options.nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
 ////            Double samplingProportion = samplingProportionField.getValue();
 ////            if (samplingProportion != null) {
 ////                options.birthDeathSamplingProportion = samplingProportion;

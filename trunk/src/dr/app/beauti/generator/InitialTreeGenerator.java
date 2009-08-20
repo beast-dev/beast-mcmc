@@ -160,9 +160,9 @@ public class InitialTreeGenerator extends Generator {
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
     	PartitionTreePrior prior = model.getPartitionTreePrior();
     		
-		if (prior.getNodeHeightPrior() == TreePrior.CONSTANT || options.isSpeciesAnalysis()) {
+		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.isSpeciesAnalysis()) {
         	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
-        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+        } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
         	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
         } else {
         	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");

@@ -11,7 +11,7 @@ import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.RelativeRatesType;
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.TreePriorType;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
@@ -54,9 +54,9 @@ public class OperatorsGenerator extends Generator {
         Attribute[] operatorAttributes;
 //		switch (options.coolingSchedule) {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
-//        if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+//        if (options.nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
         // TODO: multi-prior, currently simplify to share same prior case
-        if (options.isShareSameTreePrior() && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
+        if (options.isShareSameTreePrior() && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
             operatorAttributes = new Attribute[2];
             operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {
@@ -424,7 +424,7 @@ public class OperatorsGenerator extends Generator {
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         // not supported anymore. probably never worked. (todo) get it out of GUI too
-//        if (options.nodeHeightPrior == TreePrior.CONSTANT) {
+//        if (options.nodeHeightPrior == TreePriorType.CONSTANT) {
 //            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
 //        }
         writer.writeCloseTag(WilsonBalding.WILSON_BALDING);
@@ -533,9 +533,9 @@ public class OperatorsGenerator extends Generator {
 			}
         }
         if (options.isSpeciesAnalysis()) {
-	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
-	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
 	        } 
         }// nothing for EBSP

@@ -29,7 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 
 import org.virion.jam.panels.OptionsPanel;
@@ -48,7 +48,7 @@ import java.util.EnumSet;
  */
 public class SpeciesTreesPanel extends OptionsPanel {
 
-	private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePrior.SPECIES_YULE, TreePrior.SPECIES_BIRTH_DEATH).toArray());
+	private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH).toArray());
     
     private final PartitionTreePrior partitionTreePrior;
     private boolean settingOptions = false;
@@ -63,7 +63,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
         treePriorCombo.addItemListener(
                 new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-                    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
+                    	partitionTreePrior.setNodeHeightPrior( (TreePriorType) treePriorCombo.getSelectedItem());
                     }
                 }
         );
@@ -91,7 +91,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
     public void getOptions() {
     	if (settingOptions) return;
     	
-//    	partitionTreePrior.setNodeHeightPrior( (TreePrior) treePriorCombo.getSelectedItem());
+//    	partitionTreePrior.setNodeHeightPrior( (TreePriorType) treePriorCombo.getSelectedItem());
     }
 
 	// @Override

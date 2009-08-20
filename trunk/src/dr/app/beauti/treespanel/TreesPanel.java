@@ -254,7 +254,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     	if (options.isSpeciesAnalysis()) {
 	    	shareSameTreePriorCheck.setEnabled(false);
 	    	
-	        options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePrior.SPECIES_YULE);
+	        options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 	        
 	        options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE); // fix 1st partition
 	        int i =0;
@@ -272,7 +272,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     	} else {
     		shareSameTreePriorCheck.setEnabled(true);
     		    		
-    		options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePrior.CONSTANT);
+    		options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
     		
     		p = new PartitionTreePriorPanel(options.getPartitionTreePriors().get(0), this);
     		   		

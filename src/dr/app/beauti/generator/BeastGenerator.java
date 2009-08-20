@@ -359,7 +359,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
         //++++++++++++++++ Site Model ++++++++++++++++++
-        boolean writeMuParameters = options.hasCodon(); //options.getTotalActivePartitionSubstitutionModelCount() > 1;
+        boolean writeMuParameters = options.substitutionModelOptions.hasCodon(); //options.getTotalActivePartitionSubstitutionModelCount() > 1;
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
@@ -1114,7 +1114,7 @@ public class BeastGenerator extends Generator {
             substitutionModelGenerator.writeLog(writer, model);
         }
 
-        if (options.hasCodon()) {
+        if (options.substitutionModelOptions.hasCodon()) {
             writer.writeIDref(ParameterParser.PARAMETER, "allMus");
         }
         

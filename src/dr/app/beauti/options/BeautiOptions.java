@@ -75,18 +75,18 @@ public class BeautiOptions extends ModelOptions {
     }   
 
     private void initGlobalParaAndOpers() {
-        double rateWeights = 3.0;
-
-        // A vector of relative rates across all partitions...
-        createParameter("allMus", "All the relative rates regarding codon positions");
-
-        // This only works if the partitions are of the same size...
-//      createOperator("centeredMu", "Relative rates",
-//              "Scales codon position rates relative to each other maintaining mean", "allMus",
-//              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
-        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+//        double rateWeights = 3.0;
+//
+//        // A vector of relative rates across all partitions...
+//        createParameter("allMus", "All the relative rates regarding codon positions");
+//
+//        // This only works if the partitions are of the same size...
+////      createOperator("centeredMu", "Relative rates",
+////              "Scales codon position rates relative to each other maintaining mean", "allMus",
+////              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
+//        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+//        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
+//                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
         
         // only available for *BEAST and EBSP
         createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights", "Scales all rates inversely to node heights of the tree", 
@@ -187,6 +187,7 @@ public class BeautiOptions extends ModelOptions {
         substTreeLog = false;
         substTreeFileName.clear();
         
+        substitutionModelOptions = new SubstitutionModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
     }
     
@@ -394,19 +395,20 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
             ops.addAll(model.getOperators());
         }
-
+        substitutionModelOptions.selectOperators(ops);
+        
 //        if (multiplePartitions) {
-        if (hasCodon()) {
-            Operator deltaMuOperator = getOperator("deltaMu");
-
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
-            }
-
-            ops.add(deltaMuOperator);
-        }
+//        if (hasCodon()) {
+//            Operator deltaMuOperator = getOperator("deltaMu");
+//
+//            // update delta mu operator weight
+//            deltaMuOperator.weight = 0.0;
+//            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
+//                deltaMuOperator.weight += pm.getCodonPartitionCount();
+//            }
+//
+//            ops.add(deltaMuOperator);
+//        }
 
         double initialRootHeight = 1;
 
@@ -442,20 +444,6 @@ public class BeautiOptions extends ModelOptions {
         return dataPartitions.size() > 0;
     }
     
-    /**
-     * @return true either if the options have more than one partition or any partition is
-     *         broken into codon positions.
-     */
-    public boolean hasCodon() {
-//        final List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels();
-//        return (models.size() > 1 || models.get(0).getCodonPartitionCount() > 1);
-    	for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            if (model.getCodonPartitionCount() > 1) {
-            	return true;
-            }
-        }
-        return false;
-    }
 //    public boolean isFixedSubstitutionRate() {
 //        return fixedSubstitutionRate;
 //    }
@@ -806,299 +794,6 @@ public class BeautiOptions extends ModelOptions {
 
     }
 
-    /**
-     * return a list of parameters that are required
-     *
-     * @param params the parameter list
-     */
-//    private void selectParameters(List<Parameter> params) {
-//
-//        if (hasData()) {
-//
-//            // if not fixed then do mutation rate move and up/down move
-//            boolean fixed = isFixedSubstitutionRate();
-//            Parameter rateParam;
-//
-//            switch (clockType) {
-//                case STRICT_CLOCK:
-//                    rateParam = getParameter("clock.rate");
-//                    if (!fixed) params.add(rateParam);
-//                    break;
-//
-//                case UNCORRELATED_EXPONENTIAL:
-//                    rateParam = getParameter(ClockType.UCED_MEAN);
-//                    if (!fixed) params.add(rateParam);
-//                    break;
-//
-//                case UNCORRELATED_LOGNORMAL:
-//                    rateParam = getParameter(ClockType.UCLD_MEAN);
-//                    if (!fixed) params.add(rateParam);
-//                    params.add(getParameter(ClockType.UCLD_STDEV));
-//                    break;
-//
-//                case AUTOCORRELATED_LOGNORMAL:
-//                    rateParam = getParameter("treeModel.rootRate");
-//                    if (!fixed) params.add(rateParam);
-//                    params.add(getParameter("branchRates.var"));
-//                    break;
-//
-//                case RANDOM_LOCAL_CLOCK:
-//                    rateParam = getParameter("clock.rate");
-//                    if (!fixed) params.add(rateParam);
-//                    break;
-//
-//                default:
-//                    throw new IllegalArgumentException("Unknown clock model");
-//            }
-//
-//            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-//				rateParam = getParameter("clock.rate");
-//				if (!fixed) params.add(rateParam);
-//			} else {
-//				if (clockType == ClockType.UNCORRELATED_EXPONENTIAL) {
-//					rateParam = getParameter("uced.mean");
-//					if (!fixed) params.add(rateParam);
-//				} else if (clockType == ClockType.UNCORRELATED_LOGNORMAL) {
-//					rateParam = getParameter("ucld.mean");
-//					if (!fixed) params.add(rateParam);
-//					params.add(getParameter("ucld.stdev"));
-//				} else {
-//					throw new IllegalArgumentException("Unknown clock model");
-//				}
-//			}*/
-//
-//            rateParam.isFixed = fixed;
-//
-//        }
-//
-////        if (nodeHeightPrior == TreePrior.CONSTANT) {
-////            params.add(getParameter("constant.popSize"));
-////        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-////            params.add(getParameter("exponential.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                params.add(getParameter("exponential.growthRate"));
-////            } else {
-////                params.add(getParameter("exponential.doublingTime"));
-////            }
-////        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-////            params.add(getParameter("logistic.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                params.add(getParameter("logistic.growthRate"));
-////            } else {
-////                params.add(getParameter("logistic.doublingTime"));
-////            }
-////            params.add(getParameter("logistic.t50"));
-////        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-////            params.add(getParameter("expansion.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                params.add(getParameter("expansion.growthRate"));
-////            } else {
-////                params.add(getParameter("expansion.doublingTime"));
-////            }
-////            params.add(getParameter("expansion.ancestralProportion"));
-////        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-////            params.add(getParameter("skyline.popSize"));
-////        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-////            params.add(getParameter("demographic.populationSizeChanges"));
-////            params.add(getParameter("demographic.populationMean"));
-////        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-//////            params.add(getParameter("skyride.popSize"));
-////            params.add(getParameter("skyride.precision"));
-////        } else if (nodeHeightPrior == TreePrior.YULE) {
-////            params.add(getParameter("yule.birthRate"));
-////        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-////            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-////            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-////        }
-////
-////        params.add(getParameter("treeModel.rootHeight"));
-//    }
-
-//    private void selectStatistics(List<Parameter> params) {
-//
-//        if (taxonSets != null) {
-//            for (Taxa taxonSet : taxonSets) {
-//                Parameter statistic = statistics.get(taxonSet);
-//                if (statistic == null) {
-//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-//                    statistics.put(taxonSet, statistic);
-//                }
-//                params.add(statistic);
-//            }
-//        } else {
-//            System.err.println("TaxonSets are null");
-//        }
-//
-//        if (clockType == ClockType.RANDOM_LOCAL_CLOCK) {
-//            if (localClockRateChangesStatistic == null) {
-//                localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-//                localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-//                localClockRateChangesStatistic.poissonMean = 1.0;
-//                localClockRateChangesStatistic.poissonOffset = 0.0;
-//            }
-//            if (localClockRatesStatistic == null) {
-//                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
-//
-//                localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-//                localClockRatesStatistic.gammaAlpha = 0.5;
-//                localClockRatesStatistic.gammaBeta = 2.0;
-//            }
-//            params.add(localClockRatesStatistic);
-//            params.add(localClockRateChangesStatistic);
-//        }
-//
-//        if (clockType != ClockType.STRICT_CLOCK) {
-//            params.add(getParameter("meanRate"));
-//            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
-//            params.add(getParameter("covariance"));
-//        }
-//
-//    }
-
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-//    private void selectOperators(List<Operator> ops) {
-//
-//        if (hasData()) {
-//
-//            if (!isFixedSubstitutionRate()) {
-//                switch (clockType) {
-//                    case STRICT_CLOCK:
-//                        ops.add(getOperator("clock.rate"));
-//                        ops.add(getOperator("upDownRateHeights"));
-//                        break;
-//
-//                    case UNCORRELATED_EXPONENTIAL:
-//                        ops.add(getOperator(ClockType.UCED_MEAN));
-//                        ops.add(getOperator("upDownUCEDMeanHeights"));
-//                        ops.add(getOperator("swapBranchRateCategories"));
-//                        ops.add(getOperator("randomWalkBranchRateCategories"));
-//                        ops.add(getOperator("unformBranchRateCategories"));
-//                        break;
-//
-//                    case UNCORRELATED_LOGNORMAL:
-//                        ops.add(getOperator(ClockType.UCLD_MEAN));
-//                        ops.add(getOperator(ClockType.UCLD_STDEV));
-//                        ops.add(getOperator("upDownUCLDMeanHeights"));
-//                        ops.add(getOperator("swapBranchRateCategories"));
-//                        ops.add(getOperator("randomWalkBranchRateCategories"));
-//                        ops.add(getOperator("unformBranchRateCategories"));
-//                        break;
-//
-//                    case AUTOCORRELATED_LOGNORMAL:
-//                        ops.add(getOperator("scaleRootRate"));
-//                        ops.add(getOperator("scaleOneRate"));
-//                        ops.add(getOperator("scaleAllRates"));
-//                        ops.add(getOperator("scaleAllRatesIndependently"));
-//                        ops.add(getOperator("upDownAllRatesHeights"));
-//                        ops.add(getOperator("branchRates.var"));
-//                        break;
-//
-//                    case RANDOM_LOCAL_CLOCK:
-//                        ops.add(getOperator("clock.rate"));
-//                        ops.add(getOperator("upDownRateHeights"));
-//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
-//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
-//                        ops.add(getOperator("treeBitMove"));
-//                        break;
-//
-//                    default:
-//                        throw new IllegalArgumentException("Unknown clock model");
-//                }
-//            } else {
-//                switch (clockType) {
-//                    case STRICT_CLOCK:
-//                        // no parameter to operator on
-//                        break;
-//
-//                    case UNCORRELATED_EXPONENTIAL:
-//                        ops.add(getOperator("swapBranchRateCategories"));
-//                        ops.add(getOperator("randomWalkBranchRateCategories"));
-//                        ops.add(getOperator("unformBranchRateCategories"));
-//                        break;
-//
-//                    case UNCORRELATED_LOGNORMAL:
-//                        ops.add(getOperator(ClockType.UCLD_STDEV));
-//                        ops.add(getOperator("swapBranchRateCategories"));
-//                        ops.add(getOperator("randomWalkBranchRateCategories"));
-//                        ops.add(getOperator("unformBranchRateCategories"));
-//                        break;
-//
-//                    case AUTOCORRELATED_LOGNORMAL:
-//                        ops.add(getOperator("scaleOneRate"));
-//                        ops.add(getOperator("scaleAllRatesIndependently"));
-//                        ops.add(getOperator("branchRates.var"));
-//                        break;
-//
-//                    case RANDOM_LOCAL_CLOCK:
-//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
-//                        ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
-//                        ops.add(getOperator("treeBitMove"));
-//                        break;
-//
-//                    default:
-//                        throw new IllegalArgumentException("Unknown clock model");
-//                }
-//            }
-//        }
-//
-////        if (nodeHeightPrior == TreePrior.CONSTANT) {
-////            ops.add(getOperator("constant.popSize"));
-////        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
-////            ops.add(getOperator("exponential.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                ops.add(getOperator("exponential.growthRate"));
-////            } else {
-////                ops.add(getOperator("exponential.doublingTime"));
-////            }
-////        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
-////            ops.add(getOperator("logistic.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                ops.add(getOperator("logistic.growthRate"));
-////            } else {
-////                ops.add(getOperator("logistic.doublingTime"));
-////            }
-////            ops.add(getOperator("logistic.t50"));
-////        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
-////            ops.add(getOperator("expansion.popSize"));
-////            if (parameterization == GROWTH_RATE) {
-////                ops.add(getOperator("expansion.growthRate"));
-////            } else {
-////                ops.add(getOperator("expansion.doublingTime"));
-////            }
-////            ops.add(getOperator("expansion.ancestralProportion"));
-////        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
-////            ops.add(getOperator("skyline.popSize"));
-////            ops.add(getOperator("skyline.groupSize"));
-////        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
-////            ops.add(getOperator("gmrfGibbsOperator"));
-////        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
-////            ops.add(getOperator("demographic.populationMean"));
-////            ops.add(getOperator("demographic.popSize"));
-////            ops.add(getOperator("demographic.indicators"));
-////            ops.add(getOperator("demographic.scaleActive"));
-////        } else if (nodeHeightPrior == TreePrior.YULE) {
-////            ops.add(getOperator("yule.birthRate"));
-////        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
-////            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-////            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-////        }
-////
-////        ops.add(getOperator("treeModel.rootHeight"));
-////        ops.add(getOperator("uniformHeights"));
-////
-////        // if not a fixed tree then sample tree space
-////        if (!fixedTree) {
-////            ops.add(getOperator("subtreeSlide"));
-////            ops.add(getOperator("narrowExchange"));
-////            ops.add(getOperator("wideExchange"));
-////            ops.add(getOperator("wilsonBalding"));
-////        }
-//
-//    }
 
     /**
      * Read options from a file
@@ -1538,6 +1233,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
     
+    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
         
     @Override

@@ -23,10 +23,8 @@
 
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.beauti.components.ComponentFactory;
 
 /**
  * @author Alexei Drummond

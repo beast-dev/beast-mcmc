@@ -1,7 +1,4 @@
-package dr.app.beauti.options;
-
-import dr.app.beauti.options.Parameter;
-
+package dr.app.beauti.enumTypes;
 
 
 /**

@@ -21,7 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.options;
+package dr.app.beauti.enumTypes;
 
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.inference.operators.ScaleOperator;

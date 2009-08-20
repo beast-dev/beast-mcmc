@@ -25,7 +25,7 @@
 
 package dr.app.oldbeauti;
 
-import dr.app.beauti.options.ClockType;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;

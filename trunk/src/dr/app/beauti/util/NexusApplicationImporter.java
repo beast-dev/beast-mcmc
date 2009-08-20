@@ -25,6 +25,8 @@
 
 package dr.app.beauti.util;
 
+import dr.app.beauti.enumTypes.NucModelType;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NexusImporter;

@@ -10,7 +10,7 @@ import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SiteList;
 import dr.evolution.distance.JukesCantorDistanceMatrix;

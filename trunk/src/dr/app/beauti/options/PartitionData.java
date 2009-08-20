@@ -24,7 +24,6 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
-import dr.evolution.datatype.PloidyType;
 
 /**
  * @author Andrew Rambaut

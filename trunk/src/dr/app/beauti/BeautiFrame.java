@@ -12,6 +12,7 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;

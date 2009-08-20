@@ -27,7 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.TreePriorType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
@@ -36,7 +36,6 @@ import org.virion.jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut

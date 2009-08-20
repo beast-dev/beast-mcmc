@@ -26,6 +26,7 @@ package dr.app.beauti.generator;
 import java.util.List;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.branchratemodel.BranchRateModel;

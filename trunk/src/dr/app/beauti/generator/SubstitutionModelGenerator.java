@@ -2,6 +2,8 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.FrequencyPolicyType;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
@@ -194,7 +196,7 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
 
-        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
+        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
         	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
         		for (PartitionData partition : model.getAllPartitionData()) { //?
         			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
@@ -249,7 +251,7 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
         
-        if (model.getFrequencyPolicy() == FrequencyPolicy.EMPIRICAL) {
+        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
         	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
         		for (PartitionData partition : model.getAllPartitionData()) { //?
         			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			

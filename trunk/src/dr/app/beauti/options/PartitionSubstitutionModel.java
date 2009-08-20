@@ -23,6 +23,11 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.enumTypes.AminoAcidModelType;
+import dr.app.beauti.enumTypes.FrequencyPolicyType;
+import dr.app.beauti.enumTypes.NucModelType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.evolution.datatype.DataType;
 
 import java.util.ArrayList;
@@ -51,7 +56,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
 
-    private FrequencyPolicy frequencyPolicy = FrequencyPolicy.ESTIMATED;
+    private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
     private boolean invarHetero = false;
@@ -352,7 +357,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
                 params.add(getParameter("pInv"));
             }
         }
-        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
             if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     params.add(getParameter("CP1.frequencies"));
@@ -397,7 +402,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
 
-                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
                             if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
                                 ops.add(getOperator("CP1.frequencies"));
                                 ops.add(getOperator("CP2.frequencies"));
@@ -425,7 +430,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
                             if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
                                 ops.add(getOperator("CP1+2.frequencies"));
                                 ops.add(getOperator("CP3.frequencies"));
@@ -452,7 +457,7 @@ public class PartitionSubstitutionModel extends ModelOptions {
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }
-                    if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                    if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
                         ops.add(getOperator("frequencies"));
                     }
                 }
@@ -633,11 +638,11 @@ public class PartitionSubstitutionModel extends ModelOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public FrequencyPolicy getFrequencyPolicy() {
+    public FrequencyPolicyType getFrequencyPolicy() {
         return frequencyPolicy;
     }
 
-    public void setFrequencyPolicy(FrequencyPolicy frequencyPolicy) {
+    public void setFrequencyPolicy(FrequencyPolicyType frequencyPolicy) {
         this.frequencyPolicy = frequencyPolicy;
     }
 

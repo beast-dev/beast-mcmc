@@ -1,6 +1,6 @@
 package dr.evomodelxml;
 
-import dr.app.beauti.options.NucModelType;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
 import dr.inference.model.Parameter;

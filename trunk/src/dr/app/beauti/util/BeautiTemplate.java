@@ -31,7 +31,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;

@@ -1,4 +1,4 @@
-package dr.app.beauti.components;
+package dr.app.beauti.enumTypes;
 
 /**
  * @author Alexei Drummond

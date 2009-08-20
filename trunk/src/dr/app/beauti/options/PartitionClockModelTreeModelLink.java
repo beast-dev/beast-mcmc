@@ -25,7 +25,11 @@ package dr.app.beauti.options;
 
 import java.util.List;
 
-import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evomodel.tree.RateStatistic;
 
 /**

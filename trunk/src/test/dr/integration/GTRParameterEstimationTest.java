@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import test.dr.beauti.BeautiTesterConfig;
+import dr.app.beauti.enumTypes.NucModelType;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
 import dr.inference.trace.LogFileTraces;

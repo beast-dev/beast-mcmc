@@ -23,7 +23,10 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.priorsPanel.PriorType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
 

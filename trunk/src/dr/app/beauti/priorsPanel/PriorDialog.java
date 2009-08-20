@@ -25,6 +25,7 @@
 
 package dr.app.beauti.priorsPanel;
 
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
 import dr.gui.chart.Axis;
 import dr.gui.chart.JChart;

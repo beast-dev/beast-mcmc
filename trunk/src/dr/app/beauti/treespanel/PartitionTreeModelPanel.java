@@ -25,22 +25,14 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.options.*;
-import dr.app.tools.TemporalRooting;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.PloidyType;
-import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.distance.F84DistanceMatrix;
-import dr.evolution.tree.NeighborJoiningTree;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.UPGMATree;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
-import java.awt.*;
 import java.awt.event.*;
 
 /**

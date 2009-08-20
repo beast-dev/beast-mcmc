@@ -92,7 +92,7 @@ public class CommandLineBeauti {
         try {
             SAXBuilder parser = new SAXBuilder();
             Document doc = parser.build(file);
-            beautiOptions.parse(doc);
+            beautiOptions.beautiTemplate.parse(doc);
 
         } catch (dr.xml.XMLParseException xpe) {
             System.err.println("Error reading file: This may not be a BEAUti Template file");

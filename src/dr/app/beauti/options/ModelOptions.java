@@ -36,8 +36,8 @@ import java.util.List;
  */
 public abstract class ModelOptions {
 
-    HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
-    HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();    
+	HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     HashMap<String, Operator> operators = new HashMap<String, Operator>();
 
     public static final String version = "1.5";
@@ -76,6 +76,9 @@ public abstract class ModelOptions {
 	protected static final double branchWeights = 30.0;
 	protected static final double treeWeights = 15.0;
 	protected static final double rateWeights = 3.0;
+	
+	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+	   
 	
 	//+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
@@ -212,6 +215,17 @@ public abstract class ModelOptions {
         }
     }
 
-    private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+    public HashMap<String, Parameter> getParameters() {
+		return parameters;
+	}
+
+	public HashMap<TaxonList, Parameter> getStatistics() {
+		return statistics;
+	}
+
+	public HashMap<String, Operator> getOperators() {
+		return operators;
+	}
+
 
 }

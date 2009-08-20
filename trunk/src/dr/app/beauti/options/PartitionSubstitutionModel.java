@@ -213,173 +213,12 @@ public class PartitionSubstitutionModel extends ModelOptions {
 
     ////////////////////////////////////////////////////////////////
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<Operator> getOperators() {
-        List<Operator> operators = new ArrayList<Operator>();
-
-        switch (dataType.getType()) {
-            case DataType.NUCLEOTIDES:
-
-                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                    if (codonHeteroPattern.equals("123")) {
-                        switch (nucSubstitutionModel) {
-                            case HKY:
-                                operators.add(getOperator("CP1.kappa"));
-                                operators.add(getOperator("CP2.kappa"));
-                                operators.add(getOperator("CP3.kappa"));
-                                break;
-
-                            case GTR:
-                                for (int i = 1; i <= 3; i++) {
-                                    for (String rateName : GTR_RATE_NAMES) {
-                                        operators.add(getOperator("CP" + i + "." + rateName));
-                                    }
-                                }
-                                break;
-
-                            default:
-                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                        }
-
-                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
-                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                operators.add(getOperator("CP1.frequencies"));
-                                operators.add(getOperator("CP2.frequencies"));
-                                operators.add(getOperator("CP3.frequencies"));
-                            } else {
-                                operators.add(getOperator("frequencies"));
-                            }
-                        }
-                    } else if (codonHeteroPattern.equals("112")) {
-                        switch (nucSubstitutionModel) {
-                            case HKY:
-                                operators.add(getOperator("CP1+2.kappa"));
-                                operators.add(getOperator("CP3.kappa"));
-                                break;
-
-                            case GTR:
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    operators.add(getOperator("CP1+2." + rateName));
-                                }
-                                for (String rateName : GTR_RATE_NAMES) {
-                                    operators.add(getOperator("CP3." + rateName));
-                                }
-                                break;
-
-                            default:
-                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                        }
-                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
-                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                operators.add(getOperator("CP1+2.frequencies"));
-                                operators.add(getOperator("CP3.frequencies"));
-                            } else {
-                                operators.add(getOperator("frequencies"));
-                            }
-                        }
-
-                    } else {
-                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-                    }
-                } else { // no codon partitioning
-                    switch (nucSubstitutionModel) {
-                        case HKY:
-                            operators.add(getOperator("kappa"));
-                            break;
-
-                        case GTR:
-                            for (String rateName : GTR_RATE_NAMES) {
-                                operators.add(getOperator(rateName));
-                            }
-                            break;
-
-                        default:
-                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                    }
-                    if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
-                        operators.add(getOperator("frequencies"));
-                    }
-                }
-                break;
-
-            case DataType.AMINO_ACIDS:
-                break;
-
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-                switch (binarySubstitutionModel) {
-                    case BIN_SIMPLE:
-                        break;
-
-                    case BIN_COVARION:
-                        operators.add(getOperator("bcov.alpha"));
-                        operators.add(getOperator("bcov.s"));
-                        operators.add(getOperator("bcov.frequencies"));
-                        operators.add(getOperator("bcov.hfrequencies"));
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown binary substitution model");
-                }
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown data type");
-        }
-
-        // if gamma do shape move
-        if (gammaHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    operators.add(getOperator("CP1.alpha"));
-                    operators.add(getOperator("CP2.alpha"));
-                    operators.add(getOperator("CP3.alpha"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    operators.add(getOperator("CP1+2.alpha"));
-                    operators.add(getOperator("CP3.alpha"));
-                } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-                }
-            } else {
-                operators.add(getOperator("alpha"));
-            }
-        }
-        // if pinv do pinv move
-        if (invarHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    operators.add(getOperator("CP1.pInv"));
-                    operators.add(getOperator("CP2.pInv"));
-                    operators.add(getOperator("CP3.pInv"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    operators.add(getOperator("CP1+2.pInv"));
-                    operators.add(getOperator("CP3.pInv"));
-                } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-                }
-            } else {
-                operators.add(getOperator("pInv"));
-            }
-        }
-
-        return operators;
-    }
-
     /**
      * @param includeRelativeRates true if relative rate parameters should be added
      * @return a list of parameters that are required
      */
-    List<Parameter> getParameters() {
-    	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
-    	
-        List<Parameter> params = new ArrayList<Parameter>();
+    public void selectParameters(List<Parameter> params) {
+    	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -529,8 +368,156 @@ public class PartitionSubstitutionModel extends ModelOptions {
                 params.add(getParameter("frequencies"));
             }
 
+        }        
+    }
+
+    public void selectOperators(List<Operator> ops) {
+        
+        switch (dataType.getType()) {
+            case DataType.NUCLEOTIDES:
+
+                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                ops.add(getOperator("CP1.kappa"));
+                                ops.add(getOperator("CP2.kappa"));
+                                ops.add(getOperator("CP3.kappa"));
+                                break;
+
+                            case GTR:
+                                for (int i = 1; i <= 3; i++) {
+                                    for (String rateName : GTR_RATE_NAMES) {
+                                        ops.add(getOperator("CP" + i + "." + rateName));
+                                    }
+                                }
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                        }
+
+                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                                ops.add(getOperator("CP1.frequencies"));
+                                ops.add(getOperator("CP2.frequencies"));
+                                ops.add(getOperator("CP3.frequencies"));
+                            } else {
+                                ops.add(getOperator("frequencies"));
+                            }
+                        }
+                    } else if (codonHeteroPattern.equals("112")) {
+                        switch (nucSubstitutionModel) {
+                            case HKY:
+                                ops.add(getOperator("CP1+2.kappa"));
+                                ops.add(getOperator("CP3.kappa"));
+                                break;
+
+                            case GTR:
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    ops.add(getOperator("CP1+2." + rateName));
+                                }
+                                for (String rateName : GTR_RATE_NAMES) {
+                                    ops.add(getOperator("CP3." + rateName));
+                                }
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                        }
+                        if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                                ops.add(getOperator("CP1+2.frequencies"));
+                                ops.add(getOperator("CP3.frequencies"));
+                            } else {
+                                ops.add(getOperator("frequencies"));
+                            }
+                        }
+
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
+                } else { // no codon partitioning
+                    switch (nucSubstitutionModel) {
+                        case HKY:
+                            ops.add(getOperator("kappa"));
+                            break;
+
+                        case GTR:
+                            for (String rateName : GTR_RATE_NAMES) {
+                                ops.add(getOperator(rateName));
+                            }
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown nucleotides substitution model");
+                    }
+                    if (frequencyPolicy == FrequencyPolicy.ESTIMATED) {
+                        ops.add(getOperator("frequencies"));
+                    }
+                }
+                break;
+
+            case DataType.AMINO_ACIDS:
+                break;
+
+            case DataType.TWO_STATES:
+            case DataType.COVARION:
+                switch (binarySubstitutionModel) {
+                    case BIN_SIMPLE:
+                        break;
+
+                    case BIN_COVARION:
+                        ops.add(getOperator("bcov.alpha"));
+                        ops.add(getOperator("bcov.s"));
+                        ops.add(getOperator("bcov.frequencies"));
+                        ops.add(getOperator("bcov.hfrequencies"));
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unknown binary substitution model");
+                }
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown data type");
         }
-        return params;
+
+        // if gamma do shape move
+        if (gammaHetero) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                if (codonHeteroPattern.equals("123")) {
+                    ops.add(getOperator("CP1.alpha"));
+                    ops.add(getOperator("CP2.alpha"));
+                    ops.add(getOperator("CP3.alpha"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    ops.add(getOperator("CP1+2.alpha"));
+                    ops.add(getOperator("CP3.alpha"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                }
+            } else {
+                ops.add(getOperator("alpha"));
+            }
+        }
+        // if pinv do pinv move
+        if (invarHetero) {
+            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+                if (codonHeteroPattern.equals("123")) {
+                    ops.add(getOperator("CP1.pInv"));
+                    ops.add(getOperator("CP2.pInv"));
+                    ops.add(getOperator("CP3.pInv"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    ops.add(getOperator("CP1+2.pInv"));
+                    ops.add(getOperator("CP3.pInv"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                }
+            } else {
+                ops.add(getOperator("pInv"));
+            }
+        }
+
     }
 
     public int getCodonPartitionCount() {
@@ -592,6 +579,14 @@ public class PartitionSubstitutionModel extends ModelOptions {
         operator.setPrefix(getPrefix());
 
         return operator;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String toString() {

@@ -23,15 +23,14 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.AminoAcidModelType;
+import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.NucModelType;
+import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.evolution.datatype.DataType;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

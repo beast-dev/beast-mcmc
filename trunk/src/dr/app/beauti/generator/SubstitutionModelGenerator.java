@@ -3,7 +3,7 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.NucModelType;
+import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;

@@ -26,9 +26,9 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
-import dr.app.beauti.enumTypes.AminoAcidModelType;
+import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.NucModelType;
+import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
@@ -47,8 +47,9 @@ import java.util.logging.Logger;
 public class PartitionModelPanel extends OptionsPanel {
 
     // Components
-
-    private JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
+	private static final long serialVersionUID = -1645661616353099424L;
+	
+	private JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 

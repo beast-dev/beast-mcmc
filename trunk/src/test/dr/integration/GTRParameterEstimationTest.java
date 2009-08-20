@@ -5,12 +5,11 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import test.dr.beauti.BeautiTesterConfig;
-import dr.app.beauti.enumTypes.NucModelType;
+import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 
 

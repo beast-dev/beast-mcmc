@@ -126,7 +126,11 @@ public class PartitionTreeModel extends ModelOptions {
     	getParameter("treeModel.internalNodeHeights");
     	getParameter("treeModel.allInternalNodeHeights");    	
     	
-        params.add(getParameter("treeModel.rootHeight"));
+        if (options.isSpeciesAnalysis()) {
+        	getParameter("treeModel.rootHeight");
+        } else {
+        	params.add(getParameter("treeModel.rootHeight"));
+        }
     }
 
     /**

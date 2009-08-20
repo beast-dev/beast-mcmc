@@ -42,7 +42,7 @@ public class MutationDeathType extends DataType {
 
         initialize_internals();
         for (i = 0; i < x.getStateCount(); ++i) {  /* Copy unique codes */
-            stateCode = x.getChar(i);
+            stateCode = x.getCode(i).charAt(0);
             this.codes[stateCode] = new int[]{i};
             stateCodes[i] = stateCode;
         }
@@ -54,10 +54,13 @@ public class MutationDeathType extends DataType {
         for (i = 0; i < 128; ++i) {
             int state = x.getState((char) i);
             if (state > 0 && state < 128 && x.isAmbiguousState(state) && i != deathCode) {
-                int[] states = x.getStates(state);
-                this.codes[i] = new int[states.length];
-                System.arraycopy(states, 0, this.codes[i], 0, states.length);
+                if (!x.isUnknownState(state)) {
+                    int[] states = x.getStates(state);
+                    this.codes[i] = new int[states.length];
+                    System.arraycopy(states, 0, this.codes[i], 0, states.length);
+                }
             }
+
         }
         ambiguousStateCount = x.getAmbiguousStateCount() + 1;
     }

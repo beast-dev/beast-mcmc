@@ -150,7 +150,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Tree Prior ++++++++++++++++++
         if (options.isShareSameTreePrior()) {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                if (prior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
+                if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
                     throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
                             "\nPlease uncheck the shareSameTreePrior if using GMRF.");
                 }
@@ -166,7 +166,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Species tree ++++++++++++++++++
         if (options.isSpeciesAnalysis()) {
-//        	if (!(options.nodeHeightPrior == TreePrior.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePrior.SPECIES_YULE)) {
+//        	if (!(options.nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePriorType.SPECIES_YULE)) {
 //        		//TODO: more species tree model
 //        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
 //        	}
@@ -880,7 +880,7 @@ public class BeastGenerator extends Generator {
             // coalescent prior
             writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
-//            if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
+//            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
 //            } else {
 //                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
@@ -1068,7 +1068,7 @@ public class BeastGenerator extends Generator {
             // coalescent prior
             writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
-//            if (options.speciesTreePrior == TreePrior.SPECIES_YULE) {
+//            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
 //            } else {
 //                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
@@ -1079,10 +1079,10 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
 
-            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             } else {
             	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
@@ -1150,7 +1150,7 @@ public class BeastGenerator extends Generator {
         }       
         
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) 
+        	if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) 
         		writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
         }
         

@@ -27,7 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.TreePrior;
+import dr.app.beauti.options.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
@@ -48,7 +48,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 5016996360264782252L;
 
-    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 
     private JComboBox parameterizationCombo = new JComboBox(new String[]{
             "Growth Rate", "Doubling Time"});
@@ -83,7 +83,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
+            	partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                 setupPanel();
             }
         });
@@ -145,37 +145,37 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-        if (treePriorCombo.getSelectedItem() == TreePrior.EXPONENTIAL ||
-//                treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC || //TODO Issue 93
-                treePriorCombo.getSelectedItem() == TreePrior.EXPANSION) {
+        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL ||
+//                treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC || //TODO Issue 93
+                treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
             addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
             
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.LOGISTIC) {//TODO Issue 93
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC) {//TODO Issue 93
         	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
         	partitionTreePrior.setParameterization(parameterizationCombo1.getSelectedIndex());
 
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.SKYLINE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
             groupCountField.setColumns(6);
             addComponentWithLabel("Number of groups:", groupCountField);
             addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.BIRTH_DEATH) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH) {
 
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
             addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
             treesPanel.shareSameTreePriorCheck.setSelected(true);
             treesPanel.updateShareSameTreePriorChanged();
             
 //            treesPanel.getFrame().setupEBSP(); TODO
 
-        } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
 
         }
 
-        if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
+        if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
             addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
                     "\nThe shareSameTreePrior has to be unchecked using GMRF.");
@@ -237,16 +237,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     public void getOptions() {
         if (settingOptions) return;
 
-//        partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
+//        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
 
-        if (partitionTreePrior.getNodeHeightPrior() == TreePrior.SKYLINE) {
+        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {
             Integer groupCount = groupCountField.getValue();
             if (groupCount != null) {
                 partitionTreePrior.setSkylineGroupCount(groupCount);
             } else {
                 partitionTreePrior.setSkylineGroupCount(5);
             }
-        } else if (partitionTreePrior.getNodeHeightPrior() == TreePrior.BIRTH_DEATH) {
+        } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
 //            Double samplingProportion = samplingProportionField.getValue();
 //            if (samplingProportion != null) {
 //                partitionTreePrior.birthDeathSamplingProportion = samplingProportion;
@@ -266,14 +266,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     }
 
     public void removeCertainPriorFromTreePriorCombo() {
-        treePriorCombo.removeItem(TreePrior.YULE);
-        treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+        treePriorCombo.removeItem(TreePriorType.YULE);
+        treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
     }
 
     public void recoveryTreePriorCombo() {
-        if (treePriorCombo.getItemCount() < EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).size()) {
-            treePriorCombo.addItem(TreePrior.YULE);
-            treePriorCombo.addItem(TreePrior.BIRTH_DEATH);
+        if (treePriorCombo.getItemCount() < EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).size()) {
+            treePriorCombo.addItem(TreePriorType.YULE);
+            treePriorCombo.addItem(TreePriorType.BIRTH_DEATH);
         }
     }
 }

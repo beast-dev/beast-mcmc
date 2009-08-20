@@ -77,7 +77,7 @@ public class TreePriorGenerator extends Generator {
 
         String initialPopSize = null;
 
-        TreePrior nodeHeightPrior = prior.getNodeHeightPrior();
+        TreePriorType nodeHeightPrior = prior.getNodeHeightPrior();
         Units.Type units = options.units;
         int parameterization = prior.getParameterization();
 
@@ -290,7 +290,7 @@ public class TreePriorGenerator extends Generator {
 	            break;	            
         }
 
-        if ((!options.isSpeciesAnalysis()) && nodeHeightPrior != TreePrior.CONSTANT && nodeHeightPrior != TreePrior.EXPONENTIAL) {
+        if ((!options.isSpeciesAnalysis()) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
             // If the node height prior is not one of these two then we need to simulate a
             // random starting tree under a constant size coalescent.
 
@@ -327,7 +327,7 @@ public class TreePriorGenerator extends Generator {
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
     	String priorPrefix = prior.getPrefix();
 
-        TreePrior treePrior = prior.getNodeHeightPrior();
+        TreePriorType treePrior = prior.getNodeHeightPrior();
         
         switch (treePrior) {
     		case YULE:
@@ -485,7 +485,7 @@ public class TreePriorGenerator extends Generator {
     }
 
     void writeNodeHeightPriorModelRef(PartitionTreePrior prior, XMLWriter writer) {    	
-    	TreePrior treePrior = prior.getNodeHeightPrior();
+    	TreePriorType treePrior = prior.getNodeHeightPrior();
     	String priorPrefix = prior.getPrefix();
     	
         switch (treePrior) {
@@ -522,7 +522,7 @@ public class TreePriorGenerator extends Generator {
     
     void writeEBSPVariableDemographic(PartitionTreePrior prior, XMLWriter writer) {
     	
-    	if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {
+    	if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
     		
 	    	setModelPrefix(prior.getPrefix());
 	    	    	
@@ -680,7 +680,7 @@ public class TreePriorGenerator extends Generator {
     	
         String logFileName = options.logFileName;
 
-        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {
+        if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
             writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + "demographic.analysis"),
                     new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1),
@@ -808,7 +808,7 @@ public class TreePriorGenerator extends Generator {
         setModelPrefix(prior.getPrefix());
         	
         //TODO: make suitable for *BEAST
-        if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) { 
+        if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) { 
         	
         	writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT); // only 1 coalescent
         	

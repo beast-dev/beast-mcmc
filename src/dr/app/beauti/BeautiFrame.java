@@ -870,7 +870,7 @@ public class BeautiFrame extends DocumentFrame {
         }
         
 //        beautiOptions.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.SPECIES_YULE);
+//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 //        
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
@@ -886,7 +886,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public void removeSepciesAnalysisSetup() {
-//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePrior.CONSTANT);
+//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
 //        
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
@@ -918,10 +918,10 @@ public class BeautiFrame extends DocumentFrame {
 			treesPanel.setCheckedTipDate(isChecked);
 		} else {
 			if (isChecked) {
-				oldTreesPanel.treePriorCombo.removeItem(TreePrior.YULE);
-				oldTreesPanel.treePriorCombo.removeItem(TreePrior.BIRTH_DEATH);
+				oldTreesPanel.treePriorCombo.removeItem(TreePriorType.YULE);
+				oldTreesPanel.treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
 			} else {
-				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePrior.CONSTANT, TreePrior.BIRTH_DEATH).toArray());
+				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 			}
 		}    	
     }

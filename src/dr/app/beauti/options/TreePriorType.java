@@ -26,7 +26,7 @@ package dr.app.beauti.options;
 /**
  * @author Alexei Drummond
  */
-public enum TreePrior {
+public enum TreePriorType {
 
     CONSTANT("Coalescent: Constant Size"),
     EXPONENTIAL("Coalescent: Exponential Growth"),
@@ -40,7 +40,7 @@ public enum TreePrior {
     SPECIES_YULE("Species Tree: Yule Process"),
     SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
 
-    TreePrior(String name) {
+    TreePriorType(String name) {
         this.name = name;
     }
 

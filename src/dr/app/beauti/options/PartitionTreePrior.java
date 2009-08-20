@@ -44,7 +44,7 @@ public class PartitionTreePrior extends ModelOptions {
 
     private PartitionTreeModel treeModel; // only used when not sharing same prior
 
-    private TreePrior nodeHeightPrior = TreePrior.CONSTANT;
+    private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
     private int parameterization = GROWTH_RATE;
     private int skylineGroupCount = 10;
     private int skylineModel = CONSTANT_SKYLINE;
@@ -174,16 +174,16 @@ public class PartitionTreePrior extends ModelOptions {
      */
     public void selectParameters(List<Parameter> params) {
 
-        if (nodeHeightPrior == TreePrior.CONSTANT) {
+        if (nodeHeightPrior == TreePriorType.CONSTANT) {
             params.add(getParameter("constant.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+        } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {
             params.add(getParameter("exponential.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("exponential.growthRate"));
             } else {
                 params.add(getParameter("exponential.doublingTime"));
             }
-        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+        } else if (nodeHeightPrior == TreePriorType.LOGISTIC) {
             params.add(getParameter("logistic.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("logistic.growthRate"));
@@ -191,7 +191,7 @@ public class PartitionTreePrior extends ModelOptions {
                 params.add(getParameter("logistic.doublingTime"));
             }
             params.add(getParameter("logistic.t50"));
-        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+        } else if (nodeHeightPrior == TreePriorType.EXPANSION) {
             params.add(getParameter("expansion.popSize"));
             if (parameterization == GROWTH_RATE) {
                 params.add(getParameter("expansion.growthRate"));
@@ -199,17 +199,17 @@ public class PartitionTreePrior extends ModelOptions {
                 params.add(getParameter("expansion.doublingTime"));
             }
             params.add(getParameter("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
             params.add(getParameter("skyline.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+        } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
             params.add(getParameter("demographic.populationSizeChanges"));
             params.add(getParameter("demographic.populationMean"));
-        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+        } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
 //            params.add(getParameter("skyride.popSize"));
             params.add(getParameter("skyride.precision"));
-        } else if (nodeHeightPrior == TreePrior.YULE) {
+        } else if (nodeHeightPrior == TreePriorType.YULE) {
             params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
             params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
         }
@@ -223,16 +223,16 @@ public class PartitionTreePrior extends ModelOptions {
      */
     public void selectOperators(List<Operator> ops) {
 
-        if (nodeHeightPrior == TreePrior.CONSTANT) {
+        if (nodeHeightPrior == TreePriorType.CONSTANT) {
             ops.add(getOperator("constant.popSize"));
-        } else if (nodeHeightPrior == TreePrior.EXPONENTIAL) {
+        } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {
             ops.add(getOperator("exponential.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("exponential.growthRate"));
             } else {
                 ops.add(getOperator("exponential.doublingTime"));
             }
-        } else if (nodeHeightPrior == TreePrior.LOGISTIC) {
+        } else if (nodeHeightPrior == TreePriorType.LOGISTIC) {
             ops.add(getOperator("logistic.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("logistic.growthRate"));
@@ -240,7 +240,7 @@ public class PartitionTreePrior extends ModelOptions {
                 ops.add(getOperator("logistic.doublingTime"));
             }
             ops.add(getOperator("logistic.t50"));
-        } else if (nodeHeightPrior == TreePrior.EXPANSION) {
+        } else if (nodeHeightPrior == TreePriorType.EXPANSION) {
             ops.add(getOperator("expansion.popSize"));
             if (parameterization == GROWTH_RATE) {
                 ops.add(getOperator("expansion.growthRate"));
@@ -248,19 +248,19 @@ public class PartitionTreePrior extends ModelOptions {
                 ops.add(getOperator("expansion.doublingTime"));
             }
             ops.add(getOperator("expansion.ancestralProportion"));
-        } else if (nodeHeightPrior == TreePrior.SKYLINE) {
+        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
             ops.add(getOperator("skyline.popSize"));
             ops.add(getOperator("skyline.groupSize"));
-        } else if (nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
+        } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
-        } else if (nodeHeightPrior == TreePrior.EXTENDED_SKYLINE) {
+        } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));
             ops.add(getOperator("demographic.indicators"));
             ops.add(getOperator("demographic.scaleActive"));
-        } else if (nodeHeightPrior == TreePrior.YULE) {
+        } else if (nodeHeightPrior == TreePriorType.YULE) {
             ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePrior.BIRTH_DEATH) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
             ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
         }
@@ -324,11 +324,11 @@ public class PartitionTreePrior extends ModelOptions {
 //        this.treeModel = treeModel;
 //    }
 
-    public TreePrior getNodeHeightPrior() {
+    public TreePriorType getNodeHeightPrior() {
         return nodeHeightPrior;
     }
 
-    public void setNodeHeightPrior(TreePrior nodeHeightPrior) {
+    public void setNodeHeightPrior(TreePriorType nodeHeightPrior) {
         this.nodeHeightPrior = nodeHeightPrior;
     }
 

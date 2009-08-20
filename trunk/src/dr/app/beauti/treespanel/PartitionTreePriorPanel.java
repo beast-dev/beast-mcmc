@@ -25,6 +25,7 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.TreePrior;
 import dr.app.beauti.util.PanelUtils;
@@ -35,6 +36,7 @@ import org.virion.jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -66,65 +68,73 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //	private BeautiFrame frame = null;
 //	private BeautiOptions options = null;
 
-    private final PartitionTreePrior partitionTreePrior;
+    PartitionTreePrior partitionTreePrior;
     private final TreesPanel treesPanel;
 
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, TreesPanel parent) {    	
+    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {    	
     	super(12, 8);
 
-        this.partitionTreePrior = partitionTreePrior;
+        this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;
 
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-//	                        fireTreePriorsChanged();
+            	partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
                 setupPanel();
             }
-        }
-        );
-
-        KeyListener keyListener = new KeyAdapter() {
-            public void keyTyped(KeyEvent ev) {
-                if (ev.getKeyCode() == KeyEvent.VK_ENTER) {
-//	                    fireTreePriorsChanged();
-                }
-            }
-        };
-        groupCountField.addKeyListener(keyListener);
-//	        samplingProportionField.addKeyListener(keyListener);
-
-        FocusListener focusListener = new FocusAdapter() {
-            public void focusLost(FocusEvent focusEvent) {
-//	                fireTreePriorsChanged();
-            }
-        };
-        groupCountField.addFocusListener(focusListener);
-//	        samplingProportionField.addFocusListener(focusListener);
-
-
-        ItemListener listener = new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-//	                fireTreePriorsChanged();
-            }
-        };
+        });
+        
         PanelUtils.setupComponent(parameterizationCombo);
-        parameterizationCombo.addItemListener(listener);
+        parameterizationCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());                
+            }
+        });
         
         PanelUtils.setupComponent(parameterizationCombo1);
-        parameterizationCombo1.addItemListener(listener);
-
+        parameterizationCombo1.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	//TODO     TreePrior.LOGISTIC       
+            }
+        });
+        
+        PanelUtils.setupComponent(groupCountField);
+        groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
+			public void keyTyped(java.awt.event.KeyEvent ev) {
+				// move to here?
+			}
+		});
+        
+        
         PanelUtils.setupComponent(bayesianSkylineCombo);
-        bayesianSkylineCombo.addItemListener(listener);
-
+        bayesianSkylineCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
+            }
+        });
+        
         PanelUtils.setupComponent(extendedBayesianSkylineCombo);
-        extendedBayesianSkylineCombo.addItemListener(listener);
+        extendedBayesianSkylineCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) 
+            			extendedBayesianSkylineCombo.getSelectedItem()).toString());
+            }
+        });
 
         PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
-        gmrfBayesianSkyrideCombo.addItemListener(listener);
+        gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
+            }
+        });
+        
+        
+        
+//	        samplingProportionField.addKeyListener(keyListener);
 
         setupPanel();
     }
@@ -154,8 +164,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         } else if (treePriorCombo.getSelectedItem() == TreePrior.EXTENDED_SKYLINE) {
             addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
+            treesPanel.shareSameTreePriorCheck.setSelected(true);
+            treesPanel.updateShareSameTreePriorChanged();
             
-            treesPanel.getFrame().setupEBSP();
+//            treesPanel.getFrame().setupEBSP(); TODO
 
         } else if (treePriorCombo.getSelectedItem() == TreePrior.GMRF_SKYRIDE) {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
@@ -172,13 +184,18 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             treesPanel.updateShareSameTreePriorChanged();
         } else {
             treesPanel.shareSameTreePriorCheck.setEnabled(true);
-            treesPanel.shareSameTreePriorCheck.setSelected(true);
-            treesPanel.updateShareSameTreePriorChanged();
+//            treesPanel.shareSameTreePriorCheck.setSelected(true);
+//            treesPanel.updateShareSameTreePriorChanged();
         }
         
-        getOptions();
-        
-        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
+//        getOptions();
+//        
+//        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
+        for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
+        	if (model != null) {
+        		treesPanel.treeModelPanels.get(model).setOptions();
+        	}
+     	}
         
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
@@ -219,7 +236,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     public void getOptions() {
         if (settingOptions) return;
 
-        partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
+//        partitionTreePrior.setNodeHeightPrior((TreePrior) treePriorCombo.getSelectedItem());
 
         if (partitionTreePrior.getNodeHeightPrior() == TreePrior.SKYLINE) {
             Integer groupCount = groupCountField.getValue();
@@ -237,11 +254,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //            }
         }
 
-        partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());
-        partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
-        partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) extendedBayesianSkylineCombo.getSelectedItem()).toString());
-
-        partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
+//        partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());
+//        partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
+//        partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) extendedBayesianSkylineCombo.getSelectedItem()).toString());
+//
+//        partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
         // the taxon list may not exist yet... this should be set when generating...
 //        partitionTreePrior.skyrideIntervalCount = partitionTreePrior.taxonList.getTaxonCount() - 1;
 

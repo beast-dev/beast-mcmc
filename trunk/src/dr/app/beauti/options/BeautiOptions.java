@@ -155,7 +155,7 @@ public class BeautiOptions extends ModelOptions {
 //        partitionTreeModels.clear();
 //        partitionTreePriors.clear();
         partitionClockTreeLinks.clear();
-        activedSameTreePrior = null;
+//        activedSameTreePrior = null;
         shareSameTreePrior = true;
         userTrees.clear();
 
@@ -502,10 +502,10 @@ public class BeautiOptions extends ModelOptions {
 
         params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
-        if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+        } else if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
         }
 
@@ -519,7 +519,7 @@ public class BeautiOptions extends ModelOptions {
 
         ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
-        if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+        if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             
@@ -529,7 +529,7 @@ public class BeautiOptions extends ModelOptions {
 //            for (PartitionTreeModel tree : getPartitionTreeModels()) {
 //            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
 //            }
-        } else if (activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+        } else if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
             ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
             
 //            ops.add(getOperator("upDownYuleSpeciesTree"));
@@ -570,10 +570,10 @@ public class BeautiOptions extends ModelOptions {
     } 
 
     public boolean isEBSPSharingSamePrior() {
-    	if (activedSameTreePrior == null) {
+    	if (getPartitionTreePriors().size() < 1) {
     		return false;
     	} else {
-    		return (shareSameTreePrior && activedSameTreePrior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
+    		return (shareSameTreePrior && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
     	}
     }
 
@@ -711,18 +711,34 @@ public class BeautiOptions extends ModelOptions {
         List<PartitionTreePrior> activeTrees = new ArrayList<PartitionTreePrior>();
 
         // # tree prior = 1 or # tree model
-        if (shareSameTreePrior) {
-            if (activedSameTreePrior != null) {
-                activeTrees.add(activedSameTreePrior);
-            }
-        } else {
-            for (PartitionTreeModel model : getPartitionTreeModels()) {
-                activeTrees.add(model.getPartitionTreePrior());
-            }
-        }
+		for (PartitionTreeModel model : getPartitionTreeModels()) {
+			PartitionTreePrior prior = model.getPartitionTreePrior();
+			if (prior != null && (!activeTrees.contains(prior))) {
+				activeTrees.add(prior);
+			}			
+		}
 
         return activeTrees;
     }
+    
+    public void unLinkTreePriors() {
+    	for (PartitionTreeModel model : getPartitionTreeModels()) {
+    		PartitionTreePrior prior = model.getPartitionTreePrior();    		
+    		if (prior == null || (!prior.getName().equals(model.getName()))) {
+    			PartitionTreePrior ptp = new PartitionTreePrior(this, model);
+    			model.setPartitionTreePrior(ptp);
+    		}    		
+		}  
+    }
+    
+    public void linkTreePriors(PartitionTreePrior treePrior) {
+    	if (treePrior == null) treePrior = new PartitionTreePrior(this, getPartitionTreeModels().get(0));
+    	for (PartitionTreeModel model : getPartitionTreeModels()) {
+			model.setPartitionTreePrior(treePrior);		
+		}    	
+    }
+    
+    
     
     // ++++++++++++++ Partition Clock Model ++++++++++++++    
     public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {    	
@@ -1493,7 +1509,7 @@ public class BeautiOptions extends ModelOptions {
     // Tree
     //    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
     // PopSize
-    public PartitionTreePrior activedSameTreePrior = null;
+//    public PartitionTreePrior activedSameTreePrior = null;
     //    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
     public boolean shareSameTreePrior = true;
     // list of starting tree from user import

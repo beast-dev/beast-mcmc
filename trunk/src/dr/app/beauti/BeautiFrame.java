@@ -206,7 +206,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * set all the options for all panels
      */
-    private void setAllOptions() {
+    public void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         tipDatesPanel.setOptions(beautiOptions);
         traitsPanel.setOptions(beautiOptions);
@@ -675,13 +675,7 @@ public class BeautiFrame extends DocumentFrame {
                     
                     // use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
-                    	partition.setPartitionTreeModel(ptm);
-                    	
-                    	if (ptm.getPartitionTreePrior() == null || 
-                    			!(ptm.getPartitionTreePrior().getName().equalsIgnoreCase(beautiOptions.activedSameTreePrior.getName()))) {
-                    		PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
-                            ptm.setPartitionTreePrior(ptp);
-                    	}
+                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior       
                     }
                     if (partition.getPartitionTreeModel() == null) {
                     	// PartitionTreeModel based on PartitionData
@@ -693,8 +687,7 @@ public class BeautiFrame extends DocumentFrame {
                         ptm.setPartitionTreePrior(ptp);
                         
 //                        beautiOptions.addPartitionTreeModel(ptm);
-                        beautiOptions.shareSameTreePrior = true;
-                        beautiOptions.activedSameTreePrior = ptp;                        
+                        beautiOptions.shareSameTreePrior = true;                                                
                     }
 
                 	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -724,13 +717,7 @@ public class BeautiFrame extends DocumentFrame {
                 	
                 	// use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
-                    	partition.setPartitionTreeModel(ptm);
-                    	
-                    	if (ptm.getPartitionTreePrior() == null || 
-                    			!(ptm.getPartitionTreePrior().getName().equalsIgnoreCase(beautiOptions.activedSameTreePrior.getName()))) {
-                    		PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
-                            ptm.setPartitionTreePrior(ptp);
-                    	}
+                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior                    	
                     }
                     if (partition.getPartitionTreeModel() == null) {
                     	// PartitionTreeModel based on PartitionData
@@ -742,8 +729,7 @@ public class BeautiFrame extends DocumentFrame {
                         ptm.setPartitionTreePrior(ptp);
                         
 //                        beautiOptions.addPartitionTreeModel(ptm);
-                        beautiOptions.shareSameTreePrior = true;
-                        beautiOptions.activedSameTreePrior = ptp;                        
+                        beautiOptions.shareSameTreePrior = true;                                                
                     }
 
                 	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -915,6 +901,10 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
+    public PartitionTreePrior getCurrentPartitionTreePrior() {
+    	return treesPanel.currentTreeModel.getPartitionTreePrior();
+    }
+    
     public void setupEBSP() {
     	dataPanel.selectAll();
     	dataPanel.unlinkAll();

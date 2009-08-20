@@ -675,7 +675,9 @@ public class TreePriorGenerator extends Generator {
     }
 
     void writeEBSPAnalysisToCSVfile(PartitionTreePrior prior, XMLWriter writer) {
-
+    	
+    	setModelPrefix(prior.getPrefix());
+    	
         String logFileName = options.logFileName;
 
         if (prior.getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE) {

@@ -687,7 +687,7 @@ public class BeautiFrame extends DocumentFrame {
                         ptm.setPartitionTreePrior(ptp);
                         
 //                        beautiOptions.addPartitionTreeModel(ptm);
-                        beautiOptions.shareSameTreePrior = true;                                                
+//                        beautiOptions.shareSameTreePrior = true;                                                
                     }
 
                 	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -729,7 +729,7 @@ public class BeautiFrame extends DocumentFrame {
                         ptm.setPartitionTreePrior(ptp);
                         
 //                        beautiOptions.addPartitionTreeModel(ptm);
-                        beautiOptions.shareSameTreePrior = true;                                                
+//                        beautiOptions.shareSameTreePrior = true;                                                
                     }
 
                 	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);

@@ -56,7 +56,7 @@ public class OperatorsGenerator extends Generator {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
 //        if (options.nodeHeightPrior == TreePrior.GMRF_SKYRIDE) {
         // TODO: multi-prior, currently simplify to share same prior case
-        if (options.shareSameTreePrior && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
+        if (options.isShareSameTreePrior() && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
             operatorAttributes = new Attribute[2];
             operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {

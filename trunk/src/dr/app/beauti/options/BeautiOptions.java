@@ -156,7 +156,7 @@ public class BeautiOptions extends ModelOptions {
 //        partitionTreePriors.clear();
         partitionClockTreeLinks.clear();
 //        activedSameTreePrior = null;
-        shareSameTreePrior = true;
+//        shareSameTreePrior = true;
         userTrees.clear();
 
 //        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
@@ -573,7 +573,7 @@ public class BeautiOptions extends ModelOptions {
     	if (getPartitionTreePriors().size() < 1) {
     		return false;
     	} else {
-    		return (shareSameTreePrior && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
+    		return (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.EXTENDED_SKYLINE);
     	}
     }
 
@@ -738,7 +738,9 @@ public class BeautiOptions extends ModelOptions {
 		}    	
     }
     
-    
+    public boolean isShareSameTreePrior() {
+    	return getPartitionTreePriors().size() <= 1;
+    }
     
     // ++++++++++++++ Partition Clock Model ++++++++++++++    
     public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {    	
@@ -1502,16 +1504,8 @@ public class BeautiOptions extends ModelOptions {
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
-    // Substitution Model
-//    List<PartitionSubstitutionModel> partitionModels = new ArrayList<PartitionSubstitutionModel>();
-    // Clock Model
-    //    List<PartitionClockModel> clockModels = new ArrayList<PartitionClockModel>();
-    // Tree
-    //    List<PartitionTreeModel> partitionTreeModels = new ArrayList<PartitionTreeModel>();
-    // PopSize
-//    public PartitionTreePrior activedSameTreePrior = null;
-    //    List<PartitionTreePrior> partitionTreePriors = new ArrayList<PartitionTreePrior>();
-    public boolean shareSameTreePrior = true;
+    
+//    public boolean shareSameTreePrior = true;
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
 

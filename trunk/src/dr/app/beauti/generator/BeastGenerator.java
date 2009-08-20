@@ -148,7 +148,7 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ Tree Prior ++++++++++++++++++
-        if (options.shareSameTreePrior) {
+        if (options.isShareSameTreePrior()) {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePrior.GMRF_SKYRIDE) {
                     throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +

@@ -55,6 +55,10 @@ public class ClockModelOptions extends ModelOptions {
         createOperator("deltaAllClockRates", RelativeRatesType.CLOCK_RELATIVE_RATES.toString(),
         		"Delta exchange operator for all the relative rates regarding clock models", "allClockRates",      		 
         		OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+        
+        // only available for *BEAST and EBSP
+        createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights", "Scales all rates inversely to node heights of the tree", 
+        		demoTuning, branchWeights);  
     	
     }
 
@@ -75,7 +79,7 @@ public class ClockModelOptions extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+    	if (rateOptionClockModel == FixRateType.FIX_MEAN) {
     		Operator deltaOperator = getOperator("deltaAllClockRates");
     		
             // update delta clock operator weight
@@ -83,6 +87,13 @@ public class ClockModelOptions extends ModelOptions {
             
     		ops.add(deltaOperator);
     	}
+    	
+        //up down all rates and trees operator only available for *BEAST and EBSP
+        if (rateOptionClockModel == FixRateType.ESTIMATE && 
+        		(options.isSpeciesAnalysis() || options.isEBSPSharingSamePrior())) {
+        	ops.add(getOperator("upDownAllRatesHeights")); 
+        }
+        
     }
 
 	

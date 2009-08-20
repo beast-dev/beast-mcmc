@@ -172,7 +172,7 @@ public class TreePriorGenerator extends Generator {
 		            dr.app.beauti.options.Parameter para = prior.getParameter("logistic.t50");
 		            
 		            double initRootHeight;
-		            if (options.shareSameTreePrior) {
+		            if (options.isShareSameTreePrior()) {
 		            	initRootHeight = getRandomStartingTreeInitialRootHeight(options.getPartitionTreeModels().get(0)); // Initialise initRootHeight
 		            	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
 		            		double tmpRootHeight = getRandomStartingTreeInitialRootHeight(tree);
@@ -553,7 +553,7 @@ public class TreePriorGenerator extends Generator {
 	
 	        writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
 	        
-	        if (options.shareSameTreePrior) {
+	        if (options.isShareSameTreePrior()) {
 	            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
 		            writer.writeOpenTag(VariableDemographicModel.POP_TREE, new Attribute[]{
 			                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))

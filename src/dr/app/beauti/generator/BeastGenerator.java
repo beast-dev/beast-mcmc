@@ -316,12 +316,7 @@ public class BeastGenerator extends Generator {
 //        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
 //	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.treeModel
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior;
-        	if (options.shareSameTreePrior) {
-        		prior = options.activedSameTreePrior;        		
-        	} else {
-        		prior = model.getPartitionTreePrior();
-        	}
+        	PartitionTreePrior prior = model.getPartitionTreePrior();        	
             treePriorGenerator.writePriorLikelihood(prior, model, writer);
             writer.writeText("");
         }
@@ -442,17 +437,11 @@ public class BeastGenerator extends Generator {
         if (options.performTraceAnalysis) {
             writeTraceAnalysis(writer);
         }
-        if (options.generateCSV) {
-            if (options.shareSameTreePrior) { // Share Same Tree Prior
-                treePriorGenerator.setModelPrefix("");
-                treePriorGenerator.writeEBSPAnalysisToCSVfile(options.activedSameTreePrior, writer);
-            } else { // no species
-                for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                    treePriorGenerator.setModelPrefix(prior.getName() + "."); // partitionName.constant
-                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-                }
-            }
-        }
+		if (options.generateCSV) {
+			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+				treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
+			}
+		}
 
         writer.writeCloseTag("beast");
         writer.flush();
@@ -903,12 +892,7 @@ public class BeastGenerator extends Generator {
         writeParameterPriors(writer);
         
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior;
-        	if (options.shareSameTreePrior) {
-        		prior = options.activedSameTreePrior;        		
-        	} else {
-        		prior = model.getPartitionTreePrior();
-        	}
+        	PartitionTreePrior prior = model.getPartitionTreePrior();
         	treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
             writer.writeText("");
         }
@@ -1095,13 +1079,13 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
 
-            if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_BIRTH_DEATH) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-            } else if (options.activedSameTreePrior.getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
+            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePrior.SPECIES_YULE) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             } else {
-            	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.activedSameTreePrior.getNodeHeightPrior().toString());
+            	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
             }
             
             //Species Tree: tmrcaStatistic
@@ -1160,12 +1144,7 @@ public class BeastGenerator extends Generator {
 
         // coalescentLikelihood
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior;
-        	if (options.shareSameTreePrior) {
-        		prior = options.activedSameTreePrior;        		
-        	} else {
-        		prior = model.getPartitionTreePrior();
-        	}
+        	PartitionTreePrior prior = model.getPartitionTreePrior();
         	treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
             writer.writeText("");
         }       

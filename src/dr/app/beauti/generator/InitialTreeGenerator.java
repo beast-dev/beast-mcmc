@@ -158,30 +158,16 @@ public class InitialTreeGenerator extends Generator {
     }
 
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
-    	PartitionTreePrior prior;
+    	PartitionTreePrior prior = model.getPartitionTreePrior();
+    		
+		if (prior.getNodeHeightPrior() == TreePrior.CONSTANT || options.isSpeciesAnalysis()) {
+        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
+        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
+        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
+        } else {
+        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
+        }     		    		
     	
-    	if ( options.shareSameTreePrior ) { // Share Same Tree Prior, use options.activedSameTreePrior instead of prior
-    		prior = options.activedSameTreePrior;
-    		
-			if (prior.getNodeHeightPrior() == TreePrior.CONSTANT || options.isSpeciesAnalysis()) {
-	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "constant");
-	        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
-	        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, "exponential");    	        
-	        } else {
-	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, "initialDemo");
-	        }
-    	} else { 
-    		prior = model.getPartitionTreePrior();
-    		
-			if (prior.getNodeHeightPrior() == TreePrior.CONSTANT) {
-	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
-	        } else if (prior.getNodeHeightPrior() == TreePrior.EXPONENTIAL) {
-	        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
-	        } else {
-	        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
-	        }
-     		    		
-    	}
     }
 
     /**

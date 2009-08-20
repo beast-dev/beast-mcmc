@@ -63,18 +63,18 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
 	private boolean settingOptions = false;
 	
-    private final PartitionTreeModel partitionTreeModel;
+    PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(PartitionTreeModel partitionTreeModel, BeautiOptions options) {
+    public PartitionTreeModelPanel(PartitionTreeModel parTreeModel, BeautiOptions options) {
     	super(12, 18);
 
-		this.partitionTreeModel = partitionTreeModel;
+		this.partitionTreeModel = parTreeModel;
 		this.options = options;
 		
 		PanelUtils.setupComponent(ploidyTypeCombo);
 		ploidyTypeCombo.addItemListener( new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-//                        setupPanel();
+                    	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
                     }
                 }
         );
@@ -82,7 +82,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(startingTreeCombo);
         startingTreeCombo.addItemListener( new ItemListener() {
                     public void itemStateChanged(ItemEvent ev) {
-                        setupPanel();
+                    	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
+                    	setupPanel();
                     }
                 }
         );
@@ -106,11 +107,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         
 		removeAll();
 		
-		if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || options.isSpeciesAnalysis()) {
+		if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
 			
 			addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
 		} 		     
@@ -146,11 +143,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         settingOptions = true;
         
-        if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || options.isSpeciesAnalysis()) {
+        if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
         	        	
         	ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
@@ -165,24 +158,18 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         settingOptions = false;
 
-        validate();
-        repaint();
     }
 
     public void getOptions(BeautiOptions options) {
     	if (settingOptions) return;
     	
-    	if ((options.shareSameTreePrior && options.activedSameTreePrior != null 
-        		&& options.activedSameTreePrior.getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || (!options.shareSameTreePrior && partitionTreeModel != null
-     			&& partitionTreeModel.getPartitionTreePrior().getNodeHeightPrior().equals(TreePrior.EXTENDED_SKYLINE))
-     	   || options.isSpeciesAnalysis()) {
-    		
-        	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
-        }
+//    	if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
+//    		
+//        	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
+//        }
 
-    	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
-    	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
+//    	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
+//    	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
     }
 
     private Tree getSelectedUserTree(BeautiOptions options) {

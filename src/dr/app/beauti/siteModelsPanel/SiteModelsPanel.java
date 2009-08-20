@@ -155,6 +155,17 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //        comp = new SequenceErrorModelComponentOptions();
     }    
        
+    private void resetPanel() {
+    	if (!options.hasData()) {
+    		currentModel = null;
+    		modelPanels.clear();
+    		modelPanelParent.removeAll();
+    		modelBorder.setTitle("Substitution Model");
+    		
+        	return;
+        }
+    }
+    
     public void setOptions(BeautiOptions options) {
 
         if (DEBUG) {
@@ -163,6 +174,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         this.options = options;
 
+        resetPanel();
+        
         settingOptions = true;
 
         //setModelOptions(currentModel);

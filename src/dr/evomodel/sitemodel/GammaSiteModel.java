@@ -110,6 +110,12 @@ public class GammaSiteModel extends AbstractModel
             this.categoryCount = gammaCategoryCount;
 
             addVariable(shapeParameter);
+
+            // The quantile calculator fails when the shape parameter goes much below
+            // 1E-3 so we have put a hard lower bound on it. If this is not there then
+            // the category rates can go to 0 and cause a -Inf likelihood (whilst this
+            // is not a problem as the state will be rejected, it could mask other issues
+            // and this seems the better approach.
             shapeParameter.addBounds(new Parameter.DefaultBounds(1.0E3, 1.0E-3, 1));
         } else {
             this.categoryCount = 1;

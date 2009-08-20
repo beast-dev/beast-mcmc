@@ -61,39 +61,16 @@ import java.util.Map;
 public class BeautiOptions extends ModelOptions {
 
     public BeautiOptions() {
-        this(new ComponentFactory[]{});
-
-        initGlobalParaAndOpers();
+        this(new ComponentFactory[]{});       
     }
 
-    public BeautiOptions(ComponentFactory[] components) {
-    	initGlobalParaAndOpers();
+    public BeautiOptions(ComponentFactory[] components) {    	
 
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {
             addComponent(component.getOptions(this));
         }
     }   
-
-    private void initGlobalParaAndOpers() {
-//        double rateWeights = 3.0;
-//
-//        // A vector of relative rates across all partitions...
-//        createParameter("allMus", "All the relative rates regarding codon positions");
-//
-//        // This only works if the partitions are of the same size...
-////      createOperator("centeredMu", "Relative rates",
-////              "Scales codon position rates relative to each other maintaining mean", "allMus",
-////              OperatorType.CENTERED_SCALE, 0.75, rateWeights);
-//        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-//        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
-//                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
-        
-        // only available for *BEAST and EBSP
-        createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights", "Scales all rates inversely to node heights of the tree", 
-        		demoTuning, branchWeights);        
-
-    }
 
     public void initSpeciesParametersAndOperators() {
         double spWeights = 5.0;
@@ -392,12 +369,6 @@ public class BeautiOptions extends ModelOptions {
             selectOperatorsForSpecies(ops);
         }
 
-        //up down all rates and trees operator only available for *BEAST and EBSP
-        if (clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE && 
-        		(isSpeciesAnalysis() || isEBSPSharingSamePrior())) {
-        	ops.add(getOperator("upDownAllRatesHeights")); 
-        }
-        
         selectComponentOperators(this, ops);
 
 

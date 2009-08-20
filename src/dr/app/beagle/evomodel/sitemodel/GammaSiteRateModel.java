@@ -96,7 +96,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
             this.categoryCount = gammaCategoryCount;
 
             addVariable(shapeParameter);
-            shapeParameter.addBounds(new Parameter.DefaultBounds(1.0E3, 0.0, 1));
+            shapeParameter.addBounds(new Parameter.DefaultBounds(1.0E3, 1.0E-3, 1));
         } else {
             this.categoryCount = 1;
         }

@@ -101,7 +101,7 @@ public class TraitGuesser {
 
     public String guessTraitFromSuffix(String label, String seperator) throws GuessTraitException {
         if (seperator.length() < 1 || index < 0) {
-            throw new IllegalArgumentException("Invalid seperator");
+            throw new IllegalArgumentException("No seperator or wrong seperator index !");
         }
 
         int id = -1;
@@ -110,7 +110,7 @@ public class TraitGuesser {
             id = t.lastIndexOf(seperator);
 
             if (id < 0) {
-                throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+                throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
             }
 
             t = t.substring(0, id);
@@ -121,7 +121,7 @@ public class TraitGuesser {
 
     public String guessTraitFromPrefix(String label, String seperator) throws GuessTraitException {
         if (seperator.length() < 1 || index < 0) {
-            throw new IllegalArgumentException("Invalid seperator");
+            throw new IllegalArgumentException("No seperator or wrong seperator index !");
         }
 
         int id;
@@ -132,7 +132,7 @@ public class TraitGuesser {
 
             if (id < 0) {
             	if (i == 0) {
-            		throw new IllegalArgumentException("Can not find seperator in taxon label or invalid seperator index");
+            		throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
             	} else {
             		return label + seperator + traitAnalysisType.toString();
             	}

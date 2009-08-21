@@ -23,6 +23,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.enumTypes.PriorType;
@@ -48,8 +49,10 @@ public class PartitionTreeModel extends ModelOptions {
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
+    
+    private double initialRootHeight;
 
-    private boolean fixedTree = false;
+	private boolean fixedTree = false;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
@@ -128,11 +131,11 @@ public class PartitionTreeModel extends ModelOptions {
     	getParameter("treeModel.internalNodeHeights");
     	getParameter("treeModel.allInternalNodeHeights");    	
     	
-        if (options.isSpeciesAnalysis()) {
+//        if (options.isSpeciesAnalysis()) {
         	getParameter("treeModel.rootHeight");
-        } else {
-        	params.add(getParameter("treeModel.rootHeight"));
-        }
+//        } else {
+//        	params.add(getParameter("treeModel.rootHeight"));
+//        }
     }
 
     /**
@@ -141,10 +144,30 @@ public class PartitionTreeModel extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
+    	double initialRootHeight = 1;
+    	
+    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+            double rate = options.clockModelOptions.getMeanRelativeRate();
+
+            if (options.hasData()) {
+                initialRootHeight = getMeanDistancePerTree() / rate;
+                initialRootHeight = options.priorOptions.round(initialRootHeight, 2);
+            }
+
+        } else {
+            if (options.maximumTipHeight > 0) {
+                initialRootHeight = options.maximumTipHeight * 10.0;
+            }
+        }
 
         // if not a fixed tree then sample tree space
         if (!fixedTree) {
-            ops.add(getOperator("subtreeSlide"));
+        	Operator subtreeSlideOp = getOperator("subtreeSlide");
+            if (!subtreeSlideOp.tuningEdited) {
+            	subtreeSlideOp.tuning = initialRootHeight / 10.0;
+            }
+        	
+        	ops.add(subtreeSlideOp);
             ops.add(getOperator("narrowExchange"));
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
@@ -152,7 +175,6 @@ public class PartitionTreeModel extends ModelOptions {
         
         ops.add(getOperator("treeModel.rootHeight"));
         ops.add(getOperator("uniformHeights"));
-
     }
 
     /////////////////////////////////////////////////////////////
@@ -203,6 +225,30 @@ public class PartitionTreeModel extends ModelOptions {
 
     public PloidyType getPloidyType() {
         return ploidyType;
+    }
+    
+    public double getInitialRootHeight() {
+		return initialRootHeight;
+	}
+
+	public void setInitialRootHeight(double initialRootHeight) {
+		this.initialRootHeight = initialRootHeight;
+	}
+    
+    public double getMeanDistancePerTree() {
+    	double treeMeanDistance = 0;
+    	double totalSiteCount = 0;
+    	
+    	for (PartitionData partition: allPartitionData) {
+    		treeMeanDistance = partition.getMeanDistance() * partition.getSiteCount();
+    		totalSiteCount = totalSiteCount + partition.getSiteCount();
+		}
+    	
+    	if (totalSiteCount != 0) {
+    		return treeMeanDistance / totalSiteCount;
+    	} else {
+    		return 0;
+    	}
     }
 
     public String getName() {

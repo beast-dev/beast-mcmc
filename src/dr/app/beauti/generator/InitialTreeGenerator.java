@@ -85,7 +85,7 @@ public class InitialTreeGenerator extends Generator {
                                	
             	if (options.taxonSets == null || options.taxonSets.size() < 1) { 
             		
-            		double initRootHeight = getRandomStartingTreeInitialRootHeight(model);                	
+            		double initRootHeight = options.treeModelOptions.getRandomStartingTreeInitialRootHeight(model);                	
                 	
             		writer.writeComment("No calibration");
 	            	writer.writeOpenTag(

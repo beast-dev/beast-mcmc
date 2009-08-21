@@ -152,6 +152,14 @@ public class ClockModelOptions extends ModelOptions {
 		//TODO
 		return averageRate;
 	}
+	
+	public boolean isTimeCalibrated () {
+		return options.maximumTipHeight > 0;
+	}
+	
+	public boolean isRateCalibrated () {
+		return false;//TODO
+	}
 
 	public int[] getPartitionClockWeights() {
 		int[] weights = new int[options.getPartitionClockModels().size()]; // use List?

@@ -175,19 +175,19 @@ public class TreePriorGenerator extends Generator {
 		            
 		            double initRootHeight;
 		            if (options.isShareSameTreePrior()) {
-		            	initRootHeight = getRandomStartingTreeInitialRootHeight(options.getPartitionTreeModels().get(0)); // Initialise initRootHeight
+		            	initRootHeight = options.treeModelOptions.getRandomStartingTreeInitialRootHeight(options.getPartitionTreeModels().get(0)); // Initialise initRootHeight
 		            	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-		            		double tmpRootHeight = getRandomStartingTreeInitialRootHeight(tree);
+		            		double tmpRootHeight = options.treeModelOptions.getRandomStartingTreeInitialRootHeight(tree);
 		                    if (initRootHeight < tmpRootHeight) {
 		                    	initRootHeight = tmpRootHeight;
 		                    }
 		                }		            	
 		            } else {
-		            	initRootHeight = getRandomStartingTreeInitialRootHeight(prior.getTreeModel());
+		            	initRootHeight = options.treeModelOptions.getRandomStartingTreeInitialRootHeight(prior.getTreeModel());
 		            }
 		            
 		            if (initRootHeight <= para.initial) {
-		            	para.initial = initRootHeight / 2; // para.initial has to < initRootHeight
+		            	para.initial = initRootHeight / 2; // initRootHeight has to < para.initial 
 		            }
 	            } else {
 	            	writer.writeComment("Has calibration");

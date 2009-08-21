@@ -253,12 +253,12 @@ public class CommandLineBeauti {
                 beautiOptions.dataPartitions.add(partition);
                 beautiOptions.dataType = alignment.getDataType();
 
-                Patterns patterns = new Patterns(alignment);
-                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-                beautiOptions.meanDistance = distances.getMeanDistance();
+//                Patterns patterns = new Patterns(alignment);
+//                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+//                beautiOptions.meanDistance = distances.getMeanDistance();
 
             } else {
-                beautiOptions.meanDistance = 0.0;
+//                beautiOptions.meanDistance = 0.0;
             }
         } else {
             // This is an additional partition so check it uses the same taxa

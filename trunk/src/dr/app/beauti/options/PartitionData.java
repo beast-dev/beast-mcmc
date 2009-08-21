@@ -24,6 +24,9 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 
 /**
  * @author Andrew Rambaut
@@ -61,14 +64,17 @@ public class PartitionData {
         this.toSite = toSite;
         this.every = every;
 
-//        Patterns patterns = new Patterns(alignment);
-//        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-//        meanDistance = distances.getMeanDistance();
-        meanDistance = 0.0;
+        Patterns patterns = new Patterns(alignment);
+        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+        meanDistance = distances.getMeanDistance();
+//        meanDistance = 0.0;
 
     }
 
     public double getMeanDistance() {
+//    	Patterns patterns = new Patterns(alignment);
+//		DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+//		meanDistance = distances.getMeanDistance();
         return meanDistance;
     }
 

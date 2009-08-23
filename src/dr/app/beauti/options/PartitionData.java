@@ -23,6 +23,8 @@
 
 package dr.app.beauti.options;
 
+import java.util.List;
+
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
@@ -33,7 +35,7 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionData {
+public class PartitionData extends ModelOptions {
 
     private final String fileName;
     private final Alignment alignment;
@@ -163,5 +165,23 @@ public class PartitionData {
     public String toString() {
         return getName();
     }
+
+	@Override
+	public void selectOperators(List<Operator> ops) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void selectParameters(List<Parameter> params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getPrefix() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

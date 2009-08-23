@@ -70,6 +70,10 @@ public abstract class ModelOptions {
 	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 	   
 	
+	public abstract void selectParameters(List<Parameter> params);
+    
+    public abstract void selectOperators(List<Operator> ops);
+    
 	//+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);

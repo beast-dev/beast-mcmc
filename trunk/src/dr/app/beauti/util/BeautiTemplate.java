@@ -24,6 +24,8 @@
  */
 package dr.app.beauti.util;
 
+import java.util.List;
+
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -435,6 +437,20 @@ public class BeautiTemplate extends ModelOptions {
 	public String getPrefix() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+
+	@Override
+	public void selectOperators(List<Operator> ops) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void selectParameters(List<Parameter> params) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

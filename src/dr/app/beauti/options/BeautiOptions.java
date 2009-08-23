@@ -853,4 +853,16 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
+	@Override
+	public void selectOperators(List<Operator> ops) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void selectParameters(List<Parameter> params) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

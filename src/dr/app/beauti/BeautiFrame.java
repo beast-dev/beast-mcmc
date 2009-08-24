@@ -867,9 +867,9 @@ public class BeautiFrame extends DocumentFrame {
 //        dataPanel.unlinkModels();
 //        dataPanel.unlinkTrees();
         
-        if (beautiOptions.getPartitionClockModels().size() > 1) {
-        	dataPanel.linkClocks();
-        }
+//        if (beautiOptions.getPartitionClockModels().size() > 1) {
+//        	dataPanel.linkClocks();
+//        }
         
 //        beautiOptions.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
 //        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);

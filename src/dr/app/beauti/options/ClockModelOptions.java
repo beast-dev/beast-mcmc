@@ -108,9 +108,9 @@ public class ClockModelOptions extends ModelOptions {
 		return rateOptionClockModel;
 	}
 
-	public void setRateOptionClockModel(FixRateType rateOptionClockModel) {
-		this.rateOptionClockModel = rateOptionClockModel;
-	}
+//	public void setRateOptionClockModel(FixRateType rateOptionClockModel) {
+//		this.rateOptionClockModel = rateOptionClockModel;
+//	}
 
 	public void setMeanRelativeRate(double meanRelativeRate) {
 		this.meanRelativeRate = meanRelativeRate;

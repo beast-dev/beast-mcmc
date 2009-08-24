@@ -69,40 +69,6 @@ public class BeautiOptions extends ModelOptions {
         }
     }   
 
-    public void initSpeciesParametersAndOperators() {
-        double spWeights = 5.0;
-        double spTuning = 0.9;
-
-        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        // species tree Yule
-        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
-                "Speices tree: Yule process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        // species tree Birth Death
-        createScaleParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
-                "Speices tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Speices tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
-
-        createScaleParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
-
-        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
-
-        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
-        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createScaleOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
-
-        createScaleOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
-
-        createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
-                
-        //TODO: more
-    }
-
     /**
      * resets the options to the initial conditions
      */
@@ -167,6 +133,8 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
+        starBEASTOptions = new STARBEASTOptions(this); 
+        
         beautiTemplate = new BeautiTemplate(this);
     }
     
@@ -220,8 +188,8 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectStatistics(parameters);
         }
         
-        if (isSpeciesAnalysis()) { // species
-            selectParametersForSpecies(parameters);
+        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        	starBEASTOptions.selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
@@ -369,8 +337,8 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectOperators(ops);
         }
 
-        if (isSpeciesAnalysis()) { // species
-            selectOperatorsForSpecies(ops);
+        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        	starBEASTOptions.selectOperators(ops);
         }
 
         selectComponentOperators(this, ops);
@@ -456,86 +424,7 @@ public class BeautiOptions extends ModelOptions {
 //    	}
 //    }
     
-//    private double round(double value, int sf) {
-//        NumberFormatter formatter = new NumberFormatter(sf);
-//        try {
-//            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
-//        } catch (ParseException e) {
-//            return value;
-//        }
-//    }
-    
-    // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
-    private void selectParametersForSpecies(List<Parameter> params) {
 
-        params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-
-        if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-        } else if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-        }
-
-//    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-
-        //TODO: more
-
-    }
- 
-    private void selectOperatorsForSpecies(List<Operator> ops) {
-
-        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
-
-        if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            
-//            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
-//            ops.add(getOperator("upDownBirthDeathSTPop"));
-//            
-//            for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
-//            }
-        } else if (getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-            
-//            ops.add(getOperator("upDownYuleSpeciesTree"));
-//            ops.add(getOperator("upDownYuleSTPop"));
-//            
-//            for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            	ops.add(getOperator(tree.getPrefix() + "upDownYuleGeneTree"));
-//            }
-        }
-
-        ops.add(getOperator(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
-
-        ops.add(getOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT));
-        //TODO: more
-    }
-
-    public boolean isSpeciesAnalysis() {
-        return selecetedTraits.contains(TraitGuesser.Traits.TRAIT_SPECIES.toString());
-    }
-
-    public List<String> getSpeciesList() {
-        List<String> species = new ArrayList<String>();
-        String sp;
-
-        if (taxonList != null) {
-            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = taxonList.getTaxon(i);
-                sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
-
-                if (!species.contains(sp)) {
-                    species.add(sp);
-                }
-            }
-            return species;
-        } else {
-            return null;
-        }
-    } 
 
     public boolean isEBSPSharingSamePrior() {
     	if (getPartitionTreePriors().size() < 1) {
@@ -798,10 +687,7 @@ public class BeautiOptions extends ModelOptions {
 
     public List<String> selecetedTraits = new ArrayList<String>();
     public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
-
-    public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
-    public final String POP_MEAN = "popMean";
-
+   
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
     // ClockModel <=> TreeModel
@@ -844,6 +730,8 @@ public class BeautiOptions extends ModelOptions {
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
+    
+    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this); 
     
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
         

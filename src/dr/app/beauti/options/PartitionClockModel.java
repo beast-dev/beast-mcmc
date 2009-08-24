@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -203,6 +204,40 @@ public class PartitionClockModel extends PartitionOptions {
             	}
             }
         }
+    }
+    
+    // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
+    
+    public void iniClockRateStarBEAST() {
+    	double selectedRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels());
+    	Parameter rateParam = null;
+
+        switch (clockType) {
+            case STRICT_CLOCK:
+            case RANDOM_LOCAL_CLOCK:
+                rateParam = getParameter("clock.rate");
+                break;
+
+            case UNCORRELATED_EXPONENTIAL:
+                rateParam = getParameter(ClockType.UCED_MEAN);
+                break;
+
+            case UNCORRELATED_LOGNORMAL:
+                rateParam = getParameter(ClockType.UCLD_MEAN);
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:                    
+//                rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        } 
+        rateParam.priorType = PriorType.GAMMA_PRIOR;
+        rateParam.initial = selectedRate; 
+        rateParam.gammaAlpha = 0.1;
+        rateParam.gammaBeta = 10 * selectedRate; 
+        rateParam.gammaOffset = 0;
     }
     
     /////////////////////////////////////////////////////////////

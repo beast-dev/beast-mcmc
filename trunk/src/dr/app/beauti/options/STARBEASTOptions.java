@@ -93,14 +93,18 @@ public class STARBEASTOptions extends ModelOptions {
         //TODO: more
     }
 
-    // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
- 
+   
     /**
      * return a list of parameters that are required
      *
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
+    	
+    	for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.iniClockRateStarBEAST();
+        }    	
+    	
         params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {

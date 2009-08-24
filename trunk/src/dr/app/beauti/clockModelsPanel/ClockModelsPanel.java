@@ -251,9 +251,9 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
         if (fixedMeanRateCheck.isSelected()) {
-        	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
+        	options.clockModelOptions.fixMeanRate();
         } else {
-        	options.clockModelOptions.setRateOptionClockModel(FixRateType.RElATIVE_TO);
+        	options.clockModelOptions.fixRateOfFirstClockPartition();
         }
         options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
        

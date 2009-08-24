@@ -343,7 +343,7 @@ public class LogCombiner {
             Object value = tree.getNodeAttribute(node, name);
 
             if (!hasAttribute) {
-                buffer.append(":[&");
+                buffer.append("[&");
                 hasAttribute = true;
             } else {
                 buffer.append(",");
@@ -356,9 +356,7 @@ public class LogCombiner {
         }
 
         if (parent != null) {
-            if (!hasAttribute) {
-                buffer.append(":");
-            }
+            buffer.append(":");
             double length = tree.getBranchLength(node);
             buffer.append(convertToDecimal ? decimalFormatter.format(length) : scientificFormatter.format(length));
         }

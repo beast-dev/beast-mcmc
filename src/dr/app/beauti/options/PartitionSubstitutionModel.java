@@ -38,7 +38,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class PartitionSubstitutionModel extends ModelOptions {
+public class PartitionSubstitutionModel extends PartitionOptions {
 
     // Instance variables
 

@@ -432,14 +432,7 @@ public class BeautiTemplate extends ModelOptions {
         }
     }
 
-
-	@Override
-	public String getPrefix() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
+	
 	@Override
 	public void selectOperators(List<Operator> ops) {
 		// TODO Auto-generated method stub

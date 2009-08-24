@@ -37,7 +37,7 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionData extends ModelOptions {
+public class PartitionData extends PartitionOptions {
 
     private final String fileName;
     private final Alignment alignment;

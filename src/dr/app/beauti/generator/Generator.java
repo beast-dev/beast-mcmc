@@ -7,6 +7,7 @@ import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
@@ -97,7 +98,7 @@ public abstract class Generator {
      * @param id     the id
      * @param writer the writer
      */
-    public void writeParameter(String id, ModelOptions options, XMLWriter writer) {
+    public void writeParameter(String id, PartitionOptions options, XMLWriter writer) {
         Parameter parameter = options.getParameter(id);
         String prefix = options.getPrefix();
         
@@ -158,7 +159,7 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
     
-    public void writeParameter(String wrapperName, String id, ModelOptions options, XMLWriter writer) {
+    public void writeParameter(String wrapperName, String id, PartitionOptions options, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, options, writer);
         writer.writeCloseTag(wrapperName);

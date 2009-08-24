@@ -37,7 +37,7 @@ import dr.evomodel.tree.RateStatistic;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionClockModelTreeModelLink extends ModelOptions {
+public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
     // Instance variables
     public Parameter localClockRateChangesStatistic = null;

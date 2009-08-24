@@ -36,7 +36,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionClockModel extends ModelOptions {
+public class PartitionClockModel extends PartitionOptions {
 
     // Instance variables
     private final BeautiOptions options;

@@ -134,12 +134,8 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
 		
 		if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move            
-            boolean fixed;//TODO wrong?
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            	fixed = false;
-            } else {
-            	fixed = !model.isEstimatedRate();
-            }            
+            boolean fixed = !model.isEstimatedRate();
+                       
             Parameter rateParam;
 
             switch (model.getClockType()) { 
@@ -162,7 +158,7 @@ public class PartitionClockModelTreeModelLink extends ModelOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
         	// for isEstimatedRate() = false, write nothing on up part of upDownOp
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) {//&& model.isEstimatedRate()) {
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {//&& model.isEstimatedRate()) {
             	switch (model.getClockType()) {
 	                case STRICT_CLOCK:
 	                    ops.add(getOperator("upDownRateHeights"));

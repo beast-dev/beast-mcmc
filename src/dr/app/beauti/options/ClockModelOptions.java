@@ -28,6 +28,7 @@ import java.util.List;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
+import dr.math.MathUtils;
 
 
 /**
@@ -41,7 +42,7 @@ public class ClockModelOptions extends ModelOptions {
 	// Instance variables
     private final BeautiOptions options;
    
-    private FixRateType rateOptionClockModel = FixRateType.ESTIMATE; 
+    private FixRateType rateOptionClockModel = FixRateType.RElATIVE_TO; 
     private double meanRelativeRate = 1.0;
 
     public ClockModelOptions(BeautiOptions options) {    	
@@ -93,7 +94,7 @@ public class ClockModelOptions extends ModelOptions {
     	}
     	
         //up down all rates and trees operator only available for *BEAST and EBSP
-        if (rateOptionClockModel == FixRateType.ESTIMATE && 
+        if (rateOptionClockModel == FixRateType.RElATIVE_TO && 
         		(options.isSpeciesAnalysis() || options.isEBSPSharingSamePrior())) {
         	ops.add(getOperator("upDownAllRatesHeights")); 
         }
@@ -115,17 +116,72 @@ public class ClockModelOptions extends ModelOptions {
 		this.meanRelativeRate = meanRelativeRate;
 	}
 
+	public double[] calculateInitialRootHeightAndRate(List<PartitionData> partitions) {	
+		double avgInitialRootHeight = 1;
+        double avgInitialRate = 1;
+        double avgMeanDistance = 1;
+        
+        if (options.hasData()) {
+        	avgMeanDistance = calculateMeanDistance(partitions);
+        }
+        
+        if (options.getPartitionClockModels().size() > 0) {
+        	avgInitialRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels(partitions)); // all clock models
+        }
+        
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+            
+            if (options.hasData()) {
+            	avgInitialRootHeight = avgMeanDistance / avgInitialRate;            	
+            }
+
+        } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED) {            
+            avgInitialRootHeight = options.maximumTipHeight * 10.0;
+           
+            avgInitialRate = MathUtils.round((avgMeanDistance * 0.2) / avgInitialRootHeight, 2);
+            
+        } else {
+        	avgInitialRate = MathUtils.round((avgMeanDistance * 0.2) / avgInitialRootHeight, 2);
+        }
+        
+        avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
+        avgInitialRate = MathUtils.round(avgInitialRate, 2);
+		
+    	return new double[] {avgInitialRootHeight, avgInitialRate};
+	}
+	
+	public double getSelectedRate(List<PartitionClockModel> models) { 
+		double selectedRate = 1;
+        if (rateOptionClockModel == FixRateType.FIX_MEAN) {
+        	selectedRate = meanRelativeRate;
+        	
+        } else if (rateOptionClockModel == FixRateType.RElATIVE_TO) {         	        	
+			// fix ?th partition
+			if (models.size() == 1) {
+				selectedRate = models.get(0).getRate();
+			} else {
+				selectedRate = getAverageRate(models);
+			}
+        	
+        } else {
+        	// calibration: all isEstimatedRate = true
+        	//TODO calibration            	
+        }
+        return selectedRate;
+	}
+	
 	// FixRateType.FIX_MEAN
 	public double getMeanRelativeRate() { 
 		return meanRelativeRate;
 	}
 	
 	// FixRateType.ESTIMATE
-	public double getAverageRate() { //TODO average per tree, but how to control the estimate clock => tree?
+	public double getAverageRate(List<PartitionClockModel> models) { //TODO average per tree, but how to control the estimate clock => tree?
 		double averageRate = 0;
 		double count = 0;
 		
-		for (PartitionClockModel model : options.getPartitionClockModels()) {
+		for (PartitionClockModel model : models) {
 			if (!model.isEstimatedRate()) {
 				averageRate = averageRate + model.getRate();
 				count = count + 1;
@@ -179,7 +235,7 @@ public class ClockModelOptions extends ModelOptions {
 	}	
 	
 	public void fixRateOfFirstClockPartition() {
-		this.rateOptionClockModel = FixRateType.ESTIMATE;
+		this.rateOptionClockModel = FixRateType.RElATIVE_TO;
 		// fix rate of 1st partition
 		int i = 0;
 		for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -191,15 +247,42 @@ public class ClockModelOptions extends ModelOptions {
 			i = i + 1;
         }
 	}
-	
-	public void estimateAllRates() {
-		this.rateOptionClockModel = FixRateType.ESTIMATE;
+
+	public void fixMeanRate() {
+		this.rateOptionClockModel = FixRateType.FIX_MEAN;
+		
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
+        }
+	}
+    	
+	public void tipTimeCalibration() {
+		this.rateOptionClockModel = FixRateType.TIP_CALIBRATED;
 		
 		for (PartitionClockModel model : options.getPartitionClockModels()) {
 			model.setEstimatedRate(true);
         }
 	}
-    
+	
+	
+	public void nodeCalibration() {
+		this.rateOptionClockModel = FixRateType.NODE_CALIBRATED;
+		
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			model.setEstimatedRate(true);
+        }
+	}
+	
+	
+	public void rateCalibration() {
+		this.rateOptionClockModel = FixRateType.RATE_CALIBRATED;
+		
+		for (PartitionClockModel model : options.getPartitionClockModels()) {
+			model.setEstimatedRate(true);
+        }
+	}
+	
+	
 	@Override
 	public String getPrefix() {
 		// TODO Auto-generated method stub

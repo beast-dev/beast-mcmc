@@ -23,10 +23,12 @@
 
 package dr.app.beauti.options;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 
@@ -66,17 +68,17 @@ public class PartitionData extends ModelOptions {
         this.toSite = toSite;
         this.every = every;
 
-        Patterns patterns = new Patterns(alignment);
-        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-        meanDistance = distances.getMeanDistance();
+        List<PartitionData> p = new ArrayList<PartitionData>();
+        p.add(this);
+        meanDistance = calculateMeanDistance(p);
+        	
+//        Patterns patterns = new Patterns(alignment);
+//        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+//        meanDistance = distances.getMeanDistance();
 //        meanDistance = 0.0;
-
     }
-
+    
     public double getMeanDistance() {
-//    	Patterns patterns = new Patterns(alignment);
-//		DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-//		meanDistance = distances.getMeanDistance();
         return meanDistance;
     }
 

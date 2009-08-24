@@ -28,10 +28,11 @@ package dr.app.beauti.enumTypes;
  * @author Walter Xie
  */
 public enum FixRateType {
-	TIME_CALIBRATED("Time is calibrated"), // 
-	RATE_CALIBRATED("Rate is calibrated"), //
-	FIX_MEAN("Estimate relative Rate By Fixing Mean"), // 
-    ESTIMATE("Estimate Overall or ?th Partition Rate"); // 
+	FIX_MEAN("Estimate relative rate by fixing mean"), // 
+    RElATIVE_TO("Estimate rate relative to ?th partition rate"),
+	TIP_CALIBRATED("Tip time is calibrated"), // 
+	NODE_CALIBRATED("Tree root height is calibrated"), // 
+	RATE_CALIBRATED("Rate is calibrated"); // 
     
 	FixRateType(String name) {
         this.name = name;

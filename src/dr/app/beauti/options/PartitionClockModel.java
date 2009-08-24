@@ -104,27 +104,12 @@ public class PartitionClockModel extends ModelOptions {
     public void selectParameters(List<Parameter> params) {    	    	
         if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move
-            boolean fixed;
-            double selectedRate;
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            	fixed = false;
-            	selectedRate = options.clockModelOptions.getMeanRelativeRate();
-            	
-            } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) { 
-            	// fix ?th partition
-            	fixed = !isEstimatedRate;
-            	if (fixed) {
-            		selectedRate = rate;
-            	} else {
-            		selectedRate = options.clockModelOptions.getAverageRate();
-            	}
-            	
-            } else {
-            	// calibration: all isEstimatedRate = true
-            	fixed = false;
-            	selectedRate = 1; //TODO calibration            	
-            }
+            boolean fixed = !isEstimatedRate;
             
+            List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
+            models.add(this); // fire getRate()
+            double selectedRate = options.clockModelOptions.getSelectedRate(models);
+                        
             Parameter rateParam = null;
 
             switch (clockType) {
@@ -164,7 +149,7 @@ public class PartitionClockModel extends ModelOptions {
                     throw new IllegalArgumentException("Unknown clock model");
             }   
 //            if (fixed) rateParam.initial = rate;  
-            rateParam.priorEdited = true;
+            rateParam.priorEdited = true; // important
         }
     }
 

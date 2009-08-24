@@ -26,6 +26,9 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;
@@ -221,5 +224,19 @@ public abstract class ModelOptions {
 		return operators;
 	}
 
-
+    public double calculateMeanDistance(List<PartitionData> partitions) {
+    	List<SiteList> siteLists = new ArrayList<SiteList>();
+    	
+    	for (PartitionData partition : partitions) {
+			SiteList sl = (SiteList) partition.getAlignment();
+			if (!siteLists.contains(sl)) {
+				siteLists.add(sl);
+			}
+		}
+		
+		Patterns mergePartternsTree = new Patterns(siteLists);
+		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
+		
+		return dm.getMeanDistance();
+    }
 }

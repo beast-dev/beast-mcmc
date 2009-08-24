@@ -23,15 +23,11 @@
 
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
-import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.enumTypes.RelativeRatesType;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
 
 
 /**
@@ -76,28 +72,17 @@ public class TreeModelOptions extends ModelOptions {
     }
     
     /////////////////////////////////////////////////////////////
-    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
-    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-    	
-    	if (rootHeight.priorType != PriorType.NONE) {
-    		return rootHeight.initial;
-    	} else {
-    		List<SiteList> siteLists = new ArrayList<SiteList>();
-    		
-    		for (PartitionData partition : model.getAllPartitionData()) {
-    			SiteList sl = (SiteList) partition.getAlignment();
-    			if (!siteLists.contains(sl)) {
-    				siteLists.add(sl);
-    			}
-    		}
-    		
-    		Patterns mergePartternsTree = new Patterns(siteLists);
-    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
-    		
-    		return dm.getMeanDistance();
-    	}   	
-		
-    }
+//    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
+//    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+//    	
+//    	if (rootHeight.priorType != PriorType.NONE) {
+//    		return rootHeight.initial;
+//    	} else {    		
+//    		return calculateMeanDistance(model.getAllPartitionData());
+//    	}   	
+//		
+//    }
+    
     
 	@Override
 	public String getPrefix() {

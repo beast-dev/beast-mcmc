@@ -74,7 +74,7 @@ public class STARBEASTGenerator extends Generator {
      * @param writer
      */
     public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
-        List<String> species = options.getSpeciesList();
+        List<String> species = options.starBEASTOptions.getSpeciesList();
         String sp;
 
         numOfSpecies = species.size(); // used in private String getIndicatorsParaValue()
@@ -182,7 +182,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 
-            para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+            para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
                     new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
@@ -193,7 +193,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
-            para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
+            para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
                     new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
@@ -212,7 +212,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
 
-            para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+            para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
                     new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
@@ -275,7 +275,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeOpenTag(TMRCAStatistic.MRCA);
         writer.writeOpenTag(TaxaParser.TAXA);
 
-        for (String eachSp : options.getSpeciesList()) {
+        for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
         	writer.writeIDref(SpeciesBindings.SP, eachSp);
         }
         
@@ -331,9 +331,9 @@ public class STARBEASTGenerator extends Generator {
 
         writer.writeOpenTag(DistributionModelParser.SCALE);
         
-        Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);        
+        Parameter para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);        
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN),
+                new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN),
                 new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial))}, true);
         
         writer.writeCloseTag(DistributionModelParser.SCALE);
@@ -350,7 +350,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeCloseTag(DistributionModelParser.SHAPE);
 
         writer.writeOpenTag(DistributionModelParser.SCALE);
-        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
         writer.writeCloseTag(DistributionModelParser.SCALE);
 
         writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);

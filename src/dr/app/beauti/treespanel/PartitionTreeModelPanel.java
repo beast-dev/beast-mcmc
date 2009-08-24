@@ -110,7 +110,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 		initRootHeightField.setEnabled(false);
 		addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
 		
-		if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
+		if (options.isEBSPSharingSamePrior() || options.starBEASTOptions.isSpeciesAnalysis()) {
 			
 			addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
 		} 		     
@@ -146,7 +146,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         settingOptions = true;
         
-        if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
+        if (options.isEBSPSharingSamePrior() || options.starBEASTOptions.isSpeciesAnalysis()) {
         	        	
         	ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }

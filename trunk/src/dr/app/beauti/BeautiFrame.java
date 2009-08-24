@@ -806,7 +806,7 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        if (beautiOptions.isSpeciesAnalysis()) { // species
+        if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) { // species
             setupSpeciesAnalysis();
         }
 
@@ -863,8 +863,9 @@ public class BeautiFrame extends DocumentFrame {
     
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
-        dataPanel.unlinkModels();
-        dataPanel.unlinkTrees();
+        dataPanel.unlinkAll();
+//        dataPanel.unlinkModels();
+//        dataPanel.unlinkTrees();
         
         if (beautiOptions.getPartitionClockModels().size() > 1) {
         	dataPanel.linkClocks();
@@ -880,7 +881,7 @@ public class BeautiFrame extends DocumentFrame {
 
         treesPanel.updatePriorPanelForSpeciesAnalysis();
         
-        beautiOptions.initSpeciesParametersAndOperators();
+        beautiOptions.starBEASTOptions = new STARBEASTOptions(beautiOptions); 
         beautiOptions.fileNameStem = "LogStem";
 
         setStatusMessage();
@@ -934,8 +935,8 @@ public class BeautiFrame extends DocumentFrame {
                     beautiOptions.dataPartitions.size() +
                     (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (beautiOptions.isSpeciesAnalysis()) {
-                int num = beautiOptions.getSpeciesList().size();
+            if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
+                int num = beautiOptions.starBEASTOptions.getSpeciesList().size();
                 message += ", " + num + " species"; // species is both singular and plural
             }
 
@@ -948,7 +949,7 @@ public class BeautiFrame extends DocumentFrame {
             	message += " in total";
             }
 
-            if (beautiOptions.isSpeciesAnalysis()) {
+            if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
                 message += ";    Welcome to *BEAST";
             }
         } else if (beautiOptions.userTrees.size() > 0) {

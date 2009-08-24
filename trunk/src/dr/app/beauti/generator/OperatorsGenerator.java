@@ -530,7 +530,7 @@ public class OperatorsGenerator extends Generator {
 				}
 			}
         }
-        if (options.isSpeciesAnalysis()) {
+        if (options.starBEASTOptions.isSpeciesAnalysis()) {
 	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
 	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
@@ -542,9 +542,9 @@ public class OperatorsGenerator extends Generator {
         
         writer.writeOpenTag(UpDownOperator.DOWN);	        
         
-        if (options.isSpeciesAnalysis()) {
+        if (options.starBEASTOptions.isSpeciesAnalysis()) {
 	        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
-	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);   
         } else if (options.isEBSPSharingSamePrior()) {
         	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".populationMean");

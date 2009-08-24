@@ -220,7 +220,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    }
     
     private void updateTreePriorBorder() {
-    	if (options.isSpeciesAnalysis()) { 
+    	if (options.starBEASTOptions.isSpeciesAnalysis()) { 
     		treePriorBorder.setTitle("Species tree prior used to start all gene tree models");
     	} else if (options.isShareSameTreePrior()) {
         	treePriorBorder.setTitle("Tree prior shared by all tree models");
@@ -242,7 +242,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     	if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();
     	
     	OptionsPanel p;    	
-    	if (options.isSpeciesAnalysis()) {
+    	if (options.starBEASTOptions.isSpeciesAnalysis()) {
 	    	shareSameTreePriorCheck.setEnabled(false);
 	    	
 	        options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
@@ -426,7 +426,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
      	}
                 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (options.isSpeciesAnalysis()) {
+        	if (options.starBEASTOptions.isSpeciesAnalysis()) {
         		SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
 	        	if (ptpp != null) {
 	        		ptpp.setOptions();
@@ -476,7 +476,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //     	}
         
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (options.isSpeciesAnalysis()) {
+        	if (options.starBEASTOptions.isSpeciesAnalysis()) {
         		SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
 	        	if (ptpp != null) {
 	        		ptpp.getOptions();

@@ -284,7 +284,7 @@ public class TreePriorGenerator extends Generator {
 	            );
 	            
 	            // initial value for pop mean is the same as what used to be the value for the population size
-	            Parameter para = options.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+	            Parameter para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	            prior.getParameter("constant.popSize").initial = para.initial;
 	
 	            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
@@ -295,7 +295,7 @@ public class TreePriorGenerator extends Generator {
 	            break;	            
         }
 
-        if ((!options.isSpeciesAnalysis()) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
+        if ((!options.starBEASTOptions.isSpeciesAnalysis()) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
             // If the node height prior is not one of these two then we need to simulate a
             // random starting tree under a constant size coalescent.
 

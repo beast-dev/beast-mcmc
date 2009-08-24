@@ -168,7 +168,7 @@ public class BeastGenerator extends Generator {
 
 
         //++++++++++++++++ Species tree ++++++++++++++++++
-        if (options.isSpeciesAnalysis()) {
+        if (options.starBEASTOptions.isSpeciesAnalysis()) {
 //        	if (!(options.nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePriorType.SPECIES_YULE)) {
 //        		//TODO: more species tree model
 //        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
@@ -634,7 +634,7 @@ public class BeastGenerator extends Generator {
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
 
         writer.writeText("");
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment("Species definition: binds taxa, species and gene trees");
         }
         writer.writeComment("trait = " + trait + " trait_type = " + traitType);
@@ -643,13 +643,13 @@ public class BeastGenerator extends Generator {
         //new Attribute.Default<String>("traitType", traitType)});
 
         // write sub-tags for species
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
         	starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
         } // end write sub-tags for species
 
         writer.writeCloseTag(trait);
 
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
         	starEASTGeneratorGenerator.writeSTARBEAST(writer);
         }
 
@@ -879,7 +879,7 @@ public class BeastGenerator extends Generator {
         // write prior block
         writer.writeOpenTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
             writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
@@ -983,7 +983,7 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(Columns.COLUMN);
         }
 
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeOpenTag(Columns.COLUMN,
                     new Attribute[]{
                             new Attribute.Default<String>(Columns.LABEL, "PopMean"),
@@ -991,7 +991,7 @@ public class BeastGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -1067,7 +1067,7 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(CompoundLikelihood.LIKELIHOOD, "likelihood");
         }
 
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
             writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
@@ -1079,7 +1079,7 @@ public class BeastGenerator extends Generator {
             // prior on species tree
             writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
 
-            writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
 
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
@@ -1171,14 +1171,14 @@ public class BeastGenerator extends Generator {
     private void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
-        if (options.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // species tree log
             writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
                             new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
                             new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.SPECIES_TREE_FILE_NAME),
+                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME),
                             new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                     });
 
@@ -1246,7 +1246,7 @@ public class BeastGenerator extends Generator {
 
 
         if (options.substTreeLog) {
-            if (options.isSpeciesAnalysis()) { // species
+            if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
                 //TODO: species sub tree
             }
 

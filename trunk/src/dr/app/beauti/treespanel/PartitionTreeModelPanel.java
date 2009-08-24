@@ -30,6 +30,8 @@ import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
+
+import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -49,6 +51,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 	
 	private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());	
 	private JComboBox userTreeCombo = new JComboBox();
+	
+	private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
 //	private BeautiFrame frame = null;
 	private BeautiOptions options = null;
@@ -62,6 +66,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
 		this.partitionTreeModel = parTreeModel;
 		this.options = options;
+		
+		PanelUtils.setupComponent(initRootHeightField);
 		
 		PanelUtils.setupComponent(ploidyTypeCombo);
 		ploidyTypeCombo.addItemListener( new ItemListener() {
@@ -98,6 +104,11 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 	private void setupPanel() {
         
 		removeAll();
+		
+		initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
+		initRootHeightField.setColumns(10);
+		initRootHeightField.setEnabled(false);
+		addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
 		
 		if (options.isEBSPSharingSamePrior() || options.isSpeciesAnalysis()) {
 			

@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.*;
@@ -37,8 +38,8 @@ public class InitialTreeGenerator extends Generator {
     	
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1) 
     	
-        dr.app.beauti.options.Parameter rootHeight;
-
+        dr.app.beauti.options.Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+        
         switch (model.getStartingTreeType()) {
             case USER:
                 writeUserTree(model.getUserStartingTree(), writer);
@@ -47,7 +48,6 @@ public class InitialTreeGenerator extends Generator {
             case UPGMA:
                 // generate a upgma starting tree
                 writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-                rootHeight = model.getParameter("treeModel.rootHeight");
                 if (rootHeight.priorType != PriorType.NONE) {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
@@ -83,19 +83,19 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                                	
-            	if (options.taxonSets == null || options.taxonSets.size() < 1) { 
-            		
-            		double initRootHeight = options.treeModelOptions.getRandomStartingTreeInitialRootHeight(model);                	
+                if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {            	
                 	
             		writer.writeComment("No calibration");
 	            	writer.writeOpenTag(
 	                        CoalescentSimulator.COALESCENT_TREE,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-	                                new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + initRootHeight)
+	                                new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + rootHeight.initial)
 	                        }
 	                );
-            	} else {
+
+                } else {
             		writer.writeComment("Has calibration");
             		writer.writeOpenTag(
 	                        CoalescentSimulator.COALESCENT_TREE,

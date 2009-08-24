@@ -50,7 +50,7 @@ public class PartitionTreeModel extends ModelOptions {
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
     
-    private double initialRootHeight;
+    private double initialRootHeight = 1.0;
 
 	private boolean fixedTree = false;
 
@@ -127,15 +127,19 @@ public class PartitionTreeModel extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
+    	calculateInitialRootHeightPerTree();
+    	
     	getParameter("tree");
     	getParameter("treeModel.internalNodeHeights");
     	getParameter("treeModel.allInternalNodeHeights");    	
     	
-//        if (options.isSpeciesAnalysis()) {
-        	getParameter("treeModel.rootHeight");
-//        } else {
-//        	params.add(getParameter("treeModel.rootHeight"));
-//        }
+    	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
+    	rootHeightPara.initial = initialRootHeight; 
+    	rootHeightPara.priorEdited = true;
+    	if (!options.isSpeciesAnalysis()) {
+    		params.add(rootHeightPara);
+    	}
+    	     
     }
 
     /**
@@ -144,21 +148,7 @@ public class PartitionTreeModel extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-    	double initialRootHeight = 1;
-    	
-    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            double rate = options.clockModelOptions.getMeanRelativeRate();
-
-            if (options.hasData()) {
-                initialRootHeight = getMeanDistancePerTree() / rate;
-                initialRootHeight = options.priorOptions.round(initialRootHeight, 2);
-            }
-
-        } else {
-            if (options.maximumTipHeight > 0) {
-                initialRootHeight = options.maximumTipHeight * 10.0;
-            }
-        }
+    	calculateInitialRootHeightPerTree();
 
         // if not a fixed tree then sample tree space
         if (!fixedTree) {
@@ -234,22 +224,42 @@ public class PartitionTreeModel extends ModelOptions {
 	public void setInitialRootHeight(double initialRootHeight) {
 		this.initialRootHeight = initialRootHeight;
 	}
+	
+	private void calculateInitialRootHeightPerTree() {			
+		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(allPartitionData) [0];
+		
+//    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+//    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) {
+//            double rate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels(allPartitionData)); // clock models belong to this tree
+//
+//            if (options.hasData()) {
+//                initialRootHeight = getMeanDistancePerTree() / rate;
+//                initialRootHeight = options.priorOptions.round(initialRootHeight, 2);
+//            }
+//
+//        } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIME_CALIBRATED) {            
+//            initialRootHeight = options.maximumTipHeight * 10.0;
+//           
+//        } else {
+//        	
+//        }
+	}
     
-    public double getMeanDistancePerTree() {
-    	double treeMeanDistance = 0;
-    	double totalSiteCount = 0;
-    	
-    	for (PartitionData partition: allPartitionData) {
-    		treeMeanDistance = partition.getMeanDistance() * partition.getSiteCount();
-    		totalSiteCount = totalSiteCount + partition.getSiteCount();
-		}
-    	
-    	if (totalSiteCount != 0) {
-    		return treeMeanDistance / totalSiteCount;
-    	} else {
-    		return 0;
-    	}
-    }
+//    public double getMeanDistancePerTree() {
+//    	double treeMeanDistance = 0;
+//    	double totalSiteCount = 0;
+//    	
+//    	for (PartitionData partition: allPartitionData) {
+//    		treeMeanDistance = partition.getMeanDistance() * partition.getSiteCount();
+//    		totalSiteCount = totalSiteCount + partition.getSiteCount();
+//		}
+//    	
+//    	if (totalSiteCount != 0) {
+//    		return treeMeanDistance / totalSiteCount;
+//    	} else {
+//    		return 0;
+//    	}
+//    }
 
     public String getName() {
         return name;

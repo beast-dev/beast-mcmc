@@ -25,6 +25,11 @@
 
 package dr.math;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
+
+import dr.util.NumberFormatter;
+
 /**
  * Handy utility functions which have some Mathematical relavance.
  *
@@ -367,4 +372,20 @@ public class MathUtils {
 	}
 	return r;
     }
+    
+    /**
+     * return double *.????
+     * @param value
+     * @param sf
+     * @return
+     */
+    public static double round(double value, int sf) {
+        NumberFormatter formatter = new NumberFormatter(sf);
+        try {
+            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
+        } catch (ParseException e) {
+            return value;
+        }
+    }
+    
 }

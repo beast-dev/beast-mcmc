@@ -141,10 +141,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				
 				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 				if (fixedMeanRateCheck.isSelected()) {
-		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
-		        	options.clockModelOptions.estimateAllRates();
+		        	options.clockModelOptions.fixMeanRate();
 		        } else {
-		        	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
 		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
 							
@@ -255,7 +253,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         if (fixedMeanRateCheck.isSelected()) {
         	options.clockModelOptions.setRateOptionClockModel(FixRateType.FIX_MEAN);
         } else {
-        	options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE);
+        	options.clockModelOptions.setRateOptionClockModel(FixRateType.RElATIVE_TO);
         }
         options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
        

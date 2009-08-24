@@ -23,14 +23,10 @@
 
 package dr.app.beauti.options;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.List;
 
 import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.RelativeRatesType;
-import dr.util.NumberFormatter;
+import dr.math.MathUtils;
 
 
 /**
@@ -44,15 +40,6 @@ public class PriorOptions extends ModelOptions {
 	// Instance variables
     private final BeautiOptions options;
    
-    
-    double growthRateMaximum = 1E6;
-    double birthRateMaximum = 1E6;
-    double substitutionRateMaximum = 100;
-    double logStdevMaximum = 10;
-    double substitutionParameterMaximum = 100;
-    double initialRootHeight = 1;
-    double initialRate = 1;
-    double meanDistance = 1;
 
     public PriorOptions(BeautiOptions options) {    	
     	this.options = options;
@@ -67,29 +54,45 @@ public class PriorOptions extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {    	    	
-
-
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            double rate = options.clockModelOptions.getMeanRelativeRate();
-
-            growthRateMaximum = 1E6 * rate;
-            birthRateMaximum = 1E6 * rate;
-
-            if (options.hasData()) {
-                initialRootHeight = meanDistance / rate;
-
-                initialRootHeight = round(initialRootHeight, 2);
-            }
-
-        } else {
-            if (options.maximumTipHeight > 0) {
-                initialRootHeight = options.maximumTipHeight * 10.0;
-            }
-
-            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
+        
+        double growthRateMaximum = 1E6;
+        double birthRateMaximum = 1E6;
+        double substitutionRateMaximum = 100;
+        double logStdevMaximum = 10;
+        double substitutionParameterMaximum = 100;
+                
+        double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.dataPartitions);
+        double avgInitialRootHeight = rootAndRate[0];
+        double avgInitialRate = rootAndRate[1];
+        
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+        	
+            growthRateMaximum = 1E6 * avgInitialRate;
+            birthRateMaximum = 1E6 * avgInitialRate;   
         }
+        
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+//            double rate = options.clockModelOptions.getMeanRelativeRate();
+//
+//            growthRateMaximum = 1E6 * rate;
+//            birthRateMaximum = 1E6 * rate;
+//
+//            if (options.hasData()) {
+//                initialRootHeight = meanDistance / rate;
+//
+//                initialRootHeight = round(initialRootHeight, 2);
+//            }
+//
+//        } else {
+//            if (options.maximumTipHeight > 0) {
+//                initialRootHeight = options.maximumTipHeight * 10.0;
+//            }
+//
+//            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
+//        }
 
-        double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
+        double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
 
         for (Parameter param : params) {
 //            if (dataReset) param.priorEdited = false;
@@ -99,12 +102,12 @@ public class PriorOptions extends ModelOptions {
                     case TIME_SCALE:
                         param.uniformLower = Math.max(0.0, param.lower);
                         param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-                        param.initial = initialRootHeight;
+                        param.initial = avgInitialRootHeight;
                         break;
                     case T50_SCALE:
                         param.uniformLower = Math.max(0.0, param.lower);
                         param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-                        param.initial = initialRootHeight / 5.0;
+                        param.initial = avgInitialRootHeight / 5.0;
                         break;
                     case GROWTH_RATE_SCALE:
                         param.uniformLower = Math.max(-growthRateMaximum, param.lower);
@@ -117,7 +120,7 @@ public class PriorOptions extends ModelOptions {
                     case SUBSTITUTION_RATE_SCALE:
                         param.uniformLower = Math.max(0.0, param.lower);
                         param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
-                        param.initial = initialRate;
+                        param.initial = avgInitialRate;
                         break;
                     case LOG_STDEV_SCALE:
                         param.uniformLower = Math.max(0.0, param.lower);
@@ -134,23 +137,23 @@ public class PriorOptions extends ModelOptions {
                         break;
 
                     case ROOT_RATE_SCALE:
-                        param.initial = initialRate;
+                        param.initial = avgInitialRate;
                         param.gammaAlpha = 0.5;
                         param.gammaBeta = param.initial / 0.5;
                         break;
 
                     case LOG_VAR_SCALE:
-                        param.initial = initialRate;
+                        param.initial = avgInitialRate;
                         param.gammaAlpha = 2.0;
                         param.gammaBeta = param.initial / 2.0;
                         break;
 
                 }
-                if (param.isNodeHeight) {
+                if (param.isNodeHeight) { //TODO affecting "treeModel.rootHeight", need to review
                     param.lower = options.maximumTipHeight;
                     param.uniformLower = options.maximumTipHeight;
                     param.uniformUpper = timeScaleMaximum;
-                    param.initial = initialRootHeight;
+                    param.initial = avgInitialRootHeight;
                 }
             }
         }
@@ -170,16 +173,7 @@ public class PriorOptions extends ModelOptions {
     }
     
     /////////////////////////////////////////////////////////////
-    
-    double round(double value, int sf) {
-        NumberFormatter formatter = new NumberFormatter(sf);
-        try {
-            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
-        } catch (ParseException e) {
-            return value;
-        }
-    }
-    
+
 	@Override
 	public String getPrefix() {
 		// TODO Auto-generated method stub

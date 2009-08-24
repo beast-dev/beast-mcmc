@@ -177,7 +177,7 @@ public abstract class ModelOptions {
         return operator;
     }
 
-    abstract public String getPrefix();
+//    abstract public String getPrefix();
 
     protected void addComponent(ComponentOptions component) {
         components.add(component);

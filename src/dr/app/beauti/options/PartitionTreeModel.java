@@ -38,7 +38,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionTreeModel extends ModelOptions {
+public class PartitionTreeModel extends PartitionOptions {
 
     // Instance variables
 

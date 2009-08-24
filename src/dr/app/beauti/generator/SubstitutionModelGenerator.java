@@ -283,20 +283,20 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeComment("The Binary covarion model");
         writer.writeOpenTag(
-                dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL,
+                BinaryCovarionModel.COVARION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES,
+        writeParameter(BinaryCovarionModel.FREQUENCIES,
                 prefix + "frequencies", 2, 0.5, 0.0, 1.0, writer);
 
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES,
+        writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
                 prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer);
 
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA, "alpha", options, writer);
-        writeParameter(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE, "bcov.s", options, writer);
+        writeParameter(BinaryCovarionModel.ALPHA, "alpha", model, writer);
+        writeParameter(BinaryCovarionModel.SWITCHING_RATE, "bcov.s", model, writer);
 
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL);
+        writer.writeCloseTag(BinaryCovarionModel.COVARION_MODEL);
     }
 
     /**

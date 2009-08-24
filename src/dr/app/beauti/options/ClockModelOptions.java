@@ -283,11 +283,4 @@ public class ClockModelOptions extends ModelOptions {
 	}
 	
 	
-	@Override
-	public String getPrefix() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
 }

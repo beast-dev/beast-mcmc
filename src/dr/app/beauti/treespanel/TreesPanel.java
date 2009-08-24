@@ -247,7 +247,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 	    	
 	        options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 	        
-	        options.clockModelOptions.setRateOptionClockModel(FixRateType.ESTIMATE); // fix 1st partition
+	        options.clockModelOptions.setRateOptionClockModel(FixRateType.RElATIVE_TO); // fix 1st partition
 	        int i =0;
 	        for (PartitionClockModel model : options.getPartitionClockModels()) {
 	        	if (i == 0) {

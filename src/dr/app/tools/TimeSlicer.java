@@ -21,7 +21,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.stats.DiscreteStatistics;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.awt.geom.Point2D;
 
 import org.jdom.Element;
@@ -31,7 +33,6 @@ import org.jdom.output.Format;
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
- * @author Andrew Rambaut
  */
 
 public class TimeSlicer {
@@ -43,18 +44,17 @@ public class TimeSlicer {
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
     public static final String TRAIT = "trait";
-    public static final String DISCRETE = "discrete";
     public static final String LOCATIONTRAIT = "location";
     public static final String NAME = "name";
     public static final String DENSITY_VALUE = "density";
     public static final String SLICE_VALUE = "time";
-
+    
     public static final String STYLE = "Style";
     public static final String ID = "id";
     public static final String WIDTH = "0.5";
-    public static final String startHPDColor = "00F1D6"; //blue=B36600
-    public static final String endHPDColor = "00FF00"; //red=0000FF
-    public static final String opacity = "9f";
+    public static final String startHPDColor = "FFFFFF"; //blue=B36600
+    public static final String endHPDColor = "0000FF"; //red=0000FF
+    public static final String opacity = "6f";
 
     public static final String BURNIN = "burnin";
     public static final String SLICE = "slice";
@@ -69,81 +69,48 @@ public class TimeSlicer {
     public static final String NORMALIZATION = "normalization";
     public static final String HPD = "hpd";
     public static final String SDR = "sdr";
+    public static final String PROGRESS = "progress";
+    public static final double treeLengthPercentage = 0.00;
 
     public static final String[] falseTrue = new String[] {"false","true"};
 
-    /**
-     * Constructor for discrete traits
-     * @param treeFileName
-     * @param burnin
-     * @param traits
-     * @param slices
-     */
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, double mostRecentSamplingDate) {
 
-        this(treeFileName, burnin, traits, true, slices, false,
-                false, mostRecentSamplingDate, ContourMode.JAVA,
-                Normalization.NONE, false);
-    }
-
-    /**
-     * Constructor for continuous traits
-     * @param treeFileName
-     * @param burnin
-     * @param traits
-     * @param slices
-     * @param impute
-     * @param trueNoise
-     * @param mostRecentSamplingDate
-     * @param contourMode
-     * @param normalize
-     * @param getSRD
-     */
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, boolean isDiscrete, double[] slices, boolean impute,
-                      boolean trueNoise, double mostRecentSamplingDate, ContourMode contourMode,
-                      Normalization normalize, boolean getSRD) {
+    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] slices, boolean impute,
+                      boolean trueNoise, double mrsd, ContourMode contourMode,
+                      Normalization normalize, boolean getSRD, String progress) {
 
         this.traits = traits;
         traitCount = traits.length;
         this.slices = slices;
-        this.mostRecentSamplingDate = mostRecentSamplingDate;
+        sliceCount = 1;
+        doSlices = false;
+        mostRecentSamplingDate = mrsd;
         this.contourMode = contourMode;
         sdr = getSRD;
+        if (progress.equalsIgnoreCase("true")) {
+            sliceProgressReport = true;
+        } else if (progress.equalsIgnoreCase("check")) {
+            sliceProgressReport = true;
+            checkSliceContours = true;
+        }
 
         if (slices != null) {
             sliceCount = slices.length;
             doSlices = true;
-        } else {
-            sliceCount = 1;
-            doSlices = false;
         }
 
-        if (isDiscrete) {
-            discreteValueCounts = new ArrayList<List<Map<Object, Integer>>>(sliceCount);
-            discreteValues = new ArrayList<Set<Object>>(traitCount);
-            for (int i = 0; i < sliceCount; i++) {
-                List<Map<Object, Integer>> thisSlice = new ArrayList<Map<Object, Integer>>(traitCount);
-                discreteValueCounts.add(thisSlice);
-                for (int j = 0; j < traitCount; j++) {
-                    Map<Object, Integer> thisSliceTraitCounts = new HashMap<Object, Integer>();
-                    thisSlice.add(thisSliceTraitCounts);
-                }
-                discreteValues.add(new HashSet<Object>());
-            }
-        } else {
-            values = new ArrayList<List<List<Trait>>>(sliceCount);
-            for (int i = 0; i < sliceCount; i++) {
-                List<List<Trait>> thisSlice = new ArrayList<List<Trait>>(traitCount);
-                values.add(thisSlice);
-                for (int j = 0; j < traitCount; j++) {
-                    List<Trait> thisTraitSlice = new ArrayList<Trait>();
-                    thisSlice.add(thisTraitSlice);
-                }
+        values = new ArrayList<List<List<Trait>>>(sliceCount);
+        for (int i = 0; i < sliceCount; i++) {
+            List<List<Trait>> thisSlice = new ArrayList<List<Trait>>(traitCount);
+            values.add(thisSlice);
+            for (int j = 0; j < traitCount; j++) {
+                List<Trait> thisTraitSlice = new ArrayList<Trait>();
+                thisSlice.add(thisTraitSlice);
             }
         }
 
         try {
-            readAndAnalyzeTrees(treeFileName, burnin, traits, slices, isDiscrete, impute, trueNoise, normalize);
+            readAndAnalyzeTrees(treeFileName, burnin, traits, slices, impute, trueNoise, normalize);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
             System.exit(-1);
@@ -155,7 +122,6 @@ public class TimeSlicer {
         progressStream.println(treesAnalyzed+" trees analyzed.");
 
     }
-
 
     public void output(String outFileName, boolean summaryOnly) {
         output(outFileName,summaryOnly,OutputFormat.XML, 0.80, null);
@@ -171,7 +137,7 @@ public class TimeSlicer {
 
         if (outFileName != null) {
             try {
-                resultsStream = new PrintStream(new File(outFileName));
+            resultsStream = new PrintStream(new File(outFileName));
             } catch (IOException e) {
                 System.err.println("Error opening file: "+outFileName);
                 System.exit(-1);
@@ -248,112 +214,108 @@ public class TimeSlicer {
 //        }
 
 
-//  <--          attempt to get slice dispersalRates
-        if (sdr) {
-            double[][] sliceTreeDistances = new double[sliceCount][sliceTreeDistanceArrays.size()];
-            double[][] sliceTreeTimes = new double[sliceCount][sliceTreeDistanceArrays.size()];
-            double[][] sliceTreeRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
-            for (int q = 0; q < sliceTreeDistanceArrays.size(); q++){
-                double[] distanceArray = (double[])sliceTreeDistanceArrays.get(q);
-                double[] timeArray = (double[])sliceTreeTimeArrays.get(q);
-                for (int r = 0; r < distanceArray.length; r ++) {
-                    sliceTreeDistances[r][q] = distanceArray[r];
-                    sliceTreeTimes[r][q] = timeArray[r];
-                }
-            }
+            if (sdr) {
+                double[][] sliceTreeRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
+                double[][] sliceTreeMaxRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
 
-            print2DArray(sliceTreeDistances,"sliceTreeDistances.txt");
-            print2DArray(sliceTreeTimes,"sliceTreeTimes.txt");
-
-            if (sliceCount > 1) {
-                for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
-                    double[] distanceArray = (double[])sliceTreeDistanceArrays.get(s);
-                    double[] timeArray = (double[])sliceTreeTimeArrays.get(s);
-                    for (int t = 0; t <  (sliceCount-1); t++) {
-                        sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
-                        //sliceTreeRates[s][t] = (sliceTreeDistances[t][s] - sliceTreeDistances[t+1][s])/(sliceTreeTimes[t][s] - sliceTreeTimes[t+1][s]);
+                double[][] sliceTreeDistances = new double[sliceCount][sliceTreeDistanceArrays.size()];
+                double[][] sliceTreeTimes = new double[sliceCount][sliceTreeDistanceArrays.size()];
+                //double[][] sliceTreeMaxDistances = new double[sliceCount][sliceTreeMaxDistanceArrays.size()];
+                double[][] sliceTreeMaxDistances = new double[sliceTreeMaxDistanceArrays.size()][sliceCount];
+                double[][] sliceTreeTimesFromRoot = new double[sliceCount][sliceTreeTimeFromRootArrays.size()];
+                for (int q = 0; q < sliceTreeDistanceArrays.size(); q++){
+                    double[] distanceArray = (double[])sliceTreeDistanceArrays.get(q);
+                    double[] timeArray = (double[])sliceTreeTimeArrays.get(q);
+                    double[] maxDistanceArray = (double[])sliceTreeMaxDistanceArrays.get(q);
+                    double[] timeFromRootArray = (double[])sliceTreeTimeFromRootArrays.get(q);
+                    for (int r = 0; r < distanceArray.length; r ++) {
+                        sliceTreeDistances[r][q] = distanceArray[r];
+                        sliceTreeTimes[r][q] = timeArray[r];
+                        sliceTreeMaxDistances[q][r] = maxDistanceArray[r];
+                        sliceTreeTimesFromRoot[r][q] = timeFromRootArray[r];
                     }
-                    sliceTreeRates[s][sliceCount-1] = (sliceTreeDistances[sliceCount-1][s])/(sliceTreeTimes[sliceCount-1][s]);
                 }
-            } else {
-                for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
-                    sliceTreeRates[s][0] = sliceTreeDistances[0][s]/sliceTreeTimes[0][s];
-                }
-            }
 
-            print2DArray(sliceTreeRates,"sliceTreeRates.txt");
+                //print2DArray(sliceTreeDistances,"sliceTreeDistances.txt");
+                //print2DArray(sliceTreeTimes,"sliceTreeTimes.txt");
+                //print2DTransposedArray(sliceTreeMaxDistances,"sliceTreeMaxDistances.txt");
+                //print2DArray(sliceTreeTimesFromRoot,"sliceTreeTimesFromRoot.txt");
 
-            try{
-                PrintWriter sliceDispersalRateFile = new PrintWriter(new FileWriter(sdrFile), true);
-                sliceDispersalRateFile.print("sliceTime"+"\t");
-                if (mostRecentSamplingDate > 0) {
-                    sliceDispersalRateFile.print("realTime"+"\t");
+                if (sliceCount > 1) {
+                    for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
+                        double[] distanceArray = (double[])sliceTreeDistanceArrays.get(s);
+                        double[] timeArray = (double[])sliceTreeTimeArrays.get(s);
+                        double[] maxDistanceArray = (double[])sliceTreeMaxDistanceArrays.get(s);
+                        double[] timeFromRoot = (double[])sliceTreeTimeFromRootArrays.get(s);
+
+                        for (int t = 0; t <  (sliceCount-1); t++) {
+                           sliceTreeMaxRates[s][t] = (maxDistanceArray[t])/(timeFromRoot[t]);
+                           if ((timeArray[t] - timeArray[t+1]) > ((Double)treeLengths.get(s)*treeLengthPercentage) ) {
+                                sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
+                                //sliceTreeRates[s][t] = (sliceTreeDistances[t][s] - sliceTreeDistances[t+1][s])/(sliceTreeTimes[t][s] - sliceTreeTimes[t+1][s]);
+                            } else {
+                                if (timeArray[t] > 0) {
+                                    sliceTreeRates[s][t] = sliceTreeRates[s][t-1];
+                                } else {
+                                    //set it to NaN, we ignore NaNs when getting summary stats
+                                    sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
+                                }
+                            }
+                        }
+
+                        if ((timeArray[sliceCount-1]) > ((Double)treeLengths.get(s)*treeLengthPercentage) ) {
+                            sliceTreeRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                        } else {
+                            if ((timeArray[sliceCount-1]) > 0) {
+                                sliceTreeRates[s][sliceCount-1] = sliceTreeRates[s][sliceCount-2];
+                            } else {
+                                sliceTreeRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                            }
+                        }
+                        sliceTreeMaxRates[s][sliceCount-1] = maxDistanceArray[sliceCount-1]/timeFromRoot[sliceCount-1];
+                     }
+                } else {
+                    for (int s = 0; s < sliceTreeDistanceArrays.size(); s++) {
+                        double[] distanceArray = (double[])sliceTreeDistanceArrays.get(s);
+                        double[] timeArray = (double[])sliceTreeTimeArrays.get(s);
+                        double[] maxDistanceArray = (double[])sliceTreeMaxDistanceArrays.get(s);
+                        double[] timeFromRoot = (double[])sliceTreeTimeFromRootArrays.get(s);
+                        sliceTreeRates[s][0] = distanceArray[0]/timeArray[0];
+                        sliceTreeMaxRates[s][0] = maxDistanceArray[0]/timeFromRoot[0];
+                    }
                 }
-                sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"\t"+"hpd low"+"\t"+"hpd up"+"\r");
-                double[] meanDispersalRates = meanColNoNaN(sliceTreeRates);
-                double[][] hpdDispersalRates = getArrayHPDintervals(sliceTreeRates);
-                for (int u = 0; u < sliceCount; u++) {
-                    sliceDispersalRateFile.print(slices[u]+"\t");
+
+                //print2DTransposedArray(sliceTreeMaxRates,"sliceTreeMaxRates.txt");
+
+
+
+                try{
+                    PrintWriter sliceDispersalRateFile = new PrintWriter(new FileWriter(sdrFile), true);
+                    sliceDispersalRateFile.print("sliceTime"+"\t");
                     if (mostRecentSamplingDate > 0) {
-                        sliceDispersalRateFile.print((mostRecentSamplingDate-slices[u])+"\t");
+                        sliceDispersalRateFile.print("realTime"+"\t");
                     }
-                    sliceDispersalRateFile.print(meanDispersalRates[u] + "\t"+ hpdDispersalRates[u][0] + "\t" + hpdDispersalRates[u][1]+"\r");
-                }
-                sliceDispersalRateFile.close();
-            } catch (IOException e) {
-                System.err.println("IO Exception encountered: "+e.getMessage());
-                System.exit(-1);
-            }
-//               attempt to get slice dispersalRates  -->
-        }
-    }
-
-    public void outputDiscrete(String outFileName) {
-
-        resultsStream = System.out;
-
-        if (outFileName != null) {
-            try {
-                resultsStream = new PrintStream(new File(outFileName));
-            } catch (IOException e) {
-                System.err.println("Error opening file: "+outFileName);
-                System.exit(-1);
-            }
-        }
-
-        StringBuffer sb = new StringBuffer("slice");
-        for(int i=0; i<traits.length; i++) {
-            for(Object value : discreteValues.get(i)) {
-                sb.append(sep).append(value.toString());
-            }
-        }
-        resultsStream.println(sb);
-
-        for(int i=0; i<slices.length; i++) {
-            sb = new StringBuffer();
-
-            if (Double.isNaN(slices[i]))
-                sb.append("All");
-            else
-                sb.append(slices[i]);
-
-            List<Map<Object, Integer>> thisSlice = discreteValueCounts.get(i);
-            for(int j = 0; j < traits.length; j++) {
-                Map<Object, Integer> thisSliceTraitCounts = thisSlice.get(j);
-                for(Object value : discreteValues.get(j)) {
-                    Integer count = thisSliceTraitCounts.get(value);
-                    if (count != null) {
-                        sb.append(sep).append(count);
-                    } else {
-                        sb.append(sep).append(0);
+                    sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalDistance"+"\t"+"hpd low"+"\t"+"hpd up" + "\r");
+                    double[] meanDispersalRates = meanColNoNaN(sliceTreeRates);
+                    double[][] hpdDispersalRates = getArrayHPDintervals(sliceTreeRates);
+                    double[] meanMaxDispersalDistances = meanColNoNaN(sliceTreeMaxDistances);
+                    double[][] hpdMaxDispersalDistances = getArrayHPDintervals(sliceTreeMaxDistances);
+                    double[] meanMaxDispersalRates = meanColNoNaN(sliceTreeMaxRates);
+                    double[][] hpdMaxDispersalRates = getArrayHPDintervals(sliceTreeMaxRates);
+                    for (int u = 0; u < sliceCount; u++) {
+                        sliceDispersalRateFile.print(slices[u]+"\t");
+                        if (mostRecentSamplingDate > 0) {
+                            sliceDispersalRateFile.print((mostRecentSamplingDate-slices[u])+"\t");
+                        }
+                        sliceDispersalRateFile.print(meanDispersalRates[u] + "\t"+ hpdDispersalRates[u][0] + "\t" + hpdDispersalRates[u][1] + "\t" + meanMaxDispersalRates[u] + "\t"+ hpdMaxDispersalRates[u][0] + "\t" + hpdMaxDispersalRates[u][1] + "\t" + meanMaxDispersalDistances[u] + "\t"+ hpdMaxDispersalDistances[u][0] + "\t" + hpdMaxDispersalDistances[u][1] +"\r");
                     }
+                    sliceDispersalRateFile.close();
+                } catch (IOException e) {
+                    System.err.println("IO Exception encountered: "+e.getMessage());
+                    System.exit(-1);
                 }
             }
-
-            resultsStream.println(sb);
-        }
     }
-
 
     enum Normalization {
         LENGTH,
@@ -387,105 +349,116 @@ public class TimeSlicer {
                                      OutputFormat outputFormat,
                                      double hpdValue) {
 
-        boolean isNumber = thisTrait.get(0).isNumber();
-        boolean isMultivariate = thisTrait.get(0).isMultivariate();
-        int dim = thisTrait.get(0).getValue().length;
-        boolean isBivariate = isMultivariate && dim == 2;
-        if (isNumber) {
-
-            Element traitElement = null;
-            if (outputFormat == OutputFormat.XML) {
-                traitElement = new Element(TRAIT);
-                traitElement.setAttribute(NAME,traits[traitIndex]);
-            }
-
-            if (outputFormat == OutputFormat.KML) {
-                Element styleElement = new Element(STYLE);
-                constructPolygonStyleElement(styleElement, sliceValue);
-                documentElement.addContent(styleElement);
-            }
-
-            int count = thisTrait.size();
-            double[][] x = new double[dim][count];
-            for(int i=0; i<count; i++) {
-                Trait trait = thisTrait.get(i);
-                double[] value = trait.getValue();
-                for(int j=0; j<dim; j++)
-                    x[j][i] = value[j];
-            }
-
-            if (outputFormat == OutputFormat.XML) {
-                // Compute marginal means and standard deviations
-                for (int j = 0; j < dim; j++) {
-                    TraceDistribution trace = new TraceDistribution(x[j]);
-                    Element statsElement = new Element("stats");
-                    addDimInfo(statsElement, j, dim);
-                    StringBuffer sb = new StringBuffer();
-                    sb.append(KMLCoordinates.NEWLINE);
-                    sb.append(String.format(KMLCoordinates.FORMAT,
-                            trace.getMean())).append(KMLCoordinates.SEPERATOR);
-                    sb.append(String.format(KMLCoordinates.FORMAT,
-                            trace.getStdError())).append(KMLCoordinates.SEPERATOR);
-                    sb.append(String.format(KMLCoordinates.FORMAT,
-                            trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
-                    sb.append(String.format(KMLCoordinates.FORMAT,
-                            trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
-                    statsElement.addContent(sb.toString());
-                    traitElement.addContent(statsElement);
+                boolean isNumber = thisTrait.get(0).isNumber();
+                boolean isMultivariate = thisTrait.get(0).isMultivariate();
+                int dim = thisTrait.get(0).getValue().length;
+                boolean isBivariate = isMultivariate && dim == 2;
+                if (sliceProgressReport) {
+                    progressStream.print("slice "+sliceValue+"\t");
+                    if (mostRecentSamplingDate > 0) {
+                        progressStream.print("time="+(mostRecentSamplingDate-sliceValue)+"\t");
+                    }
+                    progressStream.print("trait="+traits[traitIndex]+"\t");
                 }
-            }
+                if (isNumber) {
 
-            if (isBivariate) {
-
-                //for testing how much points are within the polygons
-                double numberOfPointsInPolygons = 0;
-                double totalArea = 0;
-
-                ContourMaker contourMaker;
-                if (contourMode == ContourMode.JAVA)
-                    contourMaker = new KernelDensityEstimator2D(x[0],x[1]);
-                else if (contourMode == ContourMode.R)
-                    contourMaker = new ContourWithR(x[0],x[1]);
-                else if (contourMode == ContourMode.SNYDER)
-                    contourMaker = new ContourWithSynder(x[0],x[1]);
-                else
-                    throw new RuntimeException("Unimplemented ContourModel!");
-
-                ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
-                for(ContourPath path : paths) {
-
-                    KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
-                    if(outputFormat == OutputFormat.XML) {
-                        Element regionElement = new Element(REGIONS_ELEMENT);
-                        regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
-                        regionElement.addContent(coords.toXML());
-                        traitElement.addContent(regionElement);
+                    Element traitElement = null;
+                    if (outputFormat == OutputFormat.XML) {
+                        traitElement = new Element(TRAIT);
+                        traitElement.setAttribute(NAME,traits[traitIndex]);
                     }
 
-                    // only if the trait is location we will write KML
-                    if(outputFormat == OutputFormat.KML){
-                        //because KML polygons require long,lat,alt we need to switch lat and long first
-                        coords.switchXY();
-                        Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
-                        //testing how many points are within the polygon
-                        Element testElement = new Element("test");
-                        testElement.addContent(coords.toXML());
-                        Polygon2D testPolygon = new Polygon2D(testElement);
-                        totalArea += testPolygon.calculateArea();
-                        numberOfPointsInPolygons += getNumberOfPointsInPolygon(x,testPolygon);
-
-                        folderElement.addContent(placemarkElement);
+                    if (outputFormat == OutputFormat.KML) {
+                        Element styleElement = new Element(STYLE);
+                        constructPolygonStyleElement(styleElement, sliceValue);
+                        documentElement.addContent(styleElement);
                     }
+
+                    int count = thisTrait.size();
+                    double[][] x = new double[dim][count];
+                    for(int i=0; i<count; i++) {
+                        Trait trait = thisTrait.get(i);
+                        double[] value = trait.getValue();
+                        for(int j=0; j<dim; j++)
+                            x[j][i] = value[j];
+                    }
+
+                    if (outputFormat == OutputFormat.XML) {
+                        // Compute marginal means and standard deviations
+                        for (int j = 0; j < dim; j++) {
+                            TraceDistribution trace = new TraceDistribution(x[j]);
+                            Element statsElement = new Element("stats");
+                            addDimInfo(statsElement, j, dim);
+                            StringBuffer sb = new StringBuffer();
+                            sb.append(KMLCoordinates.NEWLINE);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getMean())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getStdError())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
+                            sb.append(String.format(KMLCoordinates.FORMAT,
+                                    trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
+                            statsElement.addContent(sb.toString());
+                            traitElement.addContent(statsElement);
+                        }
+                    }
+
+                    if (isBivariate) {
+
+                        //for testing how much points are within the polygons
+                        double numberOfPointsInPolygons = 0;
+                        double totalArea = 0;
+
+                        ContourMaker contourMaker;
+                        if (contourMode == ContourMode.JAVA)
+                            contourMaker = new KernelDensityEstimator2D(x[0],x[1]);
+                        else if (contourMode == ContourMode.R)
+                            contourMaker = new ContourWithR(x[0],x[1]);
+                        else if (contourMode == ContourMode.SNYDER)
+                            contourMaker = new ContourWithSynder(x[0],x[1]);
+                        else
+                            throw new RuntimeException("Unimplemented ContourModel!");
+
+                        ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
+                        for(ContourPath path : paths) {
+
+                            KMLCoordinates coords = new KMLCoordinates(path.getAllX(),path.getAllY());
+                            if(outputFormat == OutputFormat.XML) {
+                                Element regionElement = new Element(REGIONS_ELEMENT);
+                                regionElement.setAttribute(DENSITY_VALUE,Double.toString(hpdValue));
+                                regionElement.addContent(coords.toXML());
+                                traitElement.addContent(regionElement);
+                            }
+
+                            // only if the trait is location we will write KML
+                            if(outputFormat == OutputFormat.KML){
+                                //because KML polygons require long,lat,alt we need to switch lat and long first
+                                coords.switchXY();
+                                Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice);
+                                //testing how many points are within the polygon
+                                if (checkSliceContours) {
+                                    Element testElement = new Element("test");
+                                    testElement.addContent(coords.toXML());
+                                    Polygon2D testPolygon = new Polygon2D(testElement);
+                                    totalArea += testPolygon.calculateArea();
+                                    numberOfPointsInPolygons += getNumberOfPointsInPolygon(x,testPolygon);                                    
+                                }
+
+                                folderElement.addContent(placemarkElement);
+                            }
+                       }
+                       if (checkSliceContours) {
+                            progressStream.print("numberOfContours="+paths.length+"\tfreqOfPointsInContour="+numberOfPointsInPolygons/count+"\ttotalArea = "+totalArea);
+                       }
+                        
+                    }
+                    if (outputFormat == OutputFormat.XML)
+                        sliceElement.addContent(traitElement);
+                } // else skip
+                if (sliceProgressReport) {
+                    progressStream.print("\r");
                 }
-                //testing how many points are within the polygon
-                System.out.println(sliceValue+"\t"+(mostRecentSamplingDate-sliceValue)+"\t"+paths.length+"\t"+numberOfPointsInPolygons/count+"\t"+totalArea);
-
-            }
-            if (outputFormat == OutputFormat.XML)
-                sliceElement.addContent(traitElement);
-
-        } // else skip
-
     }
 
     public static int getNumberOfPointsInPolygon(double[][] pointsArray, Polygon2D testPolygon) {
@@ -503,46 +476,46 @@ public class TimeSlicer {
         if (outputFormat == OutputFormat.TAB)
             throw new RuntimeException("Only XML/KML output is implemented");
 
-        Element sliceElement = null;
+            Element sliceElement = null;
 
-        if (outputFormat == OutputFormat.XML) {
-            sliceElement = new Element(SLICE_ELEMENT);
-            sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
-        }
+            if (outputFormat == OutputFormat.XML) {
+                sliceElement = new Element(SLICE_ELEMENT);
+                sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+            }
 
-        List<List<Trait>> thisSlice = values.get(slice);
-        int traitCount = thisSlice.size();
+            List<List<Trait>> thisSlice = values.get(slice);
+            int traitCount = thisSlice.size();
 
-        for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
+            for(int traitIndex=0; traitIndex<traitCount; traitIndex++) {
 
-            summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
-                    outputFormat,
-                    hpdValue);
-        }
+                summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+                                     outputFormat,
+                                     hpdValue);
+            }
 
-        if(outputFormat == OutputFormat.XML) {
-            rootElement.addContent(sliceElement);
-        }
+            if(outputFormat == OutputFormat.XML) {
+                rootElement.addContent(sliceElement);
+            }
     }
 
     private void constructPolygonStyleElement(Element styleElement, double sliceValue){
         double date = mostRecentSamplingDate - sliceValue;
         styleElement.setAttribute(ID,REGIONS_ELEMENT+date+"_style");
-        Element lineStyle = new Element("LineStyle");
-        Element width = new Element("width");
-        width.addContent(WIDTH);
-        lineStyle.addContent(width);
-        Element polyStyle = new Element("PolyStyle");
-        Element color = new Element("color");
-        double[] minMax = new double[2];
-        minMax[0] = slices[0];
-        minMax[1] = slices[(slices.length-1)];
-        String colorString = getKMLColor(sliceValue,minMax,endHPDColor,startHPDColor);
-        color.addContent(opacity+colorString);
-        Element outline = new Element("outline");
-        outline.addContent("0");
-        polyStyle.addContent(color);
-        polyStyle.addContent(outline);
+            Element lineStyle = new Element("LineStyle");
+                Element width = new Element("width");
+                width.addContent(WIDTH);
+            lineStyle.addContent(width);
+            Element polyStyle = new Element("PolyStyle");
+                Element color = new Element("color");
+                double[] minMax = new double[2];
+                minMax[0] = slices[0];
+                minMax[1] = slices[(slices.length-1)];
+                String colorString = getKMLColor(sliceValue,minMax,endHPDColor,startHPDColor);
+                color.addContent(opacity+colorString);
+                Element outline = new Element("outline");
+                outline.addContent("0");
+            polyStyle.addContent(color);
+            polyStyle.addContent(outline);
         styleElement.addContent(lineStyle);
         styleElement.addContent(polyStyle);
     }
@@ -557,11 +530,11 @@ public class TimeSlicer {
 
         if (sliceCount > 1) {
             Element timeSpan = new Element("TimeSpan");
-            Element begin = new Element("begin");
-            begin.addContent(Double.toString(date));
-            timeSpan.addContent(begin);
+                Element begin = new Element("begin");
+                begin.addContent(Double.toString(date));
+                timeSpan.addContent(begin);
             if (sliceInteger > 1) {
-                Element end = new Element("end");
+                 Element end = new Element("end");
                 end.addContent(Double.toString(mostRecentSamplingDate-slices[(sliceInteger-1)]));
                 timeSpan.addContent(end);
             }
@@ -596,14 +569,13 @@ public class TimeSlicer {
             Trait trait = values.get(0).get(i).get(0);
             if (trait.isMultivariate()) {
                 int dim = trait.getDim();
-                for(int j=1; j<=dim; j++) {
+                for(int j=1; j<=dim; j++)
                     sb.append(sep).append(traits[i]).append(j);
-                }
-            } else {
+            } else
                 sb.append(sep).append(traits[i]);
-            }
         }
-        resultsStream.println(sb);
+        sb.append("\n");
+        resultsStream.print(sb);
     }
 
 //    private List<Tree> importTrees(String treeFileName, int burnin) throws IOException, Importer.ImportException {
@@ -644,7 +616,7 @@ public class TimeSlicer {
 //    }
 
     private void readAndAnalyzeTrees(String treeFileName, int burnin,
-                                     String[] traits, double[] slices, boolean isDiscrete,
+                                     String[] traits, double[] slices,
                                      boolean impute, boolean trueNoise, Normalization normalize)
             throws IOException, Importer.ImportException {
 
@@ -671,13 +643,8 @@ public class TimeSlicer {
         while (importer1.hasTree()) {
             Tree treeTime = importer1.importNextTree();
             treesRead++;
-            if (totalTrees > burnin) {
-                if (isDiscrete) {
-                    analyzeTree(treeTime, traits, slices);
-                } else {
-                    analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize);
-                }
-            }
+            if (totalTrees > burnin)
+               analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize);
 
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
@@ -688,7 +655,7 @@ public class TimeSlicer {
             }
             totalTrees++;
         }
-        progressStream.print("\n");
+        progressStream.print("\n");        
     }
 
     class Trait {
@@ -738,6 +705,8 @@ public class TimeSlicer {
         }
     }
 
+    private List<List<List<Trait>>> values;
+
     private void outputSlice(int slice, double sliceValue) {
 
         List<List<Trait>> thisSlice = values.get(slice);
@@ -758,7 +727,7 @@ public class TimeSlicer {
             sb.append("\n");
         }
 
-        resultsStream.print(sb);
+       resultsStream.print(sb);            
     }
 
     private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute,
@@ -793,10 +762,12 @@ public class TimeSlicer {
 //        double treeNativeDistance = 0;
 //        double treeKilometerGreatCircleDistance = 0;
 
-//  <--  attempt to get slice dispersalRates
         double[] treeSliceTime = new double[sliceCount];
         double[] treeSliceDistance = new double[sliceCount];
-//       attempt to get slice dispersalRates  -->
+        double[] treeSliceMaxDistance = new double[sliceCount];
+        double[] treeTimeFromRoot = new double[sliceCount];
+        double[] maxDistanceFromRoot = new double[sliceCount];
+        treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
@@ -820,20 +791,18 @@ public class TimeSlicer {
 
                 for (int i = 0; i < sliceCount; i++) {
 
-//  <--          attempt to get slice dispersalRates
                     if (sdr) {
                         if (!doSlices ||
                                 (slices[i] <= nodeHeight)
                                 ) {
-                            treeSliceTime[i] += (parentHeight-nodeHeight);
-                            //TreeModel model = new TreeModel(treeTime, true);
-                            //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
-                            Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
-                            Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
-                            treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
+                                treeSliceTime[i] += (parentHeight-nodeHeight);
+                                //TreeModel model = new TreeModel(treeTime, true);
+                                //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
+                                Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
+                                Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
+                                treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
                         }
                     }
-//       attempt to get slice dispersalRates  -->
 
                     if (!doSlices ||
                             (slices[i] >= nodeHeight && slices[i] < parentHeight)
@@ -868,13 +837,18 @@ public class TimeSlicer {
                             }
                             thisTraitSlice.add(trait);
 
-//  <--          attempt to get slice dispersalRates
-                            //if trait is location
+                 //if trait is location
                             if (sdr){
                                 treeSliceTime[i] += (parentHeight-slices[i]);
                                 Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
                                 treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
-//               attempt to get slice dispersalRates  -->
+                                double tempDistanceFromRoot =  getDistanceFromRoot(treeTime,traits[j],trait.getValue());
+                                if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
+                                    maxDistanceFromRoot[i] = tempDistanceFromRoot;
+                                    treeSliceMaxDistance[i] = getPathDistance(treeTime,node,traits[j],trait.getValue());
+                                    //putting this below here ensures that treeTimeFromRoot is never < 0
+                                    treeTimeFromRoot[i] = treeTime.getNodeHeight(treeTime.getRoot()) - slices[i];
+                                }
                             }
                         }
                     }
@@ -882,12 +856,12 @@ public class TimeSlicer {
             }
         }
 
-//  <--          attempt to get slice dispersalRates
         if (sdr){
             sliceTreeDistanceArrays.add(treeSliceDistance);
             sliceTreeTimeArrays.add(treeSliceTime);
+            sliceTreeMaxDistanceArrays.add(treeSliceMaxDistance);
+            sliceTreeTimeFromRootArrays.add(treeTimeFromRoot);
         }
-//               attempt to get slice dispersalRates  -->
 
 
 //  employed to get dispersal rates across the whole tree
@@ -895,108 +869,58 @@ public class TimeSlicer {
 //           double treelength = Tree.Utils.getTreeLength(treeTime, treeTime.getRoot());
 //            double dispersalNativeRate = treeNativeDistance/treelength;
 //            double dispersalKilometerRate = treeKilometerGreatCircleDistance/treelength;
-        //System.out.println(dispersalNativeRate+"\t"+dispersalKilometerRate);
+            //System.out.println(dispersalNativeRate+"\t"+dispersalKilometerRate);
 //            dispersalrates.add(dispersalNativeRate+"\t"+dispersalKilometerRate);
 //        }
 
         treesAnalyzed++;
 
     }
-
-    /**
-     * Discrete version
-     * @param treeTime
-     * @param traits
-     * @param slices
-     */
-    private void analyzeTree(Tree treeTime, String[] traits, double[] slices) {
-
-        for (int x = 0; x < treeTime.getNodeCount(); x++) {
-
-            NodeRef node = treeTime.getNode(x);
-            NodeRef parent = treeTime.getParent(node);
-
-            if (parent != null) { // is not the root
-
-                double nodeHeight = treeTime.getNodeHeight(node);
-                double parentHeight = treeTime.getNodeHeight(parent);
-                double meanHeight = (nodeHeight + parentHeight) / 2.0;
-
-                for (int j = 0; j < traitCount; j++) {
-
-                    Object traitValue = treeTime.getNodeAttribute(node, traits[j]);
-                    if (traitValue == null) {
-                        System.err.println("Trait '" + traits[j] + "' not found on branch.");
-                        System.exit(-1);
-                    }
-
-                    Object parentTraitValue = treeTime.getNodeAttribute(parent, traits[j]);
-                    if (parentTraitValue == null) {
-                        System.err.println("Trait '" + traits[j] + "' not found on branch.");
-                        System.exit(-1);
-                    }
-
-                    for (int i = 0; i < sliceCount; i++) {
-                        Object value = null;
-
-                        if  (slices[i] >= nodeHeight && slices[i] < parentHeight) {
-                            if (traitValue.equals(parentTraitValue)) {
-                                value = traitValue;
-                            } else {
-                                // if the node and parent trait values are not the same then assume the
-                                // transition occurs halfway along the branch.
-                                value = (slices[i] >= meanHeight ? parentTraitValue : traitValue);
-                            }
-                        }
-
-                        if (value != null) {
-                            List<Map<Object, Integer>> thisSlice = discreteValueCounts.get(i);
-
-                            Map<Object, Integer> thisSliceTraitCounts = thisSlice.get(j);
-                            Integer count = thisSliceTraitCounts.get(value);
-                            if (count == null) {
-                                count = 0;
-                            }
-                            thisSliceTraitCounts.put(value, count + 1);
-                            discreteValues.get(j).add(value);
-                        }
-                    }
-                }
-            }
-        }
-
-        treesAnalyzed++;
-
-    }
-
-    //  employed to get dispersal rates across the whole tree
-    //    private static double getNativeDistance(double[] location1, double[] location2) {
-    //        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
-    //    }
-    //
-    private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
+//  employed to get dispersal rates across the whole tree
+//    private static double getNativeDistance(double[] location1, double[] location2) {
+//        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
+//    }
+//
+   private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(location1[0], location1[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(location2[0], location2[1]);
         return (coord1.distance(coord2));
+   }
+
+    private double getPathDistance(Tree tree, NodeRef node, String locationTrait, double[] sliceTrait) {
+
+        double pathDistance = 0;
+        NodeRef parentNode = tree.getParent(node);
+        Trait parentTrait = new Trait(tree.getNodeAttribute(parentNode, locationTrait));
+        pathDistance += getKilometerGreatCircleDistance(sliceTrait,parentTrait.getValue());
+
+        while (parentNode!=tree.getRoot()) {
+            node = tree.getParent(node);
+            parentNode = tree.getParent(parentNode);
+            Trait nodeTrait = new Trait(tree.getNodeAttribute(node, locationTrait));
+            parentTrait = new Trait(tree.getNodeAttribute(parentNode, locationTrait));
+            pathDistance += getKilometerGreatCircleDistance(nodeTrait.getValue(),parentTrait.getValue());
+        }
+        return pathDistance;
     }
 
-    private final int traitCount;
-    private final int sliceCount;
-    private final String[] traits;
-    private final double[] slices;
-    private final boolean doSlices;
-    private final double mostRecentSamplingDate;
-    private final ContourMode contourMode;
+    private double getDistanceFromRoot(Tree tree, String locationTrait, double[] sliceTrait) {
+        NodeRef rootNode = tree.getRoot();
+        Trait rootTrait = new Trait(tree.getNodeAttribute(rootNode, locationTrait));
+        return getKilometerGreatCircleDistance(sliceTrait,rootTrait.getValue());
+    }
 
-    private List<List<List<Trait>>> values;
-
-    private List<List<Map<Object, Integer>>> discreteValueCounts;
-    private List<Set<Object>> discreteValues;
-
-
+    private int traitCount;
+    private int sliceCount;
+    private String[] traits;
+    private double[] slices;
+    private boolean sliceProgressReport;
+    private boolean checkSliceContours;
+    private boolean doSlices;
     private int treesRead = 0;
     private int treesAnalyzed = 0;
-
+    private double mostRecentSamplingDate;
+    private ContourMode contourMode;
 //  employed to get dispersal rates across the whole tree
 //    private static boolean containsLocation = false;
 //    private static ArrayList dispersalrates = new ArrayList();
@@ -1008,11 +932,12 @@ public class TimeSlicer {
 //        }
 //    }
 
-    //  <--  attempt to get slice dispersalRates
     private ArrayList sliceTreeDistanceArrays = new ArrayList();
     private ArrayList sliceTreeTimeArrays = new ArrayList();
-    //    attempt to get slice dispersalRates  -->
+    private ArrayList sliceTreeMaxDistanceArrays = new ArrayList();
+    private ArrayList sliceTreeTimeFromRootArrays = new ArrayList();
     private boolean sdr;
+    private ArrayList treeLengths = new ArrayList();
 
     private boolean outputRateWarning = true;
 
@@ -1135,19 +1060,19 @@ public class TimeSlicer {
 
     private static String[] parseVariableLengthStringArray(String inString) {
 
-        List<String> returnList = new ArrayList<String>();
-        StringTokenizer st = new StringTokenizer(inString,",");
-        while(st.hasMoreTokens()) {
-            returnList.add(st.nextToken());
-        }
+       List<String> returnList = new ArrayList<String>();
+       StringTokenizer st = new StringTokenizer(inString,",");
+       while(st.hasMoreTokens()) {
+           returnList.add(st.nextToken());
+       }
 
-        if (returnList.size()>0) {
-            String[] stringArray = new String[returnList.size()];
-            stringArray = returnList.toArray(stringArray);
-            return stringArray;
-        }
-        return null;
-    }
+       if (returnList.size()>0) {
+           String[] stringArray = new String[returnList.size()];
+           stringArray = returnList.toArray(stringArray);
+           return stringArray;
+       }
+       return null;
+   }
 
     private static double[] parseFileWithArray(String file) {
         List<Double> returnList = new ArrayList<Double>();
@@ -1170,7 +1095,7 @@ public class TimeSlicer {
             return doubleArray;
         }
         return null;
-    }
+   }
 
     public static void main(String[] args) throws IOException {
 
@@ -1178,7 +1103,6 @@ public class TimeSlicer {
         String outputFileName = null;
         String[] traitNames = null;
         double[] sliceTimes = null;
-        boolean isDiscrete = false;
         OutputFormat outputFormat = OutputFormat.XML;
         boolean impute = false;
         boolean trueNoise = true;
@@ -1190,6 +1114,7 @@ public class TimeSlicer {
         double hpdValue = 0.80;
         String outputFileSDR = null;
         boolean getSDR = false;
+        String progress = null;
 
 
 //        if (args.length == 0) {
@@ -1202,9 +1127,8 @@ public class TimeSlicer {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
-                        new Arguments.Option(DISCRETE, "trait to be analysed is discrete"),
                         new Arguments.StringOption(SLICE,"time","specifies an slice time-list [default=none]"),
-                        new Arguments.StringOption(FILE_SLICE,"fileTimes","specifies a file with a slice time-list, is overridden by command-line specification of slice times [default=none]"),
+                        new Arguments.StringOption(FILE_SLICE,"fileTimes","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
                         new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
                         new Arguments.Option(HELP, "option to print this message"),
                         new Arguments.StringOption(NOISE, falseTrue, false,
@@ -1221,6 +1145,7 @@ public class TimeSlicer {
                         new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
                                 "tree normalization [default = length"),
                         new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
+                        new Arguments.StringOption(PROGRESS,"progress report","reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
 
                 });
 
@@ -1249,8 +1174,6 @@ public class TimeSlicer {
                 burnin = arguments.getIntegerOption(BURNIN);
             }
 
-
-            isDiscrete = arguments.hasOption(DISCRETE);
 
             if (arguments.hasOption(MRSD)) {
                 mrsd = arguments.getRealOption(MRSD);
@@ -1316,10 +1239,15 @@ public class TimeSlicer {
                 outputFormat = OutputFormat.valueOf(summaryFormat.toUpperCase());
             }
 
-            String sdrString = arguments.getStringOption("sdr");
+            String sdrString = arguments.getStringOption(SDR);
             if (sdrString != null) {
                 outputFileSDR = sdrString;
                 getSDR = true;
+            }
+
+            String progressString = arguments.getStringOption(PROGRESS);
+            if (progressString != null) {
+                progress = progressString;
             }
 
         } catch (Arguments.ArgumentException e) {
@@ -1349,13 +1277,9 @@ public class TimeSlicer {
             }
         }
 
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, isDiscrete, sliceTimes, impute,
-                trueNoise, mrsd, contourMode, normalize, getSDR);
-        if (isDiscrete) {
-            timeSlicer.outputDiscrete(outputFileName);
-        } else {
-            timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
-        }
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceTimes, impute,
+                trueNoise, mrsd, contourMode, normalize, getSDR, progress);
+        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
 
         System.exit(0);
     }
@@ -1479,12 +1403,29 @@ public class TimeSlicer {
                 for (int j = 0; j < array[0].length; j++) {
                     outFile.print(array[i][j]+"\t");
                 }
-                outFile.println("");
+            outFile.println("");
             }
             outFile.close();
 
         } catch(IOException io) {
-            System.err.print("Error writing to file: " + name);
+           System.err.print("Error writing to file: " + name);
+        }
+    }
+
+    private static void print2DTransposedArray(double[][] array, String name) {
+        try {
+            PrintWriter outFile = new PrintWriter(new FileWriter(name), true);
+
+            for (int i = 0; i < array[0].length; i++) {
+                for (int j = 0; j < array.length; j++) {
+                    outFile.print(array[j][i]+"\t");
+                }
+            outFile.println("");
+            }
+            outFile.close();
+
+        } catch(IOException io) {
+           System.err.print("Error writing to file: " + name);
         }
     }
 
@@ -1493,18 +1434,18 @@ public class TimeSlicer {
 
         for (int i = 0; i < x[0].length; i++) {
 
-            double m = 0.0;
-            int lenNoZero = 0;
+         	double m = 0.0;
+        	int lenNoZero = 0;
 
 
-            for (int j = 0; j < x.length; j++) {
+        	for (int j = 0; j < x.length; j++) {
 
                 if (!(((Double)x[j][i]).isNaN())) {
                     m += x[j][i];
                     lenNoZero += 1;
                 }
-            }
-            returnArray[i] = m / (double) lenNoZero;
+        	}
+        	returnArray[i] = m / (double) lenNoZero;
 
         }
         return returnArray;
@@ -1543,7 +1484,7 @@ public class TimeSlicer {
 
         }
 
-        return returnArray;
+    return returnArray;
     }
 
 }

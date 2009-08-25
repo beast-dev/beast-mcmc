@@ -184,7 +184,7 @@ public class InitialTreeGenerator extends Generator {
                 "tree",
                 new Attribute[]{
                         new Attribute.Default<String>("height", STARTING_TREE),
-                        new Attribute.Default<String>("usingDates", (options.clockModelOptions.isTimeCalibrated() ? "true" : "false"))
+                        new Attribute.Default<String>("usingDates", (options.clockModelOptions.isTipCalibrated() ? "true" : "false"))
                 }
         );
         writeNode(tree, tree.getRoot(), writer);

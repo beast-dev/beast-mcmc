@@ -47,10 +47,7 @@ import java.util.ArrayList;
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
-
-    /**
-     *
-     */
+    
     private static final long serialVersionUID = -2936049032365493416L;
     JScrollPane scrollPane = new JScrollPane();
     JTable priorTable = null;
@@ -59,6 +56,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     public ArrayList parameters = new ArrayList();
 
     BeautiFrame frame = null;
+    BeautiOptions options = null;
 
     public PriorsPanel(BeautiFrame parent) {
 
@@ -110,6 +108,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public void setOptions(BeautiOptions options) {
+    	this.options = options;
+    	
         parameters = options.selectParameters();
         priorTableModel.fireTableDataChanged();
 
@@ -141,6 +141,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         }
         param.priorEdited = true;
+        
+        if (param.getName().indexOf(".rootHeight") > 0) {
+        	if (options.clockModelOptions.isNodeCalibrated()) {
+        		options.clockModelOptions.nodeCalibration();
+        	} else {
+        		options.clockModelOptions.fixRateOfFirstClockPartition();
+        	}
+        }
 
         priorTableModel.fireTableDataChanged();
     }

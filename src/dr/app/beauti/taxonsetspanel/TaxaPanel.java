@@ -56,11 +56,7 @@ import java.util.List;
  * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TaxaPanel extends BeautiPanel implements Exportable {
-
-
-    /**
-     *
-     */
+  
     private static final long serialVersionUID = -3138832889782090814L;
 
     private final String TAXON_SET_DEFAULT = "taxon set...";
@@ -381,6 +377,12 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                 !checkCompatibility(currentTaxonSet)) {
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
         }
+        
+        if (options.clockModelOptions.isNodeCalibrated()) {
+    		options.clockModelOptions.nodeCalibration();
+    	} else {
+    		options.clockModelOptions.fixRateOfFirstClockPartition();
+    	}
 
         frame.setDirty();
     }
@@ -438,10 +440,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 //	}
 
     Action addTaxonSetAction = new AbstractAction("+") {
-
-        /**
-         *
-         */
+        
         private static final long serialVersionUID = 20273987098143413L;
 
         public void actionPerformed(ActionEvent ae) {
@@ -464,9 +463,6 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     Action removeTaxonSetAction = new AbstractAction("-") {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = 6077578872870122265L;
 
         public void actionPerformed(ActionEvent ae) {

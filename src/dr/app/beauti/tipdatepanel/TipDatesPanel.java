@@ -223,8 +223,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 	options.clockModelOptions.tipTimeCalibration();
                 } else {
                 	options.clockModelOptions.fixRateOfFirstClockPartition();
-                }
-                
+                }                
             }
         });
 
@@ -437,7 +436,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
         }
         
-        if (options.clockModelOptions.isTimeCalibrated()) {
+        if (options.clockModelOptions.isTipCalibrated()) {
         	usingTipDates.setSelected(true);
         }
     }

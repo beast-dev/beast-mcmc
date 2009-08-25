@@ -77,6 +77,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     
     SequenceErrorModelComponentOptions comp;
 
+    TitledBorder modelBorder = new TitledBorder("");
+    
     BeautiFrame frame = null;
     BeautiOptions options = null;
     boolean settingOptions = false;
@@ -145,16 +147,18 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		        } else {
 		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
-							
+				
+				updateModelPanelBorder();
+				
 				frame.setDirty();
 				frame.repaint();
 			}
 		});
-		fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the substitution rate<br>"
-						+ "rather than try to infer it. If this option is<br>"
-						+ "turned off then either the sequences should have<br>"
-						+ "dates or the tree should have sufficient calibration<br>"
-						+ "informations specified as priors.</html>");// TODO Alexei
+		fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
+						+ "rather than try to infer it. If this option is turned off, then<br>"
+						+ "either the sequences should have dates or the tree should have<br>"
+						+ "sufficient calibration informations specified as priors.<br>" 
+						+ "In addition, it is only available for multi-clock paritions." + "</html>");// TODO Alexei
 
 		PanelUtils.setupComponent(meanRateField);
 		meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
@@ -164,12 +168,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				frame.setDirty();
 			}
 		});
-		meanRateField.setToolTipText("<html>Enter the fixed mean rate or 1st partition rate here.</html>");
+		meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
 //		meanRateField.setEnabled(true);
 
 		JPanel modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        modelPanelParent.setOpaque(false);
-        TitledBorder modelBorder = new TitledBorder("Overall model(s) parameters:");
+        modelPanelParent.setOpaque(false);        
         modelPanelParent.setBorder(modelBorder);
 		
 		OptionsPanel panel = new OptionsPanel(12, 20);
@@ -212,6 +215,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //        options.updateFixedRateClockModel();
         frame.setDirty();
     }
+    
+    private void updateModelPanelBorder() {     	
+    	if (options.hasData()) {
+    		modelBorder.setTitle(options.clockModelOptions.getRateOptionClockModel().toString());
+    	} else {
+    		modelBorder.setTitle("Overall clock model(s) parameters");
+    	}
+    	
+        repaint();
+    }
 
     public void setOptions(BeautiOptions options) {
 
@@ -228,6 +241,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
         meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());  
+        
+        updateModelPanelBorder();
         
         settingOptions = false;
         
@@ -253,11 +268,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     	SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
-        if (fixedMeanRateCheck.isSelected()) {
-        	options.clockModelOptions.fixMeanRate();
-        } else {
-        	options.clockModelOptions.fixRateOfFirstClockPartition();
-        }
+//        if (fixedMeanRateCheck.isSelected()) {
+//        	options.clockModelOptions.fixMeanRate();
+//        } else {
+//        	options.clockModelOptions.fixRateOfFirstClockPartition();
+//        }
         options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
        
         fireModelsChanged();    	
@@ -287,6 +302,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
+            if (options.getPartitionClockModels().size() < 2) {
+            	fixedMeanRateCheck.setEnabled(false);
+            } else {
+            	fixedMeanRateCheck.setEnabled(true);
+            }
             return options.getPartitionClockModels().size();
         }
 

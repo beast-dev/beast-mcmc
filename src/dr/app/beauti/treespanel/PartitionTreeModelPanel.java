@@ -26,6 +26,7 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.PloidyType;
@@ -105,10 +106,13 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         
 		removeAll();
 		
-		initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
-		initRootHeightField.setColumns(10);
-		initRootHeightField.setEnabled(false);
-		addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
+		if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+			initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
+			initRootHeightField.setColumns(10);
+			initRootHeightField.setEnabled(false);
+			addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
+		}
 		
 		if (options.isEBSPSharingSamePrior() || options.starBEASTOptions.isSpeciesAnalysis()) {
 			

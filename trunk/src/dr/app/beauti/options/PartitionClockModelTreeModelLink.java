@@ -156,65 +156,48 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-        if (options.hasData()) {
-        	// for isEstimatedRate() = false, write nothing on up part of upDownOp
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {//&& model.isEstimatedRate()) {
-            	switch (model.getClockType()) {
-	                case STRICT_CLOCK:
-	                    ops.add(getOperator("upDownRateHeights"));
-	                    break;
-	
-	                case UNCORRELATED_EXPONENTIAL:
-	                    ops.add(getOperator("upDownUCEDMeanHeights"));
-	                    addBranchRateCategories(ops);
-	                    break;
-	
-	                case UNCORRELATED_LOGNORMAL:
-	                    ops.add(getOperator("upDownUCLDMeanHeights"));
-	                    addBranchRateCategories(ops);
-	                    break;
-	
-	                case AUTOCORRELATED_LOGNORMAL:
-	                	ops.add(getOperator("scaleRootRate"));
-	                    ops.add(getOperator("scaleOneRate"));
-	                    ops.add(getOperator("scaleAllRates"));
-	                    ops.add(getOperator("scaleAllRatesIndependently"));
-	                    ops.add(getOperator("branchRates.var"));
-//	                	ops.add(getOperator("upDownAllRatesHeights"));
-	                    break;
-	
-	                case RANDOM_LOCAL_CLOCK:
-	                    ops.add(getOperator("upDownRateHeights"));
-	                    addRandomLocalClockOperators(ops);
-	                    break;
-	
-	                default:
-	                    throw new IllegalArgumentException("Unknown clock model");
-	            }
-            } else {
-            	switch (model.getClockType()) {
-	                case STRICT_CLOCK:
-	                    // no parameter to operator on
-	                    break;
-	
-	                case UNCORRELATED_EXPONENTIAL:  
-	                case UNCORRELATED_LOGNORMAL:
-	                    addBranchRateCategories(ops);                       
-	                    break;
-	
-	                case AUTOCORRELATED_LOGNORMAL:                        
-	                    ops.add(getOperator("scaleOneRate"));
-	                    ops.add(getOperator("scaleAllRatesIndependently"));                        
-	                    ops.add(getOperator("branchRates.var"));
-	                    break;
-	
-	                case RANDOM_LOCAL_CLOCK:
-	                    addRandomLocalClockOperators(ops);
-	                    break;
-	
-	                default:
-	                    throw new IllegalArgumentException("Unknown clock model");
-            	}
+        if (options.hasData()) {        	
+        	// always have upDown(rate, allInternalNodeHeights), but when isEstimatedRate() = false, write nothing on up part (rate)
+        	switch (model.getClockType()) { 
+                case STRICT_CLOCK:
+                    ops.add(getOperator("upDownRateHeights"));
+                    break;
+
+                case UNCORRELATED_EXPONENTIAL:
+                    ops.add(getOperator("upDownUCEDMeanHeights"));
+                    addBranchRateCategories(ops);
+                    break;
+
+                case UNCORRELATED_LOGNORMAL:
+                    ops.add(getOperator("upDownUCLDMeanHeights"));
+                    addBranchRateCategories(ops);
+                    break;
+
+                case AUTOCORRELATED_LOGNORMAL:
+                	
+                	throw new IllegalArgumentException("This function is NOT available !");
+                	
+//                	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {//&& model.isEstimatedRate()) {
+//	                	ops.add(getOperator("scaleRootRate"));
+//	                    ops.add(getOperator("scaleOneRate"));
+//	                    ops.add(getOperator("scaleAllRates"));
+//	                    ops.add(getOperator("scaleAllRatesIndependently"));
+//	                    ops.add(getOperator("branchRates.var"));
+////	                	ops.add(getOperator("upDownAllRatesHeights"));
+//                	} else {
+//                		ops.add(getOperator("scaleOneRate"));
+//	                    ops.add(getOperator("scaleAllRatesIndependently"));                        
+//	                    ops.add(getOperator("branchRates.var"));
+//                	}
+//                    break;
+
+                case RANDOM_LOCAL_CLOCK:
+                    ops.add(getOperator("upDownRateHeights"));
+                    addRandomLocalClockOperators(ops);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown clock model");
             }
         }
     }

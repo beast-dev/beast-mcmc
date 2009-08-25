@@ -436,6 +436,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
             }
         }
+        
+        if (options.clockModelOptions.isTimeCalibrated()) {
+        	usingTipDates.setSelected(true);
+        }
     }
 
     class DataTableModel extends AbstractTableModel {

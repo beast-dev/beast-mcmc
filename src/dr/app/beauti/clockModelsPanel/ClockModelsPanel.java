@@ -224,6 +224,9 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         errorModelCombo.setSelectedItem(comp.errorModelType);
       
         fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
+        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
+        		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
+        		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
         meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());  
         
         settingOptions = false;

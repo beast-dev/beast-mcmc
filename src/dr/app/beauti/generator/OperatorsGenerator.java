@@ -7,6 +7,7 @@ import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.TreePriorType;
@@ -272,7 +273,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeOpenTag(UpDownOperator.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed) {
+        if (!operator.parameter1.isFixed && !(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN)) {
         	writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperator.UP);

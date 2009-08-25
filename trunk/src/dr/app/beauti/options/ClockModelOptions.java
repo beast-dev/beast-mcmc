@@ -25,8 +25,10 @@ package dr.app.beauti.options;
 
 import java.util.List;
 
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.math.MathUtils;
 
@@ -50,7 +52,7 @@ public class ClockModelOptions extends ModelOptions {
                
         initGlobalClockModelParaAndOpers();
         
-        fixRateOfFirstClockPartition(); //TODO correct?
+        fixRateOfFirstClockPartition(); 
     }
     
     private void initGlobalClockModelParaAndOpers() {
@@ -73,9 +75,7 @@ public class ClockModelOptions extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {    	    	
-//    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-// TODO       	
-//        }
+
     }
 
     /**
@@ -94,7 +94,7 @@ public class ClockModelOptions extends ModelOptions {
     	}
     	
         //up down all rates and trees operator only available for *BEAST and EBSP
-        if (rateOptionClockModel == FixRateType.RElATIVE_TO && 
+        if (rateOptionClockModel == FixRateType.RElATIVE_TO && //TODO what about Calibration? 
         		(options.starBEASTOptions.isSpeciesAnalysis() || options.isEBSPSharingSamePrior())) {
         	ops.add(getOperator("upDownAllRatesHeights")); 
         }
@@ -129,21 +129,30 @@ public class ClockModelOptions extends ModelOptions {
         	avgInitialRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels(partitions)); // all clock models
         }
         
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
-            
-            if (options.hasData()) {
-            	avgInitialRootHeight = avgMeanDistance / avgInitialRate;            	
-            }
-
-        } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED) {            
-            avgInitialRootHeight = options.maximumTipHeight * 10.0;
-           
-            avgInitialRate = MathUtils.round((avgMeanDistance * 0.2) / avgInitialRootHeight, 2);
-            
-        } else {
-        	avgInitialRate = MathUtils.round((avgMeanDistance * 0.2) / avgInitialRootHeight, 2);
-        }
+		switch (options.clockModelOptions.getRateOptionClockModel()) {
+			case FIX_MEAN:
+			case RElATIVE_TO:
+				if (options.hasData()) {
+					avgInitialRootHeight = avgMeanDistance / avgInitialRate;
+				}
+				break;
+	
+			case TIP_CALIBRATED:
+				avgInitialRootHeight = options.maximumTipHeight * 10.0;
+				avgInitialRate = (avgMeanDistance * 0.2) / avgInitialRootHeight;
+				break;
+	
+			case NODE_CALIBRATED:
+				
+				break;
+	
+			case RATE_CALIBRATED:
+				
+				break;
+	
+			default:
+				throw new IllegalArgumentException("Unknown fix rate type");
+		}
         
         avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
         avgInitialRate = MathUtils.round(avgInitialRate, 2);
@@ -209,8 +218,31 @@ public class ClockModelOptions extends ModelOptions {
 		return averageRate;
 	}
 	
-	public boolean isTimeCalibrated () {
+	public boolean isTipCalibrated () {
 		return options.maximumTipHeight > 0;
+	}
+	
+	public boolean isNodeCalibrated () {
+		if (options.taxonSets != null && options.taxonSets.size() > 0) {
+			return true;
+		} else {
+			for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+				Parameter rootHeightPara = model.getParameter("treeModel.rootHeight");
+				if (   rootHeightPara.priorType == PriorType.LOGNORMAL_PRIOR 
+					|| rootHeightPara.priorType == PriorType.NORMAL_PRIOR	
+					|| rootHeightPara.priorType == PriorType.LAPLACE_PRIOR
+					|| rootHeightPara.priorType == PriorType.TRUNC_NORMAL_PRIOR
+					|| (rootHeightPara.priorType == PriorType.GAMMA_PRIOR && rootHeightPara.gammaAlpha > 1)
+					|| (rootHeightPara.priorType == PriorType.GAMMA_PRIOR && rootHeightPara.gammaOffset > 0)
+					|| (rootHeightPara.priorType == PriorType.UNIFORM_PRIOR && rootHeightPara.uniformLower > 0 
+								&& rootHeightPara.uniformUpper < Double.POSITIVE_INFINITY)
+					|| (rootHeightPara.priorType == PriorType.EXPONENTIAL_PRIOR && rootHeightPara.exponentialOffset > 0)) {
+					
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 	
 	public boolean isRateCalibrated () {

@@ -227,40 +227,8 @@ public class PartitionTreeModel extends PartitionOptions {
 	
 	private void calculateInitialRootHeightPerTree() {			
 		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(allPartitionData) [0];
-		
-//    	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-//    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.ESTIMATE) {
-//            double rate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels(allPartitionData)); // clock models belong to this tree
-//
-//            if (options.hasData()) {
-//                initialRootHeight = getMeanDistancePerTree() / rate;
-//                initialRootHeight = options.priorOptions.round(initialRootHeight, 2);
-//            }
-//
-//        } else if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIME_CALIBRATED) {            
-//            initialRootHeight = options.maximumTipHeight * 10.0;
-//           
-//        } else {
-//        	
-//        }
 	}
     
-//    public double getMeanDistancePerTree() {
-//    	double treeMeanDistance = 0;
-//    	double totalSiteCount = 0;
-//    	
-//    	for (PartitionData partition: allPartitionData) {
-//    		treeMeanDistance = partition.getMeanDistance() * partition.getSiteCount();
-//    		totalSiteCount = totalSiteCount + partition.getSiteCount();
-//		}
-//    	
-//    	if (totalSiteCount != 0) {
-//    		return treeMeanDistance / totalSiteCount;
-//    	} else {
-//    		return 0;
-//    	}
-//    }
-
     public String getName() {
         return name;
     }

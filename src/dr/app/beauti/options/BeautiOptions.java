@@ -31,7 +31,10 @@ import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
+import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SiteList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -663,7 +666,46 @@ public class BeautiOptions extends ModelOptions {
 
     }
 
-
+	public double getAveWeightedMeanDistance(List<PartitionData> partitions) {
+		double meanDistance = 0;
+		double totalSite = 0;
+		for (PartitionData partition : partitions) {
+			meanDistance = meanDistance + partition.getMeanDistance() * partition.getSiteCount();
+			totalSite = totalSite + partition.getSiteCount();	
+		}
+		
+		if (totalSite == 0) {
+			return 0;
+		} else {
+			return meanDistance / totalSite;
+		}
+		
+//    	if (allowDifferentTaxa) {//TODO: very slow, need to improve		
+//	    	double meanDistance = 0.0;
+//	    	for (PartitionData partition : partitions) {
+//	    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(partition.getAlignment());
+//	    		meanDistance += dm.getMeanDistance();
+//			}
+//			if (partitions.size() > 0) meanDistance /= partitions.size();
+//			
+//			return meanDistance;
+//    	    
+//    	} else {
+//    		List<SiteList> siteLists = new ArrayList<SiteList>();
+//        	
+//        	for (PartitionData partition : partitions) {
+//    			SiteList sl = (SiteList) partition.getAlignment();
+//    			if (!siteLists.contains(sl)) {
+//    				siteLists.add(sl);
+//    			}
+//    		}
+//    		
+//    		Patterns mergePartternsTree = new Patterns(siteLists);
+//    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
+//    		
+//    		return dm.getMeanDistance();
+//    	}
+    }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options

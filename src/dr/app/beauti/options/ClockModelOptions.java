@@ -122,7 +122,7 @@ public class ClockModelOptions extends ModelOptions {
         double avgMeanDistance = 1;
         
         if (options.hasData()) {
-        	avgMeanDistance = calculateMeanDistance(partitions);
+        	avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
         }
         
         if (options.getPartitionClockModels().size() > 0) {

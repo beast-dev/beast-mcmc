@@ -224,19 +224,4 @@ public abstract class ModelOptions {
 		return operators;
 	}
 
-    public double calculateMeanDistance(List<PartitionData> partitions) {
-    	List<SiteList> siteLists = new ArrayList<SiteList>();
-    	
-    	for (PartitionData partition : partitions) {
-			SiteList sl = (SiteList) partition.getAlignment();
-			if (!siteLists.contains(sl)) {
-				siteLists.add(sl);
-			}
-		}
-		
-		Patterns mergePartternsTree = new Patterns(siteLists);
-		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
-		
-		return dm.getMeanDistance();
-    }
 }

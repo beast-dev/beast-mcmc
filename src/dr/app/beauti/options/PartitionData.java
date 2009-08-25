@@ -53,13 +53,14 @@ public class PartitionData extends PartitionOptions {
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
+     
 
     public PartitionData(String name, String fileName, Alignment alignment) {
         this(name, fileName, alignment, -1, -1, 1);
     }
 
     public PartitionData(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
-        this.name = name;
+    	this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
         this.coding = false;
@@ -68,14 +69,15 @@ public class PartitionData extends PartitionOptions {
         this.toSite = toSite;
         this.every = every;
 
-        List<PartitionData> p = new ArrayList<PartitionData>();
-        p.add(this);
-        meanDistance = calculateMeanDistance(p);
+        meanDistance = calculateMeanDistance();
         	
-//        Patterns patterns = new Patterns(alignment);
-//        DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-//        meanDistance = distances.getMeanDistance();
 //        meanDistance = 0.0;
+    }
+    
+	private double calculateMeanDistance() {
+      Patterns patterns = new Patterns(alignment);
+      DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
+      return distances.getMeanDistance();
     }
     
     public double getMeanDistance() {

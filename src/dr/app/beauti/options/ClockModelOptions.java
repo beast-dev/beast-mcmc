@@ -141,12 +141,13 @@ public class ClockModelOptions extends ModelOptions {
                 break;
 
             case TIP_CALIBRATED:
-                avgInitialRootHeight = options.maximumTipHeight * 10.0;
-                avgInitialRate = (avgMeanDistance * 0.2) / avgInitialRootHeight;
+                avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
                 break;
 
             case NODE_CALIBRATED:
-
+            	avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
                 break;
 
             case RATE_CALIBRATED:

@@ -27,12 +27,12 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.options.Parameter;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.*;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
@@ -48,10 +48,11 @@ import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.SpeciesTreeBMPrior;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.speciation.TreePartitionCoalescent;
-import dr.evomodel.tree.*;
+import dr.evomodel.tree.MonophylyStatistic;
+import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.*;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
@@ -62,7 +63,6 @@ import dr.inference.xml.LoggerParser;
 import dr.inferencexml.PriorParsers;
 import dr.util.Attribute;
 import dr.util.Version;
-import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.io.Writer;
@@ -319,14 +319,14 @@ public class BeastGenerator extends Generator {
 //        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
 //	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.treeModel
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior = model.getPartitionTreePrior();        	
+            PartitionTreePrior prior = model.getPartitionTreePrior();
             treePriorGenerator.writePriorLikelihood(prior, model, writer);
             writer.writeText("");
         }
-        
+
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
-	    }
+            treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
+        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
 
@@ -338,16 +338,16 @@ public class BeastGenerator extends Generator {
         for (PartitionClockModel model : options.getPartitionClockModels()) {
 //        		branchRatesModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
 //            for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+            branchRatesModelGenerator.writeBranchRatesModel(model, writer);
 //            }
             writer.writeText("");
         }
 //        }
         // write allClockRate for fix mean option in clock model panel
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-        	writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
-        	for (PartitionClockModel model : options.getPartitionClockModels()) {
-        		branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
             }
             writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
             writer.writeText("");
@@ -440,11 +440,11 @@ public class BeastGenerator extends Generator {
         if (options.performTraceAnalysis) {
             writeTraceAnalysis(writer);
         }
-		if (options.generateCSV) {
-			for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-				treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-			}
-		}
+        if (options.generateCSV) {
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
+            }
+        }
 
         writer.writeCloseTag("beast");
         writer.flush();
@@ -557,7 +557,7 @@ public class BeastGenerator extends Generator {
                 //        break;
                 //
                 //    default:
-                        description = alignment.getDataType().getDescription();
+                description = alignment.getDataType().getDescription();
                 //}
                 break;
 
@@ -644,13 +644,13 @@ public class BeastGenerator extends Generator {
 
         // write sub-tags for species
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-        	starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
+            starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
         } // end write sub-tags for species
 
         writer.writeCloseTag(trait);
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-        	starEASTGeneratorGenerator.writeSTARBEAST(writer);
+            starEASTGeneratorGenerator.writeSTARBEAST(writer);
         }
 
     }
@@ -775,17 +775,18 @@ public class BeastGenerator extends Generator {
         writer.writeComment("npatterns=" + patterns.getPatternCount());
 
         List<Attribute> attributes = new ArrayList<Attribute>();
-        
+
         // no codon, unique patterns site patterns
-        if (offset == 0 && every == 1) attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS));
-        
+        if (offset == 0 && every == 1)
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS));
+
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
 
         if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
         }
-        
+
         // generate <patterns>
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
@@ -893,17 +894,17 @@ public class BeastGenerator extends Generator {
         }
 
         writeParameterPriors(writer);
-        
+
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior = model.getPartitionTreePrior();
-        	treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
             writer.writeText("");
         }
-        
+
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
+            treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
         }
-        
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihood.PRIOR);
@@ -911,7 +912,7 @@ public class BeastGenerator extends Generator {
         if (options.hasData()) {
             // write likelihood block
             writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
-            
+
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
@@ -1017,23 +1018,23 @@ public class BeastGenerator extends Generator {
         );
 
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-        	writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-        	for (PartitionClockModel model : options.getPartitionClockModels()) {
-        		if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) 
-        			writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-        	}
+            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
+                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+            }
         } else {
-        	for (PartitionClockModel model : options.getPartitionClockModels()) {
-        		branchRatesModelGenerator.writeLog(model, writer);
-        	} 
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                branchRatesModelGenerator.writeLog(model, writer);
+            }
         }
 
         writer.writeCloseTag(Columns.COLUMN);
-        
+
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-    		branchRatesModelGenerator.writeLogStatistic(model, writer);
-    	} 
-        
+            branchRatesModelGenerator.writeLogStatistic(model, writer);
+        }
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);
@@ -1088,9 +1089,9 @@ public class BeastGenerator extends Generator {
             } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             } else {
-            	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
+                throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
             }
-            
+
             //Species Tree: tmrcaStatistic
             writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
         }
@@ -1120,22 +1121,22 @@ public class BeastGenerator extends Generator {
         if (options.substitutionModelOptions.hasCodon()) {
             writer.writeIDref(ParameterParser.PARAMETER, "allMus");
         }
-        
+
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-        	writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-        	for (PartitionClockModel model : options.getPartitionClockModels()) {
-        		if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) 
-        			writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-        	}
+            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
+                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+            }
         } else {
-        	for (PartitionClockModel model : options.getPartitionClockModels()) {
-        		branchRatesModelGenerator.writeLog(model, writer);
-        	} 
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                branchRatesModelGenerator.writeLog(model, writer);
+            }
         }
-        
+
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-    		branchRatesModelGenerator.writeLogStatistic(model, writer);
-    	} 
+            branchRatesModelGenerator.writeLogStatistic(model, writer);
+        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
@@ -1147,16 +1148,16 @@ public class BeastGenerator extends Generator {
 
         // coalescentLikelihood
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-        	PartitionTreePrior prior = model.getPartitionTreePrior();
-        	treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
             writer.writeText("");
-        }       
-        
-        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) 
-        		writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
         }
-        
+
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE)
+                writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+        }
+
         writer.writeCloseTag(LoggerParser.LOG);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);

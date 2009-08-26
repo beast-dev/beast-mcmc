@@ -16,12 +16,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 import dr.xml.*;
 
-import java.util.logging.Logger;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * <b>A general irreversible class for any
@@ -30,7 +30,7 @@ import java.util.Arrays;
  * @author Marc Suchard
  */
 
-public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements  Likelihood {
+public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Likelihood {
 
     public static final String COMPLEX_SUBSTITUTION_MODEL = "complexSubstitutionModel";
     public static final String RATES = "rates";
@@ -74,7 +74,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        if (!updateMatrix) {
-            updateMatrix = true;
+        updateMatrix = true;
 //            fireModelChanged();
 //        }
     }
@@ -145,7 +145,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         }
 
         if (!wellConditioned) {
-            Arrays.fill(matrix,0.0);
+            Arrays.fill(matrix, 0.0);
             return;
         }
 
@@ -228,7 +228,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             storedEvalImag = new double[stateCount];
         }
 
-        int i= 0;
+        int i = 0;
 
         storeIntoAmat(getRates());
 
@@ -238,13 +238,13 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         // compute eigenvalues and eigenvectors
 //        EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(amat));
 
-       RobustEigenDecomposition eigenDecomp;
+        RobustEigenDecomposition eigenDecomp;
         try {
             eigenDecomp = new RobustEigenDecomposition(new DenseDoubleMatrix2D(amat), maxIterations);
         } catch (ArithmeticException ae) {
             System.err.println(ae.getMessage());
             wellConditioned = false;
-            System.err.println("amat = \n"+new Matrix(amat));
+            System.err.println("amat = \n" + new Matrix(amat));
             return;
         }
 
@@ -266,7 +266,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         //
         // SVD is needed to numerically approximate the rank of a matrix, so we can check Algrebra.rank()
         // or Algebra.cond() with almost equal amounts of work.  I don't know which is more reliable. -- MAS
-        
+
         if (checkConditioning) {
             RobustSingularValueDecomposition svd;
             try {
@@ -276,7 +276,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 wellConditioned = false;
                 return;
             }
-            if (svd.cond() > maxConditionNumber) {                
+            if (svd.cond() > maxConditionNumber) {
                 wellConditioned = false;
                 return;
             }
@@ -297,10 +297,10 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         // Check for valid decomposition
         for (i = 0; i < stateCount; i++) {
             if (Double.isNaN(Eval[i]) || Double.isNaN(EvalImag[i]) ||
-                Double.isInfinite(Eval[i]) || Double.isInfinite(EvalImag[i])) {
+                    Double.isInfinite(Eval[i]) || Double.isInfinite(EvalImag[i])) {
                 wellConditioned = false;
                 return;
-            }else if(Math.abs(Eval[i]) < 1e-10){
+            } else if (Math.abs(Eval[i]) < 1e-10) {
                 Eval[i] = 0.0;
             }
         }
@@ -312,7 +312,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         computeStationaryDistribution();
 
         if (doNormalization) {
-             double subst = 0.0;
+            double subst = 0.0;
 
             for (i = 0; i < stateCount; i++)
                 subst += -amat[i][i] * stationaryDistribution[i];
@@ -327,16 +327,16 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     //store the infinitesimal rates in the vector to a matrix called amat
-    public void storeIntoAmat(double[] rates){
+    public void storeIntoAmat(double[] rates) {
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
-            for (j = i+1; j < stateCount; j++) {
+            for (j = i + 1; j < stateCount; j++) {
                 amat[i][j] = rates[k++];
             }
         }
         // Copy lower triangle in column-order form (transposed)
-        for (j = 0; j< stateCount; j++) {
-            for (i = j+1; i < stateCount; i++) {
+        for (j = 0; j < stateCount; j++) {
+            for (i = j + 1; i < stateCount; i++) {
                 amat[i][j] = rates[k++];
             }
         }
@@ -397,7 +397,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 //		Parameter rates = new Parameter.Default(new double[] {1.0, 1.0});
 
 
-        Parameter rates = new Parameter.Default(159600,1.0);
+        Parameter rates = new Parameter.Default(159600, 1.0);
 
 
         DataType dataType = new DataType() {
@@ -415,20 +415,20 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             }
         };
 
-        FrequencyModel freqModel = new FrequencyModel(dataType, new Parameter.Default(400, 1.0/400.0));
+        FrequencyModel freqModel = new FrequencyModel(dataType, new Parameter.Default(400, 1.0 / 400.0));
 
         ComplexSubstitutionModel substModel = new ComplexSubstitutionModel("test",
 //				TwoStates.INSTANCE,
-                  dataType,
-                  freqModel,
-                  rates);
+                dataType,
+                freqModel,
+                rates);
 
         long start = System.currentTimeMillis();
         double[] finiteTimeProbs = new double[substModel.getDataType().getStateCount() * substModel.getDataType().getStateCount()];
         double time = 1.0;
         substModel.getTransitionProbabilities(time, finiteTimeProbs);
         long end = System.currentTimeMillis();
-        System.out.println("Time: "+(end-start));
+        System.out.println("Time: " + (end - start));
 //        System.out.println("Results:");
 //        System.out.println(new Vector(finiteTimeProbs));
 
@@ -494,7 +494,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             }
 
 
-            cxo = (XMLObject) xo.getChild(ROOT_FREQUENCIES);
+            cxo = xo.getChild(ROOT_FREQUENCIES);
             FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             if (dataType != rootFreq.getDataType()) {
@@ -510,9 +510,9 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
             }
 
             StringBuffer sb = new StringBuffer()
-                        .append("Constructing a complex substitution model using\n")
-                        .append("\tRate parameters: "+ratesParameter.getId()+"\n")
-                        .append("\tRoot frequency model: "+rootFreq.getId()+"\n");
+                    .append("Constructing a complex substitution model using\n")
+                    .append("\tRate parameters: " + ratesParameter.getId() + "\n")
+                    .append("\tRoot frequency model: " + rootFreq.getId() + "\n");
 
             ComplexSubstitutionModel model;
 
@@ -520,37 +520,37 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 model = new ComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter);
             else {
 
-                boolean randomize = xo.getAttribute(RANDOMIZE,false);
-                boolean connected = xo.getAttribute(CONNECTED,false);
-                model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators,connected);
+                boolean randomize = xo.getAttribute(RANDOMIZE, false);
+                boolean connected = xo.getAttribute(CONNECTED, false);
+                model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators, connected);
                 if (randomize) {
                     do {
-                    for(int i=0; i<indicators.getDimension(); i++)
-                        indicators.setParameterValue(i,
-                                (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
-                    } while(!((SVSComplexSubstitutionModel)model).isStronglyConnected());
+                        for (int i = 0; i < indicators.getDimension(); i++)
+                            indicators.setParameterValue(i,
+                                    (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
+                    } while (!((SVSComplexSubstitutionModel) model).isStronglyConnected());
                 }
-                sb.append("\tBSSVS indicators: "+indicators.getId()+"\n");
-                sb.append("\tGraph must be connected: "+connected+"\n");
+                sb.append("\tBSSVS indicators: " + indicators.getId() + "\n");
+                sb.append("\tGraph must be connected: " + connected + "\n");
             }
 
-            boolean doNormalization = xo.getAttribute(NORMALIZATION,true);
+            boolean doNormalization = xo.getAttribute(NORMALIZATION, true);
             model.setNormalization(doNormalization);
-            sb.append("\tNormalized: "+doNormalization+"\n");
+            sb.append("\tNormalized: " + doNormalization + "\n");
 
-            boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING,true);
+            boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
             model.setCheckConditioning(checkConditioning);
 
             if (checkConditioning) {
-                double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER,1000);
+                double maxConditionNumber = xo.getAttribute(MAX_CONDITION_NUMBER, 1000);
                 model.setMaxConditionNumber(maxConditionNumber);
-                sb.append("\tMax. condition number: "+maxConditionNumber+"\n");
+                sb.append("\tMax. condition number: " + maxConditionNumber + "\n");
             }
 
-            int maxIterations = xo.getAttribute(MAX_ITERATIONS,1000);
+            int maxIterations = xo.getAttribute(MAX_ITERATIONS, 1000);
             model.setMaxIterations(maxIterations);
-            sb.append("\tMax iterations: "+maxIterations+"\n");
-            
+            sb.append("\tMax iterations: " + maxIterations + "\n");
+
             sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in submission)\n");
 
             Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
@@ -579,7 +579,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                                 DataType.getRegisteredDataTypeNames(), false),
                         new ElementRule(DataType.class)
                 ),
-                AttributeRule.newBooleanRule(RANDOMIZE,true),
+                AttributeRule.newBooleanRule(RANDOMIZE, true),
                 new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class),
                 new ElementRule(RATES,
                         new XMLSyntaxRule[]{
@@ -589,11 +589,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }),
-                AttributeRule.newBooleanRule(NORMALIZATION,true),
-                AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER,true),
-                AttributeRule.newBooleanRule(CONNECTED,true),
-                AttributeRule.newIntegerRule(MAX_ITERATIONS,true),
-                AttributeRule.newBooleanRule(CHECK_CONDITIONING,true),
+                AttributeRule.newBooleanRule(NORMALIZATION, true),
+                AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER, true),
+                AttributeRule.newBooleanRule(CONNECTED, true),
+                AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
+                AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
         };
 
     };
@@ -639,12 +639,12 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     public String prettyName() {
-         return Abstract.getPrettyName(this);
+        return Abstract.getPrettyName(this);
     }
 
     public void setNormalization(boolean doNormalization) {
-         this.doNormalization = doNormalization;
-     }
+        this.doNormalization = doNormalization;
+    }
 
     public void makeDirty() {
 

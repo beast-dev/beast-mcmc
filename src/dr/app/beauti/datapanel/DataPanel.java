@@ -553,8 +553,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model", "Clock Model", "Partition Tree"};
-        String[] columnNames2 = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Partition Model"};
+        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Subst. Model", "Clock Model", "Partition Tree"};
+        String[] columnNames2 = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Subst. Model"};
 
         public DataTableModel() {
         }
@@ -686,7 +686,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public class UnlinkModelsAction extends AbstractAction {
         public UnlinkModelsAction() {
-            super("Unlink Subst Models");
+            super("Unlink Subst. Models");
             setToolTipText("Use this tool to use a different substitution model for each selected data partition");
         }
 
@@ -698,7 +698,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public class LinkModelsAction extends AbstractAction {
         public LinkModelsAction() {
-            super("Link Subst Models");
+            super("Link Subst. Models");
             setToolTipText("Use this tool to set all the selected partitions to the same substitution model");
         }
 

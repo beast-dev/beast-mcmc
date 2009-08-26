@@ -28,338 +28,360 @@ package dr.evolution.alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
  *
- * @version $Id: SimpleAlignment.java,v 1.46 2005/06/21 16:25:15 beth Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: SimpleAlignment.java,v 1.46 2005/06/21 16:25:15 beth Exp $
  */
-public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHTMLable
-{
+public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHTMLable {
 
     // **************************************************************
     // SimpleAlignment METHODS
     // **************************************************************
 
-	/**
-	 * parameterless constructor.
-	 */
-	public SimpleAlignment() {}
+    /**
+     * parameterless constructor.
+     */
+    public SimpleAlignment() {
+    }
 
-	/**
-	 * Calculates the siteCount by finding the longest sequence.
-	 */
-	public void updateSiteCount() {
-		siteCount = 0;
-		int i, len, n = getSequenceCount();
-		
-		for (i = 0; i < n; i++) {
-			len = getSequence(i).getLength();
-			if (len > siteCount)
-				siteCount = len;
-		}
-		
-		siteCountKnown = true;
-	}
+
+    /**
+     * Constructs a sub alignment based on the provided taxa.
+     *
+     * @param a
+     * @param taxa
+     */
+    public SimpleAlignment(Alignment a, TaxonList taxa) {
+
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+            Taxon taxon = taxa.getTaxon(i);
+
+            Sequence sequence = a.getSequence(a.getTaxonIndex(taxon));
+            addSequence(sequence);
+        }
+    }
+
+    /**
+     * Calculates the siteCount by finding the longest sequence.
+     */
+    public void updateSiteCount() {
+        siteCount = 0;
+        int i, len, n = getSequenceCount();
+
+        for (i = 0; i < n; i++) {
+            len = getSequence(i).getLength();
+            if (len > siteCount)
+                siteCount = len;
+        }
+
+        siteCountKnown = true;
+    }
 
     // **************************************************************
     // Alignment IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * Sets the dataType of this alignment. This should be the same as
-	 * the sequences.
-	 */
-	public void setDataType(DataType dataType) {
-		this.dataType = dataType;
-	}
+    /**
+     * Sets the dataType of this alignment. This should be the same as
+     * the sequences.
+     */
+    public void setDataType(DataType dataType) {
+        this.dataType = dataType;
+    }
 
-	/**
-	 * @return number of sites
-	 */
-	public int getSiteCount(DataType dataType) {
-		return getSiteCount();
-	}
+    /**
+     * @return number of sites
+     */
+    public int getSiteCount(DataType dataType) {
+        return getSiteCount();
+    }
 
-	/** 
-	 * sequence character at (sequence, site)
-	 */
-	public char getChar(int sequenceIndex, int siteIndex) {
-		return getSequence(sequenceIndex).getChar(siteIndex);
-	}
+    /**
+     * sequence character at (sequence, site)
+     */
+    public char getChar(int sequenceIndex, int siteIndex) {
+        return getSequence(sequenceIndex).getChar(siteIndex);
+    }
 
-	/**
-	 * Returns string representation of single sequence in
-	 * alignment with gap characters included.
-	 */
-	public String getAlignedSequenceString(int sequenceIndex) {
-		return getSequence(sequenceIndex).getSequenceString();
-	}
+    /**
+     * Returns string representation of single sequence in
+     * alignment with gap characters included.
+     */
+    public String getAlignedSequenceString(int sequenceIndex) {
+        return getSequence(sequenceIndex).getSequenceString();
+    }
 
 
-	/**
-	 * Returns string representation of single sequence in
-	 * alignment with gap characters excluded.
-	 */
-	public String getUnalignedSequenceString(int sequenceIndex) {
-		
-		StringBuffer unaligned = new StringBuffer();
-		for (int i = 0, n = getSiteCount(); i < n; i++) {
-			
-			int state = getState(sequenceIndex, i);
-			if (!dataType.isGapState(state)) {
-				unaligned.append(dataType.getChar(state));
-			}
-		}
-		
-		return unaligned.toString();
-	}
-     
+    /**
+     * Returns string representation of single sequence in
+     * alignment with gap characters excluded.
+     */
+    public String getUnalignedSequenceString(int sequenceIndex) {
+
+        StringBuffer unaligned = new StringBuffer();
+        for (int i = 0, n = getSiteCount(); i < n; i++) {
+
+            int state = getState(sequenceIndex, i);
+            if (!dataType.isGapState(state)) {
+                unaligned.append(dataType.getChar(state));
+            }
+        }
+
+        return unaligned.toString();
+    }
+
     // **************************************************************
     // Sequences METHODS
     // **************************************************************
 
-	/**
-	 * Add a sequence to the sequence list
-	 */
-	public void addSequence(Sequence sequence) {
-		if (dataType == null) {
-			if (sequence.getDataType() == null) {
-				dataType = sequence.guessDataType();
-				sequence.setDataType(dataType);
-			} else {		
-				setDataType(sequence.getDataType());
-			}
-		} else if (sequence.getDataType() == null) {
-			sequence.setDataType(dataType);
-		} else if (dataType != sequence.getDataType()) {
-			throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
-		}
-		
-		super.addSequence(sequence);
-		updateSiteCount();
-	}
+    /**
+     * Add a sequence to the sequence list
+     */
+    public void addSequence(Sequence sequence) {
+        if (dataType == null) {
+            if (sequence.getDataType() == null) {
+                dataType = sequence.guessDataType();
+                sequence.setDataType(dataType);
+            } else {
+                setDataType(sequence.getDataType());
+            }
+        } else if (sequence.getDataType() == null) {
+            sequence.setDataType(dataType);
+        } else if (dataType != sequence.getDataType()) {
+            throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
+        }
 
-	/**
-	 * Insert a sequence to the sequence list at position
-	 */
-	public void insertSequence(int position, Sequence sequence) {
-		if (dataType == null) {
-			if (sequence.getDataType() == null) {
-				dataType = sequence.guessDataType();
-				sequence.setDataType(dataType);
-			} else {		
-				setDataType(sequence.getDataType());
-			}
-		} else if (sequence.getDataType() == null) {
-			sequence.setDataType(dataType);
-		} else if (dataType != sequence.getDataType()) {
-			throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
-		}
+        super.addSequence(sequence);
+        updateSiteCount();
+    }
 
-		super.insertSequence(position, sequence);
-	}
+    /**
+     * Insert a sequence to the sequence list at position
+     */
+    public void insertSequence(int position, Sequence sequence) {
+        if (dataType == null) {
+            if (sequence.getDataType() == null) {
+                dataType = sequence.guessDataType();
+                sequence.setDataType(dataType);
+            } else {
+                setDataType(sequence.getDataType());
+            }
+        } else if (sequence.getDataType() == null) {
+            sequence.setDataType(dataType);
+        } else if (dataType != sequence.getDataType()) {
+            throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
+        }
 
-   	// **************************************************************
+        super.insertSequence(position, sequence);
+    }
+
+    // **************************************************************
     // SiteList IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * @return number of sites
-	 */
-	public int getSiteCount() {
-		if (!siteCountKnown)
-			updateSiteCount();
-		return siteCount;
-	}
-
-	/** 
-	 * Gets the pattern of site as an array of state numbers (one per sequence)
-	 * @return the site pattern at siteIndex
-	 */
-	public int[] getSitePattern(int siteIndex) {
-		Sequence seq;
-		int i, n = getSequenceCount();
-		
-		int[] pattern = new int[n];
-		
-		for (i = 0; i < n; i++) {
-			seq = getSequence(i);
-			
-			if (siteIndex >= seq.getLength())
-				pattern[i] = dataType.getGapState();
-			else
-				pattern[i] = seq.getState(siteIndex);
-		}
-		
-		return pattern;
-	}
-
-	/** 
-	 * Gets the pattern index at a particular site
-	 * @return the patternIndex
-	 */
-	public int getPatternIndex(int siteIndex) {
-		return siteIndex;
-	}
-
-	/** 
-	 * @return the sequence state at (taxon, site)
-	 */
-	public int getState(int taxonIndex, int siteIndex) {
-	
-		Sequence seq = getSequence(taxonIndex);
-			
-		if (siteIndex >= seq.getLength()) {
-			return dataType.getGapState();
-        }
-
-		return seq.getState(siteIndex);
-	}
+    /**
+     * @return number of sites
+     */
+    public int getSiteCount() {
+        if (!siteCountKnown)
+            updateSiteCount();
+        return siteCount;
+    }
 
     /**
-	 */
-	public void setState(int taxonIndex, int siteIndex, int state) {
+     * Gets the pattern of site as an array of state numbers (one per sequence)
+     *
+     * @return the site pattern at siteIndex
+     */
+    public int[] getSitePattern(int siteIndex) {
+        Sequence seq;
+        int i, n = getSequenceCount();
 
-		Sequence seq = getSequence(taxonIndex);
+        int[] pattern = new int[n];
 
-		if (siteIndex >= seq.getLength()) {
-			throw new IllegalArgumentException();
+        for (i = 0; i < n; i++) {
+            seq = getSequence(i);
+
+            if (siteIndex >= seq.getLength())
+                pattern[i] = dataType.getGapState();
+            else
+                pattern[i] = seq.getState(siteIndex);
         }
 
-		seq.setState(siteIndex, state);
-	}
+        return pattern;
+    }
+
+    /**
+     * Gets the pattern index at a particular site
+     *
+     * @return the patternIndex
+     */
+    public int getPatternIndex(int siteIndex) {
+        return siteIndex;
+    }
+
+    /**
+     * @return the sequence state at (taxon, site)
+     */
+    public int getState(int taxonIndex, int siteIndex) {
+
+        Sequence seq = getSequence(taxonIndex);
+
+        if (siteIndex >= seq.getLength()) {
+            return dataType.getGapState();
+        }
+
+        return seq.getState(siteIndex);
+    }
+
+    /**
+     */
+    public void setState(int taxonIndex, int siteIndex, int state) {
+
+        Sequence seq = getSequence(taxonIndex);
+
+        if (siteIndex >= seq.getLength()) {
+            throw new IllegalArgumentException();
+        }
+
+        seq.setState(siteIndex, state);
+    }
 
     // **************************************************************
     // PatternList IMPLEMENTATION
     // **************************************************************
 
-	/**
-	 * @return number of patterns
-	 */
-	public int getPatternCount() {
-		return getSiteCount();
-	}
+    /**
+     * @return number of patterns
+     */
+    public int getPatternCount() {
+        return getSiteCount();
+    }
 
-	/**
-	 * @return number of invariant sites
-	 */
-	public int getInvariantCount() {
+    /**
+     * @return number of invariant sites
+     */
+    public int getInvariantCount() {
         // @todo this method should be implemented at some point AD
-		throw new RuntimeException("Not implemented yet");
-	}
+        throw new RuntimeException("Not implemented yet");
+    }
 
-	/**
-	 * @return number of states for this siteList
-	 */
-	public int getStateCount() {
-		return getDataType().getStateCount();
-	}
+    /**
+     * @return number of states for this siteList
+     */
+    public int getStateCount() {
+        return getDataType().getStateCount();
+    }
 
-	/**
-	 * Gets the length of the pattern strings which will usually be the
-	 * same as the number of taxa
-	 * @return the length of patterns
-	 */
-	public int getPatternLength() {
-		return getSequenceCount();
-	}
+    /**
+     * Gets the length of the pattern strings which will usually be the
+     * same as the number of taxa
+     *
+     * @return the length of patterns
+     */
+    public int getPatternLength() {
+        return getSequenceCount();
+    }
 
-	/** 
-	 * Gets the pattern as an array of state numbers (one per sequence)
-	 * @return the pattern at patternIndex
-	 */
-	public int[] getPattern(int patternIndex) {
-		return getSitePattern(patternIndex);
-	}
+    /**
+     * Gets the pattern as an array of state numbers (one per sequence)
+     *
+     * @return the pattern at patternIndex
+     */
+    public int[] getPattern(int patternIndex) {
+        return getSitePattern(patternIndex);
+    }
 
-	/** 
-	 * @return state at (taxonIndex, patternIndex) 
-	 */
-	public int getPatternState(int taxonIndex, int patternIndex) {
-		return getState(taxonIndex, patternIndex);
-	}
+    /**
+     * @return state at (taxonIndex, patternIndex)
+     */
+    public int getPatternState(int taxonIndex, int patternIndex) {
+        return getState(taxonIndex, patternIndex);
+    }
 
-	/** 
-	 * Gets the weight of a site pattern (always 1.0)
-	 */
-	public double getPatternWeight(int patternIndex) {
-		return 1.0;
-	}
+    /**
+     * Gets the weight of a site pattern (always 1.0)
+     */
+    public double getPatternWeight(int patternIndex) {
+        return 1.0;
+    }
 
-	/**
-	 * @return the array of pattern weights
-	 */
-	public double[] getPatternWeights() {
-		double[] weights = new double[siteCount];
-		for (int i = 0; i < siteCount; i++)
-			weights[i] = 1.0;
-		return weights;
-	}
+    /**
+     * @return the array of pattern weights
+     */
+    public double[] getPatternWeights() {
+        double[] weights = new double[siteCount];
+        for (int i = 0; i < siteCount; i++)
+            weights[i] = 1.0;
+        return weights;
+    }
 
-	/**
-	 * @return the DataType of this siteList
-	 */
-	public DataType getDataType() {
-		return dataType;
-	}
+    /**
+     * @return the DataType of this siteList
+     */
+    public DataType getDataType() {
+        return dataType;
+    }
 
-	/**
-	 * @return the frequency of each state
-	 */
-	public double[] getStateFrequencies() {
-		return PatternList.Utils.empiricalStateFrequencies(this);
-	}
-	
-	public String toString() {
-		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
-		
-		StringBuffer buffer = new StringBuffer();
-		for (int i =0; i < getSequenceCount(); i++) {
-			String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
-			buffer.append(">" + name +"\n");
-            buffer.append(getAlignedSequenceString(i)+"\n");
-		}
-		return buffer.toString();
-	}
+    /**
+     * @return the frequency of each state
+     */
+    public double[] getStateFrequencies() {
+        return PatternList.Utils.empiricalStateFrequencies(this);
+    }
+
+    public String toString() {
+        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
+
+        StringBuffer buffer = new StringBuffer();
+        for (int i = 0; i < getSequenceCount(); i++) {
+            String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
+            buffer.append(">" + name + "\n");
+            buffer.append(getAlignedSequenceString(i) + "\n");
+        }
+        return buffer.toString();
+    }
 
     public String toXHTML() {
-		String xhtml = "<p><em>Alignment</em> data type = ";
-		xhtml += getDataType().getDescription();
-		xhtml += ", no. taxa = ";
-		xhtml += getTaxonCount();
-		xhtml += ", no. sites = ";
-		xhtml += getSiteCount();
-		xhtml += "</p>";
+        String xhtml = "<p><em>Alignment</em> data type = ";
+        xhtml += getDataType().getDescription();
+        xhtml += ", no. taxa = ";
+        xhtml += getTaxonCount();
+        xhtml += ", no. sites = ";
+        xhtml += getSiteCount();
+        xhtml += "</p>";
 
-		xhtml += "<pre>";
+        xhtml += "<pre>";
 
-		int length, maxLength = 0;
-		for (int i =0; i < getTaxonCount(); i++) {
-			length = getTaxonId(i).length();
-			if (length > maxLength)
-				maxLength = length;
-		}
+        int length, maxLength = 0;
+        for (int i = 0; i < getTaxonCount(); i++) {
+            length = getTaxonId(i).length();
+            if (length > maxLength)
+                maxLength = length;
+        }
 
-		for (int i = 0; i < getTaxonCount(); i++) {
-			length = getTaxonId(i).length();
-			xhtml += getTaxonId(i);
-			for (int j = length; j <= maxLength; j++)
-				xhtml += " ";
-			xhtml += getAlignedSequenceString(i) + "\n";
-		}
-		xhtml += "</pre>";
-		return xhtml;
-	}
+        for (int i = 0; i < getTaxonCount(); i++) {
+            length = getTaxonId(i).length();
+            xhtml += getTaxonId(i);
+            for (int j = length; j <= maxLength; j++)
+                xhtml += " ";
+            xhtml += getAlignedSequenceString(i) + "\n";
+        }
+        xhtml += "</pre>";
+        return xhtml;
+    }
 
-	// **************************************************************
-	// INSTANCE VARIABLES
-	// **************************************************************
+    // **************************************************************
+    // INSTANCE VARIABLES
+    // **************************************************************
 
-	private DataType dataType = null;
+    private DataType dataType = null;
 	private int siteCount = 0;
 	private boolean siteCountKnown = false;
 }

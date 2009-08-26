@@ -347,7 +347,7 @@ public class BeastMain {
             inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
         }
 
-        if (inputFile != null && working) {
+        if (inputFile != null && inputFile.getParent() != null && working) {
             System.setProperty("user.dir", inputFile.getParent());
         }
 

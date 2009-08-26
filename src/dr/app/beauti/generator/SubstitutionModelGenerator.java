@@ -12,6 +12,8 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.BinaryCovarionModel;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GTR;
+import dr.evomodel.substmodel.TN93;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
 import dr.evoxml.AlignmentParser;
@@ -90,6 +92,16 @@ public class SubstitutionModelGenerator extends Generator {
                         } else {
                             writeHKYModel(-1, writer, model);
                         }
+                        
+                    } else if (model.getNucSubstitutionModel() == NucModelType.TN93) {
+                        if (model.isUnlinkedSubstitutionModel()) {
+                            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                            	writeTN93Model(i, writer, model);
+                            }
+                        } else {
+                        	writeTN93Model(-1, writer, model);
+                        }
+
                     } else {
                         // General time reversible model
                         if (model.getNucSubstitutionModel() == NucModelType.GTR) {
@@ -159,6 +171,30 @@ public class SubstitutionModelGenerator extends Generator {
     }
 
     /**
+     * Write the TN93 model XML block.
+     *
+     * @param num    the model number
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
+     */
+    public void writeTN93Model(int num, XMLWriter writer, PartitionSubstitutionModel model) {
+
+        String prefix = model.getPrefix(num);
+
+        // TN93
+        writer.writeComment("The TN93 substitution model");
+        writer.writeOpenTag(NucModelType.TN93.getXMLName(),
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "tn93")}
+        );
+        writer.writeOpenTag(HKYParser.FREQUENCIES);
+        writeFrequencyModel(writer, model, num);
+        writer.writeCloseTag(HKYParser.FREQUENCIES);
+
+        writeParameter(num, TN93.KAPPA1, "kappa1", model, writer);
+        writeParameter(num, TN93.KAPPA2, "kappa2", model, writer);
+        writer.writeCloseTag(NucModelType.TN93.getXMLName());
+    }
+    /**
      * Write the GTR model XML block.
      *
      * @param num    the model number
@@ -170,20 +206,19 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix(num);
 
         writer.writeComment("The general time reversible (GTR) substitution model");
-        writer.writeOpenTag(
-                dr.evomodel.substmodel.GTR.GTR_MODEL,
+        writer.writeOpenTag(GTR.GTR_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "gtr")}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+        writer.writeOpenTag(GTR.FREQUENCIES);
         writeFrequencyModel(writer, model, num);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+        writer.writeCloseTag(GTR.FREQUENCIES);
 
-        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-        writeParameter(num, dr.evomodel.substmodel.GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-        writeParameter(num, dr.evomodel.substmodel.GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-        writeParameter(num, dr.evomodel.substmodel.GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
+        writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+        writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+        writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+        writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+        writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+        writer.writeCloseTag(GTR.GTR_MODEL);
     }
 
     private void writeFrequencyModel(XMLWriter writer, PartitionSubstitutionModel model, int num) {
@@ -474,7 +509,10 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "hky");
                     break;
                 case GTR:
-                    writer.writeIDref(dr.evomodel.substmodel.GTR.GTR_MODEL, prefix + "gtr");
+                    writer.writeIDref(GTR.GTR_MODEL, prefix + "gtr");
+                    break;
+                case TN93:
+                    writer.writeIDref(NucModelType.TN93.getXMLName(), prefix + "tn93");
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
@@ -495,7 +533,10 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(NucModelType.HKY.getXMLName(), prefix2 + "hky");
                     break;
                 case GTR:
-                    writer.writeIDref(dr.evomodel.substmodel.GTR.GTR_MODEL, prefix2 + "gtr");
+                    writer.writeIDref(GTR.GTR_MODEL, prefix2 + "gtr");
+                    break;
+                case TN93:
+                    writer.writeIDref(NucModelType.TN93.getXMLName(), prefix2 + "tn93");
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");

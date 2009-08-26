@@ -130,6 +130,19 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleParameter("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         createScaleParameter("CP3.kappa", "HKY transition-transversion parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
+        createScaleParameter("kappa1", "TN93 1st transition-transversion parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.kappa1", "TN93 1st transition-transversion parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.kappa1", "TN93 1st transition-transversion parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.kappa1", "TN93 1st transition-transversion parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.kappa1", "TN93 1st transition-transversion parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+
+        createScaleParameter("kappa2", "TN93 2nd transition-transversion parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        createScaleParameter("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+
+        
 //        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -182,6 +195,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("CP2.kappa", demoTuning, substWeights);
         createScaleOperator("CP1+2.kappa", demoTuning, substWeights);
         createScaleOperator("CP3.kappa", demoTuning, substWeights);
+        
+        createScaleOperator("kappa1", demoTuning, substWeights);
+        createScaleOperator("CP1.kappa1", demoTuning, substWeights);
+        createScaleOperator("CP2.kappa1", demoTuning, substWeights);
+        createScaleOperator("CP1+2.kappa1", demoTuning, substWeights);
+        createScaleOperator("CP3.kappa1", demoTuning, substWeights);
+        
+        createScaleOperator("kappa2", demoTuning, substWeights);
+        createScaleOperator("CP1.kappa2", demoTuning, substWeights);
+        createScaleOperator("CP2.kappa2", demoTuning, substWeights);
+        createScaleOperator("CP1+2.kappa2", demoTuning, substWeights);
+        createScaleOperator("CP3.kappa2", demoTuning, substWeights);
 
         createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         createOperator("CP1.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
@@ -234,6 +259,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 params.add(getParameter("CP2.kappa"));
                                 params.add(getParameter("CP3.kappa"));
                                 break;
+                            case TN93:
+                                params.add(getParameter("CP1.kappa1"));
+                                params.add(getParameter("CP2.kappa1"));
+                                params.add(getParameter("CP3.kappa1"));
+                                params.add(getParameter("CP1.kappa2"));
+                                params.add(getParameter("CP2.kappa2"));
+                                params.add(getParameter("CP3.kappa2"));
+                                break;
                             case GTR:
                                 for (int i = 1; i <= getCodonPartitionCount(); i++) {
                                     for (String rateName : GTR_RATE_NAMES) {
@@ -250,9 +283,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                         params.add(getParameter("CP3.mu"));
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
-                            case HKY:
+                            case HKY:                            
                                 params.add(getParameter("CP1+2.kappa"));
                                 params.add(getParameter("CP3.kappa"));
+                                break;
+                            case TN93:
+                                params.add(getParameter("CP1+2.kappa1"));
+                                params.add(getParameter("CP3.kappa1"));
+                                params.add(getParameter("CP1+2.kappa2"));
+                                params.add(getParameter("CP3.kappa2"));
                                 break;
                             case GTR:
                                 for (String rateName : GTR_RATE_NAMES) {
@@ -274,7 +313,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 } else { // no codon partitioning
                     switch (nucSubstitutionModel) {
                         case HKY:
-                            params.add(getParameter("kappa"));
+                        	params.add(getParameter("kappa"));
+                            break;
+                        case TN93:
+                            params.add(getParameter("kappa1"));
+                            params.add(getParameter("kappa2"));
                             break;
                         case GTR:
                             for (String rateName : GTR_RATE_NAMES) {
@@ -383,10 +426,19 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
-                            case HKY:
+                            case HKY:                            
                                 ops.add(getOperator("CP1.kappa"));
                                 ops.add(getOperator("CP2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
+                                break;
+                                
+                            case TN93:
+                                ops.add(getOperator("CP1.kappa1"));
+                                ops.add(getOperator("CP2.kappa1"));
+                                ops.add(getOperator("CP3.kappa1"));
+                                ops.add(getOperator("CP1.kappa2"));
+                                ops.add(getOperator("CP2.kappa2"));
+                                ops.add(getOperator("CP3.kappa2"));
                                 break;
 
                             case GTR:
@@ -413,8 +465,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
                             case HKY:
-                                ops.add(getOperator("CP1+2.kappa"));
+                            	ops.add(getOperator("CP1+2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
+                                break;
+                                
+                            case TN93:
+                                ops.add(getOperator("CP1+2.kappa1"));
+                                ops.add(getOperator("CP3.kappa1"));
+                                ops.add(getOperator("CP1+2.kappa2"));
+                                ops.add(getOperator("CP3.kappa2"));
                                 break;
 
                             case GTR:
@@ -444,7 +503,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 } else { // no codon partitioning
                     switch (nucSubstitutionModel) {
                         case HKY:
-                            ops.add(getOperator("kappa"));
+                        	ops.add(getOperator("kappa"));
+                            break;
+                            
+                        case TN93:
+                            ops.add(getOperator("kappa1"));
+                            ops.add(getOperator("kappa2"));
                             break;
 
                         case GTR:

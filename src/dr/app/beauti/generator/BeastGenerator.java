@@ -1202,14 +1202,30 @@ public class BeastGenerator extends Generator {
                 treeFileName = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
 
-            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG), // partionName.treeFileLog
-                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
-                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
-                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName),
-                            new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
-                    });
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG)); // partionName.treeFileLog
+            attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));
+            attributes.add(new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"));
+            attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName));
+            attributes.add(new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true"));
+            
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+                double aveFixedRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels());
+                attributes.add(new Attribute.Default<String>(TreeLoggerParser.NORMALISE_MEAN_RATE_TO, Double.toString(aveFixedRate)));
+            }
+            
+            // generate <logTree>
+            writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
+            
+//            writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG), // partionName.treeFileLog
+//                            new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
+//                            new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
+//                            new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName),
+//                            new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
+//                    });
 
             writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 

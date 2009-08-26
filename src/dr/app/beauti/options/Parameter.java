@@ -26,6 +26,9 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.TaxonList;
+import dr.math.distributions.ExponentialDistribution;
+import dr.math.distributions.LogNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 
 /**
  * @author Andrew Rambaut
@@ -179,6 +182,19 @@ public class Parameter {
             return description + " of partition " + prefix;
         }
         return description;
+    }
+
+    public double getPriorExpectation() {
+
+        switch (priorType) {
+            case LOGNORMAL_PRIOR:
+                return LogNormalDistribution.mean(logNormalMean, logNormalStdev) + logNormalOffset;
+            case NORMAL_PRIOR:
+                return NormalDistribution.mean(normalMean, normalStdev);
+            case EXPONENTIAL_PRIOR:
+                return ExponentialDistribution.mean(exponentialMean) + exponentialOffset;
+        }
+        return 1.0;
     }
 
     private final String baseName;

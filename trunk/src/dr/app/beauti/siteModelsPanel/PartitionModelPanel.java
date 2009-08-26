@@ -28,6 +28,7 @@ package dr.app.beauti.siteModelsPanel;
 import dr.app.beauti.BeautiApp;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
@@ -39,6 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.EnumSet;
 import java.util.logging.Logger;
 
 /**
@@ -49,7 +51,7 @@ public class PartitionModelPanel extends OptionsPanel {
     // Components
 	private static final long serialVersionUID = -1645661616353099424L;
 	
-	private JComboBox nucSubstCombo = new JComboBox(new String[]{"HKY", "GTR"});
+	private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(NucModelType.HKY, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
 
@@ -88,12 +90,8 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(nucSubstCombo);
         nucSubstCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                if (nucSubstCombo.getSelectedIndex() == 0) {
-                    model.setNucSubstitutionModel(NucModelType.HKY);
-                } else {
-                    model.setNucSubstitutionModel(NucModelType.GTR);
-                }
+            public void itemStateChanged(java.awt.event.ItemEvent ev) {                
+                model.setNucSubstitutionModel( (NucModelType) nucSubstCombo.getSelectedItem());                
             }
         });
         nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
@@ -176,7 +174,7 @@ public class PartitionModelPanel extends OptionsPanel {
      * Sets the components up according to the partition model - but does not layout the top
      * level options panel.
      */
-    private void setupComponents() {
+    private void setOptions() {
 
         if (SiteModelsPanel.DEBUG) {
             String modelName = (model == null) ? "null" : model.getName();
@@ -189,24 +187,21 @@ public class PartitionModelPanel extends OptionsPanel {
 
         int dataType = model.getDataType().getType();
         switch (dataType) {
-            case DataType.NUCLEOTIDES:
-                if (model.getNucSubstitutionModel() == NucModelType.GTR) {
-                    nucSubstCombo.setSelectedIndex(1);
-                } else {
-                    nucSubstCombo.setSelectedIndex(0);
-                }
-
+            case DataType.NUCLEOTIDES:                
+                nucSubstCombo.setSelectedItem(model.getNucSubstitutionModel());  
                 frequencyCombo.setSelectedItem(model.getFrequencyPolicy());
 
                 break;
 
             case DataType.AMINO_ACIDS:
                 aaSubstCombo.setSelectedItem(model.getAaSubstitutionModel());
+                
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 binarySubstCombo.setSelectedIndex(model.getBinarySubstitutionModel());
+                
                 break;
 
             default:
@@ -314,7 +309,7 @@ public class PartitionModelPanel extends OptionsPanel {
             addComponent(dolloCheck);
         }
 
-        setupComponents();
+        setOptions();
     }
 
     /**

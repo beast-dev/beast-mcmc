@@ -30,6 +30,7 @@ import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
+import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 
 
@@ -178,6 +179,15 @@ public class ClockModelOptions extends ModelOptions {
         	//TODO calibration            	
         }
         return selectedRate;
+	}
+	
+	private double getCalibrationMeanDistance(List<PartitionData> partitions) {
+		List<Taxa> taxonSets = options.taxonSets;
+        if (taxonSets != null && taxonSets.size() > 0) {
+            // TODO Alexei
+        }
+		
+		return 0;
 	}
 	
 	// FixRateType.FIX_MEAN

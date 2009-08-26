@@ -23,6 +23,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.StartingTreeType;
@@ -168,6 +169,17 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     /////////////////////////////////////////////////////////////
+    
+    public boolean containsUncorrelatedRelaxClock() {
+        for (PartitionData partition: allPartitionData) {
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (clockModel.getClockType() == ClockType.UNCORRELATED_EXPONENTIAL 
+                    || clockModel.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public List<PartitionData> getAllPartitionData() {
         return allPartitionData;

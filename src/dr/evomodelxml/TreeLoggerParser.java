@@ -32,6 +32,7 @@ public class TreeLoggerParser extends LoggerParser {
     public static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
     public static final String MAP_NAMES = "mapNamesToNumbers";
     public static final String DECIMAL_PLACES = "dp";
+    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
 
     public String getParserName() {
         return LOG_TREE;
@@ -121,6 +122,8 @@ public class TreeLoggerParser extends LoggerParser {
         // logEvery of zero only displays at the end
         final int logEvery = xo.getAttribute(LOG_EVERY, 0);
 
+        double normaliseMeanRateTo = xo.getAttribute(NORMALISE_MEAN_RATE_TO, Double.NaN);
+
         // decimal places
         final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
         NumberFormat format = null;
@@ -149,7 +152,8 @@ public class TreeLoggerParser extends LoggerParser {
 
         TreeLogger logger = new TreeLogger(tree, branchRateProvider,
                 treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition);
+                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition,
+                normaliseMeanRateTo);
 
         if (title != null) {
             logger.setTitle(title);

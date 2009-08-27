@@ -380,10 +380,21 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         frame.setDirty();
     }
+    
+    private void resetPanel() {
+        if (!options.hasData()) {
+            includedTaxa.clear();
+            excludedTaxa.clear();
+            
+            return;
+        }
+    }
 
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
+        
+        resetPanel();
 
         taxa = options.taxonList;
         if (taxa == null) {

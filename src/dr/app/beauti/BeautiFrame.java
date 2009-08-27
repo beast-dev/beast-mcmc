@@ -225,6 +225,8 @@ public class BeautiFrame extends DocumentFrame {
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
+        
+        setStatusMessage();
     }
 
     /**
@@ -928,42 +930,8 @@ public class BeautiFrame extends DocumentFrame {
 		}    	
     }
     
-    private void setStatusMessage() {
-        String message = "";
-        if (beautiOptions.hasData()) {
-            message += "Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
-                    beautiOptions.dataPartitions.size() +
-                    (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
-
-            if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
-                int num = beautiOptions.starBEASTOptions.getSpeciesList().size();
-                message += ", " + num + " species"; // species is both singular and plural
-            }
-
-            if (beautiOptions.userTrees.size() > 0) {
-                message += ", " + beautiOptions.userTrees.size() +
-                        (beautiOptions.userTrees.size() > 1 ? " trees" : " tree");
-            }
-            
-            if (beautiOptions.allowDifferentTaxa) {
-            	message += " in total";
-            }
-
-            if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
-                message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
-            }
-            
-            message += ";    " + beautiOptions.clockModelOptions.getRateOptionClockModel().toString();
-            
-        } else if (beautiOptions.userTrees.size() > 0) {
-            message += "Trees only : " + beautiOptions.userTrees.size() +
-                    (beautiOptions.userTrees.size() > 1 ? " trees, " : " tree, ") +
-                    beautiOptions.taxonList.getTaxonCount() + " taxa";
-        } else if (beautiOptions.taxonList != null && beautiOptions.taxonList.getTaxonCount() > 0) {
-            message += "Taxa only: " + beautiOptions.taxonList.getTaxonCount() + " taxa";
-        }
-
-        statusLabel.setText(message);
+    public void setStatusMessage() { 
+        statusLabel.setText(beautiOptions.statusMessage());
     }
 
     public final boolean doGenerate() {

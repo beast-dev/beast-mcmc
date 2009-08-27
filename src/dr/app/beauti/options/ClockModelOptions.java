@@ -201,7 +201,7 @@ public class ClockModelOptions extends ModelOptions {
 
                 Taxa taxa = taxonSets.get(i);
 
-                Parameter tmrcaStatistic = options.priorOptions.getStatistic(taxa);
+                Parameter tmrcaStatistic = options.getStatistic(taxa);
 
                 double taxonSetCalibrationTime = tmrcaStatistic.getPriorExpectation();
 
@@ -288,28 +288,31 @@ public class ClockModelOptions extends ModelOptions {
         return options.maximumTipHeight > 0;
     }
 
-    public boolean isNodeCalibrated() {
-        if (options.taxonSets != null && options.taxonSets.size() > 0) {
+    public boolean isNodeCalibrated(Parameter para) {
+        if ((para.taxa != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
+                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para))) {
             return true;
-        } else {
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                Parameter rootHeightPara = model.getParameter("treeModel.rootHeight");
-                if (rootHeightPara.priorType == PriorType.LOGNORMAL_PRIOR
-                        || rootHeightPara.priorType == PriorType.NORMAL_PRIOR
-                        || rootHeightPara.priorType == PriorType.LAPLACE_PRIOR
-                        || rootHeightPara.priorType == PriorType.TRUNC_NORMAL_PRIOR
-                        || (rootHeightPara.priorType == PriorType.GAMMA_PRIOR && rootHeightPara.gammaAlpha > 1)
-                        || (rootHeightPara.priorType == PriorType.GAMMA_PRIOR && rootHeightPara.gammaOffset > 0)
-                        || (rootHeightPara.priorType == PriorType.UNIFORM_PRIOR && rootHeightPara.uniformLower > 0
-                        && rootHeightPara.uniformUpper < Double.POSITIVE_INFINITY)
-                        || (rootHeightPara.priorType == PriorType.EXPONENTIAL_PRIOR && rootHeightPara.exponentialOffset > 0)) {
-
-                    return true;
-                }
-            }
+        } else {            
             return false;
         }
     }
+    
+    private boolean hasProperPriorOn(Parameter para) {                
+        if (para.priorType == PriorType.LOGNORMAL_PRIOR
+                || para.priorType == PriorType.NORMAL_PRIOR
+                || para.priorType == PriorType.LAPLACE_PRIOR
+                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
+                || (para.priorType == PriorType.GAMMA_PRIOR && para.gammaAlpha > 1)
+                || (para.priorType == PriorType.GAMMA_PRIOR && para.gammaOffset > 0)
+                || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
+                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.exponentialOffset > 0)) {
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
     public boolean isRateCalibrated() {
         return false;//TODO

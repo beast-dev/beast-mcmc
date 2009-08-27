@@ -147,7 +147,7 @@ public class BeautiOptions extends ModelOptions {
             for (Taxa taxonSet : taxonSets) {
                 Parameter statistic = statistics.get(taxonSet);
                 if (statistic == null) {
-                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
+                    statistic = new Parameter(taxonSet, TMRCA);
                     statistics.put(taxonSet, statistic);
                 }
                 params.add(statistic);
@@ -165,6 +165,8 @@ public class BeautiOptions extends ModelOptions {
     public ArrayList<Parameter> selectParameters() {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        
+        selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);       
         
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
 //          parameters.addAll(model.getParameters(multiplePartitions));
@@ -196,8 +198,6 @@ public class BeautiOptions extends ModelOptions {
         }
 
         selectComponentParameters(this, parameters);
-
-        selectTaxonSetsStatistics(parameters);
         
         selectComponentStatistics(this, parameters);
         
@@ -706,6 +706,44 @@ public class BeautiOptions extends ModelOptions {
 //    		return dm.getMeanDistance();
 //    	}
     }
+	
+	public String statusMessage() {
+        String message = "";
+        if (hasData()) {
+            message += "Data: " + taxonList.getTaxonCount() + " taxa, " +
+                    dataPartitions.size() +
+                    (dataPartitions.size() > 1 ? " partitions" : " partition");
+
+            if (starBEASTOptions.isSpeciesAnalysis()) {
+                int num = starBEASTOptions.getSpeciesList().size();
+                message += ", " + num + " species"; // species is both singular and plural
+            }
+
+            if (userTrees.size() > 0) {
+                message += ", " + userTrees.size() +
+                        (userTrees.size() > 1 ? " trees" : " tree");
+            }
+            
+            if (allowDifferentTaxa) {
+                message += " in total";
+            }
+
+            if (starBEASTOptions.isSpeciesAnalysis()) {
+                message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
+            }
+            
+            message += ";    " + clockModelOptions.getRateOptionClockModel().toString();
+            
+        } else if (userTrees.size() > 0) {
+            message += "Trees only : " + userTrees.size() +
+                    (userTrees.size() > 1 ? " trees, " : " tree, ") +
+                    taxonList.getTaxonCount() + " taxa";
+        } else if (taxonList != null && taxonList.getTaxonCount() > 0) {
+            message += "Taxa only: " + taxonList.getTaxonCount() + " taxa";
+        }
+
+        return message;
+    }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
@@ -714,6 +752,7 @@ public class BeautiOptions extends ModelOptions {
 //    public boolean dataReset = true;
 
     public Taxa taxonList = null;
+    public final String TMRCA = "tmrca statistic for taxon set ";
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

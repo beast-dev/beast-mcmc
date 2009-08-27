@@ -216,15 +216,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
-
-                frame.removeSpecifiedTreePrior(enabled);
-                
-                if (enabled) {
-                	options.clockModelOptions.tipTimeCalibration();
-                } else {
-                	options.clockModelOptions.fixRateOfFirstClockPartition();
-                } 
-                frame.setStatusMessage();
             }
         });
 
@@ -285,7 +276,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         directionCombo.setSelectedIndex(options.datesDirection);
 
         calculateHeights();
-
+        usingTipDates.setSelected(options.clockModelOptions.isTipCalibrated());
+        
         dataTableModel.fireTableDataChanged();
 
         tipDateTaxonSetCombo.removeAllItems();
@@ -438,8 +430,14 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
         
         if (options.clockModelOptions.isTipCalibrated()) {
-        	usingTipDates.setSelected(true);
-        }
+        	frame.removeSpecifiedTreePrior(true);
+            options.clockModelOptions.tipTimeCalibration();
+                
+        } else {
+            frame.removeSpecifiedTreePrior(false);
+            options.clockModelOptions.fixRateOfFirstClockPartition();
+        }        
+        frame.setStatusMessage();
     }
 
     class DataTableModel extends AbstractTableModel {

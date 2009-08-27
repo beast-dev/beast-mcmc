@@ -1210,7 +1210,7 @@ public class BeastGenerator extends Generator {
             attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeFileName));
             attributes.add(new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true"));
             
-            //if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO && tree.containsUncorrelatedRelaxClock()) { //todo Sibon's discretized branch length stuff
+            //if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO && tree.containsUncorrelatedRelaxClock()) { //TODO: Sibon's discretized branch length stuff
             //    double aveFixedRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels());
             //    attributes.add(new Attribute.Default<String>(TreeLoggerParser.NORMALISE_MEAN_RATE_TO, Double.toString(aveFixedRate)));
             //}

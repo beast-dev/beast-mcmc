@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * @author Joseph Heled
  */
 public class TN93 extends AbstractNucleotideModel {
-//    public static final String TN93_MODEL = "TN93Model";
+    private static final String TN93_MODEL = NucModelType.TN93.getXMLName();
     public static final String KAPPA1 = "kappa1";
     public static final String KAPPA2 = "kappa2";
     public static final String FREQUENCIES = "frequencies";
@@ -77,7 +77,7 @@ public class TN93 extends AbstractNucleotideModel {
      */
     public TN93(Parameter kappa1Parameter, Parameter kappa2Parameter, FrequencyModel freqModel) {
 
-        super(NucModelType.TN93.getXMLName(), freqModel);
+        super(TN93_MODEL, freqModel);
         this.kappa1Parameter = kappa1Parameter;
         this.kappa2Parameter = kappa2Parameter;
         addVariable(kappa1Parameter);
@@ -107,6 +107,13 @@ public class TN93 extends AbstractNucleotideModel {
         updateIntermediates = true;
     }
 
+    // I am not sure how HKY works without this
+    // Comment this function out to get bug 138
+    protected void ratesChanged() {
+           // frequencyModel changed
+           updateIntermediates = true;
+       }
+
     private void calculateIntermediates() {
 
         calculateFreqRY();
@@ -114,7 +121,8 @@ public class TN93 extends AbstractNucleotideModel {
         double k1 = getKappa1();
         double k2 = getKappa2();
 
-        // A hack until I get right this boundry case. gives results accurate to 1e-8 in the P matrix
+//        System.out.println(getModelName() + " Using " + k1 + " " + k2);
+        // A hack until I get right this boundary case. gives results accurate to 1e-8 in the P matrix
         // so should be OK even like this.
         if (k1 == 1) {
             k1 += 1E-10;
@@ -287,7 +295,7 @@ public class TN93 extends AbstractNucleotideModel {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return NucModelType.TN93.getXMLName();
+            return TN93_MODEL;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {

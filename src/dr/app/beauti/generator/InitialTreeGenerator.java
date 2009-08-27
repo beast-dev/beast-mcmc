@@ -129,11 +129,11 @@ public class InitialTreeGenerator extends Generator {
     	
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
         
-        if (options.taxonSets.size() > 0) { //TODO maybe incorrect for multi-data partition
+        if (options.taxonSets != null && options.taxonSets.size() > 0) { //TODO maybe incorrect for multi-data partition
             writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxonSet : options.taxonSets) {
-                dr.app.beauti.options.Parameter statistic = options.getStatistic(taxonSet);
+                Parameter statistic = options.getStatistic(taxonSet);
 
                 Attribute mono = new Attribute.Default<Boolean>(
                         CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxonSet));

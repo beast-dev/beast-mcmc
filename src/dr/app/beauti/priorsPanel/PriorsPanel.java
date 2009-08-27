@@ -142,11 +142,12 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
         param.priorEdited = true;
         
-        if (param.getName().indexOf(".rootHeight") > 0) {
-        	if (options.clockModelOptions.isNodeCalibrated()) {
+        if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA 
+        	if (options.clockModelOptions.isNodeCalibrated(param)) {
         		options.clockModelOptions.nodeCalibration();
-        	} else {
-        		options.clockModelOptions.fixRateOfFirstClockPartition();
+        		frame.setStatusMessage();
+//        	} else {
+//        		options.clockModelOptions.fixRateOfFirstClockPartition();
         	}
         }
 
@@ -164,9 +165,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     class DoubleRenderer extends TableRenderer {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -2614341608257369805L;
 
         public DoubleRenderer(int alignment, Insets insets) {

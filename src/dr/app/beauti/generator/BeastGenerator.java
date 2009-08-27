@@ -1101,7 +1101,7 @@ public class BeastGenerator extends Generator {
         }
 
         for (Taxa taxa : options.taxonSets) {
-            writer.writeIDref("tmrcaStatistic", "tmrca(" + taxa.getId() + ")");
+            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
@@ -1346,7 +1346,7 @@ public class BeastGenerator extends Generator {
      * @param parameter the parameter
      * @param writer    the writer
      */
-    private void writeParameterPrior(dr.app.beauti.options.Parameter parameter, XMLWriter writer) {
+    private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
@@ -1365,7 +1365,10 @@ public class BeastGenerator extends Generator {
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.EXPONENTIAL_PRIOR);
-                break;
+                break;                
+            case LAPLACE_PRIOR:
+                throw new IllegalArgumentException("Laplace prior has not been implemented in PriorParsers !");//TODO
+                
             case NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{

@@ -297,7 +297,7 @@ public class TN93 extends AbstractNucleotideModel {
             FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
             Logger.getLogger("dr.evomodel").info("Creating TN93 substitution model. Initial kappa = "
-                    + kappa1Param.getParameterValue(0) + "," + kappa1Param.getParameterValue(1));
+                    + kappa1Param.getParameterValue(0) + "," + kappa2Param.getParameterValue(0));
 
             return new TN93(kappa1Param, kappa2Param, freqModel);
         }
@@ -311,7 +311,7 @@ public class TN93 extends AbstractNucleotideModel {
         }
 
         public Class getReturnType() {
-            return HKY.class;
+            return TN93.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

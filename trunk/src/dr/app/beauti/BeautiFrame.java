@@ -930,7 +930,7 @@ public class BeautiFrame extends DocumentFrame {
     
     private void setStatusMessage() {
         String message = "";
-        if (beautiOptions.dataPartitions.size() > 0) {
+        if (beautiOptions.hasData()) {
             message += "Data: " + beautiOptions.taxonList.getTaxonCount() + " taxa, " +
                     beautiOptions.dataPartitions.size() +
                     (beautiOptions.dataPartitions.size() > 1 ? " partitions" : " partition");
@@ -950,8 +950,11 @@ public class BeautiFrame extends DocumentFrame {
             }
 
             if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
-                message += ";    Welcome to *BEAST";
+                message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
+            
+            message += ";    " + beautiOptions.clockModelOptions.getRateOptionClockModel().toString();
+            
         } else if (beautiOptions.userTrees.size() > 0) {
             message += "Trees only : " + beautiOptions.userTrees.size() +
                     (beautiOptions.userTrees.size() > 1 ? " trees, " : " tree, ") +

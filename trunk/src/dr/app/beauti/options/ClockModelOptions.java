@@ -36,6 +36,9 @@ import dr.stats.DiscreteStatistics;
 
 import java.util.List;
 
+import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
+
 
 /**
  * @author Alexei Drummond
@@ -377,5 +380,19 @@ public class ClockModelOptions extends ModelOptions {
         }
     }
 
+    //+++++++++++++++++++++++ Validation ++++++++++++++++++++++++++++++++
+    // true => valid, false => warning message 
+    public boolean validateFixMeanRate(JCheckBox fixedMeanRateCheck) {
+        return !(fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2);
+    }
+    
+    public boolean validateRelativeTo() {
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            if (!model.isEstimatedRate()) { // fixed
+                return true;
+            }
+        }        
+        return false;
+    }
 
 }

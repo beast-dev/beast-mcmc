@@ -52,7 +52,6 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.NumberFormat;
 import java.util.EnumSet;
 
 /**
@@ -76,8 +75,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
     
     SequenceErrorModelComponentOptions comp;
-
-    TitledBorder modelBorder = new TitledBorder("");
     
     BeautiFrame frame = null;
     BeautiOptions options = null;
@@ -101,14 +98,15 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 		col.setCellRenderer(comboBoxRenderer);
 		
-		dataTable.getColumnModel().getColumn(2).setPreferredWidth(6);
-		
+		col = dataTable.getColumnModel().getColumn(2);
+		col.setPreferredWidth(6);
+				
 		col = dataTable.getColumnModel().getColumn(3);
 		col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
         
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
-
+		
 		JScrollPane scrollPane = new JScrollPane(dataTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -133,13 +131,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
 		fixedMeanRateCheck.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent ev) {
-				if (fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2) {
-					JOptionPane.showMessageDialog(frame, "It must have multi-clock rates to fix mean substitution rate!",
-	                        "Validation Of Fix Mean Rate",
-	                        JOptionPane.WARNING_MESSAGE);
-					fixedMeanRateCheck.setSelected(false);
-					return;
-				} 
+			    if (!options.clockModelOptions.validateFixMeanRate(fixedMeanRateCheck)) {
+			        JOptionPane.showMessageDialog(frame, "It must have multi-clock rates to fix mean substitution rate!",
+		                    "Validation Of Fix Mean Rate",
+		                    JOptionPane.WARNING_MESSAGE);
+		            fixedMeanRateCheck.setSelected(false);
+		            return;
+			    }
 				
 				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 				if (fixedMeanRateCheck.isSelected()) {
@@ -147,8 +145,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		        } else {
 		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
-				
-				updateModelPanelBorder();
 				
 				frame.setDirty();
 				frame.repaint();
@@ -172,16 +168,18 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //		meanRateField.setEnabled(true);
 
 		JPanel modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        modelPanelParent.setOpaque(false);        
+        modelPanelParent.setOpaque(false);  
+        TitledBorder modelBorder = new TitledBorder("");        
         modelPanelParent.setBorder(modelBorder);
 		
 		OptionsPanel panel = new OptionsPanel(12, 20);
-
-		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-		// panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
+		
 		meanRateField.setColumns(10);
 		panel.addComponents(fixedMeanRateCheck, meanRateField);
 //		panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", meanRateField);
+		
+		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+        // panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
 		modelPanelParent.add(panel);
 		
@@ -199,7 +197,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
 		comp = new SequenceErrorModelComponentOptions();
     }
-
+     
     private void fireDataChanged() {
         options.updatePartitionClockTreeLinks();
         frame.setDirty();
@@ -216,15 +214,15 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         frame.setDirty();
     }
     
-    private void updateModelPanelBorder() {     	
-    	if (options.hasData()) {
-    		modelBorder.setTitle(options.clockModelOptions.getRateOptionClockModel().toString());
-    	} else {
-    		modelBorder.setTitle("Overall clock model(s) parameters");
-    	}
-    	
-        repaint();
-    }
+//    private void updateModelPanelBorder() {     	
+//    	if (options.hasData()) {
+//    		modelBorder.setTitle(options.clockModelOptions.getRateOptionClockModel().toString());
+//    	} else {
+//    		modelBorder.setTitle("Overall clock model(s) parameters");
+//    	}
+//    	
+//        repaint();
+//    }
 
     public void setOptions(BeautiOptions options) {
 
@@ -241,9 +239,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
         meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());  
-        
-        updateModelPanelBorder();
-        
+                
         settingOptions = false;
         
         int selRow = dataTable.getSelectedRow();
@@ -320,11 +316,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 case 2:
                     return model.isEstimatedRate();
                 case 3:
-//                    if (!(Boolean) getValueAt(row, 2)) {
-                    	return model.getRate();
-//                    } else {
-//                    	return "";
-//                    }
+                    return model.getRate();
             }
             return null;
         }
@@ -343,19 +335,20 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     break;
                 case 2:
                     model.setEstimatedRate((Boolean) aValue);
-//                    getValueAt(row, 3);
+//                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+//                        if (!options.clockModelOptions.validateRelativeTo()) {
+//                            JOptionPane.showMessageDialog(frame, "It must have at least one clock rate to be fixed !",
+//                                    "Validation Of Relative To ?th Rate", JOptionPane.WARNING_MESSAGE);
+//                            model.setEstimatedRate(false);
+//                        }
+//                    }
                     break;
                 case 3:
-//                	if (!(Boolean) getValueAt(row, 2)) {
-                		model.setRate((Double) aValue);                	
-//                	} else {
-//                    	//TODO
-//                    }
+                	model.setRate((Double) aValue);  
                 	break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
-//            fireTableRowsUpdated(row, col);
             fireDataChanged();
         }
 

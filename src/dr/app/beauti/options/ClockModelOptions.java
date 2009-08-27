@@ -389,13 +389,13 @@ public class ClockModelOptions extends ModelOptions {
         return !(fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2);
     }
     
-    public boolean validateRelativeTo() {
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (!model.isEstimatedRate()) { // fixed
-                return true;
-            }
-        }        
-        return false;
-    }
+//    public boolean validateRelativeTo() {
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            if (!model.isEstimatedRate()) { // fixed
+//                return true;
+//            }
+//        }        
+//        return false;
+//    }
 
 }

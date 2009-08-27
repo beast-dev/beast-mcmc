@@ -335,13 +335,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     break;
                 case 2:
                     model.setEstimatedRate((Boolean) aValue);
-                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
-                        if (!options.clockModelOptions.validateRelativeTo()) {
-                            JOptionPane.showMessageDialog(frame, "It must have at least one clock rate to be fixed !",
-                                    "Validation Of Relative To ?th Rate", JOptionPane.WARNING_MESSAGE);
-                            model.setEstimatedRate(false);
-                        }
-                    }
+//                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+//                        if (!options.clockModelOptions.validateRelativeTo()) {
+//                            JOptionPane.showMessageDialog(frame, "It must have at least one clock rate to be fixed !",
+//                                    "Validation Of Relative To ?th Rate", JOptionPane.WARNING_MESSAGE);
+//                            model.setEstimatedRate(false);
+//                        }
+//                    }
                     break;
                 case 3:
                 	model.setRate((Double) aValue);  
@@ -357,10 +357,10 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {                
                 case 2:// Check box
-                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
-                        editable = true;
+                    if (fixedMeanRateCheck.isSelected()) {
+                        editable = false;
                 	} else {
-                		editable = false;
+                		editable = true;
                 	}
                     break;
                 case 3:

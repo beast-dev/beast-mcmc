@@ -77,7 +77,7 @@ public class Parameter {
 
     public Parameter(TaxonList taxa, String description) {
         this.taxa = taxa;
-        this.baseName = null;
+        this.baseName = taxa.getId();
         this.description = description;
 
         this.isNodeHeight = true;
@@ -156,6 +156,10 @@ public class Parameter {
 
     private String getFullName() {
         if (prefix != null) return prefix + baseName;
+        return baseName;
+    }
+
+    public String getBaseName() {
         return baseName;
     }
 

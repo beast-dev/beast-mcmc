@@ -377,12 +377,6 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                 !checkCompatibility(currentTaxonSet)) {
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
         }
-        
-        if (options.clockModelOptions.isNodeCalibrated()) {
-    		options.clockModelOptions.nodeCalibration();
-    	} else {
-    		options.clockModelOptions.fixRateOfFirstClockPartition();
-    	}
 
         frame.setDirty();
     }

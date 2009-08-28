@@ -61,7 +61,6 @@ public class BranchRatesModelGenerator extends Generator {
      * Write the relaxed clock branch rates block.
      *
      * @param model
-     * @param tree
      * @param writer the writer
      */
     public void writeBranchRatesModel(PartitionClockModel model, XMLWriter writer) { 
@@ -491,29 +490,29 @@ public class BranchRatesModelGenerator extends Generator {
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
                 	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
                 }
                 break;
                 
             case AUTOCORRELATED_LOGNORMAL:
 // TODO
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "branchRates.var");
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "treeModel.rootRate");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
                     writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
+                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "branchRates.var");
+                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "treeModel.rootRate");
                 }
                 break;
                 
             case RANDOM_LOCAL_CLOCK:            	
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
                 	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
-                    
+
                     writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + tree.getPrefix() + "rateChanges");                        
                 }
                 break;

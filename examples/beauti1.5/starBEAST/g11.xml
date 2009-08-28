@@ -807,44 +807,51 @@
 	</alignment>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="26.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=144                                                           -->
+	<patterns id="26.patterns" from="1">
 		<alignment idref="alignment1"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="29.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=71                                                            -->
+	<patterns id="29.patterns" from="1">
 		<alignment idref="alignment2"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="47.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=153                                                           -->
+	<patterns id="47.patterns" from="1">
 		<alignment idref="alignment3"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="53.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=140                                                           -->
+	<patterns id="53.patterns" from="1">
 		<alignment idref="alignment4"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="59.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=92                                                            -->
+	<patterns id="59.patterns" from="1">
 		<alignment idref="alignment5"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="64.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=157                                                           -->
+	<patterns id="64.patterns" from="1">
 		<alignment idref="alignment6"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="72.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=85                                                            -->
+	<patterns id="72.patterns" from="1">
 		<alignment idref="alignment7"/>
 	</patterns>
 	
@@ -852,55 +859,55 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.02" lower="0.0" upper="Infinity"/>
 		</populationSize>
 	</constantSize>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="26.startingTree" rootHeight="0.016600379687229598">
+	<coalescentTree id="26.startingTree" rootHeight="0.017">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="29.startingTree" rootHeight="0.015763483132958327">
+	<coalescentTree id="29.startingTree" rootHeight="0.016">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="47.startingTree" rootHeight="0.01728760823773483">
+	<coalescentTree id="47.startingTree" rootHeight="0.017">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="53.startingTree" rootHeight="0.026195133409445598">
+	<coalescentTree id="53.startingTree" rootHeight="0.026">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="59.startingTree" rootHeight="0.015465941272640003">
+	<coalescentTree id="59.startingTree" rootHeight="0.015">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="64.startingTree" rootHeight="0.02828568194278456">
+	<coalescentTree id="64.startingTree" rootHeight="0.028">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="72.startingTree" rootHeight="0.024783939668743402">
+	<coalescentTree id="72.startingTree" rootHeight="0.025">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
@@ -1020,42 +1027,42 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="29.29.branchRates">
 		<rate>
-			<parameter id="29.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="29.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="47.47.branchRates">
 		<rate>
-			<parameter id="47.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="47.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="53.53.branchRates">
 		<rate>
-			<parameter id="53.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="53.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="59.59.branchRates">
 		<rate>
-			<parameter id="59.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="59.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="64.64.branchRates">
 		<rate>
-			<parameter id="64.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="64.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="72.72.branchRates">
 		<rate>
-			<parameter id="72.clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="72.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
@@ -1315,7 +1322,7 @@
 	<!-- Species Tree: Provides Per branch demographic function                  -->
 	<speciesTree id="sptree" constantRoot="true">
 		<species idref="species"/>
-		<sppSplitPopulations value="1.0">
+		<sppSplitPopulations value="0.02">
 			<parameter id="speciesTree.splitPopSize"/>
 		</sppSplitPopulations>
 	</speciesTree>
@@ -1368,7 +1375,7 @@
 					2
 				</shape>
 				<scale>
-					<parameter id="species.popMean" value="1.0"/>
+					<parameter id="species.popMean" value="0.02"/>
 				</scale>
 			</gammaDistributionModel>
 		</distribution0>
@@ -1391,6 +1398,48 @@
 	</mixedDistributionLikelihood>
 	<!-- Define operators                                                        -->
 	<operators id="operators">
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="26.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="29.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="29.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="47.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="47.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="53.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="53.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="59.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="59.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="64.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="64.frequencies"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="72.kappa"/>
+		</scaleOperator>
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="72.frequencies"/>
+		</deltaExchange>
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="29.clock.rate"/>
 		</scaleOperator>
@@ -1409,7 +1458,30 @@
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="72.clock.rate"/>
 		</scaleOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<upDownOperator scaleFactor="0.75" weight="30">
+			<up>
+				<parameter idref="29.clock.rate"/>
+				<parameter idref="47.clock.rate"/>
+				<parameter idref="53.clock.rate"/>
+				<parameter idref="59.clock.rate"/>
+				<parameter idref="64.clock.rate"/>
+				<parameter idref="72.clock.rate"/>
+				<parameter idref="species.birthDeath.meanGrowthRate"/>
+			</up>
+			<down>
+				<speciesTree idref="sptree"/>
+				<parameter idref="species.popMean"/>
+				<parameter idref="speciesTree.splitPopSize"/>
+				<parameter idref="26.treeModel.allInternalNodeHeights"/>
+				<parameter idref="29.treeModel.allInternalNodeHeights"/>
+				<parameter idref="47.treeModel.allInternalNodeHeights"/>
+				<parameter idref="53.treeModel.allInternalNodeHeights"/>
+				<parameter idref="59.treeModel.allInternalNodeHeights"/>
+				<parameter idref="64.treeModel.allInternalNodeHeights"/>
+				<parameter idref="72.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<subtreeSlide size="0.0017000000000000001" gaussian="true" weight="15">
 			<treeModel idref="26.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1427,7 +1499,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="26.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0016" gaussian="true" weight="15">
 			<treeModel idref="29.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1445,7 +1517,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="29.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0017000000000000001" gaussian="true" weight="15">
 			<treeModel idref="47.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1463,7 +1535,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="47.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0026" gaussian="true" weight="15">
 			<treeModel idref="53.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1481,7 +1553,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="53.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0015" gaussian="true" weight="15">
 			<treeModel idref="59.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1499,7 +1571,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="59.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0028" gaussian="true" weight="15">
 			<treeModel idref="64.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1517,7 +1589,7 @@
 		<uniformOperator weight="30">
 			<parameter idref="64.treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<subtreeSlide size="0.0025" gaussian="true" weight="15">
 			<treeModel idref="72.treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -1535,6 +1607,13 @@
 		<uniformOperator weight="30">
 			<parameter idref="72.treeModel.internalNodeHeights"/>
 		</uniformOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+			</up>
+			<down>
+				<parameter idref="26.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
 		<upDownOperator scaleFactor="0.75" weight="3">
 			<up>
 				<parameter idref="29.clock.rate"/>
@@ -1599,71 +1678,6 @@
 			<species idref="species"/>
 			<speciesTree idref="sptree"/>
 		</nodeReHeight>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="26.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="29.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="29.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="47.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="47.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="53.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="53.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="59.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="59.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="64.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="64.frequencies"/>
-		</deltaExchange>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="72.kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="72.frequencies"/>
-		</deltaExchange>
-		<upDownOperator scaleFactor="0.75" weight="30">
-			<up>
-				<parameter idref="29.clock.rate"/>
-				<parameter idref="47.clock.rate"/>
-				<parameter idref="53.clock.rate"/>
-				<parameter idref="59.clock.rate"/>
-				<parameter idref="64.clock.rate"/>
-				<parameter idref="72.clock.rate"/>
-				<parameter idref="species.birthDeath.meanGrowthRate"/>
-			</up>
-			<down>
-				<speciesTree idref="sptree"/>
-				<parameter idref="species.popMean"/>
-				<parameter idref="speciesTree.splitPopSize"/>
-				<parameter idref="26.treeModel.allInternalNodeHeights"/>
-				<parameter idref="29.treeModel.allInternalNodeHeights"/>
-				<parameter idref="47.treeModel.allInternalNodeHeights"/>
-				<parameter idref="53.treeModel.allInternalNodeHeights"/>
-				<parameter idref="59.treeModel.allInternalNodeHeights"/>
-				<parameter idref="64.treeModel.allInternalNodeHeights"/>
-				<parameter idref="72.treeModel.allInternalNodeHeights"/>
-			</down>
-		</upDownOperator>
 	</operators>
 	
 	<!-- Define MCMC                                                             -->
@@ -1673,12 +1687,6 @@
 				<speciesCoalescent idref="species.coalescent"/>
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
-				<oneOnXPrior>
-					<parameter idref="species.popMean"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="species.birthDeath.meanGrowthRate"/>
-				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="26.kappa"/>
 				</oneOnXPrior>
@@ -1699,6 +1707,30 @@
 				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="72.kappa"/>
+				</oneOnXPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="29.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="47.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="53.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="59.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="64.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="72.clock.rate"/>
+				</gammaPrior>
+				<oneOnXPrior>
+					<parameter idref="species.popMean"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
+					<parameter idref="species.birthDeath.meanGrowthRate"/>
 				</oneOnXPrior>
 				
 				
@@ -1772,13 +1804,6 @@
 			<parameter idref="59.treeModel.rootHeight"/>
 			<parameter idref="64.treeModel.rootHeight"/>
 			<parameter idref="72.treeModel.rootHeight"/>
-			<parameter idref="26.clock.rate"/>
-			<parameter idref="29.clock.rate"/>
-			<parameter idref="47.clock.rate"/>
-			<parameter idref="53.clock.rate"/>
-			<parameter idref="59.clock.rate"/>
-			<parameter idref="64.clock.rate"/>
-			<parameter idref="72.clock.rate"/>
 			<parameter idref="26.kappa"/>
 			<parameter idref="26.frequencies"/>
 			<parameter idref="29.kappa"/>
@@ -1793,6 +1818,13 @@
 			<parameter idref="64.frequencies"/>
 			<parameter idref="72.kappa"/>
 			<parameter idref="72.frequencies"/>
+			<parameter idref="26.clock.rate"/>
+			<parameter idref="29.clock.rate"/>
+			<parameter idref="47.clock.rate"/>
+			<parameter idref="53.clock.rate"/>
+			<parameter idref="59.clock.rate"/>
+			<parameter idref="64.clock.rate"/>
+			<parameter idref="72.clock.rate"/>
 			<treeLikelihood idref="26.26.treeLikelihood"/>
 			<treeLikelihood idref="29.29.treeLikelihood"/>
 			<treeLikelihood idref="47.47.treeLikelihood"/>

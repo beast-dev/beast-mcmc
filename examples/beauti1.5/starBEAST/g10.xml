@@ -807,44 +807,70 @@
 	</alignment>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="26.patterns">
-		<alignment idref="alignment1"/>
-	</patterns>
+	<!-- The unique patterns for codon positions 1                               -->
+	<mergePatterns id="26.CP1.26.patterns">
+		<!-- The unique patterns from 1 to end every 3                               -->
+		<!-- npatterns=78                                                            -->
+		<patterns from="1" every="3">
+			<alignment idref="alignment1"/>
+		</patterns>
+	</mergePatterns>
+	<!-- The unique patterns for codon positions 2                               -->
+	<mergePatterns id="26.CP2.26.patterns">
+		<!-- The unique patterns from 2 to end every 3                               -->
+		<!-- npatterns=67                                                            -->
+		<patterns from="2" every="3">
+			<alignment idref="alignment1"/>
+		</patterns>
+	</mergePatterns>
+	<!-- The unique patterns for codon positions 3                               -->
+	<mergePatterns id="26.CP3.26.patterns">
+		<!-- The unique patterns from 3 to end every 3                               -->
+		<!-- npatterns=69                                                            -->
+		<patterns from="3" every="3">
+			<alignment idref="alignment1"/>
+		</patterns>
+	</mergePatterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="29.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=71                                                            -->
+	<patterns id="29.patterns" from="1">
 		<alignment idref="alignment2"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="47.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=153                                                           -->
+	<patterns id="47.patterns" from="1">
 		<alignment idref="alignment3"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="53.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=140                                                           -->
+	<patterns id="53.patterns" from="1">
 		<alignment idref="alignment4"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="59.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=92                                                            -->
+	<patterns id="59.patterns" from="1">
 		<alignment idref="alignment5"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="64.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=157                                                           -->
+	<patterns id="64.patterns" from="1">
 		<alignment idref="alignment6"/>
 	</patterns>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="72.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=85                                                            -->
+	<patterns id="72.patterns" from="1">
 		<alignment idref="alignment7"/>
 	</patterns>
 	
@@ -852,55 +878,55 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.02" lower="0.0" upper="Infinity"/>
 		</populationSize>
 	</constantSize>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="26.startingTree" rootHeight="0.016600379687229598">
+	<coalescentTree id="26.startingTree" rootHeight="0.017">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="29.startingTree" rootHeight="0.015763483132958327">
+	<coalescentTree id="29.startingTree" rootHeight="0.016">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="47.startingTree" rootHeight="0.01728760823773483">
+	<coalescentTree id="47.startingTree" rootHeight="0.017">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="53.startingTree" rootHeight="0.026195133409445598">
+	<coalescentTree id="53.startingTree" rootHeight="0.026">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="59.startingTree" rootHeight="0.015465941272640003">
+	<coalescentTree id="59.startingTree" rootHeight="0.015">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="64.startingTree" rootHeight="0.02828568194278456">
+	<coalescentTree id="64.startingTree" rootHeight="0.028">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="72.startingTree" rootHeight="0.024783939668743402">
+	<coalescentTree id="72.startingTree" rootHeight="0.025">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
@@ -1016,39 +1042,51 @@
 			<parameter id="26.clock.rate" value="1.0"/>
 		</rate>
 	</strictClockBranchRates>
-	<strictClockBranchRates id="26.29.branchRates">
+	
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="29.29.branchRates">
 		<rate>
-			<parameter idref="26.clock.rate"/>
-		</rate>
-	</strictClockBranchRates>
-	<strictClockBranchRates id="26.47.branchRates">
-		<rate>
-			<parameter idref="26.clock.rate"/>
-		</rate>
-	</strictClockBranchRates>
-	<strictClockBranchRates id="26.53.branchRates">
-		<rate>
-			<parameter idref="26.clock.rate"/>
-		</rate>
-	</strictClockBranchRates>
-	<strictClockBranchRates id="26.59.branchRates">
-		<rate>
-			<parameter idref="26.clock.rate"/>
-		</rate>
-	</strictClockBranchRates>
-	<strictClockBranchRates id="26.64.branchRates">
-		<rate>
-			<parameter idref="26.clock.rate"/>
-		</rate>
-	</strictClockBranchRates>
-	<strictClockBranchRates id="26.72.branchRates">
-		<rate>
-			<parameter idref="26.clock.rate"/>
+			<parameter id="29.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
 		</rate>
 	</strictClockBranchRates>
 	
-	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
-	<HKYModel id="26.hky">
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="47.47.branchRates">
+		<rate>
+			<parameter id="47.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="53.53.branchRates">
+		<rate>
+			<parameter id="53.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="59.59.branchRates">
+		<rate>
+			<parameter id="59.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="64.64.branchRates">
+		<rate>
+			<parameter id="64.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="72.72.branchRates">
+		<rate>
+			<parameter id="72.clock.rate" value="1.0" lower="0.0" upper="Infinity"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<!-- The general time reversible (GTR) substitution model                    -->
+	<gtrModel id="26.gtr">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
 				<frequencies>
@@ -1056,10 +1094,22 @@
 				</frequencies>
 			</frequencyModel>
 		</frequencies>
-		<kappa>
-			<parameter id="26.kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</kappa>
-	</HKYModel>
+		<rateAC>
+			<parameter id="26.ac" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</rateAC>
+		<rateAG>
+			<parameter id="26.ag" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</rateAG>
+		<rateAT>
+			<parameter id="26.at" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</rateAT>
+		<rateCG>
+			<parameter id="26.cg" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</rateCG>
+		<rateGT>
+			<parameter id="26.gt" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</rateGT>
+	</gtrModel>
 	
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="29.hky">
@@ -1146,16 +1196,50 @@
 	</HKYModel>
 	
 	<!-- site model                                                              -->
-	<siteModel id="26.siteModel">
+	<siteModel id="26.CP1.siteModel">
 		<substitutionModel>
-			<HKYModel idref="26.hky"/>
+			<gtrModel idref="26.gtr"/>
+			<relativeRate>
+				<parameter id="26.CP1.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
+		<gammaShape gammaCategories="4">
+			<parameter id="26.CP1.alpha" value="0.5" lower="0.0" upper="1000.0"/>
+		</gammaShape>
 	</siteModel>
+	<!-- site model                                                              -->
+	<siteModel id="26.CP2.siteModel">
+		<substitutionModel>
+			<gtrModel idref="26.gtr"/>
+			<relativeRate>
+				<parameter id="26.CP2.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
+		</substitutionModel>
+		<gammaShape gammaCategories="4">
+			<parameter id="26.CP2.alpha" value="0.5" lower="0.0" upper="1000.0"/>
+		</gammaShape>
+	</siteModel>
+	<!-- site model                                                              -->
+	<siteModel id="26.CP3.siteModel">
+		<substitutionModel>
+			<gtrModel idref="26.gtr"/>
+			<relativeRate>
+				<parameter id="26.CP3.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
+		</substitutionModel>
+		<gammaShape gammaCategories="4">
+			<parameter id="26.CP3.alpha" value="0.5" lower="0.0" upper="1000.0"/>
+		</gammaShape>
+	</siteModel>
+
 	
 	<!-- site model                                                              -->
 	<siteModel id="29.siteModel">
 		<substitutionModel>
 			<HKYModel idref="29.hky"/>
+			<relativeRate>
+				<parameter id="29.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1163,6 +1247,9 @@
 	<siteModel id="47.siteModel">
 		<substitutionModel>
 			<HKYModel idref="47.hky"/>
+			<relativeRate>
+				<parameter id="47.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1170,6 +1257,9 @@
 	<siteModel id="53.siteModel">
 		<substitutionModel>
 			<HKYModel idref="53.hky"/>
+			<relativeRate>
+				<parameter id="53.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1177,6 +1267,9 @@
 	<siteModel id="59.siteModel">
 		<substitutionModel>
 			<HKYModel idref="59.hky"/>
+			<relativeRate>
+				<parameter id="59.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1184,6 +1277,9 @@
 	<siteModel id="64.siteModel">
 		<substitutionModel>
 			<HKYModel idref="64.hky"/>
+			<relativeRate>
+				<parameter id="64.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1191,13 +1287,40 @@
 	<siteModel id="72.siteModel">
 		<substitutionModel>
 			<HKYModel idref="72.hky"/>
+			<relativeRate>
+				<parameter id="72.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
-	<treeLikelihood id="26.26.treeLikelihood" useAmbiguities="false">
-		<patterns idref="26.patterns"/>
+	<compoundParameter id="allMus">
+		<parameter idref="26.CP1.mu"/>
+		<parameter idref="26.CP2.mu"/>
+		<parameter idref="26.CP3.mu"/>
+		<parameter idref="29.mu"/>
+		<parameter idref="47.mu"/>
+		<parameter idref="53.mu"/>
+		<parameter idref="59.mu"/>
+		<parameter idref="64.mu"/>
+		<parameter idref="72.mu"/>
+	</compoundParameter>
+	
+	<treeLikelihood id="26.CP1.26.treeLikelihood" useAmbiguities="false">
+		<mergePatterns idref="26.CP1.26.patterns"/>
 		<treeModel idref="26.treeModel"/>
-		<siteModel idref="26.siteModel"/>
+		<siteModel idref="26.CP1.siteModel"/>
+		<strictClockBranchRates idref="26.26.branchRates"/>
+	</treeLikelihood>
+	<treeLikelihood id="26.CP2.26.treeLikelihood" useAmbiguities="false">
+		<mergePatterns idref="26.CP2.26.patterns"/>
+		<treeModel idref="26.treeModel"/>
+		<siteModel idref="26.CP2.siteModel"/>
+		<strictClockBranchRates idref="26.26.branchRates"/>
+	</treeLikelihood>
+	<treeLikelihood id="26.CP3.26.treeLikelihood" useAmbiguities="false">
+		<mergePatterns idref="26.CP3.26.patterns"/>
+		<treeModel idref="26.treeModel"/>
+		<siteModel idref="26.CP3.siteModel"/>
 		<strictClockBranchRates idref="26.26.branchRates"/>
 	</treeLikelihood>
 	
@@ -1205,42 +1328,42 @@
 		<patterns idref="29.patterns"/>
 		<treeModel idref="29.treeModel"/>
 		<siteModel idref="29.siteModel"/>
-		<strictClockBranchRates idref="26.29.branchRates"/>
+		<strictClockBranchRates idref="29.29.branchRates"/>
 	</treeLikelihood>
 	
 	<treeLikelihood id="47.47.treeLikelihood" useAmbiguities="false">
 		<patterns idref="47.patterns"/>
 		<treeModel idref="47.treeModel"/>
 		<siteModel idref="47.siteModel"/>
-		<strictClockBranchRates idref="26.47.branchRates"/>
+		<strictClockBranchRates idref="47.47.branchRates"/>
 	</treeLikelihood>
 	
 	<treeLikelihood id="53.53.treeLikelihood" useAmbiguities="false">
 		<patterns idref="53.patterns"/>
 		<treeModel idref="53.treeModel"/>
 		<siteModel idref="53.siteModel"/>
-		<strictClockBranchRates idref="26.53.branchRates"/>
+		<strictClockBranchRates idref="53.53.branchRates"/>
 	</treeLikelihood>
 	
 	<treeLikelihood id="59.59.treeLikelihood" useAmbiguities="false">
 		<patterns idref="59.patterns"/>
 		<treeModel idref="59.treeModel"/>
 		<siteModel idref="59.siteModel"/>
-		<strictClockBranchRates idref="26.59.branchRates"/>
+		<strictClockBranchRates idref="59.59.branchRates"/>
 	</treeLikelihood>
 	
 	<treeLikelihood id="64.64.treeLikelihood" useAmbiguities="false">
 		<patterns idref="64.patterns"/>
 		<treeModel idref="64.treeModel"/>
 		<siteModel idref="64.siteModel"/>
-		<strictClockBranchRates idref="26.64.branchRates"/>
+		<strictClockBranchRates idref="64.64.branchRates"/>
 	</treeLikelihood>
 	
 	<treeLikelihood id="72.72.treeLikelihood" useAmbiguities="false">
 		<patterns idref="72.patterns"/>
 		<treeModel idref="72.treeModel"/>
 		<siteModel idref="72.siteModel"/>
-		<strictClockBranchRates idref="26.72.branchRates"/>
+		<strictClockBranchRates idref="72.72.branchRates"/>
 	</treeLikelihood>
 	
 	
@@ -1303,7 +1426,7 @@
 	<!-- Species Tree: Provides Per branch demographic function                  -->
 	<speciesTree id="sptree" constantRoot="true">
 		<species idref="species"/>
-		<sppSplitPopulations value="1.0">
+		<sppSplitPopulations value="0.02">
 			<parameter id="speciesTree.splitPopSize"/>
 		</sppSplitPopulations>
 	</speciesTree>
@@ -1353,7 +1476,7 @@
 					2
 				</shape>
 				<scale>
-					<parameter id="species.popMean" value="1.0"/>
+					<parameter id="species.popMean" value="0.02"/>
 				</scale>
 			</gammaDistributionModel>
 		</distribution0>
@@ -1376,147 +1499,29 @@
 	</mixedDistributionLikelihood>
 	<!-- Define operators                                                        -->
 	<operators id="operators">
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="26.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="26.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="26.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="26.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="26.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="26.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="29.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="29.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="29.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="29.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="29.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="29.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="47.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="47.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="47.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="47.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="47.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="47.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="53.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="53.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="53.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="53.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="53.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="53.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="59.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="59.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="59.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="59.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="59.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="59.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="64.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="64.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="64.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="64.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="64.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="64.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="72.treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="72.treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="72.treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="72.treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="72.treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="72.treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<scaleOperator scaleFactor="0.9" weight="5">
-			<parameter idref="species.popMean"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="species.yule.birthRate"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.5" weight="94">
-			<parameter idref="speciesTree.splitPopSize"/>
-		</scaleOperator>
-		<nodeReHeight weight="94">
-			<species idref="species"/>
-			<speciesTree idref="sptree"/>
-		</nodeReHeight>
 		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.kappa"/>
+			<parameter idref="26.ac"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.ag"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.at"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.cg"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.gt"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.CP1.alpha"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.CP2.alpha"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="26.CP3.alpha"/>
 		</scaleOperator>
 		<deltaExchange delta="0.01" weight="1">
 			<parameter idref="26.frequencies"/>
@@ -1557,8 +1562,35 @@
 		<deltaExchange delta="0.01" weight="1">
 			<parameter idref="72.frequencies"/>
 		</deltaExchange>
+		<deltaExchange delta="0.75" parameterWeights="205 205 204 601 819 621 553 471 706" weight="9">
+			<parameter idref="allMus"/>
+		</deltaExchange>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="29.clock.rate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="47.clock.rate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="53.clock.rate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="59.clock.rate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="64.clock.rate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="72.clock.rate"/>
+		</scaleOperator>
 		<upDownOperator scaleFactor="0.75" weight="30">
 			<up>
+				<parameter idref="29.clock.rate"/>
+				<parameter idref="47.clock.rate"/>
+				<parameter idref="53.clock.rate"/>
+				<parameter idref="59.clock.rate"/>
+				<parameter idref="64.clock.rate"/>
+				<parameter idref="72.clock.rate"/>
 				<parameter idref="species.yule.birthRate"/>
 			</up>
 			<down>
@@ -1574,6 +1606,200 @@
 				<parameter idref="72.treeModel.allInternalNodeHeights"/>
 			</down>
 		</upDownOperator>
+		<subtreeSlide size="0.0017000000000000001" gaussian="true" weight="15">
+			<treeModel idref="26.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="26.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="26.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="26.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="26.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="26.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0016" gaussian="true" weight="15">
+			<treeModel idref="29.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="29.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="29.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="29.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="29.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="29.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0017000000000000001" gaussian="true" weight="15">
+			<treeModel idref="47.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="47.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="47.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="47.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="47.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="47.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0026" gaussian="true" weight="15">
+			<treeModel idref="53.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="53.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="53.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="53.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="53.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="53.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0015" gaussian="true" weight="15">
+			<treeModel idref="59.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="59.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="59.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="59.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="59.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="59.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0028" gaussian="true" weight="15">
+			<treeModel idref="64.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="64.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="64.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="64.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="64.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="64.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<subtreeSlide size="0.0025" gaussian="true" weight="15">
+			<treeModel idref="72.treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="72.treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="72.treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="72.treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="72.treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="72.treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+			</up>
+			<down>
+				<parameter idref="26.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="29.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="29.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="47.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="47.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="53.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="53.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="59.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="59.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="64.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="64.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+				<parameter idref="72.clock.rate"/>
+			</up>
+			<down>
+				<parameter idref="72.treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<scaleOperator scaleFactor="0.9" weight="5">
+			<parameter idref="species.popMean"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="species.yule.birthRate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.5" weight="94">
+			<parameter idref="speciesTree.splitPopSize"/>
+		</scaleOperator>
+		<nodeReHeight weight="94">
+			<species idref="species"/>
+			<speciesTree idref="sptree"/>
+		</nodeReHeight>
 	</operators>
 	
 	<!-- Define MCMC                                                             -->
@@ -1584,13 +1810,19 @@
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
 				<oneOnXPrior>
-					<parameter idref="species.popMean"/>
+					<parameter idref="26.ac"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
-					<parameter idref="species.yule.birthRate"/>
+					<parameter idref="26.ag"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
-					<parameter idref="26.kappa"/>
+					<parameter idref="26.at"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
+					<parameter idref="26.cg"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
+					<parameter idref="26.gt"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="29.kappa"/>
@@ -1610,6 +1842,30 @@
 				<oneOnXPrior>
 					<parameter idref="72.kappa"/>
 				</oneOnXPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="29.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="47.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="53.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="59.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="64.clock.rate"/>
+				</gammaPrior>
+				<gammaPrior shape="0.1" scale="10.0" offset="0.0">
+					<parameter idref="72.clock.rate"/>
+				</gammaPrior>
+				<oneOnXPrior>
+					<parameter idref="species.popMean"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
+					<parameter idref="species.yule.birthRate"/>
+				</oneOnXPrior>
 				
 				
 				
@@ -1619,7 +1875,9 @@
 				
 			</prior>
 			<likelihood id="likelihood">
-				<treeLikelihood idref="26.26.treeLikelihood"/>
+				<treeLikelihood idref="26.CP1.26.treeLikelihood"/>
+				<treeLikelihood idref="26.CP2.26.treeLikelihood"/>
+				<treeLikelihood idref="26.CP3.26.treeLikelihood"/>
 				<treeLikelihood idref="29.29.treeLikelihood"/>
 				<treeLikelihood idref="47.47.treeLikelihood"/>
 				<treeLikelihood idref="53.53.treeLikelihood"/>
@@ -1654,6 +1912,12 @@
 			</column>
 			<column label="Rate" sf="6" width="12">
 				<parameter idref="26.clock.rate"/>
+				<parameter idref="29.clock.rate"/>
+				<parameter idref="47.clock.rate"/>
+				<parameter idref="53.clock.rate"/>
+				<parameter idref="59.clock.rate"/>
+				<parameter idref="64.clock.rate"/>
+				<parameter idref="72.clock.rate"/>
 			</column>
 		</log>
 		<!-- write log to file                                                       -->
@@ -1675,9 +1939,15 @@
 			<parameter idref="59.treeModel.rootHeight"/>
 			<parameter idref="64.treeModel.rootHeight"/>
 			<parameter idref="72.treeModel.rootHeight"/>
-			<parameter idref="26.clock.rate"/>
-			<parameter idref="26.kappa"/>
+			<parameter idref="26.ac"/>
+			<parameter idref="26.ag"/>
+			<parameter idref="26.at"/>
+			<parameter idref="26.cg"/>
+			<parameter idref="26.gt"/>
 			<parameter idref="26.frequencies"/>
+			<parameter idref="26.CP1.alpha"/>
+			<parameter idref="26.CP2.alpha"/>
+			<parameter idref="26.CP3.alpha"/>
 			<parameter idref="29.kappa"/>
 			<parameter idref="29.frequencies"/>
 			<parameter idref="47.kappa"/>
@@ -1690,7 +1960,17 @@
 			<parameter idref="64.frequencies"/>
 			<parameter idref="72.kappa"/>
 			<parameter idref="72.frequencies"/>
-			<treeLikelihood idref="26.26.treeLikelihood"/>
+			<parameter idref="allMus"/>
+			<parameter idref="26.clock.rate"/>
+			<parameter idref="29.clock.rate"/>
+			<parameter idref="47.clock.rate"/>
+			<parameter idref="53.clock.rate"/>
+			<parameter idref="59.clock.rate"/>
+			<parameter idref="64.clock.rate"/>
+			<parameter idref="72.clock.rate"/>
+			<treeLikelihood idref="26.CP1.26.treeLikelihood"/>
+			<treeLikelihood idref="26.CP2.26.treeLikelihood"/>
+			<treeLikelihood idref="26.CP3.26.treeLikelihood"/>
 			<treeLikelihood idref="29.29.treeLikelihood"/>
 			<treeLikelihood idref="47.47.treeLikelihood"/>
 			<treeLikelihood idref="53.53.treeLikelihood"/>
@@ -1717,32 +1997,32 @@
 		</logTree>
 		<logTree id="29.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.29.trees" sortTranslationTable="true">
 			<treeModel idref="29.treeModel"/>
-			<strictClockBranchRates idref="26.29.branchRates"/>
+			<strictClockBranchRates idref="29.29.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 		<logTree id="47.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.47.trees" sortTranslationTable="true">
 			<treeModel idref="47.treeModel"/>
-			<strictClockBranchRates idref="26.47.branchRates"/>
+			<strictClockBranchRates idref="47.47.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 		<logTree id="53.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.53.trees" sortTranslationTable="true">
 			<treeModel idref="53.treeModel"/>
-			<strictClockBranchRates idref="26.53.branchRates"/>
+			<strictClockBranchRates idref="53.53.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 		<logTree id="59.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.59.trees" sortTranslationTable="true">
 			<treeModel idref="59.treeModel"/>
-			<strictClockBranchRates idref="26.59.branchRates"/>
+			<strictClockBranchRates idref="59.59.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 		<logTree id="64.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.64.trees" sortTranslationTable="true">
 			<treeModel idref="64.treeModel"/>
-			<strictClockBranchRates idref="26.64.branchRates"/>
+			<strictClockBranchRates idref="64.64.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 		<logTree id="72.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.72.trees" sortTranslationTable="true">
 			<treeModel idref="72.treeModel"/>
-			<strictClockBranchRates idref="26.72.branchRates"/>
+			<strictClockBranchRates idref="72.72.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 	</mcmc>

@@ -97,8 +97,9 @@
 	</alignment>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="Darwins-finches.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=72                                                            -->
+	<patterns id="Darwins-finches.patterns" from="1">
 		<alignment idref="alignment"/>
 	</patterns>
 	
@@ -106,13 +107,13 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.018" lower="0.0" upper="Infinity"/>
 		</populationSize>
 	</constantSize>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="startingTree" rootHeight="0.01776199574510335">
+	<coalescentTree id="startingTree" rootHeight="0.018">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
@@ -132,42 +133,20 @@
 	</treeModel>
 	
 	
-	<!-- The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006) -->
-	<discretizedBranchRates id="branchRates">
-		<treeModel idref="treeModel"/>
-		<distribution>
-			<exponentialDistributionModel>
-				<mean>
-					<parameter id="uced.mean" value="1.0"/>
-				</mean>
-			</exponentialDistributionModel>
-		</distribution>
-		<rateCategories>
-			<parameter id="branchRates.categories" dimension="30"/>
-		</rateCategories>
-	</discretizedBranchRates>
-	
-	<rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">
-		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
-	</rateStatistic>
-	
-	<rateStatistic id="coefficientOfVariation" name="coefficientOfVariation" mode="coefficientOfVariation" internal="true" external="true">
-		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
-	</rateStatistic>
-	
-	<rateCovarianceStatistic id="covariance" name="covariance">
-		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
-	</rateCovarianceStatistic>
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="branchRates">
+		<rate>
+			<parameter id="clock.rate" value="1.0"/>
+		</rate>
+	</strictClockBranchRates>
 	
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="hky">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
+				<alignment idref="alignment"/>
 				<frequencies>
-					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+					<parameter id="frequencies" dimension="4"/>
 				</frequencies>
 			</frequencyModel>
 		</frequencies>
@@ -181,13 +160,16 @@
 		<substitutionModel>
 			<HKYModel idref="hky"/>
 		</substitutionModel>
+		<proportionInvariant>
+			<parameter id="pInv" value="0.5" lower="0.0" upper="1.0"/>
+		</proportionInvariant>
 	</siteModel>
 	
 	<treeLikelihood id="Darwins-finches.treeLikelihood" useAmbiguities="false">
 		<patterns idref="Darwins-finches.patterns"/>
 		<treeModel idref="treeModel"/>
 		<siteModel idref="siteModel"/>
-		<discretizedBranchRates idref="branchRates"/>
+		<strictClockBranchRates idref="branchRates"/>
 	</treeLikelihood>
 	
 	
@@ -226,7 +208,7 @@
 	<!-- Species Tree: Provides Per branch demographic function                  -->
 	<speciesTree id="sptree" constantRoot="true">
 		<species idref="species"/>
-		<sppSplitPopulations value="1.0">
+		<sppSplitPopulations value="0.018">
 			<parameter id="speciesTree.splitPopSize"/>
 		</sppSplitPopulations>
 	</speciesTree>
@@ -275,7 +257,7 @@
 					2
 				</shape>
 				<scale>
-					<parameter id="species.popMean" value="1.0"/>
+					<parameter id="species.popMean" value="0.018"/>
 				</scale>
 			</gammaDistributionModel>
 		</distribution0>
@@ -298,7 +280,24 @@
 	</mixedDistributionLikelihood>
 	<!-- Define operators                                                        -->
 	<operators id="operators">
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="kappa"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="pInv"/>
+		</scaleOperator>
+		<upDownOperator scaleFactor="0.75" weight="30">
+			<up>
+				<parameter idref="species.birthDeath.meanGrowthRate"/>
+			</up>
+			<down>
+				<speciesTree idref="sptree"/>
+				<parameter idref="species.popMean"/>
+				<parameter idref="speciesTree.splitPopSize"/>
+				<parameter idref="treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<subtreeSlide size="0.0018" gaussian="true" weight="15">
 			<treeModel idref="treeModel"/>
 		</subtreeSlide>
 		<narrowExchange weight="15">
@@ -316,15 +315,13 @@
 		<uniformOperator weight="30">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<swapOperator size="1" weight="10" autoOptimize="false">
-			<parameter idref="branchRates.categories"/>
-		</swapOperator>
-		<randomWalkIntegerOperator windowSize="1" weight="10">
-			<parameter idref="branchRates.categories"/>
-		</randomWalkIntegerOperator>
-		<uniformIntegerOperator weight="10">
-			<parameter idref="branchRates.categories"/>
-		</uniformIntegerOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+			</up>
+			<down>
+				<parameter idref="treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
 		<scaleOperator scaleFactor="0.9" weight="5">
 			<parameter idref="species.popMean"/>
 		</scaleOperator>
@@ -341,23 +338,6 @@
 			<species idref="species"/>
 			<speciesTree idref="sptree"/>
 		</nodeReHeight>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="kappa"/>
-		</scaleOperator>
-		<deltaExchange delta="0.01" weight="1">
-			<parameter idref="frequencies"/>
-		</deltaExchange>
-		<upDownOperator scaleFactor="0.75" weight="30">
-			<up>
-				<parameter idref="species.birthDeath.meanGrowthRate"/>
-			</up>
-			<down>
-				<speciesTree idref="sptree"/>
-				<parameter idref="species.popMean"/>
-				<parameter idref="speciesTree.splitPopSize"/>
-				<parameter idref="treeModel.allInternalNodeHeights"/>
-			</down>
-		</upDownOperator>
 	</operators>
 	
 	<!-- Define MCMC                                                             -->
@@ -368,13 +348,13 @@
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
 				<oneOnXPrior>
+					<parameter idref="kappa"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
 					<parameter idref="species.popMean"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="species.birthDeath.meanGrowthRate"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="kappa"/>
 				</oneOnXPrior>
 				
 			</prior>
@@ -384,7 +364,7 @@
 		</posterior>
 		<operators idref="operators"/>
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000000">
+		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -401,7 +381,7 @@
 				<parameter idref="treeModel.rootHeight"/>
 			</column>
 			<column label="Rate" sf="6" width="12">
-				<rateStatistic idref="meanRate"/>
+				<parameter idref="clock.rate"/>
 			</column>
 		</log>
 		<!-- write log to file                                                       -->
@@ -418,12 +398,10 @@
 			<parameter idref="species.birthDeath.relativeDeathRate"/>
 			<tmrcaStatistic idref="speciesTree.rootHeight"/>
 			<parameter idref="treeModel.rootHeight"/>
-			<rateStatistic idref="meanRate"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
-			<parameter idref="uced.mean"/>
-			<rateStatistic idref="coefficientOfVariation"/>
-			<rateCovarianceStatistic idref="covariance"/>
+			<parameter idref="pInv"/>
+			<parameter idref="clock.rate"/>
 			<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
 			
 		</log>
@@ -434,7 +412,7 @@
 		</logTree>
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="x11.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
-			<discretizedBranchRates idref="branchRates"/>
+			<strictClockBranchRates idref="branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 	</mcmc>

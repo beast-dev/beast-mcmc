@@ -324,6 +324,9 @@ public class PartitionModelPanel extends OptionsPanel {
         substUnlinkCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
+                if (codingCombo.getSelectedIndex() != 0) {
+                    freqsUnlinkCheck.setEnabled(substUnlinkCheck.isSelected());
+                }
             }
         });
         substUnlinkCheck.setEnabled(false);
@@ -367,11 +370,13 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 }
 
-                if (codingCombo.getSelectedIndex() != 0) { // codon position
-                                                           // partitioning
+                if (codingCombo.getSelectedIndex() != 0) { // codon position partitioning
                     substUnlinkCheck.setEnabled(true);
                     heteroUnlinkCheck.setEnabled(true);
                     freqsUnlinkCheck.setEnabled(true);
+                    substUnlinkCheck.setSelected(true);
+                    heteroUnlinkCheck.setSelected(true);
+                    freqsUnlinkCheck.setSelected(true);
                 } else {
                     substUnlinkCheck.setEnabled(false);
                     substUnlinkCheck.setSelected(false);

@@ -232,7 +232,7 @@ public class SubstitutionModelGenerator extends Generator {
         );
 
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
+        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
         		for (PartitionData partition : model.getAllPartitionData()) { //?
         			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
         		}   		
@@ -247,19 +247,35 @@ public class SubstitutionModelGenerator extends Generator {
         switch (model.getFrequencyPolicy()) {
             case ALLEQUAL:
             case ESTIMATED:
-                writer.writeTag(
-                        ParameterParser.PARAMETER,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")
-                        }, true);
+                if (num == -1 || model.isUnlinkedFrequencyModel()) { // single partition, or multiple partitions unlinked frequency
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
+                            new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25") }, true);
+                } else { // multiple partitions but linked frequency                    
+                    if (num == 1) {
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "frequencies"),
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25") }, true);
+                    } else {
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
+                    }
+                }
                 break;
+                
             case EMPIRICAL:
-                writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
+                if (num == -1 || model.isUnlinkedFrequencyModel()) { // single partition, or multiple partitions unlinked frequency
+                    writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
+                } else { // multiple partitions but linked frequency                    
+                    if (num == 1) {
+                        writeParameter(model.getPrefix() + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
+                    } else {
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
+                    }
+                }                
                 break;
         }
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);        
     }
 
     /**
@@ -287,7 +303,7 @@ public class SubstitutionModelGenerator extends Generator {
         );
         
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null && model.getCodonPartitionCount() > 1) {
+        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1) {
         		for (PartitionData partition : model.getAllPartitionData()) { //?
         			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
         		}   		
@@ -345,7 +361,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         switch (model.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
-                if (model.getCodonHeteroPattern() != null) {
+                if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
                     for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                         writeNucSiteModel(i, writeMuParameter, writer, model);
                     }
@@ -412,6 +428,18 @@ public class SubstitutionModelGenerator extends Generator {
                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
                         }
                         break;
+                        
+                    case TN93:
+                        if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                            for (int i = 1; i <= codonPartitionCount; i++) {
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa1");
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa2");
+                            }
+                        } else {
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa1");
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa2");
+                        }
+                        break;
 
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
@@ -427,7 +455,8 @@ public class SubstitutionModelGenerator extends Generator {
                         }
                         break;
                 }
-                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                
+                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel() && model.isUnlinkedFrequencyModel()) {
                 	for (int i = 1; i <= codonPartitionCount; i++) {
                 		writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
                     }
@@ -518,11 +547,6 @@ public class SubstitutionModelGenerator extends Generator {
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
             
-
-            if (writeMuParameter) {
-                writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
-            }
-            
         } else {
 
             switch (model.getNucSubstitutionModel()) {
@@ -540,18 +564,18 @@ public class SubstitutionModelGenerator extends Generator {
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
-            }
-            
-
-            if (writeMuParameter) {
-                writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
-            }
+            }  
         }
         
+        if (writeMuParameter) {
+            writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+        }
+                
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(
+                    GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "alpha", model, writer);
             	writeParameter(num, "alpha", model, writer);

@@ -40,6 +40,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.EnumSet;
 import java.util.logging.Logger;
 
@@ -319,9 +321,9 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(substUnlinkCheck);
 
-        substUnlinkCheck.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                model.setUnlinkedSubstitutionModel(true);
+        substUnlinkCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
             }
         });
         substUnlinkCheck.setEnabled(false);
@@ -330,18 +332,18 @@ public class PartitionModelPanel extends OptionsPanel {
                 "substitution model parameters.</html>");
 
         PanelUtils.setupComponent(heteroUnlinkCheck);
-        heteroUnlinkCheck.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                model.setUnlinkedHeterogeneityModel(true);
+        heteroUnlinkCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setUnlinkedHeterogeneityModel(heteroUnlinkCheck.isSelected());
             }
         });
         heteroUnlinkCheck.setEnabled(false);
         heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
         PanelUtils.setupComponent(freqsUnlinkCheck);
-        freqsUnlinkCheck.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                model.setUnlinkedFrequencyModel(true);
+        freqsUnlinkCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setUnlinkedFrequencyModel(freqsUnlinkCheck.isSelected());
             }
         });
         freqsUnlinkCheck.setEnabled(false);
@@ -349,37 +351,37 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(codingCombo);
         codingCombo.setToolTipText("<html>Select how to partition the codon positions.</html>");
-        codingCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        codingCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
 
-                        switch (codingCombo.getSelectedIndex()) {
-                            case 0:
-                                model.setCodonHeteroPattern(null);
-                                break;
-                            case 1:
-                                model.setCodonHeteroPattern("112");
-                                break;
-                            default:
-                                model.setCodonHeteroPattern("123");
-                                break;
+                switch (codingCombo.getSelectedIndex()) {
+                    case 0:
+                        model.setCodonHeteroPattern(null);
+                        break;
+                    case 1:
+                        model.setCodonHeteroPattern("112");
+                        break;
+                    default:
+                        model.setCodonHeteroPattern("123");
+                        break;
 
-                        }
-
-                        if (codingCombo.getSelectedIndex() != 0) { // codon position partitioning
-                            substUnlinkCheck.setEnabled(true);
-                            heteroUnlinkCheck.setEnabled(true);
-                            freqsUnlinkCheck.setEnabled(true);
-                        } else {
-                            substUnlinkCheck.setEnabled(false);
-                            substUnlinkCheck.setSelected(false);
-                            heteroUnlinkCheck.setEnabled(false);
-                            heteroUnlinkCheck.setSelected(false);
-                            freqsUnlinkCheck.setEnabled(false);
-                            freqsUnlinkCheck.setSelected(false);
-                        }
-                    }
                 }
+
+                if (codingCombo.getSelectedIndex() != 0) { // codon position
+                                                           // partitioning
+                    substUnlinkCheck.setEnabled(true);
+                    heteroUnlinkCheck.setEnabled(true);
+                    freqsUnlinkCheck.setEnabled(true);
+                } else {
+                    substUnlinkCheck.setEnabled(false);
+                    substUnlinkCheck.setSelected(false);
+                    heteroUnlinkCheck.setEnabled(false);
+                    heteroUnlinkCheck.setSelected(false);
+                    freqsUnlinkCheck.setEnabled(false);
+                    freqsUnlinkCheck.setSelected(false);
+                }
+            }
+        }
         );
     }
 

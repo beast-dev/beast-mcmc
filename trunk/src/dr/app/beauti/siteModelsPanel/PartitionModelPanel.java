@@ -70,7 +70,7 @@ public class PartitionModelPanel extends OptionsPanel {
             "2 partitions: codon positions (1 + 2), 3",
             "3 partitions: codon positions 1, 2, 3"});
 
-    private JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution model across codon positions");
+    private JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution rate parameters across codon positions");
     private JCheckBox heteroUnlinkCheck =
             new JCheckBox("Unlink rate heterogeneity model across codon positions");
     private JCheckBox freqsUnlinkCheck = new JCheckBox("Unlink base frequencies across codon positions");
@@ -139,6 +139,11 @@ public class PartitionModelPanel extends OptionsPanel {
                         } else {
                             gammaCatLabel.setEnabled(false);
                             gammaCatCombo.setEnabled(false);
+                        }                        
+
+                        if (codingCombo.getSelectedIndex() != 0) {
+                            heteroUnlinkCheck.setEnabled(heteroCombo.getSelectedIndex() != 0);
+                            heteroUnlinkCheck.setSelected(heteroCombo.getSelectedIndex() != 0);
                         }
                     }
                 }
@@ -324,9 +329,6 @@ public class PartitionModelPanel extends OptionsPanel {
         substUnlinkCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setUnlinkedSubstitutionModel(substUnlinkCheck.isSelected());
-                if (codingCombo.getSelectedIndex() != 0) {
-                    freqsUnlinkCheck.setEnabled(substUnlinkCheck.isSelected());
-                }
             }
         });
         substUnlinkCheck.setEnabled(false);
@@ -340,7 +342,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 model.setUnlinkedHeterogeneityModel(heteroUnlinkCheck.isSelected());
             }
         });
-        heteroUnlinkCheck.setEnabled(false);
+        heteroUnlinkCheck.setEnabled(heteroCombo.getSelectedIndex() != 0);
         heteroUnlinkCheck.setToolTipText("<html>Gives each codon position partition different<br>rate heterogeneity model parameters.</html>");
 
         PanelUtils.setupComponent(freqsUnlinkCheck);
@@ -372,10 +374,10 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 if (codingCombo.getSelectedIndex() != 0) { // codon position partitioning
                     substUnlinkCheck.setEnabled(true);
-                    heteroUnlinkCheck.setEnabled(true);
+                    heteroUnlinkCheck.setEnabled(heteroCombo.getSelectedIndex() != 0);
                     freqsUnlinkCheck.setEnabled(true);
                     substUnlinkCheck.setSelected(true);
-                    heteroUnlinkCheck.setSelected(true);
+                    heteroUnlinkCheck.setSelected(heteroCombo.getSelectedIndex() != 0);
                     freqsUnlinkCheck.setSelected(true);
                 } else {
                     substUnlinkCheck.setEnabled(false);

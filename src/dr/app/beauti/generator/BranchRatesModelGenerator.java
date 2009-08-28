@@ -479,7 +479,7 @@ public class BranchRatesModelGenerator extends Generator {
         }
     
 	}
-	
+
 	public void writeLogStatistic(PartitionClockModel model, XMLWriter writer) {
 		setModelPrefix(model.getPrefix());    
         

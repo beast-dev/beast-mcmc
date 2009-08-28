@@ -1025,7 +1025,7 @@ public class BeastGenerator extends Generator {
             }
         } else {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeLog(model, writer);
+                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
             }
         }
 

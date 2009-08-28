@@ -346,9 +346,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         if (options.dataPartitions.size() == 0) {
-            if (options.starBEASTOptions.isSpeciesAnalysis()) {
-                frame.removeSepciesAnalysisSetup();
-            }
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");

@@ -60,10 +60,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private int gammaCategories = 4;
     private boolean invarHetero = false;
     private String codonHeteroPattern = null;
-    private boolean unlinkedSubstitutionModel = false;
-    private boolean unlinkedHeterogeneityModel = false;
-
-    private boolean unlinkedFrequencyModel = false;
+    private boolean unlinkedSubstitutionModel = true;
+    private boolean unlinkedHeterogeneityModel = true;
+    private boolean unlinkedFrequencyModel = true;
 
     private boolean dolloModel = false;
 
@@ -251,7 +250,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
                             case HKY:
@@ -278,9 +277,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        params.add(getParameter("CP1.mu"));
-                        params.add(getParameter("CP2.mu"));
-                        params.add(getParameter("CP3.mu"));
+                        
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
                             case HKY:                            
@@ -305,12 +302,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        params.add(getParameter("CP1+2.mu"));
-                        params.add(getParameter("CP3.mu"));
+                       
                     } else {
                         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                     }
-                } else { // no codon partitioning
+                } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
                         case HKY:
                         	params.add(getParameter("kappa"));
@@ -327,13 +323,25 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                    }
-                    
-                    if (includeRelativeRates) {//TODO fix mean
-                        params.add(getParameter("mu"));
-                    }
-                    
+                    }                    
                 }
+                
+                if (includeRelativeRates) {
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.mu"));
+                        params.add(getParameter("CP2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
+
+                } else { // no codon partitioning
+//TODO
+                }
+                
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -367,7 +375,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         // if gamma do shape move
         if (gammaHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+            if (includeRelativeRates && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     params.add(getParameter("CP1.alpha"));
                     params.add(getParameter("CP2.alpha"));
@@ -384,7 +392,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+            if (includeRelativeRates && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     params.add(getParameter("CP1.pInv"));
                     params.add(getParameter("CP2.pInv"));
@@ -400,7 +408,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
         if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+            if (includeRelativeRates && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
                 if (codonHeteroPattern.equals("123")) {
                     params.add(getParameter("CP1.frequencies"));
                     params.add(getParameter("CP2.frequencies"));
@@ -419,11 +427,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void selectOperators(List<Operator> ops) {
+        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
         
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
 
-                if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
+                if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
                             case HKY:                            
@@ -453,15 +462,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
 
-                        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
-                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                ops.add(getOperator("CP1.frequencies"));
-                                ops.add(getOperator("CP2.frequencies"));
-                                ops.add(getOperator("CP3.frequencies"));
-                            } else {
-                                ops.add(getOperator("frequencies"));
-                            }
-                        }
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
                             case HKY:
@@ -488,19 +488,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
-                            if (getCodonPartitionCount() > 1 && unlinkedSubstitutionModel) {
-                                ops.add(getOperator("CP1+2.frequencies"));
-                                ops.add(getOperator("CP3.frequencies"));
-                            } else {
-                                ops.add(getOperator("frequencies"));
-                            }
-                        }
-
+                        
                     } else {
                         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                     }
-                } else { // no codon partitioning
+                    
+                } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
                         case HKY:
                         	ops.add(getOperator("kappa"));
@@ -519,10 +512,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                    }
-                    if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
-                        ops.add(getOperator("frequencies"));
-                    }
+                    }                    
                 }
                 break;
 
@@ -553,7 +543,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         // if gamma do shape move
         if (gammaHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+            if (includeRelativeRates && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1.alpha"));
                     ops.add(getOperator("CP2.alpha"));
@@ -570,7 +560,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            if (getCodonPartitionCount() > 1 && unlinkedHeterogeneityModel) {
+            if (includeRelativeRates && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1.pInv"));
                     ops.add(getOperator("CP2.pInv"));
@@ -586,6 +576,22 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
+        if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
+            if (includeRelativeRates && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
+                if (codonHeteroPattern.equals("123")) {
+                    ops.add(getOperator("CP1.frequencies"));
+                    ops.add(getOperator("CP2.frequencies"));
+                    ops.add(getOperator("CP3.frequencies"));
+                } else if (codonHeteroPattern.equals("112")) {
+                    ops.add(getOperator("CP1+2.frequencies"));
+                    ops.add(getOperator("CP3.frequencies"));
+                } else {
+                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                }
+            } else {
+                ops.add(getOperator("frequencies"));
+            }
+        }
     }
 
     public int getCodonPartitionCount() {

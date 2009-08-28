@@ -97,8 +97,9 @@
 	</alignment>
 	
 	
-	<!-- The unique patterns site patterns                                       -->
-	<patterns id="Darwins-finches.patterns">
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=72                                                            -->
+	<patterns id="Darwins-finches.patterns" from="1">
 		<alignment idref="alignment"/>
 	</patterns>
 	
@@ -106,13 +107,13 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="substitutions">
 		<populationSize>
-			<parameter id="constant.popSize" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="0.018" lower="0.0" upper="Infinity"/>
 		</populationSize>
 	</constantSize>
 	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!-- No calibration                                                          -->
-	<coalescentTree id="startingTree" rootHeight="0.01776199574510335">
+	<coalescentTree id="startingTree" rootHeight="0.018">
 		<taxa idref="taxa"/>
 		<constantSize idref="constant"/>
 	</coalescentTree>
@@ -203,7 +204,7 @@
 	<!-- Species Tree: Provides Per branch demographic function                  -->
 	<speciesTree id="sptree" constantRoot="true">
 		<species idref="species"/>
-		<sppSplitPopulations value="1.0">
+		<sppSplitPopulations value="0.018">
 			<parameter id="speciesTree.splitPopSize"/>
 		</sppSplitPopulations>
 	</speciesTree>
@@ -249,7 +250,7 @@
 					2
 				</shape>
 				<scale>
-					<parameter id="species.popMean" value="1.0"/>
+					<parameter id="species.popMean" value="0.018"/>
 				</scale>
 			</gammaDistributionModel>
 		</distribution0>
@@ -272,37 +273,6 @@
 	</mixedDistributionLikelihood>
 	<!-- Define operators                                                        -->
 	<operators id="operators">
-		<subtreeSlide size="0.1" gaussian="true" weight="15">
-			<treeModel idref="treeModel"/>
-		</subtreeSlide>
-		<narrowExchange weight="15">
-			<treeModel idref="treeModel"/>
-		</narrowExchange>
-		<wideExchange weight="3">
-			<treeModel idref="treeModel"/>
-		</wideExchange>
-		<wilsonBalding weight="3">
-			<treeModel idref="treeModel"/>
-		</wilsonBalding>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="treeModel.rootHeight"/>
-		</scaleOperator>
-		<uniformOperator weight="30">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
-		<scaleOperator scaleFactor="0.9" weight="5">
-			<parameter idref="species.popMean"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="species.yule.birthRate"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.5" weight="94">
-			<parameter idref="speciesTree.splitPopSize"/>
-		</scaleOperator>
-		<nodeReHeight weight="94">
-			<species idref="species"/>
-			<speciesTree idref="sptree"/>
-		</nodeReHeight>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="kappa"/>
 		</scaleOperator>
@@ -320,6 +290,44 @@
 				<parameter idref="treeModel.allInternalNodeHeights"/>
 			</down>
 		</upDownOperator>
+		<subtreeSlide size="0.0018" gaussian="true" weight="15">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<upDownOperator scaleFactor="0.75" weight="3">
+			<up>
+			</up>
+			<down>
+				<parameter idref="treeModel.allInternalNodeHeights"/>
+			</down>
+		</upDownOperator>
+		<scaleOperator scaleFactor="0.9" weight="5">
+			<parameter idref="species.popMean"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="species.yule.birthRate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.5" weight="94">
+			<parameter idref="speciesTree.splitPopSize"/>
+		</scaleOperator>
+		<nodeReHeight weight="94">
+			<species idref="species"/>
+			<speciesTree idref="sptree"/>
+		</nodeReHeight>
 	</operators>
 	
 	<!-- Define MCMC                                                             -->
@@ -330,13 +338,13 @@
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
 				<oneOnXPrior>
+					<parameter idref="kappa"/>
+				</oneOnXPrior>
+				<oneOnXPrior>
 					<parameter idref="species.popMean"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="species.yule.birthRate"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="kappa"/>
 				</oneOnXPrior>
 				
 			</prior>
@@ -346,7 +354,7 @@
 		</posterior>
 		<operators idref="operators"/>
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000000">
+		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -379,9 +387,9 @@
 			<parameter idref="species.yule.birthRate"/>
 			<tmrcaStatistic idref="speciesTree.rootHeight"/>
 			<parameter idref="treeModel.rootHeight"/>
-			<parameter idref="clock.rate"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
+			<parameter idref="clock.rate"/>
 			<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
 			
 		</log>

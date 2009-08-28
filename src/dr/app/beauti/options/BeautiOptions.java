@@ -139,6 +139,10 @@ public class BeautiOptions extends ModelOptions {
         starBEASTOptions = new STARBEASTOptions(this); 
         
         beautiTemplate = new BeautiTemplate(this);
+        
+        parameters.clear();
+        operators.clear();
+        statistics.clear();
     }
     
     public void selectTaxonSetsStatistics(List<Parameter> params) {

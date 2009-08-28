@@ -145,6 +145,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA 
         	if (options.clockModelOptions.isNodeCalibrated(param)) {
         		options.clockModelOptions.nodeCalibration();
+        		frame.setAllOptions();
         		frame.setStatusMessage();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();

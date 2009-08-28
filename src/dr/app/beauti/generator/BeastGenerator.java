@@ -1031,9 +1031,9 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag(Columns.COLUMN);
 
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeLogStatistic(model, writer);
-        }
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            branchRatesModelGenerator.writeLogStatistic(model, writer);
+//        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
 

@@ -168,9 +168,9 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param id        the id
-     * @param dimension the dimension
-     * @param writer    the writer
+     * @param parameter     the parameter
+     * @param dimension     the dimension
+     * @param writer        the writer
      */
     public void writeParameter(Parameter parameter, int dimension, XMLWriter writer) {
 //        Parameter parameter = options.getParameter(id);

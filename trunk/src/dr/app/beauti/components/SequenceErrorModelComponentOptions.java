@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class SequenceErrorModelComponentOptions implements ComponentOptions {
     static public final String ERROR_MODEL = "errorModel";
-    static public final String AGE_RATE = "ageRate";
-    static public final String BASE_RATE = "baseRate";
+    static public final String AGE_RATE = "ageRelatedErrorRate";
+    static public final String BASE_RATE = "baseErrorRate";
 
     static public final String AGE_RATE_PARAMETER = ERROR_MODEL + "." + AGE_RATE;
     static public final String BASE_RATE_PARAMETER = ERROR_MODEL + "." + BASE_RATE;

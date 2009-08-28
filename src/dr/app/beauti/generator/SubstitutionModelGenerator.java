@@ -456,12 +456,14 @@ public class SubstitutionModelGenerator extends Generator {
                         break;
                 }
                 
-                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel() && model.isUnlinkedFrequencyModel()) {
-                	for (int i = 1; i <= codonPartitionCount; i++) {
-                		writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
+                if (model.getFrequencyPolicy() == FrequencyPolicyType.ESTIMATED) {
+                    if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel() && model.isUnlinkedFrequencyModel()) {
+                    	for (int i = 1; i <= codonPartitionCount; i++) {
+                    		writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
+                        }
+                    } else {
+                    	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                     }
-                } else {
-                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                 }
                 break;//NUCLEOTIDES
 

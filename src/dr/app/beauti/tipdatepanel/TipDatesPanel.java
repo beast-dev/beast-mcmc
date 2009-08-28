@@ -433,7 +433,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         	frame.removeSpecifiedTreePrior(true);
             options.clockModelOptions.tipTimeCalibration();
                 
-        } else {
+        } else if (options.clockModelOptions.getRateOptionClockModel() != FixRateType.NODE_CALIBRATED 
+                && options.clockModelOptions.getRateOptionClockModel() != FixRateType.RATE_CALIBRATED){
             frame.removeSpecifiedTreePrior(false);
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }        

@@ -67,7 +67,7 @@ public class NormaliseMeanTreeRate {
                 Tree tree = importer.importNextTree();
                 for (int i = 0; i < tree.getNodeCount(); i++) {
                     NodeRef node = tree.getNode(i);
-                    System.out.print(tree.getNodeCount() + " Punk bitch " + tree.getNodeRate(node) + "\t");
+                    System.out.print(tree.getNodeCount() + "  " + tree.getNodeRate(node) + "\t");
 
                     Iterator iter = tree.getNodeAttributeNames(node);
                     if (iter != null) {

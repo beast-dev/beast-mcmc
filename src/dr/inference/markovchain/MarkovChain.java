@@ -281,20 +281,26 @@ public final class MarkovChain {
                 // This is a test that the state is correctly restored. The
                 // restored state is fully evaluated and the likelihood compared with
                 // that before the operation was made.
-                final String d1 = ((CompoundLikelihood)likelihood).getDiagnosis();
+
+                final String d1 = likelihood instanceof CompoundLikelihood ?
+                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
                 if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
-                    final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
+
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"
                             + "Likelihood before: " + oldScore
                             + " Likelihood after: " + testScore
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName());
-                    logger.severe(d1);
-                    logger.severe(d2);
+                    if( d1.length() > 0 ) {
+                      logger.severe(d1);
+                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
+                        logger.severe(d1);
+                        logger.severe(d2);
+                    }
                     fullEvaluationError = true;
                 }
             }

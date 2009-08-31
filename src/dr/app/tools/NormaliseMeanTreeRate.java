@@ -62,9 +62,10 @@ public class NormaliseMeanTreeRate {
         TreeImporter importer = new NexusImporter(fileReader);
         try {
             int totalTrees = 0;
-            Set<String> attributeNames = new HashSet<String>();
+            //Set<String> attributeNames = new HashSet<String>();
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
+                double treeRate = 0;
                 for (int i = 0; i < tree.getNodeCount(); i++) {
                     NodeRef node = tree.getNode(i);
                     System.out.print(tree.getNodeCount() + "  " + tree.getNodeRate(node) + "\t");
@@ -72,9 +73,10 @@ public class NormaliseMeanTreeRate {
                     Iterator iter = tree.getNodeAttributeNames(node);
                     if (iter != null) {
                         while (iter.hasNext()) {
-                            String name = (String) iter.next();
-                            System.out.println(name);
-                            attributeNames.add(name);
+                            //String name = (String) iter.next();
+                            //System.out.println(" fell off " + name);
+                            double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
+                            //attributeNames.add(name);
                         }
                     }
                 }

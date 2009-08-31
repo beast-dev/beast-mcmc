@@ -568,12 +568,12 @@ public class SubstitutionModelGenerator extends Generator {
                     throw new IllegalArgumentException("Unknown substitution model.");
             }  
         }
+                  
+        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
         
         if (writeMuParameter) {
             writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
-        }
-                
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        }              
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(

@@ -353,7 +353,7 @@
 	<property name="TreeAnnotator_release" value="TreeAnnotator v" />
 	<property name="LogCombiner_release" value="LogCombiner v" />
 	<property name="LogAnalyser_release" value="LogAnalyser v" />
-	
+
 	<!-- Need to either install Launch4j under {BEAST workspace}/${release}
 	             or install it in the default directoy and change the location of launch4j.dir -->
 	<target name="windows_Release" depends="build_jar_all_BEAST_NoJUnitTest"
@@ -386,7 +386,7 @@
 		</copy>
 		<copy file="${release}/VERSION HISTORY.txt" todir="${BEAST_release}${version}"/>
 		<copy file="${release}/README.txt" todir="${BEAST_release}${version}"/>
-		
+
 		<!-- BEAUTi v?.?.?.exe -->
 		<launch4j configFile="${release}/BEAUTi_launch4j.xml"
 		          jar="${dist}/beauti.jar"
@@ -421,8 +421,8 @@
 				  fileVersion="${version}.0"
 				  txtFileVersion="${version}"
 				  productVersion="${version}.0"
-				  txtProductVersion="${version}"/>	
-		
+				  txtProductVersion="${version}"/>
+
 		<!-- LogAnalyser v?.?.?.exe 
 		<launch4j configFile="${release}/LogAnalyser_launch4j.xml"
 				  jar="${dist}/beast.jar"
@@ -431,20 +431,20 @@
 				  txtFileVersion="${version}"
 				  productVersion="${version}.0"
 				  txtProductVersion="${version}"/>	-->
-		
-		<zip destfile="${release}/${BEAST_release}${version}.zip">  
+
+		<zip destfile="${release}/${BEAST_release}${version}.zip">
 			<zipfileset dir="${BEAST_release}${version}" prefix="${BEAST_release}${version}"/>
 		</zip>
 
 		<echo message="Windows version release is finished." />
 	</target>
-	
-	<target name="linux_unix_Release" depends="build_jar_all_BEAST_NoJUnitTest"
+
+	<target name="linux_unix_Release" 
 								   description="release Linux/Unix version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
 		<delete dir="${BEAST_release}${version}" />
 		<!-- Create the release directory -->
 		<mkdir dir="${BEAST_release}${version}" />
-	
+
 		<copy todir="${BEAST_release}${version}/bin">
 			<fileset dir="scripts" excludes="*.cmd"/>
 		</copy>
@@ -456,10 +456,10 @@
 		</copy>
 		<copy todir="${BEAST_release}${version}/native">
 			<fileset dir="native"/>
-		</copy>		
+		</copy>
 		<copy file="${release}/icons/beast.png" todir="${BEAST_release}${version}/images"/>
 		<copy file="${release}/icons/beauti.png" todir="${BEAST_release}${version}/images"/>
-		<copy file="${release}/icons/utility.png" todir="${BEAST_release}${version}/images"/>		
+		<copy file="${release}/icons/utility.png" todir="${BEAST_release}${version}/images"/>
 		<copy file="${dist}/beauti.jar" todir="${BEAST_release}${version}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${BEAST_release}${version}/lib"/>
 		<copy file="${dist}/beast-beagle.jar" todir="${BEAST_release}${version}/lib"/>
@@ -468,12 +468,63 @@
 		</copy>
 		<copy file="${release}/VERSION HISTORY.txt" todir="${BEAST_release}${version}"/>
 		<copy file="${release}/README.txt" todir="${BEAST_release}${version}"/>
-			
-		<tar destfile="${release}/${BEAST_release}${version}.tgz">  
+
+		<tar destfile="${release}/${BEAST_release}${version}.tgz">
 			<tarfileset dir="${BEAST_release}${version}" prefix="${BEAST_release}${version}"/>
 		</tar>
 
 		<echo message="Linux/Unix version release is finished." />
 	</target>
+
+	<target name="mac_Release" 
+								   description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
+		<delete dir="${BEAST_release}${version}" />
+		<!-- Create the release directory -->
+		<mkdir dir="${BEAST_release}${version}" />
+
+		<copy todir="${BEAST_release}${version}/bin">
+			<fileset dir="scripts" excludes="*.cmd"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/doc">
+			<fileset dir="doc"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/examples">
+			<fileset dir="examples"/>
+		</copy>
+		<copy todir="${BEAST_release}${version}/native">
+			<fileset dir="native"/>
+		</copy>
+		
+		<copy file="${dist}/beauti.jar" todir="${BEAST_release}${version}/lib"/>
+		<copy file="${dist}/beast.jar" todir="${BEAST_release}${version}/lib"/>
+		<copy file="${dist}/beast-beagle.jar" todir="${BEAST_release}${version}/lib"/>
+		<copy todir="${BEAST_release}${version}/lib">
+			<fileset dir="${release}/extra_lib"/>
+		</copy>
+		<copy file="${release}/VERSION HISTORY.txt" todir="${BEAST_release}${version}"/>
+		<copy file="${release}/README.txt" todir="${BEAST_release}${version}"/>
+
+		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+
+		<!-- create a jar bundle for the mac -->
+		<jarbundler dir="${BEAST_release}${version}"
+		                name="${BEAST_release}${version}"
+			            jar="${BEAST_release}${version}/lib/beast.jar"
+		                mainclass="dr.app.beast.BeastMain" 
+		                icon="${release}/icons/beast.icns"
+		                jvmversion="1.5+"
+		    			arguments="-window -working"
+		                version="${version}"
+		                infostring="${BEAST_release}${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+		                bundleid="dr.app.beast" >
+			
+			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+			<javaproperty name="com.apple.macos.useScreenMenuBar" value="true"/>
+		</jarbundler>
+
+
+		<echo message="Mac version release is finished." />
+	</target>
+
 
 </project>

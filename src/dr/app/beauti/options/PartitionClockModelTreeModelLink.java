@@ -52,10 +52,10 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         this.model = model;
         this.tree = tree;
 
-        initClockModelParaAndOpers();
+        initClockModelTreeModelLinkParaAndOpers();
     }
 
-    private void initClockModelParaAndOpers() {
+    private void initClockModelTreeModelLinkParaAndOpers() {
         {
             final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", PriorScaleType.LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;

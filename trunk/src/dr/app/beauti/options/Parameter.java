@@ -49,6 +49,7 @@ public class Parameter {
         this.isNodeHeight = false;
         this.isStatistic = false;
         this.taxa = null;
+        this.options = null;
         this.priorType = PriorType.NONE;
         this.initial = Double.NaN;
         this.lower = Double.NaN;
@@ -64,7 +65,8 @@ public class Parameter {
         this.isStatistic = false;
 
         this.taxa = null;
-
+        this.options = null;
+        
         this.priorType = PriorType.UNIFORM_PRIOR;
         this.scale = scale;
         this.priorEdited = false;
@@ -80,6 +82,8 @@ public class Parameter {
         this.baseName = taxa.getId();
         this.description = description;
 
+        this.options = null;
+        
         this.isNodeHeight = true;
         this.isStatistic = true;
         this.priorType = PriorType.NONE;
@@ -94,6 +98,7 @@ public class Parameter {
 
     public Parameter(String name, String description, boolean isDiscrete) {
         this.taxa = null;
+        this.options = null;
 
         this.baseName = name;
         this.description = description;
@@ -111,6 +116,7 @@ public class Parameter {
 
     public Parameter(String name, String description, double lower, double upper) {
         this.taxa = null;
+        this.options = null;
 
         this.baseName = name;
         this.description = description;
@@ -128,14 +134,36 @@ public class Parameter {
         uniformLower = lower;
         uniformUpper = upper;
     }
+    
+    public Parameter(PartitionOptions options, String name, String description, PriorScaleType scale, double initial,
+            double lower, double upper) {
+        this.baseName = name;
+        this.description = description;
+        this.initial = initial;
+        this.isNodeHeight = false;
+        this.isStatistic = false;
 
-    public Parameter(String name, String description, boolean isNodeHeight,
+        this.taxa = null;
+        this.options = options;
+
+        this.priorType = PriorType.UNIFORM_PRIOR;
+        this.scale = scale;
+        this.priorEdited = false;
+        this.lower = lower;
+        this.upper = upper;
+
+        uniformLower = lower;
+        uniformUpper = upper;
+    }
+
+    public Parameter(PartitionOptions options, String name, String description, boolean isNodeHeight,
                      double initial, double lower, double upper) {
         this.baseName = name;
         this.description = description;
         this.initial = initial;
 
-        this.taxa = null;
+        this.taxa = null;        
+        this.options = options;
 
         this.isNodeHeight = isNodeHeight;
         this.isStatistic = false;
@@ -201,6 +229,12 @@ public class Parameter {
         return 1.0;
     }
 
+    public PartitionOptions getOptions() {
+        return options;
+    }
+
+    private final PartitionOptions options; 
+    
     private final String baseName;
 
     private String prefix = null;

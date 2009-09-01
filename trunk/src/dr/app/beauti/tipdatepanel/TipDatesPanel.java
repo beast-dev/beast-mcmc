@@ -216,6 +216,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
+                
+                frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
+                
             }
         });
 
@@ -430,14 +433,15 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
         
         if (options.clockModelOptions.isTipCalibrated()) {
-        	frame.removeSpecifiedTreePrior(true);
+//        	frame.removeSpecifiedTreePrior(true);
             options.clockModelOptions.tipTimeCalibration();
                 
-        } else if (options.clockModelOptions.getRateOptionClockModel() != FixRateType.NODE_CALIBRATED 
-                && options.clockModelOptions.getRateOptionClockModel() != FixRateType.RATE_CALIBRATED){
-            frame.removeSpecifiedTreePrior(false);
-            options.clockModelOptions.fixRateOfFirstClockPartition();
-        }        
+//        } else if (options.clockModelOptions.getRateOptionClockModel() != FixRateType.NODE_CALIBRATED 
+//                && options.clockModelOptions.getRateOptionClockModel() != FixRateType.RATE_CALIBRATED){
+//            frame.removeSpecifiedTreePrior(false);
+//            options.clockModelOptions.fixRateOfFirstClockPartition();
+        }   
+        
         frame.setStatusMessage();
     }
 

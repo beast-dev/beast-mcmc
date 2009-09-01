@@ -34,6 +34,7 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JCheckBox;
@@ -132,7 +133,7 @@ public class ClockModelOptions extends ModelOptions {
         }
 
         if (options.getPartitionClockModels().size() > 0) {
-            avgInitialRate = options.clockModelOptions.getSelectedRate(options.getPartitionClockModels(partitions)); // all clock models
+            avgInitialRate = options.clockModelOptions.getSelectedRate(partitions); // all clock models
         }
 
         switch (options.clockModelOptions.getRateOptionClockModel()) {
@@ -167,24 +168,66 @@ public class ClockModelOptions extends ModelOptions {
         return new double[]{avgInitialRootHeight, avgInitialRate};
     }
 
-    public double getSelectedRate(List<PartitionClockModel> models) {
+    public double getSelectedRate(List<PartitionData> partitions) {
         double selectedRate = 1;
-        if (rateOptionClockModel == FixRateType.FIX_MEAN) {
-            selectedRate = meanRelativeRate;
+        double avgInitialRootHeight = 1;
+        double avgMeanDistance = 1;
+        // calibration: all isEstimatedRate = true
+        switch (options.clockModelOptions.getRateOptionClockModel()) {
+            case FIX_MEAN:
+                selectedRate = meanRelativeRate;
+                break;
+                
+            case RElATIVE_TO:
+                List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
+                // fix ?th partition
+                if (models.size() == 1) {
+                    selectedRate = models.get(0).getRate();
+                } else {
+                    selectedRate = getAverageRate(models);
+                }
+                break;
 
-        } else if (rateOptionClockModel == FixRateType.RElATIVE_TO) {
-            // fix ?th partition
-            if (models.size() == 1) {
-                selectedRate = models.get(0).getRate();
-            } else {
-                selectedRate = getAverageRate(models);
-            }
+            case TIP_CALIBRATED:
+                if (options.hasData()) {
+                    avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+                }
+                avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+                selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
 
-        } else {
-            // calibration: all isEstimatedRate = true
-            //TODO calibration
+            case NODE_CALIBRATED:
+                if (options.hasData()) {
+                    avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+                }
+                avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
+
+            case RATE_CALIBRATED:
+              //TODO
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown fix rate type");
         }
+        
         return selectedRate;
+    }
+    
+    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
+
+        List<PartitionData> allData = new ArrayList<PartitionData>();
+
+        for (PartitionClockModel model : models) {
+            for (PartitionData partition : model.getAllPartitionData()) {
+                if (partition != null && (!allData.contains(partition))) {
+                    allData.add(partition);
+                }
+            }
+        }
+
+        return allData;
     }
 
     private double getCalibrationEstimateOfRootTime(List<PartitionData> partitions) {
@@ -192,7 +235,7 @@ public class ClockModelOptions extends ModelOptions {
         // TODO - shouldn't this method be in the PartitionTreeModel??
 
         List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) {
+        if (taxonSets != null && taxonSets.size() > 0) { // tmrca statistic 
 
             // estimated root times based on each of the taxon sets
             double[] rootTimes = new double[taxonSets.size()];
@@ -241,9 +284,18 @@ public class ClockModelOptions extends ModelOptions {
 
             // return the mean estimate of the root time for this set of partitions
             return DiscreteStatistics.mean(rootTimes);
+        
+        } else { // prior on treeModel.rootHight
+            double avgInitialRootHeight = 0;
+            double count = 0;
+            for (PartitionTreeModel tree : options.getPartitionTreeModels(partitions)) {
+                avgInitialRootHeight = avgInitialRootHeight + tree.getInitialRootHeight();
+                count = count + 1;
+            }
+            if (count != 0) avgInitialRootHeight = avgInitialRootHeight / count;
+            return avgInitialRootHeight;
         }
-
-        return 0.0;
+        
     }
 
     // FixRateType.FIX_MEAN

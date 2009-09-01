@@ -683,32 +683,6 @@ public class BeautiOptions extends ModelOptions {
 		} else {
 			return meanDistance / totalSite;
 		}
-		
-//    	if (allowDifferentTaxa) {//TODO: very slow, need to improve		
-//	    	double meanDistance = 0.0;
-//	    	for (PartitionData partition : partitions) {
-//	    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(partition.getAlignment());
-//	    		meanDistance += dm.getMeanDistance();
-//			}
-//			if (partitions.size() > 0) meanDistance /= partitions.size();
-//			
-//			return meanDistance;
-//    	    
-//    	} else {
-//    		List<SiteList> siteLists = new ArrayList<SiteList>();
-//        	
-//        	for (PartitionData partition : partitions) {
-//    			SiteList sl = (SiteList) partition.getAlignment();
-//    			if (!siteLists.contains(sl)) {
-//    				siteLists.add(sl);
-//    			}
-//    		}
-//    		
-//    		Patterns mergePartternsTree = new Patterns(siteLists);
-//    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
-//    		
-//    		return dm.getMeanDistance();
-//    	}
     }
 	
 	public String statusMessage() {

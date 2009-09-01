@@ -102,7 +102,7 @@ public class PartitionTreeModel extends PartitionOptions {
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameter("treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(this, "treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -135,8 +135,8 @@ public class PartitionTreeModel extends PartitionOptions {
     	getParameter("treeModel.allInternalNodeHeights");    	
     	
     	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
-    	rootHeightPara.initial = initialRootHeight; 
-    	rootHeightPara.priorEdited = true;
+//    	rootHeightPara.initial = initialRootHeight; 
+//    	rootHeightPara.priorEdited = true;
     	if (!options.starBEASTOptions.isSpeciesAnalysis()) {
     		params.add(rootHeightPara);
     	}

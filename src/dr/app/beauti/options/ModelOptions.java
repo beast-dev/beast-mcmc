@@ -128,10 +128,6 @@ public abstract class ModelOptions {
         return parameter;
     }
 
-    public void createParameter(String name, String description, boolean isNodeHeight, double value, double lower, double upper) {
-        parameters.put(name, new Parameter(name, description, isNodeHeight, value, lower, upper));
-    }
-
     public void createScaleParameter(String name, String description, PriorScaleType scale, double value, double lower, double upper) {
         Parameter p = createParameter(name, description, scale, value, lower, upper);
         p.priorType = PriorType.JEFFREYS_PRIOR;

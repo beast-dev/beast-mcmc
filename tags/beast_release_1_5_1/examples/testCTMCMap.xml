@@ -1,0 +1,312 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+    <!-- The list of taxa analyse (can also include dates/ages).                 -->
+    <!-- ntax=11                                                                  -->
+    <taxa id="taxa">
+        <taxon id="Easter_Island"/>
+        <taxon id="Hawaii"/>
+        <taxon id="Maori"/>
+        <taxon id="Marquesas"/>
+        <taxon id="Mangareva"/>
+        <taxon id="Rarotonga"/>
+        <taxon id="Samoa"/>
+        <taxon id="Tahitian"/>
+        <taxon id="Tonga"/>
+        <taxon id="Tuamotu"/>
+        <taxon id="Pukapuka"/>
+    </taxa>
+
+    <!-- The sequence alignment (each sequence refers to a taxon above).         -->
+    <!-- ntax=11 nchar=576                                                       -->
+    <alignment id="alignment" dataType="binary">
+        <sequence>
+            <taxon idref="Easter_Island"/>
+            001?111?10010011?0000011000110000?0?00000101001000001001100011001?0000011000000001?0000000?1?0010100001101?0111000011?1??001011101010100001001001?1?001000?00000??00?000000?111??10???00?0?100011?0001100000001?110001000001101??0101??0000?1?00100100100000?10001???101000001011011?0?000001?001011010001100000010000001111000000101010100??1101?11?010110010100100?1100111011010011000111?0001001001?11001?01?1011000000??0??01001?00000000?1011110100001001011?00101?100?110?1000?01?0???00?10100000010000??110110?0110000001?100?1101000100001001?0010100000?11000001?110000?100??10??110101
+        </sequence>
+        <sequence>
+            <taxon idref="Hawaii"/>
+            010?1111100100110010001100001001111?0001011110110001100111111100111001011110101011??00000011000011011001010111100001111?1001011010011100101011000011000101?100011000?000000011111100?10110?10001110001101100101011010100100100110000100101011?11?10110100000010001?0100110000110101110?010001?001111111000110011010000011111000100101010010???010?11?010111010011000111101111100100110001111000001001111110110111011001111??01010010101010100?1011110110100101011100101?001011101100001?0?0110110110000001110111101101011111010101000010100011000111001011100000?11000110?1111101110?11001110110
+        </sequence>
+        <sequence>
+            <taxon idref="Maori"/>
+            011011101101101101000111110110001111001111111111010110011111111111101101111110101100000110110001011011110111111101111011100101111111010111111111101101110101000011100110000011110110010110010011111001101100101011011110100101110110101111111011110110100100010001001111111010101011100110011011111111100111101111100000111101111011101011110111011101101110101111001111011111001011101111111011011011111111101110110111110001011011110111111010111111111101110110111110111111101011111010001011011101111111011110101111111001010100011010001100011101111011100001100011101111110110?11111010110
+        </sequence>
+        <sequence>
+            <taxon idref="Marquesas"/>
+            011?1111100110110010001?01?01000100?00?0?1?01110000010011?1111001?000?00101?101000?00?010?1110000100110101000110?001001??0?1111?1101010?000011110?11001101?100001100001?000?1111110??101?0?10?01100001100000001?110001100001001??1101000000?1?11?10?101001000100?1?01?11100?0100001110?10?0?1000111101100111001111000?0011110011001010100?01?1110011?00?11100000001011100111110?10011100011100110001111111111?1?1?110101000????01001?01011101?1?11110100001111?1?110101?101?111?1000?01?0???101101?0001011010??1101101011000?1?101000110100000?00111001?11100000?11000101?1100110110?111000100?0
+        </sequence>
+        <sequence>
+            <taxon idref="Mangareva"/>
+            0???11??10010011?010011100001001??0?10?101?10011000010011?0001001?000?001010101001??00?000?110001100111101100?1000001?11000101101101110?000?010?1?1?011100?1000?10000010000?11?1110???0100?100011010011010?0?01?110001110101??0??1101?00100?1?11?10010000100?00001?0??01100?1001?01110?0100?1??0111?0100010?0010?100000111?11010001010100?0??1110011?01?1110001000000?10011111001?11110011??0001000001?1100?101?1010?0100?0????01000?0?0??100?101?110?10000111011000111?100?111?1?00?01?0??010110??0?01000110?01101?010110000001?100?1101000110001110?0?11100000?11000101?110110?110?111?00100?0
+        </sequence>
+        <sequence>
+            <taxon idref="Rarotonga"/>
+            011?111?111110110010011100011010011?10110111111110011001111001000110010110001010110?00001011100111111111011001110001101000110010111101000001?1011?11011101?10000100000000001011101110?01?00100011110011011001010110001101001101??110101110011?11110110110100010101?010111110000010111101000010111111111001111010110000011111?011001010100110??01011100100111001010000111011111101011101111110001000111111001101?1011111111000??1001111011?11001011110110010100011?00101??10111101000010?0001101101100110011101111011110111000101?1011110100010000111001010100000010000101?111110?110?111?0110010
+        </sequence>
+        <sequence>
+            <taxon idref="Samoa"/>
+            011?111?10011111?1001101100110110111000110?1001101000111111001101100110000101000011110011111?11111011111110100100101101?0110111001101100000001010100100111?000101110100000111111001?1?01001000010101111111000001101011111101101??1001101000?1001001110111100010100111?011001110111110000011110101111010001100001010000111011001111101010000?11001011?10101101101010011101011110011111101111?0100111101111001101?1000001001111?011001?010011110101111010110010001011101??000?11001010?0111?1?11110110001110101??11011110111010110011111111010000110110?1010100000110110001?1101101101?10011?11011
+        </sequence>
+        <sequence>
+            <taxon idref="Tahitian"/>
+            011?1111111111110000001101011000111?001001?11110100110011?000100111001001010001011??00011011100101101101011?11000001101?0011011011010100010001110?1?001111?1000110001000000111110101?101?0?1000111?0010011001010110001111001101??110100110111?11110100000000?00001?01?01110?00001011110000011?111111010001101001010000001111?111101110100110??110111?0101111101010001111011011101011101001110001011101111001101110110111001?0??00?1110?11010001011110110010110011?00101?111?11101000010?0?01101101100010000101111011010110000100?1000110100011000111010010100000?11000111?1111100110?110?1110010
+        </sequence>
+        <sequence>
+            <taxon idref="Tonga"/>
+            1111101?100111111101111110010001010?11001001001111001110111001101110011000100111011111001111?11110011111110100110010101?011011000110111001000101001?0101111101010110001000101111001???01?1?0000100010111111100011010011110011011?1011??1000?0111101110111110001101111?0111011101011110001011111011110101001101010010011110110010111011100?0??1001?01?00?01101101010011101111110011111111110?0100101011111101101?1010101011001?011001?1101111101011110101101110010111111??00?01011111001?11??01111110?01110001??11011010111110100111111011110000110101?1110111100?10110001111011011011100?0?11110
+        </sequence>
+        <sequence>
+            <taxon idref="Tuamotu"/>
+            010?111?11011111?100011101?11000111?001101?11111100110011111110011100?001111101011??00010?11?0010111110101110111?001111??011011?11010100001001111?1?011111?100001000?01???0111110110??0110?10?11111001101100?01?110001001001101?01101?0?000?1?111101101001000000?1??1?01111?0001101101?11??01?111?11010011110011010000001111111110111010011???110?11?01?11101110100001100011111?10111010011110010101111110011?1?1?11011100?????01011?11111101?1011110110001111?1??00101?110?11100000?1??0??100110111001111110??1101101111000?1010100001010001??001010?01101000?0?11000110?1111100110?110?1010110
+        </sequence>
+        <sequence>
+            <taxon idref="Pukapuka"/>
+            ?0??1?1????????1?1?00?11010?1????11?0??1?0?1?011???010?1??1100???110?1?00???1?1????1????1011?00???01??0111?00?110010??????01?0???111?10????0?1????10??11?1?1?00?1???0??000?0?11?0?0?1?0????100?10?0??110???11?111?1????11??11????1??110?????101111011?1101???1?101?0?????110100?1?11101?000?1???111??1???0?0??1101?????0101????1101?1?101?0?010???11?01??11??111010??11??11?1110?0111?1111?????101?0?111???010101010??1?0?01?101?0????000?1?1?1?1?110??111?11?01???11?1100????0?1????1?01????011??????100?1?1??1101??1?111?101??0??1?0?1?0??1?01???1??11??????00?100000?0?1???1??0?0?111?0??0??1
+        </sequence>
+    </alignment>
+
+    <generalDataType id="geography">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+        <state code="D"/>
+        <state code="E"/>
+        <state code="F"/>
+        <state code="G"/>
+        <state code="H"/>
+        <state code="I"/>
+        <state code="J"/>
+        <state code="K"/>
+        <ambiguity code="?" states="ABCDEFGHIJK"/>
+    </generalDataType>
+	                 <
+
+
+
+    <alignment id="locations">
+        <dataType idref="geography"/>
+        <sequence>
+            <taxon idref="Easter_Island"/>
+            J
+        </sequence>
+        <sequence>
+            <taxon idref="Hawaii"/>
+            G
+        </sequence>
+        <sequence>
+            <taxon idref="Maori"/>
+            K
+        </sequence>
+        <sequence>
+            <taxon idref="Marquesas"/>
+            F
+        </sequence>
+        <sequence>
+            <taxon idref="Mangareva"/>
+            I
+        </sequence>
+        <sequence>
+            <taxon idref="Rarotonga"/>
+            C
+        </sequence>
+        <sequence>
+            <taxon idref="Samoa"/>
+            B
+        </sequence>
+        <sequence>
+            <taxon idref="Tahitian"/>
+            E
+        </sequence>
+        <sequence>
+            <taxon idref="Tonga"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="Tuamotu"/>
+            H
+        </sequence>
+        <sequence>
+            <taxon idref="Pukapuka"/>
+            D
+        </sequence>
+    </alignment>
+
+
+    <!-- The unique patterns for all positions                                   -->
+    <!-- npatterns=69                                                            -->
+    <patterns id="patterns" from="1">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <patterns id="geoPatterns" from="1">
+        <aligment idref="locations"/>
+    </patterns>
+
+    <!-- This is a simple constant population size coalescent model              -->
+    <!-- that is used to generate an initial tree for the chain.                 -->
+    <constantSize id="initialDemo" units="substitutions">
+        <populationSize>
+            <parameter id="initialDemo.popSize" value="0.0001"/>
+        </populationSize>
+    </constantSize>
+
+    <!-- Generate a random starting tree under the coalescent process            -->
+    <coalescentTree id="startingTree" rootHeight="0.1">
+        <taxa idref="taxa"/>
+        <constantSize idref="initialDemo"/>
+    </coalescentTree>
+
+    <treeModel id="treeModel">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+
+    <generalSubstitutionModel id="binaryModel" dataType="binary" name="foo">
+        <frequencies>
+            <frequencyModel dataType="binary">
+                <alignment idref="alignment"/>
+                <frequencies>
+                    <parameter id="binary.frequencies" dimension="2"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates relativeTo="1"/>
+        <!--<parameter id="binary.rate" value="1.0" lower="0.0" upper="100.0"/>-->
+        <!--</rates>-->
+    </generalSubstitutionModel>
+
+    <generalSubstitutionModel id="islandModel" name="island">
+        <dataType idref="geography"/>
+        <frequencies>
+            <frequencyModel id="geoFreqs">
+                <dataType idref="geography"/>
+                <alignment idref="locations"/>
+                <frequencies>
+                    <parameter id="geoFreqs.frequencies" dimension="11"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates relativeTo="1">
+            <parameter id="rateABCDEFGHIJK"
+                       value="0.7 0.4 0.49 0.4 0.245 0.55 0.2 0.065 0.5 0.6 0.5 0.38 0.335 0.425 0.38 0.225 0.11 0.55 0.5 1.2 0.65 0.335 1 0.31 0.18 0.55 0.5 0.335 0.245 0.47 0.245 0.11 0.225 0.9 0.445 2.2 0.49 0.2 0.445 0.29 1.2 0.445 0.225 0.265 0.47 0.18 0.065 0.2 0.75 0.245 0.55 0.31 0.18 0.0"/>
+        </rates>
+    </generalSubstitutionModel>
+
+    <!-- site model                                                              -->
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="binaryModel"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="siteModel.mu" value="1.0" lower="0.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <siteModel id="geoSiteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="islandModel"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="geoSiteModel.mu" value="1.0" lower="0.0" upper="1000.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <treeLikelihood id="treeLikelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+    </treeLikelihood>
+
+    <ancestralTreeLikelihood id="geoTreeLikelihood">
+        <patterns idref="geoPatterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="geoSiteModel"/>
+        <generalSubstitutionModel idref="islandModel"/>
+    </ancestralTreeLikelihood>
+
+    <operators id="operators">
+        <!--<scaleOperator scaleFactor="0.5" weight="1">-->
+        <!--<parameter idref="hky.kappa"/>-->
+        <!--</scaleOperator>-->
+
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="geoSiteModel.mu"/>
+        </scaleOperator>
+
+        <scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="treeModel.rootHeight"/>
+        </scaleOperator>
+        <uniformOperator weight="10">
+            <parameter idref="treeModel.internalNodeHeights"/>
+        </uniformOperator>
+        <subtreeSlide weight="5" gaussian="true" size="1.0">
+            <treeModel idref="treeModel"/>
+        </subtreeSlide>
+        <narrowExchange weight="1">
+            <treeModel idref="treeModel"/>
+        </narrowExchange>
+        <wideExchange weight="1">
+            <treeModel idref="treeModel"/>
+        </wideExchange>
+        <wilsonBalding weight="1">
+            <treeModel idref="treeModel"/>
+        </wilsonBalding>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+        <compoundLikelihood id="likelihood">
+            <treeLikelihood idref="treeLikelihood"/>
+            <treeLikelihood idref="geoTreeLikelihood"/>
+        </compoundLikelihood>
+        <operators idref="operators"/>
+        <log logEvery="10000">
+            <column label="Likelihood" dp="4" width="12">
+                <compoundLikelihood idref="likelihood"/>
+            </column>
+            <column label="Root Height" sf="6" width="12">
+                <parameter idref="treeModel.rootHeight"/>
+            </column>
+            <column label="Rate" sf="6" width="12">
+                <parameter idref="siteModel.mu"/>
+            </column>
+            <column label="Rate" sf="6" width="12">
+                <parameter idref="geoSiteModel.mu"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testCTMCMap.log">
+            <compoundLikelihood idref="likelihood"/>
+            <parameter idref="treeModel.rootHeight"/>
+            <parameter idref="siteModel.mu"/>
+            <parameter idref="geoSiteModel.mu"/>
+        </log>
+        <logTree logEvery="1000" nexusFormat="true" fileName="testCTMCMap.trees">
+            <treeModel idref="treeModel"/>
+            <ancestralTreeLikelihood idref="geoTreeLikelihood"/>
+            <!-- this entry annotates trees with a reconstruction -->
+        </logTree>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc"/>
+        </property>
+    </report>
+
+    <traceAnalysis fileName="testCTMCMap.log"/>
+
+    <treeTraceAnalysis fileName="testCTMCMap.trees"/>
+
+</beast>

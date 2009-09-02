@@ -11,11 +11,11 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.FlexibleTree;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,113 +51,111 @@ public class NormaliseMeanTreeRate {
             System.exit(0);
         }
 
-        //BufferedReader br = new BufferedReader(new FileReader(parentFile));
-        //String line;
-        //while ((line = br.readLine()) != null) {
-
-        //}
-        //br.close();
-
         FileReader fileReader = new FileReader(parentFile);
         TreeImporter importer = new NexusImporter(fileReader);
+        ArrayList<Tree> treeList = new ArrayList<Tree>();
+        ArrayList<String> treeNames = new ArrayList<String>();
         try {
             int totalTrees = 0;
-            //Set<String> attributeNames = new HashSet<String>();
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
-                double treeRate = 0;
-                for (int i = 0; i < tree.getNodeCount(); i++) {
-                    NodeRef node = tree.getNode(i);
-                    System.out.print(tree.getNodeCount() + "  " + tree.getNodeRate(node) + "\t");
-
-                    Iterator iter = tree.getNodeAttributeNames(node);
-                    if (iter != null) {
-                        while (iter.hasNext()) {
-                            //String name = (String) iter.next();
-                            //System.out.println(" fell off " + name);
-                            double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
-                            //attributeNames.add(name);
-                        }
-                    }
-                }
-                System.out.println();
+                analyze(tree, normaliseMeanRateTo);
+                treeList.add(tree);
+                treeNames.add(tree.getId());
                 totalTrees++;
+
             }
-            //System.out.println("Total number of trees: " + totalTrees);
+            new NexusExporter(System.out).exportTrees(treeList.toArray(new Tree[treeList.size()]),
+                    true, treeNames.toArray(new String[treeNames.size()]));
 
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
         }
 
-
-
-
-
-
-        analyze(parentFile, outFile, normaliseMeanRateTo);
+        //analyze(parentFile, outFile, normaliseMeanRateTo);
     }
 
     /**
      * Recursively analyzes log files.
      *
-     * @param inFile              input file
-     * @param outFile             output file
+     * @param tree                tree to normalise
      * @param normaliseMeanRateTo rate to normalise to
      * @throws dr.inference.trace.TraceException
      *          if the trace file is in the wrong format or corrupted
      */
-    private static void analyze(File inFile, File outFile, double normaliseMeanRateTo) throws TraceException {
+    public static void analyze(Tree tree, double normaliseMeanRateTo) throws TraceException {
+        double treeRate = 0;
+        double treeTime = 0;
+        //int branchCount = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
 
-        /*try {
+            if(!tree.isRoot(node)) {
 
-
-
-
-        }catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /*if (file.isFile()) {
-            try {
-
-                String name = file.getCanonicalPath();
-                if (verbose) {
-                    TraceAnalysis.report(name, burnin, marginalLikelihood);
-                } else {
-                    TraceAnalysis.shortReport(name, burnin, drawHeader[0], hpds, ess, stdErr, marginalLikelihood);
-                    drawHeader[0] = false;
+                if(tree.getNodeAttribute(node, "rate") == null) {
+                    System.out.println("Tree file does not contain rate information. ");
+                    System.setOut(System.out);
+                    System.err.println("Tree file does not contain rate information. Program terminated");
+                    System.exit(0);
                 }
-            } catch (IOException e) {
-                //e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                //double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
+                treeRate += (Double) tree.getNodeAttribute(node, "rate") * tree.getBranchLength(node);
+                treeTime += tree.getBranchLength(node);
+//                System.out.println(tree.getNodeAttribute(node, "rate") + "\t" + tree.getBranchLength(node));
+                //branchCount++;
             }
-        } else {
-            File[] files = file.listFiles();
-            for (File f : files) {
-                if (f.isDirectory()) {
-                    analyze(f, burnin, verbose, drawHeader, hpds, ess, stdErr, marginalLikelihood);
-                } else if (f.getName().endsWith(".log") || f.getName().endsWith(".p")) {
-                    analyze(f, burnin, verbose, drawHeader, hpds, ess, stdErr, marginalLikelihood);
-                } else {
-                    if (verbose) System.out.println("Ignoring file: " + f);
+
+            /*Iterator iter = tree.getNodeAttributeNames(node);
+            if (iter != null) {
+                System.out.print(".");
+                while (iter.hasNext()) {
+                    //System.out.print("|");
+                    String name = (String) iter.next();
+                    //System.out.println(" fell off " + name);
+                    double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
+                    //System.out.println("you the fucking best" + nodeRate + "dasf");
+                    //if() {
+                        treeRate += (Double) tree.getNodeAttribute(node, "rate");
+                    //}
+                    //attributeNames.add(name);
                 }
+            }*/
+        }
+
+        //treeRate /= branchCount;
+        treeRate /= treeTime;
+//        System.out.println(" 1 " + tree);
+
+        /* Normalise the rates here */
+        FlexibleTree modifiedTree = (FlexibleTree) tree;//.getCopy();
+        for (int i = 0; i < modifiedTree.getNodeCount(); i++) {
+            NodeRef node = modifiedTree.getNode(i);
+            if(!modifiedTree.isRoot(node)) {
+                double nodeRate = (Double) modifiedTree.getNodeAttribute(node, "rate");
+                nodeRate = normaliseMeanRateTo * nodeRate / treeRate;
+
+                modifiedTree.setNodeAttribute(node, "rate", Double.valueOf(nodeRate));
+
+                //double newValue =(Double) modifiedTree.getNodeAttribute(node, "rate");
+                //System.out.println(nodeRate + "\t" + newValue);
+
+
+                //double nodeTime = (Double) modifiedTree.getNodeAttribute(node, "t");
+                double nodeTime = modifiedTree.getBranchLength(node);
+                nodeTime = nodeTime * treeRate / normaliseMeanRateTo;
+                modifiedTree.setBranchLength(node, nodeTime);
+
+//                System.out.println(nodeRate + "\t" + modifiedTree.getBranchLength(node));
+                //modifiedTree.setNodeAttribute(node, "t", Double.valueOf(nodeTime));
+
             }
-        }*/
+        }
+        //tree = modifiedTree;
+
+
+//        System.out.println(" 2 " + tree);
+
     }
 
     public static void printTitle() {

@@ -52,7 +52,7 @@ public class BeastVersion implements Version {
      * this used to parse the CVS ID string but there is no equivalent
      * for SVN. We must increment this manually.
      */
-    private static final String BUILD_ID = "Build r2175";
+    private static final String BUILD_ID = "Build r2182";
 
     public String getVersionString() {
         return "v" + VERSION;

@@ -26,9 +26,11 @@
 package dr.evomodel.tree;
 
 import dr.app.tools.NexusExporter;
+import dr.app.tools.NormaliseMeanTreeRate;
 import dr.evolution.tree.*;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
+import dr.inference.trace.TraceException;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -203,6 +205,14 @@ public class TreeLogger extends MCLogger {
     }
 
     public void log(int state) {
+
+        if(normaliseMeanRate) {
+            try {
+                NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);
+            }catch (TraceException e) {
+                e.printStackTrace();
+            }
+        }
 
         final boolean doIt = condition != null ? condition.logNow(state) :
                     (logEvery < 0 || ((state % logEvery) == 0));

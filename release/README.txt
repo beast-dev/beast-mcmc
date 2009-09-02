@@ -1,4 +1,4 @@
-                    BEAST v1.5.0 2002-2009
+                    BEAST v1.5.1 2002-2009
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,7 +17,7 @@
 
 
 Windows version README
-Last updated: a.rambaut@ed.ac.uk - 4th August 2009
+Last updated: alexei@cs.auckland.ac.nz - 3rd September 2009
 
 Contents:
 1) INTRODUCTION
@@ -59,7 +59,7 @@ ___________________________________________________________________________
 2) INSTALLING BEAST
 
 BEAST requires a Java Virtual Machine to run. Many systems will already
-have this installed. It requires at least version 1.4 of Java to run. The
+have this installed. It requires at least version 1.5 of Java to run. The
 latest versions of Java can be downloaded from:
 
 <http://java.sun.com/>
@@ -69,7 +69,7 @@ If in doubt type "java -version" to see what version of java is installed
 
 Mac OS X will already have a suitable version of Java installed.
 
-Within the BEAST.v1.5.0 package will be the following directories:
+Within the BEAST.v1.5.1 package will be the following directories:
 Directory       Contents 
 examples/       some example NEXUS and XML files
 lib/            Java & native libraries used by BEAST 
@@ -82,7 +82,7 @@ A program called "BEAUti" will import data in NEXUS format, allow you to
 select various models and options and generate an XML file ready for use in
 BEAST.
 
-To run BEAUti simply double-click the "BEAUti v1.5.0.exe" file in the BEAST
+To run BEAUti simply double-click the "BEAUti v1.5.1.exe" file in the BEAST
 folder. If this doesn't work then you may not have Java installed correctly. 
 Try opening an MS-DOS window and typing:
 
@@ -93,7 +93,7 @@ See also the separate BEAUti README.txt document.
 __________________________________________________________________________
 4) RUNNING BEAST
 
-To run BEAST simply double-click the "BEAST v1.5.0.exe" file in the BEAST
+To run BEAST simply double-click the "BEAST v1.5.1.exe" file in the BEAST
 folder. You will be asked to select a BEAST XML input file.
 
 Alternatively open a Command window and type:

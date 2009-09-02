@@ -710,7 +710,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
             
-            message += ";    " + clockModelOptions.getRateOptionClockModel().toString();
+            message += ";    " + clockModelOptions.statusMessageClockModel();
             
         } else if (userTrees.size() > 0) {
             message += "Trees only : " + userTrees.size() +

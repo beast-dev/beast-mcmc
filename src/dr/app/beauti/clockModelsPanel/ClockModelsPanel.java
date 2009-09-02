@@ -46,6 +46,8 @@ import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
@@ -86,7 +88,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
 		dataTableModel = new DataTableModel();
 		dataTable = new JTable(dataTableModel);
-		
+		        
 //		dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
 		dataTable.getTableHeader().setReorderingAllowed(false);
 		dataTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -200,6 +202,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
      
     private void fireDataChanged() {
         options.updatePartitionClockTreeLinks();
+        frame.setStatusMessage();
         frame.setDirty();
     }
 

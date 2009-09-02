@@ -434,6 +434,33 @@ public class ClockModelOptions extends ModelOptions {
             model.setEstimatedRate(true);
         }
     }
+    
+    public String statusMessageClockModel() {
+        if (rateOptionClockModel == FixRateType.RElATIVE_TO) {
+            if (options.getPartitionClockModels().size() == 1) { // single partition clock
+                if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
+                    return "Estimate clock rate";
+                } else {
+                    return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
+                }
+                
+            } else {
+                String t = rateOptionClockModel.toString() + " ";
+                int c = 0;
+                for (PartitionClockModel model : options.getPartitionClockModels()) {
+                    if (!model.isEstimatedRate()) {
+                        if (c > 0) t = t + ", ";
+                        c = c + 1;
+                        t = t + model.getName();                    
+                    }
+                }
+                return t;                
+            }
+            
+        } else {
+            return rateOptionClockModel.toString();
+        }
+    }
 
     //+++++++++++++++++++++++ Validation ++++++++++++++++++++++++++++++++
     // true => valid, false => warning message 

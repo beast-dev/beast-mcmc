@@ -76,19 +76,32 @@ public class NexusExporter implements TreeExporter {
     /**
      * @param trees      the array of trees to export
      * @param attributes true if the nodes should be annotated with their attributes
+     * @param treeNames  Names of the trees
      */
-    public void exportTrees(Tree[] trees, boolean attributes) {
+    public void exportTrees(Tree[] trees, boolean attributes, String[] treeNames) {
+        if(!(treeNames==null) && trees.length != treeNames.length) {
+            throw new RuntimeException("Number of trees and number of tree names is not the same");
+        }
         Map<String, Integer> idMap = writeNexusHeader(trees[0]);
         out.println("\t\t;");
         for (int i = 0; i < trees.length; i++) {
-            writeNexusTree(trees[i], i, attributes, idMap);
+            if(treeNames==null) {
+                writeNexusTree(trees[i], treePrefix + i, attributes, idMap);
+            }
+            else {
+                writeNexusTree(trees[i], treeNames[i], attributes, idMap);
+            }
         }
         out.println("End;");
     }
 
+    public void exportTrees(Tree[] trees, boolean attributes) {
+        exportTrees(trees, attributes, null);
+    }
+
 
     public void exportTrees(Tree[] trees) {
-        exportTrees(trees, true);
+        exportTrees(trees, true, null);
     }
 
     /**
@@ -99,11 +112,11 @@ public class NexusExporter implements TreeExporter {
     public void exportTree(Tree tree) {
         Map<String, Integer> idMap = writeNexusHeader(tree);
         out.println("\t\t;");
-        writeNexusTree(tree, 1, true, idMap);
+        writeNexusTree(tree, treePrefix + 1, true, idMap);
         out.println("End;");
     }
 
-    public void writeNexusTree(Tree tree, int i, boolean attributes, Map<String, Integer> idMap) {
+    public void writeNexusTree(Tree tree, String s, boolean attributes, Map<String, Integer> idMap) {
         // PAUP marks rooted trees thou
         String treeAttributes = "[&R] ";
 
@@ -134,7 +147,7 @@ public class NexusExporter implements TreeExporter {
             }
         }
 
-        out.print("tree " + treePrefix + i + ((treeComment != null) ? treeComment.toString() : "")
+        out.print("tree " + s + ((treeComment != null) ? treeComment.toString() : "")
                 + " = " + treeAttributes);
         
         writeNode(tree, tree.getRoot(), attributes, idMap);

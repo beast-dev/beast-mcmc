@@ -1,4 +1,4 @@
-                    BEAST v1.5.0 2002-2009
+                    BEAST v1.5.1 2002-2009
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,14 +17,41 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 4th August 2009
+Last updated: alexei@cs.auckland.ac.nz - 3rd September 2009
 	
+================================================================================
+
+Version 1.5.1 released 3rd September 2009
+
+	New Features:
+	    *BEAST: a version of BEAST that can estimate species trees from
+	    multi-locus multi-individual data sets using the multispecies coalescent
+	    (Heled & Drummond, 2009, submitted)
+
+	    BEAUti overhaul: BEAUti has been completely re-written to allow flexible
+	    handling of multi-partition analyses, including paritioning by
+	    substitution models, clock models and trees. BEAUti also supports the
+	    new *BEAST method.
+
+	    Relaxed clock refinements: The uncorrelated relaxed clock models have
+	    been refined by the addition of two new operators to address (valid)
+	    criticisms levelled in "Bayesian estimation of species divergence times
+	    from multiple loci using multiple calibrations", Rannala and Yang (2007).
+	    The change allows more than one branch to have the same relaxed clock
+	    rate category. In practice this will only have any appreciable impact on
+	    trees that have a small number of branches (< 15 taxa).
+
+	Bug Fixes
+		Many bugs fixed that were introduced in 1.5.0 including:
+
+================================================================================
+
 Version 1.5.0 released 4th August 2009
-	This is a major new version with numerous new features - see website for 
-	details.
+	This was a major new version with numerous new features and many bugs -
+	see release 1.5.1 for details.
 	
 	Bug Fixes
-		Probably many new bugs have been introduced. 
+		Many new bugs were introduced. 
 	
 ================================================================================	
 

@@ -454,6 +454,10 @@ public class ClockModelOptions extends ModelOptions {
                         t = t + model.getName();                    
                     }
                 }
+                
+                if (c == 0) t = "Estimate all clock rates";
+                if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
+                
                 return t;                
             }
             

@@ -66,7 +66,6 @@ public class DefaultModel extends AbstractModelLikelihood {
 
         public Object parseXMLObject(XMLObject xo) {
 
-//           Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             DefaultModel likelihood = new DefaultModel();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -98,8 +97,6 @@ public class DefaultModel extends AbstractModelLikelihood {
         };
 
     };
-
-
 }
 
 

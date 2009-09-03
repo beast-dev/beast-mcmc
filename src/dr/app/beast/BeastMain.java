@@ -27,7 +27,6 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.inference.mcmc.MCMC;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
@@ -38,7 +37,9 @@ import org.virion.jam.util.IconUtils;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -267,9 +268,9 @@ public class BeastMain {
             additionalParsers.add("beagle");
         }
 
-        int threadCount = 0;
+        //int threadCount = 0;
         if (arguments.hasOption("threads")) {
-            threadCount = arguments.getIntegerOption("threads");
+            final int threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
                 printTitle();
                 System.err.println("The the number of threads should be >= 0");

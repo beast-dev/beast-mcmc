@@ -346,13 +346,13 @@
 	</target>
 
 
-	<property name="version" value="1.5.1" />
+	<property name="version" value="1.5.2" />
 	<property name="release" value="release" />
-	<property name="BEAST_release" value="BEAST v" />
-	<property name="BEAUTi_release" value="BEAUTi v" />
-	<property name="TreeAnnotator_release" value="TreeAnnotator v" />
-	<property name="LogCombiner_release" value="LogCombiner v" />
-	<property name="LogAnalyser_release" value="LogAnalyser v" />
+	<property name="BEAST_release" value="BEAST_v" />
+	<property name="BEAUTi_release" value="BEAUTi_v" />
+	<property name="TreeAnnotator_release" value="TreeAnnotator_v" />
+	<property name="LogCombiner_release" value="LogCombiner_v" />
+	<property name="LogAnalyser_release" value="LogAnalyser_v" />
 
 	<!-- Need to either install Launch4j under {BEAST workspace}/${release}
 	             or install it in the default directoy and change the location of launch4j.dir -->

@@ -38,8 +38,6 @@ import dr.xml.*;
 public class PathLikelihood implements Likelihood {
 
     public static final String PATH_LIKELIHOOD = "pathLikelihood";
-    public static final String PRIOR = "prior";
-    public static final String LIKELIHOOD = "likelihood";
     public static final String PATH_PARAMETER = "theta";
     public static final String DIFFERENCE = "delta";
 

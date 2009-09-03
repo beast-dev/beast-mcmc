@@ -83,5 +83,4 @@ abstract public class AbstractNucleotideModel extends AbstractSubstitutionModel 
 	}
 	
 	protected void acceptState() { } // nothing to do
-
 }

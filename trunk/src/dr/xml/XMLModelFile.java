@@ -27,9 +27,8 @@ import java.util.*;
  * Time: 12:35:42 PM
  */
 public class XMLModelFile implements ListModel {
-    private Element xmlModel;
-    private Element posteriorElement;
-    private Map<String, XMLModelIdentifiable> identifiedElements;
+    private final Element xmlModel;
+    private final Map<String, XMLModelIdentifiable> identifiedElements;
 
     public XMLModelFile(Element root) {
         xmlModel = root; //doc.getRootElement();
@@ -53,18 +52,18 @@ public class XMLModelFile implements ListModel {
             }
         }
 
-        Element mcmc;
         Iterator mcmcIter = xmlModel.getDescendants(new MCMCFilter());
-        mcmc = (Element) mcmcIter.next();
+        Element mcmc = (Element) mcmcIter.next();
         if (mcmc == null) {
             System.err.println("Error: cannot find mcmc element");
-        }
-        for (Object child : mcmc.getChildren("posterior")) {
-            if ((child instanceof Element)) {
-                posteriorElement = (Element) child;
+        } else {
+            for (Object child : mcmc.getChildren("posterior")) {
+                if ((child instanceof Element)) {
+                    Element posteriorElement = (Element) child;
+                }
             }
+            mcmc.detach();
         }
-        mcmc.detach();
 
     }
 
@@ -77,28 +76,28 @@ public class XMLModelFile implements ListModel {
             special = new HashMap<String, String>();
         }
 
-        for (String identifiedName : identifiedElements.keySet()) {
+        for (Map.Entry<String, XMLModelIdentifiable> stringXMLModelIdentifiableEntry : identifiedElements.entrySet()) {
             String newName;
-            if (special.containsKey(identifiedName)) {//assign a special name
-                newName = special.get(identifiedName);
+            if (special.containsKey(stringXMLModelIdentifiableEntry.getKey())) {//assign a special name
+                newName = special.get(stringXMLModelIdentifiableEntry.getKey());
                 if (keepID) {
-                    identifiedElements.get(identifiedName).restoreDefinition();
+                    stringXMLModelIdentifiableEntry.getValue().restoreDefinition();
                 } else {
-                    identifiedElements.get(identifiedName).removeDefinition();
+                    stringXMLModelIdentifiableEntry.getValue().removeDefinition();
                 }
             } else {
-                newName = prefix + identifiedName;
+                newName = prefix + stringXMLModelIdentifiableEntry.getKey();
             }
-            identifiedElements.get(identifiedName).rename(newName);
+            stringXMLModelIdentifiableEntry.getValue().rename(newName);
         }
     }
 
     public void printIdentified() {
         System.out.println("Identified elements follow");
         XMLOutputter outputter = new XMLOutputter();
-        for (String pName : identifiedElements.keySet()) {
-            System.out.println("Original name: " + pName);
-            identifiedElements.get(pName).print(outputter, System.out);
+        for (Map.Entry<String, XMLModelIdentifiable> stringXMLModelIdentifiableEntry : identifiedElements.entrySet()) {
+            System.out.println("Original name: " + stringXMLModelIdentifiableEntry.getKey());
+            stringXMLModelIdentifiableEntry.getValue().print(outputter, System.out);
         }
     }
 
@@ -171,10 +170,10 @@ public class XMLModelFile implements ListModel {
             z.prefixIdentifiedNames("model1.", hm, false);
             z.printIdentified();
         } catch (IOException e) {
-
+          //
         }
         catch (JDOMException e) {
-
+         //
         }
     }
 

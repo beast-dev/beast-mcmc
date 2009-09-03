@@ -312,9 +312,9 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double shape = xo.getDoubleAttribute(SHAPE);
-            double scale = xo.getDoubleAttribute(SCALE);
-            double offset = xo.getDoubleAttribute(OFFSET);
+            final double shape = xo.getDoubleAttribute(SHAPE);
+            final double scale = xo.getDoubleAttribute(SCALE);
+            final double offset = xo.getDoubleAttribute(OFFSET);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new GammaDistribution(shape, scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {

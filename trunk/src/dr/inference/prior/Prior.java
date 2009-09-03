@@ -35,9 +35,9 @@ import dr.inference.model.Model;
  */
 public interface Prior {
 
-    public final static String PRIOR = "prior";
-    public final static String UNIFORM = "uniform";
-    public final static String TRUE = "true";
+    //public final static String PRIOR = "prior";
+    //public final static String UNIFORM = "uniform";
+    //public final static String TRUE = "true";
 
     public static final class UniformPrior implements Prior {
         public double getLogPrior(Model m) {

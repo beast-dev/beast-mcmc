@@ -118,7 +118,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            XMLObject cxo = (XMLObject) xo.getChild(MASKING);
+            XMLObject cxo = xo.getChild(MASKING);
             Parameter mask = (Parameter) cxo.getChild(Parameter.class);
 
             if (mask.getDimension() != parameter.getDimension())

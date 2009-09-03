@@ -184,7 +184,7 @@ public class AncestralSequenceAnnotator {
         protected SubstitutionModel substModel;
         protected FrequencyModel freqModel;
         protected SimpleAlignment alignment;
-        private String name;
+        private final String name;
 
         public SubstitutionModel getSubstitutionModel() {
             return substModel;

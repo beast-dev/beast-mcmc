@@ -72,12 +72,26 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 }
             }
 
+            // try to catch out of place elements, placed either by mistake or from older incompatible files.
+            
             for (int k = 0; k < xo.getChildCount(); ++k) {
                 final Object child = xo.getChild(k);
                 String unexpectedName;
                 if (child instanceof XMLObject) {
                     final XMLObject ch = (XMLObject) child;
                     unexpectedName = !isAllowed(ch.getName()) ? ch.getName() : null;
+                    final List<String> unexpected = isUnexpected(ch);
+                    if( unexpected != null ) {
+                        String n = "";
+                        for(int j = 0; j < unexpected.size(); j += 2) {
+                           n = n + ", " + unexpected.get(j) + " in " + unexpected.get(j+1);
+                        }
+                        if( unexpectedName == null ) {
+                            unexpectedName = n.substring(1, n.length()) ;
+                        } else {
+                           unexpectedName = unexpectedName + n;
+                        }
+                    }
                 } else {
                     unexpectedName = child.getClass().getName();
                     for (XMLSyntaxRule rule : rules) {
@@ -87,9 +101,9 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                         }
                     }
                 }
-                if (unexpectedName != null) {
+                if( unexpectedName != null ) {
 
-                    String msg = "unexpected element " + unexpectedName + " in " + xo;
+                    String msg = "unexpected element in " + xo + ": " + unexpectedName;
                     if (strictXML) {
                         throw new XMLParseException(msg);
                     }
@@ -123,6 +137,11 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
      */
     public abstract XMLSyntaxRule[] getSyntaxRules();
 
+    /**
+     * Allowed if any of the rules allows that element
+     * @param elementName
+     * @return
+     */
     public final boolean isAllowed(String elementName) {
         final XMLSyntaxRule[] rules = getSyntaxRules();
         if (rules != null && rules.length > 0) {
@@ -134,6 +153,32 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         }
 
         return false;
+    }
+
+    public final List<String> isUnexpected(XMLObject element) {
+        List<String> un = null;
+        final XMLSyntaxRule[] rules = getSyntaxRules();
+        if (rules != null && rules.length > 0) {
+            for (XMLSyntaxRule rule : rules) {
+                if (rule.isAllowed(element.getName())) {
+                    for(int nc = 0; nc < element.getChildCount(); ++nc) {
+                        final Object child = element.getChild(nc);
+                        if( child instanceof XMLObject ) {
+                            final String name = ((XMLObject) child).getName();
+                            if( ! rule.isAllowed(name) ) {
+                                if( un == null ) {
+                                    un = new ArrayList<String>();
+                                }
+                                un.add(name);
+                                un.add(element.getName());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return un;
     }
 
     public abstract String getParserDescription();

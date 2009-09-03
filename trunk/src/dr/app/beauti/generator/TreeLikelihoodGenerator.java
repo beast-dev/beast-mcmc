@@ -184,7 +184,7 @@ public class TreeLikelihoodGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (model.getBinarySubstitutionModel()) {
-                    case ModelOptions.BIN_COVARION:
+                    case BIN_COVARION:
                         useAmbiguities = true;
                         break;
 

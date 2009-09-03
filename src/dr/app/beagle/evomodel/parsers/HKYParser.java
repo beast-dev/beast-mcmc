@@ -49,7 +49,7 @@ public class HKYParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new ElementRule(FrequencyModelParser.FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
             new ElementRule(KAPPA,

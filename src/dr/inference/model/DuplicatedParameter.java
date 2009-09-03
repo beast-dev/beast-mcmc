@@ -108,7 +108,7 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            XMLObject cxo = (XMLObject) xo.getChild(COPIES);
+            XMLObject cxo = xo.getChild(COPIES);
             Parameter dup = (Parameter) cxo.getChild(Parameter.class);
 
             DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter);
@@ -146,6 +146,6 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
     private Parameter dupParameter;
     private int copies;
     private Bounds<Double> bounds;
-    private Bounds<Double> originalBounds;
+    private final Bounds<Double> originalBounds;
 
 }

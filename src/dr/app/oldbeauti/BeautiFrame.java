@@ -44,10 +44,10 @@ public class BeautiFrame extends DocumentFrame {
      */
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private BeastGenerator beautiOptions = new BeastGenerator();
+    private final BeastGenerator beautiOptions = new BeastGenerator();
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
-    private JLabel statusLabel = new JLabel("No data loaded");
+    private final JTabbedPane tabbedPane = new JTabbedPane();
+    private final JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
     private TaxaPanel taxaPanel;
@@ -503,6 +503,7 @@ public class BeautiFrame extends DocumentFrame {
                 FileDialog.SAVE);
 
         dialog.setVisible(true);
+        dialog.setFile(beautiOptions.fileNameStem + ".xml");
         if (dialog.getFile() != null) {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
@@ -583,7 +584,7 @@ public class BeautiFrame extends DocumentFrame {
         return openTemplateAction;
     }
 
-    private AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
+    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
         private static final long serialVersionUID = 2450459627280385426L;
 
         public void actionPerformed(ActionEvent ae) {
@@ -599,7 +600,7 @@ public class BeautiFrame extends DocumentFrame {
         return saveAsAction;
     }
 
-    private AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
+    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
         private static final long serialVersionUID = 2424923366448459342L;
 
         public void actionPerformed(ActionEvent ae) {

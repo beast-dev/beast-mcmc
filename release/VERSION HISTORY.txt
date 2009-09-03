@@ -29,7 +29,7 @@ Version 1.5.1 released 3rd September 2009
 	    (Heled & Drummond, 2009, submitted)
 
 	    BEAUti overhaul: BEAUti has been completely re-written to allow flexible
-	    handling of multi-partition analyses, including paritioning by
+	    handling of multi-partition analyses, including partitioning by
 	    substitution models, clock models and trees. BEAUti also supports the
 	    new *BEAST method.
 
@@ -43,6 +43,33 @@ Version 1.5.1 released 3rd September 2009
 
 	Bug Fixes
 		Many bugs fixed that were introduced in 1.5.0 including:
+		
+		Issue 38: If partitions are unlinked then the base frequencies should be 
+	              calculated from each partition separately;
+		Issue 80: ant build generates a broken beast;
+		Issue 81: ant build release fails after recent changes to beauti;
+		Issue 82: dr.app.util.Utils is broken (use of java 1.6 features?);
+		Issue 97: Remove "Link All/Unlink All" buttons from Data Tab;
+		Issue 98: Request to be able to view data partition alignments;
+		Issue 99: Suggestion: Clock Models tab;
+		Issue 100: Request to revise UI of "Choose Fix Rate Option";
+		Issue 103: Comments and suggestions for "MCMC Tab";
+		Issue 106: Single locus but multiple codon partitions: Doesn't allow 
+		           'Fixed mean rate';
+		Issue 109: BEAUti: Generating XML - no file overwriting warning?;
+		Issue 110: BEAUTi: excludedTaxonSetsComboBox and includedTaxonSetsComboBox 
+		           in Taxon Sets panel not updating
+		Issue 114: Beauti Priors panel for starbeast;
+		Issue 115: Beauti starbeast: missing updown operator for first gene;
+		Issue 116: Make TN93 available in BEAUTi;
+		Issue 118: Beauti defaults - clock.rate in starbeast;
+		Issue 119: Beauti fails;
+		Issue 120: Beauti silliness - warn about not saving when nothing was done;
+		Issue 121: Beauti generates spurios multiple upDown operators;
+		Issue 124: Create method to check calibration situation;
+		Issue 125: Tree prior panel affecting isShareSameTreePrior check box wrongly.
+		        
+		All issues can be tracking from http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 

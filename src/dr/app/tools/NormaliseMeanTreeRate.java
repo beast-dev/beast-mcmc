@@ -5,24 +5,27 @@ import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceAnalysis;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.FlexibleTree;
 
 import java.io.*;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Sibon
+ *
  * Date: 27/08/2009
  * Time: 16:43:14
- * To change this template use File | Settings | File Templates.
+ *
+ * Standalone application, that also contains public methods, for normalising the rates (and the times) of trees
+ * to a have a mean rate value that is specified. This is required when using discretized branch rates. Setting
+ * normaliseMeanRateTo in logTree will trigger the normalisation whenever trees are logged  
+ *
+ * @author Wai Lok Sibon Li
+ *
  */
 public class NormaliseMeanTreeRate {
 
@@ -56,28 +59,26 @@ public class NormaliseMeanTreeRate {
         ArrayList<Tree> treeList = new ArrayList<Tree>();
         ArrayList<String> treeNames = new ArrayList<String>();
         try {
-            int totalTrees = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
                 analyze(tree, normaliseMeanRateTo);
                 treeList.add(tree);
                 treeNames.add(tree.getId());
-                totalTrees++;
-
             }
-            new NexusExporter(System.out).exportTrees(treeList.toArray(new Tree[treeList.size()]),
-                    true, treeNames.toArray(new String[treeNames.size()]));
+
+            NexusExporter exporter = new NexusExporter(System.out);
+            exporter.setSortedTranslationTable(true);
+            exporter.exportTrees(treeList.toArray(new Tree[treeList.size()]),
+                true, treeNames.toArray(new String[treeNames.size()]));
 
         } catch (Importer.ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
         }
-
-        //analyze(parentFile, outFile, normaliseMeanRateTo);
     }
 
     /**
-     * Recursively analyzes log files.
+     * Normalises individual trees to the mean rate
      *
      * @param tree                tree to normalise
      * @param normaliseMeanRateTo rate to normalise to
@@ -99,36 +100,17 @@ public class NormaliseMeanTreeRate {
                     System.err.println("Tree file does not contain rate information. Program terminated");
                     System.exit(0);
                 }
-                //double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
                 treeRate += (Double) tree.getNodeAttribute(node, "rate") * tree.getBranchLength(node);
                 treeTime += tree.getBranchLength(node);
-//                System.out.println(tree.getNodeAttribute(node, "rate") + "\t" + tree.getBranchLength(node));
                 //branchCount++;
             }
-
-            /*Iterator iter = tree.getNodeAttributeNames(node);
-            if (iter != null) {
-                System.out.print(".");
-                while (iter.hasNext()) {
-                    //System.out.print("|");
-                    String name = (String) iter.next();
-                    //System.out.println(" fell off " + name);
-                    double nodeRate = (Double) tree.getNodeAttribute(node, "rate");
-                    //System.out.println("you the fucking best" + nodeRate + "dasf");
-                    //if() {
-                        treeRate += (Double) tree.getNodeAttribute(node, "rate");
-                    //}
-                    //attributeNames.add(name);
-                }
-            }*/
         }
 
         //treeRate /= branchCount;
         treeRate /= treeTime;
-//        System.out.println(" 1 " + tree);
 
         /* Normalise the rates here */
-        FlexibleTree modifiedTree = (FlexibleTree) tree;//.getCopy();
+        FlexibleTree modifiedTree = (FlexibleTree) tree;
         for (int i = 0; i < modifiedTree.getNodeCount(); i++) {
             NodeRef node = modifiedTree.getNode(i);
             if(!modifiedTree.isRoot(node)) {
@@ -136,26 +118,12 @@ public class NormaliseMeanTreeRate {
                 nodeRate = normaliseMeanRateTo * nodeRate / treeRate;
 
                 modifiedTree.setNodeAttribute(node, "rate", Double.valueOf(nodeRate));
-
-                //double newValue =(Double) modifiedTree.getNodeAttribute(node, "rate");
-                //System.out.println(nodeRate + "\t" + newValue);
-
-
-                //double nodeTime = (Double) modifiedTree.getNodeAttribute(node, "t");
                 double nodeTime = modifiedTree.getBranchLength(node);
                 nodeTime = nodeTime * treeRate / normaliseMeanRateTo;
                 modifiedTree.setBranchLength(node, nodeTime);
 
-//                System.out.println(nodeRate + "\t" + modifiedTree.getBranchLength(node));
-                //modifiedTree.setNodeAttribute(node, "t", Double.valueOf(nodeTime));
-
             }
         }
-        //tree = modifiedTree;
-
-
-//        System.out.println(" 2 " + tree);
-
     }
 
     public static void printTitle() {
@@ -205,8 +173,6 @@ public class NormaliseMeanTreeRate {
                         new Arguments.IntegerOption("input-file-name", "Input file name"),
                         new Arguments.IntegerOption("output-file-name", "Output file name"),
                         new Arguments.Option("normaliseMeanRateTo", "Mean rate we should normalise to"),
-//				new Arguments.Option("html", "format output as html"),
-//				new Arguments.Option("svg", "generate svg graphics"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -223,21 +189,6 @@ public class NormaliseMeanTreeRate {
             System.exit(0);
         }
 
-        /*int burnin = -1;
-        if (arguments.hasOption("burnin")) {
-            burnin = arguments.getIntegerOption("burnin");
-        }
-
-        boolean hpds = arguments.hasOption("hpd");
-        boolean ess = arguments.hasOption("ess");
-        boolean stdErr = arguments.hasOption("stdErr");
-        boolean shortReport = arguments.hasOption("short");
-
-        String marginalLikelihood = null;
-        if (arguments.hasOption("marginal")) {
-            marginalLikelihood = arguments.getStringOption("marginal");
-        }*/
-
         String inputFileName = null;
         if(arguments.hasOption("input-file-name")) {
             inputFileName = arguments.getStringOption("input-file-name");
@@ -253,30 +204,6 @@ public class NormaliseMeanTreeRate {
             normaliseMeanRateTo = arguments.getRealOption("normaliseMeanRateTo");
         }
 
-        //String outputFileName = arguments.getStringOption("output-file-name");
-        //double normaliseMeanRateTo = arguments.getRealOption("normaliseMeanRateTo");
-
-        /*String[] args2 = arguments.getLeftoverArguments();
-
-        if (args2.length > 2) {
-            System.err.println("Unknown option: " + args2[2]);
-            System.err.println();
-            printUsage(arguments);
-            System.exit(1);
-        }
-
-        if (args2.length > 0) {
-            inputFileName = args2[0];
-        }
-        if (args2.length > 1) {
-            outputFileName = args2[1];
-        }
-
-        if (inputFileName == null) {
-            // No input file name was given so throw up a dialog box...
-            inputFileName = Utils.getLoadFileName("NormaliseMeanTreeRate " + version.getVersionString() + " - Select tree file to normalise");
-        }*/
-
         if (inputFileName == null) {
             // No input file name was given so throw up a dialog box...
             inputFileName = Utils.getLoadFileName("NormaliseMeanTreeRate " + version.getVersionString() + " - Select log file to analyse");
@@ -284,7 +211,7 @@ public class NormaliseMeanTreeRate {
 
         if (outputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            outputFileName = Utils.getSaveFileName("NormaliseMeanTreeRate " + version.getVersionString() + " - Select log file to analyse");
+            outputFileName = Utils.getSaveFileName("NormaliseMeanTreeRate " + version.getVersionString() + " - Select file to save to");
         }
 
         if(Double.isNaN(normaliseMeanRateTo)) {

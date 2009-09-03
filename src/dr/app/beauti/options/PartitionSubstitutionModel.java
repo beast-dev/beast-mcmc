@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
 import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.evolution.datatype.DataType;
@@ -53,7 +54,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
-    private int binarySubstitutionModel = BeautiOptions.BIN_SIMPLE;
+    private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
     private boolean gammaHetero = false;
@@ -699,11 +700,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.aaSubstitutionModel = aaSubstitutionModel;
     }
 
-    public int getBinarySubstitutionModel() {
+    public BinaryModelType getBinarySubstitutionModel() {
         return binarySubstitutionModel;
     }
 
-    public void setBinarySubstitutionModel(int binarySubstitutionModel) {
+    public void setBinarySubstitutionModel(BinaryModelType binarySubstitutionModel) {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 

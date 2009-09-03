@@ -27,8 +27,8 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
 import dr.evomodel.substmodel.AminoAcidModelType;
+import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
@@ -109,7 +109,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(binarySubstCombo);
         binarySubstCombo.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                model.setBinarySubstitutionModel(binarySubstCombo.getSelectedIndex());
+                model.setBinarySubstitutionModel((BinaryModelType) binarySubstCombo.getSelectedItem());
             }
         });
         binarySubstCombo.setToolTipText("<html>Select the type of binary substitution model.</html>");
@@ -207,7 +207,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
-                binarySubstCombo.setSelectedIndex(model.getBinarySubstitutionModel());
+                binarySubstCombo.setSelectedItem(model.getBinarySubstitutionModel());
                 
                 break;
 
@@ -299,6 +299,7 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 addComponentWithLabel("Substitution Model:", binarySubstCombo);
+                addComponentWithLabel("Base frequencies:", frequencyCombo);
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                 heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);

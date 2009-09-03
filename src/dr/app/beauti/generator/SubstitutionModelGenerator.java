@@ -134,10 +134,10 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (model.getBinarySubstitutionModel()) {
-                    case ModelOptions.BIN_SIMPLE:
+                    case BIN_SIMPLE:
                         writeBinarySimpleModel(writer, model);
                         break;
-                    case ModelOptions.BIN_COVARION:
+                    case BIN_COVARION:
                         writeBinaryCovarionModel(writer, model);
                         break;
                 }
@@ -475,9 +475,9 @@ public class SubstitutionModelGenerator extends Generator {
 
                 String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
-                    case ModelOptions.BIN_SIMPLE:
+                    case BIN_SIMPLE:
                         break;
-                    case ModelOptions.BIN_COVARION:
+                    case BIN_COVARION:
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "alpha");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.s");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "frequencies");
@@ -632,11 +632,11 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         switch (model.getBinarySubstitutionModel()) {
-            case ModelOptions.BIN_SIMPLE:
+            case BIN_SIMPLE:
                 //writer.writeIDref(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, "bsimple");
                 writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, "bsimple");
                 break;
-            case ModelOptions.BIN_COVARION:
+            case BIN_COVARION:
                 writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, "bcov");
                 break;
             default:

@@ -78,8 +78,8 @@ public interface XMLSyntaxRule {
 
     /**
      *
-     * @param c
-     * @return
+     * @param c  class type
+     * @return true if rule accepts an element which, after parsing, is represented as a class of type 'c'
      */
     boolean isAllowed(Class c);
 }

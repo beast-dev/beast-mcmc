@@ -131,14 +131,15 @@ public class NexusExporter implements TreeExporter {
 
                     if( name.equals("weight") ) {
                         treeAttributes = treeAttributes + "[&W " + value + " ] ";
-                    } else {
+                    }
+                    else {
                         if( treeComment == null ) {
-                            treeComment = new StringBuilder(" [");
+                            treeComment = new StringBuilder(" [&");
                         } else if( treeComment.length() > 2 ) {
                             treeComment.append(", ");
                         }
 
-                        treeComment.append(name).append(" = ").append(value);
+                        treeComment.append(name).append("=").append(value);
                     }
                 }
                 if( treeComment != null ) {
@@ -216,6 +217,10 @@ public class NexusExporter implements TreeExporter {
             out.print(")");
         }
 
+        if (!tree.isRoot(node)) {
+            out.print(":");
+        }
+
         if (attributes) {
             Iterator iter = tree.getNodeAttributeNames(node);
             if (iter != null) {
@@ -237,8 +242,6 @@ public class NexusExporter implements TreeExporter {
         }
 
         if (!tree.isRoot(node)) {
-            out.print(":");
-
             double length = tree.getBranchLength(node);
             if (formatter != null) {
                 out.print(formatter.format(length));

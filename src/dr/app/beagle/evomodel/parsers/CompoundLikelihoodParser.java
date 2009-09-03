@@ -30,11 +30,13 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
                 Object rogueElement = xo.getChild(i);
 
-                throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to the " + LIKELIHOOD + " element");
+                throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to the "
+                        + LIKELIHOOD + " element");
             }
         }
 
-        Logger.getLogger("dr.evomodel").info("Multithreaded Likelihood, using " + compoundLikelihood.getLikelihoodCount() + " threads.");
+        Logger.getLogger("dr.evomodel").info("Multithreaded Likelihood, using "
+                + compoundLikelihood.getLikelihoodCount() + " threads.");
 
         return compoundLikelihood;
     }

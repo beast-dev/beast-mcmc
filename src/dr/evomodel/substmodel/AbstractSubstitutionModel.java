@@ -38,6 +38,9 @@ import java.util.List;
 /**
  * An abstract base class for substitution models.
  *
+ * This class needs serious documentation about the expectations from deriving classes.
+ *
+ *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
@@ -45,7 +48,6 @@ import java.util.List;
 @SuppressWarnings({"SuspiciousNameCombination", "UnusedAssignment"})
 public abstract class AbstractSubstitutionModel extends AbstractModel
         implements SubstitutionModel {
-
 
     public static final String MODEL = "model";
 
@@ -115,6 +117,9 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // frequencyModel changed!
         updateMatrix = true;
+        // if below is not true then the derived model registered more models - then it needs to override
+        // this method
+        assert( model == freqModel ) ;
         frequenciesChanged();
     }
 
@@ -167,8 +172,10 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
     protected void acceptState() {
     } // nothing to do
 
+    // called when any registered model changes
     abstract protected void frequenciesChanged();
 
+    // called when any registered variable changes
     abstract protected void ratesChanged();
 
     abstract protected void setupRelativeRates();

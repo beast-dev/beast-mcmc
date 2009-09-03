@@ -226,14 +226,14 @@ public class CompoundLikelihood implements Likelihood {
 		}
 
 		public String[] getParserNames() {
-			return new String[]{getParserName(), "posterior", "prior", "likelihood"};
+			return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD};
 		}
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			int threads = xo.getAttribute(THREADS, 0);
 
-            if (xo.getName().equalsIgnoreCase("likelihood") && System.getProperty("thread_count") != null) {
+            if (xo.getName().equalsIgnoreCase(LIKELIHOOD) && System.getProperty("thread_count") != null) {
                 threads = Integer.parseInt(System.getProperty("thread_count"));
                 if (threads < 0 || threads > 1000) {
                     // put an upper limit here - may be unnecessary?
@@ -274,8 +274,8 @@ public class CompoundLikelihood implements Likelihood {
 		}
 
 		private final XMLSyntaxRule[] rules = {
-				new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE),
-				AttributeRule.newIntegerRule(THREADS, true)
+                AttributeRule.newIntegerRule(THREADS, true),
+				new ElementRule(Likelihood.class, 1, Integer.MAX_VALUE)				
 		};
 
 		public Class getReturnType() {

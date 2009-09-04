@@ -163,7 +163,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "hky")}
         );
         writer.writeOpenTag(HKYParser.FREQUENCIES);
-        writeFrequencyModel(writer, model, num);
+        writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
         writeParameter(num, HKYParser.KAPPA, "kappa", model, writer);
@@ -187,7 +187,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "tn93")}
         );
         writer.writeOpenTag(HKYParser.FREQUENCIES);
-        writeFrequencyModel(writer, model, num);
+        writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
         writeParameter(num, TN93.KAPPA1, "kappa1", model, writer);
@@ -210,7 +210,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "gtr")}
         );
         writer.writeOpenTag(GTR.FREQUENCIES);
-        writeFrequencyModel(writer, model, num);
+        writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(GTR.FREQUENCIES);
 
         writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
@@ -220,8 +220,9 @@ public class SubstitutionModelGenerator extends Generator {
         writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         writer.writeCloseTag(GTR.GTR_MODEL);
     }
-
-    private void writeFrequencyModel(XMLWriter writer, PartitionSubstitutionModel model, int num) {
+    
+    // write frequencies for DNA data
+    private void writeFrequencyModelDNA(XMLWriter writer, PartitionSubstitutionModel model, int num) {
         String dataTypeDescription = model.getDataType().getDescription();
         String prefix = model.getPrefix(num);
         writer.writeOpenTag(
@@ -231,17 +232,7 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
 
-        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
-        		for (PartitionData partition : model.getAllPartitionData()) { //?
-        			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
-        		}   		
-        	} else { 
-        		for (PartitionData partition : model.getAllPartitionData()) { //?
-        			writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
-        		}
-        	}
-        }
+        writeAlignmentRefInFrequencies(writer, model, prefix);
 
         writer.writeOpenTag(FrequencyModel.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
@@ -277,6 +268,21 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeCloseTag(FrequencyModel.FREQUENCIES);
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);        
     }
+    
+    // adding mergePatterns or alignment ref for EMPIRICAL
+    private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
+        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
+            if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
+                for (PartitionData partition : model.getAllPartitionData()) { //?
+                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);                        
+                }           
+            } else { 
+                for (PartitionData partition : model.getAllPartitionData()) { //?
+                    writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
+                }
+            }
+        }
+    }
 
     /**
      * Write the Binary  simple model XML block.
@@ -302,21 +308,10 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
         
-        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-        	if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1) {
-        		for (PartitionData partition : model.getAllPartitionData()) { //?
-        			writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);    	    			
-        		}   		
-        	} else { 
-        		for (PartitionData partition : model.getAllPartitionData()) { //?
-        			writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
-        		}
-        	}
-        }
+        writeAlignmentRefInFrequencies(writer, model, prefix);
         
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
-        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+        writeFrequencyModelBinary(writer, model, prefix);
+        
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
 
@@ -338,7 +333,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
-        writeParameter(BinaryCovarionModel.FREQUENCIES,
+        writeParameter(BinaryCovarionModel.FREQUENCIES, // TODO
                 prefix + "frequencies", 2, 0.5, 0.0, 1.0, writer);
 
         writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
@@ -348,6 +343,26 @@ public class SubstitutionModelGenerator extends Generator {
         writeParameter(BinaryCovarionModel.SWITCHING_RATE, "bcov.s", model, writer);
 
         writer.writeCloseTag(BinaryCovarionModel.COVARION_MODEL);
+    }
+    
+    // write frequencies for binary data
+    private void writeFrequencyModelBinary(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
+        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        switch (model.getFrequencyPolicy()) {
+            case ALLEQUAL:
+            case ESTIMATED:                
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
+                        new Attribute.Default<String>(ParameterParser.VALUE, "0.5 0.5") }, true);                
+                break;
+                
+            case EMPIRICAL:                
+                writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
+                  
+                break;
+        }
+//        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
+        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
     }
 
     /**

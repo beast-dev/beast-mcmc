@@ -55,7 +55,7 @@ public class PartitionModelPanel extends OptionsPanel {
 	
 	private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(NucModelType.HKY, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
-    private JComboBox binarySubstCombo = new JComboBox(new String[]{"Simple", "Covarion"});
+    private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 

@@ -90,7 +90,7 @@ public class LogFileTraceExporter extends TabularData {
             try {
                 return new LogFileTraceExporter(file, burnIn);
             } catch (Exception e) {
-                return new XMLParseException(e.getMessage());
+                throw new XMLParseException(e.getMessage());
             }
         }
 

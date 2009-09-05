@@ -470,12 +470,21 @@ public class ElementRule implements XMLSyntaxRule {
 	}
 
 
-    public boolean isAllowed(String elementName) {
+    public boolean isLegalElementName(String elementName) {
         return c == null &&  name != null && name.equals(elementName);
     }
 
-    public boolean isAllowed(Class c) {
+    public boolean isLegalElementClass(Class c) {
         return this.c != null && this.c.isAssignableFrom(c);
+    }
+
+    public boolean isLegalSubelementName(String elementName) {
+        for( XMLSyntaxRule r : rules ) {
+            if( r.isLegalElementName(elementName) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getMin() { return min; }

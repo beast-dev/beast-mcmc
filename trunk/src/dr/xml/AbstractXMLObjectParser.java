@@ -95,7 +95,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 } else {
                     unexpectedName = child.getClass().getName();
                     for (XMLSyntaxRule rule : rules) {
-                        if (rule.isAllowed(child.getClass())) {
+                        if (rule.isLegalElementClass(child.getClass())) {
                             unexpectedName = null;
                             break;
                         }
@@ -146,7 +146,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         final XMLSyntaxRule[] rules = getSyntaxRules();
         if (rules != null && rules.length > 0) {
             for (XMLSyntaxRule rule : rules) {
-                if (rule.isAllowed(elementName)) {
+                if (rule.isLegalElementName(elementName)) {
                     return true;
                 }
             }
@@ -160,12 +160,12 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         final XMLSyntaxRule[] rules = getSyntaxRules();
         if (rules != null && rules.length > 0) {
             for (XMLSyntaxRule rule : rules) {
-                if (rule.isAllowed(element.getName())) {
+                if (rule.isLegalElementName(element.getName())) {
                     for(int nc = 0; nc < element.getChildCount(); ++nc) {
                         final Object child = element.getChild(nc);
                         if( child instanceof XMLObject ) {
                             final String name = ((XMLObject) child).getName();
-                            if( ! rule.isAllowed(name) ) {
+                            if( ! rule.isLegalSubelementName(name) ) {
                                 if( un == null ) {
                                     un = new ArrayList<String>();
                                 }

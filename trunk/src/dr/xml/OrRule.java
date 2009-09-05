@@ -118,18 +118,27 @@ public class OrRule implements XMLSyntaxRule {
         return set;
 	}
 
-    public boolean isAllowed(String elementName) {
+    public boolean isLegalElementName(String elementName) {
         for (XMLSyntaxRule rule : rules) {
-           if( rule.isAllowed(elementName) ) {
+           if( rule.isLegalElementName(elementName) ) {
                return true;
            }
         }
         return false;
     }
 
-    public boolean isAllowed(Class c) {
+    public boolean isLegalElementClass(Class c) {
         for (XMLSyntaxRule rule : rules) {
-            if( rule.isAllowed(c) ) {
+            if( rule.isLegalElementClass(c) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isLegalSubelementName(String elementName) {
+        for (XMLSyntaxRule rule : rules) {
+            if( rule.isLegalSubelementName(elementName) ) {
                 return true;
             }
         }

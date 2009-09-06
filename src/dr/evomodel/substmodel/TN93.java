@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
 /**
  * Tamura and Nei model of nucleotide evolution.
  * <p/>
- * Most general model which has an analytical solution.
+ * Most general model which has an analytical solution (i.e. that I personally know how to solve).
  *
  * @author Joseph Heled
  */
@@ -43,8 +44,8 @@ public class TN93 extends AbstractNucleotideModel {
     public static final String KAPPA2 = "kappa2";
     public static final String FREQUENCIES = "frequencies";
 
-    private Parameter kappa1Parameter = null;
-    private Parameter kappa2Parameter = null;
+    private Variable<Double> kappa1Variable = null;
+    private Variable<Double> kappa2Variable = null;
 
     private boolean updateIntermediates = true;
 
@@ -75,15 +76,15 @@ public class TN93 extends AbstractNucleotideModel {
     /**
      * Constructor
      */
-    public TN93(Parameter kappa1Parameter, Parameter kappa2Parameter, FrequencyModel freqModel) {
+    public TN93(Variable kappa1Variable, Variable kappa2Variable, FrequencyModel freqModel) {
 
         super(TN93_MODEL, freqModel);
-        this.kappa1Parameter = kappa1Parameter;
-        this.kappa2Parameter = kappa2Parameter;
-        addVariable(kappa1Parameter);
-        addVariable(kappa2Parameter);
-        kappa1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        kappa2Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.kappa1Variable = kappa1Variable;
+        this.kappa2Variable = kappa2Variable;
+        addVariable(kappa1Variable);
+        addVariable(kappa2Variable);
+        kappa1Variable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        kappa2Variable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         updateIntermediates = true;
     }
 
@@ -91,14 +92,14 @@ public class TN93 extends AbstractNucleotideModel {
      * @return kappa1
      */
     public final double getKappa1() {
-        return kappa1Parameter.getParameterValue(0);
+        return kappa1Variable.getValue(0);
     }
 
     /**
      * @return kappa2
      */
     public final double getKappa2() {
-        return kappa2Parameter.getParameterValue(0);
+        return kappa2Variable.getValue(0);
     }
 
 
@@ -300,12 +301,12 @@ public class TN93 extends AbstractNucleotideModel {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Parameter kappa1Param = (Parameter) xo.getElementFirstChild(KAPPA1);
-            Parameter kappa2Param = (Parameter) xo.getElementFirstChild(KAPPA2);
+            Variable kappa1Param = (Variable) xo.getElementFirstChild(KAPPA1);
+            Variable kappa2Param = (Variable) xo.getElementFirstChild(KAPPA2);
             FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FREQUENCIES);
 
             Logger.getLogger("dr.evomodel").info("Creating TN93 substitution model. Initial kappa = "
-                    + kappa1Param.getParameterValue(0) + "," + kappa2Param.getParameterValue(0));
+                    + kappa1Param.getValue(0) + "," + kappa2Param.getValue(0));
 
             return new TN93(kappa1Param, kappa2Param, freqModel);
         }
@@ -331,9 +332,9 @@ public class TN93 extends AbstractNucleotideModel {
                     new ElementRule(FREQUENCIES,
                             new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
                     new ElementRule(KAPPA1,
-                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                            new XMLSyntaxRule[]{new ElementRule(Variable.class)}),
                     new ElementRule(KAPPA2,
-                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+                            new XMLSyntaxRule[]{new ElementRule(Variable.class)})
             };
         }
     };

@@ -6,7 +6,7 @@ import dr.math.distributions.InverseGammaDistribution;
 /**
  * Simple test for inverse gamma distribution.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 24/04/2009
  */
 public class InvGammaTest extends TestCase {

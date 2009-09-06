@@ -14,7 +14,7 @@ import dr.xml.*;
  * <p/>
  * Very experimental and only slightly tested at this time
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 25/04/2008
  */
 

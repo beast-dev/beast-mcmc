@@ -8,7 +8,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 8/12/2008
  */
 public class SpeciesTreeBMPrior extends Likelihood.Abstract {

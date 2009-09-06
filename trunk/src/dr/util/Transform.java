@@ -25,6 +25,8 @@
 
 package dr.util;
 
+// todo not really used, is it?
+
 /**
  * interface for the one-to-one transform of a continuous variable.
  * A static member Transform.LOG provides an instance of LogTransform

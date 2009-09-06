@@ -8,7 +8,7 @@ import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 25/04/2008
  */
 

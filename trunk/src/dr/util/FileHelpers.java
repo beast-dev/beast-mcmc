@@ -28,7 +28,7 @@ package dr.util;
 import java.io.*;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 15/04/2008
  */
 public class FileHelpers {

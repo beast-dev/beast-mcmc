@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * General Time Reversible model of nucleotide evolution
@@ -39,67 +40,67 @@ import dr.inference.model.Parameter;
  */
 public class GTR extends BaseSubstitutionModel {
 
-    private Parameter rateACParameter = null;
-    private Parameter rateAGParameter = null;
-    private Parameter rateATParameter = null;
-    private Parameter rateCGParameter = null;
-    private Parameter rateCTParameter = null;
-    private Parameter rateGTParameter = null;
+    private Variable<Double> rateACVariable = null;
+    private Variable<Double> rateAGVariable = null;
+    private Variable<Double> rateATVariable = null;
+    private Variable<Double> rateCGVariable = null;
+    private Variable<Double> rateCTVariable = null;
+    private Variable<Double> rateGTVariable = null;
 
     /**
-     * @param rateACParameter rate of A<->C substitutions
-     * @param rateAGParameter rate of A<->G substitutions
-     * @param rateATParameter rate of A<->T substitutions
-     * @param rateCGParameter rate of C<->G substitutions
-     * @param rateCTParameter rate of C<->T substitutions
-     * @param rateGTParameter rate of G<->T substitutions
+     * @param rateACVariable rate of A<->C substitutions
+     * @param rateAGVariable rate of A<->G substitutions
+     * @param rateATVariable rate of A<->T substitutions
+     * @param rateCGVariable rate of C<->G substitutions
+     * @param rateCTVariable rate of C<->T substitutions
+     * @param rateGTVariable rate of G<->T substitutions
      * @param freqModel       frequencies
      */
     public GTR(
-            Parameter rateACParameter,
-            Parameter rateAGParameter,
-            Parameter rateATParameter,
-            Parameter rateCGParameter,
-            Parameter rateCTParameter,
-            Parameter rateGTParameter,
+            Variable rateACVariable,
+            Variable rateAGVariable,
+            Variable rateATVariable,
+            Variable rateCGVariable,
+            Variable rateCTVariable,
+            Variable rateGTVariable,
             FrequencyModel freqModel) {
 
         super("GTR", Nucleotides.INSTANCE, freqModel);
 
-        if (rateACParameter != null) {
-            addVariable(rateACParameter);
-            rateACParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateACParameter = rateACParameter;
+        if (rateACVariable != null) {
+            addVariable(rateACVariable);
+            rateACVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateACVariable = rateACVariable;
         }
 
-        if (rateAGParameter != null) {
-            addVariable(rateAGParameter);
-            rateAGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateAGParameter = rateAGParameter;
+        if (rateAGVariable != null) {
+            addVariable(rateAGVariable);
+            rateAGVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateAGVariable = rateAGVariable;
         }
 
-        if (rateATParameter != null) {
-            addVariable(rateATParameter);
-            rateATParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateATParameter = rateATParameter;
+        if (rateATVariable != null) {
+            addVariable(rateATVariable);
+            rateATVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateATVariable = rateATVariable;
         }
 
-        if (rateCGParameter != null) {
-            addVariable(rateCGParameter);
-            rateCGParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateCGParameter = rateCGParameter;
+        if (rateCGVariable != null) {
+            addVariable(rateCGVariable);
+            rateCGVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateCGVariable = rateCGVariable;
         }
 
-        if (rateCTParameter != null) {
-            addVariable(rateCTParameter);
-            rateCTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateCTParameter = rateCTParameter;
+        if (rateCTVariable != null) {
+            addVariable(rateCTVariable);
+            rateCTVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateCTVariable = rateCTVariable;
         }
 
-        if (rateGTParameter != null) {
-            addVariable(rateGTParameter);
-            rateGTParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-            this.rateGTParameter = rateGTParameter;
+        if (rateGTVariable != null) {
+            addVariable(rateGTVariable);
+            rateGTVariable.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            this.rateGTVariable = rateGTVariable;
         }
 
     }
@@ -127,23 +128,23 @@ public class GTR extends BaseSubstitutionModel {
     }
 
     protected void setupRelativeRates(double[] rates) {
-        if (rateACParameter != null) {
-            rates[0] = rateACParameter.getParameterValue(0);
+        if (rateACVariable != null) {
+            rates[0] = rateACVariable.getValue(0);
         }
-        if (rateAGParameter != null) {
-            rates[1] = rateAGParameter.getParameterValue(0);
+        if (rateAGVariable != null) {
+            rates[1] = rateAGVariable.getValue(0);
         }
-        if (rateATParameter != null) {
-            rates[2] = rateATParameter.getParameterValue(0);
+        if (rateATVariable != null) {
+            rates[2] = rateATVariable.getValue(0);
         }
-        if (rateCGParameter != null) {
-            rates[3] = rateCGParameter.getParameterValue(0);
+        if (rateCGVariable != null) {
+            rates[3] = rateCGVariable.getValue(0);
         }
-        if (rateCTParameter != null) {
-            rates[4] = rateCTParameter.getParameterValue(0);
+        if (rateCTVariable != null) {
+            rates[4] = rateCTVariable.getValue(0);
         }
-        if (rateGTParameter != null) {
-            rates[5] = rateGTParameter.getParameterValue(0);
+        if (rateGTVariable != null) {
+            rates[5] = rateGTVariable.getValue(0);
         }
     }
 

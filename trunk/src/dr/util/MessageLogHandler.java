@@ -48,7 +48,7 @@ public class MessageLogHandler extends StreamHandler {
 				
 		// Line separator string.  This is the value of the line.separator
 		// property at the moment that the SimpleFormatter was created.
-		private String lineSeparator = (String) java.security.AccessController.doPrivileged(
+		private final String lineSeparator = (String) java.security.AccessController.doPrivileged(
 		        new sun.security.action.GetPropertyAction("line.separator"));
 
 		/**
@@ -57,9 +57,8 @@ public class MessageLogHandler extends StreamHandler {
 		 * @return a formatted log record
 		 */
 		public synchronized String format(LogRecord record) {
-			StringBuffer sb = new StringBuffer();
-			String message = formatMessage(record);
-			sb.append(message);
+			final StringBuffer sb = new StringBuffer();
+            sb.append(formatMessage(record));
 			sb.append(lineSeparator);
 			return sb.toString();
 		}

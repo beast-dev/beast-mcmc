@@ -236,8 +236,8 @@ public class HeapSort {
         }
 
         sort(test);
-        for (int i = 0; i < test.length; i++) {
-            System.out.print(test[i] + " ");
+        for(ComparableDouble aTest : test) {
+            System.out.print(aTest + " ");
         }
         System.out.println();
 

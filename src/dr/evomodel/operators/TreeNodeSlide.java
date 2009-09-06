@@ -19,7 +19,7 @@ import java.util.Arrays;
  * <a href="http://citeseer.ist.psu.edu/rd/27056960%2C5592%2C1%2C0.25%2CDownload/http://citeseer.ist.psu.edu/cache/papers/cs/5768/ftp:zSzzSzftp.stat.wisc.eduzSzpubzSznewtonzSzlastfinal.pdf/mau98bayesian.pdf">
  * Bayesian Phylogenetic Inference via Markov Chain Monte Carlo Methods</a>
  *
- *  @author joseph
+ *  @author Joseph Heled
  *         Date: 29/05/2008
  */
 public class TreeNodeSlide extends SimpleMCMCOperator {

@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 /**
  * Test HKY matrix exponentiation
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 7/11/2007
  */
 public class TN93Test extends TestCase {

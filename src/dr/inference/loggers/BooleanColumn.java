@@ -3,7 +3,7 @@ package dr.inference.loggers;
 /**
  *
  * Boolean formating (C style) 0 is false, anything else true;
- * @author joseph
+ * @author Joseph Heled
  *         Date: 4/06/2008
  */
 

@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  * Export trace analysis data such as mean,median,HPD and ESS of trace variables.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 25/10/2007
  */
 public class LogFileTraceExporter extends TabularData {
@@ -41,10 +41,11 @@ public class LogFileTraceExporter extends TabularData {
     }
 
     public int nRows() {
-        return rows.length; // analysis.getStateCount();
+        return rows.length;
     }
 
     public Object data(int nRow, int nColumn) {
+        // read on demand
         if (distributions[nColumn] == null) {
             analysis.analyseTrace(nColumn);
             distributions[nColumn] = analysis.getDistributionStatistics(nColumn);
@@ -71,7 +72,6 @@ public class LogFileTraceExporter extends TabularData {
         }
 
         return null;
-        // return analysis.getStateValue(nColumn,  nRow);
     }
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
@@ -85,7 +85,7 @@ public class LogFileTraceExporter extends TabularData {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final File file = FileHelpers.getFile(xo.getStringAttribute(FILENAME));
-            int burnIn = xo.getAttribute(BURN_IN, -1);
+            final int burnIn = xo.getAttribute(BURN_IN, -1);
 
             try {
                 return new LogFileTraceExporter(file, burnIn);
@@ -93,10 +93,6 @@ public class LogFileTraceExporter extends TabularData {
                 throw new XMLParseException(e.getMessage());
             }
         }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
 
         public String getParserDescription() {
             return "reconstruct population graph from variable dimension run.";
@@ -115,7 +111,6 @@ public class LogFileTraceExporter extends TabularData {
                 AttributeRule.newIntegerRule(BURN_IN, true,
                         "The number of states (not sampled states, but actual states) that are discarded from the" +
                                 " beginning of the trace before doing the analysis"),
-
         };
     };
 }

@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 19/11/2007
  */
 public interface MultiLociTreeSet {

@@ -35,11 +35,6 @@ import dr.util.HeapSort;
  * @version $Id: DiscreteStatistics.java,v 1.11 2006/07/02 21:14:53 rambaut Exp $
  */
 public class DiscreteStatistics {
-
-    //
-    // Public stuff
-    //
-
     /**
      * compute mean
      *
@@ -49,11 +44,11 @@ public class DiscreteStatistics {
     public static double mean(double[] x) {
         double m = 0;
         int count = x.length;
-        for (int i = 0; i < x.length; i++) {
-            if (Double.isNaN(x[i])) {
-                count --;
+        for(double aX : x) {
+            if( Double.isNaN(aX) ) {
+                count--;
             } else {
-                m += x[i];
+                m += aX;
             }
         }
 
@@ -106,11 +101,11 @@ public class DiscreteStatistics {
     public static double variance(double[] x, double mean) {
         double var = 0;
         int count = x.length;
-        for (int i = 0; i < x.length; i++) {
-            if (Double.isNaN(x[i])) {
-                count --;
+        for(double aX : x) {
+            if( Double.isNaN(aX) ) {
+                count--;
             } else {
-                double diff = x[i] - mean;
+                double diff = aX - mean;
                 var += diff * diff;
             }
         }

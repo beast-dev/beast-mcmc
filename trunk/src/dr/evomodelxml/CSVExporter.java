@@ -55,11 +55,11 @@ public class CSVExporter extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        String fileName = xo.getStringAttribute(FILE_NAME);
+        final String fileName = xo.getStringAttribute(FILE_NAME);
 
-        File csv = FileHelpers.getFile(fileName);
+        final File csv = FileHelpers.getFile(fileName);
 
-        String sep = xo.getAttribute(SEPARATOR, "\t");
+        final String sep = xo.getAttribute(SEPARATOR, "\t");
 
         try {
             final PrintWriter writer = new PrintWriter(new FileWriter(csv));

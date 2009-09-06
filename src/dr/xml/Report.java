@@ -134,7 +134,7 @@ public class Report {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule("type", "The format of the report", new String[]{"TEXT", "XHTML"}, true),
                 new StringAttributeRule("title", "The title of the report", "Report", true),
                 new ElementRule(Object.class, "An arbitrary mixture of text and elements to report", 1, Integer.MAX_VALUE),

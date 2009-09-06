@@ -64,9 +64,8 @@ public interface Attribute<T> {
             return name + ": " + value;
         }
 
-        private String name;
-        private T value;
-
+        private final String name;
+        private final T value;
     }
 }
 

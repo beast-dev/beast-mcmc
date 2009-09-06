@@ -102,5 +102,4 @@ public interface SiteModel extends Model {
 	 * @return the frequencyModel.
 	 */
 	FrequencyModel getFrequencyModel();
-
 }

@@ -91,7 +91,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			return index;
 		}
 
-		return getWeightedOperatorIndex(MathUtils.nextDouble() * totalWeight);
+        final double v = MathUtils.nextDouble();
+        //System.err.println("v=" + v);
+        return getWeightedOperatorIndex(v * totalWeight);
 	}
 
 	public void setSequential(boolean seq) {
@@ -155,7 +157,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
     private class OperatorColumn extends NumberColumn {
-		private MCMCOperator op;
+		private final MCMCOperator op;
 
 		public OperatorColumn(String label, MCMCOperator op) {
 			super(label);

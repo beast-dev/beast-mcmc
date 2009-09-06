@@ -66,7 +66,8 @@ public class MCMCCriterion implements Acceptor {
         // for coercedAcceptanceProbability
         if (logr[0] > 0) logr[0] = 0.0;
 
-		final boolean accept = MathUtils.randomLogDouble() < logr[0];
+        final double v = MathUtils.randomLogDouble();
+        final boolean accept = v < logr[0];
 
         return accept;
     }

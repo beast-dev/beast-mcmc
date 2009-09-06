@@ -28,6 +28,7 @@ package dr.evomodel.substmodel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.inference.model.Variable;
 
 
 /**
@@ -44,7 +45,7 @@ public class HKY extends AbstractNucleotideModel {
      */
     private double tsTv;
 
-    private Parameter kappaParameter = null;
+    private Variable<Double> kappaParameter = null;
 
     private boolean updateIntermediates = true;
 
@@ -69,7 +70,7 @@ public class HKY extends AbstractNucleotideModel {
     /**
      * Constructor
      */
-    public HKY(Parameter kappaParameter, FrequencyModel freqModel) {
+    public HKY(Variable kappaParameter, FrequencyModel freqModel) {
 
         super(NucModelType.HKY.getXMLName(), freqModel);
         this.kappaParameter = kappaParameter;
@@ -84,7 +85,7 @@ public class HKY extends AbstractNucleotideModel {
      * set kappa
      */
     public void setKappa(double kappa) {
-        kappaParameter.setParameterValue(0, kappa);
+        kappaParameter.setValue(0, kappa);
         updateMatrix = true;
     }
 
@@ -92,7 +93,7 @@ public class HKY extends AbstractNucleotideModel {
      * @return kappa
      */
     public final double getKappa() {
-        return kappaParameter.getParameterValue(0);
+        return kappaParameter.getValue(0);
     }
 
     /**
@@ -360,7 +361,7 @@ public class HKY extends AbstractNucleotideModel {
     // Private stuff
     //
 
-    private Statistic tsTvStatistic = new Statistic.Abstract() {
+    private final Statistic tsTvStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "tsTv";

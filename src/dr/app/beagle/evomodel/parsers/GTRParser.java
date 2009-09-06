@@ -3,6 +3,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 /**
@@ -10,8 +11,6 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 public class GTRParser extends AbstractXMLObjectParser {
-
-
     public static final String GTR_MODEL = "gtrModel";
 
     public static final String A_TO_C = "rateAC";
@@ -32,41 +31,41 @@ public class GTRParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-        Parameter rateACParameter = null;
+        Variable rateACVariable = null;
         if (xo.hasChildNamed(A_TO_C)) {
-            rateACParameter = (Parameter) xo.getElementFirstChild(A_TO_C);
+            rateACVariable = (Variable) xo.getElementFirstChild(A_TO_C);
         }
-        Parameter rateAGParameter = null;
+        Variable rateAGVariable = null;
         if (xo.hasChildNamed(A_TO_G)) {
-            rateAGParameter = (Parameter) xo.getElementFirstChild(A_TO_G);
+            rateAGVariable = (Variable) xo.getElementFirstChild(A_TO_G);
         }
-        Parameter rateATParameter = null;
+        Variable rateATVariable = null;
         if (xo.hasChildNamed(A_TO_T)) {
-            rateATParameter = (Parameter) xo.getElementFirstChild(A_TO_T);
+            rateATVariable = (Variable) xo.getElementFirstChild(A_TO_T);
         }
-        Parameter rateCGParameter = null;
+        Variable rateCGVariable = null;
         if (xo.hasChildNamed(C_TO_G)) {
-            rateCGParameter = (Parameter) xo.getElementFirstChild(C_TO_G);
+            rateCGVariable = (Variable) xo.getElementFirstChild(C_TO_G);
         }
-        Parameter rateCTParameter = null;
+        Variable rateCTVariable = null;
         if (xo.hasChildNamed(C_TO_T)) {
-            rateCTParameter = (Parameter) xo.getElementFirstChild(C_TO_T);
+            rateCTVariable = (Variable) xo.getElementFirstChild(C_TO_T);
         }
-        Parameter rateGTParameter = null;
+        Variable rateGTVariable = null;
         if (xo.hasChildNamed(G_TO_T)) {
-            rateGTParameter = (Parameter) xo.getElementFirstChild(G_TO_T);
+            rateGTVariable = (Variable) xo.getElementFirstChild(G_TO_T);
         }
         int countNull = 0;
-        if (rateACParameter == null) countNull++;
-        if (rateAGParameter == null) countNull++;
-        if (rateATParameter == null) countNull++;
-        if (rateCGParameter == null) countNull++;
-        if (rateCTParameter == null) countNull++;
-        if (rateGTParameter == null) countNull++;
+        if (rateACVariable == null) countNull++;
+        if (rateAGVariable == null) countNull++;
+        if (rateATVariable == null) countNull++;
+        if (rateCGVariable == null) countNull++;
+        if (rateCTVariable == null) countNull++;
+        if (rateGTVariable == null) countNull++;
 
         if (countNull != 1)
             throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
-        return new GTR(rateACParameter, rateAGParameter, rateATParameter, rateCGParameter, rateCTParameter, rateGTParameter, freqModel);
+        return new GTR(rateACVariable, rateAGVariable, rateATVariable, rateCGVariable, rateCTVariable, rateGTVariable, freqModel);
     }
 
     //************************************************************************
@@ -106,16 +105,16 @@ public class GTRParser extends AbstractXMLObjectParser {
             new ElementRule(FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
             new ElementRule(A_TO_C,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(A_TO_G,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(A_TO_T,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(C_TO_G,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(C_TO_T,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true),
             new ElementRule(G_TO_T,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true)
+                    new XMLSyntaxRule[]{new ElementRule(Variable.class)}, true)
     };
 }

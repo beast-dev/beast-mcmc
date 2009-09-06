@@ -98,6 +98,43 @@ public interface Variable<V> extends Identifiable {
 
     void addBounds(Bounds<V> bounds);
 
+    public abstract class Base<V> implements Variable<V> {
+        Base(String id) {
+            this.id = id;
+        }
+
+        private void fireVariableChanged(int index) {
+            for (VariableListener listener : listeners) {
+                listener.variableChangedEvent(this, index, ChangeType.VALUE_CHANGED);
+            }
+        }
+
+        public void addVariableListener(VariableListener listener) {
+            listeners.add(listener);
+        }
+
+        public void removeVariableListener(VariableListener listener) {
+            listeners.remove(listener);
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+
+        public String getVariableName() {
+            return id;
+        }
+
+        protected List<VariableListener> listeners = new ArrayList<VariableListener>();
+
+        protected String id;
+    }
+
     public class D implements Variable<Double>, Loggable {
 
         public D(double value, int size) {
@@ -250,7 +287,6 @@ public interface Variable<V> extends Identifiable {
                 return getValue(dim);
             }
         }
-
 
         String id;
         double[] values;

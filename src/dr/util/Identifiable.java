@@ -42,6 +42,5 @@ public interface Identifiable {
      * set the id as a string.
      */
     public void setId(String id);
-
 }
 

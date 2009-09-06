@@ -176,7 +176,6 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
 
             final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-
             return new LogRandomWalkOperator(parameter, size, mode, weight, scaleAll, scaleAllInd);
         }
 

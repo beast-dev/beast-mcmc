@@ -30,7 +30,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 
 /**
  * An abstract base class for substitution models.

@@ -34,14 +34,14 @@ package dr.util;
  */
 public class ComparableDouble implements Comparable {
 	
-	private double value;
+	private final double value;
 
 	public ComparableDouble(double d) {
 		value = d;
 	}
 
 	public int compareTo(Object o) {
-		
+
 		ComparableDouble cd = (ComparableDouble)o;
 
 		if (value < cd.value) {
@@ -52,7 +52,7 @@ public class ComparableDouble implements Comparable {
 	}
 
 	public boolean equals(Object o) {
-	
+
 		ComparableDouble cd = (ComparableDouble)o;
 		return cd.value == value;
 	}

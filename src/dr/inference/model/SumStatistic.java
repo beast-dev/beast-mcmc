@@ -103,21 +103,19 @@ public class SumStatistic extends Statistic.Abstract {
             boolean elementwise = xo.getAttribute("elementwise", false);
 
             String name = SUM_STATISTIC;
-            if (xo.hasAttribute(NAME) || xo.hasAttribute(dr.xml.XMLParser.ID))
+            if (xo.hasAttribute(NAME) || xo.hasAttribute(dr.xml.XMLParser.ID)) {
                 name = xo.getAttribute(NAME, xo.getId());
+            }
 
-            SumStatistic sumStatistic = new SumStatistic(name, elementwise);
+            final SumStatistic sumStatistic = new SumStatistic(name, elementwise);
 
             for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
-                if (child instanceof Statistic) {
-                    try {
-                        sumStatistic.addStatistic((Statistic) child);
-                    } catch (IllegalArgumentException iae) {
-                        throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
-                    }
-                } else {
-                    throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
+                final Statistic statistic = (Statistic) xo.getChild(i);
+
+                try {
+                    sumStatistic.addStatistic(statistic);
+                } catch (IllegalArgumentException iae) {
+                    throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
                 }
             }
 

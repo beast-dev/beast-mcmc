@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * Binds taxa in gene trees with species information.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 25/05/2008
  */
 public class SpeciesBindings extends AbstractModel {

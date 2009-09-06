@@ -44,7 +44,7 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  * Sampling proportion not verified via simulation. Proportion set by default to 1, an assignment which makes the expressions
  * identical to the ones pre change.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 24/02/2008
  */
 public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {

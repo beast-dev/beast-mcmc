@@ -6,7 +6,7 @@ import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evolution.util.Units;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 23/06/2009
  */
 public class VDdemographicFunctionTest extends TestCase {

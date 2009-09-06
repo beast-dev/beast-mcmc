@@ -5,7 +5,7 @@ package dr.evolution.coalescent;
  *
  * Minimal implementation, only value and intensity implemented.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 19/11/2007
  */
 public class ScaledDemographic extends DemographicFunction.Abstract {

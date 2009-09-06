@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * Species tree which includes demographic function per branch.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 24/05/2008
  */
 public class SpeciesTreeModel extends AbstractModel implements MutableTree, NodeAttributeProvider, TreeLogger.LogUpon, Scalable {

@@ -6,7 +6,7 @@ package dr.inference.loggers;
  *
  * Values outside [0,1] are shown as is.
  *
- * @author joseph
+ * @author Joseph Heled
  *         Date: 4/06/2008
  */
 public class PercentColumn extends NumberColumn {

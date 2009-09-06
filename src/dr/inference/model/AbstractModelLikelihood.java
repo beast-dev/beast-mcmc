@@ -4,7 +4,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 
 /**
- * @author joseph
+ * @author Joseph Heled
  *         Date: 16/04/2009
  */
 public abstract class AbstractModelLikelihood extends AbstractModel implements Likelihood {

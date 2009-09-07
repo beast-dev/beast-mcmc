@@ -23,10 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.prior;
-
-import dr.inference.model.Model;
-import dr.inference.model.Statistic;
+//package dr.inference.prior;
+//
+//import dr.inference.model.Model;
+//import dr.inference.model.Statistic;
 
 /**
  * This class provides a statistic for interrogating the prior probability of a model.
@@ -35,18 +35,18 @@ import dr.inference.model.Statistic;
  *
  * @version $Id: LogPriorStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
-public class LogPriorStatistic extends Statistic.Abstract {
-
-	public LogPriorStatistic(Prior prior, Model model) {
-		this.prior = prior;
-		this.model = model;
-	}
-
-	public String getStatisticName() { return "logPrior"; }
-
-	public int getDimension() { return 1; }
-	public double getStatisticValue(int dim) { return prior.getLogPrior(model); }
-
-	private Prior prior;
-	private Model model;
-}
+//public class LogPriorStatistic extends Statistic.Abstract {
+//
+//	public LogPriorStatistic(Prior prior, Model model) {
+//		this.prior = prior;
+//		this.model = model;
+//	}
+//
+//	public String getStatisticName() { return "logPrior"; }
+//
+//	public int getDimension() { return 1; }
+//	public double getStatisticValue(int dim) { return prior.getLogPrior(model); }
+//
+//	private Prior prior;
+//	private Model model;
+//}

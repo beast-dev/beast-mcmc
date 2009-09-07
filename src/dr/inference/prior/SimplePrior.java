@@ -23,9 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.prior;
-
-import dr.inference.model.Parameter;
+//package dr.inference.prior;
+//
+//import dr.inference.model.Parameter;
 
 /**
  * This class provides an abstract superclass for simple priors of single variables. 
@@ -36,27 +36,27 @@ import dr.inference.model.Parameter;
  *
  * @version $Id: SimplePrior.java,v 1.8 2005/05/24 20:26:00 rambaut Exp $
  */
-public class SimplePrior implements Prior {
-
-	ContinuousVariablePrior cvp;
-	Parameter parameter;
-
-	public SimplePrior(ContinuousVariablePrior cvp, Parameter parameter) {
-		this.cvp = cvp;
-		this.parameter = parameter;
-	}
-
-	public double getLogPrior(dr.inference.model.Model model) { 
-	
-		double logPrior = 0.0;
-		for (int i =0; i < parameter.getDimension(); i++) {
-			logPrior += cvp.getLogPrior(parameter.getParameterValue(i));
-		}
-	
-		return logPrior;
-	}
-
-	public final String getPriorName() {
-		return parameter.getParameterName();
-	}
-}
+//public class SimplePrior implements Prior {
+//
+//	ContinuousVariablePrior cvp;
+//	Parameter parameter;
+//
+//	public SimplePrior(ContinuousVariablePrior cvp, Parameter parameter) {
+//		this.cvp = cvp;
+//		this.parameter = parameter;
+//	}
+//
+//	public double getLogPrior(dr.inference.model.Model model) {
+//
+//		double logPrior = 0.0;
+//		for (int i =0; i < parameter.getDimension(); i++) {
+//			logPrior += cvp.getLogPrior(parameter.getParameterValue(i));
+//		}
+//
+//		return logPrior;
+//	}
+//
+//	public final String getPriorName() {
+//		return parameter.getParameterName();
+//	}
+//}

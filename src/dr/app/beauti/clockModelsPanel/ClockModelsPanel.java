@@ -113,17 +113,15 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setOpaque(false);
-
-		ItemListener comboListener = new ItemListener() {
-			public void itemStateChanged(ItemEvent event) {
-				fireModelsChanged();
-			}
-		};
-
+		
 		PanelUtils.setupComponent(errorModelCombo);
 		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
 						+ "post-mortem DNA damage.</html>");
-		errorModelCombo.addItemListener(comboListener);
+		errorModelCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                fireModelsChanged();
+            }
+        });
 
 		// PanelUtils.setupComponent(clockModelCombo);
 		// clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
@@ -200,12 +198,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		comp = new SequenceErrorModelComponentOptions();
     }
      
-    private void fireDataChanged() {
-        options.updatePartitionClockTreeLinks();
-        frame.setStatusMessage();
-        frame.setDirty();
-    }
-
     private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
@@ -213,7 +205,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     
     private void fireModelsChanged() {
         options.updatePartitionClockTreeLinks();
-//        options.updateFixedRateClockModel();
+        frame.setStatusMessage();
         frame.setDirty();
     }
     
@@ -254,7 +246,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
             dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
         
-        fireModelsChanged();
+//        fireModelsChanged();
 
         modelsChanged();
 
@@ -274,7 +266,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //        }
         options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
        
-        fireModelsChanged();    	
+//        fireModelsChanged();    	
     }
 
     public JComponent getExportableComponent() {
@@ -352,7 +344,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
-            fireDataChanged();
+            fireModelsChanged();
         }
 
         public boolean isCellEditable(int row, int col) {        	

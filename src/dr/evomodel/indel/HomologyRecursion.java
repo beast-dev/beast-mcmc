@@ -75,9 +75,6 @@ public class HomologyRecursion {
     /** Class that implements a fast version of treeLikelihood */
     private NativeTreeLikelihood iNativeMethod;
 
-    /** Dynamic programming table */
-    private HashMap iTable;
-
     /** Labels used in local array iState[] */
     static private final int eFree = 0, ePossible = 1, eEdgeUsed = 2, eUsed = 3;
 
@@ -92,8 +89,9 @@ public class HomologyRecursion {
 
     String PrintDouble(double[] d) {
 	String str = "";
-	for (int i=0; i<d.length; i++)
-	    str = str + d[i] + " ";
+        for(double aD : d) {
+            str = str + aD + " ";
+        }
 	return str;
     }
 
@@ -146,7 +144,7 @@ public class HomologyRecursion {
 		//	System.out.println(iAlignment[i]);
 		//}
 
-		if (iErr != "")
+		if ( !iErr.equals("") )
 		    System.out.println(iErr);
 	}    
 
@@ -552,7 +550,7 @@ public class HomologyRecursion {
 	int iFirstNotUsed = 0;                         // First not-'used' alignment vector (for efficiency) 
 	int iState[] = new int[ iLen ];                // Helper array, to traverse the region in the DP table corresp. to the alignment
 	IntMathVec iPos = new IntMathVec( iLeaves );   // Current position; sum of all used vectors
-	iTable = new HashMap();
+        HashMap<IntMathVec, BFloat> iTable = new HashMap<IntMathVec, BFloat>();
 
 	// Calculate correction factor for null emissions ("wing folding", or linear equation solving.)
 
@@ -621,15 +619,15 @@ public class HomologyRecursion {
 
 			if (iFoundNonZero) {
 			    //System.out.print("Reading from pos " + iPos);
-			    BFloat iLeft = (BFloat)((BFloat)iTable.get( iPos )).clone();
+			    BFloat iLeft = (BFloat)(iTable.get( iPos )).clone();
 			    //System.out.print(" left=" + iLeft);
-			    Object iRightObj = iTable.get( iNewPos );
+			    BFloat iRightObj = iTable.get( iNewPos );
 			    BFloat iRight;
 			    if (iRightObj == null) {
 					iUnusedPos = true;
 					iRight = new BFloat(0);
 			    } else {
-					iRight = (BFloat)iRightObj;
+					iRight = iRightObj;
 					iUnusedPos = false;
 			    }
 			    double iTransFac = (-treeRecursion( iSignature, iPos )) / iNullEmissionFac;
@@ -664,7 +662,7 @@ public class HomologyRecursion {
 			// No more unused vectors, so we also fell through the edge loop above,
 			// hence iNewPos contains the final position
 			//System.out.println("Returning " + (BFloat)iTable.get( iNewPos ) + " = " + ((BFloat)iTable.get( iNewPos ) ).log());
-			return ((BFloat)iTable.get( iNewPos ) ).log();
+			return (iTable.get( iNewPos )).log();
 	    }
 
 	    // Now use this farthest-out possible vector

@@ -2,7 +2,6 @@ package test.dr.evomodel.arg.operators;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.FlexibleTree;
 import dr.evomodel.arg.ARGLogger;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGReassortmentNodeCountStatistic;
@@ -48,18 +47,18 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
 
         NewickImporter importer = new NewickImporter(
                 "(((A:1.0,B:1.0):1.0,C:2.0):1.0,D:3.0);");
-        arg4 = new ARGModel((FlexibleTree) importer.importTree(null));
+        arg4 = new ARGModel(importer.importTree(null));
         arg4.setupHeightBounds();
         arg4.addLikelihoodCalculator(null);
         arg4.addLikelihoodCalculator(null);
 
         importer = new NewickImporter(
                 "((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:3.0):1.0, E:4.0);");
-        arg5 = new ARGModel((FlexibleTree) importer.importTree(null));
+        ARGModel arg5 = new ARGModel(importer.importTree(null));
 
         importer = new NewickImporter(
                 "(((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:3.0):1.0, E:4.0),F:5.0);");
-        arg6 = new ARGModel((FlexibleTree) importer.importTree(null));
+        ARGModel arg6 = new ARGModel(importer.importTree(null));
     }
 
     // 4 taxa args
@@ -202,8 +201,4 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
 
 
     private ARGModel arg4;
-    private ARGModel arg5;
-    private ARGModel arg6;
-
-
 }

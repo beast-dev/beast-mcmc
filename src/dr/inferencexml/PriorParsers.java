@@ -255,19 +255,19 @@ public class PriorParsers {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double mean = xo.getDoubleAttribute(MEAN);
-            double stdev = xo.getDoubleAttribute(STDEV);
-            double offset = xo.getAttribute(OFFSET, 0.0);
-            boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            final double stdev = xo.getDoubleAttribute(STDEV);
+            final double offset = xo.getAttribute(OFFSET, 0.0);
+            final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
 
             if (meanInRealSpace) {
                 if (mean <= 0) {
                     throw new IllegalArgumentException("meanInRealSpace works only for a positive mean");
                 }
                 mean = Math.log(mean) - 0.5 * stdev * stdev;
-                //throw new UnsupportedOperationException("meanInRealSpace is not supported yet");
             }
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
+            final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
+            
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -314,7 +314,7 @@ public class PriorParsers {
 
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double scale = xo.getDoubleAttribute(SCALE);
-            final double offset = xo.getDoubleAttribute(OFFSET);
+            final double offset = xo.getAttribute(OFFSET, 0.0);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new GammaDistribution(shape, scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -335,7 +335,7 @@ public class PriorParsers {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
-                AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newDoubleRule(OFFSET, true),
                 AttributeRule.newBooleanRule(UNINFORMATIVE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };

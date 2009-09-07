@@ -611,14 +611,14 @@ public class BeastGenerator extends Generator {
         for (int i = 0; i < alignment.getTaxonCount(); i++) {
             Taxon taxon = alignment.getTaxon(i);
 
-            writer.writeOpenTag("sequence");
+            writer.writeOpenTag(SequenceParser.SEQUENCE);
             writer.writeIDref(TaxonParser.TAXON, taxon.getId());
             if (!options.samplePriorOnly) {
                 writer.writeText(alignment.getAlignedSequenceString(i));
             } else {
                 writer.writeText("N");
             }
-            writer.writeCloseTag("sequence");
+            writer.writeCloseTag(SequenceParser.SEQUENCE);
         }
         writer.writeCloseTag(AlignmentParser.ALIGNMENT);
     }

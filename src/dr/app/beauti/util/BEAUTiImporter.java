@@ -17,6 +17,7 @@ import javax.swing.JOptionPane;
 import org.jdom.JDOMException;
 
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
@@ -50,7 +51,7 @@ public class BEAUTiImporter {
         this.options = options;
     }
  
-    public void importFromFile(File file) throws Exception {
+    public void importFromFile(BeautiFrame frame, File file) throws Exception {
         try {
             Reader reader = new FileReader(file);
 
@@ -62,7 +63,7 @@ public class BEAUTiImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                importNexusFile(file);
+                importNexusFile(frame, file);
             } else {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
@@ -71,9 +72,9 @@ public class BEAUTiImporter {
             throw new IOException(e.getMessage());
         }
     }
-
-    protected void importBEASTFile(File file) throws IOException, JDOMException, ImportException {
-
+    
+    // xml
+    private void importBEASTFile(File file) throws IOException, JDOMException, ImportException {
         try {
             FileReader reader = new FileReader(file);
 
@@ -87,7 +88,7 @@ public class BEAUTiImporter {
             TaxonList taxa = taxonLists.get(0);
 
             for (Alignment alignment : alignments) {
-                setData(taxa, alignment, null, null, null, file.getName());
+                setData(null, taxa, alignment, null, null, null, file.getName());
             }
         } catch (JDOMException e) {
             throw new JDOMException (e.getMessage());
@@ -98,9 +99,9 @@ public class BEAUTiImporter {
         }
 
     }
-
-    protected void importNexusFile(File file) throws Exception {
-
+    
+    // nexus
+    private void importNexusFile(BeautiFrame frame, File file) throws Exception {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -209,10 +210,11 @@ public class BEAUTiImporter {
             throw new Exception (e.getMessage());
         }
 
-        setData(taxa, alignment, trees, model, charSets, file.getName());
+        setData(frame, taxa, alignment, trees, model, charSets, file.getName());
     }
-
-    private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
+    
+    //TODO need refactory to simplify
+    private void setData(BeautiFrame frame, TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
             List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
@@ -261,20 +263,9 @@ public class BEAUTiImporter {
                 }
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                    // AR - Yes and No are perfectly good answers to this question
-//                    int adt = JOptionPane.showOptionDialog(this,
-//                            "This file contains different taxa from the previously loaded\n" +
-//                                    "data partitions. This may be because the taxa are mislabelled\n" +
-//                                    "and need correcting before reloading.\n\n" +
-//                                    "Would you like to allow different taxa for each partition?\n",
-//                            "Validation of Non-matching Taxon Name(s)",
-//                            JOptionPane.YES_NO_OPTION,
-//                            JOptionPane.WARNING_MESSAGE,
-//                            null,
-//                            new String[]{"Yes", "No"},
-//                            "No"
-//                    ); // default button title
-int adt = JOptionPane.NO_OPTION; //TODO
+                    
+                    int adt = frame.allowDifferentTaxaJOptionPane();
+                    //TODO still have swing code
                     if (adt == JOptionPane.YES_OPTION) {
                         // set to Allow Different Taxa
                         options.allowDifferentTaxa = true;

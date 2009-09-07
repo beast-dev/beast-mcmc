@@ -6,8 +6,11 @@ import dr.evolution.io.Importer;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.*;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.DateParser;
+import dr.evoxml.SequenceParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
+import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -56,8 +59,8 @@ public class BeastImporter {
 
         List children = root.getChildren();
         for(Object aChildren : children) {
-            Element child = (Element) aChildren;
-
+            Element child = (Element) aChildren;            
+            
             if( child.getName().equalsIgnoreCase(TaxaParser.TAXA) ) {
                 if( taxa == null ) {
                     taxa = readTaxa(child);
@@ -98,12 +101,12 @@ public class BeastImporter {
         for(Object aChildren : children) {
             Element child = (Element) aChildren;
 
-            if( child.getName().equalsIgnoreCase("date") ) {
+            if( child.getName().equalsIgnoreCase(dr.evolution.util.Date.DATE) ) {
                 Date date = readDate(child);
-                taxon.setAttribute("date", date);
-            } else if( child.getName().equalsIgnoreCase("attr") ) {
-                String name = e.getAttributeValue("name");
-                String value = e.getAttributeValue("value");
+                taxon.setAttribute(dr.evolution.util.Date.DATE, date);
+            } else if( child.getName().equalsIgnoreCase(AttributeParser.ATTRIBUTE) ) {
+                String name = e.getAttributeValue(AttributeParser.NAME);
+                String value = e.getAttributeValue(AttributeParser.VALUE);
                 taxon.setAttribute(name, value);
             }
         }
@@ -117,7 +120,7 @@ public class BeastImporter {
         for(Object aChildren : children) {
             Element child = (Element) aChildren;
 
-            if( child.getName().equalsIgnoreCase("sequence") ) {
+            if( child.getName().equalsIgnoreCase(SequenceParser.SEQUENCE) ) {
                 alignment.addSequence(readSequence(child, taxa));
             }
         }
@@ -140,10 +143,10 @@ public class BeastImporter {
 
     private Date readDate(Element e) throws Importer.ImportException {
 
-        String value = e.getAttributeValue("value");
+        String value = e.getAttributeValue(DateParser.VALUE);
         boolean backwards = true;
-        String direction = e.getAttributeValue("direction");
-        if (direction != null && direction.equalsIgnoreCase("forwards")) {
+        String direction = e.getAttributeValue(DateParser.DIRECTION);
+        if (direction != null && direction.equalsIgnoreCase(DateParser.FORWARDS)) {
             backwards = false;
         }
         try {

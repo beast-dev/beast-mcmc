@@ -53,9 +53,6 @@ import java.util.Map;
  */
 public class BeautiFrame extends DocumentFrame {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 2114148696789612509L;
 
     private final BeautiOptions beautiOptions;
@@ -326,7 +323,7 @@ public class BeautiFrame extends DocumentFrame {
                             "Invalid file name", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        beautiOptions.beautiImporter.importFromFile(file);
+                        beautiOptions.beautiImporter.importFromFile(this, file);
 
                         setDirty();
 //                    } catch (FileNotFoundException fnfe) {
@@ -365,6 +362,16 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
+    public int allowDifferentTaxaJOptionPane() {
+        // AR - Yes and No are perfectly good answers to this question
+        int adt = JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
+                + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
+                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[] { "Yes", "No" }, "No"); 
+        // default button title
+        return adt;                                                                                                           
+    }
+    
 //    protected void importFromFile(File file) throws IOException {
 //
 //        Reader reader = new FileReader(file);

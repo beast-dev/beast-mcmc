@@ -1,7 +1,7 @@
 package dr.inference.model;
 
 import dr.xml.*;
-import sun.awt.X11.XLayerProtocol;
+//import sun.awt.X11.XLayerProtocol;
 
 /**
  * @author Joseph Heled

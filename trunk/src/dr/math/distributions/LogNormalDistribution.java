@@ -188,7 +188,7 @@ public class LogNormalDistribution implements Distribution {
      * @return variance
      */
     public static double variance(double M, double S) {
-        double S2 = S * S;
+        final double S2 = S * S;
 
         return Math.exp(S2 + 2 * M) * (Math.exp(S2) - 1);
     }

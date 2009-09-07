@@ -278,12 +278,12 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
             Parameter indicator = null;
             double indicatorOnProb = 1.0;
-            final XMLObject cxo = (XMLObject) xo.getChild(INDICATORS);
+            final XMLObject inds = xo.getChild(INDICATORS);
 
-            if (cxo != null) {
-                indicator = (Parameter) cxo.getChild(Parameter.class);
-                if (cxo.hasAttribute(PICKONEPROB)) {
-                    indicatorOnProb = cxo.getDoubleAttribute(PICKONEPROB);
+            if (inds != null) {
+                indicator = (Parameter) inds.getChild(Parameter.class);
+                if (inds.hasAttribute(PICKONEPROB)) {
+                    indicatorOnProb = inds.getDoubleAttribute(PICKONEPROB);
                     if (!(0 <= indicatorOnProb && indicatorOnProb <= 1)) {
                         throw new XMLParseException("pickoneprob must be between 0.0 and 1.0");
                     }

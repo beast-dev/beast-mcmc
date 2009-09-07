@@ -27,7 +27,6 @@ package dr.inference.distribution;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.model.Statistic;
 import dr.util.Attribute;
 
 import java.util.ArrayList;
@@ -64,9 +63,8 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
         return false;
 	}
 
-    public List getDataList() {
+    public List<Attribute<double[]>> getDataList() {
         return dataList;
     }
-	
 }
 

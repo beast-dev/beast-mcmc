@@ -48,12 +48,11 @@ public class IstvansProposal {
     
     // Static count of path count bound overruns
     static int sBigUnalignableRegion = 0;
-    private Random r = new Random();
+    private final Random r = new Random();
     // dynamic programming table
     // does this need initialization before each proposal?
-    private double[][]    iDP = new double[cMaxlength][cMaxlength];            
-    private HashMap iTable;
-    
+    private final double[][] iDP = new double[cMaxlength][cMaxlength];
+
     public void setGapSymbol(int gapSymbol) {
 		cGapsymbol = gapSymbol;
     }
@@ -71,7 +70,7 @@ public class IstvansProposal {
 		int iFirstNotUsed = 0;                         // First not-'used' alignment vector (for efficiency) 
 		int iState[] = new int[ iLen ];                // Helper array, to traverse the region in the DP table corresp. to the alignment
 		IntMathVec iPos = new IntMathVec( iLeaves );   // Current position; sum of all used vectors
-		iTable = new HashMap();
+        HashMap<IntMathVec, Integer> iTable = new HashMap<IntMathVec, Integer>();
 		
 		IntMathVec[] iAlignment = new IntMathVec[iLen];
 		for (int i=iStartCol; i<=iEndCol; i++) {
@@ -82,7 +81,7 @@ public class IstvansProposal {
 		}
 		
 		// Enter first count into DP table
-		iTable.put( iPos, new Integer(1) );
+		iTable.put(iPos, 1);
 		
 		// Array of possible vector indices, used in inner loop 
 		int[] iPossibles = new int[cMaxUnalignDimension];
@@ -141,7 +140,7 @@ public class IstvansProposal {
 			
 			if (iFoundNonZero) {
 			    //System.out.print("Reading from pos " + iPos);
-			    int iLeft = ((Integer)iTable.get( iPos )).intValue();
+			    int iLeft = iTable.get(iPos);
 			    //System.out.print(" left=" + iLeft);
 			    int iRight;
 			    Object iRightObj = iTable.get( iNewPos );
@@ -149,7 +148,7 @@ public class IstvansProposal {
 				iRight = 0;
 				iUnusedPos = true;
 			    } else {
-				iRight = ((Integer)iRightObj).intValue();
+				iRight = (Integer) iRightObj;
 				iUnusedPos = false;
 			    }
 			    //System.out.print(" right=" + iRight);
@@ -159,9 +158,9 @@ public class IstvansProposal {
 			    //System.out.println(" Storing pos " + iNewPos);
 			    // If we are storing a value at a previously unused position, make sure we use a fresh key object
 			    if (iUnusedPos) {
-				iTable.put( iNewPos.clone(), new Integer( iRight ) );
+				iTable.put(iNewPos.clone(), iRight);
 			    } else {
-				iTable.put( iNewPos, new Integer( iRight ) );
+				iTable.put( iNewPos, iRight);
 			    }
 			}
 			
@@ -181,7 +180,7 @@ public class IstvansProposal {
 		    if (iPtr == -1) {
 			// No more unused vectors, so we also fell through the edge loop above,
 			// hence iNewPos contains the final position
-			return ((Integer)iTable.get( iNewPos )).intValue();
+			return iTable.get(iNewPos);
 		    }
 		    
 		    

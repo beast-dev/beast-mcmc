@@ -30,10 +30,10 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.List;
@@ -110,7 +110,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         final double mu = meanParameter.getParameterValue(0);
         double SSE = 0;
         int n = 0;
-        for (Statistic statistic : dataList) {
+        for (Attribute<double[]> statistic : dataList) {
             for (double x : statistic.getAttributeValue()) {
                 if (isLog) {
                     final double logX = Math.log(x);
@@ -180,7 +180,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(LIKELIHOOD,
                         new XMLSyntaxRule[]{
@@ -194,10 +194,10 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     };
 
-    private Distribution prior;
+    private final Distribution prior;
     private boolean isLog = false;
 
-    private List<Statistic> dataList;
-    private Parameter meanParameter;
-    private Parameter precisionParameter;
+    private final List<Attribute<double[]>> dataList;
+    private final Parameter meanParameter;
+    private final Parameter precisionParameter;
 }

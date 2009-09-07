@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.evomodel.substmodel.HKY;
 
 
 /**
@@ -34,6 +35,8 @@ import dr.app.beauti.enumTypes.PriorScaleType;
 public abstract class PartitionOptions extends ModelOptions {   
 
     abstract public String getPrefix(); 
+    
+    abstract public Class<?> getPartitionClassType(); 
     
     public Parameter createParameter(PartitionOptions options, String name, String description, PriorScaleType scale, double value, double lower, double upper) {
         final Parameter parameter = new Parameter(options, name, description, scale, value, lower, upper);

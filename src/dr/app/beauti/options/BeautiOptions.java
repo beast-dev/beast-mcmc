@@ -488,28 +488,7 @@ public class BeautiOptions extends ModelOptions {
         return totalPartitionCount;
     }
 
-    /**
-     * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
-     * are strictly in the same order as the 'mu' relative rates are listed.
-     */
-    public int[] getPartitionCodonWeights() {
-        int[] weights = new int[getTotalActivePartitionSubstitutionModelCount()];
-
-        int k = 0;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            for (PartitionData partition : dataPartitions) {
-                if (partition.getPartitionSubstitutionModel() == model) {
-                    model.addWeightsForPartition(partition, weights, k);
-                }
-            }
-            k += model.getCodonPartitionCount();
-        }
-
-        assert (k == weights.length);
-
-        return weights;
-    }
-
+ 
     // ++++++++++++++ Partition Clock Model ++++++++++++++    
 //    public void addPartitionClockModel (PartitionClockModel model) {
 //        if (!clockModels.contains(model)) {

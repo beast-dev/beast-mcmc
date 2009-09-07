@@ -183,4 +183,9 @@ public class PartitionData extends PartitionOptions {
         return null;
     }
 
+    @Override
+    public Class<PartitionData> getPartitionClassType() {        
+        return PartitionData.class;
+    }
+
 }

@@ -395,4 +395,9 @@ public class PartitionTreePrior extends PartitionOptions {
         return options;
     }
 
+    @Override
+    public Class<PartitionTreePrior> getPartitionClassType() {        
+        return PartitionTreePrior.class;
+    }
+
 }

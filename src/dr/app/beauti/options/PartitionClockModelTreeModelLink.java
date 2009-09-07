@@ -308,4 +308,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
     public String getPrefix() {
         return model.getPrefix() + tree.getPrefix();
     }
+
+    @Override
+    public Class<PartitionClockModelTreeModelLink> getPartitionClassType() {        
+        return PartitionClockModelTreeModelLink.class;
+    }
 }

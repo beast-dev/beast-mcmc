@@ -213,7 +213,7 @@ public class Sequence implements Identifiable, Attributable {
     /**
      * @return an iterator of the attributes that this object has.
      */
-    public Iterator getAttributeNames() {
+    public Iterator<String> getAttributeNames() {
         if (attributes == null)
             return null;
         else

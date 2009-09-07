@@ -52,7 +52,7 @@ public class SquareTreePainter implements TreePainter {
 	protected Font hilightLabelFont = new Font("Helvetica", Font.PLAIN, 12);
 	protected Paint hilightLabelPaint = Color.blue;
 
-    int boxPlotSize = 3;
+    final int boxPlotSize = 3;
 
 	public SquareTreePainter() {
 		this.rememberYPositions = false;
@@ -69,7 +69,7 @@ public class SquareTreePainter implements TreePainter {
 			// initialize taxa starting y positions based on the given taxon list
 			double y = 0.5;
 			for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-				yPositionMap.put(taxonList.getTaxonId(i), new Double(y));
+				yPositionMap.put(taxonList.getTaxonId(i), y);
 				y += 1.0;
 			}
 		}
@@ -221,13 +221,13 @@ public class SquareTreePainter implements TreePainter {
 			if (rememberYPositions) {
 				// remember the y positions of taxa that you have seen before... AD
 				String taxonId = tree.getNodeTaxon(node).getId();
-				Double pos = (Double)yPositionMap.get(taxonId);
+				Double pos = yPositionMap.get(taxonId);
 				if (pos != null) {
-					y = pos.doubleValue();
+					y = pos;
 				} else {
 					y = currentY;
 					currentY += 1.0;
-					yPositionMap.put(taxonId, new Double(y));
+					yPositionMap.put(taxonId, y);
 				}
 			} else {
 				y = currentY;
@@ -383,13 +383,13 @@ public class SquareTreePainter implements TreePainter {
 			if (rememberYPositions) {
 				// remember the y positions of taxa that you have seen before... AD
 				String taxonId = tree.getNodeTaxon(node).getId();
-				Double pos = (Double)yPositionMap.get(taxonId);
+				Double pos = yPositionMap.get(taxonId);
 				if (pos != null) {
-					y = pos.doubleValue();
+					y = pos;
 				} else {
 					y = currentY;
 					currentY += 1.0;
-					yPositionMap.put(taxonId, new Double(y));
+					yPositionMap.put(taxonId, y);
 				}
 			} else {
 				y = currentY;
@@ -434,8 +434,8 @@ public class SquareTreePainter implements TreePainter {
             //double meanX = convertX(mean.doubleValue());
             //double minX = convertX(min.doubleValue());
             //double maxX = convertX(max.doubleValue());
-            double upperX = convertX(hpdUpper.doubleValue());
-            double lowerX = convertX(hpdLower.doubleValue());
+            double upperX = convertX(hpdUpper);
+            double lowerX = convertX(hpdLower);
             //System.out.println(upperX + " " + lowerX);
 
             g2.setStroke(lineStroke);
@@ -523,8 +523,8 @@ public class SquareTreePainter implements TreePainter {
 	private Rectangle2D[] nodeRectVert;
 	private Rectangle2D[] nodeRectHoriz;
 	
-	private Color textColor = Color.black;
-	private Map yPositionMap = new HashMap();
+	private final Color textColor = Color.black;
+	private final Map<String, Double> yPositionMap = new HashMap<String, Double>();
 	private boolean rememberYPositions = false;
 	private double userDefinedHeight = -1.0;
 	private boolean drawLabels = true;

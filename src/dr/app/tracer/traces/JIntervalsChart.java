@@ -1,6 +1,8 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.*;
+import dr.gui.chart.Axis;
+import dr.gui.chart.DiscreteAxis;
+import dr.gui.chart.JChart;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -28,7 +30,7 @@ public class JIntervalsChart extends JChart {
 		}
 	}
 
-	private ArrayList intervals = new ArrayList();
+	private final ArrayList<Interval> intervals = new ArrayList<Interval>();
 
 	public JIntervalsChart(Axis yAxis) {
 		super(new DiscreteAxis(true, true), yAxis);
@@ -67,7 +69,7 @@ public class JIntervalsChart extends JChart {
 			g2.setStroke(getAxisStroke());
 
 			int index = ((int)value) - 1;
-			Interval interval = (Interval)intervals.get(index);
+			Interval interval = intervals.get(index);
 			String label = interval.name;
 
 			double pos = transformX(value);
@@ -87,7 +89,7 @@ public class JIntervalsChart extends JChart {
 
 		for (int i = 0; i < intervals.size(); i++) {
 
-			Interval interval = (Interval)intervals.get(i);
+			Interval interval = intervals.get(i);
 
 			float x = (float)transformX(i + 1);
 			float xLeft = (float)transformX(((double)i + 1) - 0.1);

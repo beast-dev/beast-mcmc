@@ -17,12 +17,12 @@ public class ARGTree implements Tree {
 	protected Taxon[] taxaList;
 	protected int taxaCount;
 
-	private Node initialRoot;
+	private final Node initialRoot;
 
     public ARGModel argModel;
 //    private Map<NodeRef,Integer> mapARGNodesToInts;
 
-    private Map<NodeRef,NodeRef> mapARGNodesToTreeNodes;
+    private final Map<NodeRef,NodeRef> mapARGNodesToTreeNodes;
 
 //    public Map<NodeRef,Integer> getMappingInts() { return mapARGNodesToInts; }
 
@@ -116,7 +116,8 @@ public class ARGTree implements Tree {
                                   mapARGNodesToTreeNodes.put(node.mirrorNode, node);
 			}
 		} while (node != root);
-	}
+        hasRates = false;
+    }
 
 
     public Map<NodeRef,NodeRef> getMapping() {
@@ -465,7 +466,7 @@ public class ARGTree implements Tree {
 	/**
 	 * @return an iterator of the attributes that this object has.
 	 */
-	public Iterator getAttributeNames() {
+	public Iterator<String> getAttributeNames() {
 		if (treeAttributes == null)
 			return null;
 		else
@@ -538,8 +539,8 @@ public class ARGTree implements Tree {
 
 	protected boolean inEdit = false;
 
-	private boolean hasRates = false;
-	private boolean hasTraits = false;
+	private final boolean hasRates;
+	private final boolean hasTraits = false;
 
 
 }

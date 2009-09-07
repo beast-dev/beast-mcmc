@@ -40,7 +40,7 @@ public class JTraceChart extends JChart {
 
     private boolean useSample = true;
     private boolean isLinePlot = true;
-    private boolean isTranslucent = false;
+    private final boolean isTranslucent = false;
 
     private class Trace {
         int stateStart;
@@ -78,7 +78,7 @@ public class JTraceChart extends JChart {
         }
     }
 
-    private ArrayList traces = new ArrayList();
+    private final ArrayList<Trace> traces = new ArrayList<Trace>();
 
     public JTraceChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
@@ -116,12 +116,12 @@ public class JTraceChart extends JChart {
     }
 
     public double[] getTraceStates(int index) {
-        Trace trace = (Trace) traces.get(index);
+        Trace trace = traces.get(index);
         return trace.states;
     }
 
     public double[] getTraceValues(int index) {
-        Trace trace = (Trace) traces.get(index);
+        Trace trace = traces.get(index);
         return trace.values;
     }
 
@@ -152,7 +152,7 @@ public class JTraceChart extends JChart {
 
         for (int i = 0; i < traces.size(); i++) {
 
-            Trace trace = (Trace) traces.get(i);
+            Trace trace = traces.get(i);
 
             float x = (float) transformX(trace.states[0]);
             float y = (float) transformY(trace.values[0]);

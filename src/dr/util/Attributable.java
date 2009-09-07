@@ -57,7 +57,7 @@ public interface Attributable {
 	/**
 	 * @return an iterator of the attributes that this object has.
 	 */
-	Iterator getAttributeNames();
+	Iterator<String> getAttributeNames();
 	
 	public static final class AttributeHelper implements Attributable {
 		/**
@@ -88,7 +88,7 @@ public interface Attributable {
 		/**
 		 * @return an iterator of the attributes that this object has.
 		 */
-		public Iterator getAttributeNames() {
+		public Iterator<String> getAttributeNames() {
 			return attributes.keySet().iterator();
 		}
 	

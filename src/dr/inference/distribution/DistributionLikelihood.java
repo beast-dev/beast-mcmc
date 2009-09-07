@@ -85,11 +85,15 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         double logL = 0.0;
 
-        for (Attribute<double[]> data : dataList) {
+        for( Attribute<double[]> data : dataList ) {
 
-            for (int j = Math.max(0, from); j < Math.min(data.getAttributeValue().length, to); j++) {
+            // Using this in the loop is incredibly wasteful, especially in the loop condition to get the length
+            final double[] attributeValue = data.getAttributeValue();
 
-                double value = data.getAttributeValue()[j] - offset;
+            for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
+
+                final double value = attributeValue[j] - offset;
+
                 if (offset > 0.0 && value < 0.0) {
                     // fixes a problem with the offset on exponential distributions not
                     // actually bounding the distribution. This only performs this check

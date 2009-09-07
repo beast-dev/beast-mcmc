@@ -49,12 +49,12 @@ class IntMathVec implements Cloneable {
 
     /** Constructor, copy of existing vector */
     IntMathVec(IntMathVec iVec) {
-	iV = (int[]) iVec.iV.clone();
+	iV = iVec.iV.clone();
     }
 
     /** Constructor, copy of integer array - handy for printing */
     IntMathVec(int[] iArr) {
-	iV = (int[]) iArr.clone();
+	iV = iArr.clone();
     }
 
     /** Internal, to make sure vectors are of same length. */
@@ -82,24 +82,24 @@ class IntMathVec implements Cloneable {
 
     /** hashCode() reflects value-identity instead of object-identity */
     public int hashCode() {
-	int iCode = 0;
-	for (int i=0; i<iV.length; i++) {
-	    iCode = (iCode*75) + iV[i];
-	}
-	return iCode;
+        int iCode = 0;
+        for( int anIV : iV ) {
+            iCode = (iCode * 75) + anIV;
+        }
+        return iCode;
     }
 
     /** Clone this object */
-    public Object clone() {
-	try {
-	    // This magically creates an object of the right type
-	    IntMathVec iObj = (IntMathVec) super.clone();
-	    iObj.iV = (int[]) iV.clone();
-	    return iObj;
-	} catch (CloneNotSupportedException e) {
-	    System.out.println("IntMathVec.clone: Something happened that cannot happen -- ?");
-	    return null;
-	}
+    public IntMathVec clone() {
+        try {
+            // This magically creates an object of the right type
+            IntMathVec iObj = (IntMathVec) super.clone();
+            iObj.iV = iV.clone();
+            return iObj;
+        } catch (CloneNotSupportedException e) {
+            System.out.println("IntMathVec.clone: Something happened that cannot happen -- ?");
+            return null;
+        }
     }
 
     /** Overriding built-in toString, produces Mathematica-readable output */
@@ -124,14 +124,16 @@ class IntMathVec implements Cloneable {
     }
 
     public boolean zeroEntry() {
-	for (int i=0; i<iV.length; i++)
-	    if (iV[i]==0)
-		return true;
+        for(int anIV : iV) {
+            if( anIV == 0 ) {
+                return true;
+            }
+        }
 	return false;
     }
 
     public void assign(IntMathVec iVec) {
-	iV = (int[]) iVec.iV.clone();
+	iV = iVec.iV.clone();
     }
 
     public void add(IntMathVec iVec) {

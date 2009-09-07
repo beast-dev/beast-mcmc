@@ -29,10 +29,10 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.NormalDistribution;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.List;
@@ -92,7 +92,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
         double total = 0;
         int n = 0;
-        for (Statistic statistic : dataList) {
+        for ( Attribute<double[]> statistic : dataList ) {
             for (double x : statistic.getAttributeValue()) {
                 if (isLog)
                     total += Math.log(x);
@@ -176,6 +176,6 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
     private final Distribution prior;
     private boolean isLog = false;
 
-    private final List<Statistic> dataList;
+    private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;
 }

@@ -442,7 +442,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         public static boolean isMonophyletic(Tree tree, Set<String> leafNodes) {
-            return isMonophyletic(tree, leafNodes, Collections.EMPTY_SET);
+            return isMonophyletic(tree, leafNodes, Collections.<String>emptySet());
         }
 
         /**

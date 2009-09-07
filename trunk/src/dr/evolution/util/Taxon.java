@@ -115,16 +115,13 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 	 * @return boolean whether contains attribute by given its name
 	 */
 	public boolean containsAttribute(String name) {
-		if (attributes == null)
-			return false;
-		else 
-			return attributes.containsAttribute(name);
+        return attributes != null && attributes.containsAttribute(name);
 	}
 
 	/**
 	 * @return an iterator of the attributes that this object has.
 	 */
-	public Iterator getAttributeNames() {
+	public Iterator<String> getAttributeNames() {
 		if (attributes == null)
 			return new ArrayList().iterator();
 		else

@@ -29,7 +29,9 @@ import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.util.Attributable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * data structure for binary rooted trees
@@ -811,7 +813,7 @@ public class FlexibleTree implements MutableTree {
 	/**
 	 * @return an iterator of the attributes that this object has.
 	 */
-	public Iterator getAttributeNames() {
+	public Iterator<String> getAttributeNames() {
 		if (attributes == null)
 			return null;
 		else
@@ -823,24 +825,24 @@ public class FlexibleTree implements MutableTree {
 	}
 
 	private void fireTreeChanged() {
-        for (Object mutableTreeListener : mutableTreeListeners) {
-            ((MutableTreeListener) mutableTreeListener).treeChanged(this);
+        for (MutableTreeListener mutableTreeListener : mutableTreeListeners) {
+            (mutableTreeListener).treeChanged(this);
         }
 	}
 
-	private ArrayList mutableTreeListeners = new ArrayList();
+	private final ArrayList<MutableTreeListener> mutableTreeListeners = new ArrayList<MutableTreeListener>();
 
 	public void addMutableTaxonListListener(MutableTaxonListListener listener) {
 		mutableTaxonListListeners.add(listener);
 	}
 
 	private void fireTaxaChanged() {
-        for (Object mutableTaxonListListener : mutableTaxonListListeners) {
-            ((MutableTaxonListListener) mutableTaxonListListener).taxaChanged(this);
+        for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
+            (mutableTaxonListListener).taxaChanged(this);
         }
 	}
 
-	private ArrayList mutableTaxonListListeners = new ArrayList();
+	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
 	/**
 	 * @return a string containing a newick representation of the tree

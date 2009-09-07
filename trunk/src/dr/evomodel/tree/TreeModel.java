@@ -778,7 +778,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * @return an iterator of the attributes that this object has.
      */
-    public Iterator getAttributeNames() {
+    public Iterator<String> getAttributeNames() {
         if (treeAttributes == null)
             return null;
         else

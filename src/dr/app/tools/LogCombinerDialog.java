@@ -29,8 +29,8 @@ import dr.app.util.Utils;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.TableRenderer;
 import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -57,7 +57,7 @@ public class LogCombinerDialog {
 	private final JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
 	private final WholeNumberField resampleText = new WholeNumberField(0, Integer.MAX_VALUE);
 
-	private final List files = new ArrayList();
+	private final List<FileInfo> files = new ArrayList<FileInfo>();
 
     private final JTextField fileNameText = new JTextField("not selected", 16);
 	private File outputFile = null;
@@ -177,7 +177,7 @@ public class LogCombinerDialog {
 	public String[] getFileNames() {
 		String[] fileArray = new String[files.size()];
 		for (int i = 0; i < files.size(); i++) {
-			FileInfo fileInfo = (FileInfo)files.get(i);
+			FileInfo fileInfo = files.get(i);
 			fileArray[i] = fileInfo.file.getPath();
 		}
 		return fileArray;
@@ -186,7 +186,7 @@ public class LogCombinerDialog {
 	public int[] getBurnins() {
 		int[] burnins = new int[files.size()];
 		for (int i = 0; i < files.size(); i++) {
-			FileInfo fileInfo = (FileInfo)files.get(i);
+			FileInfo fileInfo = files.get(i);
 			burnins[i] = fileInfo.burnin;
 		}
 		return burnins;
@@ -288,7 +288,7 @@ public class LogCombinerDialog {
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			FileInfo fileInfo = (FileInfo)files.get(rowIndex);
+			FileInfo fileInfo = files.get(rowIndex);
 			if (columnIndex == 0) {
 				return fileInfo.file.getName();
 			} else {
@@ -309,7 +309,7 @@ public class LogCombinerDialog {
 		 * @param columnIndex column of cell
 		 */
 		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			FileInfo fileInfo = (FileInfo)files.get(rowIndex);
+			FileInfo fileInfo = files.get(rowIndex);
 			if (columnIndex == 1) {
 				fileInfo.burnin = (Integer)aValue;
 			}

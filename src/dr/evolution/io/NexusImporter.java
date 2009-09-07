@@ -37,10 +37,7 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 import dr.util.Attributable;
 
 import java.awt.*;
@@ -254,9 +251,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     // **************************************************************
 
     private boolean isReadingTreesBlock = false;
-    private HashMap translationList = null;
+    private HashMap<String, Taxon> translationList = null;
     private Tree nextTree = null;
-    private String[] lastToken = new String[1];
+    private final String[] lastToken = new String[1];
 
     /**
      * import a single tree.
@@ -747,10 +744,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * Reads a 'TREES' block.
      */
     private Tree[] readTreesBlock(TaxonList taxonList) throws ImportException, IOException {
-        ArrayList trees = new ArrayList();
+        ArrayList<Tree> trees = new ArrayList<Tree>();
 
         String[] lastToken = new String[1];
-        HashMap translationList = readTranslationList(taxonList, lastToken);
+        HashMap<String, Taxon> translationList = readTranslationList(taxonList, lastToken);
 
         boolean done = false;
         do {
@@ -776,8 +773,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         return treeArray;
     }
 
-    private HashMap readTranslationList(TaxonList taxonList, String[] lastToken) throws ImportException, IOException {
-        HashMap translationList = new HashMap();
+    private HashMap<String, Taxon> readTranslationList(TaxonList taxonList, String[] lastToken) throws ImportException, IOException {
+        HashMap<String, Taxon> translationList = new HashMap<String, Taxon>();
 
         String token = readToken(";");
 
@@ -826,7 +823,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         return translationList;
     }
 
-    private Tree readNextTree(HashMap translationList, String[] lastToken) throws ImportException, IOException {
+    private Tree readNextTree(HashMap<String, Taxon> translationList, String[] lastToken) throws ImportException, IOException {
         try {
             Tree tree = null;
             String token = lastToken[0];
@@ -934,7 +931,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * accordingly). It then reads the branch length and SimpleNode that will
      * point at the new node or tip.
      */
-    private FlexibleNode readBranch(HashMap translationList) throws IOException, ImportException {
+    private FlexibleNode readBranch(HashMap<String, Taxon> translationList) throws IOException, ImportException {
         double length = 0.0;
         FlexibleNode branch;
 
@@ -981,7 +978,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * Reads a node in. This could be a polytomy. Calls readBranch on each branch
      * in the node.
      */
-    private FlexibleNode readInternalNode(HashMap translationList) throws IOException, ImportException {
+    private FlexibleNode readInternalNode(HashMap<String, Taxon> translationList) throws IOException, ImportException {
         FlexibleNode node = new FlexibleNode();
 
         // read the opening '('
@@ -1045,7 +1042,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * Reads an external node in.
      */
-    private FlexibleNode readExternalNode(HashMap translationList) throws ImportException, IOException {
+    private FlexibleNode readExternalNode(HashMap<String, Taxon> translationList) throws ImportException, IOException {
         FlexibleNode node = new FlexibleNode();
 
         String label = readToken(":(),;");
@@ -1053,7 +1050,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         Taxon taxon;
 
         if (translationList.size() > 0) {
-            taxon = (Taxon) translationList.get(label);
+            taxon = translationList.get(label);
 
             if (taxon == null) {
                 // taxon not found in taxon list...
@@ -1085,7 +1082,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         double origin = 0.0;
         boolean isBackwards = false;
         Units.Type units = Units.Type.YEARS;
-        ArrayList dates = new ArrayList();
+        ArrayList<Date> dates = new ArrayList<Date>();
 
         String token;
 
@@ -1245,7 +1242,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * @param value the string
      * @return the object
      */
-    static Object parseValue(String value) {
+    static Serializable parseValue(String value) {
 
         value = value.trim();
 

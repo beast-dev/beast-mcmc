@@ -274,7 +274,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
     /**
      * @return an iterator of the attributes that this object has.
      */
-    public Iterator getAttributeNames() {
+    public Iterator<String> getAttributeNames() {
         if (attributes == null)
             return null;
         else
@@ -285,7 +285,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private Vector<Sequence> sequences = new Vector<Sequence>();
+    private final Vector<Sequence> sequences = new Vector<Sequence>();
 
     private Attributable.AttributeHelper attributes = null;
 }

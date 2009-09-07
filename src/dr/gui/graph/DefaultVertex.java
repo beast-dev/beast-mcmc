@@ -51,13 +51,13 @@ public class DefaultVertex implements Vertex {
 	public int getHeightInRows() { return 1; }
 	
 	public int getOutgoingEdgeCount() { return outgoingEdges.size(); }
-	public Edge getOutgoingEdge(int index) { return (Edge)outgoingEdges.get(index); }
+	public Edge getOutgoingEdge(int index) { return outgoingEdges.get(index); }
 	public int getOutgoingEdgeIndex(Edge edge) { return outgoingEdges.indexOf(edge); }
 
 	public void addOutgoingEdge(Edge edge) { outgoingEdges.add(edge); }
 
 	public int getIncomingEdgeCount() { return incomingEdges.size(); }
-	public Edge getIncomingEdge(int index) { return (Edge)incomingEdges.get(index); }
+	public Edge getIncomingEdge(int index) { return incomingEdges.get(index); }
 	public int getIncomingEdgeIndex(Edge edge) { return incomingEdges.indexOf(edge); }
 
 	public void addIncomingEdge(Edge edge) { incomingEdges.add(edge); }
@@ -114,11 +114,11 @@ public class DefaultVertex implements Vertex {
 	private int column = 0;
 	private int row = 0;
 	
-	private ArrayList outgoingEdges = new ArrayList();
-	private ArrayList incomingEdges = new ArrayList();
+	private final ArrayList<Edge> outgoingEdges = new ArrayList<Edge>();
+	private final ArrayList<Edge> incomingEdges = new ArrayList<Edge>();
 	
 	private Point2D location;
-	private Dimension2D dimension;
+	private final Dimension2D dimension;
 	
 	private Object userObject = null;
 }

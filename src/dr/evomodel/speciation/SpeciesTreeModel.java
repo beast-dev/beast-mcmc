@@ -1303,7 +1303,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return spTree.getAttribute(name);
     }
 
-    public Iterator getAttributeNames() {
+    public Iterator<String> getAttributeNames() {
         return spTree.getAttributeNames();
     }
 

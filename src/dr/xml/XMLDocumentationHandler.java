@@ -30,7 +30,7 @@ import java.util.*;
 
 public class XMLDocumentationHandler {
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     public XMLDocumentationHandler(XMLParser parser) {
 
@@ -277,8 +277,8 @@ public class XMLDocumentationHandler {
         // find all parsers that match this required type
         Iterator i = parser.getParsers();
         while (i.hasNext()) {
-            XMLObjectParser xmlParser = (XMLObjectParser) i.next();
-            Class returnType = xmlParser.getReturnType();
+            final XMLObjectParser xmlParser = (XMLObjectParser) i.next();
+            final Class returnType = xmlParser.getReturnType();
             if (c.isAssignableFrom(returnType)) {
                 matchingParsers.add(xmlParser);
             }

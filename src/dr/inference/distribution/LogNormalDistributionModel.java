@@ -254,14 +254,14 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
             final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
 
-            XMLObject cxo = (XMLObject) xo.getChild(MEAN);
+            XMLObject cxo = xo.getChild(MEAN);
             if (cxo.getChild(0) instanceof Parameter) {
                 meanParam = (Parameter) cxo.getChild(Parameter.class);
             } else {
                 meanParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            cxo = (XMLObject) xo.getChild(PRECISION);
+            cxo = xo.getChild(PRECISION);
             if (cxo != null) {
                 if (cxo.getChild(0) instanceof Parameter) {
                     precParam = (Parameter) cxo.getChild(Parameter.class);
@@ -272,7 +272,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
                 return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace, false);
             } else {
 
-                cxo = (XMLObject) xo.getChild(STDEV);
+                cxo = xo.getChild(STDEV);
                 if (cxo.getChild(0) instanceof Parameter) {
                     stdevParam = (Parameter) cxo.getChild(Parameter.class);
                 } else {
@@ -337,5 +337,4 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     private final Parameter scaleParameter;
     //	private Parameter precParameter;
     private final double offset;
-
 }

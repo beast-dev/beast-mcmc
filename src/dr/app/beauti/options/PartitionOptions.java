@@ -24,7 +24,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.evomodel.substmodel.HKY;
 
 
 /**

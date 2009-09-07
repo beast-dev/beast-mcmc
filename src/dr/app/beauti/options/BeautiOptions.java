@@ -24,31 +24,16 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.BeautiTemplate;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
-import dr.evomodel.operators.TreeNodeSlide;
-import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodelxml.BirthDeathModelParser;
-import dr.evomodelxml.YuleModelParser;
 import dr.inference.operators.OperatorSchedule;
-import dr.util.NumberFormatter;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -136,7 +121,9 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
-        starBEASTOptions = new STARBEASTOptions(this); 
+        starBEASTOptions = new STARBEASTOptions(this);
+        
+        beautiImporter = new BEAUTiImporter(this);    
         
         beautiTemplate = new BeautiTemplate(this);
         
@@ -769,10 +756,12 @@ public class BeautiOptions extends ModelOptions {
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
     
-    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this); 
+    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);     
+        
+    public BEAUTiImporter beautiImporter = new BEAUTiImporter(this);    
     
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
-        
+    
    
 	@Override
 	public void selectOperators(List<Operator> ops) {

@@ -822,4 +822,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         return prefix;
     }
+
+    @Override
+    public Class<PartitionSubstitutionModel> getPartitionClassType() {        
+        return PartitionSubstitutionModel.class;
+    }
 }

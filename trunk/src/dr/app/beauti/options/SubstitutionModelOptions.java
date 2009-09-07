@@ -107,4 +107,27 @@ public class SubstitutionModelOptions extends ModelOptions {
         return false;
     }
     
+    /**
+     * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
+     * are strictly in the same order as the 'mu' relative rates are listed.
+     */
+    public int[] getPartitionCodonWeights() {
+        int[] weights = new int[options.getTotalActivePartitionSubstitutionModelCount()];
+
+        int k = 0;
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            for (PartitionData partition : options.dataPartitions) {
+                if (partition.getPartitionSubstitutionModel() == model) {
+                    model.addWeightsForPartition(partition, weights, k);
+                }
+            }
+            k += model.getCodonPartitionCount();
+        }
+
+        assert (k == weights.length);
+
+        return weights;
+    }
+
+    
 }

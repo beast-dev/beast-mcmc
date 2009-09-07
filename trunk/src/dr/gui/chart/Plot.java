@@ -187,7 +187,7 @@ public interface Plot {
         protected Paint markPaint = Color.black;
         protected Paint markFillPaint = Color.black;
 
-        private Rectangle2D bounds = null;
+        private final Rectangle2D bounds = null;
 
         private double xScale, yScale, xOffset, yOffset;
 
@@ -499,7 +499,8 @@ public interface Plot {
             this.xOffset = xOffset;
             this.yOffset = yOffset;
 
-            this.bounds = bounds;
+            // variable is assigned to itself
+            //this.bounds = bounds;
 
             if (xData != null && yData != null && xData.getCount() > 0)
                 paintData(g2, xData, yData);
@@ -523,7 +524,7 @@ public interface Plot {
 
         // Listeners
 
-        private java.util.Vector listeners = new java.util.Vector();
+        private final java.util.Vector<Listener> listeners = new java.util.Vector<Listener>();
 
         /**
          * Add a plot listener
@@ -537,7 +538,7 @@ public interface Plot {
          */
         protected void firePointClickedEvent(double x, double y) {
             for (int i = 0; i < listeners.size(); i++) {
-                Listener listener = (Listener) listeners.elementAt(i);
+                final Listener listener = listeners.elementAt(i);
 				listener.pointClicked(x, y);
 			}
 		}
@@ -547,7 +548,7 @@ public interface Plot {
 		 */
 		protected void fireMarkClickedEvent(int index, double x, double y) {
 			for (int i=0; i < listeners.size(); i++) {
-				Listener listener = (Listener)listeners.elementAt(i);
+				final Listener listener = listeners.elementAt(i);
 				listener.markClicked(index, x, y);
 			}
 		}

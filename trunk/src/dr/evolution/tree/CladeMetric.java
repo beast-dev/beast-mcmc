@@ -1,18 +1,14 @@
 package dr.evolution.tree;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import jebl.evolution.graphs.Node;
 import jebl.evolution.taxa.Taxon;
 import jebl.evolution.treemetrics.RootedTreeMetric;
 import jebl.evolution.trees.RootedTree;
 
+import java.util.*;
+
 /**
- * @author Sebastian Höhna
+ * @author Sebastian Hehna
  * @version 1.0
  * 
  */

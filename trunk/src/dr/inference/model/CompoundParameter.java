@@ -133,13 +133,13 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         throw new RuntimeException();
     }
 
-    public void addBounds(Bounds boundary) {
+    public void addBounds(Bounds<Double> boundary) {
 
         if (bounds == null) createBounds();
         bounds.addBounds(boundary);
     }
 
-    public Bounds getBounds() {
+    public Bounds<Double> getBounds() {
 
         if (bounds == null) createBounds();
         return bounds;
@@ -293,7 +293,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     // Private and protected stuff
     // ****************************************************************
 
-    private class CompoundBounds implements Bounds {
+    private class CompoundBounds implements Bounds<Double> {
 
         public Double getUpperLimit(int dim) {
             return parameters.get(dim).getBounds().getUpperLimit(pindex.get(dim));

@@ -1272,7 +1272,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * This class provides bounds for parameters that represent a node height
      * in this tree model.
      */
-    private class NodeHeightBounds implements Bounds {
+    private class NodeHeightBounds implements Bounds<Double> {
 
         public NodeHeightBounds(Parameter parameter) {
             nodeHeightParameter = parameter;

@@ -34,7 +34,10 @@ import dr.evolution.util.TaxonList;
 
 import java.io.EOFException;
 import java.io.FileReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Alexei Drummond
@@ -44,8 +47,8 @@ import java.util.*;
 public class Defects {
 
     private final ArrayList<Defect> defects = new ArrayList<Defect>();
-    private final Set defectiveSequences = new HashSet();
-    private final Set defectiveSites = new HashSet();
+    private final Set<Integer> defectiveSequences = new HashSet<Integer>();
+    private final Set<Integer> defectiveSites = new HashSet<Integer>();
     int sequenceCount = 0;
     static final int STOP = -1;
     static final int INDEL = -2;
@@ -197,8 +200,8 @@ public class Defects {
      * @param defectCount
      * @return A set of integers representing the sequences with the given defect count.
      */
-    public Set getSequences(int defectCount) {
-        TreeSet set = new TreeSet();
+    public Set<Integer> getSequences(int defectCount) {
+        TreeSet<Integer> set = new TreeSet<Integer>();
         for (int i = 0; i < sequenceCount; i++) {
             if (getDefectiveSites(i) == defectCount) {
                 set.add(i);
@@ -211,8 +214,8 @@ public class Defects {
      * @param stopCount
      * @return A set of integers representing the sequences with the given defect count.
      */
-    public Set getSequencesByStopCount(int stopCount) {
-        TreeSet set = new TreeSet();
+    public Set<Integer> getSequencesByStopCount(int stopCount) {
+        TreeSet<Integer> set = new TreeSet<Integer>();
         for (int i = 0; i < sequenceCount; i++) {
             if (getStopSites(i) == stopCount) {
                 set.add(i);
@@ -405,10 +408,9 @@ public class Defects {
         //    System.out.println("  " + name);
         //}
         for (int d = 1; d <= maxDefects; d++) {
-            Set seqs = defects.getSequences(d);
-            for(Object seq : seqs) {
-                Integer index = (Integer) seq;
-                String name = alignment.getTaxonId(index);
+            Set<Integer> seqs = defects.getSequences(d);
+            for(Integer seq : seqs) {
+                String name = alignment.getTaxonId(seq);
                 System.out.println(d + "  " + name);
             }
 
@@ -437,9 +439,8 @@ public class Defects {
 
         System.out.println("stop-codon sequences:");
         for (int d = 1; d <= maxStops; d++) {
-            Set seqs = defects.getSequencesByStopCount(d);
-            for (Iterator i = seqs.iterator(); i.hasNext();) {
-                Integer index = (Integer)i.next();
+            Set<Integer> seqs = defects.getSequencesByStopCount(d);
+            for(Integer index : seqs) {
                 String name = alignment.getTaxonId(index);
                 System.out.println(d + "  " + name);
             }

@@ -110,8 +110,8 @@ public class DefaultBranchColouring implements BranchColouring {
 	 */
 	public void addEvent( int colour, double time ) {
 		
-		colourChanges.add( new Integer(colour) );
-		changeHeights.add( new Double(time) );
+		colourChanges.add(colour);
+		changeHeights.add(time);
 		
 		sanityCheck();
 		
@@ -150,7 +150,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	public int getForwardColourBelow( int i ) {
 		finalSanityCheck();
 		if (i==0) return parentColour;
-		return ((Integer)colourChanges.get(i-1)).intValue();
+		return colourChanges.get(i - 1);
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	 */
 	public double getForwardTime( int i ) {
 		finalSanityCheck();
-		return ((Double)changeHeights.get(i-1)).doubleValue();
+		return changeHeights.get(i - 1);
 	}
 
 	/**
@@ -172,7 +172,7 @@ public class DefaultBranchColouring implements BranchColouring {
 		finalSanityCheck();
 		int total = colourChanges.size();
 		if (i == total) return parentColour;
-		return ((Integer)colourChanges.get(total-1-i)).intValue();
+		return colourChanges.get(total - 1 - i);
 	}
 
 	/**
@@ -183,7 +183,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	public double getBackwardTime( int i ) {
 		finalSanityCheck();
 		int total = colourChanges.size();
-		return ((Double)changeHeights.get(total-i)).doubleValue();
+		return changeHeights.get(total - i);
 	}
 
 	/**
@@ -194,7 +194,7 @@ public class DefaultBranchColouring implements BranchColouring {
 	public int getNextForwardEvent( double height ) {
 
 		int i;
-		for (i=0; i < changeHeights.size() && ((Double)changeHeights.get(i)).doubleValue() > height; i += 1 ) {}
+		for (i=0; i < changeHeights.size() && changeHeights.get(i) > height; i += 1 ) {}
 		return i+1;
 
 	}
@@ -223,9 +223,9 @@ public class DefaultBranchColouring implements BranchColouring {
 	 * 
 	 * @return list of colour changes
 	 */
-	public List getColourChanges() {
+	public List<ColourChange> getColourChanges() {
 
-		List cc = new ArrayList(0);
+		List<ColourChange> cc = new ArrayList<ColourChange>(0);
 		for (int i=1; i<=getNumEvents(); i++) {
 	
 			cc.add( new ColourChange( getBackwardTime(i), getBackwardColourAbove(i) ) );
@@ -241,16 +241,16 @@ public class DefaultBranchColouring implements BranchColouring {
         if (checkSanity) {
 	        int total = colourChanges.size();
 			if (total > 0) {
-				if (((Integer)colourChanges.get(0)).intValue() == parentColour) {
+				if ( colourChanges.get(0) == parentColour) {
 					throw new Error("First event does not change colour");
 				}
 			}
 			if (total > 1) {
-				if (((Integer)colourChanges.get(total-1)).intValue() == ((Integer)colourChanges.get(total-2)).intValue()) {
+				if ((colourChanges.get(total-1)).intValue() == (colourChanges.get(total-2)).intValue()) {
 						throw new Error("Last event does not change colour");
 				}
 				
-				if (((Double)changeHeights.get(total-1)).doubleValue() > ((Double)changeHeights.get(total-2)).doubleValue()) {
+				if ( changeHeights.get(total - 1) > changeHeights.get(total - 2) ) {
 					throw new Error("Child event occurs before parent event");
 				}
 			}
@@ -263,10 +263,10 @@ public class DefaultBranchColouring implements BranchColouring {
 			sanityCheck();
 	        int total = colourChanges.size();
 			for (int i=1; i < total; i++) {
-				if (((Integer)colourChanges.get(i)).intValue() == ((Integer)colourChanges.get(i-1)).intValue()) {
+				if ((colourChanges.get(i)).intValue() == (colourChanges.get(i-1)).intValue()) {
 						throw new Error("Event "+i+" does not change colour");
 				}				
-				if (((Double)changeHeights.get(i)).doubleValue() > ((Double)changeHeights.get(i-1)).doubleValue()) {
+				if ( changeHeights.get(i) > changeHeights.get(i - 1) ) {
 					throw new Error("Event "+i+" jumps back in time");
 				}
 			}
@@ -283,15 +283,15 @@ public class DefaultBranchColouring implements BranchColouring {
 			}
 			int total = colourChanges.size();
 			if (total > 0) {
-				if (((Integer)colourChanges.get(total-1)).intValue() != childColour) {
+				if ( colourChanges.get(total - 1) != childColour) {
 					throw new Error("Last event does not change colour into child's");
 				}
 			}
 		}
 	}
 
-	private List colourChanges = new ArrayList(0);   // new colours, forward in time
-	private List changeHeights = new ArrayList(0);   // change heights, forward in time
+	private final List<Integer> colourChanges = new ArrayList<Integer>(0);   // new colours, forward in time
+	private final List<Double> changeHeights = new ArrayList<Double>(0);   // change heights, forward in time
 	private int parentColour;
 	private int childColour;
 	

@@ -27,7 +27,9 @@ package dr.app.treestat.statistics;
 
 import dr.evolution.tree.Tree;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -64,21 +66,21 @@ public class GammaStatistic extends AbstractTreeSummaryStatistic {
      */
     private static double[] getIntervals(Tree tree) {
 
-        ArrayList heights = new ArrayList();
+        List<Double> heights = new ArrayList<Double>();
 
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            heights.add(new Double(tree.getNodeHeight(tree.getInternalNode(i))));
+            heights.add(tree.getNodeHeight(tree.getInternalNode(i)));
         }
         Collections.sort(heights, Collections.reverseOrder());
 
         double[] intervals = new double[heights.size()];
         for (int i = 0; i < intervals.length - 1; i++) {
-            double height1 = ((Double)heights.get(i)).doubleValue();
-            double height2 = ((Double)heights.get(i + 1)).doubleValue();
+            double height1 = heights.get(i);
+            double height2 = heights.get(i + 1);
 
             intervals[i] = height1 - height2;
         }
-        intervals[intervals.length - 1] = ((Double)heights.get(intervals.length - 1)).doubleValue();
+        intervals[intervals.length - 1] = heights.get(intervals.length - 1);
 
         return intervals;
 

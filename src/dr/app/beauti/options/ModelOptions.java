@@ -52,9 +52,6 @@ public abstract class ModelOptions {
     public static final int FORWARDS = 0;
     public static final int BACKWARDS = 1;
     
-//    public static final int BIN_SIMPLE = 0;
-//    public static final int BIN_COVARION = 1;
-
     public static final int GROWTH_RATE = 0;
     public static final int DOUBLING_TIME = 1;
     public static final int CONSTANT_SKYLINE = 0;

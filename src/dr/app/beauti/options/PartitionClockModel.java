@@ -327,4 +327,9 @@ public class PartitionClockModel extends PartitionOptions {
         return prefix;
     }
 
+    @Override
+    public Class<PartitionClockModel> getPartitionClassType() {        
+        return PartitionClockModel.class;
+    }
+
 }

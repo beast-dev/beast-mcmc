@@ -304,7 +304,7 @@ public class OperatorsGenerator extends Generator {
 
         if (operator.getName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
-            int[] parameterWeights = options.getPartitionCodonWeights();
+            int[] parameterWeights = options.substitutionModelOptions.getPartitionCodonWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];

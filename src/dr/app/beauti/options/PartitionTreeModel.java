@@ -287,5 +287,9 @@ public class PartitionTreeModel extends PartitionOptions {
         return prefix;
     }
 
+    @Override
+    public Class<PartitionTreeModel> getPartitionClassType() {        
+        return PartitionTreeModel.class;
+    }
 
 }

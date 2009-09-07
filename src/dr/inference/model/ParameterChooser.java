@@ -4,7 +4,7 @@ package dr.inference.model;
  * @author Joseph Heled
  *         Date: 31/08/2009
  */
-public class ParameterChooser extends Variable.Base<Double> implements Variable<Double> {
+public class ParameterChooser extends Variable.Base<Double> implements Variable<Double>, ModelListener {
     private final ValuesPool pool;
     private final int which[];
 
@@ -12,6 +12,8 @@ public class ParameterChooser extends Variable.Base<Double> implements Variable<
         super(name);
         this.pool = pool;
         this.which = which;
+
+        pool.addModelListener(this);
     }
 
     public int getSize() {
@@ -61,11 +63,30 @@ public class ParameterChooser extends Variable.Base<Double> implements Variable<
         }
     };
 
-    public Bounds getBounds() {
+    public Bounds<Double> getBounds() {
         return bounds;
     }
 
-    public void addBounds(Bounds bounds) {
-       assert false;
+    public void addBounds(Bounds<Double> bounds) {
+        final Bounds<Double> b = getBounds();
+        assert bounds.getBoundsDimension() == b.getBoundsDimension();
+
+       for(int dim = 0; dim < bounds.getBoundsDimension(); ++dim) {
+            if( bounds.getLowerLimit(dim) > b.getLowerLimit(dim) ||
+                bounds.getUpperLimit(dim) < b.getUpperLimit(dim) ) {
+                throw new RuntimeException("can't do that");
+            }
+       }     
+    }
+
+    public void modelChangedEvent(Model model, Object object, int index) {        
+        for(int k = 0; k < which.length; ++k) {
+            if( pool.hasChanged(which[k], object, index) ) {
+                fireVariableChanged(k);
+            }
+        }
+    }
+
+    public void modelRestored(Model model) {
     }
 }

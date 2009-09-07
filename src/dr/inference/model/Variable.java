@@ -25,10 +25,10 @@
 
 package dr.inference.model;
 
-import dr.util.Identifiable;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
+import dr.util.Identifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +103,7 @@ public interface Variable<V> extends Identifiable {
             this.id = id;
         }
 
-        private void fireVariableChanged(int index) {
+        protected void fireVariableChanged(int index) {
             for (VariableListener listener : listeners) {
                 listener.variableChangedEvent(this, index, ChangeType.VALUE_CHANGED);
             }

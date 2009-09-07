@@ -4,8 +4,8 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The code is much more elegant in Python. I definitly don't have to write my own max on an list of integers (yikes).
@@ -17,15 +17,26 @@ public class SelectorOperator extends SimpleMCMCOperator {
     public static String SELECTOR_OPERATOR = "selectorOperator";
     private final Parameter selector;
 
-    private final int[] np;
+    private final int[] np_m1;
+
+    private final int[] np_m2;
 
     SelectorOperator(Parameter selector) {
         this.selector = selector;
         final int len = selector.getSize();
-        np = new int[len +1];
+        np_m1 = new int[len +1];
 
-        for(int l = 0; l < np.length; ++l) {
-            np[l] = npos(len, l);
+        for(int l = 0; l < np_m1.length; ++l) {
+            np_m1[l] = npos(len, l);
+        }
+
+        np_m2 = new int[len + 1];
+        np_m2[0] = 1;
+        for(int mx = 0; mx < len; ++mx) {
+           np_m2[mx+1] = 0;
+           for(int l = 1; l < len+1; ++l) {
+               np_m2[mx+1] += npos(l, mx);
+           }
         }
     }
     
@@ -36,7 +47,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
     public double doOperation() throws OperatorFailedException {
 
         final int[] s = vals();
-        final List<Integer> poss = movesFrom(s);
+        final List<Integer> poss = movesFrom_m2(s);
         final int i = MathUtils.nextInt(poss.size()/2);
 
         final int[] y = new int[s.length];
@@ -44,13 +55,32 @@ public class SelectorOperator extends SimpleMCMCOperator {
         final Integer p = poss.get(2 * i);
         y[p] = poss.get(2*i+1);
 
-        double hr = count1sr(s, y);
-        hr *= (double)(poss.size()*np[max(s)])/(movesFrom(y).size() * np[max(y)]);
+        double hr = count_sr_m2(s, y);
+        hr *= (double)(poss.size()* np_m2[max(s)+1])/(movesFrom_m2(y).size() * np_m2[max(y)+1]);
 
         selector.setParameterValue(p, y[p]);
         
         return Math.log(hr);
     }
+
+    public double doOperation_m1() throws OperatorFailedException {
+
+           final int[] s = vals();
+           final List<Integer> poss = movesFrom_m1(s);
+           final int i = MathUtils.nextInt(poss.size()/2);
+
+           final int[] y = new int[s.length];
+           System.arraycopy(s, 0, y, 0, s.length);
+           final Integer p = poss.get(2 * i);
+           y[p] = poss.get(2*i+1);
+
+           double hr = count_sr_m1(s, y);
+           hr *= (double)(poss.size()* np_m1[max(s)])/(movesFrom_m1(y).size() * np_m1[max(y)]);
+
+           selector.setParameterValue(p, y[p]);
+
+           return Math.log(hr);
+       }
 
     public String getPerformanceSuggestion() {
         return null;
@@ -59,7 +89,8 @@ public class SelectorOperator extends SimpleMCMCOperator {
     private int[] vals() {
         int[] v = new int[selector.getSize()];
         for(int k = 0; k < v.length; ++k) {
-            v[k] = (int)(selector.getParameterValue(k) +0.5);
+            final double vk = selector.getParameterValue(k);
+            v[k] = (int)(vk + ((vk>= 0) ? 0.5 : -0.5));
         }
         return v;
     }
@@ -103,7 +134,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return mx;
     }
 
-    private int[] counts(int[] s, int mx) {
+    private int[] counts_m1(int[] s, int mx) {
         int[] c = new int[mx+1];
         for(int si : s) {
             c[si]++;
@@ -111,10 +142,70 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return c;
     }
 
-    private List<Integer> movesFrom(int[] s) {
+    private int[] counts_m2(int[] s, int mx) {
+        int[] c = new int[mx+2];
+        for(int si : s) {
+            c[si+1]++;
+        }
+        return c;
+    }
+
+    private int[] counts_m2x(int[] s, int mx) {
+        int[] c = new int[mx+1];
+        for(int si : s) {
+            if( si >= 0 ) {
+                c[si]++;
+            }
+        }
+        return c;
+    }
+
+    private List<Integer> movesFrom_m2(int[] s) {
         final int mx = max(s);
 
-        final int[] counts = counts(s, mx);
+        final int[] counts = counts_m2x(s, mx);
+        final List<Integer> opt = new ArrayList<Integer>(5);
+
+        for(int k = 0; k < s.length; ++k) {
+            final int si = s[k];
+            if( si < 0 ) {
+                opt.add(k); opt.add(0);
+                if( mx >= 0 ) {
+                    opt.add(k); opt.add(mx+1);
+                }
+                for(int x = 1; x < mx+1; ++x) {
+                    if( counts[x]+1 <= counts[x-1]) {
+                        opt.add(k); opt.add(x);
+                    }
+                }
+            } else {
+                if( si < mx && ((counts[si] == 1) || counts[si] == counts[si+1]) ) {
+                    // only or breaks order -> no moves
+                } else {
+                    for(int x = 0; x < mx+1; ++x) {
+                        if(x == si) {
+                            continue;
+                        }
+                        if( (x > si && counts[si] - 1 >= counts[x] + 1 && counts[x-1] >= counts[x]+1)
+                                ||
+                                (x < si && (x > 0 && counts[x]+1 <= counts[x-1] || x == 0)) ) {
+                            opt.add(k); opt.add(x);
+                        }
+                    }
+                    if( counts[si] > 1) {
+                        opt.add(k); opt.add(mx+1);
+                    }
+                    opt.add(k); opt.add(-1);
+                }
+            }
+        }
+        return opt;
+    }
+
+    private List<Integer> movesFrom_m1(int[] s) {
+        final int mx = max(s);
+
+        final int[] counts = counts_m1(s, mx);
         final List<Integer> opt = new ArrayList<Integer>(5);
 
         for(int k = 0; k < s.length; ++k) {
@@ -142,17 +233,17 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return opt;
     }
 
-  private long choose(int n, int k) {
-      double r = 1;
-      while( n > k ) {
-          r *= n;
-          r /= (n-k);
-          --n;
-      }
-      return (long)(r+0.5);
-  }
+    private long choose(int n, int k) {
+        double r = 1;
+        while( n > k ) {
+            r *= n;
+            r /= (n-k);
+            --n;
+        }
+        return (long)(r+0.5);
+    }
 
-   private long[] count1l(int[] ls) {
+   private long[] countl_m1(int[] ls) {
        int l = sum(ls);
        int i = 0;
        long[] r = new long[ls.length];
@@ -166,9 +257,9 @@ public class SelectorOperator extends SimpleMCMCOperator {
        return r;
    }
 
-    private double count1sr(int[] x, int[] y) {
-        long[] r1 = count1l(counts(x, max(x)));
-        long[] r2 = count1l(counts(y, max(y)));
+    private double count_sr_m1(int[] x, int[] y) {
+        long[] r1 = countl_m1(counts_m1(x, max(x)));
+        long[] r2 = countl_m1(counts_m1(y, max(y)));
 
         int k = Math.min(r1.length, r2.length);
         double r = 1;
@@ -185,6 +276,45 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return r;
     }
 
+    private long[] countl_m2(int[] ls) {
+        if( ls.length == 1 ) {
+            return new long[]{1};
+        }
+
+        int l = sum(ls);
+
+        long[] r = new long[ls.length];
+        r[0] = choose(l, ls[0]);
+        l -= ls[0];
+        int i = 1;
+
+        while( l > 0 ) {
+            r[i] = choose(l, ls[i]);
+
+            l -= ls[i];
+            i += 1;
+        }
+        return r;
+    }
+
+    private double count_sr_m2(int[] x, int[] y) {
+        long[] r1 = countl_m2(counts_m2(x, max(x)));
+        long[] r2 = countl_m2(counts_m2(y, max(y)));
+
+        int k = Math.min(r1.length, r2.length);
+        double r = 1;
+        for(int i=0; i < k; ++i) {
+            r *= r1[i];
+            r /= r2[i];
+        }
+        for(int i=k; i < r1.length; ++i) {
+            r *= r1[i];
+        }
+        for(int i=k; i < r2.length; ++i) {
+            r /= r2[i];
+        }
+        return r;
+    }
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
@@ -194,7 +324,10 @@ public class SelectorOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new SelectorOperator(parameter);
+            final double weight = xo.getDoubleAttribute(WEIGHT);
+            final SelectorOperator op = new SelectorOperator(parameter);
+            op.setWeight(weight);
+            return op;
         }
 
         //************************************************************************
@@ -211,6 +344,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
 
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[] {
+                    AttributeRule.newDoubleRule(WEIGHT),
                     new ElementRule(Parameter.class),
             };
         }

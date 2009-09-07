@@ -14,6 +14,11 @@ public class ParameterChooserParser extends dr.xml.AbstractXMLObjectParser {
         String name = xo.getId();
         final ValuesPool pool = (ValuesPool) xo.getChild(ValuesPool.class);
         final int[] which = xo.getIntegerArrayAttribute(INDEX);
+        for( int w : which ) {
+            if( ! (0 <= w && w < pool.length()) ) {
+                throw new XMLParseException("index " + w + " out of range");
+            }
+        }
         return new ParameterChooser(name, pool, which);
     }
 

@@ -49,10 +49,8 @@ import java.util.List;
  */
 public class MCMCPanel extends BeautiPanel {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = -3710586474593827540L;
+    
     WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
@@ -90,31 +88,52 @@ public class MCMCPanel extends BeautiPanel {
         chainLengthField.setValue(100000);
         chainLengthField.setColumns(10);
         optionsPanel.addComponentWithLabel("Length of chain:", chainLengthField);
+        chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {}
+
+            public void keyReleased(KeyEvent e) {
+                options.chainLength = chainLengthField.getValue();
+                frame.setDirty();
+            }
+        });
 
         optionsPanel.addSeparator();
 
         echoEveryField.setValue(1000);
         echoEveryField.setColumns(10);
         optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
+        echoEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {}
+
+            public void keyReleased(KeyEvent e) {
+                options.echoEvery = echoEveryField.getValue();
+                frame.setDirty();
+            }
+        });
 
         logEveryField.setValue(100);
         logEveryField.setColumns(10);
         optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
+        logEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {}
 
+            public void keyReleased(KeyEvent e) {
+                options.logEvery = logEveryField.getValue();
+                frame.setDirty();
+            }
+        });
+        
         optionsPanel.addSeparator();
 
         fileNameStemField.setColumns(32);
         optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
         fileNameStemField.setEditable(true);
         fileNameStemField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-//				options.fileNameStem = fileNameStemField.getText();
-//            	setOptions(options);
-//                frame.setDirty();				
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
+            public void keyTyped(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {}
 
             public void keyReleased(KeyEvent e) {
                 options.fileNameStem = fileNameStemField.getText();
@@ -176,13 +195,7 @@ public class MCMCPanel extends BeautiPanel {
         substTreeFileNameField.setColumns(32);
         substTreeFileNameField.setEditable(false);
         substTreeFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
-
-        java.awt.event.KeyListener listener = new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                frame.setDirty();
-            }
-        };
+        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);       
 
         optionsPanel.addSeparator();
 
@@ -193,15 +206,11 @@ public class MCMCPanel extends BeautiPanel {
                 frame.setDirty();
             }
         });
-
-        chainLengthField.addKeyListener(listener);
-        echoEveryField.addKeyListener(listener);
-        logEveryField.addKeyListener(listener);
-        fileNameStemField.addKeyListener(listener);
+        
 //        logFileNameField.addKeyListener(listener);
 //        treeFileNameField.addKeyListener(listener);
         //mapTreeFileNameField.addKeyListener(listener);
-        substTreeFileNameField.addKeyListener(listener);
+//        substTreeFileNameField.addKeyListener(listener);
 
         add(optionsPanel, BorderLayout.CENTER);
 
@@ -251,12 +260,11 @@ public class MCMCPanel extends BeautiPanel {
     
     public void setOptions(BeautiOptions options) {
         this.options = options;
-
+        
         chainLengthField.setValue(options.chainLength);
-
         echoEveryField.setValue(options.echoEvery);
         logEveryField.setValue(options.logEvery);
-
+        
         if (options.fileNameStem != null) {
             fileNameStemField.setText(options.fileNameStem);
 
@@ -305,12 +313,7 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
-        options.chainLength = chainLengthField.getValue();
-
-        options.echoEvery = echoEveryField.getValue();
-        options.logEvery = logEveryField.getValue();
-
+    public void getOptions(BeautiOptions options) {    
         options.fileNameStem = fileNameStemField.getText();
         options.logFileName = logFileNameField.getText();        
 

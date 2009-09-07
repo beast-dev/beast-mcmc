@@ -30,8 +30,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -106,10 +106,13 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
 
         double logL = 0.0;
 
-        for (Attribute<double[]> data : dataList) {
-            for (int j = Math.max(0, from); j < Math.min(data.getAttributeValue().length, to); j++) {
+        for (Attribute<double[]> data : dataList) {  
+            // see comment in DistributionLikelihood
+            final double[] attributeValue = data.getAttributeValue();
 
-                double value = data.getAttributeValue()[j];
+            for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
+
+                double value = attributeValue[j];
                 logL += logPDF(value);
             }
         }

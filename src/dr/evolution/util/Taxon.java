@@ -39,7 +39,7 @@ import java.util.Iterator;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class Taxon implements Attributable, Identifiable, Comparable {
+public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 
 	public Taxon(String id) {
 		setId(id);
@@ -157,8 +157,8 @@ public class Taxon implements Attributable, Identifiable, Comparable {
 	// Comparable IMPLEMENTATION
 	// **************************************************************
 
-	public int compareTo(Object o) {
-		return getId().compareTo(((Taxon)o).getId());
+	public int compareTo(Taxon o) {
+		return getId().compareTo(o.getId());
 	}
 
 }

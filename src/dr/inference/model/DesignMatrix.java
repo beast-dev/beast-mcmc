@@ -89,7 +89,7 @@ public class DesignMatrix extends MatrixParameter {
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(ADD_INTERCEPT, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE), // TODO or have the following                            
                 AttributeRule.newStringRule(FORM,true),     // TODO Should have to include both FORM and DIMENSION at the same time

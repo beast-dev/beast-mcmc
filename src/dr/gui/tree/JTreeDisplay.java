@@ -212,14 +212,14 @@ public class JTreeDisplay extends JComponent implements Printable,
 	protected void fireNodeClickedEvent(int node) {
 	
 		for (int i=0; i < listeners.size(); i++) {
-			Listener listener = (Listener)listeners.elementAt(i);
+			Listener listener = listeners.elementAt(i);
 			listener.nodeClicked(node);
 		}
 	}
 
 	// Listeners
 	
-	private java.util.Vector listeners = new java.util.Vector(); 
+	private final java.util.Vector<Listener> listeners = new java.util.Vector();
 	
 	public interface Listener {
 	

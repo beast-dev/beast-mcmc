@@ -73,8 +73,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     private Taxa currentTaxonSet = null;
 
-    private List<Taxon> includedTaxa = new ArrayList<Taxon>();
-    private List<Taxon> excludedTaxa = new ArrayList<Taxon>();
+    private final List<Taxon> includedTaxa = new ArrayList<Taxon>();
+    private final List<Taxon> excludedTaxa = new ArrayList<Taxon>();
 
     private JTable excludedTaxaTable = null;
     private TaxaTableModel excludedTaxaTableModel = null;
@@ -385,8 +385,6 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         if (!options.hasData()) {
             includedTaxa.clear();
             excludedTaxa.clear();
-            
-            return;
         }
     }
 
@@ -538,7 +536,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         includedTaxonSetsComboBox.setSelectedIndex(0);
     }
 
-    private void setupTaxonSetsComboBox(JComboBox comboBox, List availableTaxa) {
+    private void setupTaxonSetsComboBox(JComboBox comboBox, List<Taxon> availableTaxa) {
         comboBox.removeAllItems();
 
         comboBox.addItem(TAXON_SET_DEFAULT);
@@ -558,7 +556,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
      * @param availableTaxa a potential superset of taxa
      * @return true if the taxa are all found in availableTaxa
      */
-    private boolean isCompatible(Taxa taxa, List availableTaxa) {
+    private boolean isCompatible(Taxa taxa, List<Taxon> availableTaxa) {
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);

@@ -27,7 +27,10 @@ package dr.evolution.util;
 
 import dr.util.Identifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Class for a list of taxa.
@@ -36,7 +39,7 @@ import java.util.*;
  *
  * @author Alexei Drummond
  */
-public class Taxa implements MutableTaxonList, Identifiable, Comparable {
+public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 	public Taxa() {
 	}
 
@@ -233,8 +236,8 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	public String getId() { return id; }
 	public void setId(String id) { this.id = id; }
 
-	public int compareTo(Object o) {
-		return getId().compareTo(((Taxa)o).getId());
+	public int compareTo(Taxa o) {
+		return getId().compareTo(o.getId());
 	}
 
 	public String toString() { return id; }
@@ -292,5 +295,4 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable {
 	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 
 	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
-	//ArrayList listeners = new ArrayList();
 }

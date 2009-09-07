@@ -23,24 +23,24 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.prior;
-
-import dr.inference.model.Parameter;
+//package dr.inference.prior;
+//
+//import dr.inference.model.Parameter;
 
 /**
  * An interface for priors that act on parameters.
  */
-public interface ParameterPrior extends Prior {
-
-	/**
-	 * Sets the parameter that this prior acts on
-	 */
-	public void setParameter(Parameter param);
-	
-	/**
-	 * @return the parameter that this prior acts on.
-	 */
-	public Parameter getParameter();
-	
-	public String toHTML();
-}
+//public interface ParameterPrior extends Prior {
+//
+//	/**
+//	 * Sets the parameter that this prior acts on
+//	 */
+//	public void setParameter(Parameter param);
+//
+//	/**
+//	 * @return the parameter that this prior acts on.
+//	 */
+//	public Parameter getParameter();
+//
+//	public String toHTML();
+//}

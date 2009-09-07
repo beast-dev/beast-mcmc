@@ -68,7 +68,7 @@ public class StatisticParser extends dr.xml.AbstractXMLObjectParser {
 	
 	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
-	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+	private final XMLSyntaxRule[] rules = {
 		new StringAttributeRule("name", "The name of the statistic you wish to extract from the given object"),
 		new ElementRule(StatisticList.class)
 	};

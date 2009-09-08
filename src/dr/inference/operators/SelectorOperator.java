@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -8,7 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The code is much more elegant in Python. I definitly don't have to write my own max on an list of integers (yikes).
+ * The code is much more elegant in Python.
+ * I definitly don't have to write my own max for a list of integers (yikes).
  *
  * @author Joseph Heled
  *         Date: 4/09/2009
@@ -63,107 +65,46 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return Math.log(hr);
     }
 
-    public double doOperation_m1() throws OperatorFailedException {
-
-           final int[] s = vals();
-           final List<Integer> poss = movesFrom_m1(s);
-           final int i = MathUtils.nextInt(poss.size()/2);
-
-           final int[] y = new int[s.length];
-           System.arraycopy(s, 0, y, 0, s.length);
-           final Integer p = poss.get(2 * i);
-           y[p] = poss.get(2*i+1);
-
-           double hr = count_sr_m1(s, y);
-           hr *= (double)(poss.size()* np_m1[max(s)])/(movesFrom_m1(y).size() * np_m1[max(y)]);
-
-           selector.setParameterValue(p, y[p]);
-
-           return Math.log(hr);
-       }
+//    public double doOperation_m1() throws OperatorFailedException {
+//
+//        final int[] s = vals();
+//        final List<Integer> poss = movesFrom_m1(s);
+//        final int i = MathUtils.nextInt(poss.size()/2);
+//
+//        final int[] y = new int[s.length];
+//        System.arraycopy(s, 0, y, 0, s.length);
+//        final Integer p = poss.get(2 * i);
+//        y[p] = poss.get(2*i+1);
+//
+//        double hr = count_sr_m1(s, y);
+//        hr *= (double)(poss.size()* np_m1[max(s)])/(movesFrom_m1(y).size() * np_m1[max(y)]);
+//
+//        selector.setParameterValue(p, y[p]);
+//
+//        return Math.log(hr);
+//    }
 
     public String getPerformanceSuggestion() {
         return null;
     }
 
     private int[] vals() {
-        int[] v = new int[selector.getSize()];
+        return intVals(selector);
+    }
+
+    static int[] intVals(Variable<Double> var) {
+        int[] v = new int[var.getSize()];
         for(int k = 0; k < v.length; ++k) {
-            final double vk = selector.getParameterValue(k);
+            final double vk = var.getValue(k);
             v[k] = (int)(vk + ((vk>= 0) ? 0.5 : -0.5));
         }
         return v;
     }
 
-    private int npos(int s, int m) {
-        return npos(s, m, 1);
-    }
-
-    private int npos(int s, int m, int mn) {
-        if( m == 0 || s == 0 ) {
-            return 1;
-        }
-
-        int tot = 0;
-        for(int k = mn; k < 1+s/m; ++k) {
-            final int r = s - k*(m+1);
-            if(r < 0 ) {
-                break;
-            }
-            tot += npos(r, m-1, 0);
-        }
-        return tot;
-    }
-
-    private int sum(int[] s) {
-        int sum = 0;
-        for(int si : s) {
-            sum += si;
-        }
-        return sum;
-    }
-
-    private int max(int[] s) {
-        int mx = s[0];
-
-        for(int k = 1; k < s.length; ++k) {
-            if( mx < s[k] ) {
-                mx = s[k];
-            }
-        }
-        return mx;
-    }
-
-    private int[] counts_m1(int[] s, int mx) {
-        int[] c = new int[mx+1];
-        for(int si : s) {
-            c[si]++;
-        }
-        return c;
-    }
-
-    private int[] counts_m2(int[] s, int mx) {
-        int[] c = new int[mx+2];
-        for(int si : s) {
-            c[si+1]++;
-        }
-        return c;
-    }
-
-    private int[] counts_m2x(int[] s, int mx) {
-        int[] c = new int[mx+1];
-        for(int si : s) {
-            if( si >= 0 ) {
-                c[si]++;
-            }
-        }
-        return c;
-    }
-
     private List<Integer> movesFrom_m2(int[] s) {
         final int mx = max(s);
 
-        final int[] counts = counts_m2x(s, mx);
+        final int[] counts = counts_used_m2(s, mx);
         final List<Integer> opt = new ArrayList<Integer>(5);
 
         for(int k = 0; k < s.length; ++k) {
@@ -233,7 +174,81 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return opt;
     }
 
-    private long choose(int n, int k) {
+    private static int npos(int s, int m) {
+        return npos(s, m, 1);
+    }
+
+    private static int npos(int s, int m, int mn) {
+        if( m == 0 || s == 0 ) {
+            return 1;
+        }
+
+        int tot = 0;
+        for(int k = mn; k < 1+s/m; ++k) {
+            final int r = s - k*(m+1);
+            if(r < 0 ) {
+                break;
+            }
+            tot += npos(r, m-1, 0);
+        }
+        return tot;
+    }
+
+    private static int sum(int[] s) {
+        int sum = 0;
+        for(int si : s) {
+            sum += si;
+        }
+        return sum;
+    }
+
+    private static int max(int[] s) {
+        int mx = s[0];
+
+        for(int k = 1; k < s.length; ++k) {
+            if( mx < s[k] ) {
+                mx = s[k];
+            }
+        }
+        return mx;
+    }
+
+    private static int[] counts_m1(int[] s, int mx) {
+        int[] c = new int[mx+1];
+        for(int si : s) {
+            c[si]++;
+        }
+        return c;
+    }
+
+    // Counts in s including unused (-1). indices are shifted by 1
+    private static int[] counts_m2(int[] s, int mx) {
+        int[] c = new int[mx+2];
+        for(int si : s) {
+            c[si+1]++;
+        }
+        return c;
+    }
+
+    static int[] counts_m2(int[] s) {
+        return counts_m2(s, max(s));
+    }
+
+    private static int[] counts_used_m2(int[] s, int mx) {
+        int[] c = new int[mx+1];
+        for(int si : s) {
+            if( si >= 0 ) {
+                c[si]++;
+            }
+        }
+        return c;
+    }
+
+    static int[] counts_used_m2(int[] s) {
+        return  counts_used_m2(s, max(s));
+    }
+
+    private static long choose(int n, int k) {
         double r = 1;
         while( n > k ) {
             r *= n;
@@ -243,7 +258,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return (long)(r+0.5);
     }
 
-   private long[] countl_m1(int[] ls) {
+   private static long[] countl_m1(int[] ls) {
        int l = sum(ls);
        int i = 0;
        long[] r = new long[ls.length];
@@ -257,7 +272,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
        return r;
    }
 
-    private double count_sr_m1(int[] x, int[] y) {
+    private static double count_sr_m1(int[] x, int[] y) {
         long[] r1 = countl_m1(counts_m1(x, max(x)));
         long[] r2 = countl_m1(counts_m1(y, max(y)));
 
@@ -276,7 +291,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return r;
     }
 
-    private long[] countl_m2(int[] ls) {
+    private static long[] countl_m2(int[] ls) {
         if( ls.length == 1 ) {
             return new long[]{1};
         }
@@ -297,9 +312,9 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return r;
     }
 
-    private double count_sr_m2(int[] x, int[] y) {
-        long[] r1 = countl_m2(counts_m2(x, max(x)));
-        long[] r2 = countl_m2(counts_m2(y, max(y)));
+    private static double count_sr_m2(int[] x, int[] y) {
+        long[] r1 = countl_m2(counts_m2(x));
+        long[] r2 = countl_m2(counts_m2(y));
 
         int k = Math.min(r1.length, r2.length);
         double r = 1;

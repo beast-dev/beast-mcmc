@@ -39,11 +39,11 @@ public class AttributeParser extends AbstractXMLObjectParser {
 
         final String name = xo.getStringAttribute(NAME);
         if( xo.hasAttribute(VALUE) ) {
-            return new Attribute.Default(name, xo.getAttribute(VALUE));
+            return new Attribute.Default<Object>(name, xo.getAttribute(VALUE));
         }
         final Object value = xo.getChild(0);
 
-        return new Attribute.Default(name, value);
+        return new Attribute.Default<Object>(name, value);
 	}
 	
 	//************************************************************************

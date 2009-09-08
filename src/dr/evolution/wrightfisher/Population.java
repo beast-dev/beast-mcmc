@@ -32,7 +32,7 @@ import java.util.ArrayList;
 public class Population {
 
 	// the sequences of this population
-	ArrayList population = null;
+	ArrayList<Genome> population = null;
 
 	double meanFitness;
 
@@ -69,7 +69,7 @@ public class Population {
 	public final Mutator getMutator() { return mutator; }
 
 	public final int getGenomeLength() {
-		return ((Genome)population.get(0)).getGenomeLength();
+		return population.get(0).getGenomeLength();
 	}
 
 	public final SimpleGenome getGenome(int i) {
@@ -87,7 +87,7 @@ public class Population {
 
 		ArrayList nextPopulation = new ArrayList();
 		for (int i = 0; i < popSize; i++) {
-			Genome parent = (Genome)population.get(pickParent());
+			Genome parent = population.get(pickParent());
 			nextPopulation.add(parent.replicate(mutator, fitnessFunction));
 		}
 
@@ -100,7 +100,7 @@ public class Population {
 	// private methods
 	//************************************************************************
 
-	private final void calculateCumulativeRelativeFitnesses() {
+	private void calculateCumulativeRelativeFitnesses() {
 
 		int popSize = population.size();
 
@@ -221,7 +221,7 @@ public class Population {
 						mutantCount += 1;
 					}
 				}
-				siteFrequencies[mutantCount].add(new Double(relativeFitness));
+				siteFrequencies[mutantCount].add(relativeFitness);
 			}
 		}
 	}
@@ -257,7 +257,7 @@ public class Population {
 			Genome a = tip;
 			int generation = 0;
 			while ((a.getMarks() < popSize) && (generation < distances.length)) {
-				distances[i].add(new Double(tip.hammingDistance(a)));
+				distances[i].add((double) tip.hammingDistance(a));
 				generation += 1;
 				a = a.getParent();
 			}
@@ -278,7 +278,7 @@ public class Population {
 			Genome genome = getGenome(i);
 			int generation = 0;
 			while ((genome.getMarks() < individuals) && (generation < mutations.length)) {
-				mutations[generation].add(new Integer(genome.getMutations().length));
+				mutations[generation].add(genome.getMutations().length);
 				generation += 1;
 				genome = genome.getParent();
 			}

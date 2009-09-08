@@ -107,7 +107,7 @@ public class NewickImporter extends Importer implements TreeImporter {
      */
     public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
         boolean done = false;
-        ArrayList array = new ArrayList();
+        ArrayList<FlexibleTree> array = new ArrayList<FlexibleTree>();
 
         do {
 

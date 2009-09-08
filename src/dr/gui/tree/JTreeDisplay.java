@@ -219,7 +219,7 @@ public class JTreeDisplay extends JComponent implements Printable,
 
 	// Listeners
 	
-	private final java.util.Vector<Listener> listeners = new java.util.Vector();
+	private final java.util.Vector<Listener> listeners = new java.util.Vector<Listener>();
 	
 	public interface Listener {
 	

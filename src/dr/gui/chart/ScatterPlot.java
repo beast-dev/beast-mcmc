@@ -30,6 +30,7 @@ import dr.stats.Variate;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Vector;
 
 /**
  * Description:	A scatter plot.
@@ -41,7 +42,7 @@ import java.awt.geom.Rectangle2D;
 
 public class ScatterPlot extends Plot.AbstractPlot {
 
-    private java.util.Vector markBounds = null;
+    private Vector<Rectangle2D> markBounds = null;
 
     protected Stroke hilightedMarkStroke = new BasicStroke(0.5f);
     protected Paint hilightedMarkPaint = Color.black;
@@ -174,7 +175,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
 
         float x, y;
 
-        markBounds = new java.util.Vector();
+        markBounds = new java.util.Vector<Rectangle2D>();
 
         int n = xData.getCount();
         for (int i = 0; i < n; i++) {
@@ -202,7 +203,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
             int mark = -1;
 
             for (int i = 0; i < markBounds.size(); i++) {
-                if (((Rectangle2D) markBounds.get(i)).contains(point)) {
+                if ((markBounds.get(i)).contains(point)) {
                     mark = i;
                     break;
                 }

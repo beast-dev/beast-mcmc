@@ -491,11 +491,10 @@ public class BeastGenerator extends Generator {
                 }
 
                 Attribute[] attributes = {
-                        new Attribute.Default<Double>(ParameterParser.VALUE, date.getTimeValue()),
-                        new Attribute.Default<String>("direction", date.isBackwards() ? "backwards" : "forwards"),
-                        new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
-                        /*,
-                                                    new Attribute.Default("origin", date.getOrigin()+"")*/
+                        new Attribute.Default<Double>(DateParser.VALUE, date.getTimeValue()),
+                        new Attribute.Default<String>(DateParser.DIRECTION, date.isBackwards() ? DateParser.BACKWARDS : DateParser.FORWARDS),
+                        new Attribute.Default<String>(DateParser.UNITS, Units.Utils.getDefaultUnitName(options.units))
+                        //new Attribute.Default("origin", date.getOrigin()+"")
                 };
 
                 writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);

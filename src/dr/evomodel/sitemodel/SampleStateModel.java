@@ -273,7 +273,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
         };
     };
 
-    private class omegaBounds implements Bounds {
+    private class omegaBounds implements Bounds<Double>  {
 
         private final Parameter lowerOmega, upperOmega;
 

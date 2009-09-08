@@ -87,7 +87,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         return getId();
     }
 
-    public void addBounds(Bounds bounds) {
+    public void addBounds(Bounds<Double> bounds) {
         parameter.addBounds(bounds);
     }
 

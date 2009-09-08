@@ -182,7 +182,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
     private void addDeltaParameter(Parameter deltaParameter, TaxonList taxa) {
         this.deltaParameter = deltaParameter;
-        this.deltaTips = new HashSet();
+        this.deltaTips = new HashSet<Integer>();
 
         if (taxa != null) {
             boolean first = true;
@@ -266,7 +266,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
                 // find the siteModel in the additional siteModel list
                 NodeRef node = null;
                 for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                    Clade clade = (Clade) cladeSiteModels.get(i);
+                    Clade clade = cladeSiteModels.get(i);
 
                     if (!commonAncestorsKnown) {
                         clade.findMRCA();
@@ -343,7 +343,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
 
         if (!commonAncestorsKnown) {
             for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                ((Clade) cladeSiteModels.get(i)).findMRCA();
+                (cladeSiteModels.get(i)).findMRCA();
             }
             commonAncestorsKnown = true;
         }
@@ -384,7 +384,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
             currentSiteModel = tipsSiteModel;
         } else {
             for (int i = 0, n = cladeSiteModels.size(); i < n; i++) {
-                Clade clade = (Clade) cladeSiteModels.get(i);
+                Clade clade = cladeSiteModels.get(i);
                 if (clade.getNode() == nodeNum) {
                     nextSiteModel = clade.getSiteModel();
 
@@ -607,7 +607,7 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         SiteModel siteModel;
-        Set leafSet;
+        Set<String> leafSet;
         int node;
         boolean includeStem;
     }
@@ -640,12 +640,12 @@ public class AdvancedTreeLikelihood extends AbstractTreeLikelihood {
     protected SiteModel tipsSiteModel = null;
 
     protected Parameter deltaParameter = null;
-    protected Set deltaTips = null;
+    protected Set<Integer> deltaTips = null;
 
     /**
      * the site models for specific clades
      */
-    protected ArrayList cladeSiteModels = new ArrayList();
+    protected ArrayList<Clade> cladeSiteModels = new ArrayList<Clade>();
 
     private boolean commonAncestorsKnown = true;
 

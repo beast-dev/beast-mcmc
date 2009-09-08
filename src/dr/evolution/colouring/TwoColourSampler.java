@@ -25,13 +25,13 @@
 
 package dr.evolution.colouring;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-
 import dr.evolution.tree.ColourChange;
 import dr.evolution.tree.Tree;
 import dr.math.MathUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 // This is probably redundant but is left in case it is needed as a comparison.
 
@@ -223,10 +223,10 @@ abstract class TwoColourSampler implements ColourSampler {
      * @param m migration parameters
      * @return List of ColourChange events, with the colour referring to the branch *below* each event
      */
-    public List sampleConditionalMigrationEvents2(int parentColour, double parentHeight,
+    public List<ColourChange> sampleConditionalMigrationEvents2(int parentColour, double parentHeight,
     		int childColour, double childHeight, double[] m) {
     
-    	List colourChanges = new ArrayList();
+    	List<ColourChange> colourChanges = new ArrayList<ColourChange>();
 
     	if (parentHeight < childHeight) {
     		throw new IllegalArgumentException("sampleConditionalMigrationEvents: parentHeight="+parentHeight+" childHeight="+childHeight+", not good.");
@@ -277,10 +277,10 @@ abstract class TwoColourSampler implements ColourSampler {
      * @param m migration parameters
      * @return List of ColourChange events, with the colour referring to the branch *below* each event
      */
-     public List sampleConditionalMigrationEvents(int parentColour, double parentHeight,
+     public List<ColourChange> sampleConditionalMigrationEvents(int parentColour, double parentHeight,
     		int childColour, double childHeight, double[] m) {
     
-    	List colourChanges = new ArrayList();
+    	List<ColourChange> colourChanges = new ArrayList<ColourChange>();
     	int currentColour;
     	double currentHeight;
     	
@@ -378,17 +378,17 @@ abstract class TwoColourSampler implements ColourSampler {
      * to the natural coalescent ordering.  On input, getColourAbove returns the colour of the branch *below*
      * an event.
      */
-     protected final void reverseColourChangeList( List colourChanges, int parentColour ) {
+     protected final void reverseColourChangeList( List<ColourChange> colourChanges, int parentColour ) {
 
     	Collections.reverse( colourChanges );
     	int colour;
     	for (int i=0; i < colourChanges.size(); i++) {
     		if (i<colourChanges.size()-1) {
-    			colour = ((ColourChange)colourChanges.get( i+1 )).getColourAbove();
+    			colour = (colourChanges.get( i+1 )).getColourAbove();
     		} else {
     			colour = parentColour;
     		}
-    		((ColourChange)colourChanges.get( i )).setColourAbove( colour );
+    		(colourChanges.get( i )).setColourAbove( colour );
     	}
     }
 

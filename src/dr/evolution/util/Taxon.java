@@ -123,7 +123,7 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 	 */
 	public Iterator<String> getAttributeNames() {
 		if (attributes == null)
-			return new ArrayList().iterator();
+			return new ArrayList<String>().iterator();
 		else
 			return attributes.getAttributeNames();
 	}

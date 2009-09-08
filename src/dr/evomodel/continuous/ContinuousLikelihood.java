@@ -70,7 +70,7 @@ public class ContinuousLikelihood extends Likelihood.Abstract {
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
 			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-			ArrayList traits = new ArrayList();
+			ArrayList<String> traits = new ArrayList<String>();
 			
 			for (int i = 0; i < xo.getChildCount(); i++) {
 			
@@ -92,7 +92,7 @@ public class ContinuousLikelihood extends Likelihood.Abstract {
 				throw new XMLParseException("tree model element missing from continuousLikelihood element");
 			
 			String[] traitNames = new String[traits.size()];
-			for (int i =0; i < traitNames.length; i++) { traitNames[i] = (String)traits.get(i); }
+			for (int i =0; i < traitNames.length; i++) { traitNames[i] = traits.get(i); }
 				
 			ContinuousLikelihood cl = new ContinuousLikelihood(treeModel, traitNames);
 	

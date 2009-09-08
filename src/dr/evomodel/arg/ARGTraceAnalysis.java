@@ -106,7 +106,7 @@ public class ARGTraceAnalysis {
 		for (int j = 0; j < m; j++) {
 			double[] heights = new double[n];
 			NodeRef node1 = meanTree.getInternalNode(j);
-			Set leafSet = Tree.Utils.getDescendantLeaves(meanTree, node1);
+			Set<String> leafSet = Tree.Utils.getDescendantLeaves(meanTree, node1);
 
 			for (int i = 0; i < n; i++) {
 				Tree tree = getARG(i);

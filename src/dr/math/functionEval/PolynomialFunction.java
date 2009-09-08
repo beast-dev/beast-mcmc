@@ -42,7 +42,7 @@ public class PolynomialFunction implements OneVariableFunction
 	/**
 	 * Polynomial coefficients.
 	 */
-	private double[] coefficients;
+	private final double[] coefficients;
 
 
 /**
@@ -265,7 +265,7 @@ public double[] roots( double desiredPrecision)
 		if ( !rootFinder.hasConverged() )
 			break;
 		double r = rootFinder.getResult();
-		rootCollection.addElement( new Double( r));
+		rootCollection.addElement(r);
 		p = p.deflate( r);
 		if ( p.degree() == 0 )
 			break;
@@ -278,7 +278,7 @@ public double[] roots( double desiredPrecision)
 	int n = 0;
 	while ( e.hasMoreElements() )
 	{
-		roots[n++] = ( (Double) e.nextElement()).doubleValue();
+		roots[n++] = (Double) e.nextElement();
 	}
 	return roots;
 }

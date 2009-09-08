@@ -25,9 +25,9 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.continuous.Continuous;
 import dr.evolution.continuous.ContinuousTraitLikelihood;
 import dr.evolution.continuous.Contrastable;
-import dr.evolution.continuous.Continuous;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -78,7 +78,7 @@ public class RootTraitMLE extends Statistic.Abstract {
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 			
 			TreeModel treeModel = (TreeModel)xo.getChild(TreeModel.class);
-			ArrayList traits = new ArrayList();
+			ArrayList<String> traits = new ArrayList<String>();
 			
 			for (int i = 0; i < xo.getChildCount(); i++) {
 			
@@ -94,7 +94,7 @@ public class RootTraitMLE extends Statistic.Abstract {
 			}
 			
 			String[] traitNames = new String[traits.size()];
-			for (int i =0; i < traitNames.length; i++) { traitNames[i] = (String)traits.get(i); }
+			for (int i =0; i < traitNames.length; i++) { traitNames[i] = traits.get(i); }
 				
 			RootTraitMLE rootTraitMLE = new RootTraitMLE(treeModel, traitNames);
 	

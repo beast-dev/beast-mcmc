@@ -317,6 +317,8 @@ public class ClockModelOptions extends ModelOptions {
 
         if (count > 0) {
             averageRate = averageRate / count;
+        } else {
+            averageRate = 1; //TODO how to calculate rate when estimate all 
         }
 
         return averageRate;

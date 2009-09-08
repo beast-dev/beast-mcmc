@@ -25,6 +25,14 @@ public class ValuesPool extends DefaultModel {
         addStatistic(numberOfParams);
     }
 
+    public Variable<Double> getPool() {
+        return pool;
+    }
+
+    public Variable<Double> getSelector() {
+        return selector;
+    }
+
     public int length() {
         return pool.getSize();
     }

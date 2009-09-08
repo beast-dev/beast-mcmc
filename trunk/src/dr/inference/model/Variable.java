@@ -98,7 +98,7 @@ public interface Variable<V> extends Identifiable {
 
     void addBounds(Bounds<V> bounds);
 
-    public abstract class Base<V> implements Variable<V> {
+    public abstract class Base<V> implements Variable<V>, Loggable  {
         Base(String id) {
             this.id = id;
         }
@@ -125,7 +125,6 @@ public interface Variable<V> extends Identifiable {
             this.id = id;
         }
 
-
         public String getVariableName() {
             return id;
         }
@@ -133,6 +132,40 @@ public interface Variable<V> extends Identifiable {
         protected List<VariableListener> listeners = new ArrayList<VariableListener>();
 
         protected String id;
+    }
+
+
+    public abstract class BaseNumerical<V extends Number> extends Base<V> {
+        BaseNumerical(String id) {
+            super(id);
+        }
+
+        class StatisticColumn extends NumberColumn {
+            private final int dim;
+
+            public StatisticColumn(String label, int dim) {
+                super(label);
+                this.dim = dim;
+            }
+
+            public double getDoubleValue() {
+                return getValue(dim).doubleValue();
+            }
+        }
+        /**
+         * @return the log columns.
+         */
+        public LogColumn[] getColumns() {
+            LogColumn[] columns = new LogColumn[getSize()];
+            if (getSize() == 1) {
+                columns[0] = new StatisticColumn(this.getVariableName(), 0);
+            } else {
+                for (int i = 0; i < getSize(); i++) {
+                    columns[i] = new StatisticColumn(this.getVariableName() + "[" + i + "]", i);
+                }
+            }
+            return columns;
+        }
     }
 
     public class D implements Variable<Double>, Loggable {

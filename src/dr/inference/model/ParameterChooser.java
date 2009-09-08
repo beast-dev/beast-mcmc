@@ -4,7 +4,7 @@ package dr.inference.model;
  * @author Joseph Heled
  *         Date: 31/08/2009
  */
-public class ParameterChooser extends Variable.Base<Double> implements Variable<Double>, ModelListener {
+public class ParameterChooser extends Variable.BaseNumerical<Double> implements Variable<Double>, ModelListener {
     private final ValuesPool pool;
     private final int which[];
 

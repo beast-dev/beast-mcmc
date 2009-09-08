@@ -237,7 +237,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
         StringBuffer s = new StringBuffer();
 
         for (int i = 0; i < categoryCount; i++) {
-            s.append(String.valueOf(sitesInCategory[i]) + "\t");
+            s.append(sitesInCategory[i] + "\t");
         }
         /*for(int i = 0; i < categoriesParameter.getDimension(); i++){
               t = (int)(categoriesParameter.getParameterValue(i));// get result as integer
@@ -254,10 +254,10 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(MUTATION_RATE);
+            XMLObject cxo = xo.getChild(MUTATION_RATE);
             Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(CATEGORY_PARAMETER);
+            cxo = xo.getChild(CATEGORY_PARAMETER);
             Parameter catParam = (Parameter) cxo.getChild(Parameter.class);
 
             Vector subModels = new Vector();
@@ -289,7 +289,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new ElementRule(MUTATION_RATE,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(CATEGORY_PARAMETER,
@@ -299,9 +299,9 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
     };
 
-    private class omegaBounds implements Bounds {
+    private class omegaBounds implements Bounds<Double> {
 
-        private Parameter lowerOmega, upperOmega;
+        private final Parameter lowerOmega, upperOmega;
 
         public omegaBounds(Parameter lowerOmega, Parameter upperOmega) {
 
@@ -362,15 +362,15 @@ public class SampleStateAndCategoryModel extends AbstractModel
     /**
      * mutation rate parameter
      */
-    private Parameter muParameter;
+    private final Parameter muParameter;
 
-    private int[] sitesInCategory;
+    private final int[] sitesInCategory;
 
-    private Parameter categoriesParameter;
+    private final Parameter categoriesParameter;
 
-    private Vector substitutionModels;
+    private final Vector substitutionModels;
 
-    private int categoryCount;
+    private final int categoryCount;
 
 //	private int stateCount;
 }

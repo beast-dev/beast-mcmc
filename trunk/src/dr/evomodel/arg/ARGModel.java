@@ -250,8 +250,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     private class SimulateSticks {
-        public Node mySon;
-        public boolean leftStick;
+        public final Node mySon;
+        public final boolean leftStick;
 
         public SimulateSticks(Node son, boolean left) {
             mySon = son;
@@ -602,7 +602,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     @Override
     public void sendState(int toRank) {
-        super.sendStateNoParameters(toRank);
+        sendStateNoParameters(toRank);
         int cnt = 0;
         for (Node node : nodes) {
             node.number = cnt;
@@ -666,7 +666,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     @Override
     public void receiveState(int fromRank) {
-        super.receiveStateNoParameters(fromRank);
+        receiveStateNoParameters(fromRank);
         final int newNodeCount = MPIServices.receiveInt(fromRank);
         // while (newNodeCount < nodes.size())
         // nodes.remove(0);
@@ -1131,15 +1131,15 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         return maxNumberOfPartitions;
     }
 
-    protected List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    protected final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
 
     public class TreeChangedEvent {
 
-        Node node;
+        final Node node;
 
-        Parameter parameter;
+        final Parameter parameter;
 
-        int index;
+        final int index;
 
         int size = 0;
 
@@ -1311,9 +1311,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 
     private class ArgTreeHeightColumn extends NumberColumn {
 
-        private int partition;
+        private final int partition;
 
-        private ARGModel argModel;
+        private final ARGModel argModel;
 
         public ArgTreeHeightColumn(String label, ARGModel argModel,
                                    int partition) {
@@ -1889,8 +1889,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // ystem.err.println("There are "+treeChangedEvents.size()+" events
         // waiting");
         // System.exit(-1);
-        for (int i = 0; i < treeChangedEvents.size(); i++) {
-            listenerHelper.fireModelChanged(this, treeChangedEvents.get(i));
+        for(TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+            listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();
     }
@@ -1919,7 +1919,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void setNodeNumber(NodeRef node, int n) {
-        ((Node) node).setNumber(n);
+        node.setNumber(n);
     }
 
     public void setBranchLength(NodeRef node, double length) {
@@ -4004,7 +4004,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
      * This class provides bounds for parameters that represent a node height in
      * this tree model.
      */
-    private class NodeHeightBounds implements Bounds {
+    private class NodeHeightBounds implements Bounds<Double> {
 
         public NodeHeightBounds(Parameter parameter) {
             nodeHeightParameter = parameter;
@@ -4297,9 +4297,9 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return rules;
         }
 
-        private String[] partitionFormats = {REASSORTMENT_PARTITION, RECOMBINATION_PARTITION};
+        private final String[] partitionFormats = {REASSORTMENT_PARTITION, RECOMBINATION_PARTITION};
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(PARTITION_TYPE, "Describes the partition structure of the model",
                         partitionFormats, true),
                 new ElementRule(Tree.class),

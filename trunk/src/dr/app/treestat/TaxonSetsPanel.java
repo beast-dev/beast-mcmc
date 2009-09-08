@@ -321,7 +321,7 @@ public class TaxonSetsPanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 			int saved = taxonSetsTable.getSelectedRow();
 			int[] rows = excludedTaxaTable.getSelectedRows();
-			ArrayList exclList = new ArrayList(treeStatData.allTaxa);
+			ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
 			exclList.removeAll(selectedTaxonSet.taxa);
             for (int row : rows) {
                 selectedTaxonSet.taxa.add(exclList.get(row));

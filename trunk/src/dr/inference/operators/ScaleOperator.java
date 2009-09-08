@@ -61,13 +61,13 @@ public class ScaleOperator extends AbstractCoercableOperator {
         this(variable, scale, CoercionMode.COERCION_ON, 1.0);
     }
 
-    public ScaleOperator(Variable variable, double scale, CoercionMode mode, double weight) {
+    public ScaleOperator(Variable<Double> variable, double scale, CoercionMode mode, double weight) {
 
         this(variable, false, 0, scale, mode, null, 1.0, false);
         setWeight(weight);
     }
 
-    public ScaleOperator(Variable variable, boolean scaleAll, int degreesOfFreedom, double scale,
+    public ScaleOperator(Variable<Double> variable, boolean scaleAll, int degreesOfFreedom, double scale,
                          CoercionMode mode, Parameter indicator, double indicatorOnProb, boolean scaleAllInd) {
 
         super(mode);

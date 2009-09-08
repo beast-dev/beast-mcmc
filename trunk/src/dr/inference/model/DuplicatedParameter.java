@@ -82,7 +82,7 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public Bounds getBounds() {
+    public Bounds<Double> getBounds() {
         return bounds;
     }
 

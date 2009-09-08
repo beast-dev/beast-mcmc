@@ -194,7 +194,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         if (excludedLeafSets.length == 0) return null;
 
         Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
-        for (Set excludedLeafSet : excludedLeafSets) {
+        for( Set<String> excludedLeafSet : excludedLeafSets ) {
             excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSet));
         }
         return excludeNodesBelow;

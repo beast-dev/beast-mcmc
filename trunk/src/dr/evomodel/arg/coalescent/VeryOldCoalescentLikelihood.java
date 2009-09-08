@@ -213,7 +213,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
      */
     public double calculateLogLikelihood() {
 
-        if (intervalsKnown == false) setupIntervals();
+        if ( !intervalsKnown ) setupIntervals();
 
         if (demoModel == null) return calculateAnalyticalLogLikelihood();
 
@@ -241,18 +241,16 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
         return logL;
     }
 
-    private final double calculateAnalyticalLogLikelihood() {
+    private double calculateAnalyticalLogLikelihood() {
 
-        double lambda = getLambda();
-        int n = tree.getExternalNodeCount();
-
-        double logL = 0.0;
+        final double lambda = getLambda();
+        final int n = tree.getExternalNodeCount();
 
         // assumes a 1/theta prior
         //logLikelihood = Math.log(1.0/Math.pow(lambda,n));
 
         // assumes a flat prior
-        logL = Math.log(1.0 / Math.pow(lambda, n - 1));
+        double logL = Math.log(1.0 / Math.pow(lambda, n - 1));
         return logL;
     }
 
@@ -295,7 +293,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
      * 1/theta^(n-1) * exp(-lambda/theta). This allows theta to be integrated
      * out analytically. :-)
      */
-    private final double getLambda() {
+    private double getLambda() {
         double lambda = 0.0;
         for (int i = 0; i < getIntervalCount(); i++) {
             lambda += (intervals[i] * lineageCounts[i]);
@@ -313,7 +311,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
         double MULTIFURCATION_LIMIT = 1e-9;
 
         ArrayList times = new ArrayList();
-        ArrayList childs = new ArrayList();
+        ArrayList<Integer> childs = new ArrayList<Integer>();
         collectAllTimes(tree, getMRCAOfCoalescent(tree), getExcludedMRCAs(tree), times, childs);
         int[] indices = new int[times.size()];
 
@@ -342,7 +340,7 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
             double next = finish;
 
             while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
-                int children = ((Integer) childs.get(indices[i])).intValue();
+                int children = childs.get(indices[i]);
                 if (children == 0) {
                     lineagesAdded += 1;
                 } else {
@@ -387,10 +385,10 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
      * @param node         the node to start from
      * @param excludeBelow an optional array of nodes to exclude (corresponding subtrees) from density.
      */
-    private final static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList childs) {
+    private static void collectAllTimes(Tree tree, NodeRef node, NodeRef[] excludeBelow, ArrayList times, ArrayList<Integer> childs) {
 
         times.add(new ComparableDouble(tree.getNodeHeight(node)));
-        childs.add(new Integer(tree.getChildCount(node)));
+        childs.add(tree.getChildCount(node));
 
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef child = tree.getChild(node, i);
@@ -399,8 +397,8 @@ public class VeryOldCoalescentLikelihood extends AbstractModelLikelihood impleme
             } else {
                 // check if this subtree is included in the coalescent density
                 boolean include = true;
-                for (int j = 0; j < excludeBelow.length; j++) {
-                    if (excludeBelow[j].getNumber() == child.getNumber()) {
+                for(NodeRef anExcludeBelow : excludeBelow) {
+                    if( anExcludeBelow.getNumber() == child.getNumber() ) {
                         include = false;
                         break;
                     }

@@ -38,7 +38,7 @@ public class Profiler {
 
     private static boolean profilerAvailable = true;
 
-    private static Map profiles = new HashMap();
+    private static Map<String, Profile> profiles = new HashMap<String, Profile>();
     //private static String currentProfile = null;
     private static long startTime;
 
@@ -60,7 +60,7 @@ public class Profiler {
 
             long count = 1;
             long totalTime = stopTime - startTime;
-            Profile profile = (Profile)profiles.get(name);
+            Profile profile = profiles.get(name);
             if (profile != null) {
                 totalTime += profile.time;
                 count += profile.count;
@@ -74,10 +74,10 @@ public class Profiler {
 
     public static void report() {
         if (profilerAvailable) {
-            Iterator iter = profiles.keySet().iterator();
+            Iterator<String> iter = profiles.keySet().iterator();
             while (iter.hasNext()) {
-                String name = (String)iter.next();
-                Profile profile = (Profile)profiles.get(name);
+                String name = iter.next();
+                Profile profile = profiles.get(name);
                 long average = profile.time / profile.count;
                 System.err.println("PROFILE: " + name + " [" + profile.time + " ms, " + profile.count + " calls, " + average + " ms / call]");
             }

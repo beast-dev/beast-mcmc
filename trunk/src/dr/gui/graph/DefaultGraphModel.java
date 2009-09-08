@@ -35,7 +35,7 @@ public class DefaultGraphModel implements GraphModel {
 
 	public int getVertexCount() { return vertices.size(); }
 	public Iterator getVertices() { return vertices.iterator(); }
-	public Vertex getVertex(int index) { return (Vertex)vertices.get(index); }
+	public Vertex getVertex(int index) { return vertices.get(index); }
 		
 	public Vertex getVertexWithUserObject(Object userObject) {
 		Iterator iter = getVertices();
@@ -51,10 +51,10 @@ public class DefaultGraphModel implements GraphModel {
 
 	public int getEdgeCount() { return edges.size(); }
 	public Iterator getEdges() { return edges.iterator(); }
-	public Edge getEdge(int index) { return (Edge)edges.get(index); }
+	public Edge getEdge(int index) { return edges.get(index); }
 	
 	public void clear() { vertices.clear(); edges.clear(); }
 	
-	private ArrayList vertices = new ArrayList();
-	private ArrayList edges = new ArrayList();
+	private ArrayList<Vertex> vertices = new ArrayList<Vertex>();
+	private ArrayList<Edge> edges = new ArrayList<Edge>();
 }

@@ -1350,8 +1350,8 @@ public class BeastGenerator extends Generator {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
@@ -1359,8 +1359,8 @@ public class BeastGenerator extends Generator {
             case EXPONENTIAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.exponentialMean),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.exponentialOffset)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.EXPONENTIAL_PRIOR);
@@ -1371,8 +1371,8 @@ public class BeastGenerator extends Generator {
             case NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.normalMean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.normalStdev)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
@@ -1380,9 +1380,9 @@ public class BeastGenerator extends Generator {
             case LOGNORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.logNormalMean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.logNormalStdev),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.logNormalOffset),
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
 
                                 // this is to be implemented...
                                 new Attribute.Default<String>(PriorParsers.MEAN_IN_REAL_SPACE, "false")
@@ -1393,9 +1393,9 @@ public class BeastGenerator extends Generator {
             case GAMMA_PRIOR:
                 writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.gammaAlpha),
-                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.gammaBeta),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.gammaOffset)
+                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.shape),
+                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.scale),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
@@ -1408,8 +1408,8 @@ public class BeastGenerator extends Generator {
             case POISSON_PRIOR:
                 writer.writeOpenTag(PriorParsers.POISSON_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.poissonMean),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.poissonOffset)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
@@ -1417,15 +1417,15 @@ public class BeastGenerator extends Generator {
             case TRUNC_NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.normalMean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.normalStdev)
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);

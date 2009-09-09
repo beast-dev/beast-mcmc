@@ -109,7 +109,7 @@ public abstract class Generator {
             writeParameter(prefix + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                writeParameter(prefix + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             } else {
                 writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             }
@@ -127,7 +127,7 @@ public abstract class Generator {
             writeParameter(prefix + id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                writeParameter(prefix + id, 1, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             } else {
                 writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
             }
@@ -180,7 +180,7 @@ public abstract class Generator {
         if (parameter.isFixed) { // with prefix
             writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
         } else if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-            writeParameter(parameter.getName(), dimension, parameter.initial, parameter.uniformLower, parameter.uniformUpper, writer);
+            writeParameter(parameter.getName(), dimension, parameter.initial, parameter.lower, parameter.upper, writer);
         } else {
             writeParameter(parameter.getName(), dimension, parameter.initial, parameter.lower, parameter.upper, writer);
         }

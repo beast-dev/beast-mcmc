@@ -59,8 +59,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         {
             final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", PriorScaleType.LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
+            p.shape = 1;
+            p.scale = 0.0001;
         }
 
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
@@ -70,8 +70,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         {
             final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", PriorScaleType.ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 1;
-            p.gammaBeta = 0.0001;
+            p.shape = 1;
+            p.scale = 0.0001;
         }
         createParameter("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -248,15 +248,15 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             if (localClockRateChangesStatistic == null) {
                 localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
                 localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-                localClockRateChangesStatistic.poissonMean = 1.0;
-                localClockRateChangesStatistic.poissonOffset = 0.0;
+                localClockRateChangesStatistic.mean = 1.0;
+                localClockRateChangesStatistic.offset = 0.0;
             }
             if (localClockRatesStatistic == null) {
                 localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
 
                 localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-                localClockRatesStatistic.gammaAlpha = 0.5;
-                localClockRatesStatistic.gammaBeta = 2.0;
+                localClockRatesStatistic.shape = 0.5;
+                localClockRatesStatistic.scale = 2.0;
             }
 
             localClockRateChangesStatistic.setPrefix(getPrefix());

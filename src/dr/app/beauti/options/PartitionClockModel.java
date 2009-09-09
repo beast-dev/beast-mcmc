@@ -235,9 +235,9 @@ public class PartitionClockModel extends PartitionOptions {
         
         rateParam.priorType = PriorType.GAMMA_PRIOR;
         rateParam.initial = selectedRate; 
-        rateParam.gammaAlpha = 0.1;
-        rateParam.gammaBeta = 10 * selectedRate; 
-        rateParam.gammaOffset = 0;
+        rateParam.shape = 0.1;
+        rateParam.scale = 10 * selectedRate; 
+        rateParam.offset = 0;
     }
     
     /////////////////////////////////////////////////////////////

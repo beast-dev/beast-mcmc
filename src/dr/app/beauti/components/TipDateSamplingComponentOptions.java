@@ -50,7 +50,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                             PriorScaleType.TIME_SCALE,
                             height,
                             0.0, Double.POSITIVE_INFINITY);
-                    parameter.priorEdited = true;
+                    parameter.setPriorEdited(true);
                     tipDateParameters.put(taxon, parameter);
                 }
                 params.add(parameter);

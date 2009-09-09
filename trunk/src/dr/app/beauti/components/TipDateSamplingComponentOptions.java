@@ -3,6 +3,7 @@ package dr.app.beauti.components;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
@@ -45,11 +46,9 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                     height = (Double)taxon.getAttribute("height");
                 }
                 if (parameter == null) {
-                    parameter = new Parameter("age(" + taxon.getId() + ")",
-                            "sampled age of taxon, " + taxon.getId(),
-                            PriorScaleType.TIME_SCALE,
-                            height,
-                            0.0, Double.POSITIVE_INFINITY);
+                    parameter = new Parameter.Builder("age(" + taxon.getId() + ")", "sampled age of taxon, " + taxon.getId())
+                            .scaleType(PriorScaleType.TIME_SCALE).prior(PriorType.UNIFORM_PRIOR).initial(height).lower(0.0)
+                            .upper(Double.POSITIVE_INFINITY).build();
                     parameter.setPriorEdited(true);
                     tipDateParameters.put(taxon, parameter);
                 }

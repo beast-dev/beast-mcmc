@@ -206,7 +206,10 @@ public class PriorDialog {
 		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.upper);
 
 		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.mean);
+		// ExponentialDistribution(1.0 / mean)
+        if (parameter.mean != 0) {
+            optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.mean);
+		} 
 		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(1).setValue(parameter.offset);
 
 		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(0).setValue(parameter.mean);
@@ -303,7 +306,7 @@ public class PriorDialog {
 			priorType = (PriorType) priorCombo.getSelectedItem();
 		}
 		// ExponentialDistribution(1.0 / mean)
-        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1; 
+//        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1; 
         
 		double offset = 0.0;		
 		Distribution distribution = optionsPanels.get(priorType).getDistribution();

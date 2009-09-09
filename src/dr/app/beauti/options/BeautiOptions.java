@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.BeautiTemplate;
@@ -138,7 +139,8 @@ public class BeautiOptions extends ModelOptions {
             for (Taxa taxonSet : taxonSets) {
                 Parameter statistic = statistics.get(taxonSet);
                 if (statistic == null) {
-                    statistic = new Parameter(taxonSet, TMRCA);
+                    statistic = new Parameter.Builder(taxonSet.getId(), TMRCA).taxa(taxonSet).isStatistic(true).isNodeHeight(true)
+                            .scaleType(PriorScaleType.TIME_SCALE).lower(0.0).upper(Double.MAX_VALUE).build();
                     statistics.put(taxonSet, statistic);
                 }
                 params.add(statistic);

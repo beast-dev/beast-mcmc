@@ -302,8 +302,10 @@ public class PriorDialog {
 		} else {
 			priorType = (PriorType) priorCombo.getSelectedItem();
 		}
-
-		double offset = 0.0;
+		// ExponentialDistribution(1.0 / mean)
+        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1; 
+        
+		double offset = 0.0;		
 		Distribution distribution = optionsPanels.get(priorType).getDistribution();
 
 		chart.addPlot(new PDFPlot(distribution, offset));

@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 
 
 /**
@@ -37,13 +38,18 @@ public abstract class PartitionOptions extends ModelOptions {
     
     abstract public Class<?> getPartitionClassType(); 
     
-    public Parameter createParameter(PartitionOptions options, String name, String description, PriorScaleType scale, double value, double lower, double upper) {
-        final Parameter parameter = new Parameter(options, name, description, scale, value, lower, upper);
+    public Parameter createParameter(PartitionOptions options, String name, String description, PriorScaleType scale,
+            double value, double lower, double upper) {
+        final Parameter parameter = new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.UNIFORM_PRIOR).initial(value)        
+                .lower(lower).upper(upper).partitionOptions(options).build();
         parameters.put(name, parameter);
         return parameter;
     }
 
-    public void createParameter(PartitionOptions options, String name, String description, boolean isNodeHeight, double value, double lower, double upper) {
-        parameters.put(name, new Parameter(options, name, description, isNodeHeight, value, lower, upper));
+    public void createParameter(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
+            double lower, double upper) {
+        final Parameter parameter = new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
+                .initial(value).lower(lower).upper(upper).partitionOptions(options).build();
+        parameters.put(name, parameter);
     }
 }

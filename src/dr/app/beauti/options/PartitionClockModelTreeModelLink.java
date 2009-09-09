@@ -246,17 +246,12 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
     	//TODO ?        
         if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
             if (localClockRateChangesStatistic == null) {
-                localClockRateChangesStatistic = new Parameter("rateChanges", "number of random local clocks", true);
-                localClockRateChangesStatistic.priorType = PriorType.POISSON_PRIOR;
-                localClockRateChangesStatistic.mean = 1.0;
-                localClockRateChangesStatistic.offset = 0.0;
+                localClockRateChangesStatistic = new Parameter.Builder("rateChanges", "number of random local clocks").isDiscrete(true)
+                        .prior(PriorType.POISSON_PRIOR).mean(1.0).offset(0.0).build();                
             }
             if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
-
-                localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
-                localClockRatesStatistic.shape = 0.5;
-                localClockRatesStatistic.scale = 2.0;
+                localClockRatesStatistic = new Parameter.Builder(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates")
+                        .isDiscrete(false).prior(PriorType.GAMMA_PRIOR).shape(0.5).scale(2.0).build();
             }
 
             localClockRateChangesStatistic.setPrefix(getPrefix());

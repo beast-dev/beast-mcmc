@@ -143,19 +143,19 @@ public class BeautiTemplate extends ModelOptions {
             Element e = new Element(name);
             e.addContent(createChild("initial", parameter.initial));
             e.addContent(createChild("priorType", parameter.priorType));
-            e.addContent(createChild("priorEdited", parameter.priorEdited));
-            e.addContent(createChild("uniformLower", parameter.uniformLower));
-            e.addContent(createChild("uniformUpper", parameter.uniformUpper));
-            e.addContent(createChild("exponentialMean", parameter.exponentialMean));
-            e.addContent(createChild("exponentialOffset", parameter.exponentialOffset));
-            e.addContent(createChild("normalMean", parameter.normalMean));
-            e.addContent(createChild("normalStdev", parameter.normalStdev));
-            e.addContent(createChild("logNormalMean", parameter.logNormalMean));
-            e.addContent(createChild("logNormalStdev", parameter.logNormalStdev));
-            e.addContent(createChild("logNormalOffset", parameter.logNormalOffset));
-            e.addContent(createChild("gammaAlpha", parameter.gammaAlpha));
-            e.addContent(createChild("gammaBeta", parameter.gammaBeta));
-            e.addContent(createChild("gammaOffset", parameter.gammaOffset));
+            e.addContent(createChild("priorEdited", parameter.isPriorEdited()));
+//            e.addContent(createChild("uniformLower", parameter.uniformLower));
+//            e.addContent(createChild("uniformUpper", parameter.uniformUpper));
+//            e.addContent(createChild("exponentialMean", parameter.exponentialMean));
+//            e.addContent(createChild("exponentialOffset", parameter.exponentialOffset));
+//            e.addContent(createChild("normalMean", parameter.normalMean));
+//            e.addContent(createChild("normalStdev", parameter.normalStdev));
+//            e.addContent(createChild("logNormalMean", parameter.logNormalMean));
+//            e.addContent(createChild("logNormalStdev", parameter.logNormalStdev));
+//            e.addContent(createChild("logNormalOffset", parameter.logNormalOffset));
+//            e.addContent(createChild("gammaAlpha", parameter.gammaAlpha));
+//            e.addContent(createChild("gammaBeta", parameter.gammaBeta));
+//            e.addContent(createChild("gammaOffset", parameter.gammaOffset));
             priorsElement.addContent(e);
         }
 
@@ -164,19 +164,19 @@ public class BeautiTemplate extends ModelOptions {
             Element e = new Element(statistic.getXMLName());
             e.addContent(createChild("initial", statistic.initial));
             e.addContent(createChild("priorType", statistic.priorType));
-            e.addContent(createChild("priorEdited", statistic.priorEdited));
-            e.addContent(createChild("uniformLower", statistic.uniformLower));
-            e.addContent(createChild("uniformUpper", statistic.uniformUpper));
-            e.addContent(createChild("exponentialMean", statistic.exponentialMean));
-            e.addContent(createChild("exponentialOffset", statistic.exponentialOffset));
-            e.addContent(createChild("normalMean", statistic.normalMean));
-            e.addContent(createChild("normalStdev", statistic.normalStdev));
-            e.addContent(createChild("logNormalMean", statistic.logNormalMean));
-            e.addContent(createChild("logNormalStdev", statistic.logNormalStdev));
-            e.addContent(createChild("logNormalOffset", statistic.logNormalOffset));
-            e.addContent(createChild("gammaAlpha", statistic.gammaAlpha));
-            e.addContent(createChild("gammaBeta", statistic.gammaBeta));
-            e.addContent(createChild("gammaOffset", statistic.gammaOffset));
+            e.addContent(createChild("priorEdited", statistic.isPriorEdited()));
+//            e.addContent(createChild("uniformLower", statistic.uniformLower));
+//            e.addContent(createChild("uniformUpper", statistic.uniformUpper));
+//            e.addContent(createChild("exponentialMean", statistic.exponentialMean));
+//            e.addContent(createChild("exponentialOffset", statistic.exponentialOffset));
+//            e.addContent(createChild("normalMean", statistic.normalMean));
+//            e.addContent(createChild("normalStdev", statistic.normalStdev));
+//            e.addContent(createChild("logNormalMean", statistic.logNormalMean));
+//            e.addContent(createChild("logNormalStdev", statistic.logNormalStdev));
+//            e.addContent(createChild("logNormalOffset", statistic.logNormalOffset));
+//            e.addContent(createChild("gammaAlpha", statistic.gammaAlpha));
+//            e.addContent(createChild("gammaBeta", statistic.gammaBeta));
+//            e.addContent(createChild("gammaOffset", statistic.gammaOffset));
             priorsElement.addContent(e);
         }
 

@@ -201,27 +201,27 @@ public class PriorDialog {
 	private void setArguments() {
 
 		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setRange(parameter.lower, parameter.upper);
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setValue(parameter.uniformLower);
+		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setValue(parameter.lower);
 		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setRange(parameter.lower, parameter.upper);
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.uniformUpper);
+		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.upper);
 
 		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.exponentialMean);
-		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(1).setValue(parameter.exponentialOffset);
+		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.mean);
+		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(1).setValue(parameter.offset);
 
-		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(0).setValue(parameter.normalMean);
+		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(0).setValue(parameter.mean);
 		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setValue(parameter.normalStdev);
+		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setValue(parameter.stdev);
 
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(0).setValue(parameter.logNormalMean);
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(1).setValue(parameter.logNormalStdev);
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(2).setValue(parameter.logNormalOffset);
+		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(0).setValue(parameter.mean);
+		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(1).setValue(parameter.stdev);
+		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(2).setValue(parameter.offset);
 
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setValue(parameter.gammaAlpha);
+		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setValue(parameter.shape);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setValue(parameter.gammaBeta);
+		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setValue(parameter.scale);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(2).setValue(parameter.gammaOffset);
+		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(2).setValue(parameter.offset);
 	}
 
 	private void getArguments() {
@@ -330,8 +330,8 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.laplaceMean = getValue(0);
-			parameter.laplaceStdev = getValue(1);
+			parameter.mean = getValue(0);
+			parameter.stdev = getValue(1);
 		}
 	}
 
@@ -347,8 +347,8 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.uniformLower = getValue(0);
-			parameter.uniformUpper = getValue(1);
+			parameter.lower = getValue(0);
+			parameter.upper = getValue(1);
 		}
 
 	}
@@ -366,8 +366,8 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.exponentialMean = getValue(0);
-			parameter.exponentialOffset = getValue(1);
+			parameter.mean = getValue(0);
+			parameter.offset = getValue(1);
 		}
 	}
 
@@ -384,8 +384,8 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.normalMean = getValue(0);
-			parameter.normalStdev = getValue(1);
+			parameter.mean = getValue(0);
+			parameter.stdev = getValue(1);
 		}
 	}
 
@@ -404,10 +404,10 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.normalMean = getValue(0);
-			parameter.normalStdev = getValue(1);
-			parameter.uniformLower = getValue(2);
-			parameter.uniformUpper = getValue(3);
+			parameter.mean = getValue(0);
+			parameter.stdev = getValue(1);
+			parameter.lower = getValue(2);
+			parameter.upper = getValue(3);
 		}
 	}
 
@@ -425,9 +425,9 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.logNormalMean = getValue(0);
-			parameter.logNormalStdev = getValue(1);
-			parameter.logNormalOffset = getValue(2);
+			parameter.mean = getValue(0);
+			parameter.stdev = getValue(1);
+			parameter.offset = getValue(2);
 		}
 
 	}
@@ -446,9 +446,9 @@ public class PriorDialog {
 		}
 
 		public void setParameterPrior(Parameter parameter) {
-			parameter.gammaAlpha = getValue(0);
-			parameter.gammaBeta = getValue(1);
-			parameter.gammaOffset = getValue(2);
+			parameter.shape = getValue(0);
+			parameter.scale = getValue(1);
+			parameter.offset = getValue(2);
 		}
 	}
 }

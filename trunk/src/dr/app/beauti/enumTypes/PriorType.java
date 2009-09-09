@@ -53,7 +53,7 @@ public enum PriorType {
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
-        if (!param.priorEdited) {
+        if (!param.isPriorEdited()) {
             buffer.append("* ");
         }
         switch (param.priorType) {
@@ -63,9 +63,9 @@ public enum PriorType {
             case UNIFORM_PRIOR:
                 if (!param.isDiscrete && !param.isStatistic) {
                     buffer.append("Uniform [");
-                    buffer.append(formatter.format(param.uniformLower));
+                    buffer.append(formatter.format(param.lower));
                     buffer.append(", ");
-                    buffer.append(formatter.format(param.uniformUpper));
+                    buffer.append(formatter.format(param.upper));
                     buffer.append("]");
                 } else {
                     buffer.append("Uniform");
@@ -73,33 +73,33 @@ public enum PriorType {
                 break;
             case EXPONENTIAL_PRIOR:
                 buffer.append("Exponential [");
-                buffer.append(formatter.format(param.exponentialMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append("]");
                 break;
             case LAPLACE_PRIOR:
                 buffer.append("Laplace [");
-                buffer.append(formatter.format(param.laplaceMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:
                 buffer.append("Normal [");
-                buffer.append(formatter.format(param.normalMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.normalStdev));
+                buffer.append(formatter.format(param.stdev));
                 buffer.append("]");
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
-                buffer.append(formatter.format(param.logNormalMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.logNormalStdev));
+                buffer.append(formatter.format(param.stdev));
                 buffer.append("]");
                 break;
             case GAMMA_PRIOR:
                 buffer.append("Gamma [");
-                buffer.append(formatter.format(param.gammaAlpha));
+                buffer.append(formatter.format(param.shape));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.gammaBeta));
+                buffer.append(formatter.format(param.scale));
                 buffer.append("]");
                 break;
             case JEFFREYS_PRIOR:
@@ -107,19 +107,19 @@ public enum PriorType {
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
-                buffer.append(formatter.format(param.poissonMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append("]");
                 break;
             case TRUNC_NORMAL_PRIOR:
                 buffer.append("Truncated Normal [");
-                buffer.append(formatter.format(param.normalMean));
+                buffer.append(formatter.format(param.mean));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.normalStdev));
+                buffer.append(formatter.format(param.stdev));
                 buffer.append("]");
                 buffer.append(" in [");
-                buffer.append(formatter.format(param.uniformLower));
+                buffer.append(formatter.format(param.lower));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.uniformUpper));
+                buffer.append(formatter.format(param.upper));
                 buffer.append("]");
 
                 break;

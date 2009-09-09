@@ -356,10 +356,10 @@ public class ClockModelOptions extends ModelOptions {
                 || para.priorType == PriorType.NORMAL_PRIOR
                 || para.priorType == PriorType.LAPLACE_PRIOR
                 || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
-                || (para.priorType == PriorType.GAMMA_PRIOR && para.gammaAlpha > 1)
-                || (para.priorType == PriorType.GAMMA_PRIOR && para.gammaOffset > 0)
-                || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
-                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.exponentialOffset > 0)) {
+                || (para.priorType == PriorType.GAMMA_PRIOR && para.shape > 1)
+                || (para.priorType == PriorType.GAMMA_PRIOR && para.offset > 0)
+                || (para.priorType == PriorType.UNIFORM_PRIOR && para.lower > 0 && para.upper < Double.POSITIVE_INFINITY)
+                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0)) {
 
             return true;
         } else {

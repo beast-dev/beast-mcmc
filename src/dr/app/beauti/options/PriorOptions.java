@@ -96,72 +96,72 @@ public class PriorOptions extends ModelOptions {
         double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
 
         for (Parameter param : params) {
-            if (!options.hasData()) param.priorEdited = false;
+            if (!options.hasData()) param.setPriorEdited(false);
 
-            if (!param.priorEdited) {
-                switch (param.scale) {
+            if (!param.isPriorEdited()) {
+                switch (param.scaleType) {
                     case TIME_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight;
                         break;
                         
                     case T50_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight / 5.0;
                         break;
                         
                     case GROWTH_RATE_SCALE:
-                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
-                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
+                        param.lower = Math.max(-growthRateMaximum, param.lower);
+                        param.upper = Math.min(growthRateMaximum, param.upper);
                         break;
                         
                     case BIRTH_RATE_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(birthRateMaximum, param.upper);
                         break;
                         
                     case SUBSTITUTION_RATE_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(substitutionRateMaximum, param.upper);
                         
                         param.initial = avgInitialRate;                                             
                         break;
                         
                     case LOG_STDEV_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(logStdevMaximum, param.upper);
                         break;
                         
                     case SUBSTITUTION_PARAMETER_SCALE:
-                        param.uniformLower = Math.max(0.0, param.lower);
-                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
+                        param.lower = Math.max(0.0, param.lower);
+                        param.upper = Math.min(substitutionParameterMaximum, param.upper);
                         break;
 
                     case UNITY_SCALE:
-                        param.uniformLower = 0.0;
-                        param.uniformUpper = 1.0;
+                        param.lower = 0.0;
+                        param.upper = 1.0;
                         break;
 
                     case ROOT_RATE_SCALE:
                         param.initial = avgInitialRate;
-                        param.gammaAlpha = 0.5;
-                        param.gammaBeta = param.initial / 0.5;
+                        param.shape = 0.5;
+                        param.scale = param.initial / 0.5;
                         break;
 
                     case LOG_VAR_SCALE:
                         param.initial = avgInitialRate;
-                        param.gammaAlpha = 2.0;
-                        param.gammaBeta = param.initial / 2.0;
+                        param.shape = 2.0;
+                        param.scale = param.initial / 2.0;
                         break;
 
                 }
                 
                 if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
                     param.lower = options.maximumTipHeight;
-                    param.uniformLower = options.maximumTipHeight;
-                    param.uniformUpper = timeScaleMaximum;
+                    param.lower = options.maximumTipHeight;
+                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
                     if (param.getOptions() != null) {
                         param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight(); 

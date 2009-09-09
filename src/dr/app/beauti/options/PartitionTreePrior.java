@@ -118,8 +118,8 @@ public class PartitionTreePrior extends PartitionOptions {
         {
             final Parameter p = createParameter("skyride.precision", "GMRF Bayesian skyride precision", PriorScaleType.NONE, 1.0, 0.0, Double.POSITIVE_INFINITY);
             p.priorType = PriorType.GAMMA_PRIOR;
-            p.gammaAlpha = 0.001;
-            p.gammaBeta = 1000;
+            p.shape = 0.001;
+            p.scale = 1000;
             p.priorFixed = true;
         }
 
@@ -129,7 +129,7 @@ public class PartitionTreePrior extends PartitionOptions {
         {
             final Parameter p = createStatistic("demographic.populationSizeChanges", "Average number of population change points", true);
             p.priorType = PriorType.POISSON_PRIOR;
-            p.poissonMean = Math.log(2);
+            p.mean = Math.log(2);
         }
         createParameter("yule.birthRate", "Yule speciation process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 

@@ -124,8 +124,8 @@ public class DiscretePriorDialog {
 
     private void setArguments() {
         argumentFields[0].setRange(0.0, Double.MAX_VALUE);
-        argumentFields[0].setValue(parameter.poissonMean);
-        argumentFields[1].setValue(parameter.poissonOffset);
+        argumentFields[0].setValue(parameter.mean);
+        argumentFields[1].setValue(parameter.offset);
 
     }
 
@@ -136,12 +136,12 @@ public class DiscretePriorDialog {
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
+                if (argumentFields[0].getValue() != null) parameter.lower = argumentFields[0].getValue();
+                if (argumentFields[1].getValue() != null) parameter.upper = argumentFields[1].getValue();
                 break;
             case POISSON_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.poissonMean = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.poissonOffset = argumentFields[1].getValue();
+                if (argumentFields[0].getValue() != null) parameter.mean = argumentFields[0].getValue();
+                if (argumentFields[1].getValue() != null) parameter.offset = argumentFields[1].getValue();
                 break;
             default:
                 throw new IllegalArgumentException("Unknown prior index");

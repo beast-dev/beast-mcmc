@@ -62,11 +62,11 @@ public class Parameter {
     
     public double lower;
     public double upper;   
-    public double stdev = 1.0;
-    public double mean = 1.0;
-    public double offset = 0.0;    
-    public double shape = 1.0;
-    public double scale = 1.0;    
+    public double mean;
+    public double stdev;
+    public double shape;
+    public double scale;    
+    public double offset;    
     
     public static class Builder { 
         // Required para
@@ -85,6 +85,11 @@ public class Parameter {
         private PriorType priorType = PriorType.NONE;
         private double upper = Double.NaN;
         private double lower = Double.NaN;
+        public double mean = 0.0;
+        public double stdev = 1.0;
+        public double shape = 1.0;
+        public double scale = 1.0;    
+        public double offset = 0.0;   
         
         private boolean isDiscrete = false;
         private boolean isFixed = false;
@@ -132,16 +137,6 @@ public class Parameter {
             return this;
         }
         
-        public Builder upper(double upper) {
-            this.upper = upper;
-            return this;
-        }
-        
-        public Builder lower(double lower) {
-            this.lower = lower;
-            return this;
-        }
-        
         public Builder isDiscrete(boolean isDiscrete) {
             this.isDiscrete = isDiscrete;
             return this;
@@ -156,8 +151,42 @@ public class Parameter {
             this.priorFixed = priorFixed;
             return this;
         }
+
+        public Builder upper(double upper) {
+            this.upper = upper;
+            return this;
+        }
         
-       
+        public Builder lower(double lower) {
+            this.lower = lower;
+            return this;
+        }
+                
+        public Builder mean(double mean) {
+            this.mean = mean;
+            return this;
+        }
+        
+        public Builder stdev(double stdev) {
+            this.stdev = stdev;
+            return this;
+        }
+        
+        public Builder shape(double shape) {
+            this.shape = shape;
+            return this;
+        }
+        
+        public Builder scale(double scale) {
+            this.scale = scale;
+            return this;
+        }
+        
+        public Builder offset(double offset) {
+            this.offset = offset;
+            return this;
+        }
+        
         public Parameter build() {
             return new Parameter(this);
         }               
@@ -173,155 +202,22 @@ public class Parameter {
         isStatistic = builder.isStatistic;
         options = builder.options;            
         priorType = builder.priorType;
-        upper = builder.upper;
-        lower = builder.lower;        
         isDiscrete = builder.isDiscrete;
         isFixed = builder.isFixed;        
         priorFixed = builder.priorFixed;
+        upper = builder.upper;
+        lower = builder.lower;        
+        mean = builder.mean;
+        stdev = builder.stdev;
+        shape = builder.shape;
+        scale = builder.scale;    
+        offset = builder.offset; 
+        
+        // ExponentialDistribution(1.0 / mean)
+        if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1; 
     } 
     
-    
-    /**
-     * A constructor for "special" parameters which are not user-configurable
-     *
-     * @param name        the name
-     * @param description the description
-     */
-    public Parameter(String name, String description) {
-        this.baseName = name;
-        this.description = description;
-        this.scaleType = PriorScaleType.NONE;
-        this.isNodeHeight = false;
-        this.isStatistic = false;
-        this.taxa = null;
-        this.options = null;
-        this.priorType = PriorType.NONE;
-        this.initial = Double.NaN;
-        this.lower = Double.NaN;
-        this.upper = Double.NaN;
-    }
-
-    public Parameter(String name, String description, PriorScaleType scale,
-                     double initial, double lower, double upper) {
-        this.baseName = name;
-        this.description = description;
-        this.initial = initial;
-        this.isNodeHeight = false;
-        this.isStatistic = false;
-
-        this.taxa = null;
-        this.options = null;
-        
-        this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scaleType = scale;
-        this.setPriorEdited(false);
-        this.lower = lower;
-        this.upper = upper;
-//
-//        uniformLower = lower;
-//        uniformUpper = upper;
-    }
-
-    public Parameter(TaxonList taxa, String description) {
-        this.taxa = taxa;
-        this.baseName = taxa.getId();
-        this.description = description;
-
-        this.options = null;
-        
-        this.isNodeHeight = true;
-        this.isStatistic = true;
-        this.priorType = PriorType.NONE;
-        this.scaleType = PriorScaleType.TIME_SCALE;
-        this.setPriorEdited(false);
-        this.lower = 0.0;
-        this.upper = Double.MAX_VALUE;
-
-//        uniformLower = lower;
-//        uniformUpper = upper;
-    }
-
-    public Parameter(String name, String description, boolean isDiscrete) {
-        this.taxa = null;
-        this.options = null;
-
-        this.baseName = name;
-        this.description = description;
-
-        this.isNodeHeight = false;
-        this.isStatistic = true;
-        this.isDiscrete = isDiscrete;
-        this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scaleType = PriorScaleType.NONE;
-        this.setPriorEdited(false);
-        this.initial = Double.NaN;
-        this.lower = Double.NaN;
-        this.upper = Double.NaN;
-    }
-
-    public Parameter(String name, String description, double lower, double upper) {
-        this.taxa = null;
-        this.options = null;
-
-        this.baseName = name;
-        this.description = description;
-
-        this.isNodeHeight = false;
-        this.isStatistic = true;
-        this.isDiscrete = false;
-        this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scaleType = PriorScaleType.NONE;
-        this.setPriorEdited(false);
-        this.initial = Double.NaN;
-        this.lower = lower;
-        this.upper = upper;
-
-//        uniformLower = lower;
-//        uniformUpper = upper;
-    }
-    
-    public Parameter(PartitionOptions options, String name, String description, PriorScaleType scale, double initial,
-            double lower, double upper) {
-        this.baseName = name;
-        this.description = description;
-        this.initial = initial;
-        this.isNodeHeight = false;
-        this.isStatistic = false;
-
-        this.taxa = null;
-        this.options = options;
-
-        this.priorType = PriorType.UNIFORM_PRIOR;
-        this.scaleType = scale;
-        this.setPriorEdited(false);
-        this.lower = lower;
-        this.upper = upper;
-
-//        uniformLower = lower;
-//        uniformUpper = upper;
-    }
-
-    public Parameter(PartitionOptions options, String name, String description, boolean isNodeHeight,
-                     double initial, double lower, double upper) {
-        this.baseName = name;
-        this.description = description;
-        this.initial = initial;
-
-        this.taxa = null;        
-        this.options = options;
-
-        this.isNodeHeight = isNodeHeight;
-        this.isStatistic = false;
-        this.priorType = PriorType.NONE;
-        this.scaleType = PriorScaleType.TIME_SCALE;
-        this.setPriorEdited(false);
-        this.lower = lower;
-        this.upper = upper;
-
-//        uniformLower = lower;
-//        uniformUpper = upper;
-    }
-
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++
     public void setPrefix(String prefix) {
         this.prefix = prefix;
     }

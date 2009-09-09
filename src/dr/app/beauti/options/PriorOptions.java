@@ -160,7 +160,6 @@ public class PriorOptions extends ModelOptions {
                 
                 if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
                     param.lower = options.maximumTipHeight;
-                    param.lower = options.maximumTipHeight;
                     param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
                     if (param.getOptions() != null) {

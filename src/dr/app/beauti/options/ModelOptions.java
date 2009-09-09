@@ -108,37 +108,42 @@ public abstract class ModelOptions {
     }
     
     public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
-    	final Parameter parameter = new Parameter(paraName, description);
+        final Parameter parameter = new Parameter.Builder(paraName, description).build();
         operators.put(paraName, new Operator(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS, tuning, weight));
     }
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public Parameter createParameter(String name, String description) {
-        final Parameter parameter = new Parameter(name, description);
+        final Parameter parameter = new Parameter.Builder(name, description).build();
         parameters.put(name, parameter);
         return parameter;
     }
 
-    public Parameter createParameter(String name, String description, PriorScaleType scale, double value, double lower, double upper) {
-        final Parameter parameter = new Parameter(name, description, scale, value, lower, upper);
+    public Parameter createParameter(String name, String description, PriorScaleType scale, double initial, double lower, double upper) {
+        final Parameter parameter = new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.UNIFORM_PRIOR)
+                  .initial(initial).lower(lower).upper(upper).build();
         parameters.put(name, parameter);
         return parameter;
     }
 
-    public void createScaleParameter(String name, String description, PriorScaleType scale, double value, double lower, double upper) {
-        Parameter p = createParameter(name, description, scale, value, lower, upper);
-        p.priorType = PriorType.JEFFREYS_PRIOR;
+    public void createScaleParameter(String name, String description, PriorScaleType scale, double initial, double lower, double upper) {
+        final Parameter parameter = new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.JEFFREYS_PRIOR)
+                .initial(initial).lower(lower).upper(upper).build();
+        parameters.put(name, parameter);
     }
 
   //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public Parameter createStatistic(String name, String description, boolean isDiscrete) {
-        final Parameter parameter = new Parameter(name, description, isDiscrete);
+        final Parameter parameter = new Parameter.Builder(name, description).isDiscrete(isDiscrete).isStatistic(true)
+                 .prior(PriorType.UNIFORM_PRIOR).build();
         parameters.put(name, parameter);
         return parameter;
     }
 
     public void createStatistic(String name, String description, double lower, double upper) {
-        parameters.put(name, new Parameter(name, description, lower, upper));
+        final Parameter parameter = new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
+                  .lower(lower).upper(upper).build();
+        parameters.put(name, parameter);
     }
 
     //+++++++++++++++++++ Methods ++++++++++++++++++++++++++++++++

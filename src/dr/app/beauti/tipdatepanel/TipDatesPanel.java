@@ -35,6 +35,7 @@ import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
+import dr.evoxml.DateUnitsType;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
@@ -51,6 +52,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -72,8 +74,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     JCheckBox usingTipDates = new JCheckBox("Use tip dates");
 
-    JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
-    JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
+    JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
+    JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
     JComboBox tipDateSamplingCombo = new JComboBox(TipDateSamplingType.values());
     JComboBox tipDateTaxonSetCombo = new JComboBox();
@@ -233,19 +235,19 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     public final void timeScaleChanged() {
         Units.Type units = Units.Type.YEARS;
-        switch (unitsCombo.getSelectedIndex()) {
-            case 0:
+        switch ((DateUnitsType) unitsCombo.getSelectedItem()) {
+            case YEARS:
                 units = Units.Type.YEARS;
                 break;
-            case 1:
+            case MONTHS:
                 units = Units.Type.MONTHS;
                 break;
-            case 2:
+            case DAYS:
                 units = Units.Type.DAYS;
                 break;
         }
 
-        boolean backwards = directionCombo.getSelectedIndex() == 1;
+        boolean backwards = (DateUnitsType) directionCombo.getSelectedItem() == DateUnitsType.BACKWARDS;
 
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             Date date = options.taxonList.getTaxon(i).getDate();
@@ -275,8 +277,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         setupTable();
 
-        unitsCombo.setSelectedIndex(options.datesUnits);
-        directionCombo.setSelectedIndex(options.datesDirection);
+        unitsCombo.setSelectedItem(options.datesUnits);
+        directionCombo.setSelectedItem(options.datesDirection);
 
         calculateHeights();
         usingTipDates.setSelected(options.clockModelOptions.isTipCalibrated());
@@ -295,8 +297,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-        options.datesUnits = unitsCombo.getSelectedIndex();
-        options.datesDirection = directionCombo.getSelectedIndex();
+        options.datesUnits = (DateUnitsType) unitsCombo.getSelectedItem();
+        options.datesDirection = (DateUnitsType) directionCombo.getSelectedItem();
 
         TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions) options.getComponentOptions(TipDateSamplingComponentOptions.class);
         comp.tipDateSamplingType = (TipDateSamplingType) tipDateSamplingCombo.getSelectedItem();

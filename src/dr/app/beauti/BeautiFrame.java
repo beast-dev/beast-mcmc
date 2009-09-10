@@ -358,7 +358,13 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
             
+            setStatusMessage();
             setAllOptions();
+            
+//          // @Todo templates are not implemented yet...
+////        getOpenAction().setEnabled(true);
+////        getSaveAction().setEnabled(true);
+            getExportAction().setEnabled(true);
         }
     }
 

@@ -75,8 +75,8 @@ public class BeautiTemplate extends ModelOptions {
 
         //dataElement.addContent(createChild("fileNameStem", fileNameStem));
 
-        dataElement.addContent(createChild("datesUnits", options.datesUnits));
-        dataElement.addContent(createChild("datesDirection", options.datesDirection));
+//        dataElement.addContent(createChild("datesUnits", options.datesUnits));
+//        dataElement.addContent(createChild("datesDirection", options.datesDirection));
         dataElement.addContent(createChild("translation", options.translation));
         //TODO:
 //        dataElement.addContent(createChild("startingTreeType", startingTreeType.name()));

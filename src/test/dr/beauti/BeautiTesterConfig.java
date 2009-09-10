@@ -28,6 +28,7 @@ package test.dr.beauti;
 import dr.app.beauti.util.NexusApplicationImporter;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
+import dr.evoxml.DateUnitsType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.*;
 import dr.evolution.alignment.Alignment;
@@ -80,8 +81,8 @@ public class BeautiTesterConfig {
         // Data options
         beautiOptions.taxonList = null;
 
-        beautiOptions.datesUnits = BeautiOptions.YEARS;
-        beautiOptions.datesDirection = BeautiOptions.FORWARDS;
+        beautiOptions.datesUnits = DateUnitsType.YEARS;
+        beautiOptions.datesDirection = DateUnitsType.FORWARDS;
 
 //        beautiOptions.startingTreeType = StartingTreeType.RANDOM;
 //        beautiOptions.fixedTree = false;

@@ -135,10 +135,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             }
 
-            int[] resourceList = { 1 };
-            if (resourceOrder.size() != 0) {
-                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };
+            int[] resourceList = null;
+            long preferenceFlag = 0;
+            long requirementFlag = 0;
+
+            if (resourceOrder.size() > 0) {
+                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };               
+            } else { // else determine dataset characteristics
+                if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
+                    preferenceFlag |= BeagleFlag.CPU.getMask();
+
             }
+            
             instanceCount ++;
 
             beagle = BeagleFactory.loadBeagleInstance(
@@ -152,17 +160,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
-                    0,
-                    0
+                    preferenceFlag,
+                    requirementFlag
             );
 
             InstanceDetails instanceDetails = beagle.getDetails();
-            ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
 
-            if (resourceDetails != null) {
-            logger.info("  Using BEAGLE resource " + resourceDetails.toString());
+            if (instanceDetails != null) {
+                ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());                
+                logger.info("  Using BEAGLE resource " + resourceDetails.toString());
             } else {
-                logger.info("  No external BEAGLE resources available, using Java implementation");
+                logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");

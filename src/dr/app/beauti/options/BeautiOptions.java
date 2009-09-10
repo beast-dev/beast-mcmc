@@ -33,6 +33,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evoxml.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
 import java.util.ArrayList;
@@ -72,8 +73,8 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsMono.clear();
         
 //        meanDistance = 1.0;
-        datesUnits = YEARS;
-        datesDirection = FORWARDS;
+        datesUnits = DateUnitsType.YEARS;
+        datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
         
@@ -704,8 +705,8 @@ public class BeautiOptions extends ModelOptions {
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
 
 //    public double meanDistance = 1.0;
-    public int datesUnits = YEARS;
-    public int datesDirection = FORWARDS;
+    public DateUnitsType datesUnits = DateUnitsType.YEARS;
+    public DateUnitsType datesDirection = DateUnitsType.FORWARDS;
     public double maximumTipHeight = 0.0;
     public int translation = 0;
 

@@ -44,14 +44,7 @@ public abstract class ModelOptions {
     HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();    
 	HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     HashMap<String, Operator> operators = new HashMap<String, Operator>();
-
-//    public static final String version = "1.5";
-    public static final int YEARS = 0;
-    public static final int MONTHS = 1;
-    public static final int DAYS = 2;
-    public static final int FORWARDS = 0;
-    public static final int BACKWARDS = 1;
-    
+   
     public static final int GROWTH_RATE = 0;
     public static final int DOUBLING_TIME = 1;
     public static final int CONSTANT_SKYLINE = 0;

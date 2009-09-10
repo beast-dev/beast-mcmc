@@ -40,12 +40,13 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String ORIGIN = "origin";
     public static final String DIRECTION = "direction";
-    public static final String FORWARDS = "forwards";
-    public static final String BACKWARDS = "backwards";
+    
+    public static final String FORWARDS = DateUnitsType.FORWARDS.getAttribute(); //"forwards";
+    public static final String BACKWARDS = DateUnitsType.BACKWARDS.getAttribute(); //"backwards";
 
-    public static final String YEARS = "units";
-    public static final String MONTHS = "units";
-    public static final String DAYS = "days";
+    public static final String YEARS = DateUnitsType.YEARS.getAttribute(); //"units";
+    public static final String MONTHS = DateUnitsType.MONTHS.getAttribute(); //"units";
+    public static final String DAYS = DateUnitsType.DAYS.getAttribute(); //"days";
 
     public String getParserName() {
         return Date.DATE;

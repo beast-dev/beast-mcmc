@@ -45,7 +45,7 @@ public abstract class ModelOptions {
 	HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
     HashMap<String, Operator> operators = new HashMap<String, Operator>();
 
-    public static final String version = "1.5";
+//    public static final String version = "1.5";
     public static final int YEARS = 0;
     public static final int MONTHS = 1;
     public static final int DAYS = 2;

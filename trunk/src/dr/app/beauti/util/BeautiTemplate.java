@@ -29,6 +29,7 @@ import java.util.List;
 import org.jdom.Document;
 import org.jdom.Element;
 
+import dr.app.beast.BeastVersion;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
@@ -65,9 +66,10 @@ public class BeautiTemplate extends ModelOptions {
      * @return the Document
      */
     public Document create(boolean guessDates) {
-
+        
+        final BeastVersion version = new BeastVersion();
         Element root = new Element("beauti");
-        root.setAttribute("version", version);
+        root.setAttribute("version", version.getVersion());
 
         Element dataElement = new Element("data");
 

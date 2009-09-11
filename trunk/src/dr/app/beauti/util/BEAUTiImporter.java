@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 import org.jdom.JDOMException;
@@ -362,7 +361,7 @@ public class BEAUTiImporter {
                         partition.setPartitionClockModel(pcm);
 //                        options.addPartitionClockModel(pcm);
                     }
-                    options.clockModelOptions.fixRateOfFirstClockPartition();                 
+//                    options.clockModelOptions.fixRateOfFirstClockPartition();
                     
                 } else {// only this works                    
                     for (PartitionSubstitutionModel psm : options.getPartitionSubstitutionModels()) {
@@ -379,7 +378,7 @@ public class BEAUTiImporter {
                     
                     // use same tree model and same tree prior in beginning
                     for (PartitionTreeModel ptm : options.getPartitionTreeModels()) {                        
-                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior                      
+                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
                     }
                     if (partition.getPartitionTreeModel() == null) {
                         // PartitionTreeModel based on PartitionData
@@ -404,11 +403,13 @@ public class BEAUTiImporter {
                         partition.setPartitionClockModel(pcm);
 //                        options.addPartitionClockModel(pcm);
                     }
-                    options.clockModelOptions.fixRateOfFirstClockPartition();
+//                    options.clockModelOptions.fixRateOfFirstClockPartition();
                 }
             }
+            
+            options.updateLinksBetweenPDPCMPSMPTMPTPP();
             options.updatePartitionClockTreeLinks();
-//            options.updateFixedRateClockModel();
+            options.clockModelOptions.fixRateOfFirstClockPartition();
         }
     }
     

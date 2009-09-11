@@ -244,7 +244,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     /**
      * @param includeRelativeRates true if relative rate parameters should be added
-     * @return a list of parameters that are required
      */
     public void selectParameters(List<Parameter> params) {
     	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 

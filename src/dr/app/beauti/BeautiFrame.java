@@ -357,10 +357,16 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
             }
-            
+
+            if (beautiOptions.allowDifferentTaxa) {
+                setAllOptions();
+                dataPanel.selectAll();
+                dataPanel.unlinkTrees();
+            }
+
             setStatusMessage();
             setAllOptions();
-            
+
 //          // @Todo templates are not implemented yet...
 ////        getOpenAction().setEnabled(true);
 ////        getSaveAction().setEnabled(true);
@@ -370,14 +376,12 @@ public class BeautiFrame extends DocumentFrame {
 
     public int allowDifferentTaxaJOptionPane() {
         // AR - Yes and No are perfectly good answers to this question
-        int adt = JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
+        return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
                 + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
                 + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[] { "Yes", "No" }, "No"); 
-        // default button title
-        return adt;                                                                                                           
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[] { "Yes", "No" }, "No");
     }
-    
+
 //    protected void importFromFile(File file) throws IOException {
 //
 //        Reader reader = new FileReader(file);

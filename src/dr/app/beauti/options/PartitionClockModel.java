@@ -86,10 +86,10 @@ public class PartitionClockModel extends PartitionOptions {
 //    }
 
     private void initClockModelParaAndOpers() {
-        createParameter(this, "clock.rate", "substitution rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, "clock.rate", "substitution rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
         
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);

@@ -37,12 +37,10 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionClockModel extends PartitionOptions {
+public class PartitionClockModel extends PartitionModelOptions {
 
     // Instance variables
     private final BeautiOptions options;
-    
-    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private boolean isEstimatedRate = true;
@@ -240,23 +238,6 @@ public class PartitionClockModel extends PartitionOptions {
     }
     
     /////////////////////////////////////////////////////////////
-
-    public List<PartitionData> getAllPartitionData() {
-        return allPartitionData;
-    }
-
-    public void clearAllPartitionData() {
-        this.allPartitionData.clear();
-    }
-
-    public void addPartitionData(PartitionData partition) {
-        allPartitionData.add(partition);
-    }
-
-    public boolean removePartitionData(PartitionData partition) {
-        return allPartitionData.remove(partition);
-    }
-
     public void setClockType(ClockType clockType) {
         this.clockType = clockType;
     }

@@ -39,13 +39,12 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionTreeModel extends PartitionOptions {
+public class PartitionTreeModel extends PartitionModelOptions {
 
     // Instance variables
 
     private final BeautiOptions options;
     private PartitionTreePrior treePrior;
-    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
@@ -90,11 +89,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
         initTreeModelParaAndOpers();
     }
-
-//    public PartitionTreeModel(BeautiOptions options, String name) {
-//        this.options = options;
-//        this.name = name;
-//    }
 
     private void initTreeModelParaAndOpers() {
         
@@ -178,22 +172,6 @@ public class PartitionTreeModel extends PartitionOptions {
             }
         }
         return false;
-    }
-
-    public List<PartitionData> getAllPartitionData() {
-        return allPartitionData;
-    }
-
-    public void clearAllPartitionData() {
-        this.allPartitionData.clear();
-    }
-
-    public void addPartitionData(PartitionData partition) {
-        allPartitionData.add(partition);
-    }
-
-    public boolean removePartitionData(PartitionData partition) {
-        return allPartitionData.remove(partition);
     }
 
     public PartitionTreePrior getPartitionTreePrior() {

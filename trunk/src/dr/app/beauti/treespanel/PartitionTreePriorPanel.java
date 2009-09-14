@@ -28,6 +28,7 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
@@ -49,18 +50,17 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 
-    private JComboBox parameterizationCombo = new JComboBox(new String[]{
-            "Growth Rate", "Doubling Time"});
-    private JComboBox parameterizationCombo1 = new JComboBox(new String[]{
-            "Doubling Time"});
-    private JComboBox bayesianSkylineCombo = new JComboBox(new String[]{
-            "Piecewise-constant", "Piecewise-linear"});
+    private JComboBox parameterizationCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.GROWTH_RATE,
+            TreePriorParameterizationType.DOUBLING_TIME).toArray());
+    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
+    private JComboBox bayesianSkylineCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.CONSTANT_SKYLINE,
+            TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
     private JComboBox extendedBayesianSkylineCombo = new JComboBox(VariableDemographicModel.Type.values());
 
-    JComboBox gmrfBayesianSkyrideCombo = new JComboBox(new String[]{
-            "Uniform", "Time-aware"});
+    private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
+            TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
@@ -90,14 +90,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(parameterizationCombo);
         parameterizationCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());                
+            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());                
             }
         });
         
         PanelUtils.setupComponent(parameterizationCombo1);
         parameterizationCombo1.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setParameterization(parameterizationCombo1.getSelectedIndex());       
+            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());       
             }
         });
         
@@ -112,7 +112,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(bayesianSkylineCombo);
         bayesianSkylineCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
+            	partitionTreePrior.setSkylineModel((TreePriorParameterizationType) bayesianSkylineCombo.getSelectedItem());
             }
         });
         
@@ -120,14 +120,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         extendedBayesianSkylineCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
             	partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) 
-            			extendedBayesianSkylineCombo.getSelectedItem()).toString());
+            			extendedBayesianSkylineCombo.getSelectedItem()));
             }
         });
 
         PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
         gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
+            	partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
             }
         });
         
@@ -151,7 +151,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC) {//TODO Issue 93
         	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
-        	partitionTreePrior.setParameterization(parameterizationCombo1.getSelectedIndex());
+        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
             groupCountField.setColumns(6);
@@ -218,12 +218,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         groupCountField.setValue(partitionTreePrior.getSkylineGroupCount());
         //samplingProportionField.setValue(partitionTreePrior.birthDeathSamplingProportion);
 
-        parameterizationCombo.setSelectedIndex(partitionTreePrior.getParameterization());
-        bayesianSkylineCombo.setSelectedIndex(partitionTreePrior.getSkylineModel());
+        parameterizationCombo.setSelectedItem(partitionTreePrior.getParameterization());
+        bayesianSkylineCombo.setSelectedItem(partitionTreePrior.getSkylineModel());
 
         extendedBayesianSkylineCombo.setSelectedItem(partitionTreePrior.getExtendedSkylineModel());
 
-        gmrfBayesianSkyrideCombo.setSelectedIndex(partitionTreePrior.getSkyrideSmoothing());
+        gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
 //        setupPanel();
 

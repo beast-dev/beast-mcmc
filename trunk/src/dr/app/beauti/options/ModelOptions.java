@@ -43,14 +43,6 @@ public class ModelOptions {
     protected Map<String, Operator> operators = new HashMap<String, Operator>();
    	protected Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
-    public static final int GROWTH_RATE = 0;
-    public static final int DOUBLING_TIME = 1;
-    public static final int CONSTANT_SKYLINE = 0;
-    public static final int LINEAR_SKYLINE = 1;
-
-    public static final int SKYRIDE_UNIFORM_SMOOTHING = 0;
-    public static final int SKYRIDE_TIME_AWARE_SMOOTHING = 1;
-
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
 

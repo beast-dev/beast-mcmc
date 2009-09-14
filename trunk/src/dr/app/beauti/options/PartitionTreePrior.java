@@ -23,10 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.TreePriorType;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
 
@@ -46,14 +43,14 @@ public class PartitionTreePrior extends PartitionOptions {
     private PartitionTreeModel treeModel; // only used when not sharing same prior
 
     private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
-    private int parameterization = GROWTH_RATE;
+    private TreePriorParameterizationType parameterization = TreePriorParameterizationType.GROWTH_RATE;
     private int skylineGroupCount = 10;
-    private int skylineModel = CONSTANT_SKYLINE;
-    private int skyrideSmoothing = SKYRIDE_TIME_AWARE_SMOOTHING;
+    private TreePriorParameterizationType skylineModel = TreePriorParameterizationType.CONSTANT_SKYLINE;
+    private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
     // AR - this seems to be set to taxonCount - 1 so we don't need to
     // have a settable variable...
     // public int skyrideIntervalCount = 1;
-    private String extendedSkylineModel = VariableDemographicModel.Type.LINEAR.toString();
+    private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private boolean fixedTree = false;
 
@@ -179,14 +176,14 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("constant.popSize"));
         } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {
             params.add(getParameter("exponential.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 params.add(getParameter("exponential.growthRate"));
             } else {
                 params.add(getParameter("exponential.doublingTime"));
             }
         } else if (nodeHeightPrior == TreePriorType.LOGISTIC) {
             params.add(getParameter("logistic.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 params.add(getParameter("logistic.growthRate"));
             } else {
                 params.add(getParameter("logistic.doublingTime"));
@@ -194,7 +191,7 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("logistic.t50"));
         } else if (nodeHeightPrior == TreePriorType.EXPANSION) {
             params.add(getParameter("expansion.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 params.add(getParameter("expansion.growthRate"));
             } else {
                 params.add(getParameter("expansion.doublingTime"));
@@ -228,14 +225,14 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("constant.popSize"));
         } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {
             ops.add(getOperator("exponential.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 ops.add(getOperator("exponential.growthRate"));
             } else {
                 ops.add(getOperator("exponential.doublingTime"));
             }
         } else if (nodeHeightPrior == TreePriorType.LOGISTIC) {
             ops.add(getOperator("logistic.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 ops.add(getOperator("logistic.growthRate"));
             } else {
                 ops.add(getOperator("logistic.doublingTime"));
@@ -243,7 +240,7 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("logistic.t50"));
         } else if (nodeHeightPrior == TreePriorType.EXPANSION) {
             ops.add(getOperator("expansion.popSize"));
-            if (parameterization == GROWTH_RATE) {
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
                 ops.add(getOperator("expansion.growthRate"));
             } else {
                 ops.add(getOperator("expansion.doublingTime"));
@@ -296,11 +293,11 @@ public class PartitionTreePrior extends PartitionOptions {
         this.nodeHeightPrior = nodeHeightPrior;
     }
 
-    public int getParameterization() {
+    public TreePriorParameterizationType getParameterization() {
         return parameterization;
     }
 
-    public void setParameterization(int parameterization) {
+    public void setParameterization(TreePriorParameterizationType parameterization) {
         this.parameterization = parameterization;
     }
 
@@ -312,19 +309,19 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skylineGroupCount = skylineGroupCount;
     }
 
-    public int getSkylineModel() {
+    public TreePriorParameterizationType getSkylineModel() {
         return skylineModel;
     }
 
-    public void setSkylineModel(int skylineModel) {
+    public void setSkylineModel(TreePriorParameterizationType skylineModel) {
         this.skylineModel = skylineModel;
     }
 
-    public int getSkyrideSmoothing() {
+    public TreePriorParameterizationType getSkyrideSmoothing() {
         return skyrideSmoothing;
     }
 
-    public void setSkyrideSmoothing(int skyrideSmoothing) {
+    public void setSkyrideSmoothing(TreePriorParameterizationType skyrideSmoothing) {
         this.skyrideSmoothing = skyrideSmoothing;
     }
 
@@ -344,11 +341,11 @@ public class PartitionTreePrior extends PartitionOptions {
         this.fixedTree = fixedTree;
     }
 
-    public void setExtendedSkylineModel(String extendedSkylineModel) {
+    public void setExtendedSkylineModel(VariableDemographicModel.Type extendedSkylineModel) {
         this.extendedSkylineModel = extendedSkylineModel;
     }
 
-    public String getExtendedSkylineModel() {
+    public VariableDemographicModel.Type getExtendedSkylineModel() {
         return extendedSkylineModel;
     }
 

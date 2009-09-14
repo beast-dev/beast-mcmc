@@ -39,9 +39,9 @@ import java.util.Map;
  */
 public abstract class ModelOptions {
 
-    Map<String, Parameter> parameters = new HashMap<String, Parameter>();
-    Map<String, Operator> operators = new HashMap<String, Operator>();
-   	Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    protected Map<String, Parameter> parameters = new HashMap<String, Parameter>();
+    protected Map<String, Operator> operators = new HashMap<String, Operator>();
+   	protected Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final int GROWTH_RATE = 0;
     public static final int DOUBLING_TIME = 1;

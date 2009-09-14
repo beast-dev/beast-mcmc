@@ -102,7 +102,7 @@ public class PartitionTreeModel extends PartitionOptions {
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameter(this, "treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",

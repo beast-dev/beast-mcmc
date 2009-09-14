@@ -162,8 +162,8 @@ public class PriorOptions extends ModelOptions {
                     param.lower = options.maximumTipHeight;
                     param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
-                    if (param.getOptions() != null) {
-                        param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight(); 
+                    if (param.getOptions() instanceof PartitionTreeModel) {
+                        param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
                     } else {
                         param.initial = avgInitialRootHeight;
                     }

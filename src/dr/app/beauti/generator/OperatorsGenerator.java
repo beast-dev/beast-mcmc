@@ -85,7 +85,7 @@ public class OperatorsGenerator extends Generator {
 
     private void writeOperator(Operator operator, XMLWriter writer) {
 
-        switch (operator.type) {
+        switch (operator.operatorType) {
 
             case SCALE:
                 writeScaleOperator(operator, writer);

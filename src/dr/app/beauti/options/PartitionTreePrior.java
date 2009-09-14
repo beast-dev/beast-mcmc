@@ -150,13 +150,12 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
 
         // hack pass distribution in name
-        createOperator("demographic.popSize", "demographic.populationMeanDist", "", this.getParameter("demographic.popSize"),
-        		this.getParameter("demographic.indicators"), OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperator("demographic.scaleActive", "demographic.scaleActive", "", this.getParameter("demographic.popSize"),
-        		this.getParameter("demographic.indicators"), OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
-
-        createOperator("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", this.getParameter("skyride.popSize"),
-        		this.getParameter("skyride.precision"), OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+        createOperatorUsing2Para("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
+        		"demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
+        createOperatorUsing2Para("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
+        		"demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
+        createOperatorUsing2Para("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
+        		"skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 

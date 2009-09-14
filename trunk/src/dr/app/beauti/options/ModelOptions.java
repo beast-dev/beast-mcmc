@@ -26,14 +26,12 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexei Drummond
@@ -41,10 +39,10 @@ import java.util.List;
  */
 public abstract class ModelOptions {
 
-    HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();    
-	HashMap<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
-    HashMap<String, Operator> operators = new HashMap<String, Operator>();
-   
+    Map<String, Parameter> parameters = new HashMap<String, Parameter>();
+    Map<String, Operator> operators = new HashMap<String, Operator>();
+   	Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+
     public static final int GROWTH_RATE = 0;
     public static final int DOUBLING_TIME = 1;
     public static final int CONSTANT_SKYLINE = 0;
@@ -106,37 +104,36 @@ public abstract class ModelOptions {
     }
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
-    public Parameter createParameter(String name, String description) {
-        final Parameter parameter = new Parameter.Builder(name, description).build();
-        parameters.put(name, parameter);
-        return parameter;
+    public void createParameter(String name, String description) {
+        new Parameter.Builder(name, description).build(parameters);
     }
 
-    public Parameter createParameter(String name, String description, PriorScaleType scale, double initial, double lower, double upper) {
-        final Parameter parameter = new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).lower(lower).upper(upper).build();
-        parameters.put(name, parameter);
-        return parameter;
+    public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
+                  .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 
-    public void createScaleParameter(String name, String description, PriorScaleType scale, double initial, double lower, double upper) {
-        final Parameter parameter = new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.JEFFREYS_PRIOR)
-                .initial(initial).lower(lower).upper(upper).build();
-        parameters.put(name, parameter);
+    public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                          double shape, double scale, boolean priorFixed) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
+                  .initial(initial).shape(shape).scale(scale).priorFixed(priorFixed).build(parameters);
+    }
+
+    public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                             double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.JEFFREYS_PRIOR)
+                .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 
   //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
-    public Parameter createStatistic(String name, String description, boolean isDiscrete) {
-        final Parameter parameter = new Parameter.Builder(name, description).isDiscrete(isDiscrete).isStatistic(true)
-                 .prior(PriorType.UNIFORM_PRIOR).build();
-        parameters.put(name, parameter);
-        return parameter;
+    public void createDiscreteStatistic(String name, String description) {
+        new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
+                 .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
     public void createStatistic(String name, String description, double lower, double upper) {
-        final Parameter parameter = new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
-                  .lower(lower).upper(upper).build();
-        parameters.put(name, parameter);
+        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
+                  .lower(lower).upper(upper).build(parameters);
     }
 
     //+++++++++++++++++++ Methods ++++++++++++++++++++++++++++++++
@@ -203,15 +200,15 @@ public abstract class ModelOptions {
         }
     }
 
-    public HashMap<String, Parameter> getParameters() {
+    public Map<String, Parameter> getParameters() {
 		return parameters;
 	}
 
-	public HashMap<TaxonList, Parameter> getStatistics() {
+	public Map<TaxonList, Parameter> getStatistics() {
 		return statistics;
 	}
 
-	public HashMap<String, Operator> getOperators() {
+	public Map<String, Operator> getOperators() {
 		return operators;
 	}
 

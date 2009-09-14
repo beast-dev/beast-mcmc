@@ -30,6 +30,8 @@ import dr.math.distributions.ExponentialDistribution;
 import dr.math.distributions.LogNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 
+import java.util.Map;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -189,7 +191,13 @@ public class Parameter {
         
         public Parameter build() {
             return new Parameter(this);
-        }               
+        }
+
+        public Parameter build(Map map) {
+            final Parameter parameter = new Parameter(this);
+            map.put(baseName, parameter);
+            return parameter;
+        }
     }
     
     private Parameter(Builder builder) {

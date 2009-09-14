@@ -37,7 +37,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public abstract class ModelOptions {
+public class ModelOptions {
 
     protected Map<String, Parameter> parameters = new HashMap<String, Parameter>();
     protected Map<String, Operator> operators = new HashMap<String, Operator>();
@@ -58,12 +58,8 @@ public abstract class ModelOptions {
 	protected static final double treeWeights = 15.0;
 	protected static final double rateWeights = 3.0;
 	
-	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
-	   
-	
-	public abstract void selectParameters(List<Parameter> params);
-    
-    public abstract void selectOperators(List<Operator> ops);
+	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();  
+
     
 	//+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
@@ -82,7 +78,7 @@ public abstract class ModelOptions {
         operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
     }
     
-    public void createTagOperator(String key, String name, String description, String parameterName, String tag, String idref, 
+    public void createTagOperator(String key, String name, String description, String parameterName, String tag, String idref,
     		OperatorType type, double tuning, double weight) {
     	Parameter parameter = getParameter(parameterName);
       operators.put(key, new Operator(name, description, parameter, tag, idref, type, tuning, weight));
@@ -126,12 +122,12 @@ public abstract class ModelOptions {
     }
 
   //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
-    public void createDiscreteStatistic(String name, String description) {
+    protected void createDiscreteStatistic(String name, String description) {
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
                  .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
-    public void createStatistic(String name, String description, double lower, double upper) {
+    protected void createStatistic(String name, String description, double lower, double upper) {
         new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
                   .lower(lower).upper(upper).build(parameters);
     }

@@ -433,19 +433,5 @@ public class BeautiTemplate extends ModelOptions {
             return Date.createTimeSinceOrigin(timeValue, units, origin);
         }
     }
-
-	
-	@Override
-	public void selectOperators(List<Operator> ops) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public void selectParameters(List<Parameter> params) {
-		// TODO Auto-generated method stub
-		
-	}
-
+    
 }

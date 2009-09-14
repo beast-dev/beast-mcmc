@@ -764,18 +764,5 @@ public class BeautiOptions extends ModelOptions {
     public BEAUTiImporter beautiImporter = new BEAUTiImporter(this);    
     
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
-    
-   
-	@Override
-	public void selectOperators(List<Operator> ops) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void selectParameters(List<Parameter> params) {
-		// TODO Auto-generated method stub
-		
-	}
 
 }

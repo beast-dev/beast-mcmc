@@ -277,30 +277,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 		return tree;
 	}
 
-    public Parameter getParameter(String name) {
-
-        Parameter parameter = parameters.get(name);
-
-        if (parameter == null) {
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
-        }
-
-        parameter.setPrefix(getPrefix());
-
-        return parameter;
-    }
-
-    public Operator getOperator(String name) {
-
-        Operator operator = operators.get(name);
-
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
-
-        operator.setPrefix(getPrefix());
-
-        return operator;
-    }
-
     public String getPrefix() {
         return model.getPrefix() + tree.getPrefix();
     }

@@ -35,7 +35,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionData extends PartitionOptions {
+public class PartitionData extends ModelOptions {  // extends PartitionOptions {
 
     private final String fileName;
     private final Alignment alignment;
@@ -95,6 +95,10 @@ public class PartitionData extends PartitionOptions {
         this.name = name;
     }
 
+    public String toString() {
+        return getName();
+    }
+    
     public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
         this.model = model;
     }
@@ -159,33 +163,6 @@ public class PartitionData extends PartitionOptions {
         } else {
             return 0;
         }
-    }
-
-    public String toString() {
-        return getName();
-    }
-
-    @Override
-    public void selectOperators(List<Operator> ops) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void selectParameters(List<Parameter> params) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public String getPrefix() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Class<PartitionData> getPartitionClassType() {        
-        return PartitionData.class;
     }
 
 }

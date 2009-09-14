@@ -26,27 +26,70 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
 
+import java.util.List;
+
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public abstract class PartitionOptions extends ModelOptions {   
+public abstract class PartitionOptions extends ModelOptions {
 
-    abstract public String getPrefix(); 
-    
-    abstract public Class<?> getPartitionClassType(); 
-    
-    public void createParameterClockRate(PartitionOptions options, String name, String description, PriorScaleType scale,
+    protected String name;
+
+	protected abstract void selectParameters(List<Parameter> params);
+    protected abstract void selectOperators(List<Operator> ops);
+
+    protected abstract Class<?> getPartitionClassType();
+
+    public abstract String getPrefix();    
+
+    protected void createParameterClockRate(PartitionOptions options, String name, String description, PriorScaleType scale,
             double value, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.UNIFORM_PRIOR).initial(value)
                 .lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
-    public void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
+    protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
             double lower, double upper) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
                 .initial(value).lower(lower).upper(upper).partitionOptions(options).build(parameters);        
+    }
+
+    public Parameter getParameter(String name) {
+
+        Parameter parameter = parameters.get(name);
+
+        if (parameter == null) {
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+        }
+
+        parameter.setPrefix(getPrefix());
+
+        return parameter;
+    }
+
+    public Operator getOperator(String name) {
+
+        Operator operator = operators.get(name);
+
+        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+
+        operator.setPrefix(getPrefix());
+
+        return operator;
+    }
+ 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String toString() {
+        return getName();
     }
 }

@@ -43,8 +43,6 @@ public class PartitionTreePrior extends PartitionOptions {
 
     private final BeautiOptions options;
 
-    private String name;
-
     private PartitionTreeModel treeModel; // only used when not sharing same prior
 
     private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
@@ -276,31 +274,6 @@ public class PartitionTreePrior extends PartitionOptions {
 
 
     //////////////////////////////////////////////////////
-
-    public Parameter getParameter(String name) {
-
-        Parameter parameter = parameters.get(name);
-
-        if (parameter == null) {
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
-        }
-
-        parameter.setPrefix(getPrefix());
-
-        return parameter;
-    }
-
-    public Operator getOperator(String name) {
-
-        Operator operator = operators.get(name);
-
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
-
-        operator.setPrefix(getPrefix());
-
-        return operator;
-    }
-
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionTreePriors().size() > 1) {//|| options.isSpeciesAnalysis()
@@ -308,18 +281,6 @@ public class PartitionTreePrior extends PartitionOptions {
             prefix += getName() + ".";
         }
         return prefix;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String toString() {
-        return getName();
     }
 
     /////////////////////////////////////////////////////////////////////////

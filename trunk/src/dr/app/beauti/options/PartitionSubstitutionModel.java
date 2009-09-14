@@ -48,8 +48,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private final BeautiOptions options;
     private DataType dataType;
-    private String name;
-
+    
     private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
@@ -629,43 +628,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
     
     ///////////////////////////////////////////////////////
-
-    public Parameter getParameter(String name) {
-
-        Parameter parameter = parameters.get(name);
-
-        if (parameter == null) {
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
-        }
-
-        parameter.setPrefix(getPrefix());
-
-        return parameter;
-    }
-
-    public Operator getOperator(String name) {
-
-        Operator operator = operators.get(name);
-
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
-
-        operator.setPrefix(getPrefix());
-
-        return operator;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String toString() {
-        return getName();
-    }
-
     public List<PartitionData> getAllPartitionData() {
         return allPartitionData;
     }

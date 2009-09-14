@@ -41,8 +41,7 @@ public class PartitionClockModel extends PartitionOptions {
 
     // Instance variables
     private final BeautiOptions options;
-    private String name;
-
+    
     private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
@@ -280,43 +279,7 @@ public class PartitionClockModel extends PartitionOptions {
 
 	public void setRate(double rate) {
 		this.rate = rate;
-	}
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String toString() {
-        return getName();
-    }
-
-    public Parameter getParameter(String name) {
-
-        Parameter parameter = parameters.get(name);
-
-        if (parameter == null) {
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
-        }
-
-        parameter.setPrefix(getPrefix());
-
-        return parameter;
-    }
-
-    public Operator getOperator(String name) {
-
-        Operator operator = operators.get(name);
-
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
-
-        operator.setPrefix(getPrefix());
-
-        return operator;
-    }
+	}    
 
     public String getPrefix() {
         String prefix = "";

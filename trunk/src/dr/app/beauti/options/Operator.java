@@ -24,76 +24,117 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.OperatorType;
+import java.util.Map;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Walter Xie
  */
 public class Operator {
 
-    public Operator(String name,
-                    String description,
-                    Parameter parameter,
-                    OperatorType operatorType,
-                    double tuning,
-                    double weight) {
+    private String prefix = null;
 
-        this.baseName = name;
-        this.description = description;
-        this.parameter1 = parameter;
-        this.parameter2 = null;
-        this.tag = null;
+    // final
+    private final String baseName;
+    private final String description;
+    public final OperatorType operatorType;
+    public final Parameter parameter1;
+    public final Parameter parameter2;
+    public final String tag;
 
-        this.type = operatorType;
-        this.tuningEdited = false;
-        this.tuning = tuning;
-        this.weight = weight;
+    // editable
+    public double tuning;
+    public double weight;
+    public boolean tuningEdited;
+    public boolean inUse;
+    public String idref;
 
-        this.inUse = true;
+    public static class Builder {
+        // Required para
+        private final String baseName;
+        private final String description;
+        private final Parameter parameter1;
+
+        private final OperatorType operatorType;
+        private final double tuning;
+        private final double weight;
+
+        // Optional para - initialized to default values
+        private Parameter parameter2 = null;
+        private String tag = null;
+        private String idref = null;
+
+        private boolean inUse = true;
+        private boolean tuningEdited = false;
+
+
+        public Builder(String name, String description, Parameter parameter, OperatorType type, double tuning, double weight) {
+            this.baseName = name;
+            this.description = description;
+            this.parameter1 = parameter;
+            this.operatorType = type;
+            this.tuning = tuning;
+            this.weight = weight;
+        }
+
+        public Builder parameter2(Parameter parameter2) {
+            this.parameter2 = parameter2;
+            return this;
+        }
+
+        public Builder isInUse(boolean inUse) {
+            this.inUse = inUse;
+            return this;
+        }
+
+        public Builder tuningEdited(boolean tuningEdited) {
+            this.tuningEdited = tuningEdited;
+            return this;
+        }
+
+        public Builder tag(String tag) {
+            this.tag = tag;
+            return this;
+        }
+
+        public Builder idref(String idref) {
+            this.idref = idref;
+            return this;
+        }
+
+        public Operator build() {
+            return new Operator(this);
+        }
+
+        public Operator build(Map map) {
+            final Operator operator = new Operator(this);
+            map.put(baseName, operator);
+            return operator;
+        }
     }
 
-    public Operator(String name, String description,
-                    Parameter parameter1, Parameter parameter2,
-                    OperatorType operatorType, double tuning, double weight) {
-        this.baseName = name;
-        this.description = description;
-        this.parameter1 = parameter1;
-        this.parameter2 = parameter2;
-        this.tag = null;
-        
-        this.type = operatorType;
-        this.tuningEdited = false;
-        this.tuning = tuning;
-        this.weight = weight;
-
-        this.inUse = true;
+    private Operator(Builder builder) {
+        baseName = builder.baseName;
+        description = builder.description;
+        parameter1 = builder.parameter1;
+        operatorType = builder.operatorType;
+        tuning = builder.tuning;
+        weight = builder.weight;
+        parameter2 = builder.parameter2;
+        tag = builder.tag;
+        idref = builder.idref;
+        inUse = builder.inUse;
+        tuningEdited = builder.tuningEdited;
     }
-    
-    public Operator(String name, String description,
-		            Parameter parameter, String tag, String idref,
-		            OperatorType operatorType, double tuning, double weight) {
-		this.baseName = name;
-		this.description = description;
-		this.parameter1 = parameter;
-		this.parameter2 = null;	
-		
-		this.tag = tag;
-		this.idref = idref;
-		
-		this.type = operatorType;
-		this.tuningEdited = false;
-		this.tuning = tuning;
-		this.weight = weight;
-		
-		this.inUse = true;
-	}
 
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++
     public String getDescription() {
         if (description == null || description.length() == 0) {
             String prefix = "";
-            if (type == OperatorType.SCALE || type == OperatorType.SCALE_ALL) {
+            if (operatorType == OperatorType.SCALE || operatorType == OperatorType.SCALE_ALL) {
                 prefix = "Scales the ";
-            } else if (type == OperatorType.RANDOM_WALK) {
+            } else if (operatorType == OperatorType.RANDOM_WALK) {
                 prefix = "A random-walk on the ";
             }
             return prefix + parameter1.getDescription();
@@ -121,21 +162,4 @@ public class Operator {
         }
         return name;
     }
-
-    private final String baseName;
-    public String prefix = null;
-
-    public final String description;
-
-    public final OperatorType type;
-    public boolean tuningEdited;
-    public double tuning;
-    public double weight;
-    public boolean inUse;
-    
-    public final String tag;
-    public String idref;
-    
-    public final Parameter parameter1;
-    public final Parameter parameter2;    
 }

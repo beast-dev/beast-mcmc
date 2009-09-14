@@ -272,52 +272,27 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ Tree Prior Model ++++++++++++++++++
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//        	treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeTreePriorModel(options.activedSameTreePrior, writer);
-//        } else { // Different Tree Priors
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-//        		treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.constant
             treePriorGenerator.writeTreePriorModel(prior, writer);
             writer.writeText("");
         }
-//        }
-
 
         //++++++++++++++++ Starting Tree ++++++++++++++++++
-//        if ( options.getPartitionTreeModels().size() == 1 ) { // 1 Partition Tree Model
-//        	initialTreeGenerator.setModelPrefix("");
-//        	initialTreeGenerator.writeStartingTree(options.getPartitionTreeModels().get(0), writer);
-//        } else { // Different Tree Models
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-//	        	initialTreeGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
             initialTreeGenerator.writeStartingTree(model, writer);
             writer.writeText("");
         }
-//        }
-
 
         //++++++++++++++++ Tree Model +++++++++++++++++++
-//        if ( options.getPartitionTreeModels().size() == 1 ) { // 1 Partition Tree Model
-//        	treeModelGenerator.setModelPrefix("");
-//        	treeModelGenerator.writeTreeModel(writer);
-//        } else { // Different Tree Models
+
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-//        		treeModelGenerator.setModelPrefix(model.getPrefix()); // treemodel.treeModel
             treeModelGenerator.writeTreeModel(model, writer);
             writer.writeText("");
         }
-//        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
         //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeTreePrior(options.activedSameTreePrior, writer);
-//        } else { // no species
-//        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // prior.treeModel
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
             treePriorGenerator.writePriorLikelihood(prior, model, writer);
@@ -331,18 +306,11 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
 
         //++++++++++++++++ Branch Rates Model ++++++++++++++++++                
-//        if ( options.getPartitionClockModels().size() == 1 ) { // 1 Partition Clock Model
-//        	branchRatesModelGenerator.setModelPrefix("");
-//        	branchRatesModelGenerator.writeBranchRatesModel(writer);
-//        } else { // Different Tree Models
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-//        		branchRatesModelGenerator.setModelPrefix(model.getPrefix()); // model.startingTree
-//            for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
             branchRatesModelGenerator.writeBranchRatesModel(model, writer);
-//            }
             writer.writeText("");
         }
-//        }
+
         // write allClockRate for fix mean option in clock model panel
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
             writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
@@ -382,22 +350,8 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
-//        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-//        	if ( options.isSpeciesAnalysis() ) { // species
-//        		treeLikelihoodGenerator.setModelPrefix(model.getName() + ".");
-//        	} else {
-//        		treeLikelihoodGenerator.setModelPrefix("");
-//        	}
-//            //TODO: need merge genePrifx and prefix
-////        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-//        	treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
-//            writer.writeText("");
-//        }
-
         for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
             treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
-//        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-//        	treeLikelihoodGenerator.writeTreeLikelihood(model, writer);
             writer.writeText("");
         }
 

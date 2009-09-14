@@ -90,6 +90,7 @@ public class BeastGenerator extends Generator {
     private final TreeModelGenerator treeModelGenerator;
     private final BranchRatesModelGenerator branchRatesModelGenerator;
     private final OperatorsGenerator operatorsGenerator;
+    private final ParameterPriorGenerator parameterPriorGenerator;
     private final STARBEASTGenerator starEASTGeneratorGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
@@ -104,6 +105,7 @@ public class BeastGenerator extends Generator {
         branchRatesModelGenerator = new BranchRatesModelGenerator(options, components);
 
         operatorsGenerator = new OperatorsGenerator(options, components);
+        parameterPriorGenerator = new ParameterPriorGenerator(options, components);
 
         starEASTGeneratorGenerator = new STARBEASTGenerator(options, components);
     }
@@ -846,7 +848,7 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         }
 
-        writeParameterPriors(writer);
+        parameterPriorGenerator.writeParameterPriors(writer);
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
@@ -1260,141 +1262,6 @@ public class BeastGenerator extends Generator {
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
-    }
-
-    /**
-     * Write the priors for each parameter
-     *
-     * @param writer the writer
-     */
-    private void writeParameterPriors(XMLWriter writer) {
-        boolean first = true;
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
-            if (taxaBooleanEntry.getValue()) {
-                if (first) {
-                    writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
-                    first = false;
-                }
-                final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
-                writer.writeIDref(MonophylyStatistic.MONOPHYLY_STATISTIC, taxaRef);
-            }
-        }
-        if (!first) {
-            writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
-        }
-
-        ArrayList<Parameter> parameters = options.selectParameters();
-        for (Parameter parameter : parameters) {
-            if (parameter.priorType != PriorType.NONE) {
-                if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    writeParameterPrior(parameter, writer);
-                }
-            }
-        }
-    }
-
-    /**
-     * Write the priors for each parameter
-     *
-     * @param parameter the parameter
-     * @param writer    the writer
-     */
-    private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        switch (parameter.priorType) {
-            case UNIFORM_PRIOR:
-                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-                break;
-            case EXPONENTIAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.EXPONENTIAL_PRIOR);
-                break;                
-            case LAPLACE_PRIOR:
-                throw new IllegalArgumentException("Laplace prior has not been implemented in PriorParsers !");//TODO
-                
-            case NORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
-                break;
-            case LOGNORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
-
-                                // this is to be implemented...
-                                new Attribute.Default<String>(PriorParsers.MEAN_IN_REAL_SPACE, "false")
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
-                break;
-            case GAMMA_PRIOR:
-                writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.shape),
-                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.scale),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
-                break;
-            case JEFFREYS_PRIOR:
-                writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(OneOnXPrior.ONE_ONE_X_PRIOR);
-                break;
-            case POISSON_PRIOR:
-                writer.writeOpenTag(PriorParsers.POISSON_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
-                break;
-            case TRUNC_NORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown priorType");
-        }
-    }
-
-    private void writeParameterIdref(XMLWriter writer, dr.app.beauti.options.Parameter parameter) {
-        if (parameter.isStatistic) {
-            writer.writeIDref("statistic", parameter.getName());
-        } else {
-            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-        }
     }
 
 }

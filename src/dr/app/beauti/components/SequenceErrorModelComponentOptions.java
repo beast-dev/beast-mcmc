@@ -23,10 +23,10 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     }
 
     public void createParameters(final ModelOptions modelOptions) {
-        modelOptions.createParameter(AGE_RATE_PARAMETER,
-                "age dependent sequence error rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
-        modelOptions.createParameter(BASE_RATE_PARAMETER,
-                "base sequence error rate", PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
+        modelOptions.createParameterUniformPrior(AGE_RATE_PARAMETER,"age dependent sequence error rate",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
+        modelOptions.createParameterUniformPrior(BASE_RATE_PARAMETER,"base sequence error rate",
+                PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
 
         modelOptions.createScaleOperator(AGE_RATE_PARAMETER, modelOptions.demoTuning, 3.0);
         modelOptions.createOperator(BASE_RATE_PARAMETER, OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);

@@ -52,45 +52,6 @@ public class ModelOptions {
 	
 	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();  
 
-    
-	//+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
-    public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, type, tuning, weight));
-    }
-
-    public void createOperator(String key, String name, String description, String parameterName, OperatorType type, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator(name, description, parameter, type, tuning, weight));
-    }
-
-    public void createOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2, OperatorType type, double tuning, double weight) {
-//        Parameter parameter1 = getParameter(parameterName1);
-//        Parameter parameter2 = getParameter(parameterName2);
-        operators.put(key, new Operator(name, description, parameter1, parameter2, type, tuning, weight));
-    }
-    
-    public void createTagOperator(String key, String name, String description, String parameterName, String tag, String idref,
-    		OperatorType type, double tuning, double weight) {
-    	Parameter parameter = getParameter(parameterName);
-      operators.put(key, new Operator(name, description, parameter, tag, idref, type, tuning, weight));
-  }
-
-    public void createScaleOperator(String parameterName, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE, tuning, weight));
-    }
-
-    public void createScaleAllOperator(String parameterName, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        operators.put(parameterName, new Operator(parameterName, "", parameter, OperatorType.SCALE_ALL, 0.75, weight));
-    }
-    
-    public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
-        final Parameter parameter = new Parameter.Builder(paraName, description).build();
-        operators.put(paraName, new Operator(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS, tuning, weight));
-    }
-
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public void createParameter(String name, String description) {
         new Parameter.Builder(name, description).build(parameters);
@@ -113,7 +74,7 @@ public class ModelOptions {
                 .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 
-  //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
+    //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     protected void createDiscreteStatistic(String name, String description) {
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
                  .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
@@ -123,6 +84,59 @@ public class ModelOptions {
         new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
                   .lower(lower).upper(upper).build(parameters);
     }
+
+    //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
+    public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight).build(operators);
+    }
+
+    public void createScaleOperator(String parameterName, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+    }
+
+//    public void createScaleAllOperator(String parameterName, double tuning, double weight) { // tuning = 0.75
+//        Parameter parameter = getParameter(parameterName);
+//        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE_ALL, tuning, weight).build(operators);
+//    }
+
+    public void createOperator(String key, String name, String description, String parameterName, OperatorType type,
+                               double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
+    }
+
+    public void createOperatorUsing2Para(String key, String name, String description, String parameterName1, String parameterName2, 
+                                         OperatorType type, double tuning, double weight) {
+        Parameter parameter1 = getParameter(parameterName1);
+        Parameter parameter2 = getParameter(parameterName2);
+        operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight).parameter2(parameter2).build());
+    }
+
+    public void createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
+                                     boolean isPara1Up, double tuning, double weight) {
+        if (isPara1Up) {
+           operators.put(key, new Operator.Builder(name, description, parameter1, OperatorType.UP_DOWN, tuning, weight)
+                   .parameter2(parameter2).build());
+        } else {
+           operators.put(key, new Operator.Builder(name, description, parameter2, OperatorType.UP_DOWN, tuning, weight)
+                   .parameter2(parameter1).build());     
+        }
+    }
+
+    public void createTagOperator(String key, String name, String description, String parameterName, OperatorType type,
+                                  String tag, String idref, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight)
+                .tag(tag).idref(idref).build());
+    }
+
+    public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
+        final Parameter parameter = new Parameter.Builder(paraName, description).build();
+        operators.put(paraName, new Operator.Builder(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS,
+                tuning, weight).build());
+    }//TODO a switch like createUpDownOperator?
 
     //+++++++++++++++++++ Methods ++++++++++++++++++++++++++++++++
     public Parameter getParameter(String name) {

@@ -172,7 +172,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return op.getName();
                 case 2:
-                    return op.type;
+                    return op.operatorType;
                 case 3:
                     if (op.isTunable()) {
                         return op.tuning;

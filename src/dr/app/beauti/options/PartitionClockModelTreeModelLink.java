@@ -98,15 +98,15 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createScaleOperator(ClockType.LOCAL_CLOCK + "." + "rates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + "." + "changes", OperatorType.BITFLIP, 1, treeWeights);
          
-        createOperator("upDownRateHeights", "Substitution rate and heights",
+        createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights",
+                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
+        createUpDownOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree", model.getParameter(ClockType.UCED_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
+                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
+        createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, demoTuning, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
         
 
         // These are statistics which could have priors on...        

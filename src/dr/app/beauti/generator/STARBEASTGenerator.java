@@ -60,11 +60,9 @@ import java.util.List;
 public class STARBEASTGenerator extends Generator {
 
     private int numOfSpecies; // used in private String getIndicatorsParaValue()
-    BeautiOptions options;
 
     public STARBEASTGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-        this.options = options;
     }
 
     /**

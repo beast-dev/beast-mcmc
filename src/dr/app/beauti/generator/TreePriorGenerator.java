@@ -29,6 +29,7 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
@@ -82,7 +83,7 @@ public class TreePriorGenerator extends Generator {
 
         TreePriorType nodeHeightPrior = prior.getNodeHeightPrior();
         Units.Type units = options.units;
-        int parameterization = prior.getParameterization();
+        TreePriorParameterizationType parameterization = prior.getParameterization();
 
         switch (nodeHeightPrior) {
         	case CONSTANT:  
@@ -121,7 +122,7 @@ public class TreePriorGenerator extends Generator {
 	            writeParameter("exponential.popSize", prior, writer);
 	            writer.writeCloseTag(ExponentialGrowthModel.POPULATION_SIZE);
 	
-	            if (parameterization == ModelOptions.GROWTH_RATE) {
+	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writer.writeOpenTag(ExponentialGrowthModel.GROWTH_RATE);
 	                writeParameter("exponential.growthRate", prior, writer);
@@ -155,7 +156,7 @@ public class TreePriorGenerator extends Generator {
 	            writeParameter("logistic.popSize", prior, writer);
 	            writer.writeCloseTag(LogisticGrowthModel.POPULATION_SIZE);
 	
-	            if (parameterization == ModelOptions.GROWTH_RATE) {
+	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writer.writeOpenTag(LogisticGrowthModel.GROWTH_RATE);
 	                writeParameter("logistic.growthRate", prior, writer);
@@ -221,7 +222,7 @@ public class TreePriorGenerator extends Generator {
 	            // write pop size socket
 	            writeParameter(ExpansionModel.POPULATION_SIZE, "expansion.popSize", prior, writer);
 	
-	            if (parameterization == ModelOptions.GROWTH_RATE) {
+	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writeParameter(ExpansionModel.GROWTH_RATE, "expansion.growthRate", prior, writer);
 	            } else {
@@ -400,13 +401,13 @@ public class TreePriorGenerator extends Generator {
 	                    new Attribute[]{
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skyline"),
 	                            new Attribute.Default<String>("linear",
-	                                    prior.getSkylineModel() == ModelOptions.LINEAR_SKYLINE ? "true" : "false")
+	                                    prior.getSkylineModel() == TreePriorParameterizationType.LINEAR_SKYLINE ? "true" : "false")
 	                    }
 	            );
 	
 	            // write pop size socket
 	            writer.writeOpenTag(BayesianSkylineLikelihood.POPULATION_SIZES);
-	            if (prior.getSkylineModel() == ModelOptions.LINEAR_SKYLINE) {
+	            if (prior.getSkylineModel() == TreePriorParameterizationType.LINEAR_SKYLINE) {
 	                writeParameter(prior.getParameter("skyline.popSize"), prior.getSkylineGroupCount() + 1, writer);
 	            } else {
 	                writeParameter(prior.getParameter("skyline.popSize"), prior.getSkylineGroupCount(), writer);
@@ -440,7 +441,7 @@ public class TreePriorGenerator extends Generator {
 	                    new Attribute[]{
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skyride"),
 	                            new Attribute.Default<String>(GMRFSkyrideLikelihood.TIME_AWARE_SMOOTHING,
-	                                    prior.getSkyrideSmoothing() == ModelOptions.SKYRIDE_TIME_AWARE_SMOOTHING ? "true" : "false"),
+	                                    prior.getSkyrideSmoothing() == TreePriorParameterizationType.TIME_AWARE_SKYRIDE ? "true" : "false"),
 	                            new Attribute.Default<String>(GMRFSkyrideLikelihood.RANDOMIZE_TREE,
 	                                    //TODO For GMRF, tree model/tree prior combination not implemented by BEAST yet. The validation is in BeastGenerator.checkOptions()
 	                                    prior.getTreeModel().getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
@@ -535,7 +536,7 @@ public class TreePriorGenerator extends Generator {
 	        writer.writeComment("Generate a variableDemographic for extended Bayesian skyline process");
 	        writer.writeOpenTag(tagName, new Attribute[]{
 	                new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName),
-	                new Attribute.Default<String>(VariableDemographicModel.TYPE, prior.getExtendedSkylineModel()),
+	                new Attribute.Default<String>(VariableDemographicModel.TYPE, prior.getExtendedSkylineModel().toString()),
 	                // use midpoint by default (todo) would be nice to have a user 'tickable' option
 	                new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
 	            }
@@ -624,7 +625,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case EXPONENTIAL:
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "exponential.popSize");
-                if (prior.getParameterization() == ModelOptions.GROWTH_RATE) {
+                if (prior.getParameterization() == TreePriorParameterizationType.GROWTH_RATE) {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "exponential.growthRate");
                 } else {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "exponential.doublingTime");
@@ -632,7 +633,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case LOGISTIC:
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "logistic.popSize");
-                if (prior.getParameterization() == ModelOptions.GROWTH_RATE) {
+                if (prior.getParameterization() == TreePriorParameterizationType.GROWTH_RATE) {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "logistic.growthRate");
                 } else {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "logistic.doublingTime");
@@ -641,7 +642,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case EXPANSION:
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "expansion.popSize");
-                if (prior.getParameterization() == ModelOptions.GROWTH_RATE) {
+                if (prior.getParameterization() == TreePriorParameterizationType.GROWTH_RATE) {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "expansion.growthRate");
                 } else {
                     writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "expansion.doublingTime");
@@ -705,7 +706,7 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
 
             writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
-            writer.writeText(prior.getExtendedSkylineModel());
+            writer.writeText(prior.getExtendedSkylineModel().toString());
             writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
 
             writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);

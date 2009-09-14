@@ -39,7 +39,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class PartitionSubstitutionModel extends PartitionOptions {
+public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     // Instance variables
 
@@ -48,8 +48,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private final BeautiOptions options;
     private DataType dataType;
-    
-    private List<PartitionData> allPartitionData = new ArrayList<PartitionData>();
 
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
@@ -82,11 +80,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
-        
+
         this.allPartitionData.clear();
         for (PartitionData partition: source.allPartitionData) {
         	this.allPartitionData.add(partition);			
-		}        
+		}
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -628,22 +626,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
     
     ///////////////////////////////////////////////////////
-    public List<PartitionData> getAllPartitionData() {
-        return allPartitionData;
-    }
-
-    public void clearAllPartitionData() {
-        this.allPartitionData.clear();
-    }
-
-    public void addPartitionData(PartitionData partition) {
-        allPartitionData.add(partition);
-    }
-
-    public boolean removePartitionData(PartitionData partition) {
-        return allPartitionData.remove(partition);
-    }
-
     public NucModelType getNucSubstitutionModel() {
         return nucSubstitutionModel;
     }

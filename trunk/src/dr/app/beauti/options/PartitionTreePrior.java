@@ -88,11 +88,6 @@ public class PartitionTreePrior extends PartitionOptions {
         initTreePriorParaAndOpers();
     }
 
-//    public PartitionTreePrior(BeautiOptions options, String name) {
-//        this.options = options;
-//        this.name = name;
-//    }    
-
     private void initTreePriorParaAndOpers() {
        
         createParameterJeffreysPrior("constant.popSize", "coalescent population size parameter", PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

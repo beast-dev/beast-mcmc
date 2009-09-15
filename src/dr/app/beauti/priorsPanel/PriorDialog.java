@@ -79,6 +79,7 @@ public class PriorDialog {
 
 	private JComboBox priorCombo;
 	private JComboBox rootHeightPriorCombo;
+    private JCheckBox meanInRealSpaceCheck;
 	private RealNumberField initialField = new RealNumberField();
 
 	private OptionsPanel optionPanel;
@@ -93,6 +94,7 @@ public class PriorDialog {
 
 		priorCombo = new JComboBox(priors);
 		rootHeightPriorCombo = new JComboBox(rootHeightPriors);
+        meanInRealSpaceCheck = new JCheckBox();
 
 		initialField.setColumns(8);
 
@@ -170,7 +172,27 @@ public class PriorDialog {
 			}
 		});
 
-		KeyListener listener = new KeyAdapter() {
+
+        meanInRealSpaceCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                PriorOptionsPanel currentPanel = optionsPanels.get(PriorType.LOGNORMAL_PRIOR);
+
+                if (meanInRealSpaceCheck.isSelected()) {
+                    currentPanel.replaceFieldName(0, "Mean");
+                    if (currentPanel.getValue(0) <= 0) {
+                        currentPanel.getField(0).setValue(1.0);
+                    }
+                } else {
+                    currentPanel.replaceFieldName(0, "Log(Mean)");
+                }
+
+                setupChart();
+                dialog.pack();
+                dialog.repaint();
+            }
+        });
+
+        KeyListener listener = new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
 				setupChart();
 				dialog.repaint();
@@ -178,8 +200,8 @@ public class PriorDialog {
 		};
 
 		for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-			for (RealNumberField field : optionsPanel.getFields()) {
-				field.addKeyListener(listener);
+			for (JComponent component : optionsPanel.getJComponents()) {
+                if (component instanceof RealNumberField) component.addKeyListener(listener);
 			}
 		}
 
@@ -419,20 +441,31 @@ public class PriorDialog {
 	class LogNormalOptionsPanel extends PriorOptionsPanel {
 
 		public LogNormalOptionsPanel() {
-			addField("M", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-			addField("S", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            String l = "Log(Mean)";
+            if (meanInRealSpaceCheck.isSelected()) l = "Mean";
+            addField(l, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+			addField("Log(Stdev)", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
 			addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addCheckBox("Mean In Real Space", meanInRealSpaceCheck);            
 		}
 
 		public Distribution getDistribution() {
+            double mean = getValue(0);
+            if (meanInRealSpaceCheck.isSelected()) {
+                if (mean <= 0) {
+                    throw new IllegalArgumentException("meanInRealSpace works only for a positive mean");
+                }
+                mean = Math.log(getValue(0)) - 0.5 * getValue(1) * getValue(1);
+            }
 			return new OffsetPositiveDistribution(
-					new LogNormalDistribution(getValue(0), getValue(1)), getValue(2));
+					new LogNormalDistribution(mean, getValue(1)), getValue(2));
 		}
 
 		public void setParameterPrior(Parameter parameter) {
 			parameter.mean = getValue(0);
 			parameter.stdev = getValue(1);
 			parameter.offset = getValue(2);
+            parameter.setMeanInRealSpace(meanInRealSpaceCheck.isSelected());
 		}
 
 	}

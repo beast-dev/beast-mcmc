@@ -90,6 +90,7 @@ public enum PriorType {
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
+                if (param.isMeanInRealSpace()) buffer.append("R"); 
                 buffer.append(formatter.format(param.mean));
                 buffer.append(", ");
                 buffer.append(formatter.format(param.stdev));

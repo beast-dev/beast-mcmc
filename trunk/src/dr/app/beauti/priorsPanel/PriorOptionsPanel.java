@@ -5,6 +5,7 @@ import dr.math.distributions.Distribution;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  */
 public abstract class PriorOptionsPanel extends OptionsPanel {
 
-    private List<RealNumberField> argumentFields = new ArrayList<RealNumberField>();
+    private List<JComponent> argumentFields = new ArrayList<JComponent>();
     private List<String> argumentNames = new ArrayList<String>();
 
     public PriorOptionsPanel() {
@@ -43,8 +44,20 @@ public abstract class PriorOptionsPanel extends OptionsPanel {
         setupComponents();
     }
 
+    void addCheckBox(String name, JCheckBox jCheckBox) {
+        argumentNames.add(name);
+
+        argumentFields.add(jCheckBox);
+        setupComponents();
+    }
+
+    void replaceFieldName(int i, String name) {
+        argumentNames.set(i, name);
+        setupComponents();
+    }
+
     double getValue(int i) {
-        return argumentFields.get(i).getValue();
+        return ((RealNumberField) argumentFields.get(i)).getValue();
     }
 
     void setupComponents() {
@@ -65,10 +78,10 @@ public abstract class PriorOptionsPanel extends OptionsPanel {
     public abstract void setParameterPrior(Parameter parameter);
 
     RealNumberField getField(int i) {
-        return argumentFields.get(i);
+        return (RealNumberField) argumentFields.get(i);
     }
 
-    public List<RealNumberField> getFields() {
+    public List<JComponent> getJComponents() {
         return argumentFields;
     }
 }

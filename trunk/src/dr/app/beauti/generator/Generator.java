@@ -300,26 +300,4 @@ public abstract class Generator {
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
     
-//    protected double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
-//    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-//    	
-//    	if (rootHeight.priorType != PriorType.NONE) {
-//    		return rootHeight.initial;
-//    	} else {
-//    		List<SiteList> siteLists = new ArrayList<SiteList>();
-//    		
-//    		for (PartitionData partition : model.getAllPartitionData()) {
-//    			SiteList sl = (SiteList) partition.getAlignment();
-//    			if (!siteLists.contains(sl)) {
-//    				siteLists.add(sl);
-//    			}
-//    		}
-//    		
-//    		Patterns mergePartternsTree = new Patterns(siteLists);
-//    		JukesCantorDistanceMatrix dm = new JukesCantorDistanceMatrix(mergePartternsTree);
-//    		
-//    		return dm.getMeanDistance();
-//    	}   	
-//		
-//    }
 }

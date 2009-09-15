@@ -40,6 +40,8 @@ public class Parameter {
     
     private String prefix = null;
     private boolean priorEdited;
+
+    private boolean meanInRealSpace = false;
         
     // Required para
     private final String baseName;
@@ -193,7 +195,7 @@ public class Parameter {
             return new Parameter(this);
         }
 
-        public Parameter build(Map map) {
+        public Parameter build(Map<String, Parameter> map) {
             final Parameter parameter = new Parameter(this);
             map.put(baseName, parameter);
             return parameter;
@@ -281,14 +283,20 @@ public class Parameter {
         return options;
     }
 
-
     public void setPriorEdited(boolean priorEdited) {
         this.priorEdited = priorEdited;
     }
-
 
     public boolean isPriorEdited() {
         return priorEdited;
     }
 
+    public boolean isMeanInRealSpace() {
+        return meanInRealSpace;
+    }
+
+    public void setMeanInRealSpace(boolean meanInRealSpace) {
+        this.meanInRealSpace = meanInRealSpace;
+    }
+    
 }

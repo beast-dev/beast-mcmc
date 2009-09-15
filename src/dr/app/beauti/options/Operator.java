@@ -107,7 +107,7 @@ public class Operator {
             return new Operator(this);
         }
 
-        public Operator build(Map map) {
+        public Operator build(Map<String, Operator> map) {
             final Operator operator = new Operator(this);
             map.put(baseName, operator);
             return operator;

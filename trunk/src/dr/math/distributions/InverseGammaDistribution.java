@@ -168,7 +168,10 @@ public class InverseGammaDistribution implements Distribution {
      * @return icdf value
      */
     public static double quantile(double y, double shape, double scale) {
-         throw new RuntimeException("not implemented");
+        final GammaDistribution g = new GammaDistribution(shape, scale);
+        return 1/g.quantile(1-y);
+
+        // throw new RuntimeException("not implemented");
         //return 0.5 * scale * pointChi2(y, 2.0 * shape);
     }
 

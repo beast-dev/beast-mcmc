@@ -133,9 +133,7 @@ public class ParameterPriorGenerator extends Generator {
                                 new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
                                 new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
                                 new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
-
-                                // this is to be implemented...
-                                new Attribute.Default<String>(PriorParsers.MEAN_IN_REAL_SPACE, "false")
+                                new Attribute.Default<Boolean>(PriorParsers.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace())
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);

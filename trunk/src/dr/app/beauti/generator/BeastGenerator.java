@@ -80,12 +80,12 @@ public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
 
-    protected final TreePriorGenerator treePriorGenerator;
-    protected final TreeLikelihoodGenerator treeLikelihoodGenerator;
-    protected final SubstitutionModelGenerator substitutionModelGenerator;
+    private final TreePriorGenerator treePriorGenerator;
+    private final TreeLikelihoodGenerator treeLikelihoodGenerator;
+    private final SubstitutionModelGenerator substitutionModelGenerator;
     private final InitialTreeGenerator initialTreeGenerator;
     private final TreeModelGenerator treeModelGenerator;
-    protected final BranchRatesModelGenerator branchRatesModelGenerator;
+    private final BranchRatesModelGenerator branchRatesModelGenerator;
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
@@ -879,9 +879,10 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen    	
-        logGenerator.writeLogToScreen(writer);
+        logGenerator.writeLogToScreen(writer, branchRatesModelGenerator);
         // write log to file
-        logGenerator.writeLogToFile(writer);
+        logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
+                        substitutionModelGenerator, treeLikelihoodGenerator);
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 

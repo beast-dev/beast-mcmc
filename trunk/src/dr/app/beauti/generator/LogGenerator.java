@@ -27,16 +27,13 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
-import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.MonophylyStatistic;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.speciation.TreePartitionCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
@@ -45,10 +42,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.*;
-import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.BooleanLikelihood;
-import dr.inference.model.OneOnXPrior;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.xml.LoggerParser;
 import dr.inference.loggers.Columns;
@@ -56,9 +50,7 @@ import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 import dr.evolution.util.Taxa;
-import dr.inferencexml.PriorParsers;
 
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,11 +58,11 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class LogGenerator extends BeastGenerator {
+public class LogGenerator extends Generator {
 
     private final static String TREE_FILE_LOG = "treeFileLog";
     private final static String SUB_TREE_FILE_LOG = "substTreeFileLog";
-    
+
     public LogGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
@@ -80,7 +72,7 @@ public class LogGenerator extends BeastGenerator {
      *
      * @param writer
      */
-    void writeLogToScreen(XMLWriter writer) {
+    void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator) {
         writer.writeComment("write log to screen");
 
         writer.writeOpenTag(LoggerParser.LOG,
@@ -186,7 +178,8 @@ public class LogGenerator extends BeastGenerator {
      *
      * @param writer
      */
-    void writeLogToFile(XMLWriter writer) {
+    void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
+                        SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {

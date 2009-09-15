@@ -51,7 +51,10 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
+		<javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
+		       fork="true"
+		       memoryinitialsize="256m"
+		       memorymaximumsize="256m">
 			<include name="dr/app/beast/**" />
 			<include name="dr/app/beauti/**" />
 			<include name="dr/app/tracer/**"/>

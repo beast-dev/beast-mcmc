@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.PopulationSizeModelType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
@@ -52,6 +53,7 @@ import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Alexei Drummond
@@ -147,12 +149,20 @@ public class STARBEASTGenerator extends Generator {
     private void writeSpeciesTree(XMLWriter writer) {
         writer.writeComment("Species Tree: Provides Per branch demographic function");
 
-        writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_TREE),
-                new Attribute.Default<String>(SpeciesTreeModel.CONST_ROOT_POPULATION, "true")});
+        List<Attribute> attributes = new ArrayList<Attribute>();
+
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, SP_TREE));
+        // *BEAST always share same tree prior
+        if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT) {
+              attributes.add(new Attribute.Default<String>(SpeciesTreeModel.CONST_ROOT_POPULATION, "true"));
+        }
+
+        writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, attributes);
+        
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
                 
-        //TODO: take sppSplitPopulations value from partionModel(?).constant.popSize
-        // hard code get(0)
+        // take sppSplitPopulations value from partionModel(?).constant.popSize
+        // *BEAST always share same tree prior
         double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
@@ -400,18 +410,36 @@ public class STARBEASTGenerator extends Generator {
     private String getIndicatorsParaValue() {
         String v = "";
 
-        for (int i = 0; i < numOfSpecies; i++) {
-            if (i == (numOfSpecies - 1)) {
-                v = v + "1"; // N 1
-            } else {
-                v = v + "1 "; // N 1
+        // CONTINUOUS_CONSTANT    N  1      2(N-1) 0
+        // CONTINUOUS             N  1      2N-1   0
+        // CONSTANT                         2N-1   0   
+        if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT
+                || options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS) {
+            for (int i = 0; i < numOfSpecies; i++) {
+                if (i == (numOfSpecies - 1)) {
+                    v = v + "1"; // N 1
+                } else {
+                    v = v + "1 "; // N 1
+                }
             }
         }
 
-        for (int i = 0; i < (numOfSpecies - 1); i++) {
-            v = v + " 0 0"; // 2(N-1) 0
+        if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT) {
+            for (int i = 0; i < (numOfSpecies - 1); i++) {
+                v = v + " 0 0"; // 2(N-1) 0
+            }
+        } else if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS) {
+            v = v + " 0"; // 1   0
+            for (int i = 0; i < (numOfSpecies - 1); i++) {
+                v = v + " 0 0"; // 2(N-1) 0
+            }
+        } else if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONSTANT) {
+            v = v + "0"; // 1   0
+            for (int i = 0; i < (numOfSpecies - 1); i++) {
+                v = v + " 0 0"; // 2(N-1) 0
+            }
         }
-
+        
         return v;
     }
 

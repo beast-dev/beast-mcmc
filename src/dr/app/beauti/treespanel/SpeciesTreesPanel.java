@@ -27,6 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.PopulationSizeModelType;
 import dr.app.beauti.util.PanelUtils;
 
 import org.virion.jam.panels.OptionsPanel;
@@ -46,14 +47,16 @@ public class SpeciesTreesPanel extends OptionsPanel {
 	private static final long serialVersionUID = -2768091530149898538L;
 
 	private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH).toArray());
-    
+    private JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
+
     private final PartitionTreePrior partitionTreePrior;
-    private boolean settingOptions = false;
+//    private boolean settingOptions = false;
 
     public SpeciesTreesPanel(final PartitionTreePrior partitionTreePrior) {
     	super(12, 28); 	
        
     	this.partitionTreePrior = partitionTreePrior;
+
     	PanelUtils.setupComponent(treePriorCombo);    	
     	addComponentWithLabel("Species Tree Prior:", treePriorCombo);
 
@@ -65,6 +68,16 @@ public class SpeciesTreesPanel extends OptionsPanel {
                 }
         );
 
+        PanelUtils.setupComponent(populationSizeCombo);
+    	addComponentWithLabel("Population Size Model:", populationSizeCombo);
+
+        populationSizeCombo.addItemListener(
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
+                    	partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                    }
+                }
+        );
 //        addSeparator();
 
         addLabel("Note: *BEAST only needs to select the prior for species tree.");
@@ -75,20 +88,19 @@ public class SpeciesTreesPanel extends OptionsPanel {
     }    
    
     public void setOptions() {
-        settingOptions = true;
+//        settingOptions = true;
 
         treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
+        populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());
 
-        settingOptions = false;
+//        settingOptions = false;
 
         validate();
         repaint();
     }
 
     public void getOptions() {
-    	if (settingOptions) return;
     	
-//    	partitionTreePrior.setNodeHeightPrior( (TreePriorType) treePriorCombo.getSelectedItem());
     }
 
 	// @Override

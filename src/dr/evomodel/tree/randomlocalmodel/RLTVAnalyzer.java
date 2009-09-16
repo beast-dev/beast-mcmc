@@ -56,10 +56,10 @@ public class RLTVAnalyzer {
         }
 
         List<RateCombo> rateCombos = new ArrayList<RateCombo>();
-        for (String combo : comboCounts.keySet()) {
+        for (Map.Entry<String, Integer> stringIntegerEntry1 : comboCounts.entrySet()) {
 
-            int count = comboCounts.get(combo);
-            if (count > 1) rateCombos.add(new RateCombo(combo, count));
+            int count = stringIntegerEntry1.getValue();
+            if (count > 1) rateCombos.add(new RateCombo(stringIntegerEntry1.getKey(), count));
         }
 
         Collections.sort(rateCombos, rateComboComparator);
@@ -74,9 +74,9 @@ public class RLTVAnalyzer {
         }
 
         List<RateCombo> pairRateCombos = new ArrayList<RateCombo>();
-        for (String pair : pairCounts.keySet()) {
-            int count = pairCounts.get(pair);
-            if (count > 1) pairRateCombos.add(new RateCombo(pair, count));
+        for (Map.Entry<String, Integer> stringIntegerEntry : pairCounts.entrySet()) {
+            int count = stringIntegerEntry.getValue();
+            if (count > 1) pairRateCombos.add(new RateCombo(stringIntegerEntry.getKey(), count));
         }
 
         Collections.sort(pairRateCombos, rateComboComparator);

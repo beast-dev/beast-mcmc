@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -52,34 +53,11 @@ public class PriorDialog {
 
 	private JFrame frame;
 
-	public static PriorType[] priors = {
-			PriorType.UNIFORM_PRIOR,
-			PriorType.EXPONENTIAL_PRIOR,
-			PriorType.LAPLACE_PRIOR,
-			PriorType.NORMAL_PRIOR,
-			PriorType.TRUNC_NORMAL_PRIOR,
-			PriorType.LOGNORMAL_PRIOR,
-			PriorType.GAMMA_PRIOR,
-			PriorType.JEFFREYS_PRIOR,
-	};
-
-	public static PriorType[] rootHeightPriors = {
-			PriorType.NONE,
-			PriorType.UNIFORM_PRIOR,
-			PriorType.EXPONENTIAL_PRIOR,
-			PriorType.LAPLACE_PRIOR,
-			PriorType.NORMAL_PRIOR,
-			PriorType.TRUNC_NORMAL_PRIOR,
-			PriorType.LOGNORMAL_PRIOR,
-			PriorType.GAMMA_PRIOR,
-			PriorType.JEFFREYS_PRIOR,
-	};
-
 	private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-	private JComboBox priorCombo;
-	private JComboBox rootHeightPriorCombo;
-    private JCheckBox meanInRealSpaceCheck;
+	private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+	private JComboBox rootHeightPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+    private JCheckBox meanInRealSpaceCheck = new JCheckBox();
 	private RealNumberField initialField = new RealNumberField();
 
 	private OptionsPanel optionPanel;
@@ -91,11 +69,7 @@ public class PriorDialog {
 
 	public PriorDialog(JFrame frame) {
 		this.frame = frame;
-
-		priorCombo = new JComboBox(priors);
-		rootHeightPriorCombo = new JComboBox(rootHeightPriors);
-        meanInRealSpaceCheck = new JCheckBox();
-
+        
 		initialField.setColumns(8);
 
 		optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
@@ -104,6 +78,7 @@ public class PriorDialog {
 		optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
 		optionsPanels.put(PriorType.LOGNORMAL_PRIOR, new LogNormalOptionsPanel());
 		optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
+        optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
 		optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
@@ -489,4 +464,24 @@ public class PriorDialog {
 			parameter.offset = getValue(2);
 		}
 	}
+
+    class InverseGammaOptionsPanel extends PriorOptionsPanel {
+
+        public InverseGammaOptionsPanel() {
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new InverseGammaDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.shape = getValue(0);
+            parameter.scale = getValue(1);
+            parameter.offset = getValue(2);
+        }
+    }
 }

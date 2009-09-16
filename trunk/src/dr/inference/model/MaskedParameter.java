@@ -91,7 +91,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         parameter.addBounds(bounds);
     }
 
-    public Bounds getBounds() {
+    public Bounds<Double> getBounds() {
         return parameter.getBounds();
     }
 

@@ -27,21 +27,14 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
-import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.MonophylyStatistic;
-import dr.evomodelxml.TreeModelParser;
-import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.OneOnXPrior;
 import dr.util.Attribute;
-import dr.xml.XMLParser;
 import dr.evolution.util.Taxa;
 import dr.inferencexml.PriorParsers;
 
@@ -116,8 +109,14 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeCloseTag(PriorParsers.EXPONENTIAL_PRIOR);
                 break;
             case LAPLACE_PRIOR:
-                throw new IllegalArgumentException("Laplace prior has not been implemented in PriorParsers !");//TODO
-
+                writer.writeOpenTag(PriorParsers.LAPLACE_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.LAPLACE_PRIOR);
+                break;
             case NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
@@ -147,6 +146,16 @@ public class ParameterPriorGenerator extends Generator {
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
+                break;
+            case INVERSE_GAMMA_PRIOR:
+                writer.writeOpenTag(PriorParsers.INVGAMMA_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.shape),
+                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.scale),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.INVGAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
                 writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);

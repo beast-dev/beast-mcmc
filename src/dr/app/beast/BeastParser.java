@@ -307,6 +307,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inferencexml.PriorParsers.LOG_NORMAL_PRIOR_PARSER);
         addXMLObjectParser(dr.inferencexml.PriorParsers.GAMMA_PRIOR_PARSER);
         addXMLObjectParser(dr.inferencexml.PriorParsers.INVGAMMA_PRIOR_PARSER);
+        addXMLObjectParser(dr.inferencexml.PriorParsers.LAPLACE_PRIOR_PARSER);
 
         addXMLObjectParser(new dr.inferencexml.BinomialLikelihoodParser());
 

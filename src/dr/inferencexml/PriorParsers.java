@@ -41,6 +41,7 @@ public class PriorParsers {
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
     public static final String INVGAMMA_PRIOR = "invgammaPrior";
+    public static final String LAPLACE_PRIOR = "laplacePrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
@@ -390,6 +391,48 @@ public class PriorParsers {
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given inverse gamma distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    public static XMLObjectParser LAPLACE_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LAPLACE_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new LaplaceDistribution(mean, stdev));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(STDEV),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given laplace distribution.";
         }
 
         public Class getReturnType() {

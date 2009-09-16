@@ -16,9 +16,11 @@ public enum PriorType {
     NORMAL_PRIOR,
     LOGNORMAL_PRIOR,
     GAMMA_PRIOR,
+    INVERSE_GAMMA_PRIOR,
     JEFFREYS_PRIOR,
-    POISSON_PRIOR,
-    TRUNC_NORMAL_PRIOR;
+    TRUNC_NORMAL_PRIOR,
+    POISSON_PRIOR;
+
 
     public String toString() {
 
@@ -37,6 +39,8 @@ public enum PriorType {
                 return "Lognormal";
             case GAMMA_PRIOR:
                 return "Gamma";
+            case INVERSE_GAMMA_PRIOR:
+                return "Inverse Gamma";
             case JEFFREYS_PRIOR:
                 return "1/x"; //rename Jeffreys prior to 1/x prior everywhere in Beauti
             case POISSON_PRIOR:
@@ -98,6 +102,13 @@ public enum PriorType {
                 break;
             case GAMMA_PRIOR:
                 buffer.append("Gamma [");
+                buffer.append(formatter.format(param.shape));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.scale));
+                buffer.append("]");
+                break;
+            case INVERSE_GAMMA_PRIOR:
+                buffer.append("Inverse Gamma [");
                 buffer.append(formatter.format(param.shape));
                 buffer.append(", ");
                 buffer.append(formatter.format(param.scale));

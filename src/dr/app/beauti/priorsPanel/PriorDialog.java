@@ -75,11 +75,11 @@ public class PriorDialog {
 		optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
 		optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());
 		optionsPanels.put(PriorType.NORMAL_PRIOR, new NormalOptionsPanel());
-		optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
+		optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
 		optionsPanels.put(PriorType.LOGNORMAL_PRIOR, new LogNormalOptionsPanel());
 		optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
-		optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
+		optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
 		optionPanel = new OptionsPanel(12, 12);
@@ -202,6 +202,9 @@ public class PriorDialog {
 		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setRange(parameter.lower, parameter.upper);
 		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.upper);
 
+        optionsPanels.get(PriorType.LAPLACE_PRIOR).getField(0).setValue(parameter.mean);
+		optionsPanels.get(PriorType.LAPLACE_PRIOR).getField(1).setValue(parameter.stdev);
+
 		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
 		// ExponentialDistribution(1.0 / mean)
         if (parameter.mean != 0) {
@@ -216,12 +219,22 @@ public class PriorDialog {
 		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(0).setValue(parameter.mean);
 		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(1).setValue(parameter.stdev);
 		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(2).setValue(parameter.offset);
+        meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
 
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setValue(parameter.shape);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setValue(parameter.scale);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
 		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(2).setValue(parameter.offset);
+
+        optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(0).setValue(parameter.shape);
+		optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(1).setValue(parameter.scale);
+		optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(2).setValue(parameter.offset);
+
+        optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(0).setValue(parameter.mean);
+		optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(1).setValue(parameter.stdev);
+		optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(2).setValue(parameter.lower);
+        optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(3).setValue(parameter.upper);
 	}
 
 	private void getArguments() {
@@ -324,7 +337,7 @@ public class PriorDialog {
 
 		public LaplaceOptionsPanel() {
 			addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-			addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+			addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE); //TODO Stdev?
 		}
 
 		public Distribution getDistribution() {
@@ -388,28 +401,6 @@ public class PriorDialog {
 		public void setParameterPrior(Parameter parameter) {
 			parameter.mean = getValue(0);
 			parameter.stdev = getValue(1);
-		}
-	}
-
-	class TruncatedNormalOptionsPanel extends PriorOptionsPanel {
-
-		public TruncatedNormalOptionsPanel() {
-
-			addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-			addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-			addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-			addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-		}
-
-		public Distribution getDistribution() {
-			return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
-		}
-
-		public void setParameterPrior(Parameter parameter) {
-			parameter.mean = getValue(0);
-			parameter.stdev = getValue(1);
-			parameter.lower = getValue(2);
-			parameter.upper = getValue(3);
 		}
 	}
 
@@ -484,4 +475,27 @@ public class PriorDialog {
             parameter.offset = getValue(2);
         }
     }
+
+    class TruncatedNormalOptionsPanel extends PriorOptionsPanel {
+
+        public TruncatedNormalOptionsPanel() {
+
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.stdev = getValue(1);
+            parameter.lower = getValue(2);
+            parameter.upper = getValue(3);
+        }
+    }
+    
 }

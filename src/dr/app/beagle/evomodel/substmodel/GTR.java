@@ -57,12 +57,12 @@ public class GTR extends BaseSubstitutionModel {
      * @param freqModel       frequencies
      */
     public GTR(
-            Variable rateACVariable,
-            Variable rateAGVariable,
-            Variable rateATVariable,
-            Variable rateCGVariable,
-            Variable rateCTVariable,
-            Variable rateGTVariable,
+            Variable<Double> rateACVariable,
+            Variable<Double> rateAGVariable,
+            Variable<Double> rateATVariable,
+            Variable<Double> rateCGVariable,
+            Variable<Double> rateCTVariable,
+            Variable<Double> rateGTVariable,
             FrequencyModel freqModel) {
 
         super("GTR", Nucleotides.INSTANCE, freqModel);

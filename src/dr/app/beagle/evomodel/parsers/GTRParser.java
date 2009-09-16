@@ -2,7 +2,6 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
-import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.*;
 

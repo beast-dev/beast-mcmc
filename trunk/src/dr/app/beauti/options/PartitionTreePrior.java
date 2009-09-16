@@ -52,6 +52,7 @@ public class PartitionTreePrior extends PartitionOptions {
     // public int skyrideIntervalCount = 1;
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
+    private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
     private boolean fixedTree = false;
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
@@ -346,6 +347,14 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public VariableDemographicModel.Type getExtendedSkylineModel() {
         return extendedSkylineModel;
+    }
+
+    public PopulationSizeModelType getPopulationSizeModel() {
+        return populationSizeModel;
+    }
+
+    public void setPopulationSizeModel(PopulationSizeModelType populationSizeModel) {
+        this.populationSizeModel = populationSizeModel;
     }
 
     public BeautiOptions getOptions() {

@@ -62,7 +62,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
-
 //    private JComboBox userTreeCombo = new JComboBox();
 //    private JButton button;
     
@@ -93,11 +92,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, OptionsPanel> treePriorPanels = new HashMap<PartitionTreePrior, OptionsPanel>();
 
-    // Overall model parameters ////////////////////////////////////////////////////////////////////////
     private boolean isCheckedTipDate = false;
-    
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SequenceErrorModelComponentOptions comp;
 

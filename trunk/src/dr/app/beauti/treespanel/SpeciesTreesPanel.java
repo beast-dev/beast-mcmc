@@ -53,7 +53,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
 //    private boolean settingOptions = false;
 
     public SpeciesTreesPanel(final PartitionTreePrior partitionTreePrior) {
-    	super(12, 28); 	
+    	super(12, 18); 	
        
     	this.partitionTreePrior = partitionTreePrior;
 

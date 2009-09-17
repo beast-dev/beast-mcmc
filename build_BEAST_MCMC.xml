@@ -472,7 +472,7 @@
 		<copy file="${release}/VERSION HISTORY.txt" todir="${BEAST_release}${version}"/>
 		<copy file="${release}/README.txt" todir="${BEAST_release}${version}"/>
 
-		<tar destfile="${release}/${BEAST_release}${version}.tgz">
+		<tar destfile="${release}/${BEAST_release}${version}.tgz" compression="gzip">
 			<tarfileset dir="${BEAST_release}${version}" prefix="${BEAST_release}${version}"/>
 		</tar>
 

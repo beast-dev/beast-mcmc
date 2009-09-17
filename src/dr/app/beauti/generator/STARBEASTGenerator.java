@@ -33,7 +33,6 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.speciation.*;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -43,7 +42,6 @@ import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evoxml.XMLUnits;
-import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
@@ -70,8 +68,8 @@ public class STARBEASTGenerator extends Generator {
     /**
      * write tag <sp>
      *
-     * @param taxonList
-     * @param writer
+     * @param taxonList  TaxonList
+     * @param writer    XMLWriter
      */
     public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
         List<String> species = options.starBEASTOptions.getSpeciesList();
@@ -100,7 +98,7 @@ public class STARBEASTGenerator extends Generator {
     /**
      * write the species tree, species tree model, likelihood, etc.
      *
-     * @param writer
+     * @param writer  XMLWriter
      */
     public void writeSTARBEAST(XMLWriter writer) {
         writeSpeciesTree(writer);
@@ -155,6 +153,8 @@ public class STARBEASTGenerator extends Generator {
         // *BEAST always share same tree prior
         if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT) {
               attributes.add(new Attribute.Default<String>(SpeciesTreeModel.CONST_ROOT_POPULATION, "true"));
+        } else if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONSTANT) {
+              attributes.add(new Attribute.Default<String>(SpeciesTreeModel.CONSTANT_POPULATION, "true"));
         }
 
         writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, attributes);

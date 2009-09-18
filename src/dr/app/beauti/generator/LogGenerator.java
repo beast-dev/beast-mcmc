@@ -70,7 +70,8 @@ public class LogGenerator extends Generator {
     /**
      * write log to screen
      *
-     * @param writer
+     * @param writer                          XMLWriter
+     * @param branchRatesModelGenerator       BranchRatesModelGenerator
      */
     void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator) {
         writer.writeComment("write log to screen");
@@ -176,7 +177,11 @@ public class LogGenerator extends Generator {
     /**
      * write log to file
      *
-     * @param writer
+     * @param writer                  XMLWriter
+     * @param treePriorGenerator      TreePriorGenerator
+     * @param branchRatesModelGenerator      BranchRatesModelGenerator
+     * @param substitutionModelGenerator     SubstitutionModelGenerator
+     * @param treeLikelihoodGenerator        TreeLikelihoodGenerator
      */
     void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
                         SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator) {
@@ -299,8 +304,8 @@ public class LogGenerator extends Generator {
     /**
      * write tree log to file
      *
-     * @param writer
-     */
+     * @param writer   XMLWriter
+     */     
     void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
@@ -364,17 +369,17 @@ public class LogGenerator extends Generator {
             for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
-                        writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
                     case UNCORRELATED_LOGNORMAL:
                     case RANDOM_LOCAL_CLOCK:
-                        writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
-                        writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                         break;
 
                     default:
@@ -416,17 +421,17 @@ public class LogGenerator extends Generator {
                 for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:
-                            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case UNCORRELATED_EXPONENTIAL:
                         case UNCORRELATED_LOGNORMAL:
                         case RANDOM_LOCAL_CLOCK:
-                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
-                            writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, model.getPrefix() + tree.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         default:

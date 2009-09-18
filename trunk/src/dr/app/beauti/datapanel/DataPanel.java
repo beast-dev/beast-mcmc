@@ -45,8 +45,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -314,8 +314,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         this.options = options;
         allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
 
-//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
-
         modelsChanged();
 
         dataTableModel.fireTableDataChanged();
@@ -323,8 +321,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void getOptions(BeautiOptions options) {
         options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-
-//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
     }
 
     public JComponent getExportableComponent() {
@@ -396,6 +392,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void linkModels() {
         int[] selRows = dataTable.getSelectedRows();
+        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
         DataType dateType = null;
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
@@ -410,10 +407,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
                 }
             }
+
+            if (!selectedPartitionData.contains(partition))
+                selectedPartitionData.add(partition);
         }
 
-        java.util.List<PartitionSubstitutionModel> models = options.getPartitionSubstitutionModels(dateType);
-        Object[] modelArray = models.toArray();
+        Object[] modelArray = options.getPartitionSubstitutionModels(dateType, selectedPartitionData).toArray();
 
         if (selectModelDialog == null) {
             selectModelDialog = new SelectModelDialog(frame);
@@ -428,8 +427,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                options.addPartitionSubstitutionModel(model);
             }
 
-            for (int row : selRows) {
-                PartitionData partition = options.dataPartitions.get(row);
+            for (PartitionData partition : selectedPartitionData) {
                 partition.setPartitionSubstitutionModel(model);
             }
         }
@@ -461,7 +459,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void linkClocks() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
-        Object[] modelArray = options.getPartitionClockModels().toArray();
+
+        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
+        for (int row : selRows) {
+            PartitionData partition = options.dataPartitions.get(row);
+
+            if (!selectedPartitionData.contains(partition))
+                selectedPartitionData.add(partition);
+        }
+        Object[] modelArray = options.getPartitionClockModels(selectedPartitionData).toArray();
 
         if (selectClockDialog == null) {
             selectClockDialog = new SelectClockDialog(frame);
@@ -476,8 +482,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                options.addPartitionClockModel(model);
             }
 
-            for (int row : selRows) {
-                PartitionData partition = options.dataPartitions.get(row);
+            for (PartitionData partition : selectedPartitionData) {
                 partition.setPartitionClockModel(model);
             }
         }
@@ -517,7 +522,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void linkTrees() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
-        Object[] treeArray = options.getPartitionTreeModels().toArray();
+
+        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
+        for (int row : selRows) {
+            PartitionData partition = options.dataPartitions.get(row);
+
+            if (!selectedPartitionData.contains(partition))
+                selectedPartitionData.add(partition);
+        }
+        Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
         if (selectTreeDialog == null) {
             selectTreeDialog = new SelectTreeDialog(frame);
@@ -535,8 +548,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             options.linkTreePriors(prior);
 //            options.shareSameTreePrior = true;
 
-            for (int row : selRows) {
-                PartitionData partition = options.dataPartitions.get(row);
+            for (PartitionData partition : selectedPartitionData) {
                 partition.setPartitionTreeModel(model);
             }
         }

@@ -442,9 +442,9 @@ public class BeautiOptions extends ModelOptions {
 //        return partitionModels;
 //    }
 
-    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(givenDataPartitions)) {
             if (model.getDataType() == dataType) {
                 models.add(model);
             }

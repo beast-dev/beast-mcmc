@@ -38,7 +38,8 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -57,7 +58,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     JCheckBox autoOptimizeCheck = null;
 
-    public java.util.List<Operator> operators = new ArrayList<Operator>();
+    public List<Operator> operators = new ArrayList<Operator>();
 
     BeautiFrame frame = null;
 

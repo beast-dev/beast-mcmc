@@ -127,18 +127,18 @@ public class TreeLikelihoodGenerator extends Generator {
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
-            	writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix() + treeModel.getPrefix() 
+            	writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
-            	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, clockModel.getPrefix() + treeModel.getPrefix() 
+            	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-            	writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, clockModel.getPrefix() + treeModel.getPrefix() 
+            	writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
 

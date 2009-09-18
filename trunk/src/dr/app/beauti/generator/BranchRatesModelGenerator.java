@@ -60,7 +60,7 @@ public class BranchRatesModelGenerator extends Generator {
     /**
      * Write the relaxed clock branch rates block.
      *
-     * @param model
+     * @param model  PartitionClockModel
      * @param writer the writer
      */
     public void writeBranchRatesModel(PartitionClockModel model, XMLWriter writer) { 
@@ -69,7 +69,7 @@ public class BranchRatesModelGenerator extends Generator {
         
         Attribute[] attributes;
         int categoryCount = 0;
-        String treePrefix = "";
+        String treePrefix;
         switch (model.getClockType()) {
             case STRICT_CLOCK:
                 writer.writeComment("The strict clock (Uniform rates across branches)");
@@ -80,7 +80,7 @@ public class BranchRatesModelGenerator extends Generator {
                 	
                 	writer.writeOpenTag(
 		                        StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
-		                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES)}
+		                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES)}
 		                );
                 	
                 	if (activeTrees.indexOf(tree) < 1) {	                	
@@ -115,7 +115,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                //            new Attribute.Default<Double>(DiscretizedBranchRatesParser.NORMALIZED_MEAN, options.getMeanSubstitutionRate())
 	                //    };
 	                //} else {
-	                attributes = new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix 
+	                attributes = new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix)
 	                		+ BranchRateModel.BRANCH_RATES)};
 	                //}
 	                writer.writeOpenTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, attributes);
@@ -174,7 +174,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "meanRate"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
 	                                new Attribute.Default<String>("name", "meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
@@ -182,7 +182,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, modelPrefix + treePrefix 
+	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
 	                		+ BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
@@ -190,7 +190,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + RateStatistic.COEFFICIENT_OF_VARIATION),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("internal", "true"),
@@ -198,7 +198,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, modelPrefix + treePrefix 
+	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
 	                		+ BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
@@ -206,12 +206,12 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "covariance"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
 	                                new Attribute.Default<String>("name", "covariance")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
                 }
 	                
@@ -231,7 +231,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }        
                 
 	                attributes = new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES),
+	                        new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES),
 	                        new Attribute.Default<String>("episodic", "false"),
 	                        new Attribute.Default<String>("logspace", "true"),
 	                };
@@ -252,7 +252,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                              new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
 	                      });
 	                writer.writeTag(ParameterParser.PARAMETER,
-	                      new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+	                      new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 	                    		  + TreeModelParser.NODE_RATES), true);
 	                writer.writeCloseTag(RateEvolutionLikelihood.RATES);
 	
@@ -263,7 +263,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                              new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
 	                      });
 	                writer.writeTag(ParameterParser.PARAMETER,
-	                      new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+	                      new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 	                    		  + RateEvolutionLikelihood.ROOTRATE), true);
 	                writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
 	//                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
@@ -275,11 +275,11 @@ public class BranchRatesModelGenerator extends Generator {
 	                if (model.isEstimatedRate()) {//TODO
 		              	writer.writeText("");
 			            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
-			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + TreeModel.TREE_MODEL 
+			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL
 			                    		  + "." + "allRates")});
-			            writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+			            writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 			                    		  + TreeModelParser.NODE_RATES);
-			            writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + treePrefix + TreeModel.TREE_MODEL + "." 
+			            writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 			                    		  + RateEvolutionLikelihood.ROOTRATE);
 			            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 	                }
@@ -288,7 +288,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "meanRate"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
 	                                new Attribute.Default<String>("name", "meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
@@ -318,7 +318,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "covariance"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
 	                                new Attribute.Default<String>("name", "covariance")
 	                        }
 	                );
@@ -345,14 +345,14 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RandomLocalClockModel.LOCAL_BRANCH_RATES,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES),
 	                                new Attribute.Default<String>("ratesAreMultipliers", "false")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 	
-	                writeParameterRef("rates", modelPrefix + treePrefix + ClockType.LOCAL_CLOCK + ".rates", writer);
-	                writeParameterRef("rateIndicator", modelPrefix + treePrefix + ClockType.LOCAL_CLOCK + ".changes", writer);
+	                writeParameterRef("rates", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".rates", writer);
+	                writeParameterRef("rateIndicator", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes", writer);
 	                
 	                if (activeTrees.indexOf(tree) < 1) {
 		                writeParameter("clockRate", "clock.rate", model, writer);
@@ -371,7 +371,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                                new Attribute.Default<String>("elementwise", "true"),
 	                        }
 	                );
-	                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + treePrefix + ClockType.LOCAL_CLOCK + ".changes");
+	                writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes");
 	                writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 	
 	                writer.writeText("");
@@ -379,7 +379,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeOpenTag(
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "meanRate"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
 	                                new Attribute.Default<String>("name", "meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
@@ -387,14 +387,14 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
 	                writer.writeOpenTag(
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + RateStatistic.COEFFICIENT_OF_VARIATION),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("internal", "true"),
@@ -402,19 +402,19 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
 	                writer.writeOpenTag(
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + treePrefix + "covariance"),
+	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
 	                                new Attribute.Default<String>("name", "covariance")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, modelPrefix + treePrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
                 }
                 break;
@@ -490,30 +490,30 @@ public class BranchRatesModelGenerator extends Generator {
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
-                	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
+                	writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
                 }
                 break;
                 
             case AUTOCORRELATED_LOGNORMAL:
 // TODO
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
-                	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "branchRates.var");
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + tree.getPrefix() + "treeModel.rootRate");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
+                	writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "branchRates.var");
+                    writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "treeModel.rootRate");
                 }
                 break;
                 
             case RANDOM_LOCAL_CLOCK:            	
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(model.getAllPartitionData())) {
-                    writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + "meanRate");
-                	writer.writeIDref(RateStatistic.RATE_STATISTIC, model.getPrefix() + tree.getPrefix() + RateStatistic.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, model.getPrefix() + tree.getPrefix() + "covariance");
+                    writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
+                	writer.writeIDref(RateStatistic.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatistic.COEFFICIENT_OF_VARIATION);
+                    writer.writeIDref(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
 
-                    writer.writeIDref(SumStatistic.SUM_STATISTIC, model.getPrefix() + tree.getPrefix() + "rateChanges");                        
+                    writer.writeIDref(SumStatistic.SUM_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "rateChanges");                        
                 }
                 break;
                 

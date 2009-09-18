@@ -214,4 +214,11 @@ public class ModelOptions {
 		return operators;
 	}
 
+    public String noDuplicatedPrefix(String a , String b) {
+        if (a.equals(b)) {
+            return a;
+        } else {
+            return a + b;
+        }
+    }
 }

@@ -27,7 +27,6 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.alignmentviewer.*;
-import dr.app.beauti.datapanel.BeautiAlignmentBuffer;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;

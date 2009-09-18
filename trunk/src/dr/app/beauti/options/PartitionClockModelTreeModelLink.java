@@ -278,7 +278,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 	}
 
     public String getPrefix() {
-        return model.getPrefix() + tree.getPrefix();
+        return noDuplicatedPrefix(model.getPrefix(), tree.getPrefix());
     }
 
     @Override

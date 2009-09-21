@@ -152,11 +152,12 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ Tree Prior ++++++++++++++++++
-        if (options.isShareSameTreePrior()) {
+//        if (options.isShareSameTreePrior()) {
+        if (options.getPartitionTreeModels().size() > 1) { //TODO not allowed multi-prior yet
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
                     throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
-                            "\nPlease uncheck the shareSameTreePrior if using GMRF.");
+                            "\nIt is only available for single tree model partition for this release.");
                 }
             }
         }

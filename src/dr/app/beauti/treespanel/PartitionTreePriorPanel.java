@@ -30,6 +30,7 @@ import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.generator.BeastGenerator;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
@@ -73,7 +74,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {    	
+    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {
     	super(12, 8);
 
         this.partitionTreePrior = parTreePrior;
@@ -176,14 +177,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-            addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
-                    "\nThe shareSameTreePrior has to be unchecked using GMRF.");
-
-            treesPanel.shareSameTreePriorCheck.setSelected(false);
-            treesPanel.shareSameTreePriorCheck.setEnabled(false);
-            treesPanel.updateShareSameTreePriorChanged();
-        } else {
-            treesPanel.shareSameTreePriorCheck.setEnabled(true);
+            addLabel("For GMRF, tree model/tree prior combination not implemented by BEAST yet!"
+                    + "\nIt is only available for single tree model partition for this release."
+                    + "\nPlease go to Data Partition panel to link all tree models.");
+            //TODO link tree model
+//            treesPanel.shareSameTreePriorCheck.setSelected(false);
+//            treesPanel.shareSameTreePriorCheck.setEnabled(false);
+//            treesPanel.linkTreeModel();
+//            treesPanel.updateShareSameTreePriorChanged();
+//        } else {
+//            treesPanel.shareSameTreePriorCheck.setEnabled(true);
 //            treesPanel.shareSameTreePriorCheck.setSelected(true);
 //            treesPanel.updateShareSameTreePriorChanged();
         }

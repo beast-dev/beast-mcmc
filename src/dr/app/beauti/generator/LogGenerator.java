@@ -128,41 +128,43 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(Columns.COLUMN);
         }
 
-        writer.writeOpenTag(Columns.COLUMN,
-                new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Root Height"),
-                        new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
-                }
-        );
-
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            writer.writeOpenTag(Columns.COLUMN,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Columns.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
+                            new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
+                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                    }
+            );
+
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
-        }
-        writer.writeCloseTag(Columns.COLUMN);
 
-        writer.writeOpenTag(Columns.COLUMN,
-                new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Rate"),
-                        new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
-                }
-        );
-
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-            }
-        } else {
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
-            }
+            writer.writeCloseTag(Columns.COLUMN);
         }
 
-        writer.writeCloseTag(Columns.COLUMN);
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            writer.writeOpenTag(Columns.COLUMN,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Columns.LABEL, branchRatesModelGenerator.getClockRateString(model)),
+                            new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
+                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                    }
+            );
 
+            branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+//            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
+//            for (PartitionClockModel model : options.getPartitionClockModels()) {
+//                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
+//                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+//            }
+//        } else {
+//            for (PartitionClockModel model : options.getPartitionClockModels()) {
+//                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+//            }
+//        }
+            writer.writeCloseTag(Columns.COLUMN);
+        }
 //        for (PartitionClockModel model : options.getPartitionClockModels()) {
 //            branchRatesModelGenerator.writeLogStatistic(model, writer);
 //        }

@@ -184,8 +184,8 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -197,8 +197,8 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight),
                         new Attribute.Default<String>(ScaleOperator.SCALE_ALL_IND, indepedently ? "true" : "false")
                 });
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -210,8 +210,8 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(name);
     }
 
@@ -225,8 +225,8 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<String>("boundaryCondition",
                                 (reflecting ? "reflecting" : "absorbing"))
                 });
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(name);
     }
 
@@ -241,8 +241,8 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Integer>("windowSize", windowSize),
                         getWeightAttribute(operator.weight)
                 });
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(name);
     }
 
@@ -302,8 +302,8 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(CenteredScaleOperator.CENTERED_SCALE);
     }
 
@@ -367,8 +367,8 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
     }
 
@@ -380,16 +380,16 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<String>("autoOptimize", "false")
                 }
         );
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(SwapOperator.SWAP_OPERATOR);
     }
 
     private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(BitFlipOperator.BIT_FLIP_OPERATOR,
                 getWeightAttribute(operator.weight));
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
     }
 
@@ -403,16 +403,16 @@ public class OperatorsGenerator extends Generator {
     private void writeUniformOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag("uniformOperator",
                 getWeightAttribute(operator.weight));
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag("uniformOperator");
     }
 
     private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag("uniformIntegerOperator",
                 getWeightAttribute(operator.weight));
-//        writeParameter1Ref(writer, operator);
-        writeOperatorRef(writer, operator);
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
         writer.writeCloseTag("uniformIntegerOperator");
     }
 

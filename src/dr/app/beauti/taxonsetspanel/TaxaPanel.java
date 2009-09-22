@@ -404,6 +404,20 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         taxonSetsTableSelectionChanged();
         taxonSetsTableModel.fireTableDataChanged();
+
+        validateTaxonSets();
+    }
+
+    private void validateTaxonSets() {
+        if (taxonSetsTable.getRowCount() > 0) {
+            for (Taxa taxonSet : options.taxonSets) {
+                if (taxonSet.getTaxonCount() < 1) {
+                    JOptionPane.showMessageDialog(this, "Taxon set " + taxonSet.getId() + " is empty, "
+                            + "\nplease go back to Taxon Sets panel to select included taxa.",
+                                "Empty taxon set error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 
     public void getOptions(BeautiOptions options) {

@@ -34,6 +34,8 @@ package dr.util;
  */
 public interface Version {
 
+    String getVersion();
+
 	String getVersionString();
 
 	String getBuildString();

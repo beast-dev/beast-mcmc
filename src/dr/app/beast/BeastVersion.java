@@ -45,7 +45,7 @@ public class BeastVersion implements Version {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.5.1";
+    private static final String VERSION = "1.5.2";
     
     private static final String DATE_STRING = "2002-2009";
 
@@ -86,10 +86,10 @@ public class BeastVersion implements Version {
                 "",
                 "Downloads, Help & Resources:",
 
-                "\thttp://beast.bio.ed.ac.uk/",
+                "\thttp://beast.bio.ed.ac.uk",
                 "",
                 "Source code distributed under the GNU Lesser General Public License:",
-                "\thttp://code.google.com/p/beast-mcmc/",
+                "\thttp://code.google.com/p/beast-mcmc",
                 "",
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
@@ -110,9 +110,9 @@ public class BeastVersion implements Version {
                         "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
                         "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-                        "<p><a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
+                        "<p><a href=\"http://beast.bio.ed.ac.uk\">http://beast.bio.ed.ac.uk</a></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
-                        "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
+                        "<a href=\"http://code.google.com/p/beast-mcmc\">http://code.google.com/p/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
                         "Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, Philippe Lemey,<br>" +
                         "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, Oliver Pybus,<br>" +

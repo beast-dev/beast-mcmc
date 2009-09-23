@@ -1,5 +1,6 @@
 package dr.evomodel.substmodel;
 
+
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
 import dr.inference.model.Model;
@@ -7,55 +8,34 @@ import dr.inference.model.Model;
 
 /**
  * @author Chieh-Hsi Wu
+ *
  * An abstract class for microsatellite models
  */
 public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     protected MicrosatelliteModel subModel;
+    protected boolean isNested = false;
+    protected double[][] infinitesimalRateMatrix = null;
+
+
 
     /**
      * Constructor
      * @param name              Model name
-     * @param microsatellite    Microsatellite data type
+     * @param msat              Microsatellite data type
      * @param rootFreqModel     Frequency model
      * @param parameter         Infinitesimal rates
      */
-    public MicrosatelliteModel(String name, Microsatellite microsatellite, FrequencyModel rootFreqModel, Parameter parameter) {
-        super(name, microsatellite, rootFreqModel, parameter);
+    public MicrosatelliteModel(String name, Microsatellite msat, FrequencyModel rootFreqModel, Parameter parameter) {
+        super(name, msat, rootFreqModel, parameter);
         if(parameter == null){
             double[] q = new double[stateCount*(stateCount-1)];
             infinitesimalRates = new Parameter.Default(q);
         }
-    }
-    
 
-
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        updateMatrix = true;
+        infinitesimalRateMatrix = new double[stateCount][stateCount];
     }
 
-    //store the infinitesimal rates in the vector to a matrix called amat
-    public void storeIntoAmat(double[] rates){
-        int i, j, k = 0;
-        // Set the instantaneous rate matrix
-        for (i = 0; i < stateCount; i++) {
-            for (j = 0; j < stateCount; j++) {
-                if (i != j)
-                    amat[i][j] = rates[k++];
-            }
-        }
-    }
-
-    //setup empirical frequencies
-    public void setupEmpiricalStationaryFrequencies(){
-        setToEqualFrequencies();
-        double[] transPrs = new double[stateCount*stateCount];
-        getTransitionProbabilities(Double.MAX_VALUE, transPrs);
-        double[] empFreq = new double[stateCount];
-        System.arraycopy(transPrs, 0, empFreq, 0, stateCount);
-        this.freqModel = new FrequencyModel(dataType, empFreq);
-    }
-
-    private void setToEqualFrequencies(){
+    public void setToEqualFrequencies(){
         double[] freqs = new double[stateCount];
             for(int i = 0; i < freqs.length; i++){
                 freqs[i] = 1.0/stateCount;
@@ -63,10 +43,42 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         this.freqModel = new FrequencyModel(dataType, freqs);
     }
 
-
-    public MicrosatelliteModel getSubModel(){
-        return subModel;
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        updateMatrix = true;
     }
+
+    //store the infinitesimal rates in the vector to a matrix called amat
+    public void storeIntoAmat(){
+        amat = infinitesimalRateMatrix;
+    }
+
+    //matrix is already valid
+    protected void makeValid(double[][] matrix, int dimension){}
+
+    protected double getRate(int i, int j){
+       return infinitesimalRateMatrix[i][j];
+    }
+
+    /*
+     * Set up empirical frequencies
+     */
+    public void setupEmpiricalStationaryFrequencies(){
+        int eigenValPos = 0;
+        for(int i = 0; i < stateCount; i++){
+            if(Eval[i] == 0){
+                eigenValPos = i;
+                break;
+            }
+        }
+        double[] empFreq = new double[stateCount];
+        for(int i = 0; i < stateCount; i++){
+            empFreq[i] = Evec[i][eigenValPos]*Ievc[eigenValPos][i];
+
+        }
+        this.freqModel = new FrequencyModel(dataType, empFreq);
+    }
+
+
 
     public double[] getRates(){
         return super.getRates();
@@ -78,6 +90,9 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
 
     public abstract void setupInfinitesimalRates();
 
+    public Parameter getInfinitesimalRates(){
+        return infinitesimalRates;
+    }
 
     public double getLogOneTransitionProbabilityEntry(double distance, int parentState, int childState){
         return Math.log(getOneTransitionProbabilityEntry(distance, parentState, childState));
@@ -99,11 +114,20 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
 
         double [] iexp = new double[stateCount];
         for(int i = 0; i < stateCount; i++){
-            if(EvalImag[i] == 0){                
+            if(EvalImag[i] == 0){
                 temp = Math.exp(distance*(Eval[i]));
                 iexp[i] = temp*Ievc[i][childState];
+
             }else{
-                throw new RuntimeException("imaginary eigen values");
+                int i2 = i + 1;
+                double b = EvalImag[i];
+                double expat = Math.exp(distance * Eval[i]);
+                double expatcosbt = expat * Math.cos(distance * b);
+                double expatsinbt = expat * Math.sin(distance * b);
+                iexp[i] = expatcosbt * Ievc[i][childState] + expatsinbt * Ievc[i2][childState];
+                iexp[i2] = expatcosbt * Ievc[i2][childState] - expatsinbt * Ievc[i][childState];
+                i ++;
+
             }
         }
         for(int i = 0; i < stateCount; i++){
@@ -113,9 +137,16 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         if(probability <= 0.0){
             probability = minProb;
         }
+
         return probability;
     }
 
- 
-   
+    public MicrosatelliteModel getSubmodel(){
+        return subModel;
+    }
+
+    public boolean isSubmodel(){
+        return isNested;
+    }
+
 }

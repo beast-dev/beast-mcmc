@@ -42,6 +42,14 @@ public class HomogenousBranchSiteModel extends AbstractModel implements BranchSi
         return frequencyModel.getFrequencies();
     }
 
+    /**
+     * Homogenous model - returns if substitution model can return complex diagonalization
+     * @return
+     */
+    public boolean canReturnComplexDiagonalization() {
+        return substModel.canReturnComplexDiagonalization();
+    }
+
     private final SubstitutionModel substModel;
     private final FrequencyModel frequencyModel;
 

@@ -76,7 +76,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount - 1) + " dimensions.");
         }
 
-        return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
+        return new GeneralSubstitutionModel(GENERAL_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, relativeTo);
     }
 
     //************************************************************************

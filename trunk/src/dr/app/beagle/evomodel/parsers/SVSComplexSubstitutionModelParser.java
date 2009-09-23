@@ -1,20 +1,21 @@
 package dr.app.beagle.evomodel.parsers;
 
+import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evolution.datatype.*;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
  */
-public class SVSGeneralSubstitutionModelParser extends AbstractXMLObjectParser {
+public class SVSComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
-    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
+    public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
     public static final String DATA_TYPE = "dataType";
     public static final String RATES = "rates";
     public static final String FREQUENCIES = "frequencies";
@@ -22,7 +23,7 @@ public class SVSGeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String ROOT_FREQ = "rootFrequencies";
 
     public String getParserName() {
-        return SVS_GENERAL_SUBSTITUTION_MODEL;
+        return SVS_COMPLEX_SUBSTITUTION_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -36,11 +37,11 @@ public class SVSGeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 
         int states = dataType.getStateCount();
 
-        Logger.getLogger("dr.app.beagle.evomodel").info("  BSSVS General Substitution Model (stateCount=" + states + ")");
+        Logger.getLogger("dr.app.beagle.evomodel").info("  BSSVS Complex Substitution Model (stateCount=" + states + ")");
 
         Parameter ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
+        int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         if (ratesParameter == null) {
 
@@ -70,11 +71,11 @@ public class SVSGeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             }
 
 //              return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
-            throw new RuntimeException("SVSIrreversibleSubstitutionModel is not yet implemented.");
+            throw new RuntimeException("SVSIrreversibleComplexSubstitutionModel is not yet implemented.");
 
         }
 
-        return new SVSGeneralSubstitutionModel(SVS_GENERAL_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+        return new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
     }
 
     //************************************************************************

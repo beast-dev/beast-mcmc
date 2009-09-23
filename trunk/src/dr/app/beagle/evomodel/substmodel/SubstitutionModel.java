@@ -65,4 +65,9 @@ public interface SubstitutionModel extends Model {
      * @return the data type
      */
     DataType getDataType();
+
+    /**
+     * @return if substitution model can return complex diagonalizations
+     */
+    boolean canReturnComplexDiagonalization();
 }

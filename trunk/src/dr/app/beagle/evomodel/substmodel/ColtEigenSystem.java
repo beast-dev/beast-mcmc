@@ -14,18 +14,11 @@ public class ColtEigenSystem implements EigenSystem {
 
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
-//        System.err.println("length = "+matrix.length + ","+matrix[0].length);
-
         EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(matrix));
 
         DoubleMatrix2D eigenV = eigenDecomp.getV();
         DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
-//        DoubleMatrix1D eigenVImag = eigenDecomp.getImagEigenvalues();
         DoubleMatrix2D eigenVInv;
-
-//        if (alegbra.cond(eigenV) > maxConditionNumber) {
-//            return null;
-//        }
 
         try {
             eigenVInv = alegbra.inverse(eigenV);

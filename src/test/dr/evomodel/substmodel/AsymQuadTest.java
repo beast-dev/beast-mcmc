@@ -30,7 +30,7 @@ public class AsymQuadTest extends TestCase {
         double getDistance();
 
         double[] getExpectedPi();
-        
+
         public double[] getExpectedResult();
     }
 
@@ -68,7 +68,7 @@ public class AsymQuadTest extends TestCase {
 
         public double[] getExpectedPi() {
             return new double[]{
-                    0.757532281205165, 0.126255380200861, 0.068866571018651, 0.047345767575323                    
+                    0.757532281205165, 0.126255380200861, 0.068866571018651, 0.047345767575323
             };
         }
 
@@ -182,7 +182,6 @@ public class AsymQuadTest extends TestCase {
     };
 
     Instance[] all = {test0, test1, test2};
-    
     public void testAsymmetricQuadraticModel() {
 
         for (Instance test : all) {
@@ -194,8 +193,8 @@ public class AsymQuadTest extends TestCase {
             Parameter contractQuad = new Parameter.Default(1, test.getContractQuad());
 
             Microsatellite microsat = test.getDataType();
-            AsymmetricQuadraticModel aqm = new AsymmetricQuadraticModel(microsat,null, 
-                    expanConst, expanLin, expanQuad, contractConst, contractLin, contractQuad);
+            AsymmetricQuadraticModel aqm = new AsymmetricQuadraticModel(microsat,null,
+                    expanConst, expanLin, expanQuad, contractConst, contractLin, contractQuad, false);
 
             aqm.computeStationaryDistribution();
 

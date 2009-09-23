@@ -146,6 +146,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     preferenceFlag |= BeagleFlag.CPU.getMask();
 
             }
+
+            if (branchSiteModel.canReturnComplexDiagonalization())
+                requirementFlag |= BeagleFlag.COMPLEX.getMask();
             
             instanceCount ++;
 

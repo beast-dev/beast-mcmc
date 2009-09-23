@@ -27,7 +27,6 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
-import dr.app.beagle.evomodel.parsers.GeneralSubstitutionModelParser;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -49,10 +48,9 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      *
      * @param dataType the data type
      */
-    public GeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
+    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
 
-        super(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, dataType, freqModel,
-                new DefaultEigenSystem(dataType.getStateCount()));
+        super(name, dataType, freqModel, null);
 
         ratesParameter = parameter;
         if (ratesParameter != null) {
@@ -70,7 +68,7 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
     protected GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {
 
         super(name, dataType, freqModel,
-                new DefaultEigenSystem(dataType.getStateCount()));
+                null);
 
         setRatesRelativeTo(relativeTo);
     }

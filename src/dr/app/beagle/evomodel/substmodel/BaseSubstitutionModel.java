@@ -61,13 +61,16 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     private final EigenSystem eigenSystem;
 
     BaseSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel) {
-        this(name, dataType, freqModel, new DefaultEigenSystem(dataType.getStateCount()));
+        this(name, dataType, freqModel, null);
     }
 
     BaseSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, EigenSystem eigenSystem) {
         super(name);
 
-        this.eigenSystem = eigenSystem;
+        if (eigenSystem == null)
+            this.eigenSystem = getDefaultEigenSystem(dataType.getStateCount());
+        else
+            this.eigenSystem = eigenSystem;
 
         this.dataType = dataType;
 
@@ -92,15 +95,23 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         updateMatrix = true;
     }
 
+    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+        return new DefaultEigenSystem(stateCount);
+    }
+
     private void setStateCount(int stateCount) {
         this.stateCount = stateCount;
-        rateCount = ((stateCount - 1) * stateCount) / 2;
+        rateCount = getRateCount(stateCount);
 
         relativeRates = new double[rateCount];
         storedRelativeRates = new double[rateCount];
         for (int i = 0; i < rateCount; i++) {
             relativeRates[i] = 1.0;
         }
+    }
+
+    protected int getRateCount(int stateCount) {
+        return ((stateCount - 1) * stateCount) / 2;
     }
 
     // *****************************************************************
@@ -242,7 +253,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
          }
          for(int i=0; i<stateCount; i++) {
             for(int j=0; j<stateCount; j++)
-                savedQ[i][j] = q[i][j];
+             System.arraycopy(q[i],0,savedQ[i],0,q[i].length);
          }
 
         makeValid(q, stateCount);
@@ -345,6 +356,10 @@ public abstract class BaseSubstitutionModel extends AbstractModel
                 }
             }
         }
+    }
+
+    public boolean canReturnComplexDiagonalization() {
+        return false;
     }
 
     protected double getMINFDIFF() { return 1.0E-10; }

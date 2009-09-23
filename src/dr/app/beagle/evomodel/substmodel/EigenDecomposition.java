@@ -46,6 +46,14 @@ public class EigenDecomposition {
         return Eval;
     }
 
+    /**
+     * This functions returns true if the diagonalization may be complex
+     * @return bool
+     */
+    public boolean canReturnComplexDiagonalization() {
+        return false;
+    }
+
     // Eigenvalues, eigenvectors, and inverse eigenvectors
     private final double[] Evec;
     private final double[] Ievc;

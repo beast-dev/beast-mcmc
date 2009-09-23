@@ -196,7 +196,11 @@ public class XMLParser {
                 throw new XMLParseException("Object with idref=" + idref + " has not been previously declared.");
             }
 
-            if (!e.getTagName().equals(restoredXMLObject.getName())) {
+
+            XMLObjectParser parser = parserStore.get(e.getTagName());
+            boolean classMatch = parser != null && parser.getReturnType().isAssignableFrom(restoredXMLObject.getNativeObject().getClass());
+
+            if (!e.getTagName().equals(restoredXMLObject.getName()) && !classMatch) {
                 String msg = "Element named " + e.getTagName() + " with idref=" + idref +
                         " does not match stored object with same id and tag name " + restoredXMLObject.getName();
                 if (strictXML) {

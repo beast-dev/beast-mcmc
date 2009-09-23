@@ -1,5 +1,6 @@
 package dr.evomodel.substmodel;
 
+
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
 
@@ -9,6 +10,8 @@ import dr.inference.model.Parameter;
  * Implements the Asymmetric Quadratic Model
  */
 public class AsymmetricQuadraticModel extends OnePhaseModel{
+
+    public static final String ASYMQUAD_MODEL = "ASYMQUADModel";
 
     /*
      *Parameters for setting up the infinitesimal rate matrix.
@@ -21,7 +24,6 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     private Parameter contractQuad;
 
 
-
     /**
      * Constructor
      *
@@ -29,10 +31,25 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
      * @param freqModel         Frequency model
      */
     public AsymmetricQuadraticModel(Microsatellite microsatellite, FrequencyModel freqModel){
-        this(microsatellite, freqModel,
-            null, null, null, null, null, null);
+        this(
+                microsatellite,
+                freqModel,
+                null, null, null, null, null, null,
+                false);
 
     }
+
+
+    public AsymmetricQuadraticModel(Microsatellite microsatellite, FrequencyModel freqModel, boolean isNested){
+        this(
+                microsatellite,
+                freqModel,
+                null, null, null, null, null, null,
+                isNested
+        );
+
+    }
+
 
     /**
      * Constructor
@@ -45,29 +62,26 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
      * @param contractConst     Contraction constant
      * @param contractLin       Contraction linear coefficient
      * @param contractQuad      Contraction quadratic coefficient
+     * @param isNested          boolean indicating whether this object is a submodel of another microsatellite model
      */
     public AsymmetricQuadraticModel(Microsatellite microsatellite, FrequencyModel freqModel,
                     Parameter expanConst, Parameter expanLin, Parameter expanQuad,
-                    Parameter contractConst, Parameter contractLin, Parameter contractQuad){
-        
-        super("AsymmetricQuadraticModel", microsatellite, freqModel,null);
+                    Parameter contractConst, Parameter contractLin, Parameter contractQuad,
+                    boolean isNested){
+
+        super(ASYMQUAD_MODEL, microsatellite, freqModel,null);
 
 
         //The default setting of the parameters gives the same infinitesimal rates
-        // as the truncated stepwise mutational model.
+        // as the StepwiseMutaionalModel class.
         this.expanConst = overrideDefault(new Parameter.Default(1.0), expanConst);
         this.expanLin = overrideDefault(new Parameter.Default(0.0), expanLin);
         this.expanQuad = overrideDefault(new Parameter.Default(0.0), expanQuad);
-        this.contractConst = overrideDefault(new Parameter.Default(1.0), contractConst);
-        this.contractLin = overrideDefault(new Parameter.Default(0.0), contractLin);
-        this.contractQuad = overrideDefault(new Parameter.Default(0.0), contractQuad);
-
-        addVariable(this.expanConst);
-        addVariable(this.expanLin);
-        addVariable(this.expanQuad);
-        addVariable(this.contractConst);
-        addVariable(this.contractLin);
-        addVariable(this.contractQuad);
+        this.contractConst = overrideDefault(this.expanConst, contractConst);
+        this.contractLin = overrideDefault(this.expanLin, contractLin);
+        this.contractQuad = overrideDefault(this.expanQuad, contractQuad);
+        this.isNested = isNested;
+        addParameters();
 
         setupInfinitesimalRates();
 
@@ -77,16 +91,33 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
             computeStationaryDistribution();
         }else{
             this.freqModel = freqModel;
-            addModel(this.freqModel);
         }
+
+        addModel(this.freqModel);
+
     }
+
+    private void addParameters(){
+        addParam(this.expanConst);
+        addParam(this.expanLin);
+        addParam(this.expanQuad);
+        if(this.contractConst != this.expanConst)
+            addParam(this.contractConst);
+        if(this.contractLin != this.expanLin)
+            addParam(this.contractLin);
+        if(this.contractQuad != this.expanQuad)
+            addParam(this.contractQuad);
+    }
+
+
+
 
     /*
      *  This method will override the default value of the parameter using the value specified by the user.
      */
     private Parameter overrideDefault(Parameter defaultParam, Parameter providedParam){
-        if(providedParam != null)
-            defaultParam = providedParam;
+        if(providedParam != null && providedParam != defaultParam)
+            return providedParam;
         return defaultParam;
     }
 
@@ -99,6 +130,7 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
      */
     public void setupInfinitesimalRates(){
 
+
         double u0 = expanConst.getParameterValue(0);
         double u1 = expanLin.getParameterValue(0);
         double u2 = expanQuad.getParameterValue(0);
@@ -107,38 +139,31 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
         double d1 = contractLin.getParameterValue(0);
         double d2 = contractQuad.getParameterValue(0);
 
-        double[] q = new double[stateCount*(stateCount-1)];
-        int k = 0;
-        for(int i = 0; i < stateCount; i++){
-            for(int j = 0; j < stateCount; j++){
-                if(i!=j){
-                    if(j == i+1){
-
-                        q[k] = u0+u1*i+u2*i*i;
-
-                    }else if (j == i-1){
-
-                        q[k] = d0+d1*i+d2*i*i;
-
-                    }else{
-
-                        q[k] = 0.0;
-
-                    }
-                    k++;
-                }
+        double rowSum;
+        for(int i = 0; i < stateCount;i++){
+            rowSum = 0.0;
+            if(i - 1 > -1){
+                infinitesimalRateMatrix[i][i - 1] =d0+d1*i+d2*i*i;
+                rowSum = rowSum + infinitesimalRateMatrix[i][i - 1];
 
             }
+
+            if(i + 1 < stateCount){
+                infinitesimalRateMatrix[i][i + 1] = u0+u1*i+u2*i*i;
+                rowSum = rowSum + infinitesimalRateMatrix[i][i + 1];
+
+            }
+
+            infinitesimalRateMatrix[i][i] = rowSum*-1;
+
         }
 
-        infinitesimalRates = new Parameter.Default(q);
 
     }
-    
+
 
     public void setupMatrix(){
         setupInfinitesimalRates();
-        computeStationaryDistribution();
         super.setupMatrix();
     }
 
@@ -165,5 +190,5 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     public Parameter getContractionQuad(){
         return contractQuad;
     }
-        
+
 }

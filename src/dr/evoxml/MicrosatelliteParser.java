@@ -7,7 +7,7 @@ import dr.evolution.datatype.Microsatellite;
 /**
  * @author Chieh-Hsi Wu
  *
- * This class is a parser for the microsatellite data type
+ * Microsatellite data type parser
  *
  */
 public class MicrosatelliteParser extends AbstractXMLObjectParser {

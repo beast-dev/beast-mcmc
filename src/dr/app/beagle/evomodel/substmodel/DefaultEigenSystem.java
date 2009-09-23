@@ -31,7 +31,7 @@ import dr.math.MachineAccuracy;
  * A default Eigen decomposition system
  *
  * @author Andrew Rambaut
- * @author Alexei Drummond
+ * @author Marc Suchard
  */
 public class DefaultEigenSystem implements EigenSystem {
 

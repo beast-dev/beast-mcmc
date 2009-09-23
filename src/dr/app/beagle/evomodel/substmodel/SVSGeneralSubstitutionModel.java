@@ -12,9 +12,9 @@ import dr.evolution.datatype.DataType;
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
         BayesianStochasticSearchVariableSelection {
 
-    public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel,
+    public SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
                                        Parameter ratesParameter, Parameter indicatorsParameter) {
-        super(dataType, freqModel, ratesParameter, -1);
+        super(name, dataType, freqModel, ratesParameter, -1);
         this.indicatorsParameter  = indicatorsParameter;
         addVariable(indicatorsParameter);
     }

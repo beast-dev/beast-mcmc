@@ -24,7 +24,7 @@ public interface BayesianStochasticSearchVariableSelection {
             return true;
         }
 
-        /* Determines if the graph is strongly connected, such that there exists
+       /* Determines if the graph is strongly connected, such that there exists
         * a directed path from any vertex to any other vertex
         *
         */

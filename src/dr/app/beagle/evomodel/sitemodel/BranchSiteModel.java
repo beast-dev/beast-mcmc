@@ -13,4 +13,6 @@ public interface BranchSiteModel extends Model {
     EigenDecomposition getEigenDecomposition(int branchIndex, int categoryIndex);
 
     double[] getStateFrequencies(int categoryIndex);
+
+    boolean canReturnComplexDiagonalization();
 }

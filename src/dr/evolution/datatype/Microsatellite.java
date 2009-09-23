@@ -1,12 +1,13 @@
 package dr.evolution.datatype;
-
-
 import java.util.ArrayList;
 
 /**
- *@author Chieh-Hsi Wu
+ * @author Chieh-Hsi Wu
+ *
+ * Microsatellite data type
  */
 public class Microsatellite extends DataType {
+
     public static final String DESCRIPTION = "microsatellite";
     public static int UNKNOWN_STATE_LENGTH = -1;
     private int min;
@@ -92,7 +93,7 @@ public class Microsatellite extends DataType {
         }catch(java.lang.NumberFormatException exp){
             throw new java.lang.NumberFormatException(srtRawLength+" can not be converted. State needs to be an integer or unknown (?).");
         }
-        
+
     }
 
     /**
@@ -102,31 +103,12 @@ public class Microsatellite extends DataType {
      */
     public int getState(int rawLength){
         if(rawLength > UNKNOWN_STATE_LENGTH){
-            return (rawLength - min)/unitLength;
+            return (int)Math.ceil(((double)rawLength - min)/unitLength);
         }else{
             return stateCount;
         }
     }
 
-
-
-    /**
-     *
-     * Takes in length as a String and converts it to a integer.
-     *
-
-    public static int convert(String strState){
-        char ch = strState.charAt(0);
-        try{
-            if(ch == UNKNOWN_CHARACTER){
-                return UNKNOWN_STATE_LENGTH;
-            }else{
-                return Integer.parseInt(strState);
-            }
-        }catch(java.lang.NumberFormatException exp){
-            throw new java.lang.NumberFormatException("State needs to be an integer or unknown (?).");
-        }
-    }*/
 
     /**
      *
@@ -145,7 +127,7 @@ public class Microsatellite extends DataType {
     public static int[] convertToLengths(String[] strStates){
 
         int[] lengths = new int[strStates.length];
-        for(int i = 0; i < strStates.length; i++){           
+        for(int i = 0; i < strStates.length; i++){
             char ch = strStates[i].charAt(0);
             try{
                 if(ch == UNKNOWN_CHARACTER){
@@ -164,8 +146,8 @@ public class Microsatellite extends DataType {
      *
      * @param   stateCode   the code of the state of a microsatellite allele
      * @return  the raw length of the microsallite allele given it's state code
+     *
      */
-
     public int getActualLength(int stateCode){
         if(stateCode <  stateCount){
             return (stateCode+min);
@@ -182,12 +164,11 @@ public class Microsatellite extends DataType {
      * @return true if min <= state <= max, false otherwise.
      *
      */
-    public boolean isOutsideRange(int state){
-        return (state < min || state > max);
+    public boolean isWithinRange(int state){
+        return (state >= min && state <= max);
     }
 
     /**
-     *
      * @return the upper bound of  allele length
      */
     public int getMax(){
@@ -195,7 +176,9 @@ public class Microsatellite extends DataType {
     }
 
     /**
+     *
      * @return the lower bound of allele length
+     *
      */
     public int getMin(){
         return min;
@@ -241,5 +224,5 @@ public class Microsatellite extends DataType {
     public int getType(){
         return -1;
     }
-   
+
 }

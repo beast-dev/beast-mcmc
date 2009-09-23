@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Chieh-Hsi Wu
- * Date: 5/06/2009
  *
  * Parser for Asymmetric Quadratic Model
  */
@@ -21,15 +20,16 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
     public static final String CONTRACTION_LIN = "ContractionLinear";
     public static final String EXPANSION_QUAD = "ExpansionQuad";
     public static final String CONTRACTION_QUAD = "ContractionQuad";
+    public static final String IS_SUBMODEL = "isSubmodel";
 
     public String getParserName() {
-        return "ASYMQUADModel";
+        return AsymmetricQuadraticModel.ASYMQUAD_MODEL;
     }
-        
+
 
     //AbstractXMLObjectParser implementation
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        
+
         Microsatellite microsatellite = (Microsatellite) xo.getChild(Microsatellite.class);
 
         Parameter expanConst = processModelParameter(xo, EXPANSION_CONSTANT);
@@ -37,7 +37,6 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
         Parameter expanLin = processModelParameter(xo, EXPANSION_LIN);
 
         Parameter expanQuad = processModelParameter(xo, EXPANSION_QUAD);
-
 
         Parameter contractConst = processModelParameter(xo, CONTRACTION_CONSTANT);
 
@@ -51,9 +50,19 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
             freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModel.FREQUENCIES);
         }
 
+        boolean isSubmodel = xo.getAttribute(IS_SUBMODEL, false);
 
-        return new AsymmetricQuadraticModel(microsatellite, freqModel,
-                expanConst, expanLin, expanQuad, contractConst, contractLin, contractQuad);
+        return new AsymmetricQuadraticModel(
+                microsatellite,
+                freqModel,
+                expanConst,
+                expanLin,
+                expanQuad,
+                contractConst,
+                contractLin,
+                contractQuad,
+                isSubmodel
+        );
     }
 
     private Parameter processModelParameter(XMLObject xo,
@@ -80,14 +89,15 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-        new ElementRule(Microsatellite.class),
-        new ElementRule(FrequencyModel.class,true),
-        new ElementRule(EXPANSION_CONSTANT,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
-        new ElementRule(CONTRACTION_CONSTANT,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
-        new ElementRule(EXPANSION_LIN,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
-        new ElementRule(CONTRACTION_LIN,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
-        new ElementRule(EXPANSION_QUAD,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
-        new ElementRule(CONTRACTION_QUAD,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true)
+            new ElementRule(Microsatellite.class),
+            new ElementRule(FrequencyModel.class,true),
+            new ElementRule(EXPANSION_CONSTANT,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(CONTRACTION_CONSTANT,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(EXPANSION_LIN,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(CONTRACTION_LIN,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(EXPANSION_QUAD,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(CONTRACTION_QUAD,new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            AttributeRule.newBooleanRule(IS_SUBMODEL,true)
     };
 
     public Class getReturnType() {
@@ -98,5 +108,4 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
         return true;
     }
 }
-
 

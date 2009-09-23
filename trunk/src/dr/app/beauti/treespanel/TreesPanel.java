@@ -509,6 +509,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
+            shareSameTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1);
             return options.getPartitionTreeModels().size();
         }
 

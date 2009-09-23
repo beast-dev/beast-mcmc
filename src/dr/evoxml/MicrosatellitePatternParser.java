@@ -8,29 +8,32 @@ import java.util.logging.Logger;
 
 /**
  * @author Chieh-Hsi Wu
- * Date: 18/07/2009
- * Time: 12:14:19 PM
- * To change this template use File | Settings | File Templates.
+ *
+ * Parser that returns a list of microsatellite patterns
+ *
  */
 public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
 
     public static final String MICROSATPATTERN = "microsatellitePattern";
     public static final String MICROSAT_SEQ = "microsatSeq";
-    public static final String ID ="id";
     public static final String PRINT_DETAILS = "printDetails";
-    public static final String PRINT_PATTERN_CONTENT = "printPatternContent";
+    public static final String PRINT_MSAT_PATTERN_CONTENT = "printMsatPatContent";
+    public static final String ID ="id";
 
-    //returns the name of the Parser as a string
+
+    public static final int COUNT_INCREMENT = 100;
+
     public String getParserName() {
         return MICROSATPATTERN;
     }
 
-    //returns a Patterns object with only one pattern representing that at a microsatellite locus
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Taxa taxonList = (Taxa)xo.getChild(Taxa.class);
-        Microsatellite microsatellite = (Microsatellite)xo.getChild(Microsatellite.class);
-        String[] strLengths = ((String)xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
 
+        Taxa taxonList = (Taxa)xo.getChild(Taxa.class);
+
+        Microsatellite microsatellite = (Microsatellite)xo.getChild(Microsatellite.class);
+
+        String[] strLengths = ((String)xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
         int[] pattern = new int[strLengths.length];
         for(int i = 0; i < strLengths.length; i++){
             pattern[i] = microsatellite.getState(strLengths[i]);
@@ -39,15 +42,16 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
         microsatPat.addPattern(pattern);
         microsatPat.setId((String)xo.getAttribute(ID));
 
-        boolean isPrintingDetails = xo.getAttribute(PRINT_DETAILS, true);
-        boolean isPrintingMicrosatContent = xo.getAttribute(PRINT_PATTERN_CONTENT, true);
-
-        if(isPrintingDetails)
+        if(xo.getAttribute(PRINT_DETAILS,true)){
             printDetails(microsatPat);
-        if(isPrintingMicrosatContent)
+        }
+
+        if(xo.getAttribute(PRINT_MSAT_PATTERN_CONTENT,true)){
             printMicrosatContent(microsatPat);
-        
+        }
+
         return microsatPat;
+
     }
 
     public static void printDetails(Patterns microsatPat){
@@ -83,7 +87,7 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
                             "1,2,3,4,5,67,100")},false),
             new StringAttributeRule(ID, "the name of the locus"),
             AttributeRule.newBooleanRule(PRINT_DETAILS, true),
-            AttributeRule.newBooleanRule(PRINT_PATTERN_CONTENT, true)
+            AttributeRule.newBooleanRule(PRINT_MSAT_PATTERN_CONTENT, true)
 
     };
 

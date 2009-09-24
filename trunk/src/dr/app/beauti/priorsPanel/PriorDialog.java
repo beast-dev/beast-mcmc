@@ -117,7 +117,7 @@ public class PriorDialog {
 			initialField.setValue(parameter.initial);
 		}
 
-		setArguments();
+		setArguments(priorType);
 		setupComponents();
 
 		JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -195,46 +195,74 @@ public class PriorDialog {
 		return result;
 	}
 
-	private void setArguments() {
+	private void setArguments(PriorType priorType) {
+        PriorOptionsPanel panel;
+        switch (priorType) {
+            case UNIFORM_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setRange(parameter.lower, parameter.upper);
+                panel.getField(0).setValue(parameter.lower);
+                panel.getField(1).setRange(parameter.lower, parameter.upper);
+                panel.getField(1).setValue(parameter.upper);
+                break;
 
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setRange(parameter.lower, parameter.upper);
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(0).setValue(parameter.lower);
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setRange(parameter.lower, parameter.upper);
-		optionsPanels.get(PriorType.UNIFORM_PRIOR).getField(1).setValue(parameter.upper);
+            case EXPONENTIAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                if (parameter.mean != 0) {// ExponentialDistribution(1.0 / mean)
+                    panel.getField(0).setValue(parameter.mean);
+                }
+                panel.getField(1).setValue(parameter.offset);
+                break;
 
-        optionsPanels.get(PriorType.LAPLACE_PRIOR).getField(0).setValue(parameter.mean);
-		optionsPanels.get(PriorType.LAPLACE_PRIOR).getField(1).setValue(parameter.stdev);
+            case NORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setValue(parameter.stdev);
+                break;
 
-		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
-		// ExponentialDistribution(1.0 / mean)
-        if (parameter.mean != 0) {
-            optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(0).setValue(parameter.mean);
-		} 
-		optionsPanels.get(PriorType.EXPONENTIAL_PRIOR).getField(1).setValue(parameter.offset);
+            case LOGNORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                if (parameter.mean > 0) {// LOGNORMAL (mean > 0)
+                    panel.getField(0).setValue(parameter.mean);
+                }
+                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(2).setValue(parameter.offset);
+                meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
+                break;
 
-		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(0).setValue(parameter.mean);
-		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.NORMAL_PRIOR).getField(1).setValue(parameter.stdev);
+            case LAPLACE_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+                panel.getField(1).setValue(parameter.stdev);
+                break;
 
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(0).setValue(parameter.mean);
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(1).setValue(parameter.stdev);
-		optionsPanels.get(PriorType.LOGNORMAL_PRIOR).getField(2).setValue(parameter.offset);
-        meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
+            case GAMMA_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.shape);
+                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setValue(parameter.scale);
+                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(2).setValue(parameter.offset);
+                break;
 
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setValue(parameter.shape);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(0).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setValue(parameter.scale);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(1).setRange(0.0, Double.MAX_VALUE);
-		optionsPanels.get(PriorType.GAMMA_PRIOR).getField(2).setValue(parameter.offset);
+            case INVERSE_GAMMA_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.shape);
+                panel.getField(1).setValue(parameter.scale);
+                panel.getField(2).setValue(parameter.offset);
+                break;
 
-        optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(0).setValue(parameter.shape);
-		optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(1).setValue(parameter.scale);
-		optionsPanels.get(PriorType.INVERSE_GAMMA_PRIOR).getField(2).setValue(parameter.offset);
-
-        optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(0).setValue(parameter.mean);
-		optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(1).setValue(parameter.stdev);
-		optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(2).setValue(parameter.lower);
-        optionsPanels.get(PriorType.TRUNC_NORMAL_PRIOR).getField(3).setValue(parameter.upper);
+            case TRUNC_NORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(2).setValue(parameter.lower);
+                panel.getField(3).setValue(parameter.upper);
+                break;
+        }
+       
 	}
 
 	private void getArguments() {
@@ -409,7 +437,7 @@ public class PriorDialog {
 		public LogNormalOptionsPanel() {
             String l = "Log(Mean)";
             if (meanInRealSpaceCheck.isSelected()) l = "Mean";
-            addField(l, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField(l, 0.01, 0.0, Double.POSITIVE_INFINITY);
 			addField("Log(Stdev)", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
 			addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
             addCheckBox("Mean In Real Space", meanInRealSpaceCheck);            

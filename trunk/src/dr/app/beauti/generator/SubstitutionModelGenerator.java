@@ -21,7 +21,6 @@ import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
-import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 /**

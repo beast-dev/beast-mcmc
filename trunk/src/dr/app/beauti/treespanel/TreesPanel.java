@@ -26,7 +26,6 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.*;
 import dr.app.beauti.options.*;
@@ -71,7 +70,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private BeautiFrame frame = null;    
 	private BeautiOptions options = null;
 
-	private JScrollPane scrollPane = new JScrollPane();
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
@@ -121,7 +119,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             }
         });
 
-        scrollPane = new JScrollPane(treesTable,
+        JScrollPane scrollPane = new JScrollPane(treesTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
@@ -391,7 +389,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             treeModelBorder.setTitle("Tree Model"); 
             treePriorPanelParent.removeAll();
             treePriorBorder.setTitle("Tree Prior");
-            
+
         	return;
         }
     }

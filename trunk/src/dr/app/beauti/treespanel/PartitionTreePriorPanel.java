@@ -30,7 +30,6 @@ import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.generator.BeastGenerator;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;

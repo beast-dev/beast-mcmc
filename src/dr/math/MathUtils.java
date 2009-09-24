@@ -235,8 +235,27 @@ public class MathUtils {
 		}
 	}
 
+    /**
+	 * Access a default instance of this class, access is synchronized
+	 */
+	public static double nextInverseGaussian(double mu, double lambda) {
+		synchronized (random) {
+			/* CODE TAKEN FROM WIKIPEDIA. TESTING DONE WITH RESULTS GENERATED IN R AND LOOK COMPARABLE */
+            double v = random.nextGaussian();   // sample from a normal distribution with a mean of 0 and 1 standard deviation
+            double y = v * v;
+            double x = mu + (mu * mu * y)/(2 * lambda) - (mu/(2 * lambda)) * Math.sqrt(4 * mu * lambda * y + mu * mu * y * y);
+            double test = MathUtils.nextDouble();  // sample from a uniform distribution between 0 and 1
+            if (test <= (mu) / (mu + x)) {
+                return x;
+            }
+            else {
+                return (mu * mu) / x;
+            }
+		}
+	}
 
-	/**
+
+    /**
 	 * Access a default instance of this class, access is synchronized
 	 */
 	public static float nextFloat() {

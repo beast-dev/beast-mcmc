@@ -2,6 +2,8 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+
 import java.util.ArrayList;
 
 /**
@@ -102,8 +104,8 @@ public class LinearBiasModel extends OnePhaseModel{
         addModel(this.freqModel);
 
     }
-    protected void handleParameterChangedEvent(Parameter parameter, int index, Parameter.ChangeType type) {
-        if(submodelParameters !=null && submodelParameters.indexOf(parameter) != -1){
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(submodelParameters !=null && submodelParameters.indexOf((Parameter)variable) != -1){
             updateSubmodelRates = true;
         }
         updateMatrix = true;

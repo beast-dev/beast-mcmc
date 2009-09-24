@@ -230,7 +230,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
         int i = 0;
 
-        storeIntoAmat(getRates());
+        storeIntoAmat();
 
 
         makeValid(amat, stateCount);
@@ -327,16 +327,18 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     //store the infinitesimal rates in the vector to a matrix called amat
-    public void storeIntoAmat(double[] rates) {
+    //store the infinitesimal rates in the vector to a matrix called amat
+    public void storeIntoAmat(){
+        double[] rates = getRates();
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
-            for (j = i + 1; j < stateCount; j++) {
+            for (j = i+1; j < stateCount; j++) {
                 amat[i][j] = rates[k++];
             }
         }
         // Copy lower triangle in column-order form (transposed)
-        for (j = 0; j < stateCount; j++) {
-            for (i = j + 1; i < stateCount; i++) {
+        for (j = 0; j< stateCount; j++) {
+            for (i = j+1; i < stateCount; i++) {
                 amat[i][j] = rates[k++];
             }
         }

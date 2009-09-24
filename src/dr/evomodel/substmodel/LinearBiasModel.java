@@ -19,37 +19,47 @@ public class LinearBiasModel extends OnePhaseModel{
     private ArrayList<Parameter> submodelParameters = null;
     private boolean estimateSubmodelParams = false;
     private boolean updateSubmodelRates = false;
-    private boolean logistics = false;
+    private boolean inLogitSpace = false;
 
     public double delta = 1e-15;
 
     public static final String LINEAR_BIAS_MODEL = "LINEARBIASModel";
 
 
-    /*
-     *Constructor
+    /**
+     * Constructor
+     *
+     * @param microsatellite            microsatellite data type
+     * @param freqModel                 user specified initial equilibrium frequencies
+     * @param submodel                  submodel of this linear bias model
+     * @param biasConst                 bias constant parameter
+     * @param biasLinear                bias linear parameter
+     * @param inLogitSpace              indicates whether the bias parameters are in the logit space
+     * @param estimateSubmodelParams    inidicate whether the parameters of submodel will be estimated
+     * @param isSubmodel                inidicate whether this model is a submodel of another microsatellite model
      */
     public LinearBiasModel(
             Microsatellite microsatellite,
             FrequencyModel freqModel,
-            OnePhaseModel subModel,
+            OnePhaseModel submodel,
             Parameter biasConst,
             Parameter biasLinear,
-            boolean logistics,
+            boolean inLogitSpace,
             boolean estimateSubmodelParams,
-            boolean isNested){
+            boolean isSubmodel){
 
         super(LINEAR_BIAS_MODEL, microsatellite, freqModel, null);
 
-        this.isNested = isNested;
-        this.subModel = subModel;
+        isNested = isSubmodel;
+        this.subModel = submodel;
         this.estimateSubmodelParams = estimateSubmodelParams;
         if(this.estimateSubmodelParams){
             submodelParameters = new ArrayList<Parameter>();
             for(int i = 0; i < subModel.getNestedParameterCount(); i++){
 
-                if(this.isNested)
+                if(isNested){
                     addVariable(subModel.getNestedParameter(i));
+                }
 
                 addParam(subModel.getNestedParameter(i));
                 submodelParameters.add(subModel.getNestedParameter(i));
@@ -77,8 +87,8 @@ public class LinearBiasModel extends OnePhaseModel{
         addParam(this.biasConst);
         addParam(this.biasLin);
 
-        this.logistics = logistics;
-        System.out.println("In logistics-space: "+this.logistics);
+        this.inLogitSpace = inLogitSpace;
+        System.out.println("In logit-space: "+this.inLogitSpace);
 
         setupInfinitesimalRates();
 
@@ -150,7 +160,7 @@ public class LinearBiasModel extends OnePhaseModel{
 
     public double computeExpansionProb(double biasConst, double biasLin, int length){
         double expanProb = 0.5;
-        if(logistics){
+        if(inLogitSpace){
             double numerator = Math.exp(biasConst+biasLin*length);
             expanProb = numerator/(1+numerator);
         }else{
@@ -179,8 +189,8 @@ public class LinearBiasModel extends OnePhaseModel{
         return estimateSubmodelParams;
     }
 
-    public boolean usingLogitSpace(){
-        return logistics;
+    public boolean isInLogitSpace(){
+        return inLogitSpace;
     }
 
 }

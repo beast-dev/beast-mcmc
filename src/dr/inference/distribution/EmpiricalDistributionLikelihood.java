@@ -34,6 +34,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.awt.geom.Point2D;
 
 /**
  * A class that returns the log likelihood of a set of data (statistics)
@@ -44,22 +48,98 @@ import java.util.StringTokenizer;
  * @version $Id:$
  */
 
-public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelihood {
+public abstract class EmpiricalDistributionLikelihood extends AbstractDistributionLikelihood {
 
-    public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empricalDistributionLikelihood";
+    public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
     private int from = -1;
     private int to = Integer.MAX_VALUE;
 
-    public EmpiricalDistributionLikelihood(String fileName, boolean inverse) {
+    public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
 
-        readFile(fileName);
+        if (byColumn)
+            readFileByColumn(fileName);
+        else
+            readFileByRow(fileName);
 
         this.inverse = inverse;    
     }
 
-    protected void readFile(String fileName) {
+    class ComparablePoint2D extends Point2D.Double implements Comparable {
+
+        ComparablePoint2D(double x, double y) {
+            super(x,y);
+        }
+        public int compareTo(Object o) {
+            ComparablePoint2D ptO = (ComparablePoint2D)o;
+            if (getX() > ptO.getX())
+                return 1;
+            if (getX() == ptO.getX())
+                return 0;
+            return -1;
+        }
+    }
+
+    protected void readFileByRow(String fileName) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+
+            List<ComparablePoint2D> ptList = new ArrayList<ComparablePoint2D>();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                StringTokenizer st = new StringTokenizer(line);
+                try {
+                    double value = Double.valueOf(st.nextToken());
+                    double density = Double.valueOf(st.nextToken());
+                    ptList.add(new ComparablePoint2D(value,density));
+                } catch (Exception e) {
+                    System.err.println("Error parsing line: '"+line+"' in "+fileName);
+                    System.exit(-1);
+                }
+            }
+            Collections.sort(ptList);
+            // Prune off begining and ending zeros
+
+            while( (ptList.get(0).getY() == 0) &&
+                   (ptList.get(1).getY() == 0) )
+                ptList.remove(0);
+
+            while( (ptList.get(ptList.size()-1).getY() == 0) &&
+                   (ptList.get(ptList.size()-2).getY() == 0) )
+                ptList.remove(ptList.size()-1);
+            
+            // Find min density
+            double minDensity = Double.POSITIVE_INFINITY;
+            for(ComparablePoint2D pt : ptList) {
+                if (pt.getY() < minDensity)
+                    minDensity = pt.getY();
+            }
+            // Set zeros in the middle to 1/100th of minDensity
+            for(ComparablePoint2D pt : ptList) {
+                if (pt.getY() == 0)
+                    pt.y = minDensity * 1E-2;
+            }
+            values = new double[ptList.size()];
+            density = new double[ptList.size()];
+            for(int i=0; i<ptList.size(); i++) {
+                ComparablePoint2D pt = ptList.get(i);
+                values[i] = pt.getX();
+                density[i] = pt.getY();
+            }         
+            reader.close();
+
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: "+fileName);
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println("IO exception reading: "+fileName);
+            System.exit(-1);
+        }
+    }
+
+    protected void readFileByColumn(String fileName) {
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
@@ -119,9 +199,11 @@ public class EmpiricalDistributionLikelihood extends AbstractDistributionLikelih
         return logL;
     }
 
-    protected double logPDF(double value) {
-        return 0.0;
-    }
+    abstract protected double logPDF(double value);
+//    {
+
+//        return 0.0;
+//    }
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

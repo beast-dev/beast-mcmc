@@ -34,8 +34,8 @@ import dr.inference.model.Variable;
  */
 public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihood {
 
-    public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse) {
-        super(fileName, inverse);
+    public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse, boolean byColumn) {
+        super(fileName, inverse, byColumn);
 
          // Set-up spline basis, could be degree = 1 for linear interpolation
 //        splineBasis = new SplineBasis(getId(),new Variable.D(values), new Variable.D(density), degree);

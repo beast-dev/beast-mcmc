@@ -49,7 +49,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     //
 
     public static final String TREE_MODEL = "treeModel";
-    
+
     public TreeModel(Tree tree) {
         this(tree, false);
     }
@@ -164,8 +164,8 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * Called when a parameter changes.
      */
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        final Node node = getNodeOfParameter((Parameter)variable);
-        pushTreeChangedEvent(node, (Parameter)variable, index);
+        final Node node = getNodeOfParameter((Parameter) variable);
+        pushTreeChangedEvent(node, (Parameter) variable, index);
     }
 
     private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
@@ -286,11 +286,32 @@ public class TreeModel extends AbstractModel implements MutableTree {
     }
 
     public Object getNodeAttribute(NodeRef node, String name) {
-        throw new UnsupportedOperationException("TreeModel does not use NodeAttributes");
+
+        if (name.equals("rate")) {
+            return getNodeRate(node);
+        }
+
+        return null;
     }
 
     public Iterator getNodeAttributeNames(NodeRef node) {
-        throw new UnsupportedOperationException("TreeModel does not use NodeAttributes");
+        return new Iterator() {
+
+            int i = 0;
+            String[] attributes = {"rate"};
+
+            public boolean hasNext() {
+                return i < attributes.length;
+            }
+
+            public Object next() {
+                return attributes[i++];
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException("can't remove from this iterator!");
+            }
+        };
     }
 
     public boolean hasNodeTraits() {
@@ -677,7 +698,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             }
 
             public Taxon next() {
-                index ++;
+                index++;
                 return getTaxon(index);
             }
 

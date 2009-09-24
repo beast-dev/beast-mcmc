@@ -46,8 +46,6 @@ import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
@@ -352,20 +350,10 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {                
                 case 2:// Check box
-                    if (fixedMeanRateCheck.isSelected()) {
-                        editable = false;
-                	} else {
-                		editable = true;
-                	}
+                    editable = !fixedMeanRateCheck.isSelected();
                     break;
                 case 3:
-                	if (fixedMeanRateCheck.isSelected()) {
-                		editable = false;
-                	} else if ((Boolean) getValueAt(row, 2)) {
-                		editable = false;    	        	
-                	} else {
-                		editable = true;
-                	}
+                    editable = !fixedMeanRateCheck.isSelected() && !((Boolean) getValueAt(row, 2));
                     break;                
                 default:
                     editable = true;

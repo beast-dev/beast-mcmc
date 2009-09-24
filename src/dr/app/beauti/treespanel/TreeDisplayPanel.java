@@ -28,10 +28,8 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.tree.Tree;
-import dr.gui.chart.*;
 import dr.gui.tree.JTreeDisplay;
 import dr.gui.tree.SquareTreePainter;
-import dr.stats.Regression;
 
 import javax.swing.*;
 import java.awt.*;

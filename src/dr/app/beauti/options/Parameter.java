@@ -224,7 +224,8 @@ public class Parameter {
         offset = builder.offset; 
         
         // ExponentialDistribution(1.0 / mean)
-        if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1; 
+        if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1;
+        if (priorType == PriorType.LOGNORMAL_PRIOR && mean == 0) mean = 0.01; 
     } 
     
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++

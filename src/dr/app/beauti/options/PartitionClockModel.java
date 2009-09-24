@@ -28,7 +28,6 @@ import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -215,7 +215,7 @@ public class TimeSlicer {
 
 
             if (sdr) {
-                double[][] sliceTreeRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
+                double[][] sliceTreeWeightedAverageRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
                 double[][] sliceTreeMaxRates = new double[sliceTreeDistanceArrays.size()][sliceCount];
 
                 double[][] sliceTreeDistances = new double[sliceCount][sliceTreeDistanceArrays.size()];
@@ -223,7 +223,8 @@ public class TimeSlicer {
                 //double[][] sliceTreeMaxDistances = new double[sliceCount][sliceTreeMaxDistanceArrays.size()];
                 double[][] sliceTreeMaxDistances = new double[sliceTreeMaxDistanceArrays.size()][sliceCount];
                 double[][] sliceTreeTimesFromRoot = new double[sliceCount][sliceTreeTimeFromRootArrays.size()];
-                double[][] sliceTreeDiffusionCoefficients = new double[sliceCount][sliceTreeDiffusionCoefficientArrays.size()];
+                double[][] sliceTreeDiffusionCoefficients = new double[sliceTreeDiffusionCoefficientArrays.size()][sliceCount];
+                //double[][] sliceTreeWeightedAverageDiffusionCoefficients = new double[sliceTreeDistanceArrays.size()][sliceCount];
                 for (int q = 0; q < sliceTreeDistanceArrays.size(); q++){
                     double[] distanceArray = (double[])sliceTreeDistanceArrays.get(q);
                     double[] timeArray = (double[])sliceTreeTimeArrays.get(q);
@@ -235,13 +236,13 @@ public class TimeSlicer {
                         sliceTreeTimes[r][q] = timeArray[r];
                         sliceTreeMaxDistances[q][r] = maxDistanceArray[r];
                         sliceTreeTimesFromRoot[r][q] = timeFromRootArray[r];
-                        sliceTreeDiffusionCoefficients[r][q] = diffusionCoefficientArray[r];
+                        sliceTreeDiffusionCoefficients[q][r] = diffusionCoefficientArray[r];
                     }
                 }
 
                 //print2DArray(sliceTreeDistances,"sliceTreeDistances.txt");
                 //print2DArray(sliceTreeTimes,"sliceTreeTimes.txt");
-                //print2DTransposedArray(sliceTreeMaxDistances,"sliceTreeMaxDistances.txt");
+                //print2DTransposedArray(sliceTreeDiffusionCoefficients,"sliceTreeDiffusionCoefficients.txt");
                 //print2DArray(sliceTreeTimesFromRoot,"sliceTreeTimesFromRoot.txt");
 
                 if (sliceCount > 1) {
@@ -254,25 +255,31 @@ public class TimeSlicer {
                         for (int t = 0; t <  (sliceCount-1); t++) {
                            sliceTreeMaxRates[s][t] = (maxDistanceArray[t])/(timeFromRoot[t]);
                            if ((timeArray[t] - timeArray[t+1]) > ((Double)treeLengths.get(s)*treeLengthPercentage) ) {
-                                sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
-                                //sliceTreeRates[s][t] = (sliceTreeDistances[t][s] - sliceTreeDistances[t+1][s])/(sliceTreeTimes[t][s] - sliceTreeTimes[t+1][s]);
-                            } else {
+                                sliceTreeWeightedAverageRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
+                               //sliceTreeWeightedAverageRates[s][t] = (sliceTreeDistances[t][s] - sliceTreeDistances[t+1][s])/(sliceTreeTimes[t][s] - sliceTreeTimes[t+1][s]);
+                                //sliceTreeWeightedAverageDiffusionCoefficients[s][t] = Math.pow((distanceArray[t] - distanceArray[t+1]),2.0)/(4.0*(timeArray[t] - timeArray[t+1]));
+                           } else {
                                 if (timeArray[t] > 0) {
-                                    sliceTreeRates[s][t] = sliceTreeRates[s][t-1];
+                                    sliceTreeWeightedAverageRates[s][t] = sliceTreeWeightedAverageRates[s][t-1];
+                                    //sliceTreeWeightedAverageDiffusionCoefficients[s][t] = sliceTreeWeightedAverageDiffusionCoefficients[s][t-1];
                                 } else {
                                     //set it to NaN, we ignore NaNs when getting summary stats
-                                    sliceTreeRates[s][t] = (distanceArray[t] - distanceArray[t+1])/(timeArray[t] - timeArray[t+1]);
+                                    sliceTreeWeightedAverageRates[s][t] = Double.NaN;
+                                    //sliceTreeWeightedAverageDiffusionCoefficients[s][t] = Double.NaN;
                                 }
                             }
                         }
 
                         if ((timeArray[sliceCount-1]) > ((Double)treeLengths.get(s)*treeLengthPercentage) ) {
-                            sliceTreeRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                            sliceTreeWeightedAverageRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                            //sliceTreeWeightedAverageDiffusionCoefficients[s][sliceCount-1] = Math.pow(distanceArray[sliceCount-1],2.0)/(4.0*timeArray[sliceCount-1]);
                         } else {
                             if ((timeArray[sliceCount-1]) > 0) {
-                                sliceTreeRates[s][sliceCount-1] = sliceTreeRates[s][sliceCount-2];
+                                sliceTreeWeightedAverageRates[s][sliceCount-1] = sliceTreeWeightedAverageRates[s][sliceCount-2];
+                                //sliceTreeWeightedAverageDiffusionCoefficients[s][sliceCount-1] = sliceTreeWeightedAverageDiffusionCoefficients[s][sliceCount-2];
                             } else {
-                                sliceTreeRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                                sliceTreeWeightedAverageRates[s][sliceCount-1] = (distanceArray[sliceCount-1])/(timeArray[sliceCount-1]);
+                                //sliceTreeWeightedAverageDiffusionCoefficients[s][sliceCount-1] = Math.pow(distanceArray[sliceCount-1],2.0)/(4.0*timeArray[sliceCount-1]);
                             }
                         }
                         sliceTreeMaxRates[s][sliceCount-1] = maxDistanceArray[sliceCount-1]/timeFromRoot[sliceCount-1];
@@ -283,13 +290,13 @@ public class TimeSlicer {
                         double[] timeArray = (double[])sliceTreeTimeArrays.get(s);
                         double[] maxDistanceArray = (double[])sliceTreeMaxDistanceArrays.get(s);
                         double[] timeFromRoot = (double[])sliceTreeTimeFromRootArrays.get(s);
-                        sliceTreeRates[s][0] = distanceArray[0]/timeArray[0];
+                        sliceTreeWeightedAverageRates[s][0] = distanceArray[0]/timeArray[0];
+                        //sliceTreeWeightedAverageDiffusionCoefficients[s][0] = Math.pow(distanceArray[0],2.0)/(4.0*timeArray[0]);
                         sliceTreeMaxRates[s][0] = maxDistanceArray[0]/timeFromRoot[0];
                     }
                 }
 
-                //print2DTransposedArray(sliceTreeMaxRates,"sliceTreeMaxRates.txt");
-
+                //print2DTransposedArray(sliceTreeWeightedAverageDiffusionCoefficients,"sliceTreeWeightedAverageDiffusionCoefficients.txt");
 
 
                 try{
@@ -298,21 +305,23 @@ public class TimeSlicer {
                     if (mostRecentSamplingDate > 0) {
                         sliceDispersalRateFile.print("realTime"+"\t");
                     }
-                    sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalDistance"+"\t"+"hpd low"+"\t"+"hpd up" + "mean DiffusionCoefficient"+"\t"+"hpd low"+"\t"+"hpd up" + "\r");
-                    double[] meanDispersalRates = meanColNoNaN(sliceTreeRates);
-                    double[][] hpdDispersalRates = getArrayHPDintervals(sliceTreeRates);
+                    sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalDistance"+"\t"+"hpd low"+"\t"+"hpd up" +"\t"+ "mean DiffusionCoefficient"+"\t"+"hpd low"+"\t"+"hpd up" + "\r");
+                    double[] meanWeightedAverageDispersalRates = meanColNoNaN(sliceTreeWeightedAverageRates);
+                    double[][] hpdWeightedAverageDispersalRates = getArrayHPDintervals(sliceTreeWeightedAverageRates);
                     double[] meanMaxDispersalDistances = meanColNoNaN(sliceTreeMaxDistances);
                     double[][] hpdMaxDispersalDistances = getArrayHPDintervals(sliceTreeMaxDistances);
                     double[] meanMaxDispersalRates = meanColNoNaN(sliceTreeMaxRates);
                     double[][] hpdMaxDispersalRates = getArrayHPDintervals(sliceTreeMaxRates);
                     double[] meanDiffusionCoefficients = meanColNoNaN(sliceTreeDiffusionCoefficients);
                     double[][] hpdDiffusionCoefficients = getArrayHPDintervals(sliceTreeDiffusionCoefficients);
+                    //double[] meanWeightedAverageDiffusionCoefficients = meanColNoNaN(sliceTreeWeightedAverageDiffusionCoefficients);
+                    //double[][] hpdWeightedAverageDiffusionCoefficients = getArrayHPDintervals(sliceTreeWeightedAverageDiffusionCoefficients);
                     for (int u = 0; u < sliceCount; u++) {
                         sliceDispersalRateFile.print(slices[u]+"\t");
                         if (mostRecentSamplingDate > 0) {
                             sliceDispersalRateFile.print((mostRecentSamplingDate-slices[u])+"\t");
                         }
-                        sliceDispersalRateFile.print(meanDispersalRates[u] + "\t"+ hpdDispersalRates[u][0] + "\t" + hpdDispersalRates[u][1] + "\t" + meanMaxDispersalRates[u] + "\t"+ hpdMaxDispersalRates[u][0] + "\t" + hpdMaxDispersalRates[u][1] + "\t" + meanMaxDispersalDistances[u] + "\t"+ hpdMaxDispersalDistances[u][0] + "\t" + hpdMaxDispersalDistances[u][1] + meanDiffusionCoefficients[u] + hpdDiffusionCoefficients[u][0] + hpdDiffusionCoefficients[u][1] + "\r");
+                        sliceDispersalRateFile.print(meanWeightedAverageDispersalRates[u] + "\t"+ hpdWeightedAverageDispersalRates[u][0] + "\t" + hpdWeightedAverageDispersalRates[u][1] + "\t" + meanMaxDispersalRates[u] + "\t"+ hpdMaxDispersalRates[u][0] + "\t" + hpdMaxDispersalRates[u][1] + "\t" + meanMaxDispersalDistances[u] + "\t"+ hpdMaxDispersalDistances[u][0] + "\t" + hpdMaxDispersalDistances[u][1] + "\t" + meanDiffusionCoefficients[u] + "\t" + hpdDiffusionCoefficients[u][0] + "\t" + hpdDiffusionCoefficients[u][1] + "\r");
                     }
                     sliceDispersalRateFile.close();
                 } catch (IOException e) {
@@ -773,7 +782,7 @@ public class TimeSlicer {
         double[] treeTimeFromRoot = new double[sliceCount];
         double[] maxDistanceFromRoot = new double[sliceCount];
         double[] treeSliceDiffusionCoefficient = new double[sliceCount];
-        int[] treeSliceBranchCount = new int[sliceCount];
+        //int[] treeSliceBranchCount = new int[sliceCount];
 
         treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
 
@@ -809,8 +818,8 @@ public class TimeSlicer {
                                 Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
                                 Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
                                 treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
-                                treeSliceDiffusionCoefficient[i] = Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight));
-                                treeSliceBranchCount[i] ++;
+                                treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
+                                //treeSliceBranchCount[i] ++;
                         }
                     }
 
@@ -852,8 +861,8 @@ public class TimeSlicer {
                                 treeSliceTime[i] += (parentHeight-slices[i]);
                                 Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
                                 treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
-                                treeSliceDiffusionCoefficient[i] = Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i]));
-                                treeSliceBranchCount[i] ++;
+                                treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i])))*(parentHeight-slices[i]);
+                                //treeSliceBranchCount[i] ++;
                                 double tempDistanceFromRoot =  getDistanceFromRoot(treeTime,traits[j],trait.getValue());
                                 if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
                                     maxDistanceFromRoot[i] = tempDistanceFromRoot;
@@ -874,7 +883,7 @@ public class TimeSlicer {
             sliceTreeMaxDistanceArrays.add(treeSliceMaxDistance);
             sliceTreeTimeFromRootArrays.add(treeTimeFromRoot);
             for (int i = 0; i < treeSliceDiffusionCoefficient.length; i++){
-                treeSliceDiffusionCoefficient[i] = treeSliceDiffusionCoefficient[i]/treeSliceBranchCount[i];
+                treeSliceDiffusionCoefficient[i] = treeSliceDiffusionCoefficient[i]/treeSliceTime[i];
             }
             sliceTreeDiffusionCoefficientArrays.add(treeSliceDiffusionCoefficient);
         }

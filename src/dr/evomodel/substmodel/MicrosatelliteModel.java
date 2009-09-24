@@ -12,7 +12,7 @@ import dr.inference.model.Model;
  * An abstract class for microsatellite models
  */
 public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
-    protected MicrosatelliteModel subModel;
+    protected OnePhaseModel subModel;
     protected boolean isNested = false;
     protected double[][] infinitesimalRateMatrix = null;
 

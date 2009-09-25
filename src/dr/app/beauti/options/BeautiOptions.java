@@ -424,11 +424,8 @@ public class BeautiOptions extends ModelOptions {
 
 
     public boolean isEBSPSharingSamePrior() {
-    	if (getPartitionTreePriors().size() < 1) {
-    		return false;
-    	} else {
-    		return (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
-    	}
+        return getPartitionTreePriors().size() >= 1 && 
+                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
     }
 
     // ++++++++++++++ Partition Substitution Model ++++++++++++++ 

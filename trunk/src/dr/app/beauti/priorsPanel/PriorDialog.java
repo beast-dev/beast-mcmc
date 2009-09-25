@@ -155,8 +155,8 @@ public class PriorDialog {
                 if (meanInRealSpaceCheck.isSelected()) {
                     currentPanel.replaceFieldName(0, "Mean");
                     if (currentPanel.getValue(0) <= 0) {
-                        currentPanel.getField(0).setValue(1.0);
-                    }
+                        currentPanel.getField(0).setValue(0.01);
+                    } 
                 } else {
                     currentPanel.replaceFieldName(0, "Log(Mean)");
                 }
@@ -224,7 +224,9 @@ public class PriorDialog {
 
             case LOGNORMAL_PRIOR:
                 panel = optionsPanels.get(priorType);
-                if (parameter.mean > 0) {// LOGNORMAL (mean > 0)
+                if (parameter.isMeanInRealSpace() && parameter.mean <= 0) {// if LOGNORMAL && meanInRealSpace = true, then mean > 0
+                    panel.getField(0).setValue(0.01);
+                } else {
                     panel.getField(0).setValue(parameter.mean);
                 }
                 panel.getField(1).setValue(parameter.stdev);
@@ -435,10 +437,12 @@ public class PriorDialog {
 	class LogNormalOptionsPanel extends PriorOptionsPanel {
 
 		public LogNormalOptionsPanel() {
-            String l = "Log(Mean)";
-            if (meanInRealSpaceCheck.isSelected()) l = "Mean";
-            addField(l, 0.01, 0.0, Double.POSITIVE_INFINITY);
-			addField("Log(Stdev)", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            if (meanInRealSpaceCheck.isSelected()) {
+                addField("Mean", 0.01, 0.0, Double.POSITIVE_INFINITY);
+            } else {
+                addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            }
+            addField("Log(Stdev)", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
 			addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
             addCheckBox("Mean In Real Space", meanInRealSpaceCheck);            
 		}

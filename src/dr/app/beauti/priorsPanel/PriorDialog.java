@@ -156,9 +156,11 @@ public class PriorDialog {
                     currentPanel.replaceFieldName(0, "Mean");
                     if (currentPanel.getValue(0) <= 0) {
                         currentPanel.getField(0).setValue(0.01);
-                    } 
+                    }
+                    currentPanel.getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
                 } else {
                     currentPanel.replaceFieldName(0, "Log(Mean)");
+                    currentPanel.getField(0).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                 }
 
                 setupChart();

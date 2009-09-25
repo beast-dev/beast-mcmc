@@ -67,7 +67,7 @@ public class PriorOptions extends ModelOptions {
         double avgInitialRate = rootAndRate[1];
         
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
         	
             growthRateMaximum = 1E6 * avgInitialRate;
             birthRateMaximum = 1E6 * avgInitialRate;   

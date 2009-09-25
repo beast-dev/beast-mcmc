@@ -34,11 +34,10 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JCheckBox;
-import javax.swing.JOptionPane;
+
 
 
 /**
@@ -52,7 +51,7 @@ public class ClockModelOptions extends ModelOptions {
     // Instance variables
     private final BeautiOptions options;
 
-    private FixRateType rateOptionClockModel = FixRateType.RElATIVE_TO;
+    private FixRateType rateOptionClockModel = FixRateType.RELATIVE_TO;
     private double meanRelativeRate = 1.0;
 
     public ClockModelOptions(BeautiOptions options) {
@@ -80,9 +79,8 @@ public class ClockModelOptions extends ModelOptions {
     /**
      * return a list of parameters that are required
      *
-     * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> params) {
+    public void selectParameters() {
 
     }
 
@@ -102,7 +100,7 @@ public class ClockModelOptions extends ModelOptions {
         }
 
         //up down all rates and trees operator only available for *BEAST and EBSP
-        if (rateOptionClockModel == FixRateType.RElATIVE_TO && //TODO what about Calibration? 
+        if (rateOptionClockModel == FixRateType.RELATIVE_TO && //TODO what about Calibration? 
                 (options.starBEASTOptions.isSpeciesAnalysis() || options.isEBSPSharingSamePrior())) {
             ops.add(getOperator("upDownAllRatesHeights"));
         }
@@ -138,7 +136,7 @@ public class ClockModelOptions extends ModelOptions {
 
         switch (options.clockModelOptions.getRateOptionClockModel()) {
             case FIX_MEAN:
-            case RElATIVE_TO:
+            case RELATIVE_TO:
                 if (options.hasData()) {
                     avgInitialRootHeight = avgMeanDistance / avgInitialRate;
                 }
@@ -170,7 +168,7 @@ public class ClockModelOptions extends ModelOptions {
 
     public double getSelectedRate(List<PartitionData> partitions) {
         double selectedRate = 1;
-        double avgInitialRootHeight = 1;
+        double avgInitialRootHeight;
         double avgMeanDistance = 1;
         // calibration: all isEstimatedRate = true
         switch (options.clockModelOptions.getRateOptionClockModel()) {
@@ -178,7 +176,7 @@ public class ClockModelOptions extends ModelOptions {
                 selectedRate = meanRelativeRate;
                 break;
                 
-            case RElATIVE_TO:
+            case RELATIVE_TO:
                 List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
                 // fix ?th partition
                 if (models.size() == 1) {
@@ -215,20 +213,20 @@ public class ClockModelOptions extends ModelOptions {
         return selectedRate;
     }
     
-    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
-
-        List<PartitionData> allData = new ArrayList<PartitionData>();
-
-        for (PartitionClockModel model : models) {
-            for (PartitionData partition : model.getAllPartitionData()) {
-                if (partition != null && (!allData.contains(partition))) {
-                    allData.add(partition);
-                }
-            }
-        }
-
-        return allData;
-    }
+//    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
+//
+//        List<PartitionData> allData = new ArrayList<PartitionData>();
+//
+//        for (PartitionClockModel model : models) {
+//            for (PartitionData partition : model.getAllPartitionData()) {
+//                if (partition != null && (!allData.contains(partition))) {
+//                    allData.add(partition);
+//                }
+//            }
+//        }
+//
+//        return allData;
+//    }
 
     private double getCalibrationEstimateOfRootTime(List<PartitionData> partitions) {
 
@@ -326,16 +324,14 @@ public class ClockModelOptions extends ModelOptions {
 
     // Calibration Series Data
     public double getAverageRateForCalibrationSeriesData() {
-        double averageRate = 0;
         //TODO
-        return averageRate;
+        return (double) 0;
     }
 
     // Calibration TMRCA
     public double getAverageRateForCalibrationTMRCA() {
-        double averageRate = 0;
         //TODO
-        return averageRate;
+        return (double) 0;
     }
 
     public boolean isTipCalibrated() {
@@ -343,28 +339,19 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     public boolean isNodeCalibrated(Parameter para) {
-        if ((para.taxa != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
-                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para))) {
-            return true;
-        } else {            
-            return false;
-        }
+        return (para.taxa != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
+                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
     }
     
-    private boolean hasProperPriorOn(Parameter para) {                
-        if (para.priorType == PriorType.LOGNORMAL_PRIOR
+    private boolean hasProperPriorOn(Parameter para) {
+        return para.priorType == PriorType.LOGNORMAL_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR
                 || para.priorType == PriorType.LAPLACE_PRIOR
                 || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.shape > 1)
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.offset > 0)
                 || (para.priorType == PriorType.UNIFORM_PRIOR && para.lower > 0 && para.upper < Double.POSITIVE_INFINITY)
-                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0)) {
-
-            return true;
-        } else {
-            return false;
-        }
+                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0);
     }
 
 
@@ -390,7 +377,7 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     public void fixRateOfFirstClockPartition() {
-        this.rateOptionClockModel = FixRateType.RElATIVE_TO;
+        this.rateOptionClockModel = FixRateType.RELATIVE_TO;
         // fix rate of 1st partition
         int i = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -438,7 +425,7 @@ public class ClockModelOptions extends ModelOptions {
     }
     
     public String statusMessageClockModel() {
-        if (rateOptionClockModel == FixRateType.RElATIVE_TO) {
+        if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
             if (options.getPartitionClockModels().size() == 1) { // single partition clock
                 if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
                     return "Estimate clock rate";

@@ -171,7 +171,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectParameters(parameters);
         }
-        clockModelOptions.selectParameters(parameters);
+        clockModelOptions.selectParameters();
 
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
             tree.selectParameters(parameters);

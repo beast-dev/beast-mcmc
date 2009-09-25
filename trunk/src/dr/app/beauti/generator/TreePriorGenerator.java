@@ -172,7 +172,7 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeOpenTag(LogisticGrowthModel.TIME_50);
 	            
 	            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
             		writer.writeComment("No calibration");
 		            dr.app.beauti.options.Parameter priorPara = prior.getParameter("logistic.t50");
 		            		           

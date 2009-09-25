@@ -107,7 +107,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 		removeAll();
 		
 		if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 			initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
 			initRootHeightField.setColumns(10);
 			initRootHeightField.setEnabled(false);

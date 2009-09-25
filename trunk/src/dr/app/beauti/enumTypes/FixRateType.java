@@ -29,7 +29,7 @@ package dr.app.beauti.enumTypes;
  */
 public enum FixRateType {
 	FIX_MEAN("Estimate relative clock rates (fixed mean)"), // 
-    RElATIVE_TO("Estimate clock rates relative to"),
+    RELATIVE_TO("Estimate clock rates relative to"),
 	TIP_CALIBRATED("Tip times calibrated"), // 
 	NODE_CALIBRATED("Internal node(s) calibrated"), // 
 	RATE_CALIBRATED("Rate is calibrated"); // 

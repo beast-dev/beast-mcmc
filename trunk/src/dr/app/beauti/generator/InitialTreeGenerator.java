@@ -84,7 +84,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                                	
                 if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {            	
+            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {            	
                 	
             		writer.writeComment("No calibration");
 	            	writer.writeOpenTag(

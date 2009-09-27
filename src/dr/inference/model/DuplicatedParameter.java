@@ -12,6 +12,7 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
 
     public DuplicatedParameter(Parameter parameter) {
         this.parameter = parameter;
+        parameter.addVariableListener(this);
         copies = 1;
         originalBounds = parameter.getBounds();
         bounds = originalBounds;
@@ -97,10 +98,9 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == dupParameter) {
             updateDuplication();
-        } else {
-            System.err.println("Called by " + variable.getId());
-            throw new RuntimeException("Not yet implemented.");
         }
+        // Values have changed, so notify listeners
+        fireParameterChangedEvent();
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

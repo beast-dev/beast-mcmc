@@ -31,6 +31,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.Arrays;
+
 /**
  * An abstract base class for substitution models.
  *
@@ -188,10 +190,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         EigenDecomposition eigen = getEigenDecomposition();
 
+        if (eigen == null) {
+            Arrays.fill(matrix,0.0);
+            return;
+        }
+
         double[] Evec = eigen.getEigenVectors();
-//        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Evec[0]));
         double[] Ievc = eigen.getInverseEigenVectors();
-//        if (DEBUG) System.err.println(new dr.math.matrixAlgebra.Vector(Ievc[0]));
         double[] Eval = eigen.getEigenValues();
 
         // implemented a pool of iexp matrices to support multiple threads
@@ -232,36 +237,51 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return eigenDecomposition;
     }
 
-    /**
-     * setup substitution matrix
-     */
-    private void setupMatrix() {
-        setupRelativeRates(relativeRates);
-
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         int k = 0;
         // Set the instantaneous rate matrix
         for (int i = 0; i < stateCount; i++) {
             for (int j = i + 1; j < stateCount; j++) {
-                q[i][j] = relativeRates[k] * freqModel.getFrequency(j);
-                q[j][i] = relativeRates[k] * freqModel.getFrequency(i);
-                k += 1;
+                matrix[i][j] = rates[k] * pi[j];
+                matrix[j][i] = rates[k] * pi[i];
+                k++;
             }
         }
+    }
 
-         if (savedQ == null) {
-            savedQ = new double[stateCount][stateCount];
-         }
-         for(int i=0; i<stateCount; i++) {
-            for(int j=0; j<stateCount; j++)
-             System.arraycopy(q[i],0,savedQ[i],0,q[i].length);
-         }
+    /**
+     * setup substitution matrix
+     */
+    private void setupMatrix() {
 
+        setupRelativeRates(relativeRates);
+        double[] pi = freqModel.getFrequencies();
+        setupQMatrix(relativeRates, pi, q);
         makeValid(q, stateCount);
-        normalize(q, freqModel.getFrequencies());
+        double normalization = getNormalizationValue(q,pi);
 
         eigenDecomposition = eigenSystem.decomposeMatrix(q);
 
+        if (eigenDecomposition != null)
+            eigenDecomposition.normalizeEigenValues(normalization);
+
         updateMatrix = false;
+    }
+
+    /**
+     * Normalize rate matrix to one expected substitution per unit time
+     *
+     * @param matrix the matrix to normalize to one expected substitution
+     * @param pi     the equilibrium distribution of states
+     * @return expected substitution per unit time
+     */
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double subst = 0.0;
+
+        for (int i = 0; i < stateCount; i++)
+            subst += -matrix[i][i] * pi[i];
+
+       return subst;
     }
 
     static String format = "%2.1e";
@@ -293,31 +313,8 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             }
             matrix[i][i] = -sum;
         }
-//        if(i == 0) {
-//     ;
-//        }
     }
-
-    /**
-     * Normalize rate matrix to one expected substitution per unit time
-     *
-     * @param matrix the matrix to normalize to one expected substitution
-     * @param pi     the equilibrium distribution of states
-     */
-    private void normalize(double[][] matrix, double[] pi) {
-        double subst = 0.0;
-        int dimension = pi.length;
-
-        for (int i = 0; i < dimension; i++)
-            subst += -matrix[i][i] * pi[i];
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                matrix[i][j] = matrix[i][j] / subst;
-            }
-        }
-    }
-
+   
     /**
      * Ensures that frequencies are not smaller than MINFREQ and
      * that two frequencies differ by at least 2*MINFDIFF.

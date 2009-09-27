@@ -54,6 +54,17 @@ public class EigenDecomposition {
         return false;
     }
 
+    /**
+     * This function rescales the eigen values; this is more stable than
+     * rescaling the original Q matrix, also O(stateCount) instead of O(stateCount^2)
+     */
+    public void normalizeEigenValues(double scale) {
+        int dim = Eval.length;
+        for (int i = 0; i < dim; i++)
+
+            Eval[i] /= scale;
+    }
+
     // Eigenvalues, eigenvectors, and inverse eigenvectors
     private final double[] Evec;
     private final double[] Ievc;

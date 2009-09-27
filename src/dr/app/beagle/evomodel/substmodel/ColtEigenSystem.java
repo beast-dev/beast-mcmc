@@ -1,11 +1,10 @@
 package dr.app.beagle.evomodel.substmodel;
 
-import cern.colt.matrix.linalg.EigenvalueDecomposition;
 import cern.colt.matrix.linalg.Property;
 import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.DoubleMatrix1D;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 /**
  * @author Marc Suchard
@@ -14,10 +13,9 @@ public class ColtEigenSystem implements EigenSystem {
 
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
-        EigenvalueDecomposition eigenDecomp = new EigenvalueDecomposition(new DenseDoubleMatrix2D(matrix));
+        RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(new DenseDoubleMatrix2D(matrix));
 
         DoubleMatrix2D eigenV = eigenDecomp.getV();
-        DoubleMatrix1D eigenVReal = eigenDecomp.getRealEigenvalues();
         DoubleMatrix2D eigenVInv;
 
         try {
@@ -28,7 +26,7 @@ public class ColtEigenSystem implements EigenSystem {
 
         double[][] Evec = eigenV.toArray();
         double[][] Ievc = eigenVInv.toArray();
-        double[] Eval = eigenVReal.toArray();
+        double[] Eval = getAllEigenValues(eigenDecomp);
 
         double[] flatEvec = new double[Evec.length * Evec.length];
         double[] flatIevc = new double[Ievc.length * Ievc.length];
@@ -39,6 +37,10 @@ public class ColtEigenSystem implements EigenSystem {
         }
 
         return new EigenDecomposition(flatEvec, flatIevc, Eval);
+    }
+
+    protected double[] getAllEigenValues(RobustEigenDecomposition decomposition) {
+        return decomposition.getRealEigenvalues().toArray();
     }
 
     private static final double minProb = Property.DEFAULT.tolerance();

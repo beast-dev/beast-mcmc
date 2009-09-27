@@ -3,6 +3,7 @@ package dr.inference.model;
 import cern.colt.bitvector.BitVector;
 
 import cern.colt.bitvector.BitVector;
+import dr.math.MathUtils;
 
 /**
  * @author Marc Suchard
@@ -24,7 +25,16 @@ public interface BayesianStochasticSearchVariableSelection {
             return true;
         }
 
-       /* Determines if the graph is strongly connected, such that there exists
+        public static void randomize(Parameter indicators,int dim, boolean reversible) {
+            do {
+                for (int i = 0; i < indicators.getDimension(); i++)
+                    indicators.setParameterValue(i,
+                            (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
+            } while (!(isStronglyConnected(indicators.getParameterValues(),
+                    dim, reversible)));
+        }
+
+        /* Determines if the graph is strongly connected, such that there exists
         * a directed path from any vertex to any other vertex
         *
         */

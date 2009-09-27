@@ -2,11 +2,11 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evolution.datatype.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 
 import java.util.logging.Logger;
 
@@ -21,6 +21,7 @@ public class SVSComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
     public static final String ROOT_FREQ = "rootFrequencies";
+    public static final String RANDOMIZE = "randomizeIndicators";
 
     public String getParserName() {
         return SVS_COMPLEX_SUBSTITUTION_MODEL;
@@ -57,6 +58,11 @@ public class SVSComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(INDICATOR);
 
         Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
+        boolean randomize = xo.getAttribute(RANDOMIZE, false);
+        if (randomize) {
+            BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
+                    dataType.getStateCount(),false);
+        }
 
         if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
             throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
@@ -95,6 +101,7 @@ public class SVSComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newBooleanRule(RANDOMIZE,true),
             new XORRule(
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
                     new ElementRule(DataType.class)

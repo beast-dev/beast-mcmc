@@ -10,11 +10,7 @@ import dr.evolution.datatype.DataType;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.MatrixEntryColumn;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.MathUtils;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
@@ -475,6 +471,12 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public String[] getParserNames() {
+            return new String[] {
+                    getParserName(),"beast_"+getParserName()
+            };
+        }
+
         public String getParserName() {
             return COMPLEX_SUBSTITUTION_MODEL;
         }
@@ -526,11 +528,8 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 boolean connected = xo.getAttribute(CONNECTED, false);
                 model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators, connected);
                 if (randomize) {
-                    do {
-                        for (int i = 0; i < indicators.getDimension(); i++)
-                            indicators.setParameterValue(i,
-                                    (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
-                    } while (!((SVSComplexSubstitutionModel) model).isStronglyConnected());
+                    BayesianStochasticSearchVariableSelection.Utils.randomize(indicators,
+                            dataType.getStateCount(),false);
                 }
                 sb.append("\tBSSVS indicators: " + indicators.getId() + "\n");
                 sb.append("\tGraph must be connected: " + connected + "\n");

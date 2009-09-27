@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
+import dr.inference.model.DuplicatedParameter;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -55,7 +56,8 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         ratesParameter = parameter;
         if (ratesParameter != null) {
             addVariable(ratesParameter);
-            ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
+            if (!(ratesParameter instanceof DuplicatedParameter))
+                ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
         }
         setRatesRelativeTo(relativeTo);
     }

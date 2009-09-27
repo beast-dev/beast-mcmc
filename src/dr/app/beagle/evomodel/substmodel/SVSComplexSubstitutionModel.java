@@ -53,6 +53,14 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
            return 0;
        }
 
+//       public double getLogLikelihood() {
+//        double logL = super.getLogLikelihood();
+//        if (logL == 0 && considerConnectedness && !isStronglyConnected()) { // Also check that graph is connected
+//            logL = Double.NEGATIVE_INFINITY;
+//        }
+//        return logL;
+//    }
+
        private boolean connectedAndWellConditioned() {
            if (probability == null)
                probability = new double[stateCount*stateCount];

@@ -195,6 +195,10 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         parameters.get(dim).setParameterValueQuietly(pindex.get(dim), value);
     }
 
+    public void setParameterValueNotifyChangedAll(int dim, double value){
+        parameters.get(dim).setParameterValueNotifyChangedAll(pindex.get(dim), value);
+    }
+
     protected void storeValues() {
         for (Parameter parameter : uniqueParameters) {
             parameter.storeParameterValues();

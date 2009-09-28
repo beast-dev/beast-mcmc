@@ -82,9 +82,9 @@ public class PartitionClockModel extends PartitionModelOptions {
 //    }
 
     private void initClockModelParaAndOpers() {
-        createParameterClockRate(this, "clock.rate", "substitution rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRate(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRate(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, "clock.rate", "substitution rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRate(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
         createParameterClockRate(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
         
         createScaleOperator("clock.rate", demoTuning, rateWeights);
@@ -134,9 +134,13 @@ public class PartitionClockModel extends PartitionModelOptions {
             }   
             
             rateParam.isFixed = fixed;
-            
+            if (fixed && options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO
+                    && rateParam.initial != rate) {
+                rateParam.initial = rate;
+                rateParam.setPriorEdited(true);
+            }
 //            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-//                     || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+//                     || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 //                
 //                rateParam.priorEdited = true; // important
 //            }
@@ -144,7 +148,7 @@ public class PartitionClockModel extends PartitionModelOptions {
 //            if (!rateParam.priorEdited) {
 //                rateParam.initial = selectedRate;  
 //            }
-            
+
             if (!fixed) params.add(rateParam);
         }
     }

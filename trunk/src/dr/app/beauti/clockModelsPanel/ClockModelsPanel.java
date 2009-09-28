@@ -337,7 +337,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //                    }
                     break;
                 case 3:
-                	model.setRate((Double) aValue);  
+                	model.setRate((Double) aValue);
+                    options.selectParameters();
                 	break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);

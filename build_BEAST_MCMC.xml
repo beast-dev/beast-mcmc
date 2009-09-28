@@ -471,20 +471,21 @@
 		<copy todir="${Linux_package_dir}/native">
 			<fileset dir="${common_dir}/native"/>
 		</copy>
-		<copy file="${release_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
-		<copy file="${release_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
-		<copy file="${release_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
+
+		<copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
+		<copy file="${common_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
+		<copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
 		<copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/>
 		<copy todir="${Linux_package_dir}/lib">
-			<fileset dir="${release_dir}/extra_lib"/>
+			<fileset dir="${Linux_dir}/lib"/>
 		</copy>
-		<copy file="${release_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
-		<copy file="${release_dir}/README.txt" todir="${Linux_package_dir}"/>
+        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
+        <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
 		<tar destfile="${release_dir}/${BEAST_name}v${version}.tgz" compression="gzip">
-			<tarfileset dir="${BEAST_name}v${version}" prefix="${BEAST_name}v${version}"/>
+			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
 		</tar>
 
 		<echo message="Linux/Unix version release is finished." />
@@ -496,24 +497,24 @@
 		<!-- Create the release directory -->
 		<mkdir dir="${Mac_package_dir}" />
 
-		<copy todir="${Mac_package_dir}/bin">
-			<fileset dir="scripts" excludes="*.cmd"/>
-		</copy>
-		<copy todir="${Mac_package_dir}/doc">
-			<fileset dir="doc"/>
-		</copy>
-		<copy todir="${Mac_package_dir}/examples">
-			<fileset dir="examples"/>
-		</copy>
-		<copy todir="${Mac_package_dir}/native">
-			<fileset dir="native"/>
-		</copy>
-		
+        <copy todir="${Mac_package_dir}/bin">
+            <fileset dir="${Mac_dir}/scripts"/>
+        </copy>
+        <copy todir="${Mac_package_dir}/doc">
+            <fileset dir="${common_dir}/doc"/>
+        </copy>
+        <copy todir="${Mac_package_dir}/examples">
+            <fileset dir="${common_dir}/examples"/>
+        </copy>
+        <copy todir="${Mac_package_dir}/native">
+            <fileset dir="${common_dir}/native"/>
+        </copy>
+
 		<copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
 		<copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/>
 		<copy todir="${Mac_package_dir}/lib">
-			<fileset dir="${release_dir}/extra_lib"/>
+			<fileset dir="${Mac_dir}/lib"/>
 		</copy>
 		<copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
 		<copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>

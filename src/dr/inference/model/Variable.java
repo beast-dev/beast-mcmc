@@ -43,7 +43,8 @@ public interface Variable<V> extends Identifiable {
     public enum ChangeType {
         VALUE_CHANGED,
         REMOVED,
-        ADDED
+        ADDED,
+        ALL_VALUES_CHANGED
     }
 
     /**

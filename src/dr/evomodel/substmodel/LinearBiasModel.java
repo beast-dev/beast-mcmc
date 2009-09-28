@@ -112,18 +112,7 @@ public class LinearBiasModel extends OnePhaseModel{
 
     }
 
-    /**
-     * Setting up the infinitesimal Rates
-     * If rates of the submodel at allele i are given by
-     * X -> X + 1 at rate g(i)
-     * X -> X - 1 at rate h(i)
-     * where g(i) and h(i) are functions of the parent microsatellite length,
-     * the rates are defined by the following equations:
-     * X -> X + 1 at rate g(i)*alpha
-     * X -> X - 1 at rate h(i)*(1 - alpha)
-     * Alpha is defined as alpha(biasConst, biasLin, i) = max{0, min{1, u – v(i - k)}}
-     */
-    public void setupInfinitesimalRates(){
+     public void setupInfinitesimalRates(){
         if(updateSubmodelRates){
             subModel.setupInfinitesimalRates();
             updateSubmodelRates = false;

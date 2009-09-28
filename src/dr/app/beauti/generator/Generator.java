@@ -3,7 +3,6 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
@@ -12,9 +11,6 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.SiteList;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
@@ -36,7 +32,7 @@ public abstract class Generator {
 	public static final String SPLIT_POPS = "splitPopSize"; 
 	protected static final String PDIST = "pdist";
 //	protected static final String STP = "stp";
-	protected static final String SPOPS = TraitGuesser.Traits.TRAIT_SPECIES + "." + "popSize";
+	protected static final String SPOPS = TraitGuesser.Traits.TRAIT_SPECIES + "." + "popSizesLikelihood";
 	
     protected final BeautiOptions options;
     
@@ -83,6 +79,7 @@ public abstract class Generator {
     /**
      * write a parameter
      *
+     * @param wrapperName  wrapperName
      * @param id     the id
      * @param writer the writer
      */
@@ -96,6 +93,7 @@ public abstract class Generator {
      * write a parameter
      *
      * @param id     the id
+     * @param options      PartitionOptions
      * @param writer the writer
      */
     public void writeParameter(String id, PartitionOptions options, XMLWriter writer) {
@@ -137,8 +135,10 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param id     the id
-     * @param writer the writer
+     * @param wrapperName     wrapperName
+     * @param id              the id
+     * @param dimension      dimension
+     * @param writer         the writer
      */
     public void writeParameter(String wrapperName, String id, int dimension, XMLWriter writer) {
     	Parameter parameter = options.getParameter(id);
@@ -150,7 +150,10 @@ public abstract class Generator {
     /**
      * write a parameter
      *
+     * @param num     num
+     * @param wrapperName     wrapperName
      * @param id     the id
+     * @param model   PartitionSubstitutionModel
      * @param writer the writer
      */
     public void writeParameter(int num, String wrapperName, String id, PartitionSubstitutionModel model, XMLWriter writer) {
@@ -175,7 +178,7 @@ public abstract class Generator {
     public void writeParameter(Parameter parameter, int dimension, XMLWriter writer) {
 //        Parameter parameter = options.getParameter(id);
         if (parameter == null) {
-            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
+            throw new IllegalArgumentException("parameter (== null) is unknown");
         }
         if (parameter.isFixed) { // with prefix
             writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
@@ -224,6 +227,7 @@ public abstract class Generator {
     /**
      * write a parameter
      *
+     * @param wrapperName     wrapperName
      * @param id        the id
      * @param dimension the dimension
      * @param value     the value
@@ -292,10 +296,8 @@ public abstract class Generator {
         	//FAIL
             throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
         }
-        
-        int[] count = {autocorrelatedClockCount, randomLocalClockCount};
-        
-        return count;
+
+        return new int[]{autocorrelatedClockCount, randomLocalClockCount};
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();

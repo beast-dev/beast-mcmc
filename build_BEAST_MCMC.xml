@@ -555,6 +555,37 @@
             <javaproperty name="com.apple.macos.useScreenMenuBar" value="true"/>
         </jarbundler>
 
+        <jarbundler dir="${Mac_package_dir}"
+                        name="${LogCombiner_name} v${version}"
+                        mainclass="dr.app.tools.LogCombiner"
+                        icon="${common_dir}/icons/utility.icns"
+                        jvmversion="1.5+"
+                        arguments=""
+                        version="${version}"
+                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        bundleid="dr.app.tools.logcombiner" >
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <javaproperty name="com.apple.macos.useScreenMenuBar" value="true"/>
+        </jarbundler>
+
+        <jarbundler dir="${Mac_package_dir}"
+                        name="${TreeAnnotator_name} v${version}"
+                        mainclass="dr.app.tools.TreeAnnotator"
+                        icon="${common_dir}/icons/utility.icns"
+                        jvmversion="1.5+"
+                        arguments=""
+                        version="${version}"
+                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        bundleid="dr.app.tools.treeannotator" >
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <javaproperty name="com.apple.macos.useScreenMenuBar" value="true"/>
+        </jarbundler>
 
 		<echo message="Mac version release is finished." />
 	</target>

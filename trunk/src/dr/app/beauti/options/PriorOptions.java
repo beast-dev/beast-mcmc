@@ -179,7 +179,7 @@ public class PriorOptions extends ModelOptions {
      *
      * @param ops the operator list
      */
-    public void selectOperators() {
+    public void selectOperators(List<Operator> ops) {
                 
     }
     

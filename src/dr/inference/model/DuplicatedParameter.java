@@ -73,6 +73,10 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
         parameter.setParameterValueQuietly(dim % parameter.getDimension(), value);
     }
 
+    public void setParameterValueNotifyChangedAll(int dim, double value){
+        parameter.setParameterValueNotifyChangedAll(dim % parameter.getDimension(), value);
+    }
+
     public String getParameterName() {
         if (getId() == null)
             return "duplicated" + parameter.getParameterName();

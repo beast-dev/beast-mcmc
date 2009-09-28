@@ -81,6 +81,11 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         parameter.setParameterValueQuietly(map[dim],value);
     }
 
+    public void setParameterValueNotifyChangedAll(int dim, double value){
+        parameter.setParameterValueNotifyChangedAll(map[dim],value);
+    }
+
+
     public String getParameterName() {
         if (getId() == null)
             return "masked" + parameter.getParameterName();

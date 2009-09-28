@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.OperatorType;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;
@@ -107,7 +107,7 @@ public class ModelOptions {
         operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
     }
 
-    public void createOperatorUsing2Para(String key, String name, String description, String parameterName1, String parameterName2, 
+    public void createOperatorUsing2Parameters(String key, String name, String description, String parameterName1, String parameterName2, 
                                          OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);

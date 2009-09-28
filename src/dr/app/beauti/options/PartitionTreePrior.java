@@ -23,9 +23,10 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.BirthDeathModelParser;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.*;
 
 import java.util.List;
 
@@ -146,16 +147,15 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
         createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
         createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
-
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
         createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
 
         // hack pass distribution in name
-        createOperatorUsing2Para("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
+        createOperatorUsing2Parameters("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
         		"demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
-        createOperatorUsing2Para("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
+        createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
         		"demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
-        createOperatorUsing2Para("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
+        createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.popSize",
         		"skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);

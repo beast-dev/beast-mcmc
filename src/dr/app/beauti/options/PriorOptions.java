@@ -23,7 +23,6 @@
 
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import dr.app.beauti.enumTypes.FixRateType;
@@ -124,8 +123,7 @@ public class PriorOptions extends ModelOptions {
                         
                     case SUBSTITUTION_RATE_SCALE:
                         param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(substitutionRateMaximum, param.upper);
-                        
+                        param.upper = Math.min(substitutionRateMaximum, param.upper);                        
                         param.initial = avgInitialRate;                                             
                         break;
                         
@@ -181,7 +179,7 @@ public class PriorOptions extends ModelOptions {
      *
      * @param ops the operator list
      */
-    public void selectOperators(List<Operator> ops) {
+    public void selectOperators() {
                 
     }
     

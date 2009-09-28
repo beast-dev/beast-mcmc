@@ -112,7 +112,7 @@ public class LinearBiasModel extends OnePhaseModel{
 
     }
 
-    /*
+    /**
      * Setting up the infinitesimal Rates
      * If rates of the submodel at allele i are given by
      * X -> X + 1 at rate g(i)

@@ -67,6 +67,16 @@ public interface Parameter extends Statistic, Variable<Double> {
      */
     void setParameterValueQuietly(int dim, double value);
 
+
+    /**
+     * sets the scalar value in the given dimensin of this parameter to val,
+     * and notifies that values in all dimension have been changed
+     *
+     * @param dim   the index of the dimension to set
+     * @param value the value to set
+     */
+    void setParameterValueNotifyChangedAll(int dim, double value);
+
     /**
      * @return the name of this parameter
      */
@@ -591,6 +601,18 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void setParameterValueQuietly(int dim, double value) {
             values[dim] = value;
+        }
+
+
+        /**
+         * Sets the values of the parameter and notify that all values of the parameter have changed.
+         *
+         * @param i     index of the value
+         * @param val   to value to set
+         */
+        public void setParameterValueNotifyChangedAll(int i, double val){
+            values[i] = val;
+            fireParameterChangedEvent(i, Parameter.ChangeType.ALL_VALUES_CHANGED);
         }
 
         protected final void storeValues() {

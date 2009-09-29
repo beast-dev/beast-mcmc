@@ -44,6 +44,7 @@ import dr.evomodel.clock.ACLikelihood;
 import dr.evomodelxml.*;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.xml.LoggerParser;
 import dr.inference.loggers.Columns;
 import dr.inference.distribution.MixedDistributionLikelihood;
@@ -255,10 +256,9 @@ public class LogGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(writer, model);
+            if (model.hasCodon()) {
+            writer.writeIDref(CompoundParameter.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
         }
-
-        if (options.substitutionModelOptions.hasCodon()) {
-            writer.writeIDref(ParameterParser.PARAMETER, "allMus");
         }
 
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {

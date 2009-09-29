@@ -20,6 +20,7 @@ import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.CompoundParameter;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -368,34 +369,51 @@ public class SubstitutionModelGenerator extends Generator {
      * Write the site model XML block.
      *
      * @param model            the partition model to write in BEAST XML
-     * @param writeMuParameter the relative rate parameter for this site model
      * @param writer           the writer
      */
-    public void writeSiteModel(PartitionSubstitutionModel model, boolean writeMuParameter, XMLWriter writer) {
+    public void writeSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
 
         switch (model.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
                     for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                        writeNucSiteModel(i, writeMuParameter, writer, model);
+                        writeNucSiteModel(i, writer, model);
                     }
                     writer.println();
                 } else {
-                    writeNucSiteModel(-1, writeMuParameter, writer, model);
+                    writeNucSiteModel(-1, writer, model);
                 }
                 break;
 
             case DataType.AMINO_ACIDS:
-                writeAASiteModel(writer, writeMuParameter, model);
+                writeAASiteModel(writer, model);
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
-                writeTwoStateSiteModel(writer, writeMuParameter, model);
+                writeTwoStateSiteModel(writer, model);
                 break;
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
+        }
+    }
+
+    /**
+     * Write the allMus for each partition model.
+     *
+     * @param model  PartitionSubstitutionModel
+     * @param writer  XMLWriter
+     */
+    public void writeAllMus(PartitionSubstitutionModel model, XMLWriter writer) {
+        if (model.hasCodon()) { // write allMus for codon model
+            // allMus is global for each gene
+            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "allMus")});
+
+            writeMuParameterRefs(model, writer);
+
+            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
         }
     }
 
@@ -527,11 +545,10 @@ public class SubstitutionModelGenerator extends Generator {
      * Write the nucleotide site model XML block.
      *
      * @param num              the model number
-     * @param writeMuParameter the relative rate parameter for this site model
      * @param writer           the writer
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeNucSiteModel(int num, boolean writeMuParameter, XMLWriter writer, PartitionSubstitutionModel model) {
+    private void writeNucSiteModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix(num);
         String prefix2 = model.getPrefix();
@@ -585,7 +602,7 @@ public class SubstitutionModelGenerator extends Generator {
                   
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
         
-        if (writeMuParameter) {
+        if (model.hasCodon()) {
             writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
         }              
 
@@ -631,10 +648,9 @@ public class SubstitutionModelGenerator extends Generator {
      * Write the two states site model XML block.
      *
      * @param writer           the writer
-     * @param writeMuParameter the relative rate parameter for this site model
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeTwoStateSiteModel(XMLWriter writer, boolean writeMuParameter, PartitionSubstitutionModel model) {
+    private void writeTwoStateSiteModel(XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix();
 
@@ -659,7 +675,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        if (writeMuParameter) {
+        if (model.hasCodon()) {
             writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
         }
 
@@ -681,10 +697,9 @@ public class SubstitutionModelGenerator extends Generator {
      * Write the AA site model XML block.
      *
      * @param writer           the writer
-     * @param writeMuParameter the relative rate parameter for this site model
      * @param model            the partition model to write in BEAST XML
      */
-    private void writeAASiteModel(XMLWriter writer, boolean writeMuParameter, PartitionSubstitutionModel model) {
+    private void writeAASiteModel(XMLWriter writer, PartitionSubstitutionModel model) {
 
         String prefix = model.getPrefix();
 
@@ -697,7 +712,7 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeIDref(EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
-        if (writeMuParameter) {
+        if (model.hasCodon()) {
             writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
         }
 

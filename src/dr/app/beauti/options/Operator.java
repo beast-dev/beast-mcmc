@@ -162,4 +162,9 @@ public class Operator {
         }
         return name;
     }
+
+    public String getBaseName() {
+        return baseName;
+    }
+    
 }

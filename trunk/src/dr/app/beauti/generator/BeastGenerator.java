@@ -27,12 +27,9 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
-import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
@@ -42,25 +39,15 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.clock.ACLikelihood;
-import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.speciation.TreePartitionCoalescent;
 import dr.evomodel.tree.MonophylyStatistic;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.*;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
-import dr.inference.loggers.Columns;
 import dr.inference.model.*;
 import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.xml.LoggerParser;
-import dr.inferencexml.PriorParsers;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -332,20 +319,9 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
         //++++++++++++++++ Site Model ++++++++++++++++++
-        boolean writeMuParameters = options.substitutionModelOptions.hasCodon(); //options.getTotalActivePartitionSubstitutionModelCount() > 1;
-
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            substitutionModelGenerator.writeSiteModel(model, writeMuParameters, writer);
-            writer.writeText("");
-        }
-
-        if (writeMuParameters) { // write allMus for codon model
-            // allMus is global
-            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allMus")});
-            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-                substitutionModelGenerator.writeMuParameterRefs(model, writer);
-            }
-            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {            
+            substitutionModelGenerator.writeSiteModel(model, writer); // site model
+            substitutionModelGenerator.writeAllMus(model, writer); // allMus
             writer.writeText("");
         }
 
@@ -581,10 +557,10 @@ public class BeastGenerator extends Generator {
     /**
      * Generate traits block regarding specific trait name (currently only <species>) from options
      *
-     * @param writer
-     * @param trait
-     * @param traitType
-     * @param taxonList
+     * @param writer     XMLWriter
+     * @param trait      trait
+     * @param traitType  traitType
+     * @param taxonList  TaxonList
      */
     private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
 
@@ -816,7 +792,7 @@ public class BeastGenerator extends Generator {
     /**
      * Write the MCMC block.
      *
-     * @param writer
+     * @param writer  XMLWriter
      */
     public void writeMCMC(XMLWriter writer) {
         writer.writeComment("Define MCMC");

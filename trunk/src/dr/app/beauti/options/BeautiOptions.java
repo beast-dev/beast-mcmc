@@ -118,7 +118,7 @@ public class BeautiOptions extends ModelOptions {
         substTreeLog = false;
         substTreeFileName.clear();
         
-        substitutionModelOptions = new SubstitutionModelOptions(this);
+//        substitutionModelOptions = new SubstitutionModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
@@ -166,7 +166,7 @@ public class BeautiOptions extends ModelOptions {
 //          parameters.addAll(model.getParameters(multiplePartitions));
         	model.selectParameters(parameters);
         }
-        substitutionModelOptions.selectParameters(parameters);
+//        substitutionModelOptions.selectParameters(parameters);
         
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectParameters(parameters);
@@ -314,7 +314,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
         	model.selectOperators(ops);
         }
-        substitutionModelOptions.selectOperators(ops);
+//        substitutionModelOptions.selectOperators(ops);
         
         for (PartitionClockModel model : getPartitionClockModels()) {
             model.selectOperators(ops);
@@ -467,13 +467,13 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionSubstitutionModels(dataPartitions);
     }
 
-    public int getTotalActivePartitionSubstitutionModelCount() {
-        int totalPartitionCount = 0;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            totalPartitionCount += model.getCodonPartitionCount();
-        }
-        return totalPartitionCount;
-    }
+//    public int getTotalActivePartitionSubstitutionModelCount() {
+//        int totalPartitionCount = 0;
+//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+//            totalPartitionCount += model.getCodonPartitionCount();
+//        }
+//        return totalPartitionCount;
+//    }
 
  
     // ++++++++++++++ Partition Clock Model ++++++++++++++    
@@ -751,7 +751,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
     
-    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
+//    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);

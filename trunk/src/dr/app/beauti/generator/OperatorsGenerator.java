@@ -2,11 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Operator;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.options.*;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.app.beauti.enumTypes.ClockType;
@@ -309,9 +305,9 @@ public class OperatorsGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-        if (operator.getName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
+        if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
-            int[] parameterWeights = options.substitutionModelOptions.getPartitionCodonWeights();
+            int[] parameterWeights = ((PartitionSubstitutionModel) operator.parameter1.getOptions()).getPartitionCodonWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];
@@ -327,7 +323,7 @@ public class OperatorsGenerator extends Generator {
                 );
             }
             
-        } else if (operator.getName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
+        } else if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
         	
         	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights();
 

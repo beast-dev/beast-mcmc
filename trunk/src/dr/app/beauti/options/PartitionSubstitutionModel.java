@@ -24,14 +24,10 @@
 package dr.app.beauti.options;
 
 import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.app.beauti.enumTypes.FrequencyPolicyType;
 import dr.evomodel.substmodel.NucModelType;
-import dr.app.beauti.enumTypes.BinaryModelType;
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.*;
 import dr.evolution.datatype.DataType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -185,6 +181,17 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         createParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+
+        // A vector of relative rates across all partitions...
+        createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
+
+        // This only works if the partitions are of the same size...
+//      createOperator("centeredMu", "Relative rates",
+//              "Scales codon position rates relative to each other maintaining mean", "allMus",
+//              OperatorType.CENTERED_SCALE, 0.75, 3.0);
+        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
+                OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);
@@ -419,7 +426,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 params.add(getParameter("frequencies"));
             }
 
-        }        
+        }
+
+        if (hasCodon()) getParameter("allMus");
     }
 
     public void selectOperators(List<Operator> ops) {
@@ -588,6 +597,26 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 ops.add(getOperator("frequencies"));
             }
         }
+
+        if (hasCodon()) {
+            Operator deltaMuOperator = getOperator("deltaMu");
+
+            // update delta mu operator weight
+            deltaMuOperator.weight = 0.0;
+            for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
+                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            }
+
+            ops.add(deltaMuOperator);
+        }
+    }
+
+        /**
+     * @return true either if the options have more than one partition or any partition is
+     *         broken into codon positions.
+     */
+    public boolean hasCodon() {
+        return getCodonPartitionCount() > 1;
     }
 
     public int getCodonPartitionCount() {
@@ -623,6 +652,28 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
             return;
         }
         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+    }
+
+    /**
+     * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
+     * are strictly in the same order as the 'mu' relative rates are listed.
+     *
+     * @return  weights for each partition model
+     */
+    public int[] getPartitionCodonWeights() {
+        int[] weights = new int[getCodonPartitionCount()];
+
+        int k = 0;
+        for (PartitionData partition : allPartitionData) {
+            if (partition.getPartitionSubstitutionModel() == this) {
+                addWeightsForPartition(partition, weights, k);
+            }
+        }
+        k += getCodonPartitionCount();
+
+        assert (k == weights.length);
+
+        return weights;
     }
     
     ///////////////////////////////////////////////////////

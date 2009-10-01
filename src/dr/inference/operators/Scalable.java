@@ -81,5 +81,38 @@ public interface Scalable {
         public String getName() {
             return parameter.getParameterName();
         }
+
+
+        /**
+         *
+         * This method scales values of all dimesions quitely except the last one where is also signals that
+         * all values in all dimensions have been scaled. This prevents repeated firing of Events when in fact
+         * only ONE parameter is changed.
+         *
+         */
+        public int scaleAllAndNotify(double factor, int nDims) throws OperatorFailedException {
+
+            assert nDims <= 0;
+            final int dimension = parameter.getDimension();
+            final int dimMinusOne = dimension-1;
+
+            for(int i = 0; i < dimMinusOne; ++i) {
+                parameter.setParameterValueQuietly(i, parameter.getParameterValue(i) * factor);
+            }
+
+            parameter.setParameterValueNotifyChangedAll(dimMinusOne, parameter.getParameterValue(dimMinusOne) * factor);
+
+            final Bounds<Double> bounds = parameter.getBounds();
+
+            for(int i = 0; i < dimension; i++) {
+                final double value = parameter.getParameterValue(i);
+                if( value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i) ) {
+                    throw new OperatorFailedException("proposed value outside boundaries");
+                }
+            }
+            return dimension;
+        }
     }
+
+
 }

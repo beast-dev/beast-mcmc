@@ -40,12 +40,23 @@ import java.util.*;
  */
 public class NexusExporter implements TreeExporter {
 
+    public enum AttributeType {
+        NODE_ATTRIBUTES,
+        BRANCH_ATTRIBUTES
+    }
+
     public static final String DEFAULT_TREE_PREFIX = "TREE";
 
     public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
 
     public NexusExporter(PrintStream out) {
         this.out = out;
+        this.writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
+    }
+
+    public NexusExporter(PrintStream out, AttributeType writeAttributesAs) {
+        this.out = out;
+        this.writeAttributesAs = writeAttributesAs;
     }
 
     /**
@@ -217,7 +228,7 @@ public class NexusExporter implements TreeExporter {
             out.print(")");
         }
 
-        if (!tree.isRoot(node)) {
+        if (writeAttributesAs == AttributeType.BRANCH_ATTRIBUTES && !tree.isRoot(node)) {
             out.print(":");
         }
 
@@ -239,6 +250,10 @@ public class NexusExporter implements TreeExporter {
                 }
                 out.print("]");
             }
+        }
+
+        if (writeAttributesAs == AttributeType.NODE_ATTRIBUTES && !tree.isRoot(node)) {
+            out.print(":");
         }
 
         if (!tree.isRoot(node)) {
@@ -273,5 +288,5 @@ public class NexusExporter implements TreeExporter {
     private NumberFormat formatter = null;
     private String treePrefix = DEFAULT_TREE_PREFIX;
     private boolean sorted = false;
-
+    private AttributeType writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
 }

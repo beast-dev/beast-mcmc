@@ -21,20 +21,20 @@ import dr.xml.*;
 
 /** Class for performing random sequence generation for a given site model.
  * Sequences for the leave nodes in the tree are returned as an alignment.
- * 
+ *
  * @author remco@cs.waikato.ac.nz
  *
  */
 
 public class SequenceSimulator {
 	/** nr of samples to generate **/
-	private int m_nReplications;
+	protected int m_nReplications;
 	/** tree used for generating samples **/
-    private Tree m_tree;
+    protected Tree m_tree;
 	/** site model used for generating samples **/
-    private SiteModel m_siteModel;
+    protected SiteModel m_siteModel;
 	/** branch rate model used for generating samples **/
-    private BranchRateModel m_branchRateModel;
+    protected BranchRateModel m_branchRateModel;
     /** nr of categories in site model **/
     int m_categoryCount;
     /** nr of states in site model **/
@@ -46,7 +46,7 @@ public class SequenceSimulator {
     protected double[][] m_probabilities;
 
     /**
-     * Constructor 
+     * Constructor
      * @param tree
      * @param siteModel
      * @param branchRateModel
@@ -61,7 +61,7 @@ public class SequenceSimulator {
         m_categoryCount = m_siteModel.getCategoryCount();
         m_probabilities = new double[m_categoryCount][m_stateCount * m_stateCount];
     } // c'tor
-    
+
     /**
      * Convert integer representation of sequence into a Sequence
      * @param seq integer representation of the sequence
@@ -79,39 +79,39 @@ public class SequenceSimulator {
 
 	/**
 	 * perform the actual sequence generation
-	 * @return alignment containing randomly generated sequences for the nodes in the 
+	 * @return alignment containing randomly generated sequences for the nodes in the
 	 * leaves of the tree
 	 */
 	public Alignment simulate() {
     	NodeRef root =  m_tree.getRoot();
-    	
-    		
+
+
     	double [] categoryProbs = m_siteModel.getCategoryProportions();
-    	int [] category  = new int[m_nReplications]; 
+    	int [] category  = new int[m_nReplications];
     	for (int i  = 0; i < m_nReplications; i++) {
     		category[i] = MathUtils.randomChoicePDF(categoryProbs);
     	}
 
        	FrequencyModel frequencyModel = m_siteModel.getFrequencyModel();
-    	int [] seq = new int[m_nReplications]; 
+    	int [] seq = new int[m_nReplications];
     	for (int i  = 0; i < m_nReplications; i++) {
         	seq[i] = MathUtils.randomChoicePDF(frequencyModel.getFrequencies());
     	}
 
-    	
+
     	SimpleAlignment alignment = new SimpleAlignment();
           alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
 
     	traverse(root, seq, category, alignment);
-    	
-    	
-    	
+
+
+
     	return alignment;
-    } // simulate 
-    
+    } // simulate
+
 	/**
 	 * recursively walk through the tree top down, and add sequence to alignment whenever
-	 * a leave node is reached. 
+	 * a leave node is reached.
 	 * @param node reference to the current node, for which we visit all children
 	 * @param parentSequence randomly generated sequence of the parent node
 	 * @param category array of categories for each of the sites
@@ -123,25 +123,25 @@ public class SequenceSimulator {
             for (int i = 0; i < m_categoryCount; i++) {
             	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
             }
-            
+
         	int [] seq = new int[m_nReplications];
     		double [] cProb = new double[m_stateCount];
         	for (int i  = 0; i < m_nReplications; i++) {
         		System.arraycopy(m_probabilities[category[i]], parentSequence[i]*m_stateCount, cProb, 0, m_stateCount);
             	seq[i] = MathUtils.randomChoicePDF(cProb);
         	}
-            
+
             if (m_tree.getChildCount(child) == 0) {
             	alignment.addSequence(intArray2Sequence(seq, child));
             }
 			traverse(m_tree.getChild(node, iChild), seq, category, alignment);
-		}    
+		}
 	} // traverse
-    
+
     void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probs) {
-        
+
         NodeRef parent = tree.getParent(node);
-        
+
         final double branchRate = m_branchRateModel.getBranchRate(tree, node);
 
         // Get the operational time of the branch
@@ -162,7 +162,7 @@ public class SequenceSimulator {
         m_siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
     } // getTransitionProbabilities
 
-    
+
     /** helper method **/
     public static void printUsageAndExit() {
 		System.err.println("Usage: java " + SequenceSimulator.class.getName() + " <nr of instantiations>");
@@ -170,14 +170,14 @@ public class SequenceSimulator {
 		System.exit(0);
 	} // printUsageAndExit
 
-    
+
     /* standard xml parser stuff follows */
     public static final String SEQUENCE_SIMULATOR = "sequenceSimulator";
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String TREE = "tree";
     public static final String BRANCH_RATE_MODEL = "branchRateModel";
     public static final String REPLICATIONS = "replications";
-    
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -187,11 +187,11 @@ public class SequenceSimulator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         	int nReplications = xo.getIntegerAttribute(REPLICATIONS);
-        	
+
             Tree tree = (Tree) xo.getChild(Tree.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
             BranchRateModel rateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
-            
+
             if (rateModel == null)
             	rateModel = new DefaultBranchRateModel();
 
@@ -222,7 +222,7 @@ public class SequenceSimulator {
                 AttributeRule.newIntegerRule(REPLICATIONS)
         };
     };
-    
+
     /** generate simple site model, for testing purposes **/
     static SiteModel getDefaultSiteModel() {
 		Parameter kappa = new Parameter.Default(1, 2);
@@ -231,22 +231,22 @@ public class SequenceSimulator {
         HKY hky = new HKY(kappa, f);
         return new GammaSiteModel(hky);
 	} // getDefaultSiteModel
-	
+
     public static void main(String [] args) {
     	try {
     		if (args.length == 0) {
     			printUsageAndExit();
     		}
     		int nReplications = new Integer(args[0]).intValue();
-    		
+
     		// create tree
     		NewickImporter importer = new NewickImporter("((A:1.0,B:1.0)AB:1.0,(C:1.0,D:1.0)CD:1.0)ABCD;");
     		Tree tree =  importer.importTree(null);
     		// create site model
-    		SiteModel siteModel = getDefaultSiteModel(); 
+    		SiteModel siteModel = getDefaultSiteModel();
     		// create branch rate model
     		BranchRateModel branchRateModel = new DefaultBranchRateModel();
-    		
+
     		// feed to sequence simulator and generate leaves
     		SequenceSimulator treeSimulator = new SequenceSimulator(tree, siteModel, branchRateModel, nReplications);
     		System.err.println(treeSimulator.simulate().toString());

@@ -232,6 +232,7 @@ public class BeastParser extends XMLParser {
 
         // tree likelihood
         addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);
+        addXMLObjectParser(new dr.evomodelxml.MicrosatelliteSamplerTreeLikelihoodParser());
 
         // site models
         addXMLObjectParser(dr.evomodel.sitemodel.GammaSiteModel.PARSER);
@@ -247,6 +248,7 @@ public class BeastParser extends XMLParser {
 
         // tree models
         addXMLObjectParser(new dr.evomodelxml.TreeModelParser());
+        addXMLObjectParser(new dr.evomodelxml.MicrosatelliteSamplerTreeModelParser());
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
@@ -357,6 +359,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UniformIntegerOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
+        addXMLObjectParser(dr.inference.operators.MicrosatUpDownOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.SetOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
         addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);

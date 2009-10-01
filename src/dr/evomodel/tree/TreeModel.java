@@ -164,9 +164,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * Called when a parameter changes.
      */
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        final Node node = getNodeOfParameter((Parameter) variable);
-        pushTreeChangedEvent(node, (Parameter) variable, index);
+        final Node node = getNodeOfParameter((Parameter)variable);
+        if(type == Parameter.ChangeType.ALL_VALUES_CHANGED){
+            //this signals events where values in all dimensions of a parameter is changed.
+            pushTreeChangedEvent(new TreeChangedEvent(node, (Parameter)variable, TreeChangedEvent.CHANGE_IN_ALL_INTERNAL_NODES));
+        }else{
+            pushTreeChangedEvent(node, (Parameter)variable, index);
+        }
     }
+
 
     private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
 
@@ -175,6 +181,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     }
 
     public class TreeChangedEvent {
+        static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;
         final Parameter parameter;
@@ -228,6 +235,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
         public boolean isTraitChanged(String name) {
             return parameter == node.traitParameters.get(name);
+        }
+
+        public boolean areAllInternalHeightsChanged(){
+            return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
         }
     }
 

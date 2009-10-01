@@ -2,7 +2,7 @@ package dr.app.seqgen;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.sequence.Sequence;
@@ -18,10 +18,10 @@ import dr.evomodel.branchratemodel.BranchRateModel;
  */
 public class MicrosatelliteSimulator extends SequenceSimulator{
     private Taxa taxa;
-    private DataType dataType;
+    private Microsatellite dataType;
 
     public MicrosatelliteSimulator(
-            DataType dataType,
+            Microsatellite dataType,
             Taxa taxa,
             Tree tree,
             SiteModel siteModel,

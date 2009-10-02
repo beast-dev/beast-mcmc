@@ -91,7 +91,8 @@ public class SpeciesBindings extends AbstractModel {
         for (GeneTreeInfo gt : this.geneTrees) {
             for (int ns = 0; ns < nsp; ++ns) {
                 if (gt.nLineages(ns) == 0) {
-                    throw new Error("Every gene tree must contain at least one tip from each species");
+                    throw new Error("Every gene tree must contain at least one tip from each species ("
+                            + gt.tree.getId() + "," + species[ns].name + ")");
                 }
             }
         }

@@ -105,7 +105,7 @@ public class MCMCMC implements Runnable {
         timer.start();
 
         if (isPreBurninNeeded()) {
-            int preBurnin = mcmcOptions.getPreBurnin();
+            int preBurnin = mcmcOptions.getCoercionDelay();
             if (preBurnin > 0) {
                 MarkovChainListener burninListener = new BurninListener(preBurnin);
 

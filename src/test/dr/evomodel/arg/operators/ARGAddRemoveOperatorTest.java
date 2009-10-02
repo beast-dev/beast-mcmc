@@ -74,7 +74,7 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
         MCMCOptions options = new MCMCOptions();
         options.setChainLength(chainLength);
         options.setUseCoercion(true);
-        options.setPreBurnin(100);
+        options.setCoercionDelay(100);
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 

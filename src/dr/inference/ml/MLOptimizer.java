@@ -111,7 +111,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 		timer.start();
 
 			mc.addMarkovChainListener(chainListener);
-			mc.chain(getChainLength(), true/*, 0*/);
+			mc.runChain(getChainLength(), true/*, 0*/);
 			mc.removeMarkovChainListener(chainListener);
 
 		timer.stop();

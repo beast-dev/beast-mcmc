@@ -154,7 +154,7 @@ public class CompoundLikelihood implements Likelihood {
             if( lik instanceof CompoundLikelihood ) {
                 final String d = ((CompoundLikelihood) lik).getDiagnosis();
                 if( d != null && d.length() > 0 ) {
-                    message += "(" + d + ")";
+                    message += "{" + d + "}";
                 }
             } else {
 

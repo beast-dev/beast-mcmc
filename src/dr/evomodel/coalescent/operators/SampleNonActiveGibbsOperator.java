@@ -59,7 +59,13 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
 
         if (nLoc > 0) {
             final int index = loc[MathUtils.nextInt(nLoc)];
-            data.setParameterValue(index, distribution.quantile(MathUtils.nextDouble()));
+            try {
+                final double val = distribution.quantile(MathUtils.nextDouble());
+                data.setParameterValue(index, val);
+            } catch (Exception e) {
+                // some distributions fail on extreme values - currently gamma
+               throw new OperatorFailedException(e.getMessage());
+            }
         } else {
             throw new OperatorFailedException("no non-active indicators");
         }

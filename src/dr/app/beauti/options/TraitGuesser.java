@@ -34,7 +34,15 @@ import java.util.regex.Pattern;
  */
 public class TraitGuesser {
 
-    public enum GuessType {
+    public TraitGuesser() {
+    }
+
+    public TraitGuesser(String traitName, TraitType traitType) {
+        this.traitName = traitName;
+        this.traitType = traitType;
+    }
+
+    public static enum GuessType {
         SUFFIX,
         PREFIX,
         REGEX
@@ -46,7 +54,7 @@ public class TraitGuesser {
         CONTINUOUS
     }
 
-    public enum Traits {
+    public static enum Traits {
 
         TRAIT_SPECIES("species");
 
@@ -61,15 +69,67 @@ public class TraitGuesser {
         private final String name;
     }
 
-    public boolean guessTrait = false; // no use ??
-    public GuessType guessType = GuessType.SUFFIX;
-    public Traits traitAnalysisType = Traits.TRAIT_SPECIES;
-    public TraitType traitType = TraitType.DISCRETE;
+//    private boolean guessTrait = false; // no use ??
 
-    public int index = 0;
-    public String separator;
-    public String regex;
+    private GuessType guessType = GuessType.SUFFIX;
+    private String traitName = Traits.TRAIT_SPECIES.toString();
+    private TraitType traitType = TraitType.DISCRETE;
 
+    private int index = 0;
+    private String separator;
+    private String regex;
+
+    ////////////////////////////////////////////////////////////////
+
+    public GuessType getGuessType() {
+        return guessType;
+    }
+
+    public void setGuessType(GuessType guessType) {
+        this.guessType = guessType;
+    }
+
+    public String getTraitName() {
+        return traitName;
+    }
+
+    public void setTraitName(String traitName) {
+        this.traitName = traitName;
+    }
+
+    public TraitType getTraitType() {
+        return traitType;
+    }
+
+    public void setTraitType(TraitType traitType) {
+        this.traitType = traitType;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public String getSeparator() {
+        return separator;
+    }
+
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
+
+    public String getRegex() {
+        return regex;
+    }
+
+    public void setRegex(String regex) {
+        this.regex = regex;
+    }
+
+    ////////////////////////////////////////////////////////////////
     public void guessTrait(BeautiOptions options) {
 
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
@@ -95,7 +155,7 @@ public class TraitGuesser {
                 //
             }
 
-            options.taxonList.getTaxon(i).setAttribute(Traits.TRAIT_SPECIES.toString(), value);
+            options.taxonList.getTaxon(i).setAttribute(traitName, value);
         }
     }
 
@@ -134,7 +194,7 @@ public class TraitGuesser {
             	if (i == 0) {
             		throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
             	} else {
-            		return label + seperator + traitAnalysisType.toString();
+            		return label + seperator + traitName;
             	}
             }
 

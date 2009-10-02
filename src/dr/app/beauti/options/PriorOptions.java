@@ -43,8 +43,6 @@ public class PriorOptions extends ModelOptions {
 
     public PriorOptions(BeautiOptions options) {    	
     	this.options = options;
-               
-        
     }
        
     
@@ -173,18 +171,5 @@ public class PriorOptions extends ModelOptions {
         
         
     }
-
-    /**
-     * return a list of operators that are required
-     *
-     * @param ops the operator list
-     */
-    public void selectOperators(List<Operator> ops) {
-                
-    }
-    
-    /////////////////////////////////////////////////////////////
-
-
 
 }

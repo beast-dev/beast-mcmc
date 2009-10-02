@@ -78,8 +78,8 @@ public class BeautiOptions extends ModelOptions {
         maximumTipHeight = 0.0;
         translation = 0;
         
-        selecetedTraits.clear();
-        traitTypes.clear();
+//        selecetedTraits.clear();
+//        traitTypes.clear();
         
         dataPartitions.clear();
 //        partitionModels.clear();
@@ -123,6 +123,7 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
+        traitOptions = new TraitOptions(this);
         starBEASTOptions = new STARBEASTOptions(this);
         
         beautiImporter = new BEAUTiImporter(this);    
@@ -340,7 +341,7 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
-        priorOptions.selectOperators(ops);
+//        priorOptions.selectOperators(ops);
         
 //        if (multiplePartitions) {
 //        if (hasCodon()) {
@@ -708,10 +709,10 @@ public class BeautiOptions extends ModelOptions {
     public int translation = 0;
 
     public DateGuesser dateGuesser = new DateGuesser();
-    public TraitGuesser traitGuesser = new TraitGuesser();
-
-    public List<String> selecetedTraits = new ArrayList<String>();
-    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
+//    public TraitGuesser traitGuesser = new TraitGuesser();
+//
+//    public List<String> selecetedTraits = new ArrayList<String>();
+//    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
    
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
@@ -755,7 +756,8 @@ public class BeautiOptions extends ModelOptions {
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
-    
+
+    public TraitOptions traitOptions = new TraitOptions(this);
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);     
         
     public BEAUTiImporter beautiImporter = new BEAUTiImporter(this);    

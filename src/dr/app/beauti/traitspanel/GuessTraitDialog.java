@@ -41,12 +41,12 @@ import java.awt.event.*;
  */
 public class GuessTraitDialog {
 
-    private JFrame frame;
     private TraitGuesser guesser;
-    
+    private JFrame frame;
     private final OptionsPanel optionPanel;
 
-    private final JComboBox traitSelectionCombo;
+    private JTextField traitNameField = new JTextField(18);
+//    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
     
     private final JRadioButton suffixRadio = new JRadioButton("Defined by a suffix, after the", true);
     private final JComboBox suffixOrderCombo = new JComboBox(new String[]{"last", "second from last", "third from last", "fourth from last"});
@@ -64,16 +64,28 @@ public class GuessTraitDialog {
         this.guesser = guesser;
 
         optionPanel = new OptionsPanel(12, 12);
-        
-        traitSelectionCombo = new JComboBox(TraitGuesser.Traits.values());
-        optionPanel.addComponentWithLabel("The selected trait is: ", traitSelectionCombo);
-        traitSelectionCombo.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
-                    	setTrait((TraitGuesser.Traits) traitSelectionCombo.getSelectedItem());
-                    }
-                }
-        );
+
+        traitNameField.setText(guesser.getTraitName());
+        traitNameField.setEnabled(false);
+        optionPanel.addComponentWithLabel("The trait name: ", traitNameField);
+//        traitNameField.addKeyListener(new java.awt.event.KeyListener() {
+//            public void keyTyped(KeyEvent e) {}
+//            public void keyPressed(KeyEvent e) {}
+//
+//            public void keyReleased(KeyEvent e) {
+//               guesser.setTraitName(traitNameField.getText());
+//            }
+//        } );
+
+//        optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
+//        traitTypeComb.setEnabled(false);
+//        traitTypeComb.addItemListener(
+//                new ItemListener() {
+//                    public void itemStateChanged(ItemEvent ev) {
+//                    	setTrait(traitNameField.getText(), (TraitGuesser.TraitType) traitTypeComb.getSelectedItem());
+//                    }
+//                }
+//        );
         optionPanel.addSeparator();
         
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
@@ -134,35 +146,28 @@ public class GuessTraitDialog {
     }
 
     public void setupGuesser() {
-    	
-    	setTrait((TraitGuesser.Traits) traitSelectionCombo.getSelectedItem());   	
-    	
         if (suffixRadio.isSelected()) {
-            guesser.guessType = TraitGuesser.GuessType.SUFFIX;
-            guesser.index = suffixOrderCombo.getSelectedIndex();
-            guesser.separator = suffixText.getText();
+            guesser.setGuessType(TraitGuesser.GuessType.SUFFIX);
+            guesser.setIndex(suffixOrderCombo.getSelectedIndex());
+            guesser.setSeparator(suffixText.getText());
         } else if (prefixRadio.isSelected()) {
-            guesser.guessType = TraitGuesser.GuessType.PREFIX;
-            guesser.index = prefixOrderCombo.getSelectedIndex();
-            guesser.separator = prefixText.getText();
+            guesser.setGuessType(TraitGuesser.GuessType.PREFIX);
+            guesser.setIndex(prefixOrderCombo.getSelectedIndex());
+            guesser.setSeparator(prefixText.getText());
         } else if (regexRadio.isSelected()) {
-            guesser.guessType = TraitGuesser.GuessType.REGEX;
-            guesser.regex = regexText.getText();
+            guesser.setGuessType(TraitGuesser.GuessType.REGEX);
+            guesser.setRegex(regexText.getText());
         } else {
             throw new IllegalArgumentException("unknown radio button selected");
         }
     }
-    
-    private void setTrait(TraitGuesser.Traits selectedTrait) {
-    	
-		switch (selectedTrait) {
-			case TRAIT_SPECIES:
-				guesser.traitAnalysisType = TraitGuesser.Traits.TRAIT_SPECIES;
-	    		guesser.traitType = TraitGuesser.TraitType.DISCRETE;
-				break;
-			default:
-				throw new IllegalArgumentException("unknown trait selected");
-		}
-    	
-    }
+
+//    private void setTrait(String selectedTrait, TraitGuesser.TraitType selectedTraitType) {
+//        guesser.setTraitName(selectedTrait);
+//        if (selectedTrait.equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+//            guesser.setTraitType(TraitGuesser.TraitType.DISCRETE);
+//        } else {
+//            guesser.setTraitType(selectedTraitType);
+//        }
+//    }
 }

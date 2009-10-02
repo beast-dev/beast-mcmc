@@ -219,7 +219,7 @@ public class MCMCPanel extends BeautiPanel {
     private void updateTreeFileNameList(){
     	options.treeFileName.clear();
     	options.substTreeFileName.clear();
-    	String treeFN = "";        
+    	String treeFN;
             
     	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
     		if (options.substTreeLog) {

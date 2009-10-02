@@ -50,7 +50,7 @@ public class CreateTraitDialog {
     public CreateTraitDialog(JFrame frame) {
         this.frame = frame;
 
-        nameField = new JTextField();
+        nameField = new JTextField(TraitGuesser.Traits.TRAIT_SPECIES.toString());
         nameField.setColumns(20);
 
         typeCombo = new JComboBox(TraitGuesser.TraitType.values());
@@ -113,7 +113,7 @@ public class CreateTraitDialog {
         }
 
         // check that the trait name doesn't exist
-        if (options.selecetedTraits.contains(getName())) {
+        if (options.traitOptions.containTrait(getName())) {
             int option = JOptionPane.showConfirmDialog(frame,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +

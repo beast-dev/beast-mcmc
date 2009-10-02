@@ -856,7 +856,6 @@ public class BeautiFrame extends DocumentFrame {
             Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
             for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
-                final List<String[]> value = e.getValue();
                 final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
                 final String label = e.getKey();
 
@@ -871,11 +870,20 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
 
-                beautiOptions.selecetedTraits.add(label);
                 TraitGuesser.TraitType t = (c == Boolean.class || c == String.class) ? TraitGuesser.TraitType.DISCRETE :
                         (c == Integer.class) ? TraitGuesser.TraitType.INTEGER : TraitGuesser.TraitType.CONTINUOUS;
 
-                beautiOptions.traitTypes.put(label, t);
+                TraitGuesser newTrait = new TraitGuesser(label, t);
+
+                int selRow;
+                if (beautiOptions.traitOptions.containTrait(label)) {
+                    selRow = beautiOptions.traitOptions.traits.indexOf(beautiOptions.traitOptions.getTrait(label));
+                    beautiOptions.traitOptions.traits.set(selRow, newTrait);
+                } else {
+                    beautiOptions.traitOptions.traits.add(newTrait);
+                    selRow = beautiOptions.traitOptions.traits.size() - 1;
+                }
+                traitsPanel.traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
                 for (final String[] v : e.getValue()) {
                     final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);

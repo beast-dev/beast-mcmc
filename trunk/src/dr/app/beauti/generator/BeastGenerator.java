@@ -337,11 +337,9 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Traits ++++++++++++++++++
         // traits tag
-        if (options.selecetedTraits.size() > 0) {
-            for (String trait : options.selecetedTraits) {
-                TraitGuesser.TraitType traiType = options.traitTypes.get(trait);
-
-                writeTraits(writer, trait, traiType.toString(), options.taxonList);
+        if (options.traitOptions.traits.size() > 0) {
+            for (TraitGuesser trait : options.traitOptions.traits) {
+                writeTraits(writer, trait, options.taxonList);
             }
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }
@@ -562,15 +560,15 @@ public class BeastGenerator extends Generator {
      * @param traitType  traitType
      * @param taxonList  TaxonList
      */
-    private void writeTraits(XMLWriter writer, String trait, String traitType, TaxonList taxonList) {
+    private void writeTraits(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
 
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment("Species definition: binds taxa, species and gene trees");
         }
-        writer.writeComment("trait = " + trait + " trait_type = " + traitType);
+        writer.writeComment("trait = " + trait.getTraitName() + " trait_type = " + trait.getTraitType());
 
-        writer.writeOpenTag(trait, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, trait)});
+        writer.writeOpenTag(trait.getTraitName(), new Attribute[]{new Attribute.Default<String>(XMLParser.ID, trait.getTraitName())});
         //new Attribute.Default<String>("traitType", traitType)});
 
         // write sub-tags for species
@@ -578,7 +576,7 @@ public class BeastGenerator extends Generator {
             starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
         } // end write sub-tags for species
 
-        writer.writeCloseTag(trait);
+        writer.writeCloseTag(trait.getTraitName());
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             starEASTGeneratorGenerator.writeSTARBEAST(writer);

@@ -88,7 +88,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
         MCMCOptions options = new MCMCOptions();
         options.setChainLength(1000000);
         options.setUseCoercion(true);
-        options.setPreBurnin(100);
+        options.setCoercionDelay(100);
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 

@@ -99,7 +99,7 @@ public final class MarkovChain {
      *               <p/>
      *               param onTheFlyOperatorWeights
      */
-    public int chain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
+    public int runChain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
         currentScore = evaluate(likelihood, prior);
 
@@ -330,13 +330,14 @@ public final class MarkovChain {
 
         currentLength = currentState;
 
-        fireFinished(currentLength);
-
-        // Profiler.report();
-
         return currentLength;
     }
 
+    public void terminateChain() {
+        fireFinished(currentLength);
+
+        // Profiler.report();
+    }
 //
 //    private void adjustOpWeights(int currentState) {
 //        final int count = schedule.getOperatorCount();
@@ -500,20 +501,20 @@ public final class MarkovChain {
         listeners.remove(listener);
     }
 
-    public void fireBestModel(int state, Model bestModel) {
+    private void fireBestModel(int state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
             listener.bestState(state, bestModel);
         }
     }
 
-    public void fireCurrentModel(int state, Model currentModel) {
+    private void fireCurrentModel(int state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
     }
 
-    public void fireFinished(int chainLength) {
+    private void fireFinished(int chainLength) {
 
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);

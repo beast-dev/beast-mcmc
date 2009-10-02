@@ -99,7 +99,7 @@ public class MCMC implements Identifiable, Spawnable {
                      Logger[] loggers) {
 
         MCMCOptions options = new MCMCOptions();
-        options.setPreBurnin(0);
+        options.setCoercionDelay(0);
         options.setChainLength(chainlength);
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(1);
@@ -142,17 +142,6 @@ public class MCMC implements Identifiable, Spawnable {
 
         timer.start();
 
-        if (isPreBurninNeeded()) {
-            final int preBurnin = options.getPreBurnin();
-            if (preBurnin > 0) {
-                MarkovChainListener burninListener = new BurninListener(preBurnin);
-                mc.addMarkovChainListener(burninListener);
-                mc.chain(preBurnin, true/*, 0*/);
-                mc.removeMarkovChainListener(burninListener);
-                mc.reset();
-            }
-        }
-
         if (loggers != null) {
             for (Logger logger : loggers) {
                 logger.startLogging();
@@ -161,58 +150,24 @@ public class MCMC implements Identifiable, Spawnable {
 
         if (!stopping) {
             mc.addMarkovChainListener(chainListener);
-            mc.chain(getChainLength(), false/*, ontheflyFreq*/);
+
+            int chainLength = getChainLength();
+
+            final int coercionDelay = getCoercionDelay();
+
+            if (coercionDelay > 0) {
+                // Run the chain for coercionDelay steps with coercion disabled
+                mc.runChain(coercionDelay, true);
+                chainLength -= coercionDelay;
+            }
+
+            mc.runChain(chainLength, false);
+
+            mc.terminateChain();
+
             mc.removeMarkovChainListener(chainListener);
         }
         timer.stop();
-    }
-
-    public class BurninListener implements MarkovChainListener {
-
-        public BurninListener(int stateCount) {
-            this.stateCount = stateCount;
-            step = 0;
-            stepSize = (double) stateCount / 60.0;
-        }
-
-        /**
-         * Called to update the current model keepEvery states.
-         */
-        public void currentState(int state, Model currentModel) {
-
-            if (state == 0) {
-                System.out.println();
-                System.out.println("Pre-burnin (" + stateCount + " states)");
-                System.out.println("0              25             50             75            100");
-                System.out.println("|--------------|--------------|--------------|--------------|");
-                System.out.print("*");
-                step = 1;
-            }
-
-            if (state >= (int) Math.round(step * stepSize) && step <= 60) {
-                System.out.print("*");
-                System.out.flush();
-                step += 1;
-            }
-        }
-
-        /**
-         * Called when a new new best posterior state is found.
-         */
-        public void bestState(int state, Model bestModel) {
-        }
-
-        /**
-         * cleans up when the chain finishes (possibly early).
-         */
-        public void finished(int chainLength) {
-            System.out.println("*");
-            System.out.println();
-        }
-
-        int stateCount = 0;
-        double stepSize;
-        int step = 0;
     }
 
     private final MarkovChainListener chainListener = new MarkovChainListener() {
@@ -431,18 +386,23 @@ public class MCMC implements Identifiable, Spawnable {
 
 
     //PRIVATE METHODS *****************************************
-    private boolean isPreBurninNeeded() {
+    private int getCoercionDelay() {
 
-        if (options.useCoercion()) return true;
+        int delay = options.getCoercionDelay();
+        if (delay < 0) {
+            delay = options.getChainLength() / 100;
+        }
+        if (options.useCoercion()) return delay;
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
             MCMCOperator op = schedule.getOperator(i);
 
             if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return true;
+                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return delay;
             }
         }
-        return false;
+        
+        return -1;
     }
 
     public void setShowOperatorAnalysis(boolean soa) {

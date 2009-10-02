@@ -38,7 +38,7 @@ public class MCMCOptions {
     private int fullEvaluationCount = 2000;
     private int minOperatorCountForFullEvaluation = 1;
     private boolean coercion = true;
-    private int preBurnin = 0;
+    private int coercionDelay = 0;
     private double temperature = 1.0;
 
     public MCMCOptions() {
@@ -60,8 +60,8 @@ public class MCMCOptions {
     }
 
 
-    public final int getPreBurnin() {
-        return preBurnin;
+    public final int getCoercionDelay() {
+        return coercionDelay;
     }
 
     public final double getTemperature() {
@@ -82,11 +82,11 @@ public class MCMCOptions {
 
     public final void setUseCoercion(boolean coercion) {
         this.coercion = coercion;
-        if (!coercion) preBurnin = 0;
+        if (!coercion) coercionDelay = 0;
     }
 
-    public final void setPreBurnin(int preBurnin) {
-        this.preBurnin = preBurnin;
+    public final void setCoercionDelay(int coercionDelay) {
+        this.coercionDelay = coercionDelay;
     }
 
     public int minOperatorCountForFullEvaluation() {

@@ -54,7 +54,10 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
         options.setUseCoercion(xo.getAttribute(COERCION, true));
-        options.setPreBurnin(xo.getAttribute(PRE_BURNIN, options.getChainLength() / 100));
+        if (xo.hasAttribute(PRE_BURNIN)) {
+            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, options.getChainLength() / 100));
+        }
+        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, options.getChainLength() / 100));
         options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
         options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
         options.setminOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
@@ -73,7 +76,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useCoercion());
+                "\n  autoOptimize=" + options.useCoercion() +
+                (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : ""));
 
         mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
 
@@ -129,6 +133,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String COERCION = "autoOptimize";
     public static final String NAME = "name";
     public static final String PRE_BURNIN = "preBurnin";
+    public static final String COERCION_DELAY = "autoOptimizeDelay";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";

@@ -5,6 +5,8 @@ import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
 import dr.inference.model.Model;
 
+import java.util.Arrays;
+
 
 /**
  * @author Chieh-Hsi Wu
@@ -63,6 +65,15 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
      * Set up empirical frequencies
      */
     public void setupEmpiricalStationaryFrequencies(){
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+
+        if (!wellConditioned) {
+           throw new RuntimeException("not well conditioned");
+        }
         int eigenValPos = 0;
         for(int i = 0; i < stateCount; i++){
             if(Eval[i] == 0){

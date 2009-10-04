@@ -84,6 +84,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         if(freqModel == null){
             useEmpiricalFreqs = true;
             System.out.println("TwoPhaseModel: use empirical frequencies");
+            computeStationaryDistribution();
         }else{
             useEmpiricalFreqs = false;
         }
@@ -209,7 +210,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
     }
 
     public void printDetails(){
-        System.out.println("Details of the Linear Bias Model and its paramters:");
+        System.out.println("Details of the TwoPhase Model and its paramters:");
         System.out.println("a submodel:                     "+isNested);
         System.out.println("has submodel:                   "+hasSubmodel());
         if(hasSubmodel()){

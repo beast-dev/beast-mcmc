@@ -78,15 +78,21 @@ public class TwoPhaseModelTest extends TestCase {
 
             TwoPhaseModel tpm = new TwoPhaseModel(microsat, null, subModel, pParam, mParam, null,false);
 
+            int k;
 
-
+            tpm.computeStationaryDistribution();
+            double[] statDist = tpm.getStationaryDistribution();
+            final double[] expectedStatDist = test.getPi();
+            for (k = 0; k < statDist.length; ++k) {
+                assertEquals(statDist[k], expectedStatDist[k], 1e-10);
+            }
 
             int stateCount = microsat.getStateCount();
             double[] mat = new double[stateCount*stateCount];
             tpm.getTransitionProbabilities(test.getDistance(), mat);
             final double[] result = test.getExpectedResult();
 
-            int k;
+
             for (k = 0; k < mat.length; ++k) {
                 assertEquals(result[k], mat[k], 5e-9);
                 //System.out.print(" " + (mat[k]));// - result[k]));
@@ -101,12 +107,7 @@ public class TwoPhaseModelTest extends TestCase {
             }
 
 
-            tpm.computeStationaryDistribution();
-            double[] statDist = tpm.getStationaryDistribution();
-            final double[] expectedStatDist = test.getPi();
-            for (k = 0; k < statDist.length; ++k) {
-                assertEquals(statDist[k], expectedStatDist[k], 1e-10);
-            }
+
 
 
 

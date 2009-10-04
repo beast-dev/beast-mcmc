@@ -73,11 +73,11 @@ public class TwoPhaseModel extends MicrosatelliteModel{
 
         if(transParam != null){
             this.transformParam = transParam;
-            System.out.println("TwoPhaseModel transformParameter value: "+transformParam);
         }else{
             this.transformParam = new Parameter.Default(0.0);
-            System.out.println("TwoPhaseModel - default transformParameter value : "+transformParam);
         }
+
+        printDetails();
 
         setupInfinitesimalRates();
 
@@ -206,6 +206,19 @@ public class TwoPhaseModel extends MicrosatelliteModel{
 
     public boolean isEstimatingSubmodelParams(){
         return estimateSubmodelParams;
+    }
+
+    public void printDetails(){
+        System.out.println("Details of the Linear Bias Model and its paramters:");
+        System.out.println("a submodel:                     "+isNested);
+        System.out.println("has submodel:                   "+hasSubmodel());
+        if(hasSubmodel()){
+            System.out.println("submodel class:                 "+subModel.getClass());
+        }
+        System.out.println("esitmating submodel parameters: "+estimateSubmodelParams);
+        System.out.println("one phase probability:          "+onePhasePrParam.getParameterValue(0));
+        System.out.println("geometric parameter:            "+geoParam.getParameterValue(0));
+        System.out.println("transformation parameter:       "+transformParam.getParameterValue(0));
     }
 
 }

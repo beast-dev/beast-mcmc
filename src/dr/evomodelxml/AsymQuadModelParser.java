@@ -70,12 +70,7 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
         Parameter param = null;
         if(xo.hasChildNamed(parameterName)){
             XMLObject paramXO = xo.getChild(parameterName);
-            param =(Parameter) paramXO.getChild(Parameter.class);
-            Logger.getLogger("dr.evoxml").info(
-                    "\nUser has specified the parameter: "+ parameterName + " " + param.toString());
-        }else{
-            Logger.getLogger("dr.evoxml").info(
-                    "\nUser has not specified the parameter:"+ parameterName+", default value will be used");
+            param =(Parameter) paramXO.getChild(Parameter.class);           
         }
         return param;
     }

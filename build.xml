@@ -12,15 +12,20 @@
     <property name="source" value="1.5"/>
     <path id="BEAST.classpath">
         <pathelement location="bin"/>
+        <pathelement location="lib/beagle.jar"/>
+        <pathelement location="lib/colt.jar"/>
         <pathelement location="lib/commons-math-1.2.jar"/>
+        <pathelement location="lib/figtreepanel.jar"/>
+        <pathelement location="lib/itext-1.4.5.jar"/>
+        <pathelement location="lib/jam.jar"/>
         <pathelement location="lib/jdom.jar"/>
         <pathelement location="lib/jebl.jar"/>
-        <pathelement location="lib/mtj.jar"/>
-
-        <pathelement location="lib/colt.jar"/>
-        <pathelement location="lib/itext-1.4.5.jar"/>
+        <pathelement location="lib/JRI.jar"/>
         <pathelement location="lib/junit-4.4.jar"/>
-
+        <pathelement location="lib/mpj.jar"/>
+        <pathelement location="lib/mtj.jar"/>
+        <pathelement location="lib/options.jar"/>
+        <pathelement location="lib/libjri.jnilib"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>

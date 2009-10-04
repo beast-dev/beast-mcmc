@@ -163,7 +163,7 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     }
 
     public boolean hasSubmodel(){
-        return subModel == null;
+        return subModel != null;
     }
 
 }

@@ -83,14 +83,13 @@ public class LinearBiasModel extends OnePhaseModel{
             biasLin = biasLinear;
         }else{
             biasLin = new Parameter.Default(0.0);
-            System.out.println("The bias linear parameter of LinearBiasModel is not provided.");
-            System.out.println("Using default value: "+biasLin.getParameterValue(0));
         }
         addParam(this.biasConst);
         addParam(this.biasLin);
 
         this.inLogitSpace = inLogitSpace;
-        System.out.println("In logit-space: "+this.inLogitSpace);
+
+        printDetails();
 
         setupInfinitesimalRates();
 
@@ -182,6 +181,19 @@ public class LinearBiasModel extends OnePhaseModel{
 
     public boolean isInLogitSpace(){
         return inLogitSpace;
+    }
+
+    public void printDetails(){
+        System.out.println("Details of the Linear Bias Model and its paramters:");
+        System.out.println("a submodel:                     "+isNested);
+        System.out.println("in logit space:                 "+inLogitSpace);
+        System.out.println("has submodel:                   "+hasSubmodel());
+        if(hasSubmodel()){
+            System.out.println("submodel class:                 "+subModel.getClass());
+        }        
+        System.out.println("esitmating submodel parameters: "+estimateSubmodelParams);
+        System.out.println("bias constant:                  "+biasConst.getParameterValue(0));
+        System.out.println("bias linear coefficient:        "+biasLin.getParameterValue(0));
     }
 
 }

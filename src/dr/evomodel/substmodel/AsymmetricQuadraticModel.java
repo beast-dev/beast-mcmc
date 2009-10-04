@@ -83,6 +83,8 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
         this.isNested = isNested;
         addParameters();
 
+        printDetails();
+
         setupInfinitesimalRates();
 
         //calculate the default frequencies when not provieded by the user.
@@ -189,6 +191,19 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
 
     public Parameter getContractionQuad(){
         return contractQuad;
+    }
+
+    public void printDetails(){
+        System.out.println("\n");
+        System.out.println("Details of the asymmetric quadratic model and its parameters:");
+        System.out.println("expansion constant:   "+expanConst.getParameterValue(0));
+        System.out.println("expansion linear:     "+ expanLin.getParameterValue(0));
+        System.out.println("expansion quadratic:  "+expanQuad.getParameterValue(0));
+        System.out.println("contraction constant: "+contractConst.getParameterValue(0));
+        System.out.println("contraction linear:   "+contractLin.getParameterValue(0));
+        System.out.println("contraction quadratc: "+contractQuad.getParameterValue(0));
+        System.out.println("a submodel:           "+isNested);
+        System.out.println("\n");
     }
 
 }

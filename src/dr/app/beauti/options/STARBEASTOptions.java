@@ -168,7 +168,9 @@ public class STARBEASTOptions extends ModelOptions {
         if (options.taxonList != null) {
             for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
                 Taxon taxon = options.taxonList.getTaxon(i);
-                sp = taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString()).toString();
+                sp = (String) taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+
+                if (sp == null) return null;
 
                 if (!species.contains(sp)) {
                     species.add(sp);

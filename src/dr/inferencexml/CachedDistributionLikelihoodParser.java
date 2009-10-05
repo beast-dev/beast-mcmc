@@ -1,6 +1,8 @@
 package dr.inferencexml;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.AbstractDistributionLikelihood;
+import dr.inference.distribution.CachedDistributionLikelihood;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
@@ -24,13 +26,13 @@ public class CachedDistributionLikelihoodParser extends AbstractXMLObjectParser 
 
         final String name = xo.hasId() ? xo.getId() : MODEL_NAME;
 
-        final DistributionLikelihood likelihood = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        final AbstractDistributionLikelihood likelihood = (AbstractDistributionLikelihood) xo.getChild(AbstractDistributionLikelihood.class);
         final Variable variable = (Variable) xo.getChild(Variable.class);
 
         final Logger logger = Logger.getLogger("dr.inference");
         logger.info("Constructing a cache around likelihood '" + likelihood.getId() + "', signal = " + variable.getVariableName());
 
-        return new dr.inference.distribution.CachedDistributionLikelihood(name, likelihood, variable);
+        return new CachedDistributionLikelihood(name, likelihood, variable);
 
     }
 
@@ -43,7 +45,7 @@ public class CachedDistributionLikelihoodParser extends AbstractXMLObjectParser 
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(DistributionLikelihood.class),
+            new ElementRule(AbstractDistributionLikelihood.class),
             new ElementRule(Variable.class),
     };
 

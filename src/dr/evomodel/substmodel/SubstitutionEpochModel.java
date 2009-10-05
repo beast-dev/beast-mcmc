@@ -204,7 +204,7 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
             DataType dataType = null;
             FrequencyModel freqModel = null;
             List<SubstitutionModel> modelList = new ArrayList<SubstitutionModel>();
-            XMLObject cxo = (XMLObject) xo.getChild(MODELS);
+            XMLObject cxo = xo.getChild(MODELS);
             for (int i = 0; i < cxo.getChildCount(); i++) {
                 SubstitutionModel model = (SubstitutionModel) cxo.getChild(i);
 

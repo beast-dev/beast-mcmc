@@ -10,7 +10,7 @@ import dr.inference.model.Variable;
  */
 public class CachedDistributionLikelihood extends AbstractModelLikelihood {
 
-    public CachedDistributionLikelihood(String name, DistributionLikelihood likelihood, Variable variable) {
+    public CachedDistributionLikelihood(String name, AbstractDistributionLikelihood likelihood, Variable variable) {
         super(name);
         this.likelihood = likelihood;
         addVariable(variable);
@@ -65,5 +65,5 @@ public class CachedDistributionLikelihood extends AbstractModelLikelihood {
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    private final DistributionLikelihood likelihood;
+    private final AbstractDistributionLikelihood likelihood;
 }

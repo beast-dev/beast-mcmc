@@ -288,7 +288,7 @@
 	</operators>
 	
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<oneOnXPrior>

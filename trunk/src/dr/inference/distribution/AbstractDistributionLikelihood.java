@@ -56,6 +56,8 @@ public abstract class AbstractDistributionLikelihood extends Likelihood.Abstract
 
     protected ArrayList<Attribute<double[]>> dataList = new ArrayList<Attribute<double[]>>();
 
+    public abstract double calculateLogLikelihood();
+
     /**
      * Overridden to always return false.
      */

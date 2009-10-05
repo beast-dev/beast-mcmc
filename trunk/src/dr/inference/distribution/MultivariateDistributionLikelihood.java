@@ -73,7 +73,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     protected ArrayList<Variable.D> dataList = new ArrayList<Variable.D>();
 
 
-    protected double calculateLogLikelihood() {
+    public double calculateLogLikelihood() {
         double logL = 0.0;
 
         for (Variable.D variable : dataList) {

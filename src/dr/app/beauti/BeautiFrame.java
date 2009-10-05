@@ -968,8 +968,21 @@ public class BeautiFrame extends DocumentFrame {
 		}    	
     }
     
-    public void setStatusMessage() { 
+    public void setStatusMessage() {
+        GUIValidate();
+        
         statusLabel.setText(beautiOptions.statusMessage());
+    }
+
+     public void GUIValidate() {
+         if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
+             if (beautiOptions.starBEASTOptions.getSpeciesList() == null) {
+                 JOptionPane.showMessageDialog(this, "Species value is empty."
+                         + "\nPlease go to Traits panel, either Import Traits,"
+                         + "\nor Guess trait values", "*BEAST Error Message",
+                    JOptionPane.ERROR_MESSAGE);
+             }
+         }
     }
 
     public final boolean doGenerate() {

@@ -9,9 +9,18 @@ import java.awt.*;
 * @version $Id$
 */
 public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
+    private final boolean isListAll;
+
     public ComboBoxRenderer() {
         super();
         setOpaque(true);
+        isListAll = false;
+    }
+
+    public <T> ComboBoxRenderer(T[] allValues) {
+        super(allValues);
+        setOpaque(true);
+        isListAll = true;
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -26,9 +35,13 @@ public class ComboBoxRenderer extends JComboBox implements TableCellRenderer {
             this.setBackground(table.getBackground());
         }
 
-        if (value != null) {
-            removeAllItems();
-            addItem(value);
+        if (isListAll) {
+            setSelectedItem(value);
+        } else {
+            if (value != null) {
+                removeAllItems();
+                addItem(value);
+            }
         }
         return this;
     }

@@ -78,13 +78,20 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         this.frame = parent;
 
         traitsTableModel = new TraitsTableModel();
-        TableSorter sorter = new TableSorter(traitsTableModel);
-        traitsTable = new JTable(sorter);
-        sorter.setTableHeader(traitsTable.getTableHeader());
+//        TableSorter sorter = new TableSorter(traitsTableModel);
+//        traitsTable = new JTable(sorter);
+//        sorter.setTableHeader(traitsTable.getTableHeader());
+        traitsTable = new JTable(traitsTableModel);
 
-        traitsTable.getColumnModel().getColumn(0).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        traitsTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        traitsTable.getTableHeader().setReorderingAllowed(false);
+        traitsTable.getTableHeader().setResizingAllowed(false);
+        traitsTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4))); 
+
+        TableColumn col = traitsTable.getColumnModel().getColumn(1);
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitGuesser.TraitType.values());
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        col.setCellRenderer(comboBoxRenderer);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traitsTable);
 
@@ -92,6 +99,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 traitSelectionChanged();
+                dataTableModel.fireTableDataChanged();
             }
         });
 
@@ -101,7 +109,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         scrollPane1.setOpaque(false);
 
         dataTableModel = new DataTableModel();
-        sorter = new TableSorter(dataTableModel);
+        TableSorter sorter = new TableSorter(dataTableModel);
         dataTable = new JTable(sorter);
         sorter.setTableHeader(dataTable.getTableHeader());
 
@@ -113,8 +121,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
-        TableColumn col = dataTable.getColumnModel().getColumn(1);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
+        col = dataTable.getColumnModel().getColumn(1);
+        comboBoxRenderer = new ComboBoxRenderer();
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
@@ -234,12 +242,18 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
             currentTrait = options.traitOptions.traits.get(selRow);
+            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
-        } else {
+//        } else {
 //            currentTrait = null;
+//            removeTraitAction.setEnabled(false);
+        }
+
+        if (options.traitOptions.traits.size() <= 0) {
             removeTraitAction.setEnabled(false);
         }
-        dataTableModel.fireTableDataChanged();
+//        dataTableModel.fireTableDataChanged();
+//        traitsTableModel.fireTableDataChanged();
     }
 
 
@@ -318,9 +332,12 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 selRow = options.traitOptions.traits.size() - 1;                 
             }
             traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-            
-            fireTraitsChanged();
-            dataTableModel.fireTableDataChanged();
+
+//            fireTraitsChanged();
+            traitsTableModel.fireTableDataChanged();
+            dataTableModel.fireTableDataChanged();          
+
+//            traitSelectionChanged();
         }
     }
 
@@ -441,14 +458,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     options.traitOptions.traits.get(row).setTraitName(aValue.toString());
+                    break;
                 case 1:
                     options.traitOptions.traits.get(row).setTraitType((TraitGuesser.TraitType) aValue);
+                    break;
             }            
         }
 
         public boolean isCellEditable(int row, int col) {
-//            if (col == 0) return true;
-            return false;
+//            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
+            return !options.traitOptions.traits.get(row).getTraitName().
+                    equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString());
         }
 
         public String getColumnName(int column) {

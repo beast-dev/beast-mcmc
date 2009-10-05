@@ -45,8 +45,7 @@ public class GuessTraitDialog {
     private JFrame frame;
     private final OptionsPanel optionPanel;
 
-    private JTextField traitNameField = new JTextField(18);
-//    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
+    //    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
     
     private final JRadioButton suffixRadio = new JRadioButton("Defined by a suffix, after the", true);
     private final JComboBox suffixOrderCombo = new JComboBox(new String[]{"last", "second from last", "third from last", "fourth from last"});
@@ -65,6 +64,7 @@ public class GuessTraitDialog {
 
         optionPanel = new OptionsPanel(12, 12);
 
+        JTextField traitNameField = new JTextField(18);
         traitNameField.setText(guesser.getTraitName());
         traitNameField.setEnabled(false);
         optionPanel.addComponentWithLabel("The trait name: ", traitNameField);
@@ -86,6 +86,11 @@ public class GuessTraitDialog {
 //                    }
 //                }
 //        );
+        JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
+        traitTypeComb.setSelectedItem(guesser.getTraitType());
+        traitTypeComb.setEnabled(false);
+        optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
+
         optionPanel.addSeparator();
         
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
@@ -119,6 +124,8 @@ public class GuessTraitDialog {
         suffixRadio.addItemListener(listener);
         prefixRadio.addItemListener(listener);
         regexRadio.addItemListener(listener);
+
+//        setupGuesser();
     }
 
     public int showDialog() {

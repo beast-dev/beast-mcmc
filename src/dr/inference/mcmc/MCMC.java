@@ -159,6 +159,11 @@ public class MCMC implements Identifiable, Spawnable {
                 // Run the chain for coercionDelay steps with coercion disabled
                 mc.runChain(coercionDelay, true);
                 chainLength -= coercionDelay;
+                
+                // reset operator acceptance levels
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                    schedule.getOperator(i).reset();
+                }
             }
 
             mc.runChain(chainLength, false);

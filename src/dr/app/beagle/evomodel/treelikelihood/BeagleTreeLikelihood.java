@@ -170,8 +170,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             InstanceDetails instanceDetails = beagle.getDetails();
 
             if (instanceDetails != null) {
-                ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());                
-                logger.info("  Using BEAGLE resource " + resourceDetails.toString());
+                ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+                if (resourceDetails != null) {
+                    logger.info("  Using BEAGLE resource " + resourceDetails.toString());
+                } else {
+                    logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
+                }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
@@ -497,7 +501,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             useScaleFactors = true;
             recomputeScaleFactors = true;
 
-            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+            // System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
             updateAllNodes();
             branchUpdateCount = 0;

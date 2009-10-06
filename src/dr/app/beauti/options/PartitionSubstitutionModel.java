@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.*;
 import dr.evolution.datatype.DataType;
 

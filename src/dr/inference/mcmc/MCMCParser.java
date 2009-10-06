@@ -119,6 +119,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(CHAIN_LENGTH),
             AttributeRule.newBooleanRule(COERCION, true),
+            AttributeRule.newIntegerRule(COERCION_DELAY, true),
             AttributeRule.newIntegerRule(PRE_BURNIN, true),
             AttributeRule.newDoubleRule(TEMPERATURE, true),
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),

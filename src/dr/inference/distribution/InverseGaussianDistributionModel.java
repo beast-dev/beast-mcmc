@@ -46,37 +46,86 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
     public static final String INVERSEGAUSSIAN_DISTRIBUTION_MODEL = "inverseGaussianDistributionModel";
     public static final String MEAN = "mean";
+    public static final String STDEV = "stdev";
     public static final String SHAPE = "shape";
     public static final String OFFSET = "offset";
 
 
     /**
      * @param meanParameter  the mean, mu
-     * @param shapeParameter the shape parameter, lambda
+     * @param igParameter   either the standard deviation parameter, sigma or the shape parameter, lamba
      * @param offset         offset of the distribution
+     * @param useShape         whether shape or stdev is used
      */
-    public InverseGaussianDistributionModel(Parameter meanParameter, Parameter shapeParameter, double offset) {
+    public InverseGaussianDistributionModel(Parameter meanParameter, Parameter igParameter, double offset, boolean useShape) {
 
         super(INVERSEGAUSSIAN_DISTRIBUTION_MODEL);
 
+        if(useShape) {
+            this.shapeParameter = igParameter;
+            this.stdevParameter = null;
+            addVariable(shapeParameter);
+            this.shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
+        else {
+            this.stdevParameter = igParameter;
+            this.shapeParameter = null;
+            addVariable(stdevParameter);
+            this.stdevParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
+
         this.meanParameter = meanParameter;
-        this.shapeParameter = shapeParameter;
-        this.offset = offset;
         addVariable(meanParameter);
-        addVariable(shapeParameter);
+        this.offset = offset;
         this.meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        this.shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+    }
+
+    public final double getS() {
+        if(stdevParameter==null) {
+            return Math.sqrt(InverseGaussianDistribution.variance(getM(), getShape()));
+        }
+        return stdevParameter.getParameterValue(0);
+    }
+
+    public final void setS(double S) {
+        if(stdevParameter==null) {
+            throw new RuntimeException("Standard deviation parameter is not being used");
+        }
+        else {
+            stdevParameter.setParameterValue(0, S);
+        }
+    }
+
+    public final Parameter getSParameter() {
+        if(stdevParameter==null) {
+            throw new RuntimeException("Standard deviation parameter is not being used");
+        }
+        return stdevParameter;
     }
 
     public final double getShape() {
+        if(shapeParameter == null) {
+            double shape = (getM() * getM() * getM()) / (getS() * getS());
+            return shape;
+        }
         return shapeParameter.getParameterValue(0);
     }
 
-    public final void setShape(double S) {
-        shapeParameter.setParameterValue(0, S);
+    public final void setShape(double shape) {
+        if(shapeParameter==null) {
+            throw new RuntimeException("Shape parameter is not being used");
+
+        }
+        else {
+            shapeParameter.setParameterValue(0, shape);
+        }
     }
 
     public final Parameter getShapeParameter() {
+        if(shapeParameter==null) {
+            throw new RuntimeException("Shape parameter is not being used");
+        }
         return shapeParameter;
     }
 
@@ -94,6 +143,8 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
     public final void setM(double M) {
         meanParameter.setParameterValue(0, M);
+        //double shape = (getM() * getM() * getM()) / (getS() * getS());
+        //setShape(shape);
     }
 
     public final Parameter getMParameter() {
@@ -127,14 +178,16 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
      * @return the mean of the distribution
      */
     public double mean() {
-        return InverseGaussianDistribution.mean(getM(), getShape()) + offset;
+        //return InverseGaussianDistribution.mean(getM(), getShape()) + offset;
+        return getM() + offset;
     }
 
     /**
      * @return the variance of the distribution.
      */
     public double variance() {
-        return InverseGaussianDistribution.variance(getM(), getShape());
+        //return InverseGaussianDistribution.variance(getM(), getShape());
+        return getS() * getS();
     }
 
     public final UnivariateFunction getProbabilityDensityFunction() {
@@ -198,7 +251,7 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter meanParam;
-            Parameter shapeParam;
+
             double offset = xo.getAttribute(OFFSET, 0.0);
 
             XMLObject cxo = (XMLObject) xo.getChild(MEAN);
@@ -208,14 +261,32 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
                 meanParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            cxo = (XMLObject) xo.getChild(SHAPE);
-            if (cxo.getChild(0) instanceof Parameter) {
-                shapeParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                shapeParam = new Parameter.Default(cxo.getDoubleChild(0));
+            if(xo.hasChildNamed(STDEV) && xo.hasChildNamed(SHAPE)) {
+                throw new RuntimeException("XML has both standard deviation and shape for Inverse Gaussian distribution");
             }
-
-            return new InverseGaussianDistributionModel(meanParam, shapeParam, offset);
+            else if(xo.hasChildNamed(STDEV)) {
+                Parameter stdevParam;
+                cxo = (XMLObject) xo.getChild(STDEV);
+                if (cxo.getChild(0) instanceof Parameter) {
+                    stdevParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
+                return new InverseGaussianDistributionModel(meanParam, stdevParam, offset, false);
+            }
+            else if(xo.hasChildNamed(SHAPE)) {
+                Parameter shapeParam;
+                cxo = (XMLObject) xo.getChild(SHAPE);
+                if (cxo.getChild(0) instanceof Parameter) {
+                    shapeParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    shapeParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
+                return new InverseGaussianDistributionModel(meanParam, shapeParam, offset, true);
+            }
+            else {
+                throw new RuntimeException("XML has both standard deviation and shape for Inverse Gaussian distribution");
+            }
         }
 
         //************************************************************************
@@ -234,18 +305,26 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
                                         new ElementRule(Parameter.class),
                                         new ElementRule(Double.class)
                                 )}
-                ),
-                new ElementRule(SHAPE,
+                , false),
+                new ElementRule(STDEV,
                         new XMLSyntaxRule[]{
                                 new XORRule(
                                         new ElementRule(Parameter.class),
                                         new ElementRule(Double.class)
                                 )}
-                )
+                , true),
+
+                new ElementRule(SHAPE,
+                    new XMLSyntaxRule[]{
+                            new XORRule(
+                                    new ElementRule(Parameter.class),
+                                    new ElementRule(Double.class)
+                            )}
+                , true)
         };
 
         public String getParserDescription() {
-            return "Describes a inverse gaussian distribution with a given mean and shape " +
+            return "Describes a inverse gaussian distribution with a given mean and shape (or standard deviation) " +
                     "that can be used in a distributionLikelihood element";
         }
 
@@ -259,6 +338,7 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
     // **************************************************************
 
     private final Parameter meanParameter;
+    private final Parameter stdevParameter;
     private final Parameter shapeParameter;
     private final double offset;
 

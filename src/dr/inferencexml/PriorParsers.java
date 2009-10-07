@@ -337,7 +337,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET, true),
-                AttributeRule.newBooleanRule(UNINFORMATIVE, true),
+               // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

@@ -83,8 +83,9 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
             length += tree.getInternalNodeCount() - 1;
         }
 
-        double[] rates = new double[length];
-        double[] branchLengths = new double[length];
+        final double[] rates = new double[length];
+        // need those only for mean
+        final double[] branchLengths = new double[length];
 
         for (int i = 0; i < offset; i++) {
             NodeRef child = tree.getExternalNode(i);
@@ -93,7 +94,7 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
             rates[i] = branchRateModel.getBranchRate(tree, child);
         }
         if (internal) {
-            int n = tree.getInternalNodeCount();
+            final int n = tree.getInternalNodeCount();
             int k = offset;
             for (int i = 0; i < n; i++) {
                 NodeRef child = tree.getInternalNode(i);
@@ -117,7 +118,9 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
         } else if (mode.equals(VARIANCE)) {
             return DiscreteStatistics.variance(rates);
         } else if (mode.equals(COEFFICIENT_OF_VARIATION)) {
-            return DiscreteStatistics.stdev(rates) / DiscreteStatistics.mean(rates);
+            // don't compute mean twice
+            final double mean = DiscreteStatistics.mean(rates);
+            return Math.sqrt(DiscreteStatistics.variance(rates, mean)) / mean;
         }
 
         throw new IllegalArgumentException();
@@ -131,18 +134,18 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree tree = (Tree) xo.getChild(Tree.class);
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+            final String name = xo.getAttribute(NAME, xo.getId());
+            final Tree tree = (Tree) xo.getChild(Tree.class);
+            final BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            boolean internal = xo.getBooleanAttribute("internal");
-            boolean external = xo.getBooleanAttribute("external");
+            final boolean internal = xo.getBooleanAttribute("internal");
+            final boolean external = xo.getBooleanAttribute("external");
 
             if (!(internal || external)) {
                 throw new XMLParseException("At least one of internal and external must be true!");
             }
 
-            String mode = xo.getStringAttribute(MODE);
+            final String mode = xo.getStringAttribute(MODE);
 
             return new RateStatistic(name, tree, branchRateModel, external, internal, mode);
         }
@@ -178,5 +181,4 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
     private boolean internal = true;
     private boolean external = true;
     private String mode = MEAN;
-
 }

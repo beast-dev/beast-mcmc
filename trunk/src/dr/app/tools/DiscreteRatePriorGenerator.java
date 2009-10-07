@@ -4,15 +4,14 @@ package dr.app.tools;
 import dr.app.util.Arguments;
 import dr.evolution.continuous.SphericalPolarCoordinates;
 import dr.stats.DiscreteStatistics;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 import java.io.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
-
-import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
-import org.jdom.output.Format;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +31,7 @@ public class DiscreteRatePriorGenerator {
     public DiscreteRatePriorGenerator(String[] locations, Double[] latitudes, Double[] longitudes, Double[] densities) {
 
         if (locations == null) {
-            System.out.println(locations[0]);
+            //System.out.println(locations[0]);
             System.err.println("no locations specified!");
         } else {
             //this.locations = locations;
@@ -53,7 +52,7 @@ public class DiscreteRatePriorGenerator {
     //private String[] locations;
     //private Double[] latitudes;
     //private Double[] longitudes;
-    private Double[] densities;
+    private final Double[] densities;
     private double[] distances;
 
     private double[] getUpperTriangleDistanceMatrix(Double[] latitudes, Double[] longitudes) {
@@ -178,10 +177,10 @@ public class DiscreteRatePriorGenerator {
 
         int counter = 0;
         int pairwiseCounter1 = 0;
-        for (int c = 0; c < matrixValues.length; c++) {
-            pairwiseCounter1 ++;
-            for (int d = pairwiseCounter1; d < matrixValues.length; d++) {
-                pairwiseProducts[counter] = matrixValues[c]*matrixValues[d];
+        for(Double matrixValue : matrixValues) {
+            pairwiseCounter1++;
+            for(int d = pairwiseCounter1; d < matrixValues.length; d++) {
+                pairwiseProducts[counter] = matrixValue * matrixValues[d];
                 counter++;
             }
         }
@@ -268,16 +267,16 @@ public class DiscreteRatePriorGenerator {
         StringBuffer sb1 = new StringBuffer();
         StringBuffer sb2 = new StringBuffer();
         String sep;
-        if (outputFormat == outputFormat.TAB) {
+        if (outputFormat == OutputFormat.TAB ) {
             sep = "\t";
         } else {
             sep = " ";
         }
-        for(int v=0; v<array.length; v++) {
-            sb1.append(array[v]+sep);
-            sb2.append(1+sep);
+        for(double anArray : array) {
+            sb1.append(anArray + sep);
+            sb2.append(1 + sep);
         }
-        if (outputFormat == outputFormat.XML) {
+        if (outputFormat == OutputFormat.XML ) {
             Element priorElement = new Element("multivariateGammaPrior");
             Element data = new Element("data");
             Element parameter1 = new Element("parameter");
@@ -322,11 +321,11 @@ public class DiscreteRatePriorGenerator {
     }
 
     private void outputStringLine(String outputString,  OutputFormat outputFormat) {
-        if (outputFormat == outputFormat.XML) {
+        if (outputFormat == OutputFormat.XML ) {
            resultsStream.print("<!-- ");
         }
         resultsStream.print(outputString);
-        if (outputFormat == outputFormat.XML) {
+        if (outputFormat == OutputFormat.XML ) {
            resultsStream.print(" -->");
         } else {
            resultsStream.print("\r");
@@ -334,7 +333,7 @@ public class DiscreteRatePriorGenerator {
     }
 
     // Messages to stderr, output to stdout
-    private static PrintStream progressStream = System.err;
+    private static final PrintStream progressStream = System.err;
     private PrintStream resultsStream;
     private static final String commandName = "discreteRatePriorGenerator";
 
@@ -347,7 +346,7 @@ public class DiscreteRatePriorGenerator {
     }
 
     private static ArrayList parseCoordinatesFile(String inputFile, String[] locations, Double[] latitudes, Double[] longitudes) {
-        ArrayList returnList = new ArrayList();
+        ArrayList<Object[]> returnList = new ArrayList<Object[]>();
         List<String> countList = new ArrayList<String>();
         try{
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
@@ -382,7 +381,7 @@ public class DiscreteRatePriorGenerator {
 
     private static ArrayList parseSingleMeasureFile(String inputFile, String[] locations, Double[] densities) {
 
-        ArrayList returnList = new ArrayList();
+        ArrayList<Object[]> returnList = new ArrayList<Object[]>();
 
         boolean locationsSpecified = true;
         if (locations == null) {
@@ -507,8 +506,8 @@ public class DiscreteRatePriorGenerator {
          try {
              PrintWriter outFile = new PrintWriter(new FileWriter(name), true);
 
-             for (int i = 0; i < array.length; i++) {
-                 outFile.print(array[i]+"\t");
+             for(Double anArray : array) {
+                 outFile.print(anArray + "\t");
              }
              outFile.close();
          } catch(IOException io) {
@@ -519,8 +518,8 @@ public class DiscreteRatePriorGenerator {
          try {
              PrintWriter outFile = new PrintWriter(new FileWriter(name), true);
 
-             for (int i = 0; i < array.length; i++) {
-                 outFile.print(array[i]+"\t");
+             for(String anArray : array) {
+                 outFile.print(anArray + "\t");
              }
              outFile.close();
          } catch(IOException io) {

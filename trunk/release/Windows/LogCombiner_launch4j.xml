@@ -1,6 +1,6 @@
 <launch4jConfig>
   <headerType>gui</headerType>
-  <icon>icons/utility.ico</icon>
+  <icon>../common/icons/utility.ico</icon>
   <classPath>
   	<mainClass>dr.app.tools.LogCombiner</mainClass>
   	<cp>./lib/beast.jar</cp>
@@ -8,7 +8,7 @@
   <jre>
     <minVersion>1.5.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
-    <maxHeapSize>1000</maxHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>LogCombiner</fileDescription>    

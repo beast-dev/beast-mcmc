@@ -207,11 +207,11 @@ public class TreeLogger extends MCLogger {
     public void log(int state) {
 
         if(normaliseMeanRate) {
-            try {
+//            try {
                 NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);
-            }catch (TraceException e) {
-                e.printStackTrace();
-            }
+//            }catch (TraceException e) {
+//                e.printStackTrace();
+//            }
         }
 
         final boolean doIt = condition != null ? condition.logNow(state) :

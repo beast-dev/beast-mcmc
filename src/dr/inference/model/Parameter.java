@@ -527,8 +527,8 @@ public interface Parameter extends Statistic, Variable<Double> {
 
 
             double[] newValues = new double[dim];
-            // copy over new values
-            System.arraycopy(values, 0, newValues, 0, oldDim);
+            // copy over new values, min in case new dim is smaller
+            System.arraycopy(values, 0, newValues, 0, Math.min(oldDim, dim));
             // fill new values with first item
             for (int i = oldDim; i < dim; i++) {
                 newValues[i] = values[0];
@@ -536,7 +536,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             values = newValues;
 
             if( bounds != null ) {
-                assert oldDim < dim :  "Can't decrease dimension when bounds are set";
+                //assert oldDim < dim :  "Can't decrease dimension when bounds are set";
                 for(int k = 1; k < oldDim; ++k) {
                     assert ((double)bounds.getLowerLimit(k) == bounds.getLowerLimit(0)) &&
                             ((double)bounds.getUpperLimit(k) == bounds.getUpperLimit(0) ) :

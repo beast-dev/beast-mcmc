@@ -491,8 +491,8 @@
 		<echo message="Linux/Unix version release is finished." />
 	</target>
 
-	<target name="mac_Release" 
-								   description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
+	<target name="mac_Release"  depends="build_jar_all_BEAST_NoJUnitTest"
+								description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
 		<delete dir="${Mac_package_dir}" />
 		<!-- Create the release directory -->
 		<mkdir dir="${Mac_package_dir}" />
@@ -595,6 +595,21 @@
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
 
+        <echo message="Building disk image." />
+
+        <!-- create disk image -->
+        <exec executable="/usr/bin/hdiutil">
+            <arg value="create"/>
+            <arg value="-ov"/>
+            <arg value="-srcfolder"/>
+            <arg value="${Mac_package_dir}"/>
+            <arg value="-volname"/>
+            <arg value="${BEAST_name} v${version}"/>
+            <arg value="-imagekey"/>
+            <arg value="zlib-level=6"/>
+            <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
+        </exec>
+        
 		<echo message="Mac version release is finished." />
 	</target>
 

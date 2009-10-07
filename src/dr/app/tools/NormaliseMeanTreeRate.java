@@ -5,12 +5,15 @@ import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.inference.trace.TraceException;
+import dr.inference.model.Parameter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.Importer;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.FlexibleTree;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.NodeTraitLogger;
 
 import java.io.*;
 import java.util.*;
@@ -32,7 +35,7 @@ public class NormaliseMeanTreeRate {
     private final static Version version = new BeastVersion();
 
 
-    public NormaliseMeanTreeRate(String inputFileName, String outputFileName, double normaliseMeanRateTo) throws java.io.IOException, TraceException {
+    public NormaliseMeanTreeRate(String inputFileName, String outputFileName, double normaliseMeanRateTo) throws java.io.IOException {
 
         File parentFile = new File(inputFileName);
 
@@ -82,15 +85,18 @@ public class NormaliseMeanTreeRate {
      *
      * @param tree                tree to normalise
      * @param normaliseMeanRateTo rate to normalise to
-     * @throws dr.inference.trace.TraceException
      *          if the trace file is in the wrong format or corrupted
      */
-    public static void analyze(Tree tree, double normaliseMeanRateTo) throws TraceException {
+    public static void analyze(Tree tree, double normaliseMeanRateTo) {
         double treeRate = 0;
         double treeTime = 0;
-        //int branchCount = 0;
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
+
+            if(tree.getClass().getName().equals("dr.evomodel.tree.TreeModel")) {
+
+                throw new RuntimeException("Does not currently handle TreeModel");
+            }
 
             if(!tree.isRoot(node)) {
 
@@ -100,13 +106,11 @@ public class NormaliseMeanTreeRate {
                     System.err.println("Tree file does not contain rate information. Program terminated");
                     System.exit(0);
                 }
-                treeRate += (Double) tree.getNodeAttribute(node, "rate") * tree.getBranchLength(node);
+                treeRate += tree.getNodeRate(node) * tree.getBranchLength(node);
                 treeTime += tree.getBranchLength(node);
-                //branchCount++;
             }
         }
 
-        //treeRate /= branchCount;
         treeRate /= treeTime;
 
         /* Normalise the rates here */
@@ -114,9 +118,7 @@ public class NormaliseMeanTreeRate {
         for (int i = 0; i < modifiedTree.getNodeCount(); i++) {
             NodeRef node = modifiedTree.getNode(i);
             if(!modifiedTree.isRoot(node)) {
-                double nodeRate = (Double) modifiedTree.getNodeAttribute(node, "rate");
-                nodeRate = normaliseMeanRateTo * nodeRate / treeRate;
-
+                double nodeRate = normaliseMeanRateTo * modifiedTree.getNodeRate(node) / treeRate;
                 modifiedTree.setNodeAttribute(node, "rate", Double.valueOf(nodeRate));
                 double nodeTime = modifiedTree.getBranchLength(node);
                 nodeTime = nodeTime * treeRate / normaliseMeanRateTo;
@@ -155,10 +157,9 @@ public class NormaliseMeanTreeRate {
 
     public static void printUsage(Arguments arguments) {
 
-        arguments.printUsage("normaliseMeanTreeRate", "[-input-file-name <input-file-name>] [<output-file-name> <output-file-name>] [<normaliseMeanRateTo> <normaliseMeanRateTo>]");
+        arguments.printUsage("normaliseMeanTreeRate", "[-input-file-name <input-file-name>] [-output-file-name <output-file-name>] [-normaliseMeanRateTo <normaliseMeanRateTo>]");
         System.out.println();
         System.out.println("  Example: normaliseMeanTreeRate test.trees out.trees 1.0");
-        System.out.println("  Example: loganalyser -input-file-name test.trees out.trees 1.0");
         System.out.println();
 
     }
@@ -170,9 +171,9 @@ public class NormaliseMeanTreeRate {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("input-file-name", "Input file name"),
-                        new Arguments.IntegerOption("output-file-name", "Output file name"),
-                        new Arguments.Option("normaliseMeanRateTo", "Mean rate we should normalise to"),
+                        new Arguments.StringOption("input-file-name", "infile", "Input file name"),
+                        new Arguments.StringOption("output-file-name", "outfile", "Output file name"),
+                        new Arguments.RealOption("normaliseMeanRateTo", "Mean rate we should normalise to"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -222,6 +223,8 @@ public class NormaliseMeanTreeRate {
 
 
         new NormaliseMeanTreeRate(inputFileName, outputFileName, normaliseMeanRateTo);
+
+        System.out.println("Please bear in mind that the log files are unchanged and results may vary slightly from if you ran them internally");
 
         System.exit(0);
     }

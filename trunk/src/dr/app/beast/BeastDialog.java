@@ -30,6 +30,8 @@ import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -41,56 +43,57 @@ import java.io.File;
 import dr.app.tools.TreeAnnotator;
 
 public class BeastDialog {
-	private JFrame frame;
+    private JFrame frame;
 
-	private OptionsPanel optionPanel;
+    private OptionsPanel optionPanel;
 
     private WholeNumberField seedText = new WholeNumberField(1, Integer.MAX_VALUE);
     private JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library");
-    private JComboBox threadsCombo = new JComboBox(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+    private JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources");
+    private JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
-	private File inputFile = null;
+    private File inputFile = null;
 
-	public BeastDialog(final JFrame frame, final String titleString, final Icon icon) {
-		this.frame = frame;
+    public BeastDialog(final JFrame frame, final String titleString, final Icon icon) {
+        this.frame = frame;
 
-		optionPanel = new OptionsPanel(12, 12);
+        optionPanel = new OptionsPanel(12, 12);
 
-		this.frame = frame;
+        this.frame = frame;
 
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
 
         final JLabel titleText = new JLabel(titleString);
         titleText.setIcon(icon);
         optionPanel.addSpanningComponent(titleText);
         titleText.setFont(new Font("sans-serif", 0, 12));
-        
+
         final JButton inputFileButton = new JButton("Choose File...");
-		final JTextField inputFileNameText = new JTextField("not selected", 16);
+        final JTextField inputFileNameText = new JTextField("not selected", 16);
 
-		inputFileButton.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				FileDialog dialog = new FileDialog(frame,
-						"Select target file...",
-						FileDialog.LOAD);
+        inputFileButton.addActionListener( new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                FileDialog dialog = new FileDialog(frame,
+                        "Select target file...",
+                        FileDialog.LOAD);
 
-				dialog.setVisible(true);
-				if (dialog.getFile() == null) {
-					// the dialog was cancelled...
-					return;
-				}
+                dialog.setVisible(true);
+                if (dialog.getFile() == null) {
+                    // the dialog was cancelled...
+                    return;
+                }
 
-				inputFile = new File(dialog.getDirectory(), dialog.getFile());
-				inputFileNameText.setText(inputFile.getName());
+                inputFile = new File(dialog.getDirectory(), dialog.getFile());
+                inputFileNameText.setText(inputFile.getName());
 
-			}});
-		inputFileNameText.setEditable(false);
+            }});
+        inputFileNameText.setEditable(false);
 
-		JPanel panel1 = new JPanel(new BorderLayout(0,0));
-		panel1.add(inputFileNameText, BorderLayout.CENTER);
-		panel1.add(inputFileButton, BorderLayout.EAST);
-		optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
+        JPanel panel1 = new JPanel(new BorderLayout(0,0));
+        panel1.add(inputFileNameText, BorderLayout.CENTER);
+        panel1.add(inputFileButton, BorderLayout.EAST);
+        optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
 
         optionPanel.addSeparator();
 
@@ -100,30 +103,40 @@ public class BeastDialog {
         optionPanel.addComponentWithLabel("Thread pool size: ", threadsCombo);
 
         optionPanel.addComponent(beagleCheckBox);
-    
+        OptionsPanel optionPanel2 = new OptionsPanel(0,0);
+        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
+        optionPanel2.addComponent(beagleInfoCheckBox);
+        optionPanel.addComponent(optionPanel2);
+        
+        beagleInfoCheckBox.setEnabled(false);
+        beagleCheckBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                beagleInfoCheckBox.setEnabled(beagleCheckBox.isSelected());
+            }
+        });
 
-	}
+    }
 
-	public boolean showDialog(String title, int seed) {
+    public boolean showDialog(String title, int seed) {
 
-		JOptionPane optionPane = new JOptionPane(optionPanel,
-				JOptionPane.PLAIN_MESSAGE,
-				JOptionPane.OK_CANCEL_OPTION,
-				null,
-				new String[] { "Run", "Quit" },
-				null);
-		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JOptionPane optionPane = new JOptionPane(optionPanel,
+                JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION,
+                null,
+                new String[] { "Run", "Quit" },
+                "Run");
+        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         seedText.setValue(seed);
 
-		final JDialog dialog = optionPane.createDialog(frame, title);
-		//dialog.setResizable(true);
-		dialog.pack();
+        final JDialog dialog = optionPane.createDialog(frame, title);
+        //dialog.setResizable(true);
+        dialog.pack();
 
-		dialog.setVisible(true);
+        dialog.setVisible(true);
 
-		return optionPane.getValue().equals("Run");
-	}
+        return optionPane.getValue().equals("Run");
+    }
 
     public int getSeed() {
         return seedText.getValue();
@@ -133,9 +146,17 @@ public class BeastDialog {
         return beagleCheckBox.isSelected();
     }
 
-	public int getThreadPoolSize() {
-		return (Integer)threadsCombo.getSelectedItem();
-	}
+    public boolean showBeagleInfo() {
+        return beagleInfoCheckBox.isSelected();
+    }
+
+    public int getThreadPoolSize() {
+        if (threadsCombo.getSelectedIndex() == 0) {
+            // Automatic
+            return -1;
+        }
+        return (Integer)threadsCombo.getSelectedItem();
+    }
 
     public File getInputFile() {
         return inputFile;

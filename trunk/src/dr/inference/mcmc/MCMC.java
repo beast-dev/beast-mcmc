@@ -102,7 +102,7 @@ public class MCMC implements Identifiable, Spawnable {
         options.setCoercionDelay(0);
         options.setChainLength(chainlength);
         MCMCCriterion criterion = new MCMCCriterion();
-        criterion.setTemperature(1);
+        criterion.setTemperature(1);                                                                                        
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         for (MCMCOperator operator : operators) schedule.addOperator(operator);
 

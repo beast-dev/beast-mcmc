@@ -175,7 +175,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-	                                new Attribute.Default<String>("name", "meanRate"),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -191,7 +191,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
-	                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -207,7 +207,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-	                                new Attribute.Default<String>("name", "covariance")
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
@@ -289,7 +289,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-	                                new Attribute.Default<String>("name", "meanRate"),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) +"meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -304,7 +304,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + RateStatistic.COEFFICIENT_OF_VARIATION),
-	                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -319,7 +319,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-	                                new Attribute.Default<String>("name", "covariance")
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
@@ -367,7 +367,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        SumStatistic.SUM_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + "rateChanges"),
-	                                new Attribute.Default<String>("name", "rateChangeCount"),
+	                                new Attribute.Default<String>("name", modelPrefix + "rateChangeCount"),
 	                                new Attribute.Default<String>("elementwise", "true"),
 	                        }
 	                );
@@ -380,7 +380,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-	                                new Attribute.Default<String>("name", "meanRate"),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
 	                                new Attribute.Default<String>("mode", "mean"),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -395,7 +395,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateStatistic.RATE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
-	                                new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
 	                                new Attribute.Default<String>("internal", "true"),
 	                                new Attribute.Default<String>("external", "true")
@@ -410,7 +410,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-	                                new Attribute.Default<String>("name", "covariance")
+	                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);

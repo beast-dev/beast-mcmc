@@ -527,7 +527,7 @@
 		                mainclass="dr.app.beast.BeastMain" 
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
-		    			arguments="-window -working"
+		    			arguments="-window -working -options"
 		                version="${version}"
 		                infostring="${BEAST_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >

@@ -513,9 +513,6 @@
 		<copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
 		<copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/>
-		<copy todir="${Mac_package_dir}/lib">
-			<fileset dir="${Mac_dir}/lib"/>
-		</copy>
 		<copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
 		<copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
@@ -536,6 +533,7 @@
 			<javaproperty name="java.library.path" value="$JAVAROOT/lib:/usr/local/lib"/>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
+                <include name="**/beast-beagle.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_dir}">
                 <include name="lib/libNucleotideLikelihoodCore.jnilib"/>

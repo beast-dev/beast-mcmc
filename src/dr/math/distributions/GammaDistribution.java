@@ -141,8 +141,8 @@ public class GammaDistribution implements Distribution {
             return Math.exp(-x / scale) / scale;
         }
 
-        double a = Math.exp((shape - 1.0) * Math.log(x / scale) - x / scale
-                - GammaFunction.lnGamma(shape));
+        final double a = Math.exp((shape - 1.0) * Math.log(x / scale) - x / scale
+                        - GammaFunction.lnGamma(shape));
 
         return a / scale;
     }
@@ -423,15 +423,15 @@ public class GammaDistribution implements Distribution {
         // Best DJ & Roberts DE (1975) The percentage points of the
         // Chi2 distribution. Applied Statistics 24: 385-388. (AS91)
 
-        double e = 0.5e-6, aa = 0.6931471805, p = prob, g;
-        double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2, s3, s4, s5, s6;
+        final double e = 0.5e-6, aa = 0.6931471805, p = prob;
+        double ch, a, q, p1, p2, t, x, b, s1, s2, s3, s4, s5, s6;
 
         if (p < 0.000002 || p > 0.999998 || v <= 0) {
-            throw new IllegalArgumentException("Arguments out of range");
+            throw new IllegalArgumentException("Arguments out of range p" + p + " v " + v);
         }
-        g = GammaFunction.lnGamma(v / 2);
-        xx = v / 2;
-        c = xx - 1;
+        double g = GammaFunction.lnGamma(v / 2);
+        double xx = v / 2;
+        double c = xx - 1;
         if (v < -1.24 * Math.log(p)) {
             ch = Math.pow((p * xx * Math.exp(g + xx * aa)), 1 / xx);
             if (ch - e < 0) {

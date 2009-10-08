@@ -28,6 +28,7 @@ package dr.app.beast;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.components.RealNumberField;
+import org.virion.jam.html.SimpleLinkListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -102,6 +103,17 @@ public class BeastDialog {
 
         optionPanel.addComponentWithLabel("Thread pool size: ", threadsCombo);
 
+        optionPanel.addSeparator();
+        
+        JEditorPane beagleInfo = new JEditorPane("text/html",
+                "<html><div style=\"font-family:sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
+                        "additional computational resources such as graphics boards. It must be<br>" +
+                        "downloaded and installed independently of BEAST:</p>" +
+                        "<center><a href=\"http://beagle-lib.googlecode.com/\">http://beagle-lib.googlecode.com/</a></center></div>");
+        beagleInfo.setOpaque(false);
+        beagleInfo.setEditable(false);
+        beagleInfo.addHyperlinkListener(new SimpleLinkListener());
+        optionPanel.addSpanningComponent(beagleInfo);
         optionPanel.addComponent(beagleCheckBox);
         OptionsPanel optionPanel2 = new OptionsPanel(0,0);
         optionPanel2.setBorder(BorderFactory.createEmptyBorder());

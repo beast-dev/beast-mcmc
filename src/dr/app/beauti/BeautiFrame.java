@@ -816,6 +816,8 @@ public class BeautiFrame extends DocumentFrame {
                 final File file = new File(dialog.getDirectory(), dialog.getFile());
 
                 importTraitsFromFile(file);
+
+                traitsPanel.fireTraitsChanged();
             }
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",

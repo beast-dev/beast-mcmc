@@ -233,7 +233,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         return dataTable;
     }
 
-    private void fireTraitsChanged() {
+    public void fireTraitsChanged() {
         traitsTableModel.fireTableDataChanged();
         frame.setDirty();
     }

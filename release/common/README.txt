@@ -1,4 +1,4 @@
-                    BEAST v1.5.1 2002-2009
+                    BEAST v1.5.2 2002-2009
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard

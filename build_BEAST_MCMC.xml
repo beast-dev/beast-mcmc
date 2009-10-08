@@ -527,12 +527,13 @@
 		                mainclass="dr.app.beast.BeastMain" 
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
+                        vmoptions="-Xmx512M"
 		    			arguments="-window -working -options"
 		                version="${version}"
 		                infostring="${BEAST_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >
 			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-			<javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+			<javaproperty name="java.library.path" value="$JAVAROOT/lib:/usr/local/lib"/>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
             </jarfileset>
@@ -546,6 +547,7 @@
                         mainclass="dr.app.beauti.BeautiApp"
                         icon="${common_dir}/icons/beauti.icns"
                         jvmversion="1.5+"
+                        vmoptions="-Xmx128M"
                         arguments=""
                         version="${version}"
                         infostring="${BEAUti_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Walter Xie"
@@ -568,6 +570,7 @@
                         mainclass="dr.app.tools.LogCombiner"
                         icon="${common_dir}/icons/utility.icns"
                         jvmversion="1.5+"
+                        vmoptions="-Xmx128M"
                         arguments=""
                         version="${version}"
                         infostring="${LogCombiner_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
@@ -584,6 +587,7 @@
                         mainclass="dr.app.tools.TreeAnnotator"
                         icon="${common_dir}/icons/utility.icns"
                         jvmversion="1.5+"
+                        vmoptions="-Xmx256M"
                         arguments=""
                         version="${version}"
                         infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"

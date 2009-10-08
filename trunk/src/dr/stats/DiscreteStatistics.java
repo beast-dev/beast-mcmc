@@ -204,7 +204,7 @@ public class DiscreteStatistics {
      * @return variance of x (ML estimator)
      */
     public static double variance(double[] x) {
-        double m = mean(x);
+        final double m = mean(x);
         return variance(x, m);
     }
 

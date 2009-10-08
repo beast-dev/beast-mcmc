@@ -49,7 +49,7 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  */
 public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
     public enum TreeType {
-        UNSCALED,     // no coeff
+        UNSCALED,     // no coefficient 
         TIMESONLY,    // n!
         ORIENTED,     // n
         LABELED,      // 2^(n-1)/(n-1)!

@@ -91,6 +91,11 @@ public class STARBEASTOptions extends ModelOptions {
         createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
                 
         //TODO: more
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.iniClockRateStarBEAST();
+        }
+
     }
 
    
@@ -100,11 +105,7 @@ public class STARBEASTOptions extends ModelOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-    	
-    	for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.iniClockRateStarBEAST();
-        }    	
-    	
+
         params.add(getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {

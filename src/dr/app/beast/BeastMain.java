@@ -34,6 +34,7 @@ import dr.util.Version;
 import dr.xml.XMLParser;
 import org.virion.jam.util.IconUtils;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -226,6 +227,7 @@ public class BeastMain {
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
                         new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
+                        new Arguments.Option("options", "display an options dialog"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
                         new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
@@ -258,32 +260,31 @@ public class BeastMain {
         final boolean verbose = arguments.hasOption("verbose");
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
+        final boolean options = arguments.hasOption("options");
         final boolean working = arguments.hasOption("working");
 
+        long seed = MathUtils.getSeed();
+        boolean useJava = false;
+        boolean useBeagle = false;
+        int threadCount = 0;
+
         if (arguments.hasOption("java")) {
-            System.setProperty("java_only", "true");
+            useJava = true;
         }
 
         if (arguments.hasOption("beagle")) {
-            additionalParsers.add("beagle");
+            useBeagle = true;
         }
 
-        //int threadCount = 0;
         if (arguments.hasOption("threads")) {
-            final int threadCount = arguments.getIntegerOption("threads");
+            threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
                 printTitle();
                 System.err.println("The the number of threads should be >= 0");
                 System.exit(1);
             }
-            System.setProperty("thread_count", String.valueOf(threadCount));
         }
-        
-        // (HACK)
-        //MCMC.logOps =  arguments.hasOption("logops");
-        // MCMC.ontheflyFreq = arguments.hasOption("otfops") ? arguments.getIntegerOption("otfops") : 0;
 
-        long seed = MathUtils.getSeed();
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
             if (seed <= 0) {
@@ -291,7 +292,6 @@ public class BeastMain {
                 System.err.println("The random number seed should be > 0");
                 System.exit(1);
             }
-            MathUtils.setSeed(seed);
         }
 
         int maxErrorCount = 0;
@@ -302,11 +302,9 @@ public class BeastMain {
             }
         }
 
-//		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
-//			window = true;
-//		}
-
         BeastConsoleApp consoleApp = null;
+
+        String nameString = "BEAST " + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -315,7 +313,6 @@ public class BeastMain {
 
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
-            String nameString = "BEAST " + version.getVersionString();
             String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
                     "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
@@ -325,32 +322,72 @@ public class BeastMain {
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
 
-        String inputFileName = null;
-
-        String[] args2 = arguments.getLeftoverArguments();
-
-        if (args2.length > 1) {
-            System.err.println("Unknown option: " + args2[1]);
-            System.err.println();
-            printUsage(arguments);
-            System.exit(1);
-        }
-
         File inputFile = null;
 
-        if (args2.length > 0) {
-            inputFileName = args2[0];
-            inputFile = new File(inputFileName);
-        }
+        if (options) {
 
-        if (inputFileName == null) {
-            // No input file name was given so throw up a dialog box...
-            inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+            String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
+            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+
+           BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
+
+            if (!dialog.showDialog(nameString, (int)seed)) {
+                return;
+            }
+
+            useBeagle = dialog.useBeagle();
+            threadCount = dialog.getThreadPoolSize();
+            seed = dialog.getSeed();
+
+            inputFile = dialog.getInputFile();
+            if (inputFile == null) {
+                System.err.println("No input file specified");
+                return;
+            }
+
+        } else {
+
+            String[] args2 = arguments.getLeftoverArguments();
+
+            if (args2.length > 1) {
+                System.err.println("Unknown option: " + args2[1]);
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
+
+            String inputFileName = null;
+
+
+            if (args2.length > 0) {
+                inputFileName = args2[0];
+                inputFile = new File(inputFileName);
+            }
+
+            if (inputFileName == null) {
+                // No input file name was given so throw up a dialog box...
+                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+            }
         }
 
         if (inputFile != null && inputFile.getParent() != null && working) {
             System.setProperty("user.dir", inputFile.getParent());
         }
+
+        if (useJava) {
+            System.setProperty("java_only", "true");
+        }
+
+        if (useBeagle) {
+            additionalParsers.add("beagle");
+        }
+
+        if (threadCount > 0) {
+            System.setProperty("thread_count", String.valueOf(threadCount));
+        }
+
+        MathUtils.setSeed(seed);
 
         System.out.println();
         System.out.println("Random number seed: " + seed);
@@ -362,6 +399,14 @@ public class BeastMain {
             // For applications using the ConsoleApp, we don't want to exit at the end of the main() or
             // the console is closed on an error without the user being able to see it.
             System.exit(0);
+        } else {
+            while (true) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

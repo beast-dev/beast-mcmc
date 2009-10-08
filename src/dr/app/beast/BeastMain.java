@@ -43,6 +43,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.*;
 
+import beagle.Beagle;
+import beagle.BeagleInfo;
+
 public class BeastMain {
 
     private final static Version version = new BeastVersion();
@@ -237,6 +240,8 @@ public class BeastMain {
                         new Arguments.IntegerOption("threads", "the number of computational threads to use (default 1)"),
                         new Arguments.Option("java", "use Java only, no native implementations"),
                         new Arguments.Option("beagle", "use beagle library if available"),
+                        new Arguments.Option("beagle_info", "show information on available beagle resources"),
+                        new Arguments.Option("beagle_resource_order", "set order of beagle resources"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -266,6 +271,7 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
         boolean useBeagle = false;
+        boolean showBeagleInfo = false;
         int threadCount = 0;
 
         if (arguments.hasOption("java")) {
@@ -276,6 +282,9 @@ public class BeastMain {
             useBeagle = true;
         }
 
+        if (arguments.hasOption("beagle_info")) {
+            showBeagleInfo = true;
+        }
         if (arguments.hasOption("threads")) {
             threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
@@ -336,17 +345,26 @@ public class BeastMain {
                 return;
             }
 
-            useBeagle = dialog.useBeagle();
-            threadCount = dialog.getThreadPoolSize();
             seed = dialog.getSeed();
+            threadCount = dialog.getThreadPoolSize();
+
+            useBeagle = dialog.useBeagle();
+            showBeagleInfo = dialog.showBeagleInfo();
 
             inputFile = dialog.getInputFile();
-            if (inputFile == null) {
+            if (!showBeagleInfo && inputFile == null) {
                 System.err.println("No input file specified");
                 return;
             }
 
-        } else {
+        }
+
+        if (showBeagleInfo) {
+            BeagleInfo.printResourceList();
+            return;
+        }
+
+        if (inputFile == null) {
 
             String[] args2 = arguments.getLeftoverArguments();
 
@@ -354,7 +372,7 @@ public class BeastMain {
                 System.err.println("Unknown option: " + args2[1]);
                 System.err.println();
                 printUsage(arguments);
-                System.exit(1);
+                return;
             }
 
             String inputFileName = null;
@@ -376,7 +394,7 @@ public class BeastMain {
         }
 
         if (useJava) {
-            System.setProperty("java_only", "true");
+            System.setProperty("java.only", "true");
         }
 
         if (useBeagle) {
@@ -384,7 +402,7 @@ public class BeastMain {
         }
 
         if (threadCount > 0) {
-            System.setProperty("thread_count", String.valueOf(threadCount));
+            System.setProperty("thread.count", String.valueOf(threadCount));
         }
 
         MathUtils.setSeed(seed);
@@ -396,17 +414,7 @@ public class BeastMain {
         new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
 
         if (!window) {
-            // For applications using the ConsoleApp, we don't want to exit at the end of the main() or
-            // the console is closed on an error without the user being able to see it.
             System.exit(0);
-        } else {
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }

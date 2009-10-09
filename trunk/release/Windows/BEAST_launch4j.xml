@@ -1,6 +1,6 @@
 <launch4jConfig>
   <headerType>gui</headerType>
-  <icon>icons/beast.ico</icon>
+  <icon>../common/icons/beast.ico</icon>
   <cmdLine>-window -working -options</cmdLine>
   <jre>
     <minVersion>1.5.0</minVersion>

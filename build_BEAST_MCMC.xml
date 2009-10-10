@@ -36,7 +36,7 @@
         description="Clean and Build all run-time stuff">
 	</target>
 
-	<!-- clean previous build, compile Java source code, and Juint test, and make the beast.jar and beauti.jar -->
+	<!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
 	<target name="build_jar_all_BEAST" depends="clean,compile-all,junit,dist_all_BEAST"
         description="Clean and Build all run-time stuff">
 	</target>
@@ -51,7 +51,7 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
+		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="256m">

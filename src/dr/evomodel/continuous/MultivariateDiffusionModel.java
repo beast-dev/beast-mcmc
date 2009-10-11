@@ -16,8 +16,7 @@ import org.w3c.dom.Element;
 public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
 
     public static final String DIFFUSION_PROCESS = "multivariateDiffusionModel";
-    public static final String DIFFUSION_CONSTANT = "precisionMatrix";
-    public static final String BIAS = "mu";
+    public static final String DIFFUSION_CONSTANT = "precisionMatrix";   
     public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
     public static final double LOG2PI = Math.log(2*Math.PI);
@@ -128,12 +127,12 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     protected void acceptState() {
     } // no additional state needs accepting
 
-    public String getTreeAttributeLabel() {
-        return PRECISION_TREE_ATTRIBUTE;
+    public String[] getTreeAttributeLabel() {
+        return new String[] {PRECISION_TREE_ATTRIBUTE};
     }
 
-    public String getAttributeForTree(Tree tree) {
-        return diffusionPrecisionMatrixParameter.toSymmetricString();
+    public String[] getAttributeForTree(Tree tree) {
+        return new String[] {diffusionPrecisionMatrixParameter.toSymmetricString()};
     }
 
     // **************************************************************

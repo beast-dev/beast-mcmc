@@ -44,13 +44,16 @@ import java.util.Set;
 public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic {
 
     public static final String TMRCA_STATISTIC = "tmrcaStatistic";
+    public static final String PARENT = "forParent";
     public static final String MRCA = "mrca";
 
-    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate) throws Tree.MissingTaxonException {
+    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate, boolean forParent
+    ) throws Tree.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
         this.isRate = isRate;
+        this.forParent = forParent;
     }
 
     public void setTree(Tree tree) {
@@ -71,6 +74,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
     public double getStatisticValue(int dim) {
 
         NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+        if (forParent && !tree.isRoot(node))
+            node = tree.getParent(node);       
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
         if (isRate) {
             return tree.getNodeRate(node);
@@ -90,9 +95,10 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
             Tree tree = (Tree) xo.getChild(Tree.class);
             TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
             boolean isRate = xo.getAttribute("rate", false);
+            boolean forParent = xo.getAttribute(PARENT,false);
 
             try {
-                return new TMRCAStatistic(name, tree, taxa, isRate);
+                return new TMRCAStatistic(name, tree, taxa, isRate, forParent);
             } catch (Tree.MissingTaxonException mte) {
                 throw new XMLParseException(
                         "Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
@@ -122,12 +128,14 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
                         "A name for this statistic primarily for the purposes of logging", true),
                 AttributeRule.newBooleanRule("rate", true),
                 new ElementRule(MRCA,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
+                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)}),
+                AttributeRule.newBooleanRule(PARENT,true),
         };
     };
 
     private Tree tree = null;
     private Set<String> leafSet = null;
     private final boolean isRate;
+    private final boolean forParent;
 
 }

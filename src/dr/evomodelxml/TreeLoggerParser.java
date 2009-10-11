@@ -90,12 +90,12 @@ public class TreeLoggerParser extends LoggerParser {
                 final Likelihood likelihood = (Likelihood) cxo;
                 taps.add(new TreeAttributeProvider() {
 
-                    public String getTreeAttributeLabel() {
-                        return "lnP";
+                    public String[] getTreeAttributeLabel() {
+                        return new String[] {"lnP"};
                     }
 
-                    public String getAttributeForTree(Tree tree) {
-                        return Double.toString(likelihood.getLogLikelihood());
+                    public String[] getAttributeForTree(Tree tree) {
+                        return new String[] {Double.toString(likelihood.getLogLikelihood())};
                     }
                 });
 

@@ -129,7 +129,8 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new StringAttributeRule(FILE_NAME, "The name of a BEAST log file (can not include trees, which should be logged separately"),
-            AttributeRule.newIntegerRule("burnIn", true),
-            new ElementRule("expectation", new XMLSyntaxRule[]{AttributeRule.newStringRule("name"), AttributeRule.newStringRule("value")}, 0, Integer.MAX_VALUE)
+            AttributeRule.newIntegerRule(BURN_IN, true),
+            new ElementRule("expectation", new XMLSyntaxRule[]{AttributeRule.newStringRule("name"), AttributeRule.newStringRule("value")}, 0, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(STD_ERROR,true),
     };
 }

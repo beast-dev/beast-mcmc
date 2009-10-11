@@ -7,7 +7,7 @@ package dr.evolution.tree;
  */
 public interface TreeAttributeProvider {
 
-	String getTreeAttributeLabel();
+	String[] getTreeAttributeLabel();
 
-	String getAttributeForTree(Tree tree);
+	String[] getAttributeForTree(Tree tree);
 }

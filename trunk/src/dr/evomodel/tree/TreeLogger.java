@@ -223,16 +223,19 @@ public class TreeLogger extends MCLogger {
             if (treeAttributeProviders != null) {
                 boolean hasAttribute = false;
                 for (TreeAttributeProvider tap : treeAttributeProviders) {
-                    if (!hasAttribute) {
-                        buffer.append(" [&");
-                        hasAttribute = true;
-                    } else {
-                        buffer.append(",");
+                    String[] attributeLabel = tap.getTreeAttributeLabel();
+                    String[] attributeValue = tap.getAttributeForTree(tree);
+                    for (int i = 0; i < attributeLabel.length; i++) {
+                        if (!hasAttribute) {
+                            buffer.append(" [&");
+                            hasAttribute = true;
+                        } else {
+                            buffer.append(",");
+                        }
+                        buffer.append(attributeLabel[i]);
+                        buffer.append("=");
+                        buffer.append(attributeValue[i]);
                     }
-                    buffer.append(tap.getTreeAttributeLabel());
-                    buffer.append("=");
-                    buffer.append(tap.getAttributeForTree(tree));
-
                 }
                 if (hasAttribute) {
                     buffer.append("]");

@@ -83,7 +83,7 @@ public class GammaDistributionTest extends TestCase{
 			double mypdf = Math.pow(value, shape-1)/GammaFunction.gamma(shape)
 					*Math.exp(-value/scale)/Math.pow(scale, shape);
 			
-			assertEquals(mypdf,gamma.pdf(value),1e-10);
+			assertEquals(mypdf,gamma.pdf(value),1e-8);
 		}
 		gamma.setScale(1.0);
 		gamma.setShape(1.0);

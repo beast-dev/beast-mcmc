@@ -21,7 +21,7 @@ public class GammaDistributionTest extends TestCase{
 	
 	public void testPdf(){
 		
-		int numberOfTests = 100;
+		int numberOfTests = 50;
 		
 			for(int i = 0; i < numberOfTests; i++){
 			double j = i/500.0 + 1.0;

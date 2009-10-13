@@ -175,7 +175,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
     public void computeStationaryDistribution() {
 
         if(useEmpiricalFreqs){
-            setupEmpiricalStationaryFrequencies();
+            setupStationaryFrequencies();
         }
         super.computeStationaryDistribution();
     }

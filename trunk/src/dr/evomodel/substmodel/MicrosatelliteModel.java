@@ -64,7 +64,7 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     /*
      * Set up empirical frequencies
      */
-    public void setupEmpiricalStationaryFrequencies(){
+    public void setupStationaryFrequencies(){
         synchronized (this) {
             if (updateMatrix) {
                 setupMatrix();
@@ -74,13 +74,15 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         if (!wellConditioned) {
            throw new RuntimeException("not well conditioned");
         }
-        int eigenValPos = 0;
+        int eigenValPos = -1;
+
         for(int i = 0; i < stateCount; i++){
             if(Eval[i] == 0){
                 eigenValPos = i;
                 break;
             }
         }
+        
         double[] empFreq = new double[stateCount];
         for(int i = 0; i < stateCount; i++){
             empFreq[i] = Evec[i][eigenValPos]*Ievc[eigenValPos][i];

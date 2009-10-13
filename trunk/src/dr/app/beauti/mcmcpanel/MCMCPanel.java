@@ -137,7 +137,7 @@ public class MCMCPanel extends BeautiPanel {
 
             public void keyReleased(KeyEvent e) {
                 options.fileNameStem = fileNameStemField.getText();
-                setOptions(options);
+                updateOtherFileNames(options);
                 frame.setDirty();
             }
         });
@@ -260,16 +260,32 @@ public class MCMCPanel extends BeautiPanel {
     
     public void setOptions(BeautiOptions options) {
         this.options = options;
-        
+
         chainLengthField.setValue(options.chainLength);
         echoEveryField.setValue(options.echoEvery);
         logEveryField.setValue(options.logEvery);
-        
+
         if (options.fileNameStem != null) {
             fileNameStemField.setText(options.fileNameStem);
+        } else {
+            fileNameStemField.setText(fileNameStem);
+            fileNameStemField.setEnabled(false);
+        }
+        
+        updateOtherFileNames(options);
+
+        samplePriorCheckBox.setSelected(options.samplePriorOnly);
+
+        optionsPanel.validate();
+        optionsPanel.repaint();
+    }
+
+    private void updateOtherFileNames(BeautiOptions options) {
+        if (options.fileNameStem != null) {
+//            fileNameStemField.setText(options.fileNameStem);
 
             options.logFileName = options.fileNameStem + ".log";
-            if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";            
+            if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";
             logFileNameField.setText(options.logFileName);
 
 //            if (options.mapTreeFileName == null) {
@@ -277,10 +293,10 @@ public class MCMCPanel extends BeautiPanel {
 //            } else {
 //                mapTreeFileNameField.setText(options.mapTreeFileName);
 //            }
-            
+
             updateTreeFileNameList();
             treeFileNameField.setText(displayTreeList(options.treeFileName));
-            
+
             if (options.substTreeLog) {
                 substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
             } else {
@@ -293,10 +309,10 @@ public class MCMCPanel extends BeautiPanel {
 
             substTreeLogCheck.setEnabled(true);
             substTreeLogCheck.setSelected(options.substTreeLog);
-            
+
         } else {
-            fileNameStemField.setText(fileNameStem);
-            fileNameStemField.setEnabled(false);
+//            fileNameStemField.setText(fileNameStem);
+//            fileNameStemField.setEnabled(false);
             logFileNameField.setText(fileNameStem + ".log");
             treeFileNameField.setText(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
 //            mapTreeLogCheck.setEnabled(false);
@@ -306,11 +322,6 @@ public class MCMCPanel extends BeautiPanel {
             substTreeFileNameField.setEnabled(false);
             substTreeFileNameField.setText("untitled");
         }
-
-        samplePriorCheckBox.setSelected(options.samplePriorOnly);
-
-        optionsPanel.validate();
-        optionsPanel.repaint();
     }
 
     public void getOptions(BeautiOptions options) {    

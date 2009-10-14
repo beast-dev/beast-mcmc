@@ -26,10 +26,8 @@
 package dr.app.oldbeauti;
 
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.generator.InitialTreeGenerator;
-import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.ClockType;
-import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.generator.InitialTreeGenerator;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
@@ -54,8 +52,10 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.YuleModel;
+import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.*;
@@ -2053,17 +2053,17 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
 
-            writer.writeOpenTag(CSVExporter.CSV_EXPORT,
+            writer.writeOpenTag(CSVExporterParser.CSV_EXPORT,
                     new Attribute[]{
-                            new Attribute.Default<String>(CSVExporter.FILE_NAME,
+                            new Attribute.Default<String>(CSVExporterParser.FILE_NAME,
                                     logFileName.subSequence(0, logFileName.length() - 4) + ".csv"),
-                            new Attribute.Default<String>(CSVExporter.SEPARATOR, ",")
+                            new Attribute.Default<String>(CSVExporterParser.SEPARATOR, ",")
                     });
-            writer.writeOpenTag(CSVExporter.COLUMNS);
+            writer.writeOpenTag(CSVExporterParser.COLUMNS);
             writer.writeTag(EBSPAnalysis.VD_ANALYSIS,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "demographic.analysis")}, true);
-            writer.writeCloseTag(CSVExporter.COLUMNS);
-            writer.writeCloseTag(CSVExporter.CSV_EXPORT);
+            writer.writeCloseTag(CSVExporterParser.COLUMNS);
+            writer.writeCloseTag(CSVExporterParser.CSV_EXPORT);
         }
 
     }

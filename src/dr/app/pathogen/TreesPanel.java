@@ -43,10 +43,14 @@ import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.DecimalFormat;
+import java.util.*;
 
 import figtree.panel.FigTreePanel;
+import figtree.treeviewer.TreePaneSelector;
+import figtree.treeviewer.TreeSelectionListener;
 import jebl.evolution.trees.RootedTree;
 import jebl.evolution.taxa.Taxon;
+import jebl.evolution.graphs.Node;
 
 /**
  * @author Andrew Rambaut
@@ -69,6 +73,9 @@ public class TreesPanel extends JPanel implements Exportable {
     FigTreePanel treePanel;
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
+    ScatterPlot rootToTipPlot;
+
+    Map<Node, Integer> pointMap = new HashMap<Node, Integer>();
 
     private boolean bestFittingRoot;
     private TemporalRooting temporalRooting = null;
@@ -104,7 +111,16 @@ public class TreesPanel extends JPanel implements Exportable {
         treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
         tabbedPane.add("Tree", treePanel);
 
+        treePanel.getTreeViewer().setSelectionMode(TreePaneSelector.SelectionMode.TAXA);
+        treePanel.getTreeViewer().addTreeSelectionListener(new TreeSelectionListener() {
+            public void selectionChanged() {
+                treeSelectionChanged();
+            }
+        });
         rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
+
+        ChartSelector selector = new ChartSelector(rootToTipChart);
+
         rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
         rootToTipPanel.setOpaque(false);
 
@@ -136,6 +152,26 @@ public class TreesPanel extends JPanel implements Exportable {
         });
 
         setTree(tree);
+    }
+
+    private void treeSelectionChanged() {
+        if (rootToTipPlot != null) {
+            Set<Node> selectedTips = treePanel.getTreeViewer().getSelectedTips();
+            Set<Integer> selectedPoints = new HashSet<Integer>();
+            for (Node node : selectedTips) {
+                selectedPoints.add(pointMap.get(node));
+            }
+            rootToTipPlot.setSelectedPoints(selectedPoints);
+        }
+    }
+
+    private void plotSelectionChanged(final Set<Integer> selectedPoints) {
+        Set<String> selectedTaxa = new HashSet<String>();
+        for (Integer i : selectedPoints) {
+            selectedTaxa.add(tree.getTaxon(i).toString());
+        }
+
+        treePanel.getTreeViewer().selectTaxa(selectedTaxa);
     }
 
     public void timeScaleChanged() {
@@ -217,14 +253,23 @@ public class TreesPanel extends JPanel implements Exportable {
             } else {
                 Regression r = temporalRooting.getRootToTipRegression(currentTree);
                 double[] residuals = temporalRooting.getRootToTipResiduals(currentTree, r);
+                pointMap.clear();
                 for (int i = 0; i < currentTree.getExternalNodeCount(); i++) {
                     NodeRef tip = currentTree.getExternalNode(i);
-                    jtree.getNode(Taxon.getTaxon(
-                            currentTree.getNodeTaxon(tip).getId())).setAttribute("residual", residuals[i]);
+                    Node node = jtree.getNode(Taxon.getTaxon(currentTree.getNodeTaxon(tip).getId()));
+                    node.setAttribute("residual", residuals[i]);
+
+                    pointMap.put(node, i);
                 }
 
                 rootToTipChart.removeAllPlots();
-                rootToTipChart.addPlot(new ScatterPlot(r.getXData(), r.getYData()));
+                rootToTipPlot = new ScatterPlot(r.getXData(), r.getYData());
+                rootToTipPlot.addListener(new Plot.Adaptor() {
+                    public void selectionChanged(final Set<Integer> selectedPoints) {
+                        plotSelectionChanged(selectedPoints);
+                    }
+                });
+                rootToTipChart.addPlot(rootToTipPlot);
                 rootToTipChart.addPlot(new RegressionPlot(r));
                 rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
                 rootToTipPanel.setXAxisTitle("root-to-tip divergence");
@@ -240,7 +285,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
             treePanel.setTree(jtree);
             treePanel.setColourBy("residual");
-      
+
         } else {
             treePanel.setTree(null);
             rootToTipChart.removeAllPlots();

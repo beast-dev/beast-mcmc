@@ -96,7 +96,7 @@ public class TreeLogger extends MCLogger {
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames, NumberFormat format,
                       TreeLogger.LogUpon condition) {
-        
+
         this(tree, branchRateProvider, treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition, Double.NaN);
 
     }
@@ -127,7 +127,7 @@ public class TreeLogger extends MCLogger {
 
         this.normaliseMeanRateTo = normaliseMeanRateTo;
         if(!Double.isNaN(normaliseMeanRateTo)) {
-            normaliseMeanRate = true;   
+            normaliseMeanRate = true;
         }
 
         this.nexusFormat = nexusFormat;
@@ -207,11 +207,7 @@ public class TreeLogger extends MCLogger {
     public void log(int state) {
 
         if(normaliseMeanRate) {
-//            try {
-                NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);
-//            }catch (TraceException e) {
-//                e.printStackTrace();
-//            }
+            NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);
         }
 
         final boolean doIt = condition != null ? condition.logNow(state) :

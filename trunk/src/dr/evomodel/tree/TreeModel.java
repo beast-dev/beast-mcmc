@@ -51,12 +51,12 @@ public class TreeModel extends AbstractModel implements MutableTree {
     public static final String TREE_MODEL = "treeModel";
 
     public TreeModel(Tree tree) {
-        this(tree, false);
+        this(TREE_MODEL, tree, false);
     }
 
     public TreeModel(String id, Tree tree) {
 
-        this(tree, false);
+        this(TREE_MODEL, tree, false);
         setId(id);
     }
 
@@ -64,9 +64,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
       * Useful for constructing a TreeModel from a NEXUS file entry
       */
 
-    public TreeModel(Tree tree, boolean copyAttributes) {
+    public TreeModel(String name, Tree tree, boolean copyAttributes) {
 
-        super(TREE_MODEL);
+        super(name);
 
         // get a rooted version of the tree to clone
         FlexibleTree binaryTree = new FlexibleTree(tree, copyAttributes);
@@ -249,14 +249,14 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Return the units that this tree is expressed in.
      */
-    public final Type getUnits() {
+    public Type getUnits() {
         return units;
     }
 
     /**
      * Sets the units that this tree is expressed in.
      */
-    public final void setUnits(Type units) {
+    public void setUnits(Type units) {
         this.units = units;
     }
 
@@ -264,15 +264,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * @return a count of the number of nodes (internal + external) in this
      *         tree.
      */
-    public final int getNodeCount() {
+    public int getNodeCount() {
         return nodeCount;
     }
 
-    public final boolean hasNodeHeights() {
+    public boolean hasNodeHeights() {
         return true;
     }
 
-    public final double getNodeHeight(NodeRef node) {
+    public double getNodeHeight(NodeRef node) {
         return ((Node) node).getHeight();
     }
 
@@ -289,7 +289,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * @param node
      * @return the rate parameter associated with this node.
      */
-    public final double getNodeRate(NodeRef node) {
+    public double getNodeRate(NodeRef node) {
         if (!hasRates) {
             return 1.0;
         }
@@ -354,35 +354,35 @@ public class TreeModel extends AbstractModel implements MutableTree {
         swapAllTraits((Node) node1, (Node) node2);
     }
 
-    public final Taxon getNodeTaxon(NodeRef node) {
+    public Taxon getNodeTaxon(NodeRef node) {
         return ((Node) node).taxon;
     }
 
-    public final boolean isExternal(NodeRef node) {
+    public boolean isExternal(NodeRef node) {
         return ((Node) node).isExternal();
     }
 
-    public final boolean isRoot(NodeRef node) {
+    public boolean isRoot(NodeRef node) {
         return (node == root);
     }
 
-    public final int getChildCount(NodeRef node) {
+    public int getChildCount(NodeRef node) {
         return ((Node) node).getChildCount();
     }
 
-    public final NodeRef getChild(NodeRef node, int i) {
+    public NodeRef getChild(NodeRef node, int i) {
         return ((Node) node).getChild(i);
     }
 
-    public final NodeRef getParent(NodeRef node) {
+    public NodeRef getParent(NodeRef node) {
         return ((Node) node).parent;
     }
 
-    public final boolean hasBranchLengths() {
+    public boolean hasBranchLengths() {
         return true;
     }
 
-    public final double getBranchLength(NodeRef node) {
+    public double getBranchLength(NodeRef node) {
         NodeRef parent = getParent(node);
         if (parent == null) {
             return 0.0;
@@ -391,15 +391,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
         return getNodeHeight(parent) - getNodeHeight(node);
     }
 
-    public final NodeRef getExternalNode(int i) {
+    public NodeRef getExternalNode(int i) {
         return nodes[i];
     }
 
-    public final NodeRef getInternalNode(int i) {
+    public NodeRef getInternalNode(int i) {
         return nodes[i + externalNodeCount];
     }
 
-    public final NodeRef getNode(int i) {
+    public NodeRef getNode(int i) {
         return nodes[i];
     }
 
@@ -410,21 +410,21 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * Returns the number of external nodes.
      */
-    public final int getExternalNodeCount() {
+    public int getExternalNodeCount() {
         return externalNodeCount;
     }
 
     /**
      * Returns the ith internal node.
      */
-    public final int getInternalNodeCount() {
+    public int getInternalNodeCount() {
         return internalNodeCount;
     }
 
     /**
      * Returns the root node of this tree.
      */
-    public final NodeRef getRoot() {
+    public NodeRef getRoot() {
         return root;
     }
 
@@ -724,7 +724,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
      *         external node. If the node doesn't have a taxon then the nodes own attribute
      *         is returned.
      */
-    public final Object getTaxonAttribute(int taxonIndex, String name) {
+    public Object getTaxonAttribute(int taxonIndex, String name) {
         Taxon taxon = getTaxon(taxonIndex);
         if (taxon != null) {
             return taxon.getAttribute(name);

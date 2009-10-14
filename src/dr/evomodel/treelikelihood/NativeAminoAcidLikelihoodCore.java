@@ -114,7 +114,8 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
             System.loadLibrary("AminoAcidLikelihoodCore");
             isNativeAvailable = true;
         } catch (UnsatisfiedLinkError e) {
-            System.err.println("Using Java nucleotide likelihood core " + e.toString());
+            System.err.println("Using Java AminoAcid likelihood core " + e.toString());
+            System.err.println("Looking for AminoAcidLikelihoodCore in " + System.getProperty("java.library.path"));
         }
     }
 }

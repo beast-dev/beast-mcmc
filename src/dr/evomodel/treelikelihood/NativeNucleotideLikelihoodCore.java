@@ -162,6 +162,7 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 		} catch (UnsatisfiedLinkError e) {
 
 			System.err.println("Using Java nucleotide likelihood core " + e.toString());
+            System.err.println("Looking for NucleotideLikelihoodCore in " + System.getProperty("java.library.path"));
 		}
 
 	}

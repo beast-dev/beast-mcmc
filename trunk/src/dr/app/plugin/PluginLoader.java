@@ -1,5 +1,4 @@
 package dr.app.plugin;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.net.URL;
@@ -11,15 +10,29 @@ import java.util.logging.Logger;
 public class PluginLoader {
 
 	  
-	   static final String PLUGIN_FOLDER = "plugins";
-	   static final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
+		public static File getPluginFolder() {
+			String pluginFolderFromProperty = null;
+			try {
+				pluginFolderFromProperty =  java.lang.System.getProperty("beast.plugins.dir");
+			} catch (Exception ex) {
+			}
+			if (pluginFolderFromProperty != null) {
+				return new File(pluginFolderFromProperty);
+			}
+			final String PLUGIN_FOLDER = "plugins";
+			final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
+			return PLUGIN_FILE;
+			
+	   }
 
 //	    private static Set<String> loadedPlugins = new HashSet<String>();
 
 	   public static List<String> getAvailablePlugins(){
 
 	       List<String> plugins = new ArrayList<String> ();
-	       File[] classFolderFiles = PLUGIN_FILE.listFiles(new FileFilter() {
+	       File pluginFile = PluginLoader.getPluginFolder();
+	       Logger.getLogger("dr.app.plugin").info("looking for plugins in" + pluginFile.getAbsolutePath());
+	       File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
 	           public boolean accept(File pathname) {
 	               String name = pathname.getName();
 	               if(!pathname.isDirectory() || name.endsWith("CVS") || name.endsWith(".classes"))
@@ -40,7 +53,7 @@ public class PluginLoader {
 	           }
 	       }
 
-	       File[] pluginJarFiles = PLUGIN_FILE.listFiles(new FileFilter() {
+	       File[] pluginJarFiles = pluginFile.listFiles(new FileFilter() {
 	           public boolean accept(File pathname) {
 	               return !pathname.isDirectory() && pathname.getAbsolutePath().endsWith(".jar");
 	           }
@@ -62,19 +75,18 @@ public class PluginLoader {
 	                                                                                     //documents from that plugin can still be displayed.
           final String loggerName = "dr.app.plugin";
           Logger.getLogger(loggerName).info("loading plugin " + pluginName);
-	      String fullname = PLUGIN_FOLDER + "/" + pluginName;
-	      File file = new File(fullname);
+	      File pluginDir = PluginLoader.getPluginFolder();
+	      File file = new File(pluginDir, pluginName);
 
 	      try {
 	          URL[] urls;
 	          if (!file.exists()) {
 	        	  Logger.getLogger(loggerName).info("loading jar file");
-	              fullname = PLUGIN_FOLDER + "/" + pluginName+ ".jar";
-	              file = new File(fullname);
+	              file = new File(pluginDir, pluginName + ".jar");
 	              urls = new URL[]{file.toURL()};
 	          }
 	          else {
-	              File classFiles = new File(fullname + "/" + "classes");
+	              File classFiles = new File(pluginDir, "classes");
 	              final boolean classesExist = classFiles.exists();
 
 	              File[] files = file.listFiles(new FileFilter() {

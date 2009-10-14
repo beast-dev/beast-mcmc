@@ -32,6 +32,7 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import dr.evomodel.tree.UniformNodeHeightPrior;
 import dr.evomodel.operators.ImportanceNarrowExchange;
+import dr.evomodelxml.CSVExporterParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -378,7 +379,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
         addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
         addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
-        addXMLObjectParser(new dr.evomodelxml.CSVExporter());
+        addXMLObjectParser(new CSVExporterParser());
 
         addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
 

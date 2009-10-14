@@ -40,7 +40,7 @@ import java.awt.*;
  */
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.1";
+        private static final String VERSION = "1.2";
 
         public String getVersion() {
             return VERSION;
@@ -55,7 +55,7 @@ public class PathogenApp extends MultiDocApplication {
         }
 
         public String getBuildString() {
-            return "Build r1412";
+            return "Build r2010";
         }
 
         public String[] getCredits() {
@@ -108,8 +108,8 @@ public class PathogenApp extends MultiDocApplication {
                     version.getHTMLCredits() +
                     "</center></html>";
 
-            String websiteURLString = "http://beast.bio.ed.ac.uk";
-            String helpURLString = "http://beast.bio.ed.ac.uk/BEAUti";
+            String websiteURLString = "http://tree.bio.ed.ac.uk/";
+            String helpURLString = "http://tree.bio.ed.ac.uk/software/pathogen";
 
             PathogenApp app = new PathogenApp(nameString, aboutString, icon,
                     websiteURLString, helpURLString);

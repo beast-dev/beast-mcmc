@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.app.util.OSType;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
@@ -222,8 +223,6 @@ public class BeastMain {
     //Main method
     public static void main(String[] args) throws java.io.IOException {
 
-        printTitle();
-
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
@@ -329,7 +328,19 @@ public class BeastMain {
                     "</div></center></div></html>";
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
-        }
+        }         
+
+//        if (OSType.isWindows()) {
+//            System.out.println(System.getProperty("user.dir"));
+//            System.out.println(System.getProperty("java.library.path"));
+//
+//            String currentDir = System.getProperty("user.dir") + "\\lib";
+//            System.setProperty("java.library.path", currentDir);
+//            System.out.println(currentDir);
+//            System.out.println(System.getProperty("java.library.path"));
+//        }
+
+        printTitle();
 
         File inputFile = null;
 

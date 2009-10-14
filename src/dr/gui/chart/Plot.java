@@ -29,6 +29,7 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.*;
 
 /**
  * Plot.java
@@ -130,7 +131,15 @@ public interface Plot {
     /**
      * A point on the plot has been clicked
      */
-    public void pointClicked(Point2D point);
+    void pointClicked(Point2D point);
+
+    void selectPoints(Rectangle2D dragRectangle);
+
+    void clearSelection();
+
+    void setSelectedPoints(final Collection<Integer> selectedPoints);
+    
+    Set<Integer> getSelectedPoints();    
 
     Variate getXData();
 
@@ -141,6 +150,8 @@ public interface Plot {
         void pointClicked(double x, double y);
 
         void markClicked(int index, double x, double y);
+
+        void selectionChanged(Set<Integer> selectedPoints);
 
         void rangeXSelected(double lower, double upper);
 
@@ -155,6 +166,9 @@ public interface Plot {
         }
 
         public void markClicked(int index, double x, double y) {
+        }
+
+        public void selectionChanged(final Set<Integer> selectedPoints) {
         }
 
         public void rangeXSelected(double lower, double upper) {
@@ -192,6 +206,8 @@ public interface Plot {
         private double xScale, yScale, xOffset, yOffset;
 
         private String name;
+
+        private Set<Integer> selectedPoints = new HashSet<Integer>();     
 
         /**
          * Constructor
@@ -522,6 +538,43 @@ public interface Plot {
             firePointClickedEvent(x, y);
         }
 
+        public void selectPoints(final Rectangle2D dragRectangle) {
+            if (dragRectangle == null) {
+                return;
+            }
+            
+            selectedPoints.clear();
+            
+            double x0 = untransformX(dragRectangle.getX());
+            double y0 = untransformY(dragRectangle.getY() + dragRectangle.getHeight());
+
+            double x1 = untransformX(dragRectangle.getX() + dragRectangle.getWidth());
+            double y1 = untransformY(dragRectangle.getY());
+
+            for (int i = 0; i < xData.getCount(); i ++) {
+                double x = xData.get(i);
+                double y = yData.get(i);
+
+                if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
+                    selectedPoints.add(i);
+                }
+            }
+        }
+
+        public void clearSelection() {
+            selectedPoints.clear();
+        }
+
+        public void setSelectedPoints(final Collection<Integer> selectedPoints) {
+            this.selectedPoints.clear();
+            this.selectedPoints.addAll(selectedPoints);
+        }
+
+
+        public Set<Integer> getSelectedPoints() {
+            return selectedPoints;
+        }
+
         // Listeners
 
         private final java.util.Vector<Listener> listeners = new java.util.Vector<Listener>();
@@ -553,8 +606,14 @@ public interface Plot {
 			}
 		}
 
-			
-			
+        protected void fireSelectionChanged() {
+            for (int i = 0; i < listeners.size(); i++) {
+                final Listener listener = listeners.elementAt(i);
+				listener.selectionChanged(selectedPoints);
+			}
+		}
+
+
 	}
 }
 

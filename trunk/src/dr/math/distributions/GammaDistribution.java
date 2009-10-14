@@ -137,11 +137,14 @@ public class GammaDistribution implements Distribution {
             else
                 return 0.0;
         }
-        if (shape == 1.0) {
-            return Math.exp(-x / scale) / scale;
-        }
 
-        final double a = Math.exp((shape - 1.0) * Math.log(x / scale) - x / scale
+        final double xs = x / scale;
+
+        if (shape == 1.0) {
+            return Math.exp(-xs) / scale;
+        }
+       
+        final double a = Math.exp((shape - 1.0) * Math.log(xs) - xs
                         - GammaFunction.lnGamma(shape));
 
         return a / scale;
@@ -425,10 +428,13 @@ public class GammaDistribution implements Distribution {
 
         final double e = 0.5e-6, aa = 0.6931471805, p = prob;
         double ch, a, q, p1, p2, t, x, b, s1, s2, s3, s4, s5, s6;
-
-        if (p < 0.000002 || p > 0.999998 || v <= 0) {
-            throw new IllegalArgumentException("Arguments out of range p" + p + " v " + v);
+          double epsi = .01;
+        if( p < 0.000002 || p > 1 - 0.000002)  {
+            epsi = .000001;
         }
+       // if (p < 0.000002 || p > 0.999998 || v <= 0) {
+      //      throw new IllegalArgumentException("Arguments out of range p" + p + " v " + v);
+      //  }
         double g = GammaFunction.lnGamma(v / 2);
         double xx = v / 2;
         double c = xx - 1;
@@ -449,6 +455,7 @@ public class GammaDistribution implements Distribution {
                 ch = 0.4;
                 a = Math.log(1 - p);
 
+
                 do {
                     q = ch;
                     p1 = 1 + ch * (4.67 + ch);
@@ -457,7 +464,7 @@ public class GammaDistribution implements Distribution {
                             - (6.73 + ch * (13.32 + 3 * ch)) / p2;
                     ch -= (1 - Math.exp(a + g + .5 * ch + c * aa) * p2 / p1)
                             / t;
-                } while (Math.abs(q / ch - 1) - .01 > 0);
+                } while (Math.abs(q / ch - 1) - epsi > 0);
             }
         }
         do {

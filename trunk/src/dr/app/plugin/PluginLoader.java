@@ -1,9 +1,12 @@
 package dr.app.plugin;
-import java.net.*;
-import java.util.*;
-import java.io.*;
 
-import java.util.logging.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 public class PluginLoader {
 
@@ -57,15 +60,15 @@ public class PluginLoader {
 
 	  public static Plugin loadPlugin(final String pluginName/*, boolean pluginEnabled*/) {   //the class loader must still be assigned if the plugin isnt enabled so
 	                                                                                     //documents from that plugin can still be displayed.
-	      Logger.getLogger("dr.app.plugin").info("loading plugin " + pluginName);
+          final String loggerName = "dr.app.plugin";
+          Logger.getLogger(loggerName).info("loading plugin " + pluginName);
 	      String fullname = PLUGIN_FOLDER + "/" + pluginName;
 	      File file = new File(fullname);
-	      Object plugin = null;
-	      try {
 
+	      try {
 	          URL[] urls;
 	          if (!file.exists()) {
-	        	  Logger.getLogger("dr.app.plugin").info("loading jar file");
+	        	  Logger.getLogger(loggerName).info("loading jar file");
 	              fullname = PLUGIN_FOLDER + "/" + pluginName+ ".jar";
 	              file = new File(fullname);
 	              urls = new URL[]{file.toURL()};
@@ -93,7 +96,7 @@ public class PluginLoader {
 	                  urls [ count ++ ] =classFiles.toURL();
 	              }
 	              urls [ count ++ ] = file.toURL();
-	              Logger.getLogger("dr.app.plugin").info("adding " + file + " to class path");
+	              Logger.getLogger(loggerName).info("adding " + file + " to class path");
 	              for (File jarFile : files) {
 	                  urls[count++] = jarFile.toURL();
 	              }
@@ -102,12 +105,12 @@ public class PluginLoader {
 	          classLoader = new URLClassLoader(urls);
 
 	          for (URL url : classLoader.getURLs()) {
-	        	  Logger.getLogger("dr.app.plugin").info("URL from loader: " + url.toString() + "\n");
+	        	  Logger.getLogger(loggerName).info("URL from loader: " + url.toString() + "\n");
 	          }
 	          
 	          Class myClass = classLoader.loadClass(pluginName);
 	          
-	          plugin = myClass.newInstance();
+	          Object plugin = myClass.newInstance();
 	          if (!(plugin instanceof Plugin)){
 	              throw new Exception("Class should be " + Plugin.class.getName());
 	          }
@@ -115,12 +118,8 @@ public class PluginLoader {
 	          
 	          
 	      } catch (Exception e) {
-	    	  Logger.getLogger("dr.app.plugin").severe(e.getMessage());
+	    	  Logger.getLogger(loggerName).severe(e.getMessage());
 	      }
 	      return null;
 	  }
-
-	
-	
-	
 }

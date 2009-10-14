@@ -25,24 +25,23 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
+import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
-import java.util.logging.Logger;
-import java.util.List;
 import java.util.ArrayList;
-
-import beagle.*;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -58,7 +57,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
-    private static String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
+    private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
@@ -608,11 +607,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final int[] op1 = new int[] { -1 };
+            final int[] op1 = { -1 };
             final boolean update1 = traverse(tree, child1, op1, flip);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final int[] op2 = new int[] { -1 };
+            final int[] op2 = { -1 };
             final boolean update2 = traverse(tree, child2, op2, flip);
 
             // If either child node was updated then update this node too
@@ -676,7 +675,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int operationCount;
 
     protected BufferIndexHelper partialBufferHelper;
-    private BufferIndexHelper eigenBufferHelper;
+    private final BufferIndexHelper eigenBufferHelper;
     protected BufferIndexHelper matrixBufferHelper;
     protected BufferIndexHelper scaleBufferHelper;
 

@@ -28,10 +28,10 @@ package dr.evolution.coalescent;
 import dr.evolution.util.Units;
 import dr.math.Binomial;
 import dr.math.MathUtils;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
-import org.apache.commons.math.analysis.RombergIntegrator;
-import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.integration.RombergIntegrator;
 
 /**
  * This interface provides methods that describe a demographic function.

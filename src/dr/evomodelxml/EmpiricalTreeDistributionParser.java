@@ -71,14 +71,11 @@ public class EmpiricalTreeDistributionParser extends AbstractXMLObjectParser {
             NexusImporter importer = new NexusImporter(reader);
             trees = importer.importTrees(taxa);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
+            throw new XMLParseException(e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            throw new XMLParseException(e.getMessage());
         } catch (Importer.ImportException e) {
-            e.printStackTrace();
-            return null;
+            throw new XMLParseException(e.getMessage());
         }
 
         return new EmpiricalTreeDistributionModel(trees);

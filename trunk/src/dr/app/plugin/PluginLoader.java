@@ -8,7 +8,7 @@ import java.util.logging.*;
 public class PluginLoader {
 
 	  
-	   static final String PLUGIN_FOLDER = "/Users/mholder/Documents/projects/beast-eclipse/beast-mcmc/plugins";
+	   static final String PLUGIN_FOLDER = "plugins";
 	   static final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
 
 //	    private static Set<String> loadedPlugins = new HashSet<String>();

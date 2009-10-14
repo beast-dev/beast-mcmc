@@ -151,39 +151,32 @@ public class CombinedTraces implements TraceList {
      * @return the trace distribution statistic object for the given index
      */
     public TraceDistribution getDistributionStatistics(int index) {
-        if (traceStatistics == null) {
-            return null;
-        }
-
-        return traceStatistics[index];
+	return getCorrelationStatistics(index); 
     }
 
     /**
      * @return the trace correlation statistic object for the given index
      */
-    public TraceCorrelation getCorrelationStatistics(int index) {
-        // Combined traceset cannot do correlation statistics...
-        return null;
+    public TraceCorrelation getCorrelationStatistics(int index) 
+    {
+        if (traceStatistics == null) {
+	    throw new RuntimeException("No ESS for combined traces? This is not supposed to happen.");
+        }
+
+        return traceStatistics[index];
     }
 
     public void analyseTrace(int index) {
         double[] values = new double[getStateCount()];
 
+	// no offset: burnin is handled inside each TraceList we own and invisible to us.
+
         if (traceStatistics == null) {
-            traceStatistics = new TraceDistribution[getTraceCount()];
+            traceStatistics = new TraceCorrelation[getTraceCount()];
         }
 
-        int offset = 0;
-        double ESS = 0;
-        for (TraceList traceList : traceLists) {
-            traceList.getValues(index, values, offset);
-            offset += traceList.getStateCount();
-            TraceDistribution td = traceList.getDistributionStatistics(index);
-            if (td != null) {
-                ESS += td.getESS();
-            }
-        }
-        traceStatistics[index] = new TraceDistribution(values, ESS);
+	getValues(index,values);
+        traceStatistics[index] = new TraceCorrelation(values, getStepSize());
     }
 
     /**
@@ -206,8 +199,8 @@ public class CombinedTraces implements TraceList {
     //************************************************************************
 
     private TraceList[] traceLists = null;
-    private TraceDistribution[] traceStatistics = null;
 
-	private String name;
+    private TraceCorrelation[] traceStatistics = null;
 
+    private String name;
 }

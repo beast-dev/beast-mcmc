@@ -37,7 +37,7 @@ import java.util.Vector;
 
 public class JChart extends JPanel {
 
-	/**
+    /**
 	 *
 	 */
 	private static final long serialVersionUID = -7064065852204509247L;
@@ -60,6 +60,8 @@ public class JChart extends JPanel {
 
 	private Rectangle2D plotBounds = null;
 
+    private Rectangle2D dragRectangle = null;
+    
 	private double majorTickSize = 4;
 	private double minorTickSize = 2;
 
@@ -154,6 +156,29 @@ public class JChart extends JPanel {
 	public Plot getPlot(int index) {
 		return plots.get(index);
 	}
+
+    public Rectangle2D getDragRectangle() {
+        return dragRectangle;
+    }
+
+    public void setDragRectangle(Rectangle2D dragRectangle) {
+        this.dragRectangle = dragRectangle;
+        repaint();
+    }    
+
+    public void selectPoints(Rectangle2D dragRectangle) {
+        for (Plot plot : plots) {
+            plot.selectPoints(dragRectangle);
+        }
+        repaint();
+    }
+
+    public void clearSelection() {
+        for (Plot plot : plots) {
+            plot.clearSelection();
+        }
+        repaint();
+    }
 
 	private void resetPlots() {
 //		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
@@ -341,6 +366,12 @@ public class JChart extends JPanel {
 		if (showLegend) {
 			paintLegend(g2);
 		}
+
+        if (dragRectangle != null) {
+            g2.setPaint(new Color(128, 128, 128, 128));
+            g2.fill(dragRectangle);
+        }
+        
 
 		g2.setClip(null);
 

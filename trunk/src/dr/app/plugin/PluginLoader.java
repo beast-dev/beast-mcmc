@@ -7,14 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class PluginLoader {
-
-	  
+public class PluginLoader {	  
 		public static File getPluginFolder() {
 			String pluginFolderFromProperty = null;
 			try {
 				pluginFolderFromProperty =  java.lang.System.getProperty("beast.plugins.dir");
 			} catch (Exception ex) {
+                //
 			}
 			if (pluginFolderFromProperty != null) {
 				return new File(pluginFolderFromProperty);
@@ -71,8 +70,9 @@ public class PluginLoader {
 	       return plugins;
 	   }
 
-	  public static Plugin loadPlugin(final String pluginName/*, boolean pluginEnabled*/) {   //the class loader must still be assigned if the plugin isnt enabled so
-	                                                                                     //documents from that plugin can still be displayed.
+	  public static Plugin loadPlugin(final String pluginName/*, boolean pluginEnabled*/) {
+          //the class loader must still be assigned if the plugin isnt enabled so
+	      //documents from that plugin can still be displayed.
           final String loggerName = "dr.app.plugin";
           Logger.getLogger(loggerName).info("loading plugin " + pluginName);
 	      File pluginDir = PluginLoader.getPluginFolder();
@@ -104,31 +104,33 @@ public class PluginLoader {
 
 	              urls = new URL[length];
 	              int count = 0;
-	              if (classesExist) {
-	                  urls [ count ++ ] =classFiles.toURL();
+	              if( classesExist ) {
+	                  urls[ count ++ ] = classFiles.toURL();
 	              }
-	              urls [ count ++ ] = file.toURL();
-	              Logger.getLogger(loggerName).info("adding " + file + " to class path");
+	              urls[ count ++ ] = file.toURL();
+
+                  Logger.getLogger(loggerName).info("adding " + file + " to class path");
+
 	              for (File jarFile : files) {
 	                  urls[count++] = jarFile.toURL();
 	              }
 	          }
-	          URLClassLoader classLoader;
-	          classLoader = new URLClassLoader(urls);
+	          final URLClassLoader classLoader = new URLClassLoader(urls);
 
 	          for (URL url : classLoader.getURLs()) {
 	        	  Logger.getLogger(loggerName).info("URL from loader: " + url.toString() + "\n");
 	          }
 	          
-	          Class myClass = classLoader.loadClass(pluginName);
+	          final Class myClass = classLoader.loadClass(pluginName);
 	          
-	          Object plugin = myClass.newInstance();
+	          final Object plugin = myClass.newInstance();
+
+              // isn't that covered by the cast failing?
 	          if (!(plugin instanceof Plugin)){
 	              throw new Exception("Class should be " + Plugin.class.getName());
 	          }
 	          return (Plugin)plugin;
-	          
-	          
+
 	      } catch (Exception e) {
 	    	  Logger.getLogger(loggerName).severe(e.getMessage());
 	      }

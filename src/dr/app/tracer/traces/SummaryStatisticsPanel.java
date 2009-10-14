@@ -184,7 +184,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 return rowNames[row];
             }
 
-            TraceDistribution td;
             TraceCorrelation tc = null;
 
             if (traceLists != null && traceNames != null) {
@@ -193,12 +192,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
                 TraceList tl = traceLists[n1];
                 int index = tl.getTraceIndex(traceNames.get(n2));
-                if (tl instanceof CombinedTraces) {
-                    td = tl.getDistributionStatistics(index);
-                } else {
-                    tc = tl.getCorrelationStatistics(index);
-                    td = tc;
-                }
+                tc = tl.getCorrelationStatistics(index);
             } else {
                 return "-";
             }
@@ -233,30 +227,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         break;
                     case 7:
                         value = tc.getESS();
-                        break;
-                }
-            } else if (td != null) {
-                if (row != 0 && !td.isValid()) return "n/a";
-
-                switch (row) {
-                    case 0:
-                        value = td.getMean();
-                        break;
-                    case 1:
-                        return "n/a";
-                    case 2:
-                        value = td.getMedian();
-                        break;
-                    case 3:
-                        value = td.getLowerHPD();
-                        break;
-                    case 4:
-                        value = td.getUpperHPD();
-                        break;
-                    case 5:
-                        return "n/a";
-                    case 6:
-                        value = td.getESS();
                         break;
                 }
             } else {

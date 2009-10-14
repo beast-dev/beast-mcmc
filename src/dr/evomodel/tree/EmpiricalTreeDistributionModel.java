@@ -1,10 +1,8 @@
 package dr.evomodel.tree;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.Units;
-import dr.inference.model.*;
 import dr.math.MathUtils;
 
 import java.util.Iterator;
@@ -14,18 +12,13 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class EmpiricalTreeDistributionModel extends AbstractModel implements Tree {
+public class EmpiricalTreeDistributionModel extends TreeModel {
+
     public EmpiricalTreeDistributionModel(final Tree[] trees) {
-        super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
+        super(EMPIRICAL_TREE_DISTRIBUTION_MODEL, null);
 
         this.trees = trees;
         drawTreeIndex();
-    }
-
-    protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
-    }
-
-    protected void handleVariableChangedEvent(final Variable variable, final int index, final Parameter.ChangeType type) {
     }
 
     protected void storeState() {

@@ -28,8 +28,8 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.TreePriorParameterizationType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
@@ -40,7 +40,7 @@ import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
-import dr.evomodelxml.CSVExporter;
+import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
@@ -719,16 +719,16 @@ public class TreePriorGenerator extends Generator {
 
             writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
 
-            writer.writeOpenTag(CSVExporter.CSV_EXPORT,
+            writer.writeOpenTag(CSVExporterParser.CSV_EXPORT,
                     new Attribute[]{
-                            new Attribute.Default<String>(CSVExporter.FILE_NAME,
+                            new Attribute.Default<String>(CSVExporterParser.FILE_NAME,
                                     logFileName.subSequence(0, logFileName.length() - 4) + ".csv"), //.log
-                            new Attribute.Default<String>(CSVExporter.SEPARATOR, ",")
+                            new Attribute.Default<String>(CSVExporterParser.SEPARATOR, ",")
                     });
-            writer.writeOpenTag(CSVExporter.COLUMNS);
+            writer.writeOpenTag(CSVExporterParser.COLUMNS);
             writer.writeIDref(EBSPAnalysis.VD_ANALYSIS, modelPrefix + "demographic.analysis");
-            writer.writeCloseTag(CSVExporter.COLUMNS);
-            writer.writeCloseTag(CSVExporter.CSV_EXPORT);
+            writer.writeCloseTag(CSVExporterParser.COLUMNS);
+            writer.writeCloseTag(CSVExporterParser.CSV_EXPORT);
         }
     }
 

@@ -42,7 +42,7 @@ import java.util.List;
  *         <p/>
  *         Very lame so far. need checks for possible qouting of elements.
  */
-public class CSVExporter extends AbstractXMLObjectParser {
+public class CSVExporterParser extends AbstractXMLObjectParser {
 
     final static public String CSV_EXPORT = "CSVexport";
 

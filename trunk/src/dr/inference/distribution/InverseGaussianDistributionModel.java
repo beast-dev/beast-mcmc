@@ -285,7 +285,7 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
                 return new InverseGaussianDistributionModel(meanParam, shapeParam, offset, true);
             }
             else {
-                throw new RuntimeException("XML has both standard deviation and shape for Inverse Gaussian distribution");
+                throw new RuntimeException("XML has neither standard deviation nor shape for Inverse Gaussian distribution");
             }
         }
 

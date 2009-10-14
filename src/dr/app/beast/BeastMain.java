@@ -24,7 +24,7 @@
  */
 
 package dr.app.beast;
-
+import dr.app.plugin.*;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.app.util.OSType;
@@ -33,6 +33,7 @@ import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLParser;
+import dr.xml.XMLObjectParser;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.*;
 
 import beagle.Beagle;
@@ -126,6 +128,16 @@ public class BeastMain {
             handler.setLevel(Level.WARNING);
             logger.addHandler(handler);
 
+            for (String pluginName : PluginLoader.getAvailablePlugins()) {
+            	Plugin plugin = PluginLoader.loadPlugin(pluginName);
+            	if (plugin != null) {
+            		Set<XMLObjectParser> parserSet = plugin.getParsers();
+            		for (XMLObjectParser pluginParser : parserSet) {
+            			parser.addXMLObjectParser(pluginParser);
+            		}
+            	}
+            }
+            
             parser.parse(fileReader, true);
 
         } catch (java.io.IOException ioe) {

@@ -61,6 +61,7 @@
 			<include name="dr/app/oldbeauti/**" />
 			<include name="dr/app/beagle/**" />
 			<include name="dr/app/seqgen/**" />
+			<include name="dr/app/plugin/**" />
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
 			<include name="dr/evolution/**" />
@@ -102,6 +103,7 @@
 				<!--<include name="dr/app/beastdev/**/*.class"/>-->
 				<include name="dr/app/beauti/**/*.class" />
 				<include name="dr/app/seqgen/**" />
+				<include name="dr/app/plugin/**" />
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
 				<include name="dr/evolution/**/*.class" />

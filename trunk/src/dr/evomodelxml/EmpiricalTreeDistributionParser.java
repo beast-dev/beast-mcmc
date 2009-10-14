@@ -96,6 +96,6 @@ public class EmpiricalTreeDistributionParser extends AbstractXMLObjectParser {
 
 
     public Class getReturnType() {
-        return null;
+        return EmpiricalTreeDistributionModel.class;
     }
 }

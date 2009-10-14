@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Vector;
+import java.util.Set;
 
 /**
  * Description:	A scatter plot.
@@ -47,8 +48,6 @@ public class ScatterPlot extends Plot.AbstractPlot {
     protected Stroke hilightedMarkStroke = new BasicStroke(0.5f);
     protected Paint hilightedMarkPaint = Color.black;
     protected Paint hilightedMarkFillPaint = Color.blue;
-
-    private boolean[] hilightedMarks = null;
 
     /**
      * Constructor
@@ -70,34 +69,6 @@ public class ScatterPlot extends Plot.AbstractPlot {
                 Color.black, Color.yellow);
         setHilightedMarkStyle(new BasicStroke(1),
                 Color.black, Color.blue);
-    }
-
-    /**
-     * Set mark as hilighted
-     */
-    public void setHilightedMark(int index) {
-
-        if (hilightedMarks == null) {
-            hilightedMarks = new boolean[xData.getCount()];
-
-            clearHilightedMarks();
-        }
-
-        hilightedMarks[index] = true;
-    }
-
-    /**
-     * clear marks as hilighted
-     */
-    public void clearHilightedMarks() {
-
-        if (hilightedMarks == null) {
-            return;
-        }
-
-        for (int i = 0; i < xData.getCount(); i++) {
-            hilightedMarks[i] = false;
-        }
     }
 
     /**
@@ -177,12 +148,14 @@ public class ScatterPlot extends Plot.AbstractPlot {
 
         markBounds = new java.util.Vector<Rectangle2D>();
 
+        Set<Integer> selectedPoints = getSelectedPoints();
+
         int n = xData.getCount();
         for (int i = 0; i < n; i++) {
             x = (float) transformX(xData.get(i));
             y = (float) transformY(yData.get(i));
 
-            if (hilightedMarks != null && hilightedMarks[i]) {
+            if (selectedPoints.contains(i)) {
                 drawMarkHilighted(g2, x, y);
             } else {
                 drawMark(g2, x, y);
@@ -210,7 +183,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
             }
             fireMarkClickedEvent(mark, x, y);
 		}
-		
+
 		firePointClickedEvent(x, y);
 	}
 

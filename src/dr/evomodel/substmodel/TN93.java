@@ -36,6 +36,20 @@ import java.util.logging.Logger;
  * <p/>
  * Most general model which has an analytical solution (i.e. that I personally know how to solve).
  *
+ *
+ *  pr = p[0]+p[1]
+    py = 1 - pr
+
+    eigen values
+
+   [0, -1, -(k[0]*pr + py), -(k[1]*py + pr)]
+
+   unnormalized eigen vectors
+   [1,1,1,1],
+   [1,1,-pr/py,-pr/py],
+   [1, -p[0]/p[1], 0, 0],
+   [0, 0, 1,-p[2]/p[3]]
+
  * @author Joseph Heled
  */
 public class TN93 extends AbstractNucleotideModel {

@@ -13,7 +13,7 @@ import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 import dr.inference.trace.TraceList;
-import dr.java16compat.FileNameExtensionFilter;
+import dr.app.java16compat.FileNameExtensionFilter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;

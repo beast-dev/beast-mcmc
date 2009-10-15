@@ -30,7 +30,7 @@ import dr.app.util.Utils;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.util.Taxon;
-import dr.java16compat.FileNameExtensionFilter;
+import dr.app.java16compat.FileNameExtensionFilter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
@@ -151,7 +151,7 @@ public class BeautiFrame extends DocumentFrame {
             }
         });
 
-        JPanel panel = new JPanel(new BorderLayout(6, 6));       
+        JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         panel.add(tabbedPane, BorderLayout.CENTER);
         panel.setPreferredSize(new java.awt.Dimension(800, 600));
@@ -165,7 +165,7 @@ public class BeautiFrame extends DocumentFrame {
         panel2.add(generateButton, BorderLayout.EAST);
 
         panel.add(panel2, BorderLayout.SOUTH);
-        
+
         JScrollPane scrollPane = new JScrollPane(panel);
         scrollPane.setOpaque(false);
 
@@ -202,7 +202,7 @@ public class BeautiFrame extends DocumentFrame {
         clockModelsPanel.setOptions(beautiOptions);
 //        if (beautiOptions.isSpeciesAnalysis()) {
 //            speciesTreesPanel.setOptions(beautiOptions);
-//        } else 
+//        } else
         if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.setOptions(beautiOptions);
         } else {
@@ -211,7 +211,7 @@ public class BeautiFrame extends DocumentFrame {
         priorsPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
-        
+
         setStatusMessage();
     }
 
@@ -227,7 +227,7 @@ public class BeautiFrame extends DocumentFrame {
         clockModelsPanel.getOptions(beautiOptions);
 //        if (beautiOptions.isSpeciesAnalysis()) {
 //            speciesTreesPanel.getOptions(beautiOptions);
-//        } else 
+//        } else
         if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.getOptions(beautiOptions);
         } else {
@@ -256,7 +256,7 @@ public class BeautiFrame extends DocumentFrame {
         } else {
             throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }
-        
+
         setStatusMessage();
     }
 
@@ -331,23 +331,23 @@ public class BeautiFrame extends DocumentFrame {
 //                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
                     } catch (IOException ioe) {
                         JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
-                                "Unable to read file", JOptionPane.ERROR_MESSAGE);                    
+                                "Unable to read file", JOptionPane.ERROR_MESSAGE);
                         ioe.printStackTrace();
-                        return;                          
-                    
+                        return;
+
                     } catch (MissingBlockException ex) {
                         JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
                                 "Missing Block in Nexus File",
                                 JOptionPane.ERROR_MESSAGE);
                         ex.printStackTrace();
-                        
+
                     } catch (ImportException ime) {
                         JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
                                 "Error reading file",
                                 JOptionPane.ERROR_MESSAGE);
                         ime.printStackTrace();
                         return;
-                        
+
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                                 "Error reading file",
@@ -701,31 +701,31 @@ public class BeautiFrame extends DocumentFrame {
 //            }
 //            for (PartitionData partition : partitions) {
 //                beautiOptions.dataPartitions.add(partition);
-//                
-//                if (model != null) {//TODO Cannot load Substitution Model and Tree Model from BEAST file yet                
+//
+//                if (model != null) {//TODO Cannot load Substitution Model and Tree Model from BEAST file yet
 //                    partition.setPartitionSubstitutionModel(model);
 //                    model.addPartitionData(partition);
-//                    
+//
 //                    // use same tree model and same tree prior in beginning
-//                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
-//                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior       
+//                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {
+//                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
 //                    }
 //                    if (partition.getPartitionTreeModel() == null) {
 //                    	// PartitionTreeModel based on PartitionData
 //                    	PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
 //                        partition.setPartitionTreeModel(ptm);
-//                        
+//
 //                        // PartitionTreePrior always based on PartitionTreeModel
 //                        PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
 //                        ptm.setPartitionTreePrior(ptp);
-//                        
+//
 ////                        beautiOptions.addPartitionTreeModel(ptm);
-////                        beautiOptions.shareSameTreePrior = true;                                                
+////                        beautiOptions.shareSameTreePrior = true;
 //                    }
 //
 //                	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-//                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
-//                        partition.setPartitionClockModel(pcm);                        
+//                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {
+//                        partition.setPartitionClockModel(pcm);
 //                	}
 //                	if (partition.getPartitionClockModel() == null) {
 //                        // PartitionClockModel based on PartitionData
@@ -733,9 +733,9 @@ public class BeautiFrame extends DocumentFrame {
 //                        partition.setPartitionClockModel(pcm);
 ////                        beautiOptions.addPartitionClockModel(pcm);
 //                    }
-//                	beautiOptions.clockModelOptions.fixRateOfFirstClockPartition();                	
-//                	
-//                } else {// only this works                    
+//                	beautiOptions.clockModelOptions.fixRateOfFirstClockPartition();
+//
+//                } else {// only this works
 //                	for (PartitionSubstitutionModel psm : beautiOptions.getPartitionSubstitutionModels()) {
 //                        if (psm.getDataType() == alignment.getDataType()) { // use same substitution model in beginning
 //                            partition.setPartitionSubstitutionModel(psm);
@@ -747,27 +747,27 @@ public class BeautiFrame extends DocumentFrame {
 //                        partition.setPartitionSubstitutionModel(psm);
 ////                        beautiOptions.addPartitionSubstitutionModel(psm);
 //                    }
-//                	
+//
 //                	// use same tree model and same tree prior in beginning
-//                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {                        
-//                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior                    	
+//                    for (PartitionTreeModel ptm : beautiOptions.getPartitionTreeModels()) {
+//                    	partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
 //                    }
 //                    if (partition.getPartitionTreeModel() == null) {
 //                    	// PartitionTreeModel based on PartitionData
 //                    	PartitionTreeModel ptm = new PartitionTreeModel(beautiOptions, partition);
 //                        partition.setPartitionTreeModel(ptm);
-//                        
+//
 //                        // PartitionTreePrior always based on PartitionTreeModel
 //                        PartitionTreePrior ptp = new PartitionTreePrior(beautiOptions, ptm);
 //                        ptm.setPartitionTreePrior(ptp);
-//                        
+//
 ////                        beautiOptions.addPartitionTreeModel(ptm);
-////                        beautiOptions.shareSameTreePrior = true;                                                
+////                        beautiOptions.shareSameTreePrior = true;
 //                    }
 //
 //                	// use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-//                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {                        
-//                        partition.setPartitionClockModel(pcm);                        
+//                	for (PartitionClockModel pcm : beautiOptions.getPartitionClockModels()) {
+//                        partition.setPartitionClockModel(pcm);
 //                	}
 //                	if (partition.getPartitionClockModel() == null) {
 //                        // PartitionClockModel based on PartitionData
@@ -902,28 +902,28 @@ public class BeautiFrame extends DocumentFrame {
                     "Error Loading file", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
         dataPanel.unlinkAll();
 //        dataPanel.unlinkModels();
 //        dataPanel.unlinkTrees();
-        
+
 //        if (beautiOptions.getPartitionClockModels().size() > 1) {
 //        	dataPanel.linkClocks();
 //        }
-        
+
 //        beautiOptions.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
 //        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);
-//        
+//
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
 //        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
 //        speciesTreesPanel.getOptions(beautiOptions);
 
         treesPanel.updatePriorPanelForSpeciesAnalysis();
-        
-        beautiOptions.starBEASTOptions = new STARBEASTOptions(beautiOptions); 
+
+        beautiOptions.starBEASTOptions = new STARBEASTOptions(beautiOptions);
         beautiOptions.fileNameStem = "LogStem";
 
         setStatusMessage();
@@ -931,7 +931,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public void removeSepciesAnalysisSetup() {
 //        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
-//        
+//
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
 //        if (DataPanel.ALLOW_UNLINKED_TREES) {
@@ -939,25 +939,25 @@ public class BeautiFrame extends DocumentFrame {
 //        } else {
 //            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
 //        }
-           
+
     	treesPanel.updatePriorPanelForSpeciesAnalysis();
-    	
+
         setStatusMessage();
     }
 
     public PartitionTreePrior getCurrentPartitionTreePrior() {
     	return treesPanel.currentTreeModel.getPartitionTreePrior();
     }
-    
+
     public void setupEBSP() {
     	dataPanel.selectAll();
     	dataPanel.unlinkAll();
-    	
+
     	setAllOptions();
     }
-    
+
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
-    	//TODO: wait for new implementation in BEAST    	   	
+    	//TODO: wait for new implementation in BEAST
 	    if (DataPanel.ALLOW_UNLINKED_TREES) {
 			treesPanel.setCheckedTipDate(isChecked);
 		} else {
@@ -967,12 +967,12 @@ public class BeautiFrame extends DocumentFrame {
 			} else {
 				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 			}
-		}    	
+		}
     }
-    
+
     public void setStatusMessage() {
         GUIValidate();
-        
+
         statusLabel.setText(beautiOptions.statusMessage());
     }
 
@@ -1003,28 +1003,28 @@ public class BeautiFrame extends DocumentFrame {
         final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File file = exportChooser.getSelectedFile();
-            
+
             int n = JOptionPane.YES_OPTION;
-            
+
             if (file.exists()) {
             	n = JOptionPane.showConfirmDialog(this, file.getName(),
-            		     "Overwrite the exsting file?", JOptionPane.YES_NO_OPTION);            	         
+            		     "Overwrite the exsting file?", JOptionPane.YES_NO_OPTION);
             }
-            
-            if (n == JOptionPane.YES_OPTION) {            	
+
+            if (n == JOptionPane.YES_OPTION) {
 	            try {
 	                generate(file);
-	                
+
 	            } catch (IOException ioe) {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
 	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
 	                return false;
-	            }        
+	            }
             } else {
             	doGenerate();
             }
         }
-        
+
         clearDirty();
         return true;
     }
@@ -1118,7 +1118,7 @@ public class BeautiFrame extends DocumentFrame {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
-            doImport();  
+            doImport();
         }
     };
 

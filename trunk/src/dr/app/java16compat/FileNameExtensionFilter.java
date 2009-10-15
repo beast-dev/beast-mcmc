@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package dr.java16compat;
+package dr.app.java16compat;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;

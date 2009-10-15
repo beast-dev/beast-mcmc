@@ -50,11 +50,11 @@ public class Simulator implements Runnable {
 	public static final String REPEATS = "repeats";
 	
 	/** the coalescent simulator */
-	private DemographicModel demographicModel;
-	private TaxonList taxa;
-	private int simulationCount;
-	private TreeStatistic[] statistics;
-	private Logger[] loggers;
+	private final DemographicModel demographicModel;
+	private final TaxonList taxa;
+	private final int simulationCount;
+	private final TreeStatistic[] statistics;
+	private final Logger[] loggers;
 		
 	/**
 	 *
@@ -86,9 +86,9 @@ public class Simulator implements Runnable {
 	public void simulate() {
 		
 		if (loggers != null) {
-			for (int i =0; i < loggers.length; i++) {
-				loggers[i].startLogging();
-			}
+            for(Logger logger : loggers) {
+                logger.startLogging();
+            }
 		}
 		
 		CoalescentSimulator coalSim = new CoalescentSimulator();
@@ -100,21 +100,21 @@ public class Simulator implements Runnable {
 			Tree tree = coalSim.simulateTree(taxa, demographicModel);
 
 			if (loggers != null) {
-				for (int j = 0; j < statistics.length; j++) {
-					statistics[j].setTree(tree);
-				}
+                for(TreeStatistic statistic : statistics) {
+                    statistic.setTree(tree);
+                }
 
-				for (int j = 0; j < loggers.length; j++) {
-					loggers[j].log(i);
-				}
+                for(Logger logger : loggers) {
+                    logger.log(i);
+                }
 			}
 		
 		}
 		
 		if (loggers != null) {
-			for (int j = 0; j < loggers.length; j++) {
-				loggers[j].stopLogging();
-			}
+            for(Logger logger : loggers) {
+                logger.stopLogging();
+            }
 		}
 				
 		timer.stop();
@@ -139,17 +139,17 @@ public class Simulator implements Runnable {
 		
 				DemographicModel demoModel = (DemographicModel)xo.getChild(DemographicModel.class);
 				TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
-				ArrayList statistics = new ArrayList();
-				ArrayList loggers = new ArrayList();
+				ArrayList<TreeStatistic> statistics = new ArrayList<TreeStatistic>();
+				ArrayList<Logger> loggers = new ArrayList<Logger>();
 	
 				int repeats = xo.getIntegerAttribute(REPEATS);
 				
 				for (int i = 0; i < xo.getChildCount(); i++) {	
-					Object child = xo.getChild(i);
+					final Object child = xo.getChild(i);
 					if (child instanceof TreeStatistic) {
-						statistics.add((TreeStatistic)child);
+						statistics.add((TreeStatistic) child);
 					} else if (child instanceof Logger) {
-						loggers.add((Logger)child);
+						loggers.add((Logger) child);
 					}
 				}
 				
@@ -176,7 +176,7 @@ public class Simulator implements Runnable {
 
 			public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 		
-			private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+			private final XMLSyntaxRule[] rules = {
 				AttributeRule.newIntegerRule(REPEATS),
 				new ElementRule(DemographicModel.class),
 				new ElementRule(TaxonList.class),
@@ -187,7 +187,7 @@ public class Simulator implements Runnable {
 	}
 
 	// PRIVATE TRANSIENTS 
-	private dr.util.Timer timer = new dr.util.Timer();
+	private final dr.util.Timer timer = new dr.util.Timer();
 	
 }
 

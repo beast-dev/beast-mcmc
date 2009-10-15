@@ -7,10 +7,10 @@ import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrix;
 import no.uib.cipr.matrix.Vector;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -186,8 +186,8 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
 
         class XY implements Comparable {
 
-            private double x;
-            private double y;
+            private final double x;
+            private final double y;
 
             public XY(double x, double y) {
                 this.x = x;
@@ -219,7 +219,7 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
             return rules;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(DEGREE, true),
                 new ElementRule(KNOT_POINTS, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
@@ -230,21 +230,21 @@ public class SplineBasis extends AbstractModel implements IntegrableUnivariateFu
         };
     };
 
-    private int degree;
-    private int n;
-    private Variable<Double> knotLocations;
-    private Variable<Double> knotValues;
+    private final int degree;
+    private final int n;
+    private final Variable<Double> knotLocations;
+    private final Variable<Double> knotValues;
 //    private double[] splineCoefficients;
 //    private double[] storedSplineCoefficients;
     private boolean updateBasis;
     private double rangeMax;
     private double rangeMin;
 
-    private double[] h;
-    private double[] deltaY;
+    private final double[] h;
+    private final double[] deltaY;
 
-    private Matrix hMatrix;
-    private Vector yByH;
-    private Vector z;
+    private final Matrix hMatrix;
+    private final Vector yByH;
+    private final Vector z;
 
 }

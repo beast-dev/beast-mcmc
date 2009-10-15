@@ -41,11 +41,6 @@ dr.inference.*
 Contains classes for statistical inference, without specific reference to probablistic models of molecular evolution.
 Classes in these packages do not depend on classes in dr.app.*, dr.evolution.*, dr.evomodel.*, dr.evomodelxml or dr.geo.*.
 
-dr.app.java16compat
----------------
-Provides support for java 1.6 functionality.
-Should be moved to dr.util and eventually obsoleted.
-
 dr.math.*
 ---------
 Basic numerical computing classes including mathematical functions and optimization algorithms.

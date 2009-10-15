@@ -298,7 +298,9 @@ public class CoalescentSimulator {
                     final int nConstraints = constraints.size();
 
                     if (nConstraints == 0) {
-                        taxonLists.add(taxa);
+                        if( taxa != null ) {
+                            taxonLists.add(taxa);
+                        }
                     } else {
                         for (int nc = 0; nc < nConstraints; ++nc) {
                             TaxaConstraint cnc = constraints.get(nc);
@@ -380,21 +382,23 @@ public class CoalescentSimulator {
                         }
 
                         // add a taxon list for remaining taxa
-                        final Taxa list = new Taxa();
-                        for (int j = 0; j < taxa.getTaxonCount(); ++j) {
-                            Taxon taxonj = taxa.getTaxon(j);
-                            for (Tree aSt : st) {
-                                if (aSt.getTaxonIndex(taxonj) >= 0) {
-                                    taxonj = null;
-                                    break;
+                        if( taxa != null ) {
+                            final Taxa list = new Taxa();
+                            for (int j = 0; j < taxa.getTaxonCount(); ++j) {
+                                Taxon taxonj = taxa.getTaxon(j);
+                                for (Tree aSt : st) {
+                                    if (aSt.getTaxonIndex(taxonj) >= 0) {
+                                        taxonj = null;
+                                        break;
+                                    }
+                                }
+                                if (taxonj != null) {
+                                    list.addTaxon(taxonj);
                                 }
                             }
-                            if (taxonj != null) {
-                                list.addTaxon(taxonj);
+                            if (list.getTaxonCount() > 0) {
+                                taxonLists.add(list);
                             }
-                        }
-                        if (list.getTaxonCount() > 0) {
-                            taxonLists.add(list);
                         }
                         if (st.size() > 1) {
                             final Tree t = simulator.simulateTree(st.toArray(new Tree[st.size()]), demoModel, -1, false);

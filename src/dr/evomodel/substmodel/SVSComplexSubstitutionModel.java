@@ -40,13 +40,13 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         return indicators;
     }
 
-     public double getLogLikelihood() {
-        double logL = super.getLogLikelihood();
-        if (logL == 0 && considerConnectedness && !isStronglyConnected()) { // Also check that graph is connected
-            logL = Double.NEGATIVE_INFINITY;
-        }
-        return logL;
-    }
+//     public double getLogLikelihood() {
+//        double logL = super.getLogLikelihood();
+//        if (logL == 0 && considerConnectedness && !isStronglyConnected()) { // Also check that graph is connected
+//            logL = Double.NEGATIVE_INFINITY;
+//        }
+//        return logL;
+//    }
 
     private boolean hasEdge(int i, int j) {
         return i != j && getIndicators().getParameterValue(getEntry(i,j,stateCount)) == 1;

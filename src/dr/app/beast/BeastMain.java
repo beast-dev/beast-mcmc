@@ -137,7 +137,7 @@ public class BeastMain {
             		}
             	}
             }
-            
+
             parser.parse(fileReader, true);
 
         } catch (java.io.IOException ioe) {
@@ -340,7 +340,7 @@ public class BeastMain {
                     "</div></center></div></html>";
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
-        }         
+        }
 
 //        if (OSType.isWindows()) {
 //            System.out.println(System.getProperty("user.dir"));
@@ -424,7 +424,7 @@ public class BeastMain {
             additionalParsers.add("beagle");
         }
 
-        if (threadCount > 0) {
+        if (threadCount >= 0) {
             System.setProperty("thread.count", String.valueOf(threadCount));
         }
 

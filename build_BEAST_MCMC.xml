@@ -28,7 +28,7 @@
 	</target>
 
 	<target name="clean">
-		<delete dir="bin" />
+		<delete dir="build" />
 	</target>
 
 	<!-- clean previous build, and then compile Java source code, and Juint test -->

@@ -1,8 +1,6 @@
 package dr.inference.model;
 
 import cern.colt.bitvector.BitVector;
-
-import cern.colt.bitvector.BitVector;
 import dr.math.MathUtils;
 
 /**
@@ -17,9 +15,9 @@ public interface BayesianStochasticSearchVariableSelection {
 
     public class Utils {
         
-    public static boolean connectedAndWellConditioned(double[] probability) {
-            for(int i=0; i<probability.length; i++) {
-                if(probability[i] <= 0 || probability[i] > 1)
+        public static boolean connectedAndWellConditioned(double[] probability) {
+            for(double prob : probability) {
+                if(prob <= 0 || prob > 1)
                     return false;
             }
             return true;

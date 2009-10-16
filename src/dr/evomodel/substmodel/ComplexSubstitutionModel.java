@@ -632,12 +632,23 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     }
 
     public double getLogLikelihood() {
-        if (updateMatrix)
-            setupMatrix();
-        if (wellConditioned)
-            return 0;
+        if (connectedAndWellConditioned())
+            return 0;        
         return Double.NEGATIVE_INFINITY;
     }
+
+    private boolean connectedAndWellConditioned() {
+        if (probability == null)
+            probability = new double[stateCount*stateCount];
+
+        try {
+            getTransitionProbabilities(1.0,probability);
+            return BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability);            
+        } catch (Exception e) { // Any numerical error is bad news
+            return false;
+        }
+    }
+
 
     public String prettyName() {
         return Abstract.getPrettyName(this);
@@ -650,4 +661,7 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     public void makeDirty() {
 
     }
+    
+    private double[] probability = null;
+
 }

@@ -41,6 +41,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
      * @param storePartials   -
      * @param dataType        - need to provide the data-type, so that corrent data characters can be returned
      * @param tag             - string label for reconstruction characters in tree log
+     * @param forceRescaling  -
      */
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                         SiteModel siteModel, BranchRateModel branchRateModel,
@@ -80,19 +81,19 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
         areStatesRedrawn = true;
     }
 
-    private boolean checkConditioning = true;
+//    private boolean checkConditioning = true;
 
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == siteModel)
-            checkConditioning = true;
+//        if (model == siteModel)
+//            checkConditioning = true;
         super.handleModelChangedEvent(model, object, index);
 
     }
 
     protected double calculateLogLikelihood() {
 
-        if (checkConditioning) {
+//        if (checkConditioning) {
 //            final int len = stateCount * stateCount;
 //            double[] test = new double[len];
 //            try {
@@ -107,8 +108,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 //
 //            }
 //          THis should all be handled by the substitution (as likelihood) model            
-            checkConditioning = false;
-        }
+//            checkConditioning = false;
+//        }
 
         areStatesRedrawn = false;
 

@@ -247,8 +247,8 @@ public class BEAUTiImporter {
                 }
             }
 
-
             options.fileNameStem = fileNameStem;
+
         } else {
             // This is an additional partition so check it uses the same taxa
             if (!options.allowDifferentTaxa) { // not allow Different Taxa
@@ -289,12 +289,6 @@ public class BEAUTiImporter {
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
 
-//                for (Taxon taxon : taxa) { // not working
-//                    if (!options.taxonList.contains(taxon)) {
-//                        options.taxonList.addTaxon(taxon);
-//                    }
-//                }
-
                 // add the new diff taxa
                 List<String> prevTaxa = new ArrayList<String>();
                 for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
@@ -330,12 +324,14 @@ public class BEAUTiImporter {
             for (PartitionData partition : partitions) {
                 options.dataPartitions.add(partition);
                 
-                if (model != null) {//TODO Cannot load Substitution Model and Tree Model from BEAST file yet                
+                if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet                
                     partition.setPartitionSubstitutionModel(model);
                     model.addPartitionData(partition);
                     
                     // use same tree model and same tree prior in beginning
-                    for (PartitionTreeModel ptm : options.getPartitionTreeModels()) {                        
+                    if (options.getPartitionTreeModels() != null
+                            && options.getPartitionTreeModels().size() == 1) {
+                        PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
                         partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior       
                     }
                     if (partition.getPartitionTreeModel() == null) {
@@ -352,7 +348,9 @@ public class BEAUTiImporter {
                     }
 
                     // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                    for (PartitionClockModel pcm : options.getPartitionClockModels()) {                        
+                    if (options.getPartitionClockModels() != null
+                            && options.getPartitionClockModels().size() == 1) {
+                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);                      
                         partition.setPartitionClockModel(pcm);                        
                     }
                     if (partition.getPartitionClockModel() == null) {
@@ -362,11 +360,15 @@ public class BEAUTiImporter {
 //                        options.addPartitionClockModel(pcm);
                     }
 //                    options.clockModelOptions.fixRateOfFirstClockPartition();
-                    
+
                 } else {// only this works                    
-                    for (PartitionSubstitutionModel psm : options.getPartitionSubstitutionModels()) {
-                        if (psm.getDataType() == alignment.getDataType()) { // use same substitution model in beginning
+                    if (options.getPartitionSubstitutionModels() != null
+                            && options.getPartitionSubstitutionModels().size() == 1) { // use same substitution model in beginning
+                        PartitionSubstitutionModel psm = options.getPartitionSubstitutionModels().get(0);
+                        if (psm.getDataType() == alignment.getDataType()) {
                             partition.setPartitionSubstitutionModel(psm);
+                        } else {
+                            //TODO exception?
                         }
                     }
                     if (partition.getPartitionSubstitutionModel() == null) {
@@ -375,27 +377,31 @@ public class BEAUTiImporter {
                         partition.setPartitionSubstitutionModel(psm);
 //                        options.addPartitionSubstitutionModel(psm);
                     }
-                    
+
                     // use same tree model and same tree prior in beginning
-                    for (PartitionTreeModel ptm : options.getPartitionTreeModels()) {                        
+                    if (options.getPartitionTreeModels() != null
+                            && options.getPartitionTreeModels().size() == 1) {
+                        PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
                         partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
                     }
                     if (partition.getPartitionTreeModel() == null) {
                         // PartitionTreeModel based on PartitionData
                         PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
                         partition.setPartitionTreeModel(ptm);
-                        
+
                         // PartitionTreePrior always based on PartitionTreeModel
                         PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
                         ptm.setPartitionTreePrior(ptp);
-                        
+
 //                        options.addPartitionTreeModel(ptm);
 //                        options.shareSameTreePrior = true;                                                
                     }
 
                     // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                    for (PartitionClockModel pcm : options.getPartitionClockModels()) {                        
-                        partition.setPartitionClockModel(pcm);                        
+                    if (options.getPartitionClockModels() != null
+                            && options.getPartitionClockModels().size() == 1) {
+                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);
+                        partition.setPartitionClockModel(pcm);
                     }
                     if (partition.getPartitionClockModel() == null) {
                         // PartitionClockModel based on PartitionData
@@ -403,7 +409,6 @@ public class BEAUTiImporter {
                         partition.setPartitionClockModel(pcm);
 //                        options.addPartitionClockModel(pcm);
                     }
-//                    options.clockModelOptions.fixRateOfFirstClockPartition();
                 }
             }
             

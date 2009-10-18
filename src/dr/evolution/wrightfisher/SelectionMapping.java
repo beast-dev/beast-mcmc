@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -62,8 +63,8 @@ public class SelectionMapping {
 		double beta = Double.parseDouble(props.getProperty("beta", "1"));
 		int stateSize = Integer.parseInt(props.getProperty("stateSize", "4"));
 		int n = Integer.parseInt(props.getProperty("sampleSize", "40"));
-		boolean randomFittest = (new Boolean(props.getProperty("randomizeFittest", "false"))).booleanValue();
-		boolean outputAlignments = (new Boolean(props.getProperty("outputAlignments", "false"))).booleanValue();
+		boolean randomFittest = Boolean.valueOf(props.getProperty("randomizeFittest", "false"));
+		boolean outputAlignments = Boolean.valueOf(props.getProperty("outputAlignments", "false"));
 		String alignmentFileName = props.getProperty("alignment.filename", "alignment.fasta");
 		String fileName = props.getProperty("output.filename", "out.txt");
 		int burninFactor = Integer.parseInt(props.getProperty("burninFactor", "10"));
@@ -102,11 +103,11 @@ public class SelectionMapping {
 		int aaSegs = 0;
 
 		for (int reps = 0; reps < replicates; reps++) {
-			FitnessFunction f = null;
-			if (alpha == 0.0) {
-				f = new NeutralModel();
-			}
-			f = new CodonFitnessFunction(genomeLength, alpha, beta, pInv);
+//			FitnessFunction f = null;
+//			if (alpha == 0.0) {
+//				f = new NeutralModel();
+//			}
+			FitnessFunction f = new CodonFitnessFunction(genomeLength, alpha, beta, pInv);
 			Population p = new Population(populationSize, genomeLength*3, new SimpleMutator(mu, stateSize), f, randomFittest);
 
 			Genome master = new SimpleGenome(genomeLength*3, f, randomFittest);
@@ -140,9 +141,9 @@ public class SelectionMapping {
 			// get the mutational density per lineage as a function of time
 			// ************************************************************************************
 
-			ArrayList[] mutations = new ArrayList[200];
+			List<Integer>[] mutations = new ArrayList[200];
 			for (int i = 0; i < mutations.length; i++) {
-				mutations[i] = new ArrayList(200);
+				mutations[i] = new ArrayList<Integer>(200);
 			}
 
 			int sampleSize = Math.min(n, populationSize);
@@ -151,7 +152,7 @@ public class SelectionMapping {
 
 			for (int i = 0; i < mutations.length; i++) {
 				for (int j = 0; j < mutations[i].size(); j++) {
-					totalMutationalDensity[i] += ((Integer)mutations[i].get(j)).intValue();
+					totalMutationalDensity[i] += mutations[i].get(j);
 				}
 				totalLineages[i] += mutations[i].size();
 			}
@@ -209,7 +210,7 @@ public class SelectionMapping {
 			double proportionPositive = 0.0;
 			double proportionNegative = 0.0;
 			for (int j = 0; j < unfoldedSites[i].size(); j++) {
-				double relativeFitness = ((Double)unfoldedSites[i].get(j)).doubleValue();
+				double relativeFitness = (Double) unfoldedSites[i].get(j);
 				meanFitness += relativeFitness;
 				if (relativeFitness == 1.0) {
 					proportionNeutral += 1.0;
@@ -299,9 +300,9 @@ public class SelectionMapping {
 				counts[a.getState(i, j)] += 1;
 			}
 		}
-		for (int i = 0; i < counts.length; i++) {
-			if (counts[i] == 1) return true;
-		}
+        for(int count : counts) {
+            if( count == 1 ) return true;
+        }
 		return false;
 	}
 
@@ -316,9 +317,9 @@ public class SelectionMapping {
 				counts[a.getState(i, j)] += 1;
 			}
 		}
-		for (int i = 0; i < counts.length; i++) {
-			if (counts[i] > 0 && counts[i] < seqCount) return true;
-		}
+        for(int count : counts) {
+            if( count > 0 && count < seqCount ) return true;
+        }
 		return false;
 	}
 

@@ -227,17 +227,15 @@ public class RLTVAnalyzer {
         final int count;
 
         public boolean equals(Object o) {
+            assert o instanceof RateCombo;
             RateCombo c2 = (RateCombo) o;
             return (combo.equals(c2.combo) && count == c2.count);
         }
     }
 
-    static Comparator rateComboComparator = new Comparator() {
+    static Comparator<RateCombo> rateComboComparator = new Comparator<RateCombo>() {
 
-        public int compare(Object o, Object o1) {
-            RateCombo r1 = (RateCombo) o;
-            RateCombo r2 = (RateCombo) o1;
-
+        public int compare(RateCombo r1, RateCombo r2) {
             return r2.count - r1.count;
         }
     };

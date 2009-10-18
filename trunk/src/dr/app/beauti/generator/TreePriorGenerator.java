@@ -325,6 +325,7 @@ public class TreePriorGenerator extends Generator {
      * Write the prior on node heights (coalescent or speciational models)
      *
      * @param prior  the partition tree prior
+     * @param model   PartitionTreeModel
      * @param writer the writer
      */
     void writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {

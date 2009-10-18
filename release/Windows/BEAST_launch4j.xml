@@ -6,7 +6,6 @@
     <minVersion>1.5.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
     <maxHeapSize>1024</maxHeapSize>
-    <opt>-Djava.library.path=./lib/</opt>      
   </jre>    
   <versionInfo>
     <fileDescription>BEAST</fileDescription>    

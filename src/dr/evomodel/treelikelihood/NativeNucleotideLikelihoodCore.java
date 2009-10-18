@@ -25,6 +25,11 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.app.util.OSType;
+
+import java.io.File;
+import java.net.URISyntaxException;
+
 /**
  * NativeNucleotideLikelihoodCore - An implementation of LikelihoodCore for nucleotides
  * that calls native methods for maximum speed. The native methods should be in
@@ -152,17 +157,29 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	private static boolean isNativeAvailable = false;
 
 	static {
+        String currentDir = null;
+        try {
+            currentDir = new File(NativeNucleotideLikelihoodCore.class.getProtectionDomain().getCodeSource().
+                        getLocation().toURI()).getParent() + "\\lib\\";
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }          
+        try {
+//            System.setProperty("java.library.path", currentDir);
+//            System.setProperty("user.dir", currentDir);
 
-		try {
-			System.loadLibrary("NucleotideLikelihoodCore");
-
-			// System.err.println("Native nucleotide likelihood core found");
-
+            if (OSType.isWindows()) {
+                System.load(currentDir + "NucleotideLikelihoodCore.dll");
+                System.out.println("Load NucleotideLikelihoodCore.dll successfully ...");
+            } else {
+                System.loadLibrary("NucleotideLikelihoodCore");
+            }
 			isNativeAvailable = true;
 		} catch (UnsatisfiedLinkError e) {
-
 			System.err.println("Using Java nucleotide likelihood core " + e.toString());
-            System.err.println("Looking for NucleotideLikelihoodCore in " + System.getProperty("java.library.path"));
+//            System.err.println("Looking for NucleotideLikelihoodCore in java.library.path : " + System.getProperty("java.library.path"));
+//            System.err.println("Looking for NucleotideLikelihoodCore in user.dir : " + System.getProperty("user.dir"));
+              System.err.println("Looking for NucleotideLikelihoodCore in : " + currentDir);
 		}
 
 	}

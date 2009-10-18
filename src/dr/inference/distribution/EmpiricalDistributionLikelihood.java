@@ -29,15 +29,15 @@ import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.StringTokenizer;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.awt.geom.Point2D;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * A class that returns the log likelihood of a set of data (statistics)
@@ -52,8 +52,8 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
     public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
-    private static double MIN_DENSITY_PROPORTION = 1E-2;
-    private static boolean DEBUG = false;
+    private static final double MIN_DENSITY_PROPORTION = 1E-2;
+    private static final boolean DEBUG = false;
 
     private int from = -1;
     private int to = Integer.MAX_VALUE;
@@ -70,16 +70,16 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         this.inverse = inverse;    
     }
 
-    class ComparablePoint2D extends Point2D.Double implements Comparable {
+    class ComparablePoint2D extends Point2D.Double implements Comparable<ComparablePoint2D> {
 
         ComparablePoint2D(double x, double y) {
             super(x,y);
         }
-        public int compareTo(Object o) {
-            ComparablePoint2D ptO = (ComparablePoint2D)o;
-            if (getX() > ptO.getX())
+
+        public int compareTo(ComparablePoint2D pt0) {
+            if (getX() > pt0.getX())
                 return 1;
-            if (getX() == ptO.getX())
+            if (getX() == pt0.getX())
                 return 0;
             return -1;
         }

@@ -30,29 +30,29 @@ public class GTRParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
-        Variable rateACVariable = null;
+        Variable<Double> rateACVariable = null;
         if (xo.hasChildNamed(A_TO_C)) {
-            rateACVariable = (Variable) xo.getElementFirstChild(A_TO_C);
+            rateACVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_C);
         }
-        Variable rateAGVariable = null;
+        Variable<Double> rateAGVariable = null;
         if (xo.hasChildNamed(A_TO_G)) {
-            rateAGVariable = (Variable) xo.getElementFirstChild(A_TO_G);
+            rateAGVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_G);
         }
-        Variable rateATVariable = null;
+        Variable<Double> rateATVariable = null;
         if (xo.hasChildNamed(A_TO_T)) {
-            rateATVariable = (Variable) xo.getElementFirstChild(A_TO_T);
+            rateATVariable = (Variable<Double>) xo.getElementFirstChild(A_TO_T);
         }
-        Variable rateCGVariable = null;
+        Variable<Double> rateCGVariable = null;
         if (xo.hasChildNamed(C_TO_G)) {
-            rateCGVariable = (Variable) xo.getElementFirstChild(C_TO_G);
+            rateCGVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_G);
         }
-        Variable rateCTVariable = null;
+        Variable<Double> rateCTVariable = null;
         if (xo.hasChildNamed(C_TO_T)) {
-            rateCTVariable = (Variable) xo.getElementFirstChild(C_TO_T);
+            rateCTVariable = (Variable<Double>) xo.getElementFirstChild(C_TO_T);
         }
-        Variable rateGTVariable = null;
+        Variable<Double> rateGTVariable = null;
         if (xo.hasChildNamed(G_TO_T)) {
-            rateGTVariable = (Variable) xo.getElementFirstChild(G_TO_T);
+            rateGTVariable = (Variable<Double>) xo.getElementFirstChild(G_TO_T);
         }
         int countNull = 0;
         if (rateACVariable == null) countNull++;

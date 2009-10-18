@@ -52,11 +52,15 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
     public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
+    private static double MIN_DENSITY_PROPORTION = 1E-2;
+    private static boolean DEBUG = false;
+
     private int from = -1;
     private int to = Integer.MAX_VALUE;
 
     public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
+        this.fileName = fileName;
 
         if (byColumn)
             readFileByColumn(fileName);
@@ -89,14 +93,16 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
             String line;
             while ((line = reader.readLine()) != null) {
-                StringTokenizer st = new StringTokenizer(line);
-                try {
-                    double value = Double.valueOf(st.nextToken());
-                    double density = Double.valueOf(st.nextToken());
-                    ptList.add(new ComparablePoint2D(value,density));
-                } catch (Exception e) {
-                    System.err.println("Error parsing line: '"+line+"' in "+fileName);
-                    System.exit(-1);
+                if (line.charAt(0) != '#') {
+                    StringTokenizer st = new StringTokenizer(line);
+                    try {
+                        double value = Double.valueOf(st.nextToken());
+                        double density = Double.valueOf(st.nextToken());
+                        ptList.add(new ComparablePoint2D(value,density));
+                    } catch (Exception e) {
+                        System.err.println("Error parsing line: '"+line+"' in "+fileName);
+                        System.exit(-1);
+                    }
                 }
             }
             Collections.sort(ptList);
@@ -119,7 +125,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             // Set zeros in the middle to 1/100th of minDensity
             for(ComparablePoint2D pt : ptList) {
                 if (pt.getY() == 0)
-                    pt.y = minDensity * 1E-2;
+                    pt.y = minDensity * MIN_DENSITY_PROPORTION;
             }
             values = new double[ptList.size()];
             density = new double[ptList.size()];
@@ -129,6 +135,12 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
                 density[i] = pt.getY();
             }         
             reader.close();
+
+            if (DEBUG) {
+                System.err.println("EDL File : "+fileName);
+                System.err.println("Min value: "+values[0]);
+                System.err.println("Max value: "+values[values.length-1]);                
+            }
 
         } catch (FileNotFoundException e) {
             System.err.println("File not found: "+fileName);
@@ -194,6 +206,16 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
                 double value = attributeValue[j];
                 logL += logPDF(value);
+
+                if (DEBUG) {
+                    if (Double.isInfinite(logL)) {
+                        System.err.println("Infinite log density in "+
+                                (getId() != null ? getId() : fileName)                        
+                        );
+                        System.err.println("Evaluated at "+value);
+                        System.err.println("Min: "+values[0]+" Max: "+values[values.length-1]);
+                    }
+                }
             }
         }
         return logL;
@@ -217,5 +239,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     protected  double[] density;
 
     protected boolean inverse;
+
+    protected String fileName;
 }
 

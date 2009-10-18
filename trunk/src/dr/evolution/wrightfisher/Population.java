@@ -28,11 +28,12 @@ package dr.evolution.wrightfisher;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Population {
 
 	// the sequences of this population
-	ArrayList<Genome> population = null;
+	List<Genome> population = null;
 
 	double meanFitness;
 
@@ -43,7 +44,7 @@ public class Population {
 	FitnessFunction fitnessFunction = null;
 
 	public Population(int size, int sequenceLength, Mutator mutator, FitnessFunction fitnessFunction, boolean initializeToFittest) {
-		population = new ArrayList();
+		population = new ArrayList<Genome>();
 		for (int i = 0; i < size; i++) {
 			population.add(new SimpleGenome(sequenceLength, fitnessFunction, initializeToFittest));
 		}
@@ -52,7 +53,7 @@ public class Population {
 		cumulativeFitness = new double[size];
 	}
 
-	private Population(ArrayList population, Mutator mutator, FitnessFunction fitnessFunction) {
+	private Population(List<Genome> population, Mutator mutator, FitnessFunction fitnessFunction) {
 		this.population = population;
 		this.mutator = mutator;
 		this.fitnessFunction = fitnessFunction;
@@ -85,7 +86,7 @@ public class Population {
 
 		int popSize = population.size();
 
-		ArrayList nextPopulation = new ArrayList();
+		List<Genome> nextPopulation = new ArrayList<Genome>();
 		for (int i = 0; i < popSize; i++) {
 			Genome parent = population.get(pickParent());
 			nextPopulation.add(parent.replicate(mutator, fitnessFunction));
@@ -188,9 +189,9 @@ public class Population {
 		return g;
 	}
 
-	public void unfoldedSiteFrequencies(ArrayList[] siteFrequencies) {
+	public void unfoldedSiteFrequencies(List<Double>[] siteFrequencies) {
 
-		int popSize = population.size();
+		final int popSize = population.size();
 
 		double[][] fitnessTable = fitnessFunction.getFitnessTable();
 
@@ -244,7 +245,7 @@ public class Population {
 		return (double)count/(double)popSize;
 	}
 
-	public void getTipHammingDistance(int individuals, ArrayList[] distances) {
+	public void getTipHammingDistance(int individuals, List<Double>[] distances) {
 
 		int popSize = population.size();
 
@@ -268,7 +269,7 @@ public class Population {
 		}
 	}
 
-	public void getMutationDensity(int individuals, ArrayList[] mutations) {
+	public void getMutationDensity(int individuals, List<Integer>[] mutations) {
 
 		for (int i = 0; i < individuals; i++) {
 			getGenome(i).mark();

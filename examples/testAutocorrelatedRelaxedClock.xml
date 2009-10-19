@@ -203,7 +203,7 @@
     </coalescentLikelihood>
 
     <!-- The autocorrelated relaxed clock (Rannala & Yang, 2007)                 -->
-    <ACLikelihood id="branchRates" episodic="false" logspace="true">
+    <ACLikelihood id="branchRates" episodic="false" distribution="logNormal">
         <treeModel idref="treeModel"/>
         <rates>
             <parameter id="treeModel.nodeRates"/>

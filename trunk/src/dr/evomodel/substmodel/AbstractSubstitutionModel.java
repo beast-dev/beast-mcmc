@@ -548,7 +548,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel
                 }
                 if (itn == 0) {
                     /* eigenvalues have not converged */
-                    System.out.println("Eigenvalues not converged");
                     throw new ArithmeticException();
                 }
                 y = h[na - 1][na - 1];

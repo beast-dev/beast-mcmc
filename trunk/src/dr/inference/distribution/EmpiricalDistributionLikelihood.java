@@ -26,8 +26,6 @@
 package dr.inference.distribution;
 
 import dr.util.Attribute;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -222,18 +220,6 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     }
 
     abstract protected double logPDF(double value);
-//    {
-
-//        return 0.0;
-//    }
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document d) {
-        throw new RuntimeException("Not implemented yet!");
-    }
 
     protected  double[] values;
     protected  double[] density;

@@ -9,6 +9,10 @@
     <property name="lib" location="lib"/>
     <property name="dist" location="dist"/>
 
+    <path id="classpath">
+		<fileset dir="${lib}" includes="**/*.jar"/>
+	</path>
+
     <property environment="env"/>
 
     <target name="init">
@@ -31,8 +35,8 @@
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/jebl.jar:${lib}/jam.jar:${lib}/jdom.jar:${lib}/figtreepanel.jar:${lib}/jri.jar">
+        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+               classpath="classpath">
             <include name="dr/app/pathogen/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>

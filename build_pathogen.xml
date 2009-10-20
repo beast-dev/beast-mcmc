@@ -1,6 +1,6 @@
 <project name="Pathogen" default="all" basedir=".">
     <description>
-        Build file for PATHOGEN release versions
+        Build file for PATHOGEN release versions, It is also used by Hudson Pathogen project.
         $Id: build_pathogen.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
     </description>
     <!-- set global properties for this build -->
@@ -13,6 +13,7 @@
 
     <target name="init">
         <!-- Create the time stamp -->
+        <echo message="${ant.project.name}: ${ant.file}" />
         <tstamp/>
         <!-- Create the build directory structure used by compile -->
         <mkdir dir="${build}"/>

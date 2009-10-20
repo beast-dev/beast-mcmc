@@ -28,7 +28,6 @@ package dr.app.pathogen;
 import dr.app.util.OSType;
 import dr.util.Version;
 import org.virion.jam.framework.*;
-import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;

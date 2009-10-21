@@ -345,7 +345,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 } else { // no codon partitioning
 //TODO
                 }
-                
+
+                // only AMINO_ACIDS not addFrequency
+                addFrequencyParams(params, includeRelativeRates);
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -371,6 +373,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 if (includeRelativeRates) {
                     params.add(getParameter("mu"));
                 }
+                
+                // only AMINO_ACIDS not addFrequency
+                addFrequencyParams(params, includeRelativeRates);
                 break;
 
             default:
@@ -411,6 +416,11 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 params.add(getParameter("pInv"));
             }
         }
+
+        if (hasCodon()) getParameter("allMus");
+    }
+
+    private void addFrequencyParams(List<Parameter> params, boolean includeRelativeRates) {
         if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
             if (includeRelativeRates && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
                 if (codonHeteroPattern.equals("123")) {
@@ -428,8 +438,6 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
             }
 
         }
-
-        if (hasCodon()) getParameter("allMus");
     }
 
     public void selectOperators(List<Operator> ops) {
@@ -520,6 +528,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }                    
                 }
+
+                // only AMINO_ACIDS not addFrequency
+                addFrequencyOps(ops, includeRelativeRates);
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -541,6 +552,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
+
+                // only AMINO_ACIDS not addFrequency
+                addFrequencyOps(ops, includeRelativeRates);
                 break;
 
             default:
@@ -582,6 +596,20 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
             }
         }
 
+        if (hasCodon()) {
+            Operator deltaMuOperator = getOperator("deltaMu");
+
+            // update delta mu operator weight
+            deltaMuOperator.weight = 0.0;
+            for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
+                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            }
+
+            ops.add(deltaMuOperator);
+        }
+    }
+
+    private void addFrequencyOps(List<Operator> ops, boolean includeRelativeRates) {
         if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
             if (includeRelativeRates && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
                 if (codonHeteroPattern.equals("123")) {
@@ -597,18 +625,6 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
             } else {
                 ops.add(getOperator("frequencies"));
             }
-        }
-
-        if (hasCodon()) {
-            Operator deltaMuOperator = getOperator("deltaMu");
-
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
-            }
-
-            ops.add(deltaMuOperator);
         }
     }
 

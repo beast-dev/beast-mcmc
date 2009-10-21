@@ -486,6 +486,9 @@
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
+        <!-- Only works under Unix or NonStop Kernel (Tandem) -->
+        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
+
 		<tar destfile="${Linux_dir}/${BEAST_name}v${version}.tgz" compression="gzip">
 			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
 		</tar>

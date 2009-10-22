@@ -316,10 +316,6 @@ public class BeastMain {
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.SINGLE.getMask();
         }
-        if (beagleFlags != 0) {
-            System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
-
-        }
 
         if (arguments.hasOption("beagle_resource_order")) {
             System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_resource_order"));
@@ -402,6 +398,18 @@ public class BeastMain {
 
             useBeagle = dialog.useBeagle();
             beagleShowInfo = dialog.showBeagleInfo();
+            if (dialog.preferBeagleCPU()) {
+                beagleFlags |= BeagleFlag.CPU.getMask();
+            }
+            if (dialog.preferBeagleGPU()) {
+                beagleFlags |= BeagleFlag.GPU.getMask();
+            }
+            if (dialog.preferBeagleDouble()) {
+                beagleFlags |= BeagleFlag.DOUBLE.getMask();
+            }
+            if (dialog.preferBeagleSingle()) {
+                beagleFlags |= BeagleFlag.SINGLE.getMask();
+            }
 
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
@@ -451,6 +459,11 @@ public class BeastMain {
 
         if (useBeagle) {
             additionalParsers.add("beagle");
+        }
+
+        if (beagleFlags != 0) {
+            System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
+
         }
 
         if (threadCount >= 0) {

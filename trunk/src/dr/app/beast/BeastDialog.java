@@ -34,6 +34,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,8 +50,11 @@ public class BeastDialog {
     private OptionsPanel optionPanel;
 
     private WholeNumberField seedText = new WholeNumberField(1, Integer.MAX_VALUE);
-    private JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library");
-    private JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources");
+    private JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
+    private JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
+    private JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
+    private JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Single", "Double" });
+
     private JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
     private File inputFile = null;
@@ -104,29 +108,61 @@ public class BeastDialog {
         optionPanel.addComponentWithLabel("Thread pool size: ", threadsCombo);
 
         optionPanel.addSeparator();
-        
-        JEditorPane beagleInfo = new JEditorPane("text/html",
+
+        optionPanel.addSpanningComponent(beagleCheckBox);
+        beagleCheckBox.setSelected(true);
+
+        final OptionsPanel optionPanel1 = new OptionsPanel(0,12);
+//        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
+        optionPanel1.setBorder(new TitledBorder(""));
+
+        OptionsPanel optionPanel2 = new OptionsPanel(0,12);
+        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
+        final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
+        final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
+        optionPanel2.addComponent(beagleInfoCheckBox);
+
+        optionPanel1.addComponent(optionPanel2);
+
+        final JEditorPane beagleInfo = new JEditorPane("text/html",
                 "<html><div style=\"font-family:sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
                         "additional computational resources such as graphics boards. It must be<br>" +
                         "downloaded and installed independently of BEAST:</p>" +
-                        "<center><a href=\"http://beagle-lib.googlecode.com/\">http://beagle-lib.googlecode.com/</a></center></div>");
+                        "<pre><a href=\"http://beagle-lib.googlecode.com/\">http://beagle-lib.googlecode.com/</a></pre></div>");
         beagleInfo.setOpaque(false);
         beagleInfo.setEditable(false);
         beagleInfo.addHyperlinkListener(new SimpleLinkListener());
-        optionPanel.addSpanningComponent(beagleInfo);
-        optionPanel.addComponent(beagleCheckBox);
-        OptionsPanel optionPanel2 = new OptionsPanel(0,0);
-        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
-        optionPanel2.addComponent(beagleInfoCheckBox);
-        optionPanel.addComponent(optionPanel2);
-        
+        optionPanel1.addComponent(beagleInfo);
+
+        optionPanel.addSpanningComponent(optionPanel1);
+
         beagleInfoCheckBox.setEnabled(false);
         beagleCheckBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
+                beagleInfo.setEnabled(beagleCheckBox.isSelected());
                 beagleInfoCheckBox.setEnabled(beagleCheckBox.isSelected());
+                label1.setEnabled(beagleCheckBox.isSelected());
+                beagleResourceCombo.setEnabled(beagleCheckBox.isSelected());
+                label2.setEnabled(beagleCheckBox.isSelected());
+                beaglePrecisionCombo.setEnabled(beagleCheckBox.isSelected());
             }
         });
 
+        beagleResourceCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                if (beagleResourceCombo.getSelectedItem().equals("GPU")) {
+                    beaglePrecisionCombo.setSelectedItem("Single");
+                    label2.setEnabled(false);
+                    beaglePrecisionCombo.setEnabled(false);
+                } else {
+                    label2.setEnabled(true);
+                    beaglePrecisionCombo.setEnabled(true);
+                }
+            }
+        });
+
+        beagleCheckBox.setSelected(false);
+        beagleResourceCombo.setSelectedItem("GPU");
     }
 
     public boolean showDialog(String title, int seed) {
@@ -156,6 +192,22 @@ public class BeastDialog {
 
     public boolean useBeagle() {
         return beagleCheckBox.isSelected();
+    }
+
+    public boolean preferBeagleGPU() {
+        return beagleResourceCombo.getSelectedItem().equals("GPU");
+    }
+
+    public boolean preferBeagleCPU() {
+        return beagleResourceCombo.getSelectedItem().equals("CPU");
+    }
+
+    public boolean preferBeagleSingle() {
+        return beaglePrecisionCombo.getSelectedItem().equals("Single");
+    }
+
+    public boolean preferBeagleDouble() {
+        return beaglePrecisionCombo.getSelectedItem().equals("Double");
     }
 
     public boolean showBeagleInfo() {

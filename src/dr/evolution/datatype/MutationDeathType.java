@@ -212,7 +212,12 @@ public class MutationDeathType extends DataType {
 
 
             cxo = xo.getChild(STATE);
-            char stateChar = cxo.getStringAttribute(CODE).charAt(0);
+            char stateChar;
+            if (cxo != null) {
+                stateChar = cxo.getStringAttribute(CODE).charAt(0);
+            } else {
+                stateChar = dataType.getChar(dataType.getGapState());
+            }
 
             Logger.getLogger("dr.evolution").info("\tNon-existent code: " + stateChar);
 
@@ -269,7 +274,7 @@ public class MutationDeathType extends DataType {
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(DataType.DATA_TYPE, "Base datatype name", DataType.getRegisteredDataTypeNames(), true),
                 new ElementRule(DataType.class, true),
-                new ElementRule(STATE, new XMLSyntaxRule[]{AttributeRule.newStringRule(CODE)}),
+                new ElementRule(STATE, new XMLSyntaxRule[]{AttributeRule.newStringRule(CODE)}, true),
                 new ElementRule(EXTANT, new XMLSyntaxRule[]{AttributeRule.newStringRule(CODE)}, true),
                 new ContentRule("<ambiguity code=\"Z\" states=\"XY\"/>")
         };

@@ -58,6 +58,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
+    private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
+    private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
@@ -135,20 +137,29 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             int[] resourceList = null;
-            long preferenceFlag = 0;
-            long requirementFlag = 0;
+            long preferenceFlags = 0;
+            long requirementFlags = 0;
 
             if (resourceOrder.size() > 0) {
-                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };               
-            } else { // else determine dataset characteristics
-                if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
-                    preferenceFlag |= BeagleFlag.CPU.getMask();
+                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };
+            }
 
+            if (System.getProperty(PREFERRED_FLAGS_PROPERTY) != null) {
+                preferenceFlags = Long.valueOf(System.getProperty(PREFERRED_FLAGS_PROPERTY));
+            }
+
+            if (System.getProperty(REQUIRED_FLAGS_PROPERTY) != null) {
+                requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));                
+            }
+
+            if (preferenceFlags == 0) { // else determine dataset characteristics
+                if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
+                    preferenceFlags |= BeagleFlag.CPU.getMask();
             }
 
             if (branchSiteModel.canReturnComplexDiagonalization())
-                requirementFlag |= BeagleFlag.COMPLEX.getMask();
-            
+                requirementFlags |= BeagleFlag.COMPLEX.getMask();
+
             instanceCount ++;
 
             beagle = BeagleFactory.loadBeagleInstance(
@@ -162,8 +173,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
-                    preferenceFlag,
-                    requirementFlag
+                    preferenceFlags,
+                    requirementFlags
             );
 
             InstanceDetails instanceDetails = beagle.getDetails();
@@ -171,7 +182,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (instanceDetails != null) {
                 ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
                 if (resourceDetails != null) {
-                    logger.info("  Using BEAGLE resource " + resourceDetails.toString());
+                    StringBuilder sb = new StringBuilder("  Using BEAGLE resource ");
+                    sb.append(resourceDetails.getNumber()).append(": ");
+                    sb.append(resourceDetails.getName()).append("\n");
+                    if (resourceDetails.getDescription() != null) {
+                        String[] description = resourceDetails.getDescription().split("\\|");
+                        for (String desc : description) {
+                            if (desc.trim().length() > 0) {
+                                sb.append("    ").append(desc.trim()).append("\n");
+                            }
+                        }
+                    }
+                    sb.append("    with instance flags: ").append(instanceDetails.toString());
+                    logger.info(sb.toString());
                 } else {
                     logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
                 }
@@ -212,7 +235,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     allowRescale = true;
                     break;
                 default:
-                    throw new RuntimeException("Unknown PartialsRescalingScheme in BeagleTreeLikelihood.");                    
+                    throw new RuntimeException("Unknown PartialsRescalingScheme in BeagleTreeLikelihood.");
             }
             logger.info("  Partials scaling scheme used: " + rescalingScheme.getText());
 
@@ -358,7 +381,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         partialBufferHelper.storeState();
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
-        
+
         if (useScaleFactors) { // Only store when actually used
             storedUseScaleFactors = useScaleFactors;
             scaleBufferHelper.storeState();
@@ -378,7 +401,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         partialBufferHelper.restoreState();
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
-        
+
         useScaleFactors = storedUseScaleFactors;
         if (useScaleFactors ) {
             scaleBufferHelper.restoreState();
@@ -455,7 +478,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 branchUpdateCount);
 
         if (COUNT_TOTAL_OPERATIONS)
-               totalMatrixUpdateCount += branchUpdateCount;        
+               totalMatrixUpdateCount += branchUpdateCount;
 
         beagle.updatePartials(operations, operationCount, -1);
 
@@ -493,7 +516,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if  (alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL))) {
             logL = Double.NEGATIVE_INFINITY; // TODO Why is BEAGLE returning +\infty???
         }
- 
+
         // Attempt dynamic rescaling if over/under-flow
         if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
@@ -537,7 +560,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 logL += patternLogLikelihoods[i] * patternWeights[i];
             }
             recomputeScaleFactors = false; // Only recompute after under/over-flow
-                  
+
             if (Double.isNaN(logL) || Double.isInfinite(logL)) {
                 logL = Double.NEGATIVE_INFINITY;
                 // TODO Discussion pt:
@@ -686,7 +709,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean recomputeScaleFactors = false;
     private boolean alwaysRescale = false;
     private boolean allowRescale = true;
-    
+
     private boolean storedUseScaleFactors = false;
 
     /**

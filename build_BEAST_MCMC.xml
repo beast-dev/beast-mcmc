@@ -487,12 +487,13 @@
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
         <!-- Only works under Unix or NonStop Kernel (Tandem) -->
-        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
+        <!-- <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
 
 		<tar destfile="${Linux_dir}/${BEAST_name}v${version}.tgz" compression="gzip">
 			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
-		</tar>
-
+		</tar>-->
+        <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
+        <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files." />
 		<echo message="Linux/Unix version release is finished." />
 	</target>
 

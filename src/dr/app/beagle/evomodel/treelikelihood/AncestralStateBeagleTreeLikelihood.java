@@ -8,13 +8,13 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.math.MathUtils;
 import beagle.Beagle;
+
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -27,31 +27,50 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
-                                               DataType dataType,
-                                            String tag) {
+                                              DataType dataType,
+                                              String tag,
+                                              SubstitutionModel substModel) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme);
+
+        if (useAmbiguities) {
+            Logger.getLogger("dr.app.beagle.evomodel").info("Ancestral reconstruction using ambiguities is currently "+
+            "not support with BEAGLE");
+            System.exit(-1);
+        }
 
         this.dataType = dataType;
         this.tag = tag;
 
-//        branchSiteModel.
-
-
-//        oldSiteModel = new SiteModel();
-
-//        oldAncestralLikelihood = new AncestralStateTreeLikelihood()
-
-//                                                        SiteModel siteModel, BranchRateModel branchRateModel,
-//                                        boolean useAmbiguities, boolean storePartials,
-//                                        DataType dataType,
-//                                        String tag) {
-
         probabilities = new double[stateCount*stateCount];
         partials = new double[stateCount*patternCount];
-        rootPartials = new double[stateCount*patternCount];
-        cumulativeScaleBuffers = new int[nodeCount][];
-        scaleBufferIndex = getScaleBufferCount() - 1;
+//        rootPartials = new double[stateCount*patternCount];
+//        cumulativeScaleBuffers = new int[nodeCount][];
+//        scaleBufferIndex = getScaleBufferCount() - 1;
+
+        // Save tip states locally so these do not need to be transfers back
+
+        tipStates = new int[tipCount][];
+
+        for (int i = 0; i < tipCount; i++) {
+            // Find the id of tip i in the patternList
+            String id = treeModel.getTaxonId(i);
+            int index = patternList.getTaxonIndex(id);
+            tipStates[i] = getStates(patternList,index);          
+        }
+
+        substitutionModel = substModel;
+    }
+
+
+    private int[] getStates(PatternList patternList,
+                            int sequenceIndex) {
+
+        int[] states = new int[patternCount];
+        for (int i = 0; i < patternCount; i++) {
+            states[i] = patternList.getPatternState(sequenceIndex, i);
+        }
+        return states;
     }
 
     public String[] getNodeAttributeLabel() {
@@ -80,7 +99,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
      public void redrawAncestralStates() {
          // Setup cumulate scale buffers
-         traverseCollectScaleBuffers(treeModel, treeModel.getRoot());
+//         traverseCollectScaleBuffers(treeModel, treeModel.getRoot());
          // Sample states
          traverseSample(treeModel, treeModel.getRoot(), null);
          areStatesRedrawn = true;
@@ -115,73 +134,64 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return sb.toString();
     }
 
-//    private double[] getRootPartials() {
-//        int rootNum = treeModel.getRoot().getNumber();
-//        beagle.resetScaleFactors(scaleBufferIndex);
-//        beagle.accumulateScaleFactors(cumulativeScaleBuffers[rootNum],cumulativeScaleBuffers[rootNum].length,scaleBufferIndex);
-//        beagle.getPartials(partialBufferHelper.getOffsetIndex(rootNum),scaleBufferIndex,rootPartials);
-//        return rootPartials;
-//    }
-
     private void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
-        if (useScaleFactors) {
-            cumulativeBufferIndex = scaleBufferIndex;
-            beagle.resetScaleFactors(cumulativeBufferIndex);
-            beagle.accumulateScaleFactors(cumulativeScaleBuffers[number],cumulativeScaleBuffers[number].length,cumulativeBufferIndex);
-        }
+//        if (useScaleFactors) {
+//            cumulativeBufferIndex = scaleBufferIndex;
+//            beagle.resetScaleFactors(cumulativeBufferIndex);
+//            beagle.accumulateScaleFactors(cumulativeScaleBuffers[number],cumulativeScaleBuffers[number].length,cumulativeBufferIndex);
+//        }
+        /* No need to rescale partials */
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number),cumulativeBufferIndex,partials);
     }
 
     private void getMatrix(int matrixNum, double[] probabilities) {
-//        beagle.getMatrix(); // TODO Need to add accessor to BEAGLE API.  Oh no!!!
+        beagle.getTransitionMatrix(matrixBufferHelper.getOffsetIndex(matrixNum),probabilities);
+        // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
 
     private void getStates(int tipNum, int[] states)  {
-        // TODO
+        // Keep these in local memory because they don't change
+        System.arraycopy(tipStates[tipNum],0,states,0,states.length);
     }
 
-    public int traverseCollectScaleBuffers(TreeModel tree, NodeRef node) {
-
-        if (true) // Currently do nothing
-            return 0;
-
-        if (tree.isExternal(node))
-            return 0;
-
-        int nodeNum = node.getNumber();
-
-        NodeRef child0 = tree.getChild(node,0);
-        NodeRef child1 = tree.getChild(node,1);
-
-        int len0 = traverseCollectScaleBuffers(tree,child0);
-        int len1 = traverseCollectScaleBuffers(tree,child1);
-        int thisLen = len0 + len1 + 1;
-        int offset = 0;
-
-        int[] scaleBuffer = new int[thisLen];
-        if (len0 > 0) {
-            System.arraycopy(cumulativeScaleBuffers[child0.getNumber()],0,scaleBuffer,offset,len0);
-            offset += len0;
-        }
-        if (len1 > 0) {
-            System.arraycopy(cumulativeScaleBuffers[child1.getNumber()],0,scaleBuffer,offset,len1);
-            offset += len1;
-        }
-        scaleBuffer[offset] = scaleBufferHelper.getOffsetIndex(nodeNum - tipCount);        
-        cumulativeScaleBuffers[nodeNum] = scaleBuffer;
-
-        return thisLen;
-    }
+//    public int traverseCollectScaleBuffers(TreeModel tree, NodeRef node) {
+//
+//        if (true) // Currently do nothing
+//            return 0;
+//
+//            return 0;
+//
+//        int nodeNum = node.getNumber();
+//
+//        NodeRef child0 = tree.getChild(node,0);
+//        NodeRef child1 = tree.getChild(node,1);
+//
+//        int len0 = traverseCollectScaleBuffers(tree,child0);
+//        int len1 = traverseCollectScaleBuffers(tree,child1);
+//        int thisLen = len0 + len1 + 1;
+//        int offset = 0;
+//
+//        int[] scaleBuffer = new int[thisLen];
+//        if (len0 > 0) {
+//            System.arraycopy(cumulativeScaleBuffers[child0.getNumber()],0,scaleBuffer,offset,len0);
+//            offset += len0;
+//        }
+//        if (len1 > 0) {
+//            System.arraycopy(cumulativeScaleBuffers[child1.getNumber()],0,scaleBuffer,offset,len1);
+//            offset += len1;
+//        }
+//        scaleBuffer[offset] = scaleBufferHelper.getOffsetIndex(nodeNum - tipCount);
+//        cumulativeScaleBuffers[nodeNum] = scaleBuffer;
+//
+//        return thisLen;
+//    }
 
 
     public void traverseSample(TreeModel tree, NodeRef node, int[] parentState) {
 
         if (reconstructedStates == null)
             reconstructedStates = new int[tree.getNodeCount()][patternCount];
-
-        if (true)  // Currently do nothing
-            return;
         
         int nodeNum = node.getNumber();
 
@@ -216,12 +226,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                 // This is an internal node, but not the root
                 double[] partialLikelihood = new double[stateCount * patternCount];
-                getPartials(nodeNum,partialLikelihood);  // TODO fix number
+                getPartials(nodeNum,partialLikelihood);
 
                 if (categoryCount > 1)
                     throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
 
-                getMatrix(nodeNum*categoryCount,probabilities); // TODO fix number
+                getMatrix(nodeNum,probabilities);
 
                 for (int j = 0; j < patternCount; j++) {
 
@@ -248,7 +258,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
             // This is an external leaf
 
-            getStates(nodeNum, reconstructedStates[nodeNum]); // TODO fix number
+            getStates(nodeNum, reconstructedStates[nodeNum]);
 
             // Check for ambiguity codes and sample them
 
@@ -259,7 +269,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 if (dataType.isAmbiguousState(thisState)) {
 
                     int parentIndex = parentState[j] * stateCount;
-                    getMatrix(nodeNum*categoryCount,probabilities); // TODO fix number
+                    getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex, conditionalProbabilities, 0, stateCount);
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                 }
@@ -271,13 +281,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     private int[][] reconstructedStates;
     private String tag;
 
-    private AncestralStateTreeLikelihood oldAncestralLikelihood;
-    private SiteModel oldSiteModel;
-    private SubstitutionModel oldSubstitutionModel;
+    private int[][] tipStates;
+
+    private SubstitutionModel substitutionModel;
 
     private double[] probabilities;
     private double[] partials;
-    private double[] rootPartials;
-    private int[][] cumulativeScaleBuffers;
-    private int scaleBufferIndex;
+//    private double[] rootPartials;
+//    private int[][] cumulativeScaleBuffers;
+//    private int scaleBufferIndex;
 }

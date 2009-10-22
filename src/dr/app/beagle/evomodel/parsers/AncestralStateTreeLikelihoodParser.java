@@ -5,7 +5,6 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -43,7 +42,9 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
+        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+
+        DataType dataType = substModel.getDataType();
 
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
@@ -56,17 +57,17 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
                 "AncestralBeagleTreeLikelihood object '"+xo.getId());
         }
 
-//        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
-        return new BeagleTreeLikelihood(
+        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
                 patternList,
                 treeModel,
                 branchSiteModel,
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
-                scalingScheme
-//                ,dataType,
-//                tag
+                scalingScheme,
+                dataType,
+                tag,
+                substModel
         );
 
     }
@@ -90,6 +91,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
+            new ElementRule(SubstitutionModel.class),
             AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
     };
 }

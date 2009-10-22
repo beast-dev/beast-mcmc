@@ -25,14 +25,14 @@
 
 package dr.app.beast;
 
+import dr.evomodel.operators.ImportanceNarrowExchange;
+import dr.evomodel.tree.UniformNodeHeightPrior;
+import dr.evomodelxml.CSVExporterParser;
 import dr.inference.model.OneOnXPrior;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import dr.evomodel.tree.UniformNodeHeightPrior;
-import dr.evomodel.operators.ImportanceNarrowExchange;
-import dr.evomodelxml.CSVExporterParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -172,7 +172,6 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(UserInput.STRING_PARSER);
         addXMLObjectParser(UserInput.DOUBLE_PARSER);
         addXMLObjectParser(UserInput.INTEGER_PARSER);
-
 
 
         //addXMLObjectParser(ColouringTest.PARSER);
@@ -385,7 +384,6 @@ public class BeastParser extends XMLParser {
 
 
         addXMLObjectParser(dr.inference.model.ThreadedCompoundLikelihood.PARSER);
-
     }
 
 }

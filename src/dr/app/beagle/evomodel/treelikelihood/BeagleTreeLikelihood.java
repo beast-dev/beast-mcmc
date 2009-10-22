@@ -153,7 +153,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             if (preferenceFlags == 0) { // else determine dataset characteristics
-                if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
+                if (stateCount == 4 && patternList.getPatternCount() < 1000) // TODO determine good cut-off
                     preferenceFlags |= BeagleFlag.CPU.getMask();
             }
 

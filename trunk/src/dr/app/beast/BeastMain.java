@@ -46,8 +46,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.*;
 
-import beagle.Beagle;
-import beagle.BeagleInfo;
+import beagle.*;
 
 public class BeastMain {
 
@@ -71,7 +70,7 @@ public class BeastMain {
     }
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp,
-                     int maxErrorCount, boolean verbose, boolean strictXML,
+                     int maxErrorCount, final boolean verbose, boolean strictXML,
                      List<String> additionalParsers) {
 
         if (inputFile == null) {
@@ -105,14 +104,18 @@ public class BeastMain {
             });
             logger.addHandler(handler);
 
-            // Add a handler to handle warnings and errors. This is a ConsoleHandler
-            // so the messages will go to StdErr..
-            handler = new ConsoleHandler();
-            handler.setFilter(new Filter() {
-                public boolean isLoggable(LogRecord record) {
-                    return record.getLevel().intValue() >= Level.WARNING.intValue();
-                }
-            });
+//            // Add a handler to handle warnings and errors. This is a ConsoleHandler
+//            // so the messages will go to StdErr..
+//            handler = new ConsoleHandler();
+//            handler.setFilter(new Filter() {
+//                public boolean isLoggable(LogRecord record) {
+//                    if (verbose) {
+//                        return record.getLevel().intValue() >= Level.WARNING.intValue();
+//                    } else {
+//                        return record.getLevel().intValue() >= Level.SEVERE.intValue();
+//                    }
+//                }
+//            });
 //            logger.addHandler(handler);
 
             logger.setUseParentHandlers(false);
@@ -129,13 +132,13 @@ public class BeastMain {
             logger.addHandler(handler);
 
             for (String pluginName : PluginLoader.getAvailablePlugins()) {
-            	Plugin plugin = PluginLoader.loadPlugin(pluginName);
-            	if (plugin != null) {
-            		Set<XMLObjectParser> parserSet = plugin.getParsers();
-            		for (XMLObjectParser pluginParser : parserSet) {
-            			parser.addXMLObjectParser(pluginParser);
-            		}
-            	}
+                Plugin plugin = PluginLoader.loadPlugin(pluginName);
+                if (plugin != null) {
+                    Set<XMLObjectParser> parserSet = plugin.getParsers();
+                    for (XMLObjectParser pluginParser : parserSet) {
+                        parser.addXMLObjectParser(pluginParser);
+                    }
+                }
             }
 
             parser.parse(fileReader, true);
@@ -251,8 +254,13 @@ public class BeastMain {
                         new Arguments.IntegerOption("threads", "the number of computational threads to use (default 1)"),
                         new Arguments.Option("java", "use Java only, no native implementations"),
                         new Arguments.Option("beagle", "use beagle library if available"),
-                        new Arguments.Option("beagle_info", "show information on available beagle resources"),
-                        new Arguments.Option("beagle_resource_order", "set order of beagle resources"),
+                        new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_resource_order", "BEAGLE: set order of resource use"),
+                        new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
+                        new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
+                        new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
+                        new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -281,21 +289,42 @@ public class BeastMain {
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
-        boolean useBeagle = false;
-        boolean showBeagleInfo = false;
+
         int threadCount = 0;
 
         if (arguments.hasOption("java")) {
             useJava = true;
         }
 
-        if (arguments.hasOption("beagle")) {
-            useBeagle = true;
+        long beagleFlags = 0;
+
+        boolean useBeagle = arguments.hasOption("beagle");
+        boolean beagleShowInfo = arguments.hasOption("beagle_info");
+        if (arguments.hasOption("beagle_CPU")) {
+            beagleFlags |= BeagleFlag.CPU.getMask();
+        }
+        if (arguments.hasOption("beagle_GPU")) {
+            beagleFlags |= BeagleFlag.GPU.getMask();
+        }
+        if (arguments.hasOption("beagle_SSE")) {
+            beagleFlags |= BeagleFlag.CPU.getMask();
+            beagleFlags |= BeagleFlag.SSE.getMask();
+        }
+        if (arguments.hasOption("beagle_double")) {
+            beagleFlags |= BeagleFlag.DOUBLE.getMask();
+        }
+        if (arguments.hasOption("beagle_single")) {
+            beagleFlags |= BeagleFlag.SINGLE.getMask();
+        }
+        if (beagleFlags != 0) {
+            System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
+
         }
 
-        if (arguments.hasOption("beagle_info")) {
-            showBeagleInfo = true;
+        if (arguments.hasOption("beagle_resource_order")) {
+            System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_resource_order"));
         }
+
         if (arguments.hasOption("threads")) {
             threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
@@ -362,7 +391,7 @@ public class BeastMain {
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
-           BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
+            BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
             if (!dialog.showDialog(nameString, (int)seed)) {
                 return;
@@ -372,17 +401,17 @@ public class BeastMain {
             threadCount = dialog.getThreadPoolSize();
 
             useBeagle = dialog.useBeagle();
-            showBeagleInfo = dialog.showBeagleInfo();
+            beagleShowInfo = dialog.showBeagleInfo();
 
             inputFile = dialog.getInputFile();
-            if (!showBeagleInfo && inputFile == null) {
+            if (!beagleShowInfo && inputFile == null) {
                 System.err.println("No input file specified");
                 return;
             }
 
         }
 
-        if (showBeagleInfo) {
+        if (beagleShowInfo) {
             BeagleInfo.printResourceList();
             return;
         }

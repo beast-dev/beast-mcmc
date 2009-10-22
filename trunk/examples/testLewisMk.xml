@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<beast>
+    <!-- DATA SPECIFICATION -->
+
+    <kStateType id="kst" stateCount="5" startWith="1"/>
+    <!--    <alignment id="short">
+        <dataType idref="alsDataType"/>
+        <sequence> <taxon idref="hg"/>    222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222</sequence>
+        <sequence> <taxon idref="panTro"/>U000000000000000000000000011111111111111111111111112222222222222222222222222BBBBBBBBBBBBBBBBBBBBBBBBBUUUUUUUUUUUUUUUUUUUUUUUUU</sequence>
+        <sequence> <taxon idref="mm"/>    U000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU</sequence>
+        <sequence> <taxon idref="rn"/>    U012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU</sequence>
+    </alignment>-->
+
+    <frequencyModel id="freqModel">
+        <kStateType idref="kst"/>
+        <frequencies>
+            <parameter dimension="5" value="0.2 0.2 0.2 0.2 0.2" id="model.frequencies"/>
+        </frequencies>
+    </frequencyModel>
+
+    <lewisMk id="lewisModel" totalOrder="false">
+        <frequencies>
+            <frequencyModel idref="freqModel"/>
+        </frequencies>
+        <order state="3" adjacentTo="2"/>
+        <order state="3" adjacentTo="4"/>
+        <order state="3" adjacentTo="5"/>
+        <order state="4" adjacentTo="5"/>
+    </lewisMk>
+
+</beast>

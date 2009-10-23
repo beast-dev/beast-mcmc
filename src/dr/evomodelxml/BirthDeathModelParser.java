@@ -39,12 +39,12 @@ import java.util.logging.Logger;
  */
 public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
-
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
     public static final String SAMPLE_RATE = "sampleRate";
     public static final String TREE_TYPE = "type";
+    public static final String CONDITIONAL_ON_ROOT = "conditionalOnRoot";
 
     public static final String BIRTH_DEATH = "birthDeath";
     public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".meanGrowthRate";
@@ -56,20 +56,24 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         final String s = xo.getAttribute(TREE_TYPE, BirthDeathGernhard08Model.TreeType.UNSCALED.toString());
-        BirthDeathGernhard08Model.TreeType treeType = BirthDeathGernhard08Model.TreeType.valueOf(s);
+        final BirthDeathGernhard08Model.TreeType treeType = BirthDeathGernhard08Model.TreeType.valueOf(s);
+        final boolean conditonalOnRoot =  xo.getAttribute(CONDITIONAL_ON_ROOT, false);
 
-        Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
-        Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
-        Parameter sampleParameter = xo.hasChildNamed(SAMPLE_RATE) ?
+        final Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
+        final Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
+        final Parameter sampleParameter = xo.hasChildNamed(SAMPLE_RATE) ?
                 (Parameter) xo.getElementFirstChild(SAMPLE_RATE) : null;
 
-        Logger.getLogger("dr.evomodel").info("Using Gernhard08 birth-death model on tree: Gernhard T (2008) J Theor Biol, In press");
+        Logger.getLogger("dr.evomodel").info("Using birth-death model on tree: Gernhard T (2008) J Theor Biol," +
+                " Volume 253, Issue 4, Pages 769-778 In press");
 
+        final String modelName = xo.getId();
 
-        return new BirthDeathGernhard08Model(birthParameter, deathParameter, sampleParameter, treeType, units);
+        return new BirthDeathGernhard08Model(modelName, birthParameter, deathParameter, sampleParameter, 
+                treeType, units, conditonalOnRoot);
     }
 
     //************************************************************************
@@ -90,6 +94,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
+            AttributeRule.newBooleanRule(CONDITIONAL_ON_ROOT, true),
             new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),

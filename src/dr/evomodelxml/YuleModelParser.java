@@ -27,7 +27,6 @@ package dr.evomodelxml;
 
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.YuleModel;
 import dr.evoxml.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -38,12 +37,13 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  */
 public class YuleModelParser extends AbstractXMLObjectParser {
+    public static final String YULE_MODEL = "yuleModel";
 
-    public static String YULE = "yule";
-    public static String BIRTH_RATE = "birthRate";
+    public static final String YULE = "yule";
+    public static final String BIRTH_RATE = "birthRate";
 
     public String getParserName() {
-        return YuleModel.YULE_MODEL;
+        return YULE_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -51,8 +51,9 @@ public class YuleModelParser extends AbstractXMLObjectParser {
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         final XMLObject cxo = xo.getChild(BIRTH_RATE);
-        Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
-        Parameter deathParameter = new Parameter.Default(0.0);
+
+        final Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
+        final Parameter deathParameter = new Parameter.Default(0.0);
 
         Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
 

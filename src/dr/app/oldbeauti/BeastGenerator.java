@@ -51,7 +51,6 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -497,7 +496,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Yule speciation process (a pure birth process).");
             writer.writeOpenTag(
-                    YuleModel.YULE_MODEL,
+                    YuleModelParser.YULE_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "yule"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -507,7 +506,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
             writeParameter("yule.birthRate", writer);
             writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
-            writer.writeCloseTag(YuleModel.YULE_MODEL);
+            writer.writeCloseTag(YuleModelParser.YULE_MODEL);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
             writer.writeComment("A prior on the distribution node heights defined given");
             writer.writeComment("a Birth-Death speciation process (Gernhard 2008).");
@@ -2946,7 +2945,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "skyline")}, true);
         } else if (nodeHeightPrior == YULE) {
-            writer.writeTag(YuleModel.YULE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "yule")}, true);
+            writer.writeTag(YuleModelParser.YULE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "yule")}, true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "birthDeath")}, true);
         } else {

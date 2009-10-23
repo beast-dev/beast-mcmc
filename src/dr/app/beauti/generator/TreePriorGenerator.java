@@ -36,7 +36,6 @@ import dr.evomodel.coalescent.*;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
-import dr.evomodel.speciation.YuleModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.CSVExporterParser;
@@ -243,7 +242,7 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeComment("A prior on the distribution node heights defined given");
 	            writer.writeComment("a Yule speciation process (a pure birth process).");
 	            writer.writeOpenTag(
-	                    YuleModel.YULE_MODEL,
+	                    YuleModelParser.YULE_MODEL,
 	                    new Attribute[]{
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "yule"),
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -251,7 +250,7 @@ public class TreePriorGenerator extends Generator {
 	            );
 	
 	            writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", prior, writer);
-	            writer.writeCloseTag(YuleModel.YULE_MODEL);
+	            writer.writeCloseTag(YuleModelParser.YULE_MODEL);
 	            
 	            break;
 	            
@@ -517,7 +516,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
                 break;
             case YULE:
-                writer.writeIDref(YuleModel.YULE_MODEL, priorPrefix + "yule");
+                writer.writeIDref(YuleModelParser.YULE_MODEL, priorPrefix + "yule");
                 break;
             case BIRTH_DEATH:
                 writer.writeIDref(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL, priorPrefix + "birthDeath");

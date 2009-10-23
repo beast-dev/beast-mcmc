@@ -26,14 +26,20 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.PopulationSizeModelType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.speciation.*;
+import dr.evomodel.speciation.SpeciationLikelihood;
+import dr.evomodel.speciation.SpeciesBindings;
+import dr.evomodel.speciation.SpeciesTreeModel;
+import dr.evomodel.speciation.TreePartitionCoalescent;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
@@ -50,8 +56,8 @@ import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -214,7 +220,7 @@ public class STARBEASTGenerator extends Generator {
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
-            writer.writeOpenTag(YuleModel.YULE_MODEL, new Attribute[]{
+            writer.writeOpenTag(YuleModelParser.YULE_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, YuleModelParser.YULE),
                     new Attribute.Default<String>(XMLUnits.UNITS, XMLUnits.SUBSTITUTIONS)});
 
@@ -229,7 +235,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
 
-            writer.writeCloseTag(YuleModel.YULE_MODEL);
+            writer.writeCloseTag(YuleModelParser.YULE_MODEL);
         } else {
         	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
         }
@@ -257,10 +263,11 @@ public class STARBEASTGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});
 
             writer.writeOpenTag(SpeciationLikelihood.MODEL);
-            writer.writeIDref(YuleModel.YULE_MODEL, YuleModelParser.YULE);
+            writer.writeIDref(YuleModelParser.YULE_MODEL, YuleModelParser.YULE);
             writer.writeCloseTag(SpeciationLikelihood.MODEL);
         } else {
-        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
+        	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : "
+                    + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
         }
 
         // <sp> tree
@@ -442,5 +449,4 @@ public class STARBEASTGenerator extends Generator {
         
         return v;
     }
-
 }

@@ -255,7 +255,8 @@ public class BeastMain {
                         new Arguments.Option("java", "use Java only, no native implementations"),
                         new Arguments.Option("beagle", "use beagle library if available"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
-                        new Arguments.Option("beagle_resource_order", "BEAGLE: set order of resource use"),
+                        new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
+                        new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
@@ -317,8 +318,12 @@ public class BeastMain {
             beagleFlags |= BeagleFlag.SINGLE.getMask();
         }
 
-        if (arguments.hasOption("beagle_resource_order")) {
-            System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_resource_order"));
+        if (arguments.hasOption("beagle_order")) {
+            System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
+        }
+
+        if (arguments.hasOption("beagle_instances")) {
+            System.setProperty("beagle.instance.count", Integer.toString(arguments.getIntegerOption("beagle_instances")));
         }
 
         if (arguments.hasOption("threads")) {

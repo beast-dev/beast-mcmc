@@ -25,36 +25,35 @@
 
 package dr.app.beast;
 
-import jam.panels.OptionsPanel;
+import org.virion.jam.components.WholeNumberField;
+import org.virion.jam.html.SimpleLinkListener;
+import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
-
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.html.SimpleLinkListener;
 
 
 public class BeastDialog {
-    private JFrame frame;
+    private final JFrame frame;
 
-    private OptionsPanel optionPanel;
+    private final OptionsPanel optionPanel;
 
-    private WholeNumberField seedText = new WholeNumberField((long)1, Long.MAX_VALUE);
-    private JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
-    private JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
-    private JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
-    private JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Single", "Double" });
+    private final WholeNumberField seedText = new WholeNumberField((long)1, Long.MAX_VALUE);
+    private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
+    private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
+    private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
+    private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Single", "Double" });
 
-    private JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+    private final JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
     private File inputFile = null;
 
@@ -63,7 +62,7 @@ public class BeastDialog {
 
         optionPanel = new OptionsPanel(12, 12);
 
-        this.frame = frame;
+        //this.frame = frame;
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);

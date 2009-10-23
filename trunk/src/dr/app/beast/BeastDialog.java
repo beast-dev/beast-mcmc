@@ -164,7 +164,7 @@ public class BeastDialog {
         beagleResourceCombo.setSelectedItem("GPU");
     }
 
-    public boolean showDialog(String title, int seed) {
+    public boolean showDialog(String title, long seed) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.PLAIN_MESSAGE,

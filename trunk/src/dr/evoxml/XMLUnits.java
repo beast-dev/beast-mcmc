@@ -49,7 +49,7 @@ public interface XMLUnits extends Units {
     public final static String UNITS = "units";
 
     XMLSyntaxRule UNITS_RULE = new StringAttributeRule("units", "the units", UNIT_NAMES, false);
-    XMLSyntaxRule[] SYNTAX_RULES = new XMLSyntaxRule[]{UNITS_RULE};
+    XMLSyntaxRule[] SYNTAX_RULES = {UNITS_RULE};
 
     class Utils {
 

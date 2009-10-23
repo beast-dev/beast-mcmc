@@ -128,7 +128,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
             else
                 logq = (dim - 2) * Math.log(scale);
 
-            // Must first set all parameters first and check for boundries later for the operator to work
+            // Must first set all parameters first and check for boundaries later for the operator to work
             // correctly with dependent parameters such as tree node heights.
             for (int i = 0; i < dim; i++) {
                 variable.setValue(i, variable.getValue(i) * scale);
@@ -261,11 +261,11 @@ public class ScaleOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
-            boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
-            int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
+            final boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
+            final boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
+            final int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            final CoercionMode mode = CoercionMode.parseMode(xo);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -319,6 +319,7 @@ public class ScaleOperator extends AbstractCoercableOperator {
                 AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newIntegerRule(DEGREES_OF_FREEDOM, true),
 
                 new ElementRule(Parameter.class),
                 new ElementRule(INDICATORS,

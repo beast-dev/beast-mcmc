@@ -389,7 +389,7 @@ public class BeastMain {
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
-            if (!dialog.showDialog(nameString, (int)seed)) {
+            if (!dialog.showDialog(nameString, seed)) {
                 return;
             }
 

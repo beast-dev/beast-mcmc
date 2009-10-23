@@ -25,10 +25,7 @@
 
 package dr.app.beast;
 
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.html.SimpleLinkListener;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -42,14 +39,16 @@ import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 
-import dr.app.tools.TreeAnnotator;
+import org.virion.jam.components.WholeNumberField;
+import org.virion.jam.html.SimpleLinkListener;
+
 
 public class BeastDialog {
     private JFrame frame;
 
     private OptionsPanel optionPanel;
 
-    private WholeNumberField seedText = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField seedText = new WholeNumberField((long)1, Long.MAX_VALUE);
     private JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });

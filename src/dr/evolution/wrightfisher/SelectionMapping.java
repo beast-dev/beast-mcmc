@@ -88,7 +88,7 @@ public class SelectionMapping {
 		int[] nMutants = new int[genomeLength*3];
 		double[] mrcaFitness = new double[1];
 
-		int generations = populationSize;
+		final int generations = populationSize;
 
 		ArrayList[] unfoldedSites = new ArrayList[populationSize+1];
 		for (int i = 0; i < populationSize+1; i++) {

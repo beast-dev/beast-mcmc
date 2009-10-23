@@ -26,7 +26,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.enumTypes.TreePriorType;
@@ -171,32 +170,33 @@ public class TreePriorGenerator extends Generator {
 	            // write logistic t50 socket
 	            writer.writeOpenTag(LogisticGrowthModel.TIME_50);
 	            
-	            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-            		writer.writeComment("No calibration");
-		            dr.app.beauti.options.Parameter priorPara = prior.getParameter("logistic.t50");
-		            		           
-		            double initRootHeight;
-		            if (options.isShareSameTreePrior()) {
-		            	initRootHeight = priorPara.initial; 
-		            	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-		            		double tmpRootHeight = tree.getParameter("treeModel.rootHeight").initial;
-		                    if (initRootHeight > tmpRootHeight) { // take min
-		                    	initRootHeight = tmpRootHeight;
-		                    }
-		                }		            	
-		            } else {
-		            	initRootHeight = prior.getTreeModel().getParameter("treeModel.rootHeight").initial;
-		            }
-		            
-		            if (priorPara.initial >= initRootHeight) {
-		            	priorPara.initial = initRootHeight / 2; // tree prior.initial  has to < treeRootHeight.initial 
-		            }
-	            } else {
-	            	writer.writeComment("Has calibration");
-	            	//TODO
-	            	throw new IllegalArgumentException("This function is not available in this release !");
-	            }
+//	            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+//	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+//            		writer.writeComment("No calibration");
+                writer.writeComment("logistic.t50 initial always has to < treeRootHeight initial");
+                dr.app.beauti.options.Parameter priorPara = prior.getParameter("logistic.t50");
+
+                double initRootHeight;
+                if (options.isShareSameTreePrior()) {
+                    initRootHeight = priorPara.initial;
+                    for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+                        double tmpRootHeight = tree.getParameter("treeModel.rootHeight").initial;
+                        if (initRootHeight > tmpRootHeight) { // take min
+                            initRootHeight = tmpRootHeight;
+                        }
+                    }
+                } else {
+                    initRootHeight = prior.getTreeModel().getParameter("treeModel.rootHeight").initial;
+                }
+                // logistic.t50 initial always has to < treeRootHeight initial
+                if (priorPara.initial >= initRootHeight) {
+                    priorPara.initial = initRootHeight / 2; // tree prior.initial has to < treeRootHeight.initial
+                }
+//	            } else {
+//	            	writer.writeComment("Has calibration");
+//	            	//TODO
+//	            	throw new IllegalArgumentException("This function is not available in this release !");
+//	            }
 	            
 	            writeParameter("logistic.t50", prior, writer);
 	            writer.writeCloseTag(LogisticGrowthModel.TIME_50);

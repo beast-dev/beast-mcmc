@@ -79,7 +79,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
     public double getLogLikelihood() {
         double logLikelihood = 0.0;
-        
+
         if (threads == null) {
             // first call so setup a thread for each likelihood...
             threads = new LikelihoodThread[likelihoodCallers.size()];
@@ -99,7 +99,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
             // now wait for the results to be set...
             Double result = thread.getResult();
             while (result == null) {
-                result = thread.getResult();                
+                result = thread.getResult();
             }
             logLikelihood += result;
         }
@@ -167,9 +167,9 @@ public class ThreadedCompoundLikelihood implements Likelihood {
     }
 
     public void setWeightFactor(double w) { weightFactor = w; }
-    
+
     public double getWeightFactor() { return weightFactor; }
-    
+
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -231,7 +231,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
                     throw new XMLParseException("An element (" + rogueElement + ") which is not a likelihood has been added to a " + THREADED_COMPOUND_LIKELIHOOD + " element");
                 }
             }
-            
+
             double weight = xo.getAttribute(WEIGHT, 0.0);
             if (weight < 0)
             	throw new XMLParseException("Robust weight must be non-negative.");
@@ -268,7 +268,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 
     private final List<LikelihoodCaller> likelihoodCallers = new ArrayList<LikelihoodCaller>();
-    
+
     private double weightFactor = 1.0;
 
     class LikelihoodCaller {
@@ -313,10 +313,10 @@ public class ThreadedCompoundLikelihood implements Likelihood {
                      resultAvailable = true;
                      caller = null;
             	} catch (InterruptedException e){
-            		
+
                  } finally {
                     lock.unlock();
-                 }                
+                 }
             }
         }
 
@@ -325,7 +325,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         	if (!lock.isLocked() && resultAvailable)  { // thread is not busy and completed
         		resultAvailable = false; // TODO need to lock before changing resultAvailable?
         		returnValue = result;
-        	}        		        	
+        	}
         	return returnValue;
         }
 
@@ -335,4 +335,19 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         private final ReentrantLock lock = new ReentrantLock();
         private final Condition condition = lock.newCondition();
     }
+
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+
+        for (Likelihood l : likelihoods) {
+            l.setUsed();
+        }
+    }
+
+    private boolean isUsed = false;
+
 }

@@ -85,7 +85,18 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return "SVSGeneralSubstitutionModel-connectedness";
     }
 
-      // **************************************************************
+    @Override
+    public boolean isUsed() {
+        return super.isUsed() && isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    private boolean isUsed = false;
+
+    // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
 
@@ -108,5 +119,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     private double[] probability = null;
 
     private final Parameter indicatorsParameter;
+
 
 }

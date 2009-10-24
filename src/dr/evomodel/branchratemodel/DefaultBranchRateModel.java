@@ -99,4 +99,9 @@ public final class DefaultBranchRateModel implements BranchRateModel {
     public void setId(String id) {
         // nothing to do
     }
+
+    public boolean isUsed() {
+        return false;
+    }
+    
 }

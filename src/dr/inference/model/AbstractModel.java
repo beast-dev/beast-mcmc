@@ -30,6 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A model that brings together a number of model components
@@ -114,6 +115,11 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         listenerHelper.addModelRestoreListener(listener);
     }
 
+    public boolean isUsed() {
+        return listenerHelper.getListenerCount() > 0;
+    }
+
+    
     /**
      * Fires a model changed event.
      */

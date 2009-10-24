@@ -63,17 +63,18 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                     }
                 }
                 if (name != null) {
-                    final String msg = "unhandled attribute (typo?) " + name + " in " + xo;
+                    final String msg = "Unhandled attribute (typo?) " + name + " in " + xo;
                     if (strictXML) {
                         throw new XMLParseException(msg);
                     }
-                    System.err.println("WARNING:" + msg);
+//                    System.err.println("WARNING:" + msg);
+                    java.util.logging.Logger.getLogger("dr.xml").warning(msg);
 
                 }
             }
 
             // try to catch out of place elements, placed either by mistake or from older incompatible files.
-            
+
             for (int k = 0; k < xo.getChildCount(); ++k) {
                 final Object child = xo.getChild(k);
                 String unexpectedName;
@@ -103,11 +104,12 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 }
                 if( unexpectedName != null ) {
 
-                    String msg = "unexpected element in " + xo + ": " + unexpectedName;
+                    String msg = "Unexpected element in " + xo + ": " + unexpectedName;
                     if (strictXML) {
                         throw new XMLParseException(msg);
                     }
-                    System.err.println("WARNING: " + msg);
+//                    System.err.println("WARNING: " + msg);
+                    java.util.logging.Logger.getLogger("dr.xml").warning(msg);
                 }
             }
         }

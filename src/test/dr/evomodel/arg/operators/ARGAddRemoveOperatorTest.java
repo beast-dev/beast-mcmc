@@ -13,8 +13,7 @@ import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
+import dr.inference.model.*;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
@@ -30,7 +29,7 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -96,11 +95,13 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
         CompoundParameter rootHeight = (CompoundParameter) arg.createNodeHeightsParameter(true, false, false);
         rootPrior.addData(rootHeight);
 
-        CompoundLikelihood compoundLikelihood = new CompoundLikelihood(1);
+        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
+        likelihoods.add(uniformPrior);
+        likelihoods.add(rootPrior);
+        likelihoods.add(nodeCountPrior);
+        
+        CompoundLikelihood compoundLikelihood = new CompoundLikelihood(1, likelihoods);
         compoundLikelihood.setId("likelihood1");
-        compoundLikelihood.addLikelihood(uniformPrior);
-        compoundLikelihood.addLikelihood(rootPrior);
-        compoundLikelihood.addLikelihood(nodeCountPrior);
 
         MCLogger[] loggers = new MCLogger[3];
 

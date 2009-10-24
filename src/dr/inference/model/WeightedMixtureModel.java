@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * @author Marc A. Suchard
+ * @author Andrew Rambaut
  */
 public class WeightedMixtureModel extends AbstractModelLikelihood {
 
@@ -117,8 +118,9 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-//			new ElementRule(TreeLikelihood.class,2,2),
-//			new ElementRule(Parameter.class)
+                AttributeRule.newBooleanRule(NORMALIZE, true),
+                new ElementRule(Likelihood.class,2,Integer.MAX_VALUE),
+                new ElementRule(Parameter.class)
         };
     };
 

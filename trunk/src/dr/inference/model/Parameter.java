@@ -29,8 +29,7 @@ import dr.inference.parallel.MPIServices;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Represents a multi-dimensional continuous parameter.
@@ -159,10 +158,20 @@ public interface Parameter extends Statistic, Variable<Double> {
      */
     public double removeDimension(int index);
 
+    boolean isUsed();
+
     /**
      * Abstract base class for parameters
      */
     public abstract class Abstract extends Statistic.Abstract implements Parameter {
+
+        protected Abstract() {
+        }
+
+        protected Abstract(final String name) {
+            super(name);
+
+        }
 
         // **************************************************************
         // MPI IMPLEMENTATION
@@ -173,6 +182,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             double[] value = getParameterValues();
             MPIServices.sendDoubleArray(value, toRank);
         }
+
 
         public void receiveState(int fromRank) {
             final int length = getDimension();
@@ -362,8 +372,11 @@ public interface Parameter extends Statistic, Variable<Double> {
             acceptParameterValues();
         }
 
+        public boolean isUsed() {
+            return listeners != null && listeners.size() > 0;
+        }
 
-        // --------------------------------------------------------------------
+// --------------------------------------------------------------------
 
         protected abstract void storeValues();
 
@@ -644,7 +657,7 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         protected final void adoptValues(Parameter source) {
             // todo bug ? bounds not adopted?
-            
+
             if (getDimension() != source.getDimension()) {
                 throw new RuntimeException("The two parameters don't have the same number of dimensions");
             }
@@ -716,4 +729,6 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         private final double[] uppers, lowers;
     }
+
+    final static Set<Parameter> FULL_PARAMETER_SET = new HashSet<Parameter>();
 }

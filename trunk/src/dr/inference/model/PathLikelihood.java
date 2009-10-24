@@ -117,6 +117,16 @@ public class PathLikelihood implements Likelihood {
 
     }
 
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    private boolean isUsed = false;
+
     // **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************

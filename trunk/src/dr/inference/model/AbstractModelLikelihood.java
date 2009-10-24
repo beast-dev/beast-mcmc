@@ -19,6 +19,17 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
         return Likelihood.Abstract.getPrettyName(this);
     }
 
+    @Override
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    private boolean isUsed = false;
+
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************

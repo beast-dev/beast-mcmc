@@ -27,6 +27,7 @@ package dr.xml;
 
 import dr.util.FileHelpers;
 import dr.util.Identifiable;
+import dr.inference.model.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 
@@ -115,9 +116,9 @@ public class XMLParser {
      */
     public Object parse(Reader reader, Class target)
             throws java.io.IOException,
-            org.xml.sax.SAXException,
-            dr.xml.XMLParseException,
-            javax.xml.parsers.ParserConfigurationException {
+                   org.xml.sax.SAXException,
+                   dr.xml.XMLParseException,
+                   javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -138,9 +139,9 @@ public class XMLParser {
 
     public ObjectStore parse(Reader reader, boolean run)
             throws java.io.IOException,
-            org.xml.sax.SAXException,
-            dr.xml.XMLParseException,
-            javax.xml.parsers.ParserConfigurationException {
+                   org.xml.sax.SAXException,
+                   dr.xml.XMLParseException,
+                   javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -179,7 +180,7 @@ public class XMLParser {
             if ((e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1)&& index == -1) {
                 throw new XMLParseException("Object with idref=" + idref + " must not have other content or attributes (or perhaps it was not intended to be a reference?).");
             }
-               
+
 
             XMLObject restoredXMLObject = (XMLObject) store.get(idref);
             if (index != -1) {
@@ -206,7 +207,8 @@ public class XMLParser {
                 if (strictXML) {
                     throw new XMLParseException(msg);
                 } else {
-                    System.err.println("WARNING: " + msg);
+//                    System.err.println("WARNING: " + msg);
+                    java.util.logging.Logger.getLogger("dr.xml").warning(msg);
                 }
             }
 
@@ -278,6 +280,14 @@ public class XMLParser {
 
                 if (id != null && obj instanceof Identifiable) {
                     ((Identifiable) obj).setId(id);
+                }
+
+                if (obj instanceof Likelihood) {
+                    Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood)obj);
+                } else if (obj instanceof Model) {
+                    Model.FULL_MODEL_SET.add((Model)obj);
+                } else if (obj instanceof Parameter) {
+                    Parameter.FULL_PARAMETER_SET.add((Parameter)obj);
                 }
 
                 xo.setNativeObject(obj);

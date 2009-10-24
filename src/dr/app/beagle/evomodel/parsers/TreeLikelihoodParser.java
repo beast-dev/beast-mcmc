@@ -15,6 +15,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.xml.*;
 
+import java.util.*;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -43,7 +45,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         if (instanceCount < 1) {
             instanceCount = 1;
         }
-        
+
         String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
         if (ic != null && ic.length() > 0) {
             instanceCount = Integer.parseInt(ic);
@@ -80,7 +82,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             );
         }
 
-        CompoundLikelihood likelihood = new CompoundLikelihood(instanceCount);
+        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         for (int i = 0; i < instanceCount; i++) {
             Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
 
@@ -93,9 +95,10 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     useAmbiguities,
                     scalingScheme);
             treeLikelihood.setId(xo.getId() + "_" + instanceCount);
-            likelihood.addLikelihood(treeLikelihood);
+            likelihoods.add(treeLikelihood);
         }
-        return likelihood;
+
+        return new CompoundLikelihood(instanceCount, likelihoods);
     }
 
     //************************************************************************

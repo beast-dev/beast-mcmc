@@ -28,8 +28,7 @@ package dr.inference.model;
 import dr.util.NumberFormatter;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
@@ -41,25 +40,35 @@ import java.util.logging.Logger;
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class CompoundLikelihood implements Likelihood {
-
     public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
     public static final String THREADS = "threads";
     public static final String POSTERIOR = "posterior";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
 
-    public CompoundLikelihood(int threads) {
-        if (threads > 0) {
-            pool = Executors.newFixedThreadPool(threads);
-        } else if (threads < 0) {
-            // create a cached thread pool which should create one thread per likelihood...
-            pool = Executors.newCachedThreadPool();
+    public CompoundLikelihood(int threads, Collection<Likelihood> likelihoods) {
+        if (threads < 0 && likelihoods.size() > 1) {
+            // asking for an automatic threadpool size
+            threadCount = likelihoods.size();
+        } else {
+            threadCount = threads;
+        }
+
+        if (threadCount > 0) {
+            pool = Executors.newFixedThreadPool(threadCount);
+//        } else if (threads < 0) {
+//            // create a cached thread pool which should create one thread per likelihood...
+//            pool = Executors.newCachedThreadPool();
         } else {
             pool = null;
         }
+
+        for (Likelihood l : likelihoods) {
+            addLikelihood(l);
+        }
     }
 
-    public void addLikelihood(Likelihood likelihood) {
+    private void addLikelihood(Likelihood likelihood) {
 
         if (!likelihoods.contains(likelihood)) {
 
@@ -184,6 +193,22 @@ public class CompoundLikelihood implements Likelihood {
         return Abstract.getPrettyName(this);
     }
 
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed() {
+        used = true;
+        for (Likelihood l : likelihoods) {
+            l.setUsed();
+        }
+    }
+
+    public int getThreadCount() {
+        return threadCount;
+    }
+
+
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -251,12 +276,11 @@ public class CompoundLikelihood implements Likelihood {
                 }
             }
 
-            CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads);
-
+            List<Likelihood> likelihoods = new ArrayList<Likelihood>();
             for(int i = 0; i < xo.getChildCount(); i++) {
                 final Object child = xo.getChild(i);
                 if( child instanceof Likelihood ) {
-                    compoundLikelihood.addLikelihood((Likelihood) child);
+                    likelihoods.add((Likelihood) child);
                 } else {
 
                     throw new XMLParseException("An element (" + child + ") which is not a likelihood has been added to a "
@@ -264,10 +288,12 @@ public class CompoundLikelihood implements Likelihood {
                 }
             }
 
-            if (threads > 0) {
+            CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
+
+            if (compoundLikelihood.getThreadCount() > 0) {
                 Logger.getLogger("dr.evomodel").info("Likelihood is using " + threads + " threads.");
-            } else if (threads < 0) {
-                Logger.getLogger("dr.evomodel").info("Likelihood is using a cached thread pool.");
+//            } else if (threads < 0) {
+//                Logger.getLogger("dr.evomodel").info("Likelihood is using a cached thread pool.");
             }
 
             return compoundLikelihood;
@@ -294,6 +320,10 @@ public class CompoundLikelihood implements Likelihood {
             return CompoundLikelihood.class;
         }
     };
+
+    private boolean used = false;
+
+    private final int threadCount;
 
     private final ExecutorService pool;
 

@@ -27,7 +27,7 @@ package dr.inference.model;
 
 import dr.util.Identifiable;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * An interface that describes a model of some data.
@@ -53,13 +53,13 @@ public interface Model extends Identifiable {
 
 	/**
 	 * This function should be called to store the state of the
-	 * entire model. This makes the model state invalid until either 
+	 * entire model. This makes the model state invalid until either
 	 * an acceptModelState or restoreModelState is called.
 	 */
 	void storeModelState();
 
 	/**
-	 * This function should be called to restore the state of the entire model. 
+	 * This function should be called to restore the state of the entire model.
 	 */
 	void restoreModelState();
 
@@ -77,7 +77,7 @@ public interface Model extends Identifiable {
 	 * @return the total number of sub-models
 	 */
 	int getModelCount();
-	
+
 	/**
 	 * @return the ith sub-model
 	 */
@@ -87,21 +87,27 @@ public interface Model extends Identifiable {
 	 * @return the total number of variable in this model
 	 */
 	int getVariableCount();
-	
+
 	/**
 	 * @return the ith variable
 	 */
 	Variable getVariable(int i);
-	
+
 	/**
 	 * @return the variable of the component with a given name
 	 */
 	//Parameter getParameter(String name);
-	
+
 	/**
 	 * @return the name of this model
 	 */
 	String getModelName();
+
+    /**
+     * is the model being listened to by another or by a likelihood?
+     * @return
+     */
+    boolean isUsed();
 
     /**
 	 * A helper class for storing listeners and firing events.
@@ -111,11 +117,11 @@ public interface Model extends Identifiable {
 		public void fireModelChanged(Model model) {
 			fireModelChanged(model, model, -1);
 		}
-		
+
 		public void fireModelChanged(Model model, Object object) {
 			fireModelChanged(model, object, -1);
 		}
-		
+
 		public void fireModelChanged(Model model, Object object, int index) {
 			if (listeners != null) {
                 for (ModelListener listener : listeners) {
@@ -123,14 +129,14 @@ public interface Model extends Identifiable {
                 }
             }
 		}
-		
+
 		public void addModelListener(ModelListener listener) {
 			if (listeners == null) {
 				listeners = new java.util.ArrayList<ModelListener>();
-			}	
+			}
 			listeners.add(listener);
 		}
-		
+
 		public void removeModelListener(ModelListener listener) {
 			if (listeners != null) {
 				listeners.remove(listener);
@@ -152,9 +158,18 @@ public interface Model extends Identifiable {
             }
         }
 
+        public int getListenerCount() {
+            return listeners != null ? listeners.size() : 0;
+        }
+
         private ArrayList<ModelListener> listeners = null;
 
         private ArrayList<ModelListener> restoreListeners = null;
     }
+
+
+    // set to store all created models
+    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>(); 
+
 }
-		
+

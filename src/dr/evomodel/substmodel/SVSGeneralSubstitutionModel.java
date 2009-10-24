@@ -264,6 +264,17 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         };
 
     };
+    
+    @Override
+    public boolean isUsed() {
+        return super.isUsed() && isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    private boolean isUsed = false;
 
     private Parameter rateIndicator;
 }

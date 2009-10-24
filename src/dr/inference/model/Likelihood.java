@@ -28,6 +28,8 @@ package dr.inference.model;
 import dr.inference.loggers.Loggable;
 import dr.util.Identifiable;
 
+import java.util.*;
+
 /**
  * classes that calculate likelihoods should implement this interface.
  *
@@ -61,7 +63,14 @@ public interface Likelihood extends Loggable, Identifiable {
      */
     String prettyName();
 
-	/**
+    /**
+     * @return is the likelihood used in the MCMC?
+     */
+    boolean isUsed();
+
+    void setUsed();
+
+    /**
 	 * A simple abstract base class for likelihood functions
 	 */
 
@@ -71,7 +80,7 @@ public interface Likelihood extends Loggable, Identifiable {
 
 			this.model = model;
 			if (model != null) model.addModelListener(this);
-		}
+   		}
 
         public void modelChangedEvent(Model model, Object object, int index) {
             makeDirty();
@@ -125,7 +134,7 @@ public interface Likelihood extends Loggable, Identifiable {
 
         static public String getPrettyName(Likelihood l) {
             final Model m = l.getModel();
-            String s = l.getClass().getName();  
+            String s = l.getClass().getName();
             String[] parts = s.split("\\.");
             s = parts[parts.length - 1];
             if( m != null ) {
@@ -136,6 +145,14 @@ public interface Likelihood extends Loggable, Identifiable {
 
         public String prettyName() {
             return getPrettyName(this);
+        }
+
+        public boolean isUsed() {
+            return used;
+        }
+
+        public void setUsed() {
+            this.used = true;
         }
 
         // **************************************************************
@@ -169,5 +186,12 @@ public interface Likelihood extends Loggable, Identifiable {
 		private final Model model;
 		private double logLikelihood;
 		private boolean likelihoodKnown = false;
+
+        private boolean used = false;
 	}
+
+
+    // set to store all created likelihoods
+    final static Set<Likelihood> FULL_LIKELIHOOD_SET = new HashSet<Likelihood>();
+
 }

@@ -27,8 +27,7 @@ package dr.inference.mcmc;
 
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
+import dr.inference.model.*;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.xml.*;
@@ -51,6 +50,28 @@ public class MCMCParser extends AbstractXMLObjectParser {
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
         ArrayList<Logger> loggers = new ArrayList<Logger>();
+
+        likelihood.setUsed();
+        
+        // check that all models, parameters and likelihoods are being used
+//        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
+//            if (!l.isUsed()) {
+//                java.util.logging.Logger.getLogger("dr.inference").warning("Likelihood, " + l.getId() +
+//                        ", of class " + l.getClass().getName() + " is not being handled by the MCMC.");
+//            }
+//        }
+//        for (Model m : Model.FULL_MODEL_SET) {
+//            if (!m.isUsed()) {
+//                java.util.logging.Logger.getLogger("dr.inference").warning("Model, " + m.getId() +
+//                        ", of class " + m.getClass().getName() + " is not being handled by the MCMC.");
+//            }
+//        }
+//        for (Parameter p : Parameter.FULL_PARAMETER_SET) {
+//            if (!p.isUsed()) {
+//                java.util.logging.Logger.getLogger("dr.inference").warning("Parameter, " + p.getId() +
+//                        ", of class " + p.getClass().getName() + " is not being handled by the MCMC.");
+//            }
+//        }
 
         options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
         options.setUseCoercion(xo.getAttribute(COERCION, true));

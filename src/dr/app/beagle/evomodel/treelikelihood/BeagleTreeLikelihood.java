@@ -141,7 +141,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             long requirementFlags = 0;
 
             if (resourceOrder.size() > 0) {
-                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()) };
+                // added the zero on the end so that a CPU is selected if requested resource fails
+                resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()), 0 };
             }
 
             if (System.getProperty(PREFERRED_FLAGS_PROPERTY) != null) {
@@ -149,11 +150,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             if (System.getProperty(REQUIRED_FLAGS_PROPERTY) != null) {
-                requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));                
+                requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));
             }
 
-            if (preferenceFlags == 0) { // else determine dataset characteristics
-                if (stateCount == 4 && patternList.getPatternCount() < 1000) // TODO determine good cut-off
+            if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
+                if ( stateCount == 4 && patternList.getPatternCount() < 1000) // TODO determine good cut-off
                     preferenceFlags |= BeagleFlag.CPU.getMask();
             }
 

@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class PluginLoader {	  
+public class PluginLoader {	 
+
 		public static File getPluginFolder() {
 			String pluginFolderFromProperty = null;
 			try {
@@ -21,17 +22,17 @@ public class PluginLoader {
 			final String PLUGIN_FOLDER = "plugins";
 			final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
 			return PLUGIN_FILE;
-			
-	   }
 
-//	    private static Set<String> loadedPlugins = new HashSet<String>();
+	   }
 
 	   public static List<String> getAvailablePlugins(){
 
 	       List<String> plugins = new ArrayList<String> ();
 	       File pluginFile = PluginLoader.getPluginFolder();
+
 	       Logger.getLogger("dr.app.plugin").info("looking for plugins in" + pluginFile.getAbsolutePath());
-	       File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
+
+           File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
 	           public boolean accept(File pathname) {
 	               String name = pathname.getName();
 	               if(!pathname.isDirectory() || name.endsWith("CVS") || name.endsWith(".classes"))
@@ -120,9 +121,9 @@ public class PluginLoader {
 	          for (URL url : classLoader.getURLs()) {
 	        	  Logger.getLogger(loggerName).info("URL from loader: " + url.toString() + "\n");
 	          }
-	          
+
 	          final Class myClass = classLoader.loadClass(pluginName);
-	          
+
 	          final Object plugin = myClass.newInstance();
 
               // isn't that covered by the cast failing?

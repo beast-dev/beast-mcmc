@@ -3,8 +3,7 @@ package dr.inference.model;
 import dr.inference.parallel.MPIServices;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -16,17 +15,11 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 	public static final String LOCAL_CHECK = "doLocalCheck";
 	public static final String RUN_PARALLEL = "doInParallel";
 
-	public ParallelCompoundLikelihood(boolean doParallel, boolean checkLocal) {
-		super(1);
+	public ParallelCompoundLikelihood(Collection<Likelihood> likelihoods, boolean doParallel, boolean checkLocal) {
+		super(1, likelihoods);
 		this.doParallel = doParallel;
 		this.checkLocal = checkLocal;
 	}
-
-	public void addLikelihood(Likelihood likelihood) {
-		super.addLikelihood(likelihood);
-		// todo make sure that link to a remote node exists
-	}
-
 
 	private boolean doParallel = true;
 	private boolean checkLocal = false;
@@ -126,16 +119,17 @@ public class ParallelCompoundLikelihood extends CompoundLikelihood {
 			if (xo.hasAttribute(RUN_PARALLEL)) {
 				doParallel = xo.getBooleanAttribute(RUN_PARALLEL);
 			}
+            List<Likelihood> likelihoods = new ArrayList<Likelihood>();
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof Likelihood) {
+                    likelihoods.add((Likelihood) xo.getChild(i));
+                } else {
+                    throw new XMLParseException("An element which is not a likelihood has been added to a " + PARALLEL_COMPOUND_LIKELIHOOD + " element");
+                }
+            }
 
-			ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood(doParallel, checkLocal);
+			ParallelCompoundLikelihood compoundLikelihood = new ParallelCompoundLikelihood(likelihoods, doParallel, checkLocal);
 
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				if (xo.getChild(i) instanceof Likelihood) {
-					compoundLikelihood.addLikelihood((Likelihood) xo.getChild(i));
-				} else {
-					throw new XMLParseException("An element which is not a likelihood has been added to a " + PARALLEL_COMPOUND_LIKELIHOOD + " element");
-				}
-			}
 			return compoundLikelihood;
 		}
 

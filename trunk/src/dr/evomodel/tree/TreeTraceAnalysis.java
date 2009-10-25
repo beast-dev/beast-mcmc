@@ -190,7 +190,7 @@ public class TreeTraceAnalysis {
 
         FlexibleTree meanTree = null;
 
-        // todo using CladeSet may probably spped this a lot
+        // todo using CladeSet may probably speed this a lot
         for (int i = 0; i < n; i++) {
             final Tree tree = getTree(i);
 
@@ -403,7 +403,7 @@ public class TreeTraceAnalysis {
 
         final int n = treeSet.size();
         final int totalTrees = treeSet.getSumFrequency();
-        double highestProp = ((double) treeSet.getFrequency(0)) / totalTrees;
+        final double highestProp = ((double) treeSet.getFrequency(0)) / totalTrees;
         String mapTree = treeSet.get(0);
 
         if (drawHeader) {
@@ -424,11 +424,11 @@ public class TreeTraceAnalysis {
         double targetTreeProb = 0.0;
         double targetTreeCum = 1.0;
         for (int i = 0; i < n; i++) {
-            int freq = treeSet.getFrequency(i);
-            double prop = ((double) freq) / totalTrees;
+            final int freq = treeSet.getFrequency(i);
+            final double prop = ((double) freq) / totalTrees;
 
             sumFreq += freq;
-            double sumProp = ((double) sumFreq) / totalTrees;
+            final double sumProp = ((double) sumFreq) / totalTrees;
 
             String newickTree = treeSet.get(i);
 

@@ -53,7 +53,7 @@ public interface Scalable {
     String getName();
 
     public class Default implements Scalable {
-        private Parameter parameter;
+        private final Parameter parameter;
 
         Default(Parameter p) {
             this.parameter = p;
@@ -113,6 +113,4 @@ public interface Scalable {
             return dimension;
         }
     }
-
-
 }

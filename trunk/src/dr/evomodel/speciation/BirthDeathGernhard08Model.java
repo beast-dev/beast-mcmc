@@ -177,7 +177,12 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
             } else {
                 // Root dependent coefficient from each internal node
                 final double ca = 1 - a;
-                l = (tree.getTaxonCount() - 2) * Math.log(r * ca * (1 + ca /(Math.exp(-mrh) - 1)));
+                final double emrh = Math.exp(-mrh);
+                if( emrh != 1.0 ) {
+                  l = (tree.getTaxonCount() - 2) * Math.log(r * ca * (1 + ca /(emrh - 1)));
+                } else {  // use exp(x)-1 = x for x near 0
+                  l = (tree.getTaxonCount() - 2) * Math.log(ca * (r + ca/height));
+                }
             }
             return l;
         }

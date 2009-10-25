@@ -171,18 +171,36 @@ public class UpDownOperator extends AbstractCoercableOperator {
                     args[k] = (Scalable) child;
                 } else {
                     XMLObject xo = (XMLObject)child;
-                    int count = xo.getIntegerAttribute("count");
-                    final Scalable s = (Scalable) xo.getChild(Scalable.class);
-                    args[k] = new Scalable() {
+                    if( xo.hasAttribute("count") ) {
+                        final int count = xo.getIntegerAttribute("count");
 
-                        public int scale(double factor, int nDims) throws OperatorFailedException {
-                            return s.scale(factor, 1);
-                        }
+                        final Scalable s = (Scalable) xo.getChild(Scalable.class);
+                        args[k] = new Scalable() {
 
-                        public String getName() {
-                            return s.getName() + "(1)";
-                        }
-                    };
+                            public int scale(double factor, int nDims) throws OperatorFailedException {
+                                return s.scale(factor, count);
+                            }
+
+                            public String getName() {
+                                return s.getName() + "(" + count + ")";
+                            }
+                        };
+                    } else if (xo.hasAttribute("df") ) {
+                      final int df = xo.getIntegerAttribute("df");
+
+                        final Scalable s = (Scalable) xo.getChild(Scalable.class);
+                        args[k] = new Scalable() {
+
+                            public int scale(double factor, int nDims) throws OperatorFailedException {
+                                s.scale(factor, -1);
+                                return df;
+                            }
+
+                            public String getName() {
+                                return s.getName() + "[df=" + df + "]";
+                            }
+                        };
+                    }
                 }
 
             }
@@ -197,8 +215,8 @@ public class UpDownOperator extends AbstractCoercableOperator {
 
             final CoercionMode mode = CoercionMode.parseMode(xo);
 
-            final Scalable[] upArgs = getArgs((XMLObject) xo.getChild(UP));
-            final Scalable[] dnArgs = getArgs((XMLObject) xo.getChild(DOWN));
+            final Scalable[] upArgs = getArgs(xo.getChild(UP));
+            final Scalable[] dnArgs = getArgs(xo.getChild(DOWN));
 
             return new UpDownOperator(upArgs, dnArgs, scaleFactor, weight, mode);
         }
@@ -221,7 +239,8 @@ public class UpDownOperator extends AbstractCoercableOperator {
                 new ElementRule(Scalable.class, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule("scale", new XMLSyntaxRule[]{
-                        AttributeRule.newIntegerRule("count"),
+                        AttributeRule.newIntegerRule("count", true),
+                        AttributeRule.newIntegerRule("df", true),
                         new ElementRule(Scalable.class),
                 }, true),
         };
@@ -231,7 +250,7 @@ public class UpDownOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
 
-                // Allow an arbitrary number of Parameters or Scalables in up or down
+                // Allow an arbitrary number of Parameters or Scalable in up or down
                 new ElementRule(UP, ee, 1, Integer.MAX_VALUE),
                 new ElementRule(DOWN, ee, 1, Integer.MAX_VALUE),
         };

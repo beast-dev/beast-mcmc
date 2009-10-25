@@ -258,7 +258,7 @@ public class PriorParsers {
             double mean = xo.getDoubleAttribute(MEAN);
             final double stdev = xo.getDoubleAttribute(STDEV);
             final double offset = xo.getAttribute(OFFSET, 0.0);
-            final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
 
             if (meanInRealSpace) {
                 if (mean <= 0) {
@@ -288,7 +288,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(STDEV),
                 AttributeRule.newDoubleRule(OFFSET, true),
-                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
+                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

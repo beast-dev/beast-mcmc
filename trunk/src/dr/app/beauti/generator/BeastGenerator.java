@@ -39,21 +39,25 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.speciation.TreePartitionCoalescent;
 import dr.evomodel.tree.MonophylyStatistic;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
-import dr.inference.model.*;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
 
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class holds all the data for the current BEAUti Document
@@ -557,7 +561,6 @@ public class BeastGenerator extends Generator {
      *
      * @param writer     XMLWriter
      * @param trait      trait
-     * @param traitType  traitType
      * @param taxonList  TaxonList
      */
     private void writeTraits(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
@@ -811,7 +814,7 @@ public class BeastGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);

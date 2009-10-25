@@ -147,14 +147,17 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         boolean check = spTree.getAttribute("check") != null;
         spTree.setAttribute("check", null);
 
-        while( check ) {
-            // Start tree had branch info, keep it when compatible, decrease height by 1% until
-            // compatible otherwise.
-            check = false;
-            for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
-                if( ! isCompatible(t) ) {
-                    SimpleTree.Utils.scaleNodeHeights(spTree, 0.99);
-                    check = true;
+        if( check ) {
+            // change only is needed - if the user provided a compatible state she may know
+            // what she is doing
+            for( SpeciesBindings.GeneTreeInfo gt : species.getGeneTrees() ) {
+                if( ! isCompatible(gt) ) {
+
+                    species.makeCompatible(spTree.getRootHeight());
+                    for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
+                        assert isCompatible(t);
+                    }
+                    anyChange = false;
                     break;
                 }
             }

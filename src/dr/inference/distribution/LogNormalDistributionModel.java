@@ -45,7 +45,7 @@ import org.w3c.dom.Element;
 public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
 
-    public static final String NORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
+    public static final String LOGNORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
     public static final String MEAN = "mean";
     public static final String STDEV = "stdev";
     public static final String PRECISION = "precision";
@@ -60,7 +60,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
      */
     public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace) {
 
-        super(NORMAL_DISTRIBUTION_MODEL);
+        super(LOGNORMAL_DISTRIBUTION_MODEL);
 
         isMeanInRealSpace = meanInRealSpace;
 
@@ -80,7 +80,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     public LogNormalDistributionModel(Parameter meanParameter, Parameter scaleParameter,
                                       double offset, boolean meanInRealSpace, boolean usesStDev) {
 
-        super(NORMAL_DISTRIBUTION_MODEL);
+        super(LOGNORMAL_DISTRIBUTION_MODEL);
 
         isMeanInRealSpace = meanInRealSpace;
         this.usesStDev = usesStDev;
@@ -242,37 +242,41 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return NORMAL_DISTRIBUTION_MODEL;
+            return LOGNORMAL_DISTRIBUTION_MODEL;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
             Parameter meanParam;
-            Parameter stdevParam;
-            Parameter precParam;
-            double offset = xo.getAttribute(OFFSET, 0.0);
 
-            final boolean meanInRealSpace = xo.getBooleanAttribute(MEAN_IN_REAL_SPACE);
+            final double offset = xo.getAttribute(OFFSET, 0.0);
 
-            XMLObject cxo = xo.getChild(MEAN);
-            if (cxo.getChild(0) instanceof Parameter) {
-                meanParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                meanParam = new Parameter.Default(cxo.getDoubleChild(0));
+            final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
+
+            {
+                final XMLObject cxo = xo.getChild(MEAN);
+                if (cxo.getChild(0) instanceof Parameter) {
+                    meanParam = (Parameter) cxo.getChild(Parameter.class);
+                } else {
+                    meanParam = new Parameter.Default(cxo.getDoubleChild(0));
+                }
             }
 
-            cxo = xo.getChild(PRECISION);
-            if (cxo != null) {
-                if (cxo.getChild(0) instanceof Parameter) {
-                    precParam = (Parameter) cxo.getChild(Parameter.class);
-                } else {
-                    precParam = new Parameter.Default(cxo.getDoubleChild(0));
+            {
+                final XMLObject cxo = xo.getChild(PRECISION);
+                if (cxo != null) {
+                    Parameter precParam;
+                    if (cxo.getChild(0) instanceof Parameter) {
+                        precParam = (Parameter) cxo.getChild(Parameter.class);
+                    } else {
+                        precParam = new Parameter.Default(cxo.getDoubleChild(0));
+                    }
+
+                    return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace, false);
                 }
-
-                return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace, false);
-            } else {
-
-                cxo = xo.getChild(STDEV);
+            }
+            {
+                final XMLObject cxo = xo.getChild(STDEV);
+                Parameter stdevParam;
                 if (cxo.getChild(0) instanceof Parameter) {
                     stdevParam = (Parameter) cxo.getChild(Parameter.class);
                 } else {
@@ -292,7 +296,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE),
+                AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(MEAN,
                         new XMLSyntaxRule[]{
@@ -335,6 +339,5 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     private final Parameter meanParameter;
     private final Parameter scaleParameter;
-    //	private Parameter precParameter;
     private final double offset;
 }

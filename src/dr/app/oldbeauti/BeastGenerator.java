@@ -74,6 +74,7 @@ import dr.xml.XMLParser;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -1326,14 +1327,15 @@ public class BeastGenerator extends BeautiOptions {
                     fixParameter(ClockType.UCLD_MEAN, meanSubstitutionRate);
                 }
 
-                writer.writeOpenTag("logNormalDistributionModel", new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
+                writer.writeOpenTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL,
+                        new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
                 writer.writeOpenTag("mean");
                 writeParameter(ClockType.UCLD_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeOpenTag("stdev");
                 writeParameter(ClockType.UCLD_STDEV, writer);
                 writer.writeCloseTag("stdev");
-                writer.writeCloseTag("logNormalDistributionModel");
+                writer.writeCloseTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL);
             } else {
                 throw new RuntimeException("Unrecognised relaxed clock model");
             }
@@ -2255,13 +2257,14 @@ public class BeastGenerator extends BeautiOptions {
      */
     private void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
-        for (Taxa taxa : taxonSetsMono.keySet()) {
-            if (taxonSetsMono.get(taxa)) {
+
+        for (Map.Entry<Taxa, Boolean> taxa : taxonSetsMono.entrySet()) {
+            if ( taxa.getValue() ) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
                     first = false;
                 }
-                final String taxaRef = "monophyly(" + taxa.getId() + ")";
+                final String taxaRef = "monophyly(" + taxa.getKey().getId() + ")";
                 final Attribute.Default attr = new Attribute.Default<String>(XMLParser.IDREF, taxaRef);
                 writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
             }

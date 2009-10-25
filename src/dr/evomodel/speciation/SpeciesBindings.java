@@ -25,6 +25,7 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -224,6 +225,25 @@ public class SpeciesBindings extends AbstractModel {
             }
         }
         return bound;
+    }
+
+    public void makeCompatible(double rootHeight) {
+        for( GeneTreeInfo t : getGeneTrees() ) {
+
+            MutableTree tree = t.tree;
+
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                final NodeRef node = tree.getExternalNode(i);
+                final NodeRef p = tree.getParent(node);
+                tree.setNodeHeight(p, rootHeight + tree.getNodeHeight(p));
+            }
+            MutableTree.Utils.correctHeightsForTips(tree);
+             // (todo) ugly re-init - can I do something better?
+            t.wasChanged();
+            t.getCoalInfo();
+            t.wasBacked = false;
+            //t.wasChanged();
+       }
     }
 
     /**

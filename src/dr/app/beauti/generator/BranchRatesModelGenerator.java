@@ -23,8 +23,6 @@
 
 package dr.app.beauti.generator;
 
-import java.util.List;
-
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
@@ -46,6 +44,8 @@ import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -136,7 +136,7 @@ public class BranchRatesModelGenerator extends Generator {
 	
 					} else if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
 	
-						writer.writeOpenTag("logNormalDistributionModel",
+						writer.writeOpenTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL,
 										new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
 	
 						if (activeTrees.indexOf(tree) < 1) {
@@ -147,7 +147,7 @@ public class BranchRatesModelGenerator extends Generator {
 							writeParameterRef("stdev", modelPrefix + ClockType.UCLD_STDEV, writer);
 						}
 	
-						writer.writeCloseTag("logNormalDistributionModel");
+						writer.writeCloseTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL);
 	
 					} else {
 						throw new RuntimeException(

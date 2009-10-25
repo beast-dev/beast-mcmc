@@ -52,12 +52,14 @@ public class YuleModelParser extends AbstractXMLObjectParser {
 
         final XMLObject cxo = xo.getChild(BIRTH_RATE);
 
+        final boolean conditonalOnRoot =  xo.getAttribute(BirthDeathModelParser.CONDITIONAL_ON_ROOT, false);
         final Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
         final Parameter deathParameter = new Parameter.Default(0.0);
 
         Logger.getLogger("dr.evomodel").info("Using Yule prior on tree");
 
-        return new BirthDeathGernhard08Model(brParameter, deathParameter, null, BirthDeathGernhard08Model.TreeType.UNSCALED, units);
+        return new BirthDeathGernhard08Model(xo.getId(), brParameter, deathParameter, null,
+                BirthDeathGernhard08Model.TreeType.UNSCALED, units, conditonalOnRoot);
     }
 
     //************************************************************************
@@ -77,6 +79,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(BirthDeathModelParser.CONDITIONAL_ON_ROOT, true),
             new ElementRule(BIRTH_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]

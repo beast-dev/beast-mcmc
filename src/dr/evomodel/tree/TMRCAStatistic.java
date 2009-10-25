@@ -47,8 +47,8 @@ public class TMRCAStatistic extends Statistic.Abstract implements TreeStatistic 
     public static final String PARENT = "forParent";
     public static final String MRCA = "mrca";
 
-    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate, boolean forParent
-    ) throws Tree.MissingTaxonException {
+    public TMRCAStatistic(String name, Tree tree, TaxonList taxa, boolean isRate, boolean forParent)
+            throws Tree.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);

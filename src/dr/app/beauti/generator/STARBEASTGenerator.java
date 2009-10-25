@@ -36,10 +36,10 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodel.speciation.TreePartitionCoalescent;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
@@ -305,13 +305,13 @@ public class STARBEASTGenerator extends Generator {
         writer.writeComment("Species Tree: Coalescent likelihood for gene trees under species tree");
 
         // speciesCoalescent id="coalescent"
-        writer.writeOpenTag(TreePartitionCoalescent.SPECIES_COALESCENT, new Attribute[]{
+        writer.writeOpenTag(MultiSpeciesCoalescent.SPECIES_COALESCENT, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT)});
 
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
 
-        writer.writeCloseTag(TreePartitionCoalescent.SPECIES_COALESCENT);
+        writer.writeCloseTag(MultiSpeciesCoalescent.SPECIES_COALESCENT);
 
         // exponentialDistributionModel id="pdist"
 //        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, new Attribute[]{

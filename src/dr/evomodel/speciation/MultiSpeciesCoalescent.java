@@ -18,14 +18,14 @@ import java.util.Arrays;
  * @author Joseph Heled
  *         Date: 26/05/2008
  */
-public class TreePartitionCoalescent extends Likelihood.Abstract implements Units {
+public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units {
     public static final String SPECIES_COALESCENT = "speciesCoalescent";
     private final SpeciesTreeModel spTree;
     private final SpeciesBindings species;
     private boolean checkCompatibility;
     private final boolean[] compatibleCheckRequited;
 
-    public TreePartitionCoalescent(SpeciesBindings species, SpeciesTreeModel tree) {
+    public MultiSpeciesCoalescent(SpeciesBindings species, SpeciesTreeModel tree) {
         super(tree);
         spTree = tree;
         this.species = species;
@@ -133,6 +133,9 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
 
             // The root of every gene tree (last coalescent point) should be always above
             // root of species tree
+            if( indexInClist >=  cList.length)  {
+                int k = 1;
+            }
             assert indexInClist < cList.length;
 
             // Skip over (presumably, not tested by assert) non interesting coalescent
@@ -272,7 +275,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final SpeciesBindings sb = (SpeciesBindings) xo.getChild(SpeciesBindings.class);
             final SpeciesTreeModel tree = (SpeciesTreeModel) xo.getChild(SpeciesTreeModel.class);
-            return new TreePartitionCoalescent(sb, tree);
+            return new MultiSpeciesCoalescent(sb, tree);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -287,7 +290,7 @@ public class TreePartitionCoalescent extends Likelihood.Abstract implements Unit
         }
 
         public Class getReturnType() {
-            return TreePartitionCoalescent.class;
+            return MultiSpeciesCoalescent.class;
         }
 
         public String getParserName() {

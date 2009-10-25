@@ -31,26 +31,26 @@ import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.util.Taxa;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.speciation.TreePartitionCoalescent;
+import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.clock.ACLikelihood;
+import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.*;
-import dr.inference.model.ParameterParser;
+import dr.inference.distribution.MixedDistributionLikelihood;
+import dr.inference.loggers.Columns;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.ParameterParser;
 import dr.inference.xml.LoggerParser;
-import dr.inference.loggers.Columns;
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-import dr.evolution.util.Taxa;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -210,7 +210,7 @@ public class LogGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(TreePartitionCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);

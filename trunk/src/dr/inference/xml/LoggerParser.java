@@ -81,7 +81,14 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
-        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, !xo.hasAttribute(FILE_NAME));
+        boolean performanceReport = false;
+
+        if (!xo.hasAttribute(FILE_NAME)) {
+            // is a screen log
+            performanceReport = true;
+        }
+        
+        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, performanceReport, logEvery * 5);
 
         if (xo.hasAttribute(TITLE)) {
             logger.setTitle(xo.getStringAttribute(TITLE));

@@ -633,15 +633,15 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * @return the number of statistics of this component.
      */
     public int getStatisticCount() {
-        return 1;
+        return super.getStatisticCount() + 1;
     }
 
     /**
      * @return the ith statistic of the component
      */
     public Statistic getStatistic(int i) {
-        if (i == 0) return root.heightParameter;
-        throw new IllegalArgumentException();
+        if (i == super.getStatisticCount()) return root.heightParameter;
+        return super.getStatistic(i);
     }
 
 //    public String getModelComponentName() {

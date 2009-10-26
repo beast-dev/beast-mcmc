@@ -50,6 +50,13 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
     public static final String TREE_MODEL = "treeModel";
 
+    public TreeModel(String name) {
+        super(name);
+        nodeCount = 0;
+        externalNodeCount = 0;
+        internalNodeCount = 0;
+    }
+
     public TreeModel(Tree tree) {
         this(TREE_MODEL, tree, false);
     }

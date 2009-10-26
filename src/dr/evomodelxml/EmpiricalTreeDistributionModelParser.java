@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 
 import java.io.*;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -57,6 +58,8 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 //            burnin = xo.getIntegerAttribute(BURNIN);
 //        }
 
+        Logger.getLogger("dr.evomodel").info("Creating the empirical tree distribution model, '" + xo.getId() + "'");
+
         TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
 
         final File file = FileHelpers.getFile(fileName);
@@ -74,6 +77,8 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         } catch (Importer.ImportException e) {
             throw new XMLParseException(e.getMessage());
         }
+        
+        Logger.getLogger("dr.evomodel").info("    Read " + trees.length + " trees from file, " + fileName);
 
         return new EmpiricalTreeDistributionModel(trees);
     }

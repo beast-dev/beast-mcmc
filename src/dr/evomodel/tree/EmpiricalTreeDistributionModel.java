@@ -10,6 +10,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -18,7 +19,7 @@ import java.util.List;
 public class EmpiricalTreeDistributionModel extends TreeModel {
 
     public EmpiricalTreeDistributionModel(final Tree[] trees) {
-        super(EMPIRICAL_TREE_DISTRIBUTION_MODEL, null);
+        super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         this.trees = trees;
         drawTreeIndex();
@@ -30,14 +31,20 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
     protected void restoreState() {
         currentTreeIndex = storedTreeIndex;
+        fireModelChanged();
     }
 
     protected void acceptState() {
     }
 
     public void drawTreeIndex() {
+//        System.err.print("Drawing new tree, (old tree = " + currentTreeIndex);
+
         currentTreeIndex = MathUtils.nextInt(trees.length);
-        fireModelChanged();
+
+//        System.err.println(") new tree = " + currentTreeIndex);
+
+        fireModelChanged(new TreeModel.TreeChangedEvent());
     }
 
     public NodeRef getRoot() {

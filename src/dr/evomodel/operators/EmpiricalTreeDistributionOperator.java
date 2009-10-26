@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
 
-    public final static String EMPIRICAL_TREE_DISTRIBUTION_OPERATOR = "empiricalTreeOperator";
+    public final static String EMPIRICAL_TREE_DISTRIBUTION_OPERATOR = "empiricalTreeDistributionOperator";
 
     private final EmpiricalTreeDistributionModel treeModel;
 
@@ -33,7 +33,9 @@ public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
 
     public double doOperation() throws OperatorFailedException {
         treeModel.drawTreeIndex();
-        return 0;
+
+        // always accept these moves...
+        return Double.POSITIVE_INFINITY;
     }
 
     public String getPerformanceSuggestion() {

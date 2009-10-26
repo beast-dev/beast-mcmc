@@ -7,6 +7,9 @@ import dr.math.MathUtils;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticList;
+import dr.inference.model.AbstractModel;
 
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +26,17 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
         this.trees = trees;
         drawTreeIndex();
+
+        addStatistic(new Statistic.Abstract("Current Tree")  {
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public double getStatisticValue(int dim) {
+                return currentTreeIndex;
+            }
+        });
     }
 
     protected void storeState() {
@@ -182,7 +196,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     public Iterator<String> getAttributeNames() {
         return trees[currentTreeIndex].getAttributeNames();
     }
-
+    
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
     private final Tree[] trees;

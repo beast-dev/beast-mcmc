@@ -4,6 +4,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.math.MathUtils;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 
 import java.util.Iterator;
 import java.util.List;
@@ -30,11 +33,11 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     protected void acceptState() {
-        drawTreeIndex();
     }
 
-    private void drawTreeIndex() {
+    public void drawTreeIndex() {
         currentTreeIndex = MathUtils.nextInt(trees.length);
+        fireModelChanged();
     }
 
     public NodeRef getRoot() {

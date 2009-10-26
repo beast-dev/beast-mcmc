@@ -31,6 +31,8 @@ import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+import java.util.LinkedList;
 
 /**
  * A class for a general purpose logger.
@@ -48,7 +50,8 @@ public class MCLogger implements Logger {
     /**
      * Output performance stats in this log
      */
-    private boolean performanceReport;
+    private final boolean performanceReport;
+    private final int performanceReportDelay;
 
     /**
      * Constructor. Will log every logEvery.
@@ -56,11 +59,12 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(String fileName, LogFormatter formatter, int logEvery, boolean performanceReport) {
+    public MCLogger(String fileName, LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
         this.performanceReport = performanceReport;
+        this.performanceReportDelay = performanceReportDelay;
         this.fileName = fileName;
     }
 
@@ -71,7 +75,17 @@ public class MCLogger implements Logger {
      * @param logEvery  logging frequency
      */
     public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
-        this(null, formatter, logEvery, performanceReport);
+        this(null, formatter, logEvery, performanceReport, 0);
+    }
+
+    /**
+     * Constructor. Will log every logEvery.
+     *
+     * @param formatter the formatter of this logger
+     * @param logEvery  logging frequency
+     */
+    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
+        this(null, formatter, logEvery, performanceReport, performanceReportDelay);
     }
 
     /**
@@ -79,8 +93,8 @@ public class MCLogger implements Logger {
      *
      * @param logEvery logging frequency
      */
-    public MCLogger(String fileName, int logEvery, boolean performanceReport) throws IOException {
-        this(fileName, new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport);
+    public MCLogger(String fileName, int logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
+        this(fileName, new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport, performanceReportDelay);
     }
 
     /**
@@ -89,7 +103,7 @@ public class MCLogger implements Logger {
      * @param logEvery logging frequency
      */
     public MCLogger(int logEvery) {
-        this(null, new TabDelimitedFormatter(System.out), logEvery, true);
+        this(null, new TabDelimitedFormatter(System.out), logEvery, true, 0);
     }
 
     public final void setTitle(String title) {
@@ -210,8 +224,9 @@ public class MCLogger implements Logger {
 
     public void log(int state) {
 
-        if (state == 0) {
+        if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
             startTime = System.currentTimeMillis();
+            startState = state;
             formatter.setMaximumFractionDigits(2);
         }
 
@@ -228,13 +243,14 @@ public class MCLogger implements Logger {
             }
 
             if (performanceReport) {
-                if (state > 0) {
+                if (performanceReportStarted) {
 
-                    long timeTaken = System.currentTimeMillis() - startTime;
+                    long time = System.currentTimeMillis();
 
-                    double hoursPerMillionStates = (double) timeTaken / (3.6 * (double) state);
+                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
                     values[columnCount + 1] = formatter.format(hoursPerMillionStates) + " hours/million states";
+
                 } else {
                     values[columnCount + 1] = "-";
                 }
@@ -242,6 +258,11 @@ public class MCLogger implements Logger {
 
             logValues(values);
         }
+
+        if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
+            performanceReportStarted = true;
+        }
+
     }
 
     public void stopLogging() {
@@ -267,7 +288,10 @@ public class MCLogger implements Logger {
 
     protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
 
+    private boolean performanceReportStarted = false;
     private long startTime;
+    private int startState;
+
     private NumberFormat formatter = NumberFormat.getNumberInstance();
 
 }

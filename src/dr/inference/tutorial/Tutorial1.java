@@ -87,7 +87,7 @@ public class Tutorial1 {
         logger1.add(stdev);
 
         // construct a logger to log to a log file for later analysis
-        MCLogger logger2 = new MCLogger("tutorial1.log", 100, false);
+        MCLogger logger2 = new MCLogger("tutorial1.log", 100, false, 0);
         logger2.add(mean);
         logger2.add(stdev);
 

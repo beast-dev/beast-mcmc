@@ -363,9 +363,9 @@
     <property name="Linux_dir" value="${release_dir}/Linux" />
     <property name="Windows_dir" value="${release_dir}/Windows" />
 
-    <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name} v${version}" />
+    <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name}v${version}" />
     <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_name}v${version}" />
-    <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_name} v${version}" />
+    <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_name}v${version}" />
 
 	<!-- Need to either install Launch4j under {BEAST workspace}/${release}
 	             or install it in the default directory and change the location of launch4j.dir -->
@@ -404,7 +404,7 @@
 		<!-- BEAUTi v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/BEAUTi_launch4j.xml"
 		          jar="${dist}/beauti.jar"
-				  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
+				  outfile="${Windows_package_dir}/${BEAUti_name}v${version}.exe"
 		          fileVersion="${version}.0"
 		          txtFileVersion="${version}"
 		          productVersion="${version}.0"
@@ -413,7 +413,7 @@
 		<!-- BEAST v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
 		          jar="${dist}/beast.jar"
-			      outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
+			      outfile="${Windows_package_dir}/${BEAST_name}v${version}.exe"
 		          fileVersion="${version}.0"
 		          txtFileVersion="${version}"
 		          productVersion="${version}.0"
@@ -422,7 +422,7 @@
 		<!-- TreeAnnotator v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
 				  jar="${dist}/beast.jar"
-				  outfile="${Windows_package_dir}/${TreeAnnotator_name}${version}.exe"
+				  outfile="${Windows_package_dir}/${TreeAnnotator_name}v${version}.exe"
 				  fileVersion="${version}.0"
 				  txtFileVersion="${version}"
 				  productVersion="${version}.0"
@@ -431,7 +431,7 @@
 		<!-- LogCombiner v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
 				  jar="${dist}/beast.jar"
-				  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
+				  outfile="${Windows_package_dir}/${LogCombiner_name}v${version}.exe"
 				  fileVersion="${version}.0"
 				  txtFileVersion="${version}"
 				  productVersion="${version}.0"
@@ -440,14 +440,14 @@
 		<!-- LogAnalyser v?.?.?.exe 
 		<launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
 				  jar="${dist}/beast.jar"
-				  outfile="${Windows_package_dir}/${LogAnalyser_name} v${version}.exe"
+				  outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
 				  fileVersion="${version}.0"
 				  txtFileVersion="${version}"
 				  productVersion="${version}.0"
 				  txtProductVersion="${version}"/>	-->
 
-		<zip destfile="${Windows_dir}/${BEAST_name} v${version}.zip">
-			<zipfileset dir="${Windows_package_dir}" prefix="${BEAST_name} v${version}"/>
+		<zip destfile="${Windows_dir}/${BEAST_name}v${version}.zip">
+			<zipfileset dir="${Windows_package_dir}" prefix="${BEAST_name}v${version}"/>
 		</zip>
 
 		<echo message="Windows version release is finished." />
@@ -504,6 +504,8 @@
         <copy todir="${Mac_package_dir}/bin">
             <fileset dir="${Mac_dir}/scripts"/>
         </copy>
+        <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
+
         <copy todir="${Mac_package_dir}/doc">
             <fileset dir="${common_dir}/doc"/>
         </copy>
@@ -527,7 +529,7 @@
 
 		<!-- create a jar bundle for the mac -->
 		<jarbundler dir="${Mac_package_dir}"
-		                name="${BEAST_name} v${version}"
+		                name="${BEAST_name}v${version}"
 		                mainclass="dr.app.beast.BeastMain" 
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
@@ -548,7 +550,7 @@
 		</jarbundler>
 
         <jarbundler dir="${Mac_package_dir}"
-                        name="${BEAUti_name} v${version}"
+                        name="${BEAUti_name}v${version}"
                         mainclass="dr.app.beauti.BeautiApp"
                         icon="${common_dir}/icons/beauti.icns"
                         jvmversion="1.5+"
@@ -571,7 +573,7 @@
         </jarbundler>
 
         <jarbundler dir="${Mac_package_dir}"
-                        name="${LogCombiner_name} v${version}"
+                        name="${LogCombiner_name}v${version}"
                         mainclass="dr.app.tools.LogCombiner"
                         icon="${common_dir}/icons/utility.icns"
                         jvmversion="1.5+"
@@ -588,7 +590,7 @@
         </jarbundler>
 
         <jarbundler dir="${Mac_package_dir}"
-                        name="${TreeAnnotator_name} v${version}"
+                        name="${TreeAnnotator_name}v${version}"
                         mainclass="dr.app.tools.TreeAnnotator"
                         icon="${common_dir}/icons/utility.icns"
                         jvmversion="1.5+"

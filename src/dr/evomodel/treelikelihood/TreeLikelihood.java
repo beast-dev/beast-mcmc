@@ -25,7 +25,9 @@
 
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.alignment.*;
+import dr.evolution.alignment.AscertainedSitePatterns;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -35,7 +37,9 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Statistic;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -131,10 +135,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             } else {
                 likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
             }
-            logger.info("TreeLikelihood using " + coreName + " likelihood core");
+            {
+              final String id = getId();
+              logger.info("TreeLikelihood(" + ((id != null) ? id : treeModel.getId()) + ") using " + coreName + " likelihood core");
 
-            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+              logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+              logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+            }
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -171,7 +178,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 addModel(tipPartialsModel);
-                useAmbiguities = true;
+                //useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList
@@ -703,7 +710,4 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * the LikelihoodCore
      */
     protected LikelihoodCore likelihoodCore;
-
-
-
 }

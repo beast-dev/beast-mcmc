@@ -542,8 +542,8 @@
                 <include name="**/beast.jar"/>
                 <include name="**/beast-beagle.jar"/>
             </jarfileset>
-            <jarfileset dir="${Mac_dir}">
-                <include name="lib/libNucleotideLikelihoodCore.jnilib"/>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="libNucleotideLikelihoodCore.jnilib"/>
             </jarfileset>
 		</jarbundler>
 
@@ -560,11 +560,11 @@
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>
             </jarfileset>
-            <jarfileset dir="${Mac_dir}/lib">
+            <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/quaqua-filechooser-only.jar"/>
             </jarfileset>
-            <jarfileset dir="${Mac_dir}">
-                <include name="lib/libquaqua*.jnilib"/>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="libquaqua*.jnilib"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>

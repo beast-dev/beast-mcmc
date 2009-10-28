@@ -197,6 +197,18 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         return 0.0;
     }
 
+    public double getMeanEvaluationTime() {
+        return (double) sumEvaluationTime / (double) (acceptCount + rejectCount);
+    }
+
+    public long getTotalEvaluationTime() {
+        return sumEvaluationTime;
+    }
+
+    public void addEvaluationTime(long time) {
+        sumEvaluationTime += time;
+    }
+
     /**
      * Called by operate(), does the actual operation.
      *
@@ -214,6 +226,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     private boolean operateAllowed = true;
     private double targetAcceptanceProb = 0.234;
+
+    private long sumEvaluationTime = 0;
 
 //    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
 //    private int spanCount = 0;

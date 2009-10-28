@@ -91,6 +91,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         }
 
         mcmc.setShowOperatorAnalysis(true);
+        if (xo.hasAttribute(OPERATOR_ANALYSIS)) {
+            mcmc.setOperatorAnalysisFileName(xo.getStringAttribute(OPERATOR_ANALYSIS));
+        }
 
         Logger[] loggerArray = new Logger[loggers.size()];
         loggers.toArray(loggerArray);
@@ -147,6 +150,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(MIN_OPS_EVALUATIONS, true),
             AttributeRule.newBooleanRule(SPAWN, true),
             AttributeRule.newStringRule(NAME, true),
+            AttributeRule.newStringRule(OPERATOR_ANALYSIS, true),
             new ElementRule(OperatorSchedule.class),
             new ElementRule(Likelihood.class),
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE)
@@ -163,5 +167,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";
     public static final String SPAWN = "spawn";
+    public static final String OPERATOR_ANALYSIS = "operatorAnalysis";
+
 
 }

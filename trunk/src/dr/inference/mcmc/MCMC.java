@@ -226,6 +226,17 @@ public class MCMC implements Identifiable, Spawnable {
                 }
             }
 
+            if (operatorAnalysisFileName != null) {
+                try {
+                    FileOutputStream out = new FileOutputStream(operatorAnalysisFileName);
+                    showOperatorAnalysis(new PrintStream(out));
+                    out.flush();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
             // How should premature finish be flagged?
         }
 
@@ -240,7 +251,10 @@ public class MCMC implements Identifiable, Spawnable {
         out.println();
         out.println("Operator analysis");
         out.println(formatter.formatToFieldWidth("Operator", 50) +
-                formatter.formatToFieldWidth("", 8) +
+                formatter.formatToFieldWidth("Tuning", 9) +
+                formatter.formatToFieldWidth("Count", 11) +
+                formatter.formatToFieldWidth("Time", 9) +
+                formatter.formatToFieldWidth("Time/Op", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                 " Performance suggestion");
 
@@ -252,12 +266,18 @@ public class MCMC implements Identifiable, Spawnable {
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
                             + formattedParameterString(jointOp.getSubOperator(k))
+                            + formattedCountString(op)
+                            + formattedTimeString(op)
+                            + formattedTimePerOpString(op)
                             + formattedProbString(jointOp)
                             + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
                         + formattedParameterString(op)
+                        + formattedCountString(op)
+                        + formattedTimeString(op)
+                        + formattedTimePerOpString(op)
                         + formattedProbString(op)
                         + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
             }
@@ -276,6 +296,21 @@ public class MCMC implements Identifiable, Spawnable {
             pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
         }
         return pString;
+    }
+
+    private String formattedCountString(MCMCOperator op) {
+        final int count = op.getCount();
+        return formatter.formatToFieldWidth(Integer.toString(count), 10) + " ";
+    }
+
+    private String formattedTimeString(MCMCOperator op) {
+        final long time = op.getTotalEvaluationTime();
+        return formatter.formatToFieldWidth(Long.toString(time), 8) + " ";
+    }
+
+    private String formattedTimePerOpString(MCMCOperator op) {
+        final double time = op.getMeanEvaluationTime();
+        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 2), 8) + " ";
     }
 
     private String formattedProbString(MCMCOperator op) {
@@ -414,6 +449,9 @@ public class MCMC implements Identifiable, Spawnable {
         showOperatorAnalysis = soa;
     }
 
+    public void setOperatorAnalysisFileName(String operatorAnalysisFileName) {
+        this.operatorAnalysisFileName = operatorAnalysisFileName;
+    }
 
     public String getId() {
         return id;
@@ -429,6 +467,7 @@ public class MCMC implements Identifiable, Spawnable {
     private final boolean isAdapting = true;
     private boolean stopping = false;
     private boolean showOperatorAnalysis = true;
+    private String operatorAnalysisFileName = null;
     private final dr.util.Timer timer = new dr.util.Timer();
     private int currentState = 0;
     //private int stepsPerReport = 1000;

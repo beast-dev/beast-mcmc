@@ -115,6 +115,20 @@ public abstract class SimpleOperator implements MCMCOperator {
         return span;
     }
 
+    public double getMeanEvaluationTime() {
+        return (double) sumEvaluationTime / (double) (accepted + rejected);
+    }
+
+    public long getTotalEvaluationTime() {
+        return sumEvaluationTime;
+    }
+
+    public void addEvaluationTime(long time) {
+        sumEvaluationTime += time;
+    }
+
+    private long sumEvaluationTime = 0;
+   
     private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
     private int spanCount = 0;
 

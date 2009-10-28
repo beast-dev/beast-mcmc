@@ -46,6 +46,7 @@ import java.util.logging.Logger;
 public final class MarkovChain {
 
     private final static boolean DEBUG = false;
+    private final static boolean PROFILE = true;
 
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
@@ -210,8 +211,17 @@ public final class MarkovChain {
                     System.out.println("** Evaluate");
                 }
 
+                long elapsedTime = 0;
+                if (PROFILE) {
+                    elapsedTime = System.currentTimeMillis();
+                }
+
                 // The new model is evaluated
                 score = evaluate(likelihood, prior);
+
+                if (PROFILE) {
+                    mcmcOperator.addEvaluationTime(System.currentTimeMillis() - elapsedTime);
+                }
 
                 // assert Profiler.stopProfile("Evaluate");
 

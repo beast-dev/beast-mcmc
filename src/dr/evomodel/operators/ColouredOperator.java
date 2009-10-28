@@ -200,6 +200,18 @@ public class ColouredOperator implements CoercableMCMCOperator {
         return innerOperator.getPerformanceSuggestion();
     }
 
+    public double getMeanEvaluationTime() {
+        return innerOperator.getMeanEvaluationTime();
+    }
+
+    public long getTotalEvaluationTime() {
+        return innerOperator.getTotalEvaluationTime();
+    }
+
+    public void addEvaluationTime(long time) {
+        innerOperator.addEvaluationTime(time);
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {

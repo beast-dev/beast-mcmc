@@ -156,6 +156,12 @@ public interface MCMCOperator {
      */
     String getOperatorName();
 
+    double getMeanEvaluationTime();
+
+    void addEvaluationTime(long time);
+
+    long getTotalEvaluationTime();
+
     class Utils {
 
         public static double getAcceptanceProbability(MCMCOperator op) {

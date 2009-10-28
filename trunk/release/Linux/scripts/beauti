@@ -22,6 +22,6 @@ if [ -z "$BEAST" ]; then
 	cd "$saveddir"
 fi
 
-BEAST_LIB=$BEAST/lib
-java -Xms64m -Xmx1024m -Djava.library.path=$BEAST_LIB -jar $BEAST_LIB/beauti.jar $*
+BEAST_LIB="$BEAST/lib"
+java -Xms64m -Xmx1024m -Djava.library.path="$BEAST_LIB" -jar "$BEAST_LIB/beauti.jar" $*
 

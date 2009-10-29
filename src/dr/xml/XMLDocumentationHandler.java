@@ -79,6 +79,8 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a particular element, using the syntax information.
+     * @param writer     PrintWriter
+     * @param parser     XMLObjectParser
      */
     public void outputExampleXML(PrintWriter writer, XMLObjectParser parser) {
 
@@ -113,6 +115,9 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a particular element, using the syntax information.
+     * @param writer   PrintWriter
+     * @param parser   XMLObjectParser
+     * @param level    int
      */
     public void outputExampleXML(PrintWriter writer, XMLObjectParser parser, int level) {
         outputElementRules(writer, parser.getParserName(), parser.getSyntaxRules(), level);
@@ -151,8 +156,10 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a rule, using the syntax information.
+     * @param writer   PrintWriter
+     * @param rule     AttributeRule
      */
-    public void outputExampleXML(PrintWriter writer, AttributeRule rule, int level) {
+    public void outputExampleXML(PrintWriter writer, AttributeRule rule) { //, int level) {
         writer.print(" " + rule.getName() + "=\"");
         if (rule.hasExample()) {
             writer.print(rule.getExample());
@@ -164,6 +171,9 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs an example of a rule, using the syntax information.
+     * @param writer  PrintWriter
+     * @param rule    ElementRule
+     * @param level   int
      */
     public void outputExampleXML(PrintWriter writer, ElementRule rule, int level) {
 
@@ -179,6 +189,13 @@ public class XMLDocumentationHandler {
         }
     }
 
+    /**
+     *
+     * @param writer   PrintWriter
+     * @param name     String
+     * @param rules    XMLSyntaxRule[]
+     * @param level    int
+     */
     public void outputElementRules(PrintWriter writer, String name, XMLSyntaxRule[] rules, int level) {
 
         ArrayList<XMLSyntaxRule> attributeList = new ArrayList<XMLSyntaxRule>();
@@ -188,7 +205,7 @@ public class XMLDocumentationHandler {
         writer.print(spaces(level) + "&lt;" + name);
         // write out the attributes
         for (XMLSyntaxRule rule : attributeList) {
-            outputExampleXML(writer, (AttributeRule) rule, level + 1);
+            outputExampleXML(writer, (AttributeRule) rule); //, level + 1);
         }
         if (elementList.size() > 0) {
             writer.println("&gt;");
@@ -277,8 +294,10 @@ public class XMLDocumentationHandler {
         // find all parsers that match this required type
         Iterator i = parser.getParsers();
         while (i.hasNext()) {
-            final XMLObjectParser xmlParser = (XMLObjectParser) i.next();
-            final Class returnType = xmlParser.getReturnType();
+//            final XMLObjectParser xmlParser = (XMLObjectParser) i.next();
+//            final Class returnType = xmlParser.getReturnType();
+            XMLObjectParser xmlParser = (XMLObjectParser) i.next();
+            Class returnType = xmlParser.getReturnType();
             if (c.isAssignableFrom(returnType)) {
                 matchingParsers.add(xmlParser);
             }
@@ -288,6 +307,7 @@ public class XMLDocumentationHandler {
 
     /**
      * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
+     * @param writer  PrintWriter
      */
     public void outputTypes(PrintWriter writer) {
 
@@ -311,32 +331,83 @@ public class XMLDocumentationHandler {
 
                 System.out.println("  outputting HTML for generic type " + name);
 
-
-                TreeSet<String> matchingParserNames = new TreeSet<String>();
+//                TreeSet<XMLObjectParser> matchingParserNames = new TreeSet<XMLObjectParser>();
+                ArrayList<String> matchingParserNames = new ArrayList<String>();
 
                 // find all parsers that match this required type
                 Iterator i = parser.getParsers();
                 while (i.hasNext()) {
                     XMLObjectParser xmlParser = (XMLObjectParser) i.next();
                     Class returnType = xmlParser.getReturnType();
-                    if (requiredType.isAssignableFrom(returnType)) {
-                        matchingParserNames.add(xmlParser.getParserName());
-                    }
-                }
+                    if (returnType == null) {
+                        System.out.println("find null Class for parser : " + xmlParser.getParserName());
+                    } else if (requiredType.isAssignableFrom(returnType)) {
+                        if (matchingParserNames.size() == 0) {
+                            writer.println("<div id=\"" + name + "\"><h2>" + name + "</h2>");
+                            writer.println("<p>");
+                            writer.println("Elements of this type include:");
+                            writer.println("</p>");
+                        }
 
-                if (matchingParserNames.size() > 1 || !matchingParserNames.iterator().next().equals(name)) {
-                    // output table row containing the type and the matching parser names
-                    writer.println("<div id=\"" + name + "\"><h2>" + name + "</h2>");
-                    writer.println("<p>");
-                    writer.println("Elements of this type include:");
-                    writer.println("</p>");
-                    i = matchingParserNames.iterator();
-                    while (i.hasNext()) {
-                        String parserName = (String) i.next();
-                        writer.println("<div><a href=\"index.html#" + parserName + "\"> &lt;" + parserName + "&gt;</a></div>");
+                        if (!matchingParserNames.contains(xmlParser.getParserName())) {
+                            matchingParserNames.add(xmlParser.getParserName());                                                        
+//                            writer.println(xmlParser.toHTML(this));
+
+//                        writer.println("<div><a href=\"index.html#" + xmlParser.getParserName() + "\"> &lt;"
+//                                + xmlParser.getParserName() + "&gt;</a></div>");
+                            writer.println("<div id=\"" + xmlParser.getParserName() + "\" class=\"element\">");
+                            writer.println("  <div class=\"elementheader\">");
+                            writer.println("    <span class=\"elementname\"><a href=\"types.html#" + xmlParser.getParserName() + "\"> <h3>&lt;"
+                                    + xmlParser.getParserName() + "&gt;</h3></a></span>");
+                            writer.println("    <div class=\"description\"><b>Description:</b><br>");
+                            writer.println(xmlParser.getParserDescription());
+                            writer.println("    </div>");
+                            writer.println("  </div>");
+
+//                            // print rules
+//                            if (xmlParser.hasSyntaxRules()) {
+//                                XMLSyntaxRule[] rules = xmlParser.getSyntaxRules();
+//                                writer.println("  <div class=\"rules\"><b>Rule:</b>");
+//                                for (XMLSyntaxRule rule : rules) {
+//                                    writer.println(rule.htmlRuleString(this));
+//                                }
+//                                writer.println("  </div>");
+//                            }
+//
+//                            // print examples
+//                            if (xmlParser.hasExample()) {
+//                                writer.println("<div class=\"example\"><b>Example:</b>");
+//                                outputExampleXML(writer, xmlParser);
+//                                writer.println("</div>");
+//                            }
+                            
+                            writer.println("<p/>");
+                        }
                     }
-                    writer.println("</div>");
                 }
+                if (matchingParserNames.size() > 0) writer.println("</div>");
+                writer.println("<p/>");
+
+//                if (matchingParserNames.size() > 1 ||
+//                        (matchingParserNames.size() == 1 && (!matchingParserNames.iterator().next().getParserName().equals(name)))) {
+//                    // output table row containing the type and the matching parser names
+//                    writer.println("<div id=\"" + name + "\"><h2>" + name + "</h2>");
+//                    writer.println("<p>");
+//                    writer.println("Elements of this type include:");
+//                    writer.println("</p>");
+//                    i = matchingParserNames.iterator();
+//                    while (i.hasNext()) {
+//                        XMLObjectParser parser = i.next();
+//                        writer.println("<div><a href=\"index.html#" + parser.getParserName() + "\"> &lt;"
+//                                + parser.getParserName() + "&gt;</a></div>");
+//                        writer.println("<div>" + parser.getParserDescription() + "</div>");
+//                        if (parser.hasExample()) writer.println("<div>" + parser.getExample() + "</div>");
+//                        for (XMLSyntaxRule rule: parser.getSyntaxRules()) {
+//                            writer.println("<div>" + rule.ruleString() + "</div>");
+//                        }
+//                    }
+//                    writer.println("</div>");
+//                }
             }
 
         }

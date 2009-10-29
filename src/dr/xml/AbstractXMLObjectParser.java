@@ -206,20 +206,22 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         StringBuffer buffer = new StringBuffer();
         buffer.append("<div id=\"").append(getParserName()).append("\" class=\"element\">\n");
         buffer.append("  <div class=\"elementheader\">\n");
-        buffer.append("    <span class=\"elementname\">").append(getParserName()).append("</span> element\n");
-        buffer.append("    <div class=\"description\">\n");
+        buffer.append("    <span class=\"elementname\"><a href=\"index.html#").append(getParserName())
+                .append("\"> <h3>&lt;").append(getParserName()).append("&gt;</h3></a></span>\n");         
+        buffer.append("    <div class=\"description\"><b>Description:</b><br>\n");
         buffer.append("      ").append(getParserDescription()).append("\n");
         buffer.append("    </div>\n");
         buffer.append("  </div>\n");
         if (hasSyntaxRules()) {
             XMLSyntaxRule[] rules = getSyntaxRules();
-            buffer.append("  <div class=\"rules\">\n");
+            buffer.append("  <div class=\"rules\"><b>Rule:</b>\n");
             for (XMLSyntaxRule rule : rules) {
                 buffer.append(rule.htmlRuleString(handler));
             }
             buffer.append("  </div>\n");
         }
-        buffer.append("<div class=\"example\">");
+        if (hasExample()) {
+        buffer.append("<div class=\"example\"><b>Example:</b>");
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         handler.outputExampleXML(pw, this);
@@ -227,7 +229,9 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         pw.close();
         buffer.append(sw.toString());
         buffer.append("</div>\n");
+        }
         buffer.append("</div>\n");
+        buffer.append("<p/>\n");
         return buffer.toString();
     }
 

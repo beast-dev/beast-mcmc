@@ -98,7 +98,7 @@ public class BeastDoc {
     public static void printTitle() {
 
         System.out.println("+-----------------------------------------------\\");
-        System.out.println("|               BeastDoc v1.0 2003              |\\");
+        System.out.println("|           BeastParserDoc v1.1 2009            |\\");
 
         String versionString = "BEAST Library: " + version.getVersionString();
         System.out.print("|");
@@ -110,8 +110,7 @@ public class BeastDoc {
         for (int i = 0; i < n2; i++) { System.out.print(" "); }
         System.out.println("||");
 
-        System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
-        System.out.println("|              University of Oxford             ||");
+        System.out.println("|   Alexei Drummond, Andrew Rambaut, Walter Xie ||");
         System.out.println("|           http://beast.bio.ed.ac.uk/          ||");
         System.out.println("\\-----------------------------------------------\\|");
         System.out.println(" \\-----------------------------------------------\\");
@@ -167,10 +166,10 @@ public class BeastDoc {
 
         if (outputDirectory == null) {
             // No input file name was given so throw up a dialog box...
-            outputDirectory = Utils.getSaveFileName("BeastDoc v1.0 - Select output directory");
+            outputDirectory = Utils.getSaveFileName("BeastParserDoc v1.1 - Select output directory");
         }
 
-        new BeastDoc(new BeastParser(new String[] {}, null, false, false), outputDirectory, true);
+        new BeastDoc(new BeastParser(new String[] {}, null, false, false), outputDirectory, false);
 
         System.exit(0);
     }

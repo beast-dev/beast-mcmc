@@ -89,4 +89,6 @@ public interface XMLObjectParser {
      * @return
      */
     boolean isAllowed(String elementName);
+
+    boolean hasSyntaxRules();
 }

@@ -212,6 +212,6 @@ public class CSVExporterParser extends AbstractXMLObjectParser {
 
 
     public Class getReturnType() {
-        return null;
+        return CSVExporterParser.class; //TODO write CSVExporter
     }
 }

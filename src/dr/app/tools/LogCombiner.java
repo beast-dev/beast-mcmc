@@ -125,7 +125,7 @@ public class LogCombiner {
                             stateStep = state;
                         }
 
-                        if (state >= burnin) {
+                        if (state >= burnin * (stateStep>0?stateStep : 1)) {
                             if (stateStep > 0) {
                                 stateCount += stateStep;
                             }
@@ -315,6 +315,20 @@ public class LogCombiner {
         writer.println(buffer.toString());
     }
 
+    private String formatValue(Object value) {
+        if( value instanceof String ) {
+            return (String) value;
+        } else if (value instanceof Object[] ) {
+           String val = "{";
+           for( Object v : (Object[]) value ) {
+               val += formatValue(v);
+               val += ',';
+           }
+            return val.substring(0, val.length() - 1 ) + '}';
+        }
+        return value.toString();
+    }
+
     private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuffer buffer) {
 
         NodeRef parent = tree.getParent(node);
@@ -348,7 +362,8 @@ public class LogCombiner {
             } else {
                 buffer.append(",");
             }
-            buffer.append(name).append("=").append(value);
+
+            buffer.append(name).append("=").append(formatValue(value));
         }
 
         if (hasAttribute) {
@@ -516,7 +531,8 @@ public class LogCombiner {
                             new Arguments.Option("trees", "use this option to combine tree log files"),
                             new Arguments.Option("decimal", "this option converts numbers from scientific to decimal notation"),
                             new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                            new Arguments.IntegerOption("resample", "resample the log files to this frequency (the original sampling frequency must be a factor of this value)"),
+                            new Arguments.IntegerOption("resample", "resample the log files to this frequency " +
+                                    "(the original sampling frequency must be a factor of this value)"),
                             new Arguments.RealOption("scale", "a scaling factor that will multiply any time units by this value"),
                             new Arguments.Option("help", "option to print this message")
                     });

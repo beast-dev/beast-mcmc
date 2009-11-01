@@ -59,6 +59,7 @@
                classpath="${lib}/colt.jar:${lib}/commons-math-1.2.jar:${lib}/jebl.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar:${lib}/mtj.jar:${lib}/JRI.jar:${lib}/mpj.jar">
             <include name="dr/app/tracer/**"/>
             <include name="dr/app/util/**"/>
+            <include name="dr/app/java16compat/**/"/>
             <include name="dr/evolution/alignment/**"/>
             <include name="dr/evolution/coalescent/**"/>
             <include name="dr/evolution/colouring/**"/>
@@ -76,7 +77,6 @@
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
-            <include name="dr/java16compat/**/"/>
         </javac>
     </target>
 
@@ -94,6 +94,7 @@
             <fileset dir="${build}">
                 <include name="dr/app/tracer/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
+                <include name="dr/app/java16compat/**/*.class"/>
                 <include name="dr/evolution/alignment/**/*.class"/>
                 <include name="dr/evolution/coalescent/**/*.class"/>
                 <include name="dr/evolution/colouring/**/*.class"/>
@@ -111,7 +112,6 @@
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
-                <include name="dr/java16compat/**/*.class"/>
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/app/tracer/**/*.png"/>

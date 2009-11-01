@@ -64,6 +64,7 @@
 			<include name="dr/app/plugin/**" />
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
+            <include name="dr/app/java16compat/**"/>			            
 			<include name="dr/evolution/**" />
 			<include name="dr/evomodel/**" />
 			<include name="dr/evomodelxml/**" />
@@ -79,7 +80,6 @@
 			<include name="dr/util/**" />
 			<include name="dr/xml/**" />
 			<include name="dr/geo/**"/>
-			<include name="dr/java16compat/**"/>
 			<!-- complie JUnit test classes -->
 			<include name="test/dr/**" />
 		</javac>
@@ -105,6 +105,7 @@
 				<include name="dr/app/plugin/**" />
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
+                <include name="dr/app/java16compat/**/*.class"/>
 				<include name="dr/evolution/**/*.class" />
 				<exclude name="dr/evomodel/beagle/**" />
 				<include name="dr/evomodel/**/*.class" />
@@ -120,7 +121,6 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
-				<include name="dr/java16compat/**/*.class"/>
 			</fileset>
 			<fileset dir="">
 				<include name="images/*.png" />
@@ -150,6 +150,7 @@
 				<include name="dr/app/beauti/**/*.class" />
 				<include name="dr/app/oldbeauti/**/*.class" />
 				<include name="dr/app/util/**/*.class" />
+                <include name="dr/app/java16compat/**/*.class"/>
 				<include name="dr/evolution/alignment/**/*.class" />
 				<include name="dr/evolution/coalescent/**/*.class" />
 				<include name="dr/evolution/colouring/**/*.class" />
@@ -183,7 +184,6 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
-				<include name="dr/java16compat/**/*.class"/>
 				<include name="org/virion/jam/**/*.class" />
 			</fileset>
 			<fileset dir="">
@@ -266,7 +266,7 @@
 				<include name="dr/stats/**/*.class" />
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
-				<include name="dr/java16compat/**/*.class" />
+				<include name="dr/app/java16compat/**/*.class" />
 			</fileset>
 			<fileset dir="${src}">
 				<include name="dr/app/tracer/**/*.png" />

@@ -1,5 +1,5 @@
 /*
- * BeastDoc.java
+ * BeastParserDoc.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -36,11 +36,20 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 
-public class BeastDoc {
+public class BeastParserDoc {
+
+    public final static String INDEX_HTML = "index.html";
+    public final static String DEATAIL_HTML = "detail.html";
 
     private final static Version version = new BeastVersion();
 
-    public BeastDoc(XMLParser parser, String directory, boolean wikiFormat) throws java.io.IOException {
+    public final static String TITTLE = "BEAST " + version.getVersionString() + " Parser Library ("
+            + version.getDateString() + ")";
+    public final static String AUTHORS = "Alexei Drummond, Andrew Rambaut, Walter Xie";
+    public final static String LINK1 = "http://beast.bio.ed.ac.uk/";
+    public final static String LINK2 = "http://code.google.com/p/beast-mcmc/";
+
+    public BeastParserDoc(XMLParser parser, String directory, boolean wikiFormat) throws java.io.IOException {
 
         File file = new File(directory);
 
@@ -62,7 +71,7 @@ public class BeastDoc {
             System.out.println("done.");
 
             System.out.println("Building types table...");
-            handler.outputTypes(writer);
+            handler.outputIndex(writer);
             System.out.println("done.");
 
             writer.flush();
@@ -70,16 +79,16 @@ public class BeastDoc {
         } else {
             XMLDocumentationHandler handler = new XMLDocumentationHandler(parser);
 
-            System.out.println("Building types table...");
-            PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, "index.html")));
+            System.out.println("Generate " + INDEX_HTML + " ...");
+            PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, INDEX_HTML)));
 
-            handler.outputTypes(writer);
+            handler.outputIndex(writer); // generate index.html
             System.out.println("done.");
             writer.flush();
             writer.close();
 
-            System.out.println("Building element descriptions html...");
-            writer = new PrintWriter(new FileWriter(new File(directory, "types.html")));
+            System.out.println("Generate " + DEATAIL_HTML + " ...");
+            writer = new PrintWriter(new FileWriter(new File(directory, DEATAIL_HTML)));
 
             handler.outputElements(writer);
             System.out.println("done.");
@@ -90,28 +99,34 @@ public class BeastDoc {
     }
 
 //	private final void setup() throws XMLParseException {
-
     // add all the XMLObject parsers you need
-
 //	}
+
+    public static void printDocTitle(PrintWriter writer, String page) {
+        writer.println("<head>");
+        writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
+        writer.println("  <title>" + page + "</title>");
+        writer.println("</head>");
+        writer.println("<h1>" + TITTLE + "</h1>");
+        writer.println("<!-- " + AUTHORS + " -->");
+        writer.println("<!-- " + LINK1 + " -->");
+        writer.println("<!-- " + LINK2 + " -->");
+    }
 
     public static void printTitle() {
 
         System.out.println("+-----------------------------------------------\\");
-        System.out.println("|           BeastParserDoc v1.1 2009            |\\");
-
-        String versionString = "BEAST Library: " + version.getVersionString();
         System.out.print("|");
-        int n = 47 - versionString.length();
+        int n = 47 - TITTLE.length();
         int n1 = n / 2;
         int n2 = n1 + (n % 2);
         for (int i = 0; i < n1; i++) { System.out.print(" "); }
-        System.out.print(versionString);
+        System.out.print(TITTLE);
         for (int i = 0; i < n2; i++) { System.out.print(" "); }
         System.out.println("||");
-
-        System.out.println("|   Alexei Drummond, Andrew Rambaut, Walter Xie ||");
-        System.out.println("|           http://beast.bio.ed.ac.uk/          ||");
+        System.out.println("|   " + AUTHORS + " ||");
+        System.out.println("|           " + LINK1 + "          ||");
+        System.out.println("|      " + LINK2 + "     ||");
         System.out.println("\\-----------------------------------------------\\|");
         System.out.println(" \\-----------------------------------------------\\");
         System.out.println();
@@ -166,10 +181,11 @@ public class BeastDoc {
 
         if (outputDirectory == null) {
             // No input file name was given so throw up a dialog box...
-            outputDirectory = Utils.getSaveFileName("BeastParserDoc v1.1 - Select output directory");
+            outputDirectory = Utils.getSaveFileName("BeastParserDoc " + version.getVersionString()
+                    + " - Select output directory");
         }
 
-        new BeastDoc(new BeastParser(new String[] {}, null, false, false), outputDirectory, false);
+        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false), outputDirectory, false);
 
         System.exit(0);
     }

@@ -25,6 +25,8 @@
 
 package dr.xml;
 
+import dr.app.tools.BeastParserDoc;
+
 import java.io.PrintWriter;
 import java.util.*;
 
@@ -54,12 +56,7 @@ public class XMLDocumentationHandler {
     public void outputElements(PrintWriter writer) {
 
         writer.println("<html>");
-        writer.println("<head>");
-        writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
-        writer.println("  <title>BEAST elements</title>");
-        writer.println("</head>");
-        writer.println("<body>");
-        writer.println("<h1>BEAST elements</h1>");
+        BeastParserDoc.printDocTitle(writer, BeastParserDoc.DEATAIL_HTML);
         writer.println("<p>");
         writer.println("The following is a list of valid elements in a beast file.<br>");
         writer.println("<span class=\"required\">&nbsp;&nbsp;&nbsp;&nbsp;</span> required<br>");
@@ -309,14 +306,10 @@ public class XMLDocumentationHandler {
      * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
      * @param writer  PrintWriter
      */
-    public void outputTypes(PrintWriter writer) {
+    public void outputIndex(PrintWriter writer) {
 
         writer.println("<html>");
-        writer.println("<head>");
-        writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
-        writer.println("  <title>BEAST elements</title>");
-        writer.println("</head>");
-        writer.println("<h1>BEAST types</h1>");
+        BeastParserDoc.printDocTitle(writer, BeastParserDoc.INDEX_HTML);
         writer.println("<p>");
         writer.println("The following is a list of generic types that elements represent in a beast file.<br>");
         writer.println("</p>");
@@ -353,12 +346,13 @@ public class XMLDocumentationHandler {
                             matchingParserNames.add(xmlParser.getParserName());                                                        
 //                            writer.println(xmlParser.toHTML(this));
 
-//                        writer.println("<div><a href=\"index.html#" + xmlParser.getParserName() + "\"> &lt;"
+//                        writer.println("<div><a href=\"" + BeastParserDoc.INDEX_HTML + "#" + xmlParser.getParserName() + "\"> &lt;"
 //                                + xmlParser.getParserName() + "&gt;</a></div>");
                             writer.println("<div id=\"" + xmlParser.getParserName() + "\" class=\"element\">");
-                            writer.println("  <div class=\"elementheader\">");
-                            writer.println("    <span class=\"elementname\"><a href=\"types.html#" + xmlParser.getParserName() + "\"> <h3>&lt;"
-                                    + xmlParser.getParserName() + "&gt;</h3></a></span>");
+//                            writer.println("  <div class=\"elementheader\">");
+                            writer.println("    <span class=\"elementname\"><a href=\"" + BeastParserDoc.DEATAIL_HTML
+                                     + "#" + xmlParser.getParserName() + "\"> <h3>&lt;" + xmlParser.getParserName()
+                                    + "&gt;</h3></a></span>");
                             writer.println("    <div class=\"description\"><b>Description:</b><br>");
                             writer.println(xmlParser.getParserDescription());
                             writer.println("    </div>");
@@ -398,7 +392,7 @@ public class XMLDocumentationHandler {
 //                    i = matchingParserNames.iterator();
 //                    while (i.hasNext()) {
 //                        XMLObjectParser parser = i.next();
-//                        writer.println("<div><a href=\"index.html#" + parser.getParserName() + "\"> &lt;"
+//                        writer.println("<div><a href=\"" + BeastParserDoc.INDEX_HTML + "#" + parser.getParserName() + "\"> &lt;"
 //                                + parser.getParserName() + "&gt;</a></div>");
 //                        writer.println("<div>" + parser.getParserDescription() + "</div>");
 //                        if (parser.hasExample()) writer.println("<div>" + parser.getExample() + "</div>");
@@ -411,7 +405,7 @@ public class XMLDocumentationHandler {
             }
 
         }
-
+        writer.println("</body>");
         writer.println("</html>");
     }
 
@@ -426,7 +420,7 @@ public class XMLDocumentationHandler {
 
     public String getHTMLForClass(Class c) {
         String name = ClassComparator.getName(c);
-        return "<A HREF=\"types.html#" + name + "\">" + name + "</A>";
+        return "<A HREF=\"" + BeastParserDoc.DEATAIL_HTML + "#" + name + "\">" + name + "</A>";
     }
 /*
 	class SetHash {

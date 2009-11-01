@@ -238,8 +238,8 @@ public class AncestralSequenceAnnotator {
                     int cnt = 0;
                     double sum = 0;
                     String charList = "";
-                    for (Iterator i = tree.getAttributeNames(); i.hasNext();) {
-                        String name = (String) i.next();
+                    for (Iterator<String> i = tree.getAttributeNames(); i.hasNext();) {
+                        String name = i.next();
                         if (name.startsWith("pi")) {
                             String character = name.substring(2, 3);
                             charList = charList.concat(character);
@@ -271,7 +271,7 @@ public class AncestralSequenceAnnotator {
     public static final String AA_ORDER = "ACDEFGHIKLMNPQRSTVWY";
 
     //	public static final String WAG_STRING = "Empirical(Data/wag.dat)*pi";
-    private int die = 0;
+    private final int die = 0;
 
     private Tree processTree(Tree tree) {
 
@@ -411,10 +411,10 @@ public class AncestralSequenceAnnotator {
     }
 
     private void setupTreeAttributes(Tree tree) {
-        Iterator iter = tree.getAttributeNames();
+        Iterator<String> iter = tree.getAttributeNames();
         if (iter != null) {
             while (iter.hasNext()) {
-                String name = (String) iter.next();
+                String name = iter.next();
                 treeAttributeNames.add(name);
             }
         }
@@ -522,7 +522,7 @@ public class AncestralSequenceAnnotator {
             addTreeAttributes(tree);
         }
 
-        public Map getCladeMap() {
+        public Map<BitSet, Clade> getCladeMap() {
             return cladeMap;
         }
 
@@ -847,14 +847,19 @@ public class AncestralSequenceAnnotator {
                             i++;
                         }
                         pw.close();
-                        String line;
+
                         Process p = Runtime.getRuntime().exec(clustalExecutable + " " + fileName + " -OUTPUT=NEXUS");
                         BufferedReader input =
                                 new BufferedReader
                                         (new InputStreamReader(p.getInputStream()));
-                        while ((line = input.readLine()) != null) {
+                        {
+                            //String line;
+
+                            while ((/*line = */input.readLine()) != null) {
 //							System.out.println(line);
+                            }
                         }
+
                         input.close();
                         externalCalls++;
 //						System.err.println("clustal call #" + externalCalls);

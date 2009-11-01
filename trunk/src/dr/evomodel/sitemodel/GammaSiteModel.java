@@ -216,10 +216,8 @@ public class GammaSiteModel extends AbstractModel
                 calculateCategoryRates();
             }
         }
-        double mu = 1.0;
-        if (muParameter != null) {
-            mu = muParameter.getParameterValue(0);
-        }
+
+        final double mu = (muParameter != null) ? muParameter.getParameterValue(0) : 1.0;
 
         return categoryRates[category] * mu;
     }
@@ -230,11 +228,10 @@ public class GammaSiteModel extends AbstractModel
                 calculateCategoryRates();
             }
         }
-        double[] rates = new double[categoryRates.length];
-        double mu = 1.0;
-        if (muParameter != null) {
-            mu = muParameter.getParameterValue(0);
-        }
+
+        final double mu = (muParameter != null) ? muParameter.getParameterValue(0) : 1.0;
+
+        final double[] rates = new double[categoryRates.length];
         for (int i = 0; i < rates.length; i++) {
             rates[i] = categoryRates[i] * mu;
         }
@@ -402,7 +399,7 @@ public class GammaSiteModel extends AbstractModel
             Parameter shapeParam = null;
             int catCount = 4;
             if (xo.hasChildNamed(GAMMA_SHAPE)) {
-                XMLObject cxo = (XMLObject) xo.getChild(GAMMA_SHAPE);
+                final XMLObject cxo = xo.getChild(GAMMA_SHAPE);
                 catCount = cxo.getIntegerAttribute(GAMMA_CATEGORIES);
                 shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
@@ -415,14 +412,9 @@ public class GammaSiteModel extends AbstractModel
                 msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
             }
 
-            if (msg.length() > 0) {
-                Logger.getLogger("dr.evomodel").info("Creating site model: " + msg);
-            } else {
-                Logger.getLogger("dr.evomodel").info("Creating site model.");
-            }
+            Logger.getLogger("dr.evomodel").info("Creating site model." + (msg.length() > 0 ? msg : ""));
 
             return new GammaSiteModel(substitutionModel, muParam, shapeParam, catCount, invarParam);
-
         }
 
         //************************************************************************

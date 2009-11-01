@@ -113,7 +113,7 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
 			runner.init();
 			//         MCMCOptions options = new MCMCOptions();
 			//          OperatorSchedule opsched = (OperatorSchedule)xo.getChild(OperatorSchedule.class);
-			ArrayList loggers = new ArrayList();
+			ArrayList<Object> loggers = new ArrayList<Object>();
 
 			//         options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
 
@@ -162,7 +162,7 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
 			return rules;
 		}
 
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+		private final XMLSyntaxRule[] rules = {
 //                AttributeRule.newIntegerRule(CHAIN_LENGTH),
 //                AttributeRule.newBooleanRule(COERCION, true),
 //                AttributeRule.newIntegerRule(PRE_BURNIN, true),
@@ -178,6 +178,6 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
 	private String id;
 	private int mpiRank;
 	private int mpiSize;
-	private Likelihood likelihood;
+	private final Likelihood likelihood;
 
 }

@@ -139,15 +139,15 @@ public class StructuredColourSampler implements ColourSampler {
     private void computeIntervals(Tree tree, MetaPopulation mp) {
 
         // dumb implementation using a sorted map - slowish but simple
-        TreeMap intervals = new TreeMap();
+        TreeMap<Double, ArrayList<NodeRef>> intervals = new TreeMap<Double, ArrayList<NodeRef>>();
         int numnodes = tree.getNodeCount();
         for (int i = 0; i < numnodes; i++) {
             NodeRef node = tree.getNode(i);
             Double height = new Double(tree.getNodeHeight(node));
             if (intervals.containsKey(height)) {
-                ((List) intervals.get(height)).add(node);
+                (intervals.get(height)).add(node);
             } else {
-                ArrayList list = new ArrayList(1);
+                ArrayList<NodeRef> list = new ArrayList<NodeRef>(1);
                 list.add(node);
                 intervals.put(height, list);
             }
@@ -156,14 +156,14 @@ public class StructuredColourSampler implements ColourSampler {
         interval2Height = new double[intervals.size()];
         avgN0 = new double[intervals.size()];
         avgN1 = new double[intervals.size()];
-        Iterator iter = intervals.keySet().iterator();
+        Iterator<Double> iter = intervals.keySet().iterator();
         int interval = 0;
         while (iter.hasNext()) {
-            Double height = (Double) iter.next();
+            Double height = iter.next();
             interval2Height[interval] = height.doubleValue();
-            List nodes = (List) intervals.get(height);
+            List<NodeRef> nodes = intervals.get(height);
             for (int i = 0; i < nodes.size(); i++) {
-                node2Interval[((NodeRef) nodes.get(i)).getNumber()] = interval;
+                node2Interval[(nodes.get(i)).getNumber()] = interval;
             }
             // now initialize the effective (i.e. harmonic average) N's
             if (interval > 0) {
@@ -608,22 +608,18 @@ public class StructuredColourSampler implements ColourSampler {
         if (S < 1.0e-5) {
             if (current == 0) {
                 a = Math.exp(-a);
-                double vec[] = {a, b * a};
-                return vec;
+                return new double[]{a, b * a};
             } else {
                 d = Math.exp(-d);
-                double vec[] = {c * d, d};
-                return vec;
+                return new double[]{c * d, d};
             }
         } else {
             double T = Math.exp(-(a + d + S) / 2.0);
             double U = Math.exp(-(a + d - S) / 2.0);
             if (current == 0) {
-                double[] vec = {((d - a + S) * U - (d - a - S) * T) / (2 * S), (b * (U - T)) / S};
-                return vec;
+                return new double[]{((d - a + S) * U - (d - a - S) * T) / (2 * S), (b * (U - T)) / S};
             } else {
-                double[] vec = {(c * (U - T)) / S, ((a - d + S) * U - (a - d - S) * T) / (2 * S)};
-                return vec;
+                return new double[]{(c * (U - T)) / S, ((a - d + S) * U - (a - d - S) * T) / (2 * S)};
             }
         }
     }
@@ -706,7 +702,7 @@ public class StructuredColourSampler implements ColourSampler {
 
         // Make a result array and a current state
         double[][] partials = new double[topInterval - bottomInterval][2];
-        double[] state = (double[]) inState.clone();
+        double[] state = inState.clone();
         int curinterval = bottomInterval;
 
         while (curinterval != topInterval) {
@@ -1250,7 +1246,7 @@ public class StructuredColourSampler implements ColourSampler {
 
     private final int colourCount;
 
-    private int[] nodeColours;
+    private final int[] nodeColours;
 
     private final int[] leafColourCounts;
 

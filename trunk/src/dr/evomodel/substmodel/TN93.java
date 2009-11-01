@@ -276,6 +276,38 @@ public class TN93 extends AbstractNucleotideModel {
     protected void setupRelativeRates() {
     }
 
+    // untested
+//     public double[] getEigenValues() {
+//        final double k1 = getKappa1();
+//        final double k2 = getKappa2();
+//        calculateFreqRY();
+//
+//        return new double[]{0, -1, -(k1*freqR + freqY), -(k2*freqY + freqR)};
+//     }
+//
+//     public double[][] getEigenVectors() {
+//        calculateFreqRY();
+//
+//         final double[][] emat = {
+//                 {1., 1, 1., 1},
+//                 {1, 1, -freqR / freqY, -freqR / freqY},
+//                 {1, -freqA / freqC, 0, 0},
+//                 {0, 0, 1, -freqG / freqT}};
+//
+//         // make them norm 1
+//         for(int k = 0; k < 4; ++k) {
+//             double s = 0;
+//             for(int i = 0; i < 4; ++i) {
+//                s += emat[k][i];
+//             }
+//             s = 1.0/Math.sqrt(s);
+//             for(int i = 0; i < 4; ++i) {
+//                emat[k][i] *= s;
+//             }
+//         }
+//         return emat;
+//     }
+
     // *****************************************************************
     // Interface Model
     // *****************************************************************

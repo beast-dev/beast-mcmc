@@ -32,6 +32,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import dr.app.tools.BeastParserDoc;
+
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
     public final Object parseXMLObject(XMLObject xo, String id, ObjectStore store, boolean strictXML)
@@ -141,8 +143,8 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
     /**
      * Allowed if any of the rules allows that element
-     * @param elementName
-     * @return
+     * @param elementName  String
+     * @return boolean isAllowed
      */
     public final boolean isAllowed(String elementName) {
         final XMLSyntaxRule[] rules = getSyntaxRules();
@@ -206,8 +208,9 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         StringBuffer buffer = new StringBuffer();
         buffer.append("<div id=\"").append(getParserName()).append("\" class=\"element\">\n");
         buffer.append("  <div class=\"elementheader\">\n");
-        buffer.append("    <span class=\"elementname\"><a href=\"index.html#").append(getParserName())
-                .append("\"> <h3>&lt;").append(getParserName()).append("&gt;</h3></a></span>\n");         
+        buffer.append("    <span class=\"elementname\"><a href=\"").append(BeastParserDoc.INDEX_HTML)
+                .append("#").append(getParserName()).append("\"> <h3>&lt;").append(getParserName())
+                .append("&gt;</h3></a></span>\n");         
         buffer.append("    <div class=\"description\"><b>Description:</b><br>\n");
         buffer.append("      ").append(getParserDescription()).append("\n");
         buffer.append("    </div>\n");

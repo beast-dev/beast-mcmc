@@ -420,7 +420,8 @@ public class XMLDocumentationHandler {
 
     public String getHTMLForClass(Class c) {
         String name = ClassComparator.getName(c);
-        return "<A HREF=\"" + BeastParserDoc.DEATAIL_HTML + "#" + name + "\">" + name + "</A>";
+//        return "<A HREF=\"" + BeastParserDoc.DEATAIL_HTML + "#" + name + "\">" + name + "</A>";
+        return "<A HREF=\"" + BeastParserDoc.INDEX_HTML + "#" + name + "\">" + name + "</A>";
     }
 /*
 	class SetHash {

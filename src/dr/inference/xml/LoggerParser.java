@@ -87,8 +87,9 @@ public class LoggerParser extends AbstractXMLObjectParser {
             // is a screen log
             performanceReport = true;
         }
-        
-        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, performanceReport, logEvery * 5);
+
+        // added a performance measurement delay to avoid the full evaluation period.
+        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, performanceReport, 10000);
 
         if (xo.hasAttribute(TITLE)) {
             logger.setTitle(xo.getStringAttribute(TITLE));

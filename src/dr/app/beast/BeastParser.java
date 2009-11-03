@@ -42,9 +42,12 @@ import java.util.Properties;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Walter Xie
  * @version $Id: BeastParser.java,v 1.76 2006/08/30 16:01:59 rambaut Exp $
  */
 public class BeastParser extends XMLParser {
+
+    public final String RELEASE ="release_parsers.properties";
 
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean strictXML) {
         super(strictXML);
@@ -63,6 +66,9 @@ public class BeastParser extends XMLParser {
 
         // Try to find and load the additional 'core' parsers
         try {
+            // always load release_parsers.properties !!!
+            loadProperties(this.getClass(), RELEASE, verbose);
+
             Properties properties = new Properties();
             properties.load(this.getClass().getResourceAsStream("beast.properties"));
 
@@ -75,8 +81,13 @@ public class BeastParser extends XMLParser {
                 parsers = properties.getProperty("parsers");
             }
 
-            if (parsers != null) {
-                // load the parsers
+            if (parsers != null ) {
+                // load the development parsers
+                if (parsers.equalsIgnoreCase("development")) {
+                    System.out.println("Loading additional development parsers from " + parsers + "_parsers.properties, "
+                            + "which is additional set of parsers only available for development version ...");
+                    System.out.println();
+                }
                 loadProperties(this.getClass(), parsers + "_parsers.properties", verbose);
             }
 
@@ -100,8 +111,13 @@ public class BeastParser extends XMLParser {
     private void loadProperties(Class c, String parsersFile, boolean verbose) throws IOException {
 
         if (verbose) {
-            System.out.println();
-            System.out.println("Loading additional parsers (" + parsersFile + "):");
+            if (parsersFile.equalsIgnoreCase(RELEASE)) {
+                System.out.println();
+                System.out.println("Always loading " + parsersFile + ":");
+            } else {
+                System.out.println();
+                System.out.println("Loading additional parsers (" + parsersFile + "):");
+            }
         }
         final InputStream stream = c.getResourceAsStream(parsersFile);
         if (stream == null) {
@@ -122,6 +138,9 @@ public class BeastParser extends XMLParser {
                         boolean replaced = addXMLObjectParser((XMLObjectParser) parser.newInstance(), true);
                         if (verbose) {
                             System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName());
+                        } else if (replaced) {
+                            System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
+                                    + "which is REPLACING the same parser loaded previously.\n");
                         }
                     } else {
                         boolean parserFound = false;
@@ -132,7 +151,11 @@ public class BeastParser extends XMLParser {
                                 try {
                                     boolean replaced = addXMLObjectParser((XMLObjectParser) field.get(null), true);
                                     if (verbose) {
-                                        System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName() + "." + field.getName());
+                                        System.out.println((replaced ? "Replaced" : "Loaded") + " parser: "
+                                                + parser.getName() + "." + field.getName());
+                                    } else if (replaced) {
+                                        System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
+                                                + "which is REPLACING the same parser loaded previously.\n");                                        
                                     }
                                 } catch (IllegalArgumentException iae) {
                                     System.err.println("Failed to install parser: " + iae.getMessage());

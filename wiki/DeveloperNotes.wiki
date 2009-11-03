@@ -19,3 +19,16 @@ Try to avoid circular dependencies between packages. Certain packages are intend
   * An example of this is _dr.evomodel.transmission_ which contains a package of classes for analysing transmission histories for infectious diseases. 
 
   * The advantages of this is that once we have a plugin architecture, bug fixes and improvements of models will be able to be distributed independently of BEAST.
+
+= 'Parsers Loading Regulations' =
+
+  * Please review release_parser.properties, and please MOVE any parser not ready for release into development_parser.properties.   
+
+  * To solve release parsers out of date problem, I made 3 changes for loading parsers:
+1) Always load release_parser.properties;
+2) development_parser.properties should contain additional parsers only available for development, which should NOT duplicate with release parsers;
+3) add WARNING message to check the duplication of parser loading.
+
+  * From now, any parser not ready for release should stay in development_parser.properties. Once it is ready for release, it should be moved into release_parser.properties.
+
+  * I suggest to move all parsers in BeastParser.jave into release_parser.properties in next stage.  

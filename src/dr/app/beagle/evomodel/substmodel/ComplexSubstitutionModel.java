@@ -2,12 +2,18 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
+import dr.inference.model.Likelihood;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Model;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.MatrixEntryColumn;
+
 import java.util.Arrays;
 
 /**
  * @author Marc Suchard
  */
-public class ComplexSubstitutionModel extends GeneralSubstitutionModel {
+public class ComplexSubstitutionModel extends GeneralSubstitutionModel implements Likelihood {
 
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
@@ -128,6 +134,63 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel {
         if (doNormalization)
             return super.getNormalizationValue(matrix, pi);
         return 1.0;
+    }
+
+    public double getLogLikelihood() {
+        if (connectedAndWellConditioned())
+            return 0;
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    private boolean connectedAndWellConditioned() {
+        if (probability == null)
+            probability = new double[stateCount*stateCount];
+
+        try {
+            getTransitionProbabilities(1.0,probability);
+            return BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability);
+        } catch (Exception e) { // Any numerical error is bad news
+            return false;
+        }
+    }
+
+    public String prettyName() {
+        return Abstract.getPrettyName(this);
+    }
+
+    public void setNormalization(boolean doNormalization) {
+        this.doNormalization = doNormalization;
+    }
+
+    public void makeDirty() {
+
+    }
+
+    @Override
+    public boolean isUsed() {
+        return super.isUsed() && isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    private boolean isUsed = false;
+    private double[] probability;
+
+    public Model getModel() {
+        return this;
+    }
+
+    public LogColumn[] getColumns() {
+
+        LogColumn[] columnList = new LogColumn[stateCount * stateCount];
+        int index = 0;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++)
+                columnList[index++] = new MatrixEntryColumn(getId(), i, j, getQ());
+        }
+        return columnList;
     }
 
     private boolean doNormalization = true;

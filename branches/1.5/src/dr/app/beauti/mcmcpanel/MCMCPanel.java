@@ -71,6 +71,9 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
+    JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analaysis file:");
+    JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
+
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
@@ -195,7 +198,23 @@ public class MCMCPanel extends BeautiPanel {
         substTreeFileNameField.setColumns(32);
         substTreeFileNameField.setEditable(false);
         substTreeFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);       
+        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
+
+        optionsPanel.addComponent(operatorAnalaysisCheck);
+        operatorAnalaysisCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                options.operatorAnalays = operatorAnalaysisCheck.isSelected();
+                
+                updateOtherFileNames(options);
+
+                frame.setDirty();
+            }
+        });
+        
+        operatorAnalaysisFileNameField.setColumns(32);
+        operatorAnalaysisFileNameField.setEditable(false);
+        operatorAnalaysisFileNameField.setEnabled(false);
+        optionsPanel.addComponentWithLabel("Operator analaysis file name:", operatorAnalaysisFileNameField);
 
         optionsPanel.addSeparator();
 
@@ -271,7 +290,9 @@ public class MCMCPanel extends BeautiPanel {
             fileNameStemField.setText(fileNameStem);
             fileNameStemField.setEnabled(false);
         }
-        
+
+        operatorAnalaysisCheck.setSelected(options.operatorAnalays);
+
         updateOtherFileNames(options);
 
         samplePriorCheckBox.setSelected(options.samplePriorOnly);
@@ -303,6 +324,17 @@ public class MCMCPanel extends BeautiPanel {
                 substTreeFileNameField.setText("");
             }
 
+            options.operatorAnalaysFileName = options.fileNameStem + ".ops";
+            if (addTxt.isSelected()) {
+                options.operatorAnalaysFileName = options.operatorAnalaysFileName + ".txt";
+            }
+            operatorAnalaysisFileNameField.setEnabled(options.operatorAnalays);
+            if (options.operatorAnalays) {
+                operatorAnalaysisFileNameField.setText(options.operatorAnalaysFileName);
+            } else {
+                operatorAnalaysisFileNameField.setText("");
+            }
+            
 //            mapTreeLogCheck.setEnabled(true);
 //            mapTreeLogCheck.setSelected(options.mapTreeLog);
 //            mapTreeFileNameField.setEnabled(options.mapTreeLog);
@@ -318,9 +350,11 @@ public class MCMCPanel extends BeautiPanel {
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");
-            substTreeLogCheck.setEnabled(false);
+            substTreeLogCheck.setSelected(false);
             substTreeFileNameField.setEnabled(false);
-            substTreeFileNameField.setText("untitled");
+            substTreeFileNameField.setText("");
+            operatorAnalaysisCheck.setSelected(false);
+            operatorAnalaysisFileNameField.setText("");
         }
     }
 
@@ -333,6 +367,9 @@ public class MCMCPanel extends BeautiPanel {
 
         options.substTreeLog = substTreeLogCheck.isSelected();
         updateTreeFileNameList();
+
+        options.operatorAnalays = operatorAnalaysisCheck.isSelected();
+        options.operatorAnalaysFileName = operatorAnalaysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
     }

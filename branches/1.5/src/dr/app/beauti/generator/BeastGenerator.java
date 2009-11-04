@@ -797,13 +797,17 @@ public class BeastGenerator extends Generator {
      */
     public void writeMCMC(XMLWriter writer) {
         writer.writeComment("Define MCMC");
-        writer.writeOpenTag(
-                "mcmc",
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, "mcmc"),
-                        new Attribute.Default<Integer>("chainLength", options.chainLength),
-                        new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false")
-                });
+
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
+        attributes.add(new Attribute.Default<Integer>("chainLength", options.chainLength));
+        attributes.add(new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false"));
+
+        if (options.operatorAnalays) {
+            attributes.add(new Attribute.Default<String>("operatorAnalaysis", options.operatorAnalaysFileName));
+        }
+
+        writer.writeOpenTag("mcmc",attributes);
 
         if (options.hasData()) {
             writer.writeOpenTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));

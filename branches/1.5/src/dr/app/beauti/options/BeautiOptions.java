@@ -117,6 +117,8 @@ public class BeautiOptions extends ModelOptions {
         treeFileName.clear();
         substTreeLog = false;
         substTreeFileName.clear();
+        operatorAnalays = false;
+        operatorAnalaysFileName = null;
         
 //        substitutionModelOptions = new SubstitutionModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
@@ -751,6 +753,8 @@ public class BeautiOptions extends ModelOptions {
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
+    public boolean operatorAnalays = false;
+    public String operatorAnalaysFileName = null;
     
 //    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);

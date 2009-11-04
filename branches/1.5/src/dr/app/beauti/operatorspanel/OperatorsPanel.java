@@ -38,6 +38,7 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -60,6 +61,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     public List<Operator> operators = new ArrayList<Operator>();
 
+    private BeautiOptions options;
     BeautiFrame frame = null;
 
     public OperatorsPanel(BeautiFrame parent) {
@@ -110,6 +112,13 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         autoOptimizeCheck = new JCheckBox("Auto Optimize - This option will attempt to tune the operators to maximum efficiency. Turn off to tune the operators manually.");
         autoOptimizeCheck.setOpaque(false);
+        autoOptimizeCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                options.autoOptimize = autoOptimizeCheck.isSelected();
+                if (!autoOptimizeCheck.isSelected()) options.operatorAnalays = true;
+                frame.setDirty();
+            }
+        });
 
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
@@ -129,17 +138,14 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     }
 
     public void setOptions(BeautiOptions options) {
+        this.options = options;
+
         autoOptimizeCheck.setSelected(options.autoOptimize);
-
         operators = options.selectOperators();
-
         operatorTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {
-
-        options.autoOptimize = autoOptimizeCheck.isSelected();
-
     }
 
     public JComponent getExportableComponent() {

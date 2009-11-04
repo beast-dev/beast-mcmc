@@ -47,7 +47,8 @@ import java.util.Properties;
  */
 public class BeastParser extends XMLParser {
 
-    public final String RELEASE ="release_parsers.properties";
+    public final String RELEASE ="release";
+    public final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
 
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean strictXML) {
         super(strictXML);
@@ -67,7 +68,7 @@ public class BeastParser extends XMLParser {
         // Try to find and load the additional 'core' parsers
         try {
             // always load release_parsers.properties !!!
-            loadProperties(this.getClass(), RELEASE, verbose);
+            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose);
 
             Properties properties = new Properties();
             properties.load(this.getClass().getResourceAsStream("beast.properties"));
@@ -81,19 +82,19 @@ public class BeastParser extends XMLParser {
                 parsers = properties.getProperty("parsers");
             }
 
-            if (parsers != null ) {
+            if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase("development")) {
-                    System.out.println("Loading additional development parsers from " + parsers + "_parsers.properties, "
-                            + "which is additional set of parsers only available for development version ...");
+                    System.out.println("Loading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
+                            + ", which is additional set of parsers only available for development version ...");
                     System.out.println();
                 }
-                loadProperties(this.getClass(), parsers + "_parsers.properties", verbose);
+                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose);
             }
 
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + "_parsers.properties", verbose);
+                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose);
                 }
             }
         } catch (IOException e) {
@@ -111,7 +112,7 @@ public class BeastParser extends XMLParser {
     private void loadProperties(Class c, String parsersFile, boolean verbose) throws IOException {
 
         if (verbose) {
-            if (parsersFile.equalsIgnoreCase(RELEASE)) {
+            if (parsersFile.equalsIgnoreCase(RELEASE + PARSER_PROPERTIES_SUFFIX)) {
                 System.out.println();
                 System.out.println("Always loading " + parsersFile + ":");
             } else {

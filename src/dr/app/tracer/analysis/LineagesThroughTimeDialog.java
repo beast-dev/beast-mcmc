@@ -497,11 +497,11 @@ public class LineagesThroughTimeDialog {
                                 index += 1;
                             }
 
+                            double lineageCount = 1;
                             if (index < branchingTimes[state].length) {
-                                double lineageCount = n - index + 1;
-
-                                bins[k].add(lineageCount);
+                                lineageCount = n - index + 1;
                             }
+                            bins[k].add(lineageCount);
                         }
                     }
                     height += delta;

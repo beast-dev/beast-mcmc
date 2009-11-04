@@ -44,6 +44,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -854,7 +855,22 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     clearLastMetaComment();
 
                     FlexibleNode root = readInternalNode(translationList);
-                    tree = new FlexibleTree(root, false, true);
+
+                    if (translationList != null) {
+                        // this ensures that if a translation list is used, the external node numbers
+                        // of the trees correspond as well.
+                        
+                        Map<Taxon, Integer> taxonNumberMap = new HashMap<Taxon, Integer>();
+                        for (String label : translationList.keySet()) {
+                            Taxon taxon = translationList.get(label);
+                            taxonNumberMap.put(taxon, Integer.parseInt(label) - 1);
+                        }
+
+                        tree = new FlexibleTree(root, false, true, taxonNumberMap);
+                    } else {
+                        tree = new FlexibleTree(root, false, true, null);
+                    }
+
                     tree.setId(token2);
 
                     if (getLastDelimiter() == ':') {

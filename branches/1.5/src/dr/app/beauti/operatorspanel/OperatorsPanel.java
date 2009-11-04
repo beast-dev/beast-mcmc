@@ -115,7 +115,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         autoOptimizeCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 options.autoOptimize = autoOptimizeCheck.isSelected();
-                if (!autoOptimizeCheck.isSelected()) options.operatorAnalays = true;
+                if (!autoOptimizeCheck.isSelected()) options.operatorAnalysis = true;
                 frame.setDirty();
             }
         });

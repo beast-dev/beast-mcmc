@@ -203,7 +203,7 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addComponent(operatorAnalaysisCheck);
         operatorAnalaysisCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                options.operatorAnalays = operatorAnalaysisCheck.isSelected();
+                options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
                 
                 updateOtherFileNames(options);
 
@@ -291,7 +291,7 @@ public class MCMCPanel extends BeautiPanel {
             fileNameStemField.setEnabled(false);
         }
 
-        operatorAnalaysisCheck.setSelected(options.operatorAnalays);
+        operatorAnalaysisCheck.setSelected(options.operatorAnalysis);
 
         updateOtherFileNames(options);
 
@@ -324,13 +324,13 @@ public class MCMCPanel extends BeautiPanel {
                 substTreeFileNameField.setText("");
             }
 
-            options.operatorAnalaysFileName = options.fileNameStem + ".ops";
+            options.operatorAnalysisFileName = options.fileNameStem + ".ops";
             if (addTxt.isSelected()) {
-                options.operatorAnalaysFileName = options.operatorAnalaysFileName + ".txt";
+                options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
             }
-            operatorAnalaysisFileNameField.setEnabled(options.operatorAnalays);
-            if (options.operatorAnalays) {
-                operatorAnalaysisFileNameField.setText(options.operatorAnalaysFileName);
+            operatorAnalaysisFileNameField.setEnabled(options.operatorAnalysis);
+            if (options.operatorAnalysis) {
+                operatorAnalaysisFileNameField.setText(options.operatorAnalysisFileName);
             } else {
                 operatorAnalaysisFileNameField.setText("");
             }
@@ -368,8 +368,8 @@ public class MCMCPanel extends BeautiPanel {
         options.substTreeLog = substTreeLogCheck.isSelected();
         updateTreeFileNameList();
 
-        options.operatorAnalays = operatorAnalaysisCheck.isSelected();
-        options.operatorAnalaysFileName = operatorAnalaysisFileNameField.getText();
+        options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
+        options.operatorAnalysisFileName = operatorAnalaysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
     }

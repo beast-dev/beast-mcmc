@@ -803,8 +803,8 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Integer>("chainLength", options.chainLength));
         attributes.add(new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false"));
 
-        if (options.operatorAnalays) {
-            attributes.add(new Attribute.Default<String>("operatorAnalaysis", options.operatorAnalaysFileName));
+        if (options.operatorAnalysis) {
+            attributes.add(new Attribute.Default<String>("operatorAnalysis", options.operatorAnalysisFileName));
         }
 
         writer.writeOpenTag("mcmc",attributes);

@@ -173,7 +173,7 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
         double[][] G = gamma.getParameterAsMatrix();
         double[] theta = dependentParam.getParameterValues();
         double[] Xbeta = null;
-        boolean hasEffects = getNumberOfEffects() > 0;
+        boolean hasEffects = getNumberOfFixedEffects() > 0;
 
         if (!conditionalPrecisionKnown)
             calculateConditionPrecision();

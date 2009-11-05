@@ -53,10 +53,15 @@ public class EmpiricalTreeDistributionOperatorParser extends AbstractXMLObjectPa
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+        boolean metropolisHastings = false;
+
+        if (xo.hasAttribute(EmpiricalTreeDistributionOperator.METROPOLIS_HASTINGS)) {
+            metropolisHastings = xo.getBooleanAttribute(EmpiricalTreeDistributionOperator.METROPOLIS_HASTINGS);
+        }
 
         final EmpiricalTreeDistributionModel treeModel = (EmpiricalTreeDistributionModel) xo.getChild(EmpiricalTreeDistributionModel.class);
 
-        return new EmpiricalTreeDistributionOperator(treeModel, weight);
+        return new EmpiricalTreeDistributionOperator(treeModel, metropolisHastings, weight);
     }
 
     //************************************************************************
@@ -69,6 +74,7 @@ public class EmpiricalTreeDistributionOperatorParser extends AbstractXMLObjectPa
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+            AttributeRule.newBooleanRule(EmpiricalTreeDistributionOperator.METROPOLIS_HASTINGS, true),
             new ElementRule(EmpiricalTreeDistributionModel.class)
     };
 

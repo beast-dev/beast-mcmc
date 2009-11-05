@@ -608,7 +608,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
 //                for (PartitionData partition : options.dataPartitions) {
@@ -622,7 +622,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 3");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
 
@@ -641,7 +641,7 @@ public class BeastGenerator extends Generator {
                     writer.writeComment("The unique patterns for codon positions " + i);
                     writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                             }
                     );
 
@@ -662,7 +662,7 @@ public class BeastGenerator extends Generator {
 
 //            writer.writeOpenTag(SitePatternsParser.PATTERNS,
 //                    new Attribute[]{
-//                            new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS),
+//                            new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + SitePatternsParser.PATTERNS),
 //                    }
 //            );
             writePatternList(partition, 0, 1, writer);
@@ -710,7 +710,7 @@ public class BeastGenerator extends Generator {
 
         // no codon, unique patterns site patterns
         if (offset == 0 && every == 1)
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS));
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix()+ SitePatternsParser.PATTERNS));
 
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));

@@ -274,7 +274,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
                 for (PartitionData partition : model.getAllPartitionData()) { //?
-                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);                        
+                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);                        
                 }           
             } else { 
                 for (PartitionData partition : model.getAllPartitionData()) { //?

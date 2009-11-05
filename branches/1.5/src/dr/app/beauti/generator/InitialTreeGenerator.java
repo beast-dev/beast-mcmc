@@ -111,7 +111,7 @@ public class InitialTreeGenerator extends Generator {
                 		 throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
                     
                     for (PartitionData partition : model.getAllPartitionData()) {
-                        taxaId = partition.getName() + "." + TaxaParser.TAXA;
+                        taxaId = partition.getPrefix() + TaxaParser.TAXA;
                 		writeTaxaRef(taxaId, writer);
                 	} //TODO BEAST cannot handle multi <taxa> ref for 1 tree                  	
 //                    taxaId = model.getAllPartitionData().get(0).getName() + "." + TaxaParser.TAXA;

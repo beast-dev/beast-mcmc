@@ -137,21 +137,9 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     public double getLogLikelihood() {
-        if (connectedAndWellConditioned())
+        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this))
             return 0;
         return Double.NEGATIVE_INFINITY;
-    }
-
-    private boolean connectedAndWellConditioned() {
-        if (probability == null)
-            probability = new double[stateCount*stateCount];
-
-        try {
-            getTransitionProbabilities(1.0,probability);
-            return BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability);
-        } catch (Exception e) { // Any numerical error is bad news
-            return false;
-        }
     }
 
     public String prettyName() {

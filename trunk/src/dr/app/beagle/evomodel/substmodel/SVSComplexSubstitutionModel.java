@@ -31,7 +31,8 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
 
     public boolean validState() {
-        return !updateMatrix || connectedAndWellConditioned();
+        return !updateMatrix ||
+                Utils.connectedAndWellConditioned(probability,this);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -42,31 +43,6 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 
     public Model getModel() {
         return this;
-    }
-
-    public double getLogLikelihood() {
-        if (updateMatrix) {
-            if (!connectedAndWellConditioned()) {
-                return Double.NEGATIVE_INFINITY;
-            }
-        }
-        return 0;
-    }
-
-//       public double getLogLikelihood() {
-//        double logL = super.getLogLikelihood();
-//        if (logL == 0 && considerConnectedness && !isStronglyConnected()) { // Also check that graph is connected
-//            logL = Double.NEGATIVE_INFINITY;
-//        }
-//        return logL;
-//    }
-
-    private boolean connectedAndWellConditioned() {
-        if (probability == null)
-            probability = new double[stateCount*stateCount];
-
-        getTransitionProbabilities(1.0,probability);
-        return Utils.connectedAndWellConditioned(probability);
     }
 
     /**

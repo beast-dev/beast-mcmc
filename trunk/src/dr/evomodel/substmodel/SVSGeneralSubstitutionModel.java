@@ -39,7 +39,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     public boolean validState() {
-        return !updateMatrix || connectedAndWellConditioned();
+        return !updateMatrix || Utils.connectedAndWellConditioned(probability,this);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -64,23 +64,11 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public double getLogLikelihood() {
         if (updateMatrix) {
-            if (!connectedAndWellConditioned()) {
+            if (!Utils.connectedAndWellConditioned(probability,this)) {
                 return Double.NEGATIVE_INFINITY;
             }
         }
         return 0;
-    }
-
-    private boolean connectedAndWellConditioned() {
-        if (probability == null)
-            probability = new double[stateCount*stateCount];
-
-        try {
-            getTransitionProbabilities(1.0,probability);
-            return Utils.connectedAndWellConditioned(probability);
-        } catch (Exception e) { // Any numerical error is bad news
-            return false;
-        }
     }
 
     /**

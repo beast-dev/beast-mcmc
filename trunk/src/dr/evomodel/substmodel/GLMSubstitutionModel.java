@@ -2,8 +2,8 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evoxml.DataTypeUtils;
-import dr.inference.model.Parameter;
 import dr.inference.model.Model;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
@@ -48,21 +48,14 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return glm.getColumns();
     }
 
-
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
-        if (logL == 0) { // Also check that graph is connected
-            getTransitionProbabilities(1.0,testProbabilities);
-            for(int i=0; i<testProbabilities.length; i++) {
-                if (testProbabilities[i] == 0) {
-                    logL = Double.NEGATIVE_INFINITY;
-                    break;
-                }
-            }
+        if (logL == 0 &&
+            BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(testProbabilities,this)) { // Also check that graph is connected
+            return 0;
         }
-        return logL;
-    }
-
+        return Double.NEGATIVE_INFINITY;
+    }   
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -86,7 +79,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
                 throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);
             }
 
-            XMLObject cxo = (XMLObject) xo.getChild(ROOT_FREQUENCIES);
+            XMLObject cxo = xo.getChild(ROOT_FREQUENCIES);
             FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             if (dataType != rootFreq.getDataType()) {

@@ -202,15 +202,15 @@ public class PriorDialog {
         switch (priorType) {
             case UNIFORM_PRIOR:
                 panel = optionsPanels.get(priorType);
-                panel.getField(0).setRange(parameter.lower, parameter.upper);
+//                panel.getField(0).setRange(parameter.lower, parameter.upper);
                 panel.getField(0).setValue(parameter.lower);
-                panel.getField(1).setRange(parameter.lower, parameter.upper);
+//                panel.getField(1).setRange(parameter.lower, parameter.upper);
                 panel.getField(1).setValue(parameter.upper);
                 break;
 
             case EXPONENTIAL_PRIOR:
                 panel = optionsPanels.get(priorType);
-                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
                 if (parameter.mean != 0) {// ExponentialDistribution(1.0 / mean)
                     panel.getField(0).setValue(parameter.mean);
                 }
@@ -220,7 +220,7 @@ public class PriorDialog {
             case NORMAL_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.mean);
-                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
                 panel.getField(1).setValue(parameter.stdev);
                 break;
 
@@ -245,9 +245,9 @@ public class PriorDialog {
             case GAMMA_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.shape);
-                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
                 panel.getField(1).setValue(parameter.scale);
-                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
                 panel.getField(2).setValue(parameter.offset);
                 break;
 
@@ -321,6 +321,7 @@ public class PriorDialog {
 			optionPanel.addComponents(new JLabel("Initial Value:"), initialField);
 		}
 
+        // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart
 		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {
 			optionPanel.addSeparator();
 

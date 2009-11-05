@@ -19,13 +19,16 @@ import java.util.List;
  */
 public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
 
-    public final static String EMPIRICAL_TREE_DISTRIBUTION_OPERATOR = "empiricalTreeDistributionOperator";
+    public static final String EMPIRICAL_TREE_DISTRIBUTION_OPERATOR = "empiricalTreeDistributionOperator";
+    public static final String METROPOLIS_HASTINGS = "metropolisHastings";
 
     private final EmpiricalTreeDistributionModel treeModel;
+    private final boolean metropolisHastings;
 
-    public EmpiricalTreeDistributionOperator(EmpiricalTreeDistributionModel treeModel, double weight) {
+    public EmpiricalTreeDistributionOperator(EmpiricalTreeDistributionModel treeModel, boolean metropolisHastings, double weight) {
         this.treeModel = treeModel;
         setWeight(weight);
+        this.metropolisHastings = metropolisHastings;
     }
 
     // IMPLEMENTATION: SimpleMCMCOperator
@@ -34,7 +37,11 @@ public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
     public double doOperation() throws OperatorFailedException {
         treeModel.drawTreeIndex();
 
-        // always accept these moves...
+        if (metropolisHastings) {           
+            return 0.0;
+        }
+
+        // if not MetropolisHastings, always accept these moves...
         return Double.POSITIVE_INFINITY;
     }
 

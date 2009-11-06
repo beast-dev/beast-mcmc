@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -64,7 +65,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         if (randomEffects == null) {
             randomEffects = new ArrayList<Parameter>();
         }
-        if (effect.getDimension() != N) {
+        if (N != 0 && effect.getDimension() != N) {
             throw new RuntimeException("Random effects have the wrong dimension");
         }
         addVariable(effect);
@@ -94,7 +95,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         if(delta != null)
             addVariable(delta);
         numIndependentVariables++;
-        System.out.println("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
+        Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
     }
 
     public int getNumberOfFixedEffects() {
@@ -160,6 +161,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             for (int i = 0; i < N; i++)
                 xBeta[i] += X[i][k] * betaK;
         }
+
+        if (numRandomEffects != 0)
+            throw new RuntimeException("Attempting to retrieve fixed effects without controlling for random effects");
 
         return xBeta;
 
@@ -479,10 +483,12 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         private void checkRandomEffectsDimensions(Parameter randomEffect, Parameter dependentParam)
             throws XMLParseException {
+            if (dependentParam != null) {
             if (randomEffect.getDimension() != dependentParam.getDimension()) {
                 throw new XMLParseException(
                         "dim(" + dependentParam.getId() +") != dim(" + randomEffect.getId() +")"
                 );
+            }
             }
         }
 
@@ -516,7 +522,14 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                 new ElementRule(DEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
                 new ElementRule(INDEPENDENT_VARIABLES,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, 1, 3),
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class,true),
+                                new ElementRule(DesignMatrix.class),                                
+                                new ElementRule(INDICATOR,
+                                        new XMLSyntaxRule[]{
+                                                new ElementRule(Parameter.class)
+                                        },true),
+                        }, 1, 3),
                 new ElementRule(RANDOM_EFFECTS,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,

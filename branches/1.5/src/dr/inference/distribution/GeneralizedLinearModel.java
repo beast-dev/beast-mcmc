@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -29,7 +30,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     public static final String LOG_NORMAL_REGRESSION = "logNormal";
     public static final String LOG_LINEAR = "logLinear";
 //    public static final String LOG_TRANSFORM = "logDependentTransform";
-//	public static final String RANDOM_EFFECTS = "randomEffects";
+	public static final String RANDOM_EFFECTS = "randomEffects";
 
     protected Parameter dependentParam;
     protected List<Parameter> independentParam;
@@ -41,9 +42,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     protected Parameter scaleParameter;
 
     protected int numIndependentVariables = 0;
+    protected int numRandomEffects = 0;
     protected int N;
 
-    protected List<Parameter> randomEffects;
+    protected List<Parameter> randomEffects = null;
 
     public GeneralizedLinearModel(Parameter dependentParam) {
         super(GLM_LIKELIHOOD);
@@ -58,6 +60,18 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
 //    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
     public int[] getScaleDesign() { return scaleDesign; }
+
+    public void addRandomEffectsParameter(Parameter effect) {
+        if (randomEffects == null) {
+            randomEffects = new ArrayList<Parameter>();
+        }
+        if (N != 0 && effect.getDimension() != N) {
+            throw new RuntimeException("Random effects have the wrong dimension");
+        }
+        addVariable(effect);
+        randomEffects.add(effect);
+        numRandomEffects++;
+    }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
         if (designMatrix == null)
@@ -81,11 +95,15 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         if(delta != null)
             addVariable(delta);
         numIndependentVariables++;
-        System.out.println("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
+        Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
     }
 
-    public int getNumberOfEffects() {
+    public int getNumberOfFixedEffects() {
         return numIndependentVariables;
+    }
+
+    public int getNumberOfRandomEffects() {
+        return numRandomEffects;
     }
 
     public double[] getXBeta() {
@@ -106,12 +124,22 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             }
         }
 
-        return xBeta;
+        for (int j=0; j<numRandomEffects; j++) {
+            Parameter effect = randomEffects.get(j);
+            for (int i=0; i<N; i++) {
+                xBeta[i] += effect.getParameterValue(i);
+            }
+        }
 
+        return xBeta;
     }
 
-    public Parameter getEffect(int j) {
+    public Parameter getFixedEffect(int j) {
         return independentParam.get(j);
+    }
+
+    public Parameter getRandomEffect(int j) {
+        return randomEffects.get(j);
     }
 
     public Parameter getDependentVariable() {
@@ -133,6 +161,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             for (int i = 0; i < N; i++)
                 xBeta[i] += X[i][k] * betaK;
         }
+
+        if (numRandomEffects != 0)
+            throw new RuntimeException("Attempting to retrieve fixed effects without controlling for random effects");
 
         return xBeta;
 
@@ -405,13 +436,27 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                     }
                 }
 
-//                checkDimensions(scaleParameter, dependentParam, designMatrix);
                 glm.addScaleParameter(scaleParameter, scaleDesign);
             }
 
             addIndependentParameters(xo, glm, dependentParam);
+            addRandomEffects(xo, glm, dependentParam);
 
             return glm;
+        }
+
+        public void addRandomEffects(XMLObject xo, GeneralizedLinearModel glm,
+                                     Parameter dependentParam) throws XMLParseException {
+            int totalCount = xo.getChildCount();
+
+            for(int i=0; i<totalCount; i++) {
+                if (xo.getChildName(i).compareTo(RANDOM_EFFECTS) == 0) {
+                    XMLObject cxo = (XMLObject) xo.getChild(i);
+                    Parameter randomEffect = (Parameter) cxo.getChild(Parameter.class);
+                    checkRandomEffectsDimensions(randomEffect,dependentParam);
+                    glm.addRandomEffectsParameter(randomEffect);
+                }
+            }
         }
 
         public void addIndependentParameters(XMLObject xo, GeneralizedLinearModel glm,
@@ -436,6 +481,17 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             }
         }
 
+        private void checkRandomEffectsDimensions(Parameter randomEffect, Parameter dependentParam)
+            throws XMLParseException {
+            if (dependentParam != null) {
+            if (randomEffect.getDimension() != dependentParam.getDimension()) {
+                throw new XMLParseException(
+                        "dim(" + dependentParam.getId() +") != dim(" + randomEffect.getId() +")"
+                );
+            }
+            }
+        }
+
         private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
                 throws XMLParseException {
             if (dependentParam != null) {
@@ -451,7 +507,6 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                     );
                }
             }
-
         }
 
         //************************************************************************
@@ -467,7 +522,16 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                 new ElementRule(DEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
                 new ElementRule(INDEPENDENT_VARIABLES,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, 1, 3),
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class,true),
+                                new ElementRule(DesignMatrix.class),
+                                new ElementRule(INDICATOR,
+                                        new XMLSyntaxRule[]{
+                                                new ElementRule(Parameter.class)
+                                        },true),
+                        }, 1, 3),
+                new ElementRule(RANDOM_EFFECTS,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,
 //						new XMLSyntaxRule[]{new ElementRule(DesignMatrix.class)})
         };

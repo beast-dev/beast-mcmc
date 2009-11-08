@@ -47,7 +47,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
         this.effectPrior = effectPrior.getDistribution();
         dim = effect.getDimension();
         N = linearModel.getDependentVariable().getDimension();
-        numEffects = linearModel.getNumberOfEffects();
+        numEffects = linearModel.getNumberOfFixedEffects();
         X = linearModel.getX(effectNumber);
     }
 
@@ -180,7 +180,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
             if (prior.getDistribution().getType().compareTo(MultivariateNormalDistribution.TYPE) != 0)
                 throw new XMLParseException("Only a multivariate normal prior is conjugate");
 
-            XMLObject cxo = (XMLObject) xo.getChild(GeneralizedLinearModel.INDICATOR);
+            XMLObject cxo = xo.getChild(GeneralizedLinearModel.INDICATOR);
             Parameter indicators = null;
             if (cxo != null) {
                 indicators = (Parameter) cxo.getChild(Parameter.class);

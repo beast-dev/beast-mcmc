@@ -35,6 +35,8 @@ import dr.util.Version;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Properties;
 
 public class BeastParserDoc {
 
@@ -49,7 +51,10 @@ public class BeastParserDoc {
     public final static String LINK1 = "http://beast.bio.ed.ac.uk/";
     public final static String LINK2 = "http://code.google.com/p/beast-mcmc/";
 
-    public BeastParserDoc(XMLParser parser, String directory, boolean wikiFormat) throws java.io.IOException {
+    private final BeastParser parser;
+
+    public BeastParserDoc(BeastParser parser, String directory, boolean wikiFormat) throws java.io.IOException {
+        this.parser = parser;
 
         File file = new File(directory);
 
@@ -101,17 +106,6 @@ public class BeastParserDoc {
 //	private final void setup() throws XMLParseException {
     // add all the XMLObject parsers you need
 //	}
-
-    public static void printDocTitle(PrintWriter writer, String page) {
-        writer.println("<head>");
-        writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
-        writer.println("  <title>" + page + "</title>");
-        writer.println("</head>");
-        writer.println("<h1>" + TITTLE + "</h1>");
-        writer.println("<!-- " + AUTHORS + " -->");
-        writer.println("<!-- " + LINK1 + " -->");
-        writer.println("<!-- " + LINK2 + " -->");
-    }
 
     public static void printTitle() {
 

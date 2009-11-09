@@ -30,6 +30,7 @@ import dr.app.beast.BeastParser;
 
 import java.io.PrintWriter;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class XMLDocumentationHandler {
 
@@ -62,13 +63,16 @@ public class XMLDocumentationHandler {
         writer.println("  <title>" + page + "</title>");
         writer.println("</head>");
         writer.println("<h1>" + BeastParserDoc.TITTLE + "</h1>");
+        
+        Calendar date = Calendar.getInstance();
+        SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
 
         if (parser.parsers != null) {
             if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {
-                writer.println("<p>Release Version</p>");
+                writer.println("<p>Release Version (" + dateformatter.format(date.getTime()) + ")</p>");
                 System.out.println("Release Version");
             } else if (parser.parsers.equalsIgnoreCase(BeastParser.DEV)) {
-                writer.println("<p>Development Version</p>");
+                writer.println("<p>Development Version (" + dateformatter.format(date.getTime()) + ")</p>");
                 System.out.println("Development Version");
             }
         }

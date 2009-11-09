@@ -138,8 +138,11 @@ public interface Likelihood extends Loggable, Identifiable {
             String[] parts = s.split("\\.");
             s = parts[parts.length - 1];
             if( m != null ) {
-//                return s + "(" + m.getModelName() + ")";
-                return s + "(" + m.getId()  + ")";
+                if (m.getId() != null && m.getId().length() > 0) {
+                    return s + "(" + m.getId()  + ")";
+                } else {
+                    return s + "(" + m.getModelName() + ")";
+                }
             }
             return s;
         }

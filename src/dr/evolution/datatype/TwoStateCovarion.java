@@ -42,20 +42,24 @@ public class TwoStateCovarion extends DataType {
 
     public int getState(char c) {
         switch (c) {
-            case'a':
+            case 'a':
                 return 0;
-            case'b':
+            case 'b':
                 return 1;
-            case'c':
+            case 'c':
                 return 2;
-            case'd':
+            case 'd':
                 return 3;
-            case'0':
+            case '0':
                 return 4;
-            case'1':
+            case '1':
                 return 5;
+            case '?':
+                return getUnknownState();
+            case '-':
+                return getGapState();
         }
-        return getGapState();
+        throw new IllegalArgumentException("Character " + c + " not recognised in two-state covarion datatype!");
     }
 
     public char getChar(int state) {
@@ -73,8 +77,12 @@ public class TwoStateCovarion extends DataType {
                 return '0';
             case 5:
                 return '1';
+            case 6:
+                return '?';
+            case 7:
+                return '-';
         }
-        return '-';
+        throw new IllegalArgumentException("State " + state + " not recognised in two-state covarion datatype!");
     }
 
     /**
@@ -102,7 +110,7 @@ public class TwoStateCovarion extends DataType {
         }
         if (!isAmbiguousState(state)) {
             stateSet[state] = true;
-        } else if (state < (stateCount + 2)) {
+        } else if (state >= 4 && state <= 5) {
             for (int i = 0; i < stateCount; i++) {
                 if ((i % 2) == (state % 2)) {
                     stateSet[i] = true;

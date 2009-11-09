@@ -179,7 +179,7 @@ public class LogFileTraces extends AbstractTraceList {
         if (tokens == null) {
             throw new TraceException("Trace file is empty.");
         }
-        
+
         // read over empty lines
         while (!tokens.hasMoreTokens()) {
             tokens = reader.tokenizeLine();
@@ -280,7 +280,24 @@ public class LogFileTraces extends AbstractTraceList {
      * @param numberOfLines a hint about the number of lines, must be > 0
      */
     private void addTrace(String name, int numberOfLines) {
-        traces.add(new Trace(name, numberOfLines));
+        int suffix = 0;
+        String uniqueName = name;
+        boolean isNameUnique;
+
+        // check if name is unique and keep incrementing a suffix until it is.
+        do {
+            isNameUnique = true;
+            uniqueName = name + (suffix > 0 ? "_" + suffix : "");
+            for (Trace trace : traces) {
+                if (trace.getName().equalsIgnoreCase(uniqueName)) {
+                    suffix++;
+                    isNameUnique = false;
+                    break;
+                }
+            }
+        } while (!isNameUnique);
+
+        traces.add(new Trace(uniqueName, numberOfLines));
     }
 
     /**

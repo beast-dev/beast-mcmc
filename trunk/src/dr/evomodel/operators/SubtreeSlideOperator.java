@@ -65,9 +65,9 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         this.tree = tree;
         setWeight(weight);
 
-        if( size == 0.0 ) {
+        if (size == 0.0) {
             double b = 0.0;
-            for(int k = 0; k < tree.getNodeCount(); ++k) {
+            for (int k = 0; k < tree.getNodeCount(); ++k) {
                 b += tree.getBranchLength(tree.getNode(k));
             }
             size = b / (2 * tree.getNodeCount());
@@ -393,7 +393,12 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
             final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-            final double size = xo.getAttribute("size", 0.0);
+            final double size = xo.getAttribute("size", 1.0);
+
+            if (Double.isInfinite(size) || size <= 0.0) {
+                throw new XMLParseException("size attribute must be positive and not infinity.");
+            }
+
             final boolean gaussian = xo.getBooleanAttribute("gaussian");
             SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,
                     swapRates, swapTraits, scaledDirichletBranches, mode);

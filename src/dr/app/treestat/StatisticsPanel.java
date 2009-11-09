@@ -1,7 +1,7 @@
 /*
  * StatisticsPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -78,6 +78,10 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(TreeLength.FACTORY);
         availableStatistics.add(TreeHeight.FACTORY);
         availableStatistics.add(NodeHeights.FACTORY);
+        availableStatistics.add(InternalBranchLengths.FACTORY);
+        availableStatistics.add(InternalBranchRates.FACTORY);
+        availableStatistics.add(ExternalBranchRates.FACTORY);
+        availableStatistics.add(InternalNodeAttribute.FACTORY);
         availableStatistics.add(RootToTipLengths.FACTORY);
         availableStatistics.add(TMRCASummaryStatistic.FACTORY);
         availableStatistics.add(CladeMRCAAttributeStatistic.FACTORY);
@@ -123,7 +127,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         availableStatisticsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) { statisticsTableSelectionChanged(false); }
+            public void valueChanged(ListSelectionEvent evt) {
+                statisticsTableSelectionChanged(false);
+            }
         });
 
         scrollPane1 = new JScrollPane(availableStatisticsTable,
@@ -144,7 +150,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         includedStatisticsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) { statisticsTableSelectionChanged(true); }
+            public void valueChanged(ListSelectionEvent evt) {
+                statisticsTableSelectionChanged(true);
+            }
         });
 
         scrollPane2 = new JScrollPane(includedStatisticsTable,
@@ -159,7 +167,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         c.weighty = 0.75;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(6,6,6,6);
+        c.insets = new Insets(6, 6, 6, 6);
         c.gridx = 0;
         c.gridy = 0;
         add(scrollPane1, c);
@@ -168,7 +176,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         c.weighty = 0.75;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(6,0,6,0);
+        c.insets = new Insets(6, 0, 6, 0);
         c.gridx = 1;
         c.gridy = 0;
         add(buttonPanel1, c);
@@ -177,7 +185,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         c.weighty = 0.75;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(6,6,6,6);
+        c.insets = new Insets(6, 6, 6, 6);
         c.gridx = 2;
         c.gridy = 0;
         add(scrollPane2, c);
@@ -186,13 +194,13 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         c.weighty = 0.25;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(6,6,6,6);
+        c.insets = new Insets(6, 6, 6, 6);
         c.gridx = 0;
         c.gridy = 1;
         c.gridwidth = 3;
         add(statisticLabel, c);
 
-        setBorder(BorderFactory.createEmptyBorder(6,6,6,6));
+        setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
     }
 
     JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
@@ -222,7 +230,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         removeAction.setEnabled(false);
 
         buttonPanel.add(addButton);
-        buttonPanel.add(new JToolBar.Separator(new Dimension(6,6)));
+        buttonPanel.add(new JToolBar.Separator(new Dimension(6, 6)));
         buttonPanel.add(removeButton);
 
         return buttonPanel;
@@ -269,7 +277,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             int[] indices = availableStatisticsTable.getSelectedRows();
-            for (int i = indices.length-1; i >= 0; i--) {
+            for (int i = indices.length - 1; i >= 0; i--) {
                 TreeSummaryStatistic.Factory ssd = availableStatistics.get(indices[i]);
                 TreeSummaryStatistic tss = createStatistic(ssd);
                 if (tss != null) {
@@ -289,7 +297,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             int[] indices = includedStatisticsTable.getSelectedRows();
-            for (int i = indices.length-1; i >= 0; i--) {
+            for (int i = indices.length - 1; i >= 0; i--) {
                 treeStatData.statistics.remove(indices[i]);
             }
 
@@ -345,8 +353,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 optionPanel.addSeparator();
             }
 
-            if (factory.allowsTaxonList()) { taxonSetRadio.setSelected(true); }
-            if (factory.allowsWholeTree()) { wholeTreeRadio.setSelected(true); }
+            if (factory.allowsTaxonList()) {
+                taxonSetRadio.setSelected(true);
+            }
+            if (factory.allowsWholeTree()) {
+                wholeTreeRadio.setSelected(true);
+            }
         }
 
         if (factory.allowsDouble() || factory.allowsInteger() || factory.allowsString()) {
@@ -394,7 +406,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         if (wholeTreeRadio.isSelected()) {
             statistic = factory.createStatistic();
         } else if (taxonSetRadio.isSelected()) {
-            TreeStatData.TaxonSet t = (TreeStatData.TaxonSet)taxonSetCombo.getSelectedItem();
+            TreeStatData.TaxonSet t = (TreeStatData.TaxonSet) taxonSetCombo.getSelectedItem();
             Taxa taxa = new Taxa();
             taxa.setId(t.name);
             //Iterator iter = t.taxa.iterator();
@@ -411,12 +423,12 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         if (factory.allowsDouble()) {
             assert valueField instanceof RealNumberField;
 
-            Double value = ((RealNumberField)valueField).getValue();
+            Double value = ((RealNumberField) valueField).getValue();
             statistic.setDouble(value);
         } else if (factory.allowsInteger()) {
             assert valueField instanceof WholeNumberField;
 
-            Integer value = ((WholeNumberField)valueField).getValue();
+            Integer value = ((WholeNumberField) valueField).getValue();
             statistic.setInteger(value);
         } else {
             String value = valueField.getText();
@@ -459,7 +471,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             return "Category";
         }
 
-        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
     }
 
     class IncludedStatisticsTableModel extends AbstractTableModel {
@@ -497,7 +511,9 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             return "Description";
         }
 
-        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
     }
 
     class TreeSummaryStatisticLabel extends JLabel {
@@ -531,7 +547,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
                 html += "</ul>";
                 String ref = statistic.getSummaryStatisticReference();
                 if (ref != null && !ref.equals("") && !ref.equals("-")) {
-                    html +="Reference: " + ref;
+                    html += "Reference: " + ref;
                 }
                 html += "</body></html>";
             }

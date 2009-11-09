@@ -126,9 +126,9 @@ public final class MarkovChain {
                 }
             }
 
-            String message = "The initial likelihood is zero";
+            String message = "The initial likelihood is zero (log likelihood is negative infinity)";
             if (likelihood instanceof CompoundLikelihood) {
-                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis(2);
             } else {
                 message += "!";
             }
@@ -293,7 +293,7 @@ public final class MarkovChain {
                 // that before the operation was made.
 
                 final String d1 = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+                        ((CompoundLikelihood)likelihood).getDiagnosis(-1) : "";
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
@@ -307,7 +307,7 @@ public final class MarkovChain {
                             + " " + mcmcOperator.getOperatorName());
                     if( d1.length() > 0 ) {
                       logger.severe(d1);
-                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
+                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis(-1);
                         logger.severe(d1);
                         logger.severe(d2);
                     }

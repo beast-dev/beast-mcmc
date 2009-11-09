@@ -189,7 +189,6 @@ public class BeastMain {
                                 "The individual components of the posterior are as follows:\n" +
                                 rex.getMessage() + "\n" +
                                 "For more information go to <http://beast.bio.ed.ac.uk/>.");
-
             } else {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???
@@ -481,7 +480,22 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
         System.out.println();
 
-        new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
+        try {
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
+        } catch (RuntimeException rte) {
+            if (window) {
+                // This sleep for 2 seconds is to ensure that the final message
+                // appears at the end of the console.
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println();
+                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+            }
+            // logger.severe will throw a RTE but we want to keep the console visible
+        }
 
         if (!window) {
             System.exit(0);

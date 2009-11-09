@@ -47,8 +47,10 @@ import java.util.Properties;
  */
 public class BeastParser extends XMLParser {
 
-    public final String RELEASE ="release";
-    public final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
+    public static final String RELEASE ="release";
+    public static final String DEV = "development";
+    public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
+    public String parsers;
 
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean strictXML) {
         super(strictXML);
@@ -74,7 +76,7 @@ public class BeastParser extends XMLParser {
             properties.load(this.getClass().getResourceAsStream("beast.properties"));
 
             // get the parsers file prefix from the beast.properties file
-            String parsers = properties.getProperty("parsers");
+            parsers = properties.getProperty("parsers");
 
             if (System.getProperty("parsers") != null) {
                 // If a system property has been set then allow this to override the default
@@ -84,7 +86,7 @@ public class BeastParser extends XMLParser {
 
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
-                if (parsers.equalsIgnoreCase("development")) {
+                if (parsers.equalsIgnoreCase(DEV)) {
                     System.out.println("Loading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
                             + ", which is additional set of parsers only available for development version ...");
                     System.out.println();

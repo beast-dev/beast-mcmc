@@ -10,7 +10,7 @@ import jam.mac.Utils;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
+ * @version $Id$
  */
 public class SpreadApp extends MultiDocApplication {
 

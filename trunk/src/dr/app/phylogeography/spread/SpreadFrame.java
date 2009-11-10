@@ -1,29 +1,22 @@
 package dr.app.phylogeography.spread;
 
-import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.evolution.io.NexusImporter.MissingBlockException;
-import dr.evolution.io.Importer.ImportException;
-import dr.evolution.util.Taxon;
 import dr.app.java16compat.FileNameExtensionFilter;
+import dr.app.phylogeography.generator.Generator;
+import dr.app.phylogeography.generator.KMLGenerator;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
+ * @version $Id$
  */
 public class SpreadFrame extends DocumentFrame {
 
@@ -33,15 +26,20 @@ public class SpreadFrame extends DocumentFrame {
 //    private final BeastGenerator generator;
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
-    public final JLabel statusLabel = new JLabel("No data loaded");
+    private final JLabel statusLabel = new JLabel("No data loaded");
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
 
-    final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
+    private final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
+
+    private final java.util.List<Generator> generators;
 
     public SpreadFrame(String title) {
         super();
+
+        generators = new ArrayList<Generator>();
+        generators.add(new KMLGenerator());
 
         setTitle(title);
 
@@ -58,6 +56,14 @@ public class SpreadFrame extends DocumentFrame {
     }
 
     public void initializeComponents() {
+
+        TimelinePanel timeLinePanel = new TimelinePanel(this);
+        LayersPanel layersPanel = new LayersPanel(this);
+        OutputPanel outputPanel = new OutputPanel(this, generators);
+
+        tabbedPane.addTab("Timeline", timeLinePanel);
+        tabbedPane.addTab("Layers", layersPanel);
+        tabbedPane.addTab("Output", outputPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));

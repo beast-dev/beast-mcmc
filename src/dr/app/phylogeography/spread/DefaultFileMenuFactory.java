@@ -10,9 +10,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
 
 /**
- * @author rambaut
- *         Date: Dec 26, 2004
- *         Time: 11:01:06 AM
+ * @author Andrew Rambaut
+ * @version $Id$
  */
 public class DefaultFileMenuFactory implements MenuFactory {
 

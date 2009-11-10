@@ -140,12 +140,13 @@ public class BeautiOptions extends ModelOptions {
     public void selectTaxonSetsStatistics(List<Parameter> params) {
     	
         if (taxonSets != null) {
-            for (Taxa taxonSet : taxonSets) {
-                Parameter statistic = statistics.get(taxonSet);
+            for (Taxa taxa : taxonSets) {
+                Parameter statistic = statistics.get(taxa);
                 if (statistic == null) {
-                    statistic = new Parameter.Builder(taxonSet.getId(), TMRCA).taxa(taxonSet).isStatistic(true).isNodeHeight(true)
-                            .scaleType(PriorScaleType.TIME_SCALE).lower(0.0).upper(Double.MAX_VALUE).build();
-                    statistics.put(taxonSet, statistic);
+                    statistic = new Parameter.Builder(taxa.getId(), "").taxa(taxa)
+                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.TIME_SCALE)
+                            .lower(0.0).upper(Double.MAX_VALUE).build();
+                    statistics.put(taxa, statistic);
                 }
                 params.add(statistic);
             }
@@ -699,7 +700,6 @@ public class BeautiOptions extends ModelOptions {
 //    public boolean dataReset = true;
 
     public Taxa taxonList = null;
-    public final String TMRCA = "tmrca statistic for taxon set ";
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

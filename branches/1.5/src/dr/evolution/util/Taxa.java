@@ -26,6 +26,7 @@
 package dr.evolution.util;
 
 import dr.util.Identifiable;
+import dr.app.beauti.options.PartitionTreeModel;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +41,13 @@ import java.util.List;
  * @author Alexei Drummond
  */
 public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
+        
+	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
+	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+
+    private String id = null;    
+    private PartitionTreeModel treeModel;
+
 	public Taxa() {
 	}
 
@@ -54,6 +62,11 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
     public Taxa(Collection<Taxon> taxa) {
         addTaxa(taxa);
     }
+
+    public Taxa(String id, PartitionTreeModel treeModel) {
+		this.id = id;
+        this.treeModel = treeModel;
+	}
 
     /**
      * Adds the given taxon and returns its index. If the taxon is already in the list then it is not
@@ -246,8 +259,6 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
         return taxa.iterator();
     }
 
-    private String id = null;
-
 	/**
 	 * Sets an named attribute for a given taxon.
 	 * @param taxonIndex the index of the taxon whose attribute is being set.
@@ -292,7 +303,13 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
         }
     }
 
-	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
+    public PartitionTreeModel getTreeModel() {
+        return treeModel;
+    }
 
-	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+    public void setTreeModel(PartitionTreeModel treeModel) {
+        this.treeModel = treeModel;
+    }
+    
+
 }

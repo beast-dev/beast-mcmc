@@ -41,9 +41,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.tree.MonophylyStatistic;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeModel;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
@@ -81,10 +78,12 @@ public class BeastGenerator extends Generator {
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
     private final STARBEASTGenerator starEASTGeneratorGenerator;
+    private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
 
+        tmrcaStatisticsGenerator = new TMRCAStatisticsGenerator (options, components);                
         substitutionModelGenerator = new SubstitutionModelGenerator(options, components);
         treePriorGenerator = new TreePriorGenerator(options, components);
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options, components);
@@ -199,11 +198,6 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon List ++++++++++++++++++
         writeTaxa(writer, options.taxonList);
 
-        List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) {
-            writeTaxonSets(writer, taxonSets); // TODO
-        }
-
         if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
             writer.writeText("");
             writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
@@ -213,6 +207,13 @@ public class BeastGenerator extends Generator {
                 writeDifferentTaxaForMultiGene(partition, writer);
             }
         }
+
+        //++++++++++++++++ Taxon Sets ++++++++++++++++++
+        List<Taxa> taxonSets = options.taxonSets;
+        if (taxonSets != null && taxonSets.size() > 0) {
+            tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets); 
+        }
+
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
@@ -350,8 +351,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++  ++++++++++++++++++
         if (taxonSets != null && taxonSets.size() > 0) {
-            //TODO: need to suit for multi-gene-tree
-            writeTMRCAStatistics(writer);
+            tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
         }
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -439,30 +439,6 @@ public class BeastGenerator extends Generator {
         }
 
         writer.writeCloseTag(TaxaParser.TAXA);
-    }
-
-    /**
-     * Generate additional taxon sets
-     *
-     * @param writer    the writer
-     * @param taxonSets a list of taxa to write
-     */
-    private void writeTaxonSets(XMLWriter writer, List<Taxa> taxonSets) {
-        writer.writeText("");
-
-        for (Taxa taxa : taxonSets) {
-            writer.writeOpenTag(
-                    TaxaParser.TAXA,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, taxa.getId())
-                    }
-            );
-
-            for (int j = 0; j < taxa.getTaxonCount(); j++) {
-                writer.writeIDref(TaxonParser.TAXON, taxa.getTaxon(j).getId());
-            }
-            writer.writeCloseTag(TaxaParser.TAXA);
-        }
     }
 
 
@@ -724,43 +700,6 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
-
-    /**
-     * Generate tmrca statistics
-     *
-     * @param writer the writer
-     */
-    public void writeTMRCAStatistics(XMLWriter writer) {
-
-        writer.writeText("");
-        for (Taxa taxa : options.taxonSets) {
-            writer.writeOpenTag(
-                    TMRCAStatistic.TMRCA_STATISTIC,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getId() + ")"),
-                    }
-            );
-            writer.writeOpenTag(TMRCAStatistic.MRCA);
-            writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-            writer.writeCloseTag(TMRCAStatistic.MRCA);
-            writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
-            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
-
-            if (options.taxonSetsMono.get(taxa)) {
-                writer.writeOpenTag(
-                        MonophylyStatistic.MONOPHYLY_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
-                        });
-                writer.writeOpenTag(MonophylyStatistic.MRCA);
-                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                writer.writeCloseTag(MonophylyStatistic.MRCA);
-                writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
-                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
-            }
-        }
-    }
-
 
     /**
      * Write the timer report block.

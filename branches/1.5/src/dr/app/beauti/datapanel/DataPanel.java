@@ -516,6 +516,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
+        options.taxonSets.clear();
+        options.taxonSetsMono.clear();
         repaint();
     }
 
@@ -555,6 +557,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
+        options.taxonSets.clear();
+        options.taxonSetsMono.clear();
         repaint();
     }
 

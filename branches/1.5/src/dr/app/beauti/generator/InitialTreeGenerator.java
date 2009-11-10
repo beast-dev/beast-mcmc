@@ -30,7 +30,7 @@ public class InitialTreeGenerator extends Generator {
 
     /**
      * Generate XML for the starting tree
-     * @param model 
+     * @param model  PartitionTreeModel 
      *
      * @param writer the writer
      */
@@ -112,13 +112,13 @@ public class InitialTreeGenerator extends Generator {
                     
                     for (PartitionData partition : model.getAllPartitionData()) {
                         taxaId = partition.getPrefix() + TaxaParser.TAXA;
-                		writeTaxaRef(taxaId, writer);
+                		writeTaxaRef(taxaId, model, writer);
                 	} //TODO BEAST cannot handle multi <taxa> ref for 1 tree                  	
 //                    taxaId = model.getAllPartitionData().get(0).getName() + "." + TaxaParser.TAXA;
 //                	writeTaxaRef(taxaId, writer);
                 } else {
                 	taxaId = TaxaParser.TAXA;
-                	writeTaxaRef(taxaId, writer);
+                	writeTaxaRef(taxaId, model, writer);
                 }
 
                 writeInitialDemoModelRef(model, writer);
@@ -130,22 +130,23 @@ public class InitialTreeGenerator extends Generator {
         }
     }
     
-    private void writeTaxaRef(String taxaId, XMLWriter writer) {
+    private void writeTaxaRef(String taxaId, PartitionTreeModel model, XMLWriter writer) {
     	
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
         
-        if (options.taxonSets != null && options.taxonSets.size() > 0) { //TODO maybe incorrect for multi-data partition
+        if (options.taxonSets != null && options.taxonSets.size() > 0) { 
             writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
-            for (Taxa taxonSet : options.taxonSets) {
-                Parameter statistic = options.getStatistic(taxonSet);
+            for (Taxa taxa : options.taxonSets) {
+                if (taxa.getTreeModel().equals(model)) {
+                Parameter statistic = options.getStatistic(taxa);
 
                 Attribute mono = new Attribute.Default<Boolean>(
-                        CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxonSet));
+                        CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
 
                 writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
 
-                writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
+                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 if (statistic.isNodeHeight) {
                     if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                         writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
@@ -156,6 +157,7 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                }
             }
             writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
         } else {

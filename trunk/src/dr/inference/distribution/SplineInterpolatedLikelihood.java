@@ -26,13 +26,14 @@
 package dr.inference.distribution;
 
 import dr.inference.model.SplineBasis;
-import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
  * @author Andrew Rambaut
  */
 public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihood {
+
+    protected static double outsideLogDensity = Double.NEGATIVE_INFINITY; // Use for a proper posterior
 
     public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse, boolean byColumn) {
         super(fileName, inverse, byColumn);
@@ -51,7 +52,7 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
         final int len = values.length;
 
         if (x < values[0] || x > values[len - 1])
-            return Double.NEGATIVE_INFINITY;
+            return outsideLogDensity;
 
         double rtnValue = 0;
 

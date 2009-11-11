@@ -32,7 +32,8 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
- *
+ * @author Andrew Rambaut
+ * @author Marc A. Suchard
  */
 public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectParser {
 
@@ -44,7 +45,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String DEGREE = "degree";
     public static final String INVERSE = "inverse";
     public static final String READ_BY_COLUMN = "readByColumn";
-
+    public static final String OFFSET="offset";
 
     public String getParserName() {
         return EmpiricalDistributionLikelihood.EMPIRICAL_DISTRIBUTION_LIKELIHOOD;
@@ -93,6 +94,9 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
             }
         }
 
+        double offset = cxo1.getAttribute(OFFSET,0); 
+        likelihood.setOffset(offset);
+
         return likelihood;
     }
 
@@ -113,6 +117,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),
+                    AttributeRule.newDoubleRule(OFFSET,true),
                     new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
             })
     };

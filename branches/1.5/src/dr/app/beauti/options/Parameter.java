@@ -26,9 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.Taxa;
-import dr.math.distributions.ExponentialDistribution;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.NormalDistribution;
+import dr.math.distributions.*;
 
 import java.util.Map;
 
@@ -268,17 +266,22 @@ public class Parameter {
         return description;
     }
 
-    public double getPriorExpectation() {
+    public double getPriorExpectationMean() {
+        double expMean = 1.0;
+        Distribution dist = priorType.getDistributionClass(this);
+        if (dist != null) {
+            expMean = dist.mean();
 
-        switch (priorType) {
-            case LOGNORMAL_PRIOR:
-                return LogNormalDistribution.mean(mean, stdev) + offset;
-            case NORMAL_PRIOR:
-                return NormalDistribution.mean(mean, stdev);
-            case EXPONENTIAL_PRIOR:
-                return ExponentialDistribution.mean(mean) + offset;
+            if (expMean == 0) {
+                expMean = dist.quantile(0.975);
+            }
+            
+            if (expMean == 0) {
+                expMean = 1.0;
+            }
         }
-        return 1.0;
+        
+        return expMean;
     }
 
     public PartitionOptions getOptions() {

@@ -26,6 +26,7 @@ package dr.app.phylogeography.spread;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.*;
 import dr.app.phylogeography.structure.Layer;
+import dr.app.phylogeography.builder.*;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -47,14 +48,19 @@ import java.util.List;
  * @version $Id$
  */
 public class LayersPanel extends JPanel implements Exportable {
+    public final static BuilderFactory[] builderFactories = {
+            DiscreteTreeBuilder.FACTORY
+    };
 
-    JScrollPane scrollPane = new JScrollPane();
-    JTable layerTable = null;
-    LayerTableModel layerTableModel = null;
+    private JScrollPane scrollPane = new JScrollPane();
+    private JTable layerTable = null;
+    private LayerTableModel layerTableModel = null;
 
-    SpreadFrame frame = null;
+    private SpreadFrame frame = null;
 
-    List<Layer> layers = new ArrayList<Layer>();
+    private List<Builder> layerBuilders = new ArrayList<Builder>();
+
+    private SelectBuilderDialog selectBuilderDialog = null;
 
     public LayersPanel(SpreadFrame parent) {
 
@@ -105,10 +111,12 @@ public class LayersPanel extends JPanel implements Exportable {
 
         Action addLayerAction = new AddLayerAction();
         Action removeLayerAction = new RemoveLayerAction();
+        Action editLayerAction = new EditLayerAction();
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
+        ActionPanel actionPanel1 = new ActionPanel(true);
         actionPanel1.setAddAction(addLayerAction);
         actionPanel1.setRemoveAction(removeLayerAction);
+        actionPanel1.setActionAction(editLayerAction);
 
         removeLayerAction.setEnabled(false);
 
@@ -210,7 +218,44 @@ public class LayersPanel extends JPanel implements Exportable {
         fireDataChanged();
     }
 
+    public void editSelection() {
+//        int[] selRows = layerTable.getSelectedRows();
+//        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
+//        for (int row : selRows) {
+//            partitionsToRemove.add(options.dataPartitions.get(row));
+//        }
+//
+//        // TODO: would probably be a good idea to check if the user wants to remove the last partition
+//        options.dataPartitions.removeAll(partitionsToRemove);
+//
+//        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
+//            uncheckAllowDifferentTaxa();
+//        }
+//
+//        if (options.dataPartitions.size() == 0) {
+//            // all data partitions removed so reset the taxa
+//            options.reset();
+//            frame.statusLabel.setText("");
+//            frame.setAllOptions();
+//        }
+
+        layerTableModel.fireTableDataChanged();
+
+        fireDataChanged();
+    }
+
     public void addLayer() {
+        if (selectBuilderDialog == null) {
+            selectBuilderDialog = new SelectBuilderDialog(frame);
+        }
+
+        int result = selectBuilderDialog.showDialog(builderFactories);
+        if (result != JOptionPane.CANCEL_OPTION) {
+            BuilderFactory builderFactory = selectBuilderDialog.getBuilderFactory();
+            Builder builder = builderFactory.getBuilder();
+            builder.setName(selectBuilderDialog.getName());
+            layerBuilders.add(builder);
+        }
         layerTableModel.fireTableDataChanged();
 
         fireDataChanged();
@@ -223,7 +268,7 @@ public class LayersPanel extends JPanel implements Exportable {
     class LayerTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Description"};
+        String[] columnNames = {"Name", "Layer Type"};
 
         public LayerTableModel() {
         }
@@ -233,23 +278,23 @@ public class LayersPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return layers.size();
+            return layerBuilders.size();
         }
 
         public Object getValueAt(int row, int col) {
-            Layer layer = layers.get(row);
+            Builder builder = layerBuilders.get(row);
             switch (col) {
                 case 0:
-                    return layer.getName();
+                    return builder.getName();
                 case 1:
-                    return layer.getDescription();
+                    return builder.getBuilderName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            Layer layer = layers.get(row);
+            Builder builder = layerBuilders.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
@@ -329,6 +374,17 @@ public class LayersPanel extends JPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             removeSelection();
+        }
+    }
+
+    public class EditLayerAction extends AbstractAction {
+        public EditLayerAction() {
+            super("Edit");
+            setToolTipText("Use this button to edit a selected layer in the table");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            editSelection();
         }
     }
 

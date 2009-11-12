@@ -4,25 +4,37 @@ import dr.app.phylogeography.structure.*;
 import jebl.evolution.trees.RootedTree;
 import jebl.evolution.graphs.Node;
 
+import javax.swing.*;
 import java.awt.*;
+
+import jam.panels.OptionsPanel;
 
 /**
  * @author Andrew Rambaut
  * @version $Id$
  */
 public class DiscreteTreeBuilder implements Builder {
+
+    private static final String BUILDER_NAME = "Discrete Diffusion Tree";
+
     public static final String LONGITUDE_ATTRIBUTE = "long";
     public static final String LATITUDE_ATTRIBUTE = "lat";
     public static final String TIME_ATTRIBUTE = "height";
 
-    public DiscreteTreeBuilder(final RootedTree tree) {
-        this.tree = tree;
+    public DiscreteTreeBuilder() {
     }
 
     public Layer buildLayer() {
         Layer layer = new Layer(name, description, isVisible);
         buildTree(layer, tree, tree.getRootNode());
         return layer;
+    }
+
+    public JPanel getEditPanel() {
+        if (editPanel == null) {
+            editPanel = new OptionsPanel();           
+        }
+        return editPanel;
     }
 
     private void buildTree(Layer layer, final RootedTree tree, final Node node) {
@@ -55,6 +67,10 @@ public class DiscreteTreeBuilder implements Builder {
         }
     }
 
+    public String getBuilderName() {
+        return FACTORY.getBuilderName();
+    }
+
     public String getName() {
         return name;
     }
@@ -71,6 +87,14 @@ public class DiscreteTreeBuilder implements Builder {
         this.description = description;
     }
 
+    public RootedTree getTree() {
+        return tree;
+    }
+
+    public void setTree(final RootedTree tree) {
+        this.tree = tree;
+    }
+
     public boolean isVisible() {
         return isVisible;
     }
@@ -79,8 +103,22 @@ public class DiscreteTreeBuilder implements Builder {
         isVisible = visible;
     }
 
-    private final RootedTree tree;
+
+    public final static BuilderFactory FACTORY = new BuilderFactory() {
+
+        public String getBuilderName() {
+            return BUILDER_NAME;
+        }
+
+        public Builder getBuilder() {
+            return new DiscreteTreeBuilder();
+        }
+    };
+
+    private RootedTree tree;
     private String name;
     private String description;
     private boolean isVisible;
+
+    private JPanel editPanel = null;
 }

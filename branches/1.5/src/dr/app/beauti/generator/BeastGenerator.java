@@ -214,7 +214,6 @@ public class BeastGenerator extends Generator {
             tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets); 
         }
 
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
         //++++++++++++++++ Alignments ++++++++++++++++++

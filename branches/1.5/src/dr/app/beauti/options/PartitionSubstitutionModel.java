@@ -50,6 +50,8 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
 
+    public boolean useAmbiguitiesTreeLikelihood = false;
+    
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
@@ -363,6 +365,8 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                         break;
 
                     case BIN_COVARION:
+//                        useAmbiguitiesTreeLikelihood = true;
+
                         params.add(getParameter("bcov.alpha"));
                         params.add(getParameter("bcov.s"));
                         break;
@@ -799,6 +803,14 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     public void setDolloModel(boolean dolloModel) {
         this.dolloModel = dolloModel;
+    }
+    
+    public boolean isUseAmbiguitiesTreeLikelihood() {
+        return useAmbiguitiesTreeLikelihood;
+    }
+
+    public void setUseAmbiguitiesTreeLikelihood(boolean useAmbiguitiesTreeLikelihood) {
+        this.useAmbiguitiesTreeLikelihood = useAmbiguitiesTreeLikelihood;
     }
 
     public String getPrefix() {

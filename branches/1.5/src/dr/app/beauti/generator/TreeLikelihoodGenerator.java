@@ -29,7 +29,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -93,14 +92,14 @@ public class TreeLikelihoodGenerator extends Generator {
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix(num) + partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(substModel))}
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
             );
         } else {
             writer.writeOpenTag(
                     TreeLikelihood.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix() + partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities(substModel))}
+                            new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + id),
+                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
             );
         }
 
@@ -166,7 +165,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
                 }
             } else {
-                writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, substModel.getPrefix() + partition.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
+                writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
             }
 
             PartitionClockModel clockModel = partition.getPartitionClockModel();
@@ -176,27 +175,29 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
-    private boolean useAmbiguities(PartitionSubstitutionModel model) {
-        boolean useAmbiguities = false;
-
-        switch (model.getDataType().getType()) {
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-
-                switch (model.getBinarySubstitutionModel()) {
-                    case BIN_COVARION:
-                        useAmbiguities = true;
-                        break;
-
-                    default:
-                }
-                break;
-
-            default:
-                useAmbiguities = false;
-        }
-
-        return useAmbiguities;
-    }
+// replaced by useAmbiguitiesTreeLikelihoodCheck.setSelected(binarySubstCombo.getSelectedItem() == BinaryModelType.BIN_COVARION);
+// in PartitionModelPanel
+//    private boolean useAmbiguities(PartitionSubstitutionModel model) {
+//        boolean useAmbiguities = false;
+//
+//        switch (model.getDataType().getType()) {
+//            case DataType.TWO_STATES:
+//            case DataType.COVARION:
+//
+//                switch (model.getBinarySubstitutionModel()) {
+//                    case BIN_COVARION:
+//                        useAmbiguities = true;
+//                        break;
+//
+//                    default:
+//                }
+//                break;
+//
+//            default:
+//                useAmbiguities = false;
+//        }
+//
+//        return useAmbiguities;
+//    }
 
 }

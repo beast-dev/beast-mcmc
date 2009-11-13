@@ -242,8 +242,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);
-        //createOperator("frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+//        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
     }
 
     ////////////////////////////////////////////////////////////////
@@ -366,9 +365,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
                     case BIN_COVARION:
 //                        useAmbiguitiesTreeLikelihood = true;
-
                         params.add(getParameter("bcov.alpha"));
                         params.add(getParameter("bcov.s"));
+                        params.add(getParameter("hfrequencies")); // no codon for binary
                         break;
 
                     default:
@@ -549,8 +548,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                     case BIN_COVARION:
                         ops.add(getOperator("bcov.alpha"));
                         ops.add(getOperator("bcov.s"));
-                        ops.add(getOperator("bcov.frequencies"));
-                        ops.add(getOperator("bcov.hfrequencies"));
+//                        ops.add(getOperator("hfrequencies"));
                         break;
 
                     default:

@@ -29,12 +29,14 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.TwoStateCovarion;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -450,27 +452,19 @@ public class BeastGenerator extends Generator {
      */
 
     private String getAlignmentDataTypeDescription(Alignment alignment) {
-        String description;
+        String description = alignment.getDataType().getDescription();
 
         switch (alignment.getDataType().getType()) {
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-
-                // TODO make this work
-//                throw new RuntimeException("TO DO!");
-
-                //switch (partition.getPartitionSubstitutionModel().binarySubstitutionModel) {
-                //    case ModelOptions.BIN_COVARION:
-                //        description = TwoStateCovarion.DESCRIPTION;
-                //        break;
-                //
-                //    default:
-                description = alignment.getDataType().getDescription();
-                //}
+            case DataType.TWO_STATES: // when dataType="binary"
+//            case DataType.COVARION:
+//                description = alignment.getDataType().getDescription();
+                
+                // if choose Covarion model then should change into dataType="twoStateCovarion"
+                if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
+                        == BinaryModelType.BIN_COVARION) {
+                    description = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion"
+                }
                 break;
-
-            default:
-                description = alignment.getDataType().getDescription();
         }
 
         return description;

@@ -3,17 +3,13 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.TwoStateCovarion;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.BinaryCovarionModel;
-import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GTR;
-import dr.evomodel.substmodel.TN93;
+import dr.evomodel.substmodel.*;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
 import dr.evoxml.AlignmentParser;
@@ -300,7 +296,7 @@ public class SubstitutionModelGenerator extends Generator {
                 BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bsimple")}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeOpenTag(GeneralSubstitutionModel.FREQUENCIES);
         writer.writeOpenTag(
                 FrequencyModel.FREQUENCY_MODEL,
                 new Attribute[]{
@@ -313,7 +309,7 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelBinary(writer, model, prefix);
         
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeCloseTag(GeneralSubstitutionModel.FREQUENCIES);
 
         writer.writeCloseTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
     }
@@ -325,6 +321,7 @@ public class SubstitutionModelGenerator extends Generator {
      * @param model  the partition model to write
      */
     public void writeBinaryCovarionModel(XMLWriter writer, PartitionSubstitutionModel model) {
+        String dataTypeDescription = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion" for COVARION_MODEL
         String prefix = model.getPrefix();
 
         writer.writeComment("The Binary covarion model");
@@ -333,13 +330,25 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
-        writeParameter(BinaryCovarionModel.FREQUENCIES, // TODO
-                prefix + "frequencies", 2, 0.5, 0.0, 1.0, writer);
+//        writer.writeOpenTag(GeneralSubstitutionModel.FREQUENCIES);
+//        writer.writeOpenTag(
+//                FrequencyModel.FREQUENCY_MODEL,
+//                new Attribute[]{
+//                        new Attribute.Default<String>("dataType", dataTypeDescription)
+//                }
+//        );
+//
+//        writeAlignmentRefInFrequencies(writer, model, prefix);
+
+        writeFrequencyModelBinary(writer, model, prefix);
+
+//        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+//        writer.writeCloseTag(GeneralSubstitutionModel.FREQUENCIES);
 
         writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
-                prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer);
+                prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer); // hfrequencies also 0.5 0.5
 
-        writeParameter(BinaryCovarionModel.ALPHA, "alpha", model, writer);
+        writeParameter(BinaryCovarionModel.ALPHA, "bcov.alpha", model, writer);
         writeParameter(BinaryCovarionModel.SWITCHING_RATE, "bcov.s", model, writer);
 
         writer.writeCloseTag(BinaryCovarionModel.COVARION_MODEL);
@@ -510,7 +519,7 @@ public class SubstitutionModelGenerator extends Generator {
                     case BIN_SIMPLE:
                         break;
                     case BIN_COVARION:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "alpha");
+                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.alpha");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.s");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "frequencies");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "hfrequencies");

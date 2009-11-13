@@ -33,6 +33,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evolution.alignment.Alignment;
 import dr.evoxml.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
@@ -391,6 +392,15 @@ public class BeautiOptions extends ModelOptions {
     
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+
+    public PartitionData getPartitionData(Alignment alignment) {
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getAlignment() == alignment) {
+                return pd;
+            }
+        }
+        return null;
     }
     
 //    public boolean isFixedSubstitutionRate() {

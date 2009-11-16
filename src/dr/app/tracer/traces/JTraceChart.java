@@ -115,6 +115,29 @@ public class JTraceChart extends JChart {
         repaint();
     }
 
+    public void addBurnin(String name, int stateStart, int stateStep, double[] values, Paint paint, boolean isBurnin) {
+
+        Variate.Double yd = new Variate.Double(values);
+
+        traces.add(new Trace(stateStart, stateStep, values));
+
+        Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
+            protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+            }
+        };
+
+        xAxis.addRange(0, stateStart + (values.length * stateStep) - stateStep);
+        if (!isBurnin) {
+            yAxis.addRange(yd.getMin(), yd.getMax());
+            plot.setLineColor(paint);
+            plot.setName(name);
+            addPlot(plot);
+        }
+
+        recalibrate();
+        repaint();
+    }
+
     public double[] getTraceStates(int index) {
         Trace trace = traces.get(index);
         return trace.states;

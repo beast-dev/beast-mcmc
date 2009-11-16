@@ -57,10 +57,12 @@ public class SpreadFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        TimelinePanel timeLinePanel = new TimelinePanel(this);
-        LayersPanel layersPanel = new LayersPanel(this);
-        OutputPanel outputPanel = new OutputPanel(this, generators);
+        final DataPanel dataPanel = new DataPanel(this);
+        final TimelinePanel timeLinePanel = new TimelinePanel(this);
+        final LayersPanel layersPanel = new LayersPanel(this);
+        final OutputPanel outputPanel = new OutputPanel(this, generators);
 
+        tabbedPane.addTab("Data", dataPanel);
         tabbedPane.addTab("Timeline", timeLinePanel);
         tabbedPane.addTab("Layers", layersPanel);
         tabbedPane.addTab("Output", outputPanel);

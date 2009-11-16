@@ -179,9 +179,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             );
 
             InstanceDetails instanceDetails = beagle.getDetails();
+            ResourceDetails resourceDetails = null;
 
             if (instanceDetails != null) {
-                ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+                resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
                 if (resourceDetails != null) {
                     StringBuilder sb = new StringBuilder("  Using BEAGLE resource ");
                     sb.append(resourceDetails.getNumber()).append(": ");
@@ -222,7 +223,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            switch(rescalingScheme) {
+            this.rescalingScheme = rescalingScheme;
+            if (rescalingScheme == PartialsRescalingScheme.DEFAULT && resourceDetails != null) {
+                if( (resourceDetails.getFlags() & BeagleFlag.GPU.getMask()) != 0) {
+                    // Default to old system
+                    this.rescalingScheme = PartialsRescalingScheme.STATIC_RESCALING;
+                } else {
+                    // Default to dynamicRescaling
+                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
+                }
+            }
+
+            switch(this.rescalingScheme) {
                 case NONE:
                     alwaysRescale = false;
                     allowRescale = false;
@@ -231,6 +243,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     alwaysRescale = true;
                     allowRescale = true;
                     break;
+                case STATIC_RESCALING:
+                    alwaysRescale = false;
+//                    staticRescale = true;
+                    allowRescale = true;
                 case DYNAMIC_RESCALING:
                     alwaysRescale = false;
                     allowRescale = true;
@@ -255,6 +271,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Sets the partials from a sequence in an alignment.
+     * @param beagle beagle
+     * @param patternList patternList
+     * @param sequenceIndex sequenceIndex
+     * @param nodeIndex nodeIndex
      */
     protected final void setPartials(Beagle beagle,
                                      PatternList patternList,
@@ -293,6 +313,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Sets the partials from a sequence in an alignment.
+     * @param beagle beagle
+     * @param patternList patternList
+     * @param sequenceIndex sequenceIndex
+     * @param nodeIndex nodeIndex
      */
     protected final void setStates(Beagle beagle,
                                    PatternList patternList,
@@ -515,16 +539,20 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         if  (alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL))) {
-            logL = Double.NEGATIVE_INFINITY; // TODO Why is BEAGLE returning +\infty???
+            logL = Double.NEGATIVE_INFINITY;
         }
 
         // Attempt dynamic rescaling if over/under-flow
         if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
+            if (rescalingScheme == PartialsRescalingScheme.STATIC_RESCALING) {
+                alwaysRescale = true; // Turn on rescaling permanently
+            }
+
             useScaleFactors = true;
             recomputeScaleFactors = true;
 
-            // System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
             updateAllNodes();
             branchUpdateCount = 0;
@@ -564,11 +592,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             if (Double.isNaN(logL) || Double.isInfinite(logL)) {
                 logL = Double.NEGATIVE_INFINITY;
-                // TODO Discussion pt:
-                // There are several reasons for poor calculation:
-                // (1) a bug in BEAGLE (BAD)
-                // (2) no rescaling is sufficient (BEAGLE should throw error), or
-                // (3) BSSVS can return -\infty if the chain is not connected (should pass along -\infty)
             }
         }
 
@@ -588,6 +611,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Traverse the tree calculating partial likelihoods.
+     * @param tree tree
+     * @param node node
+     * @param operatorNumber operatorNumber
+     * @param flip flip
+     * @return boolean
      */
     private boolean traverse(Tree tree, NodeRef node, int[] operatorNumber, boolean flip) {
 
@@ -710,6 +738,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean recomputeScaleFactors = false;
     private boolean alwaysRescale = false;
     private boolean allowRescale = true;
+//    private boolean firstIteration = true;
+//    private boolean staticRescale = false;
+    private PartialsRescalingScheme rescalingScheme;
 
     private boolean storedUseScaleFactors = false;
 

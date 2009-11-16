@@ -61,7 +61,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
+        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
         if (xo.hasAttribute(SCALING_SCHEME)) {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)

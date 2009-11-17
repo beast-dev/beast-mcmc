@@ -2,10 +2,11 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -107,12 +108,34 @@ public class InitialTreeGenerator extends Generator {
                 
                 String taxaId;
                 if (options.allowDifferentTaxa) {
-                    if (model.getAllPartitionData().size() > 1) 
-                		 throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                    if (model.getAllPartitionData().size() > 1) {
+                        Alignment ref = null;
+                        boolean legal = true;
+                        for( PartitionData partition : model.getAllPartitionData() ) {
+                            final Alignment a = partition.getAlignment();
+                            if( ref == null ){
+                                ref = a;
+                            } else {
+                                if( a.getTaxonCount() != ref.getTaxonCount() ) {
+                                    legal = false;
+                                }  else {
+                                    for(int k = 0; k < a.getTaxonCount(); ++k) {
+                                        if( ref.getTaxonIndex(a.getTaxonId(k)) == -1 ) {
+                                            legal = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if( ! legal ) {
+                		   throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                        }
+                    }
                     
-                    for (PartitionData partition : model.getAllPartitionData()) {
+                    for( PartitionData partition : model.getAllPartitionData() ) {
                         taxaId = partition.getName() + "." + TaxaParser.TAXA;
                 		writeTaxaRef(taxaId, writer);
+                        break;
                 	} //TODO BEAST cannot handle multi <taxa> ref for 1 tree                  	
 //                    taxaId = model.getAllPartitionData().get(0).getName() + "." + TaxaParser.TAXA;
 //                	writeTaxaRef(taxaId, writer);

@@ -546,13 +546,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
 
             if (rescalingScheme == PartialsRescalingScheme.STATIC_RESCALING) {
+                System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
                 alwaysRescale = true; // Turn on rescaling permanently
             }
 
             useScaleFactors = true;
             recomputeScaleFactors = true;
-
-            System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
 
             updateAllNodes();
             branchUpdateCount = 0;

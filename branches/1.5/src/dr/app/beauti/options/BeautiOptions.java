@@ -664,6 +664,30 @@ public class BeautiOptions extends ModelOptions {
 			return meanDistance / totalSite;
 		}
     }
+
+    public boolean validateDiffTaxa(List<PartitionData> partitionDataList) {
+        Alignment ref = null;
+        boolean legal = true;
+        for (PartitionData partition : partitionDataList) {
+            final Alignment a = partition.getAlignment();
+            if (ref == null) {
+                ref = a;
+            } else {
+                if (a.getTaxonCount() != ref.getTaxonCount()) {
+                    legal = false;
+                } else {
+                    for (int k = 0; k < a.getTaxonCount(); ++k) {
+                        if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
+                            legal = false;
+                        }
+                    }
+                }
+            }
+        }        
+        return legal;
+    }
+
+
 	
 	public String statusMessage() {
         String message = "";

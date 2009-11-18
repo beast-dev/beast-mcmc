@@ -38,7 +38,7 @@ public class InitialTreeGenerator extends Generator {
     	
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1) 
     	
-        dr.app.beauti.options.Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+        Parameter rootHeight = model.getParameter("treeModel.rootHeight");
         
         switch (model.getStartingTreeType()) {
             case USER:
@@ -71,7 +71,8 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, which may be 1 of many aligments using this tree.");
+                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
+                        + "which may be 1 of many aligments using this tree.");
                 writer.writeIDref(AlignmentParser.ALIGNMENT, model.getAllPartitionData().get(0).getAlignment().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
@@ -106,16 +107,21 @@ public class InitialTreeGenerator extends Generator {
             	}
                 
                 String taxaId;
-                if (options.allowDifferentTaxa) {
-                    if (model.getAllPartitionData().size() > 1) 
-                		 throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
+                    if (model.getAllPartitionData().size() > 1) {
+                        if (!options.validateDiffTaxa(model.getAllPartitionData())) {
+                            throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                        }
+                    }
+
+//                    for (PartitionData partition : model.getAllPartitionData()) {
+//                        taxaId = partition.getPrefix() + TaxaParser.TAXA;
+//                        writeTaxaRef(taxaId, model, writer);
+//                        break; //only need 1 taxa ref
+//                    }
+                    taxaId = model.getAllPartitionData().get(0).getPrefix() + TaxaParser.TAXA;
+                    writeTaxaRef(taxaId, model, writer);
                     
-                    for (PartitionData partition : model.getAllPartitionData()) {
-                        taxaId = partition.getPrefix() + TaxaParser.TAXA;
-                		writeTaxaRef(taxaId, model, writer);
-                	} //TODO BEAST cannot handle multi <taxa> ref for 1 tree                  	
-//                    taxaId = model.getAllPartitionData().get(0).getName() + "." + TaxaParser.TAXA;
-//                	writeTaxaRef(taxaId, writer);
                 } else {
                 	taxaId = TaxaParser.TAXA;
                 	writeTaxaRef(taxaId, model, writer);

@@ -55,8 +55,11 @@ public class OutputPanel extends JPanel {
 
     private final JComboBox formatCombo;
 
-    public OutputPanel(final SpreadFrame parent, final List<Generator> generators) {
+    private final SpreadDocument document;
+
+    public OutputPanel(final SpreadFrame parent, final SpreadDocument document, final List<Generator> generators) {
         this.frame = parent;
+        this.document = document;
 
         setLayout(new BorderLayout());
 

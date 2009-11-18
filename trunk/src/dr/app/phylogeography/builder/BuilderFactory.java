@@ -10,7 +10,7 @@ public abstract class BuilderFactory {
     
     public abstract String getBuilderName();
 
-    public abstract Builder getBuilder();
+    public abstract Builder createBuilder();
 
     public String toString() {
         return getBuilderName();

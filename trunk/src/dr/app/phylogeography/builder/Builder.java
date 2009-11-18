@@ -19,5 +19,7 @@ public interface Builder {
 
     Layer buildLayer();
 
-    JPanel getEditPanel();    
+    JPanel getEditPanel();
+
+    void setFromEditPanel();
 }

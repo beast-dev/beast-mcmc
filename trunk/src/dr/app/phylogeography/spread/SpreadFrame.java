@@ -4,6 +4,11 @@ import dr.app.util.Utils;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.phylogeography.generator.Generator;
 import dr.app.phylogeography.generator.KMLGenerator;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.util.TaxonList;
+import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.tree.Tree;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
@@ -13,6 +18,9 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
+
+import org.jdom.JDOMException;
 
 /**
  * @author Andrew Rambaut
@@ -22,11 +30,12 @@ public class SpreadFrame extends DocumentFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
 
-//    private final BeautiOptions beautiOptions;
+    private final SpreadDocument document = new SpreadDocument();
 //    private final BeastGenerator generator;
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
+    private final DataPanel dataPanel;
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
@@ -53,16 +62,27 @@ public class SpreadFrame extends DocumentFrame {
         getFindAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
+
+        dataPanel = new DataPanel(this, document, getImportAction(), getDeleteAction());
+
+        document.addListener(new SpreadDocument.Listener() {
+            public void dataChanged() {
+                setDirty();
+            }
+
+            public void settingsChanged() {
+                setDirty();
+            }
+        });
     }
 
     public void initializeComponents() {
 
-        final DataPanel dataPanel = new DataPanel(this);
-        final TimelinePanel timeLinePanel = new TimelinePanel(this);
-        final LayersPanel layersPanel = new LayersPanel(this);
-        final OutputPanel outputPanel = new OutputPanel(this, generators);
+        final TimelinePanel timeLinePanel = new TimelinePanel(this, document);
+        final LayersPanel layersPanel = new LayersPanel(this, document);
+        final OutputPanel outputPanel = new OutputPanel(this, document, generators);
 
-        tabbedPane.addTab("Data", dataPanel);
+        tabbedPane.addTab("Input", dataPanel);
         tabbedPane.addTab("Timeline", timeLinePanel);
         tabbedPane.addTab("Layers", layersPanel);
         tabbedPane.addTab("Output", outputPanel);
@@ -102,8 +122,8 @@ public class SpreadFrame extends DocumentFrame {
 
         importChooser.setMultiSelectionEnabled(true);
         importChooser.setFileFilter(new FileNameExtensionFilter(
-                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast"));
-        importChooser.setDialogTitle("Import Aligment...");
+                "NEXUS (*.nex) & BEAST Tree (*.trees) Files", "nex", "nexus", "nx", "tree", "tre", "trees"));
+        importChooser.setDialogTitle("Import Data Files...");
     }
 
     public final void dataSelectionChanged(boolean isSelected) {
@@ -115,7 +135,7 @@ public class SpreadFrame extends DocumentFrame {
     }
 
     public void doDelete() {
-        setStatusMessage();
+        dataPanel.removeSelection();
     }
 
     public boolean requestClose() {
@@ -151,69 +171,94 @@ public class SpreadFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-//        int returnVal = importChooser.showOpenDialog(this);
-//        if (returnVal == JFileChooser.APPROVE_OPTION) {
-//            File[] files = importChooser.getSelectedFiles();
-//            for (File file : files) {
-//                if (file == null || file.getName().equals("")) {
-//                    JOptionPane.showMessageDialog(this, "Invalid file name",
-//                            "Invalid file name", JOptionPane.ERROR_MESSAGE);
-//                } else {
-//                    try {
-////                        beautiOptions.beautiImporter.importFromFile(this, file);
-//
-//                        setDirty();
-////                    } catch (FileNotFoundException fnfe) {
-////                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-////                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
-//                    } catch (IOException ioe) {
-//                        JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
-//                                "Unable to read file", JOptionPane.ERROR_MESSAGE);
-//                        ioe.printStackTrace();
-//                        return;
-//
-//                    } catch (MissingBlockException ex) {
-//                        JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
-//                                "Missing Block in Nexus File",
-//                                JOptionPane.ERROR_MESSAGE);
-//                        ex.printStackTrace();
-//
-//                    } catch (ImportException ime) {
-//                        JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
-//                                "Error reading file",
-//                                JOptionPane.ERROR_MESSAGE);
-//                        ime.printStackTrace();
-//                        return;
-//
-//                    } catch (Exception ex) {
-//                        JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-//                                "Error reading file",
-//                                JOptionPane.ERROR_MESSAGE);
-//                        ex.printStackTrace();
-//                        return;
-//                    }
-//                }
-//            }
-//
-////            setAllOptions();
-//        }
-    }
+        int returnVal = importChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File[] files = importChooser.getSelectedFiles();
+            for (File file : files) {
+                if (file == null || file.getName().equals("")) {
+                    JOptionPane.showMessageDialog(this, "Invalid file name",
+                            "Invalid file name", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    try {
+                        importDataFile(file);
 
-    public final void doImportTraits() {
-        FileDialog dialog = new FileDialog(this,
-                "Import Traits File...",
-                FileDialog.LOAD);
+                        setDirty();
+//                    } catch (FileNotFoundException fnfe) {
+//                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+//                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
+                    } catch (IOException ioe) {
+                        JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
+                                "Unable to read file", JOptionPane.ERROR_MESSAGE);
+                        ioe.printStackTrace();
+                        return;
 
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            final File file = new File(dialog.getDirectory(), dialog.getFile());
+                    } catch (NexusImporter.MissingBlockException ex) {
+                        JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
+                                "Missing Block in Nexus File",
+                                JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
 
-//            importTraitsFromFile(file);
+                    } catch (Importer.ImportException ime) {
+                        JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
+                                "Error reading file",
+                                JOptionPane.ERROR_MESSAGE);
+                        ime.printStackTrace();
+                        return;
+
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                                "Error reading file",
+                                JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                        return;
+                    }
+                }
+            }
+
+//            setAllOptions();
         }
     }
 
-    public void setStatusMessage() {
-//        statusLabel.setText(beautiOptions.statusMessage());
+    public void importDataFile(File file) throws IOException, Importer.ImportException {
+        Reader reader = new FileReader(file);
+
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = bufferedReader.readLine();
+        while (line != null && line.length() == 0) {
+            line = bufferedReader.readLine();
+        }
+
+        if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+            // is a NEXUS file
+            Tree tree = importFirstTree(file);
+            if (tree != null) {
+                document.addTreeFile(new SpreadDocument.DataFile(file, tree));
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Error parsing imported file. This may not be a NEXUS file",
+                    "Error reading file",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // nexus
+    private Tree importFirstTree(File file) throws IOException, Importer.ImportException {
+        TaxonList taxa = null;
+        Tree tree = null;
+
+        FileReader reader = new FileReader(file);
+
+        NexusImporter importer = new NexusImporter(reader);
+
+        tree = importer.importTree(taxa);
+
+
+        return tree;
+    }
+
+
+    public void setStatusMessage(String text) {
+        statusLabel.setText(text);
     }
 
     public final boolean doGenerate() {
@@ -311,18 +356,18 @@ public class SpreadFrame extends DocumentFrame {
         return true;
     }
 
-//    public Action getImportAction() {
-//        return importAlignmentAction;
-//    }
-//
-//    protected AbstractAction importAlignmentAction = new AbstractAction("Import Alignment...") {
-//        private static final long serialVersionUID = 3217702096314745005L;
-//
-//        public void actionPerformed(java.awt.event.ActionEvent ae) {
-//            doImport();
-//        }
-//    };
-//
+    public Action getImportAction() {
+        return importAlignmentAction;
+    }
+
+    protected AbstractAction importAlignmentAction = new AbstractAction("Import Alignment...") {
+        private static final long serialVersionUID = 3217702096314745005L;
+
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doImport();
+        }
+    };
+
 //    public Action getImportTraitsAction() {
 //        return importTraitsAction;
 //    }

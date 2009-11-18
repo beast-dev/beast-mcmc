@@ -8,6 +8,8 @@ import javax.swing.*;
 import java.awt.*;
 
 import jam.panels.OptionsPanel;
+import org.virion.jam.components.WholeNumberField;
+import org.virion.jam.components.RealNumberField;
 
 /**
  * @author Andrew Rambaut
@@ -21,6 +23,10 @@ public class DiscreteTreeBuilder implements Builder {
     public static final String LATITUDE_ATTRIBUTE = "lat";
     public static final String TIME_ATTRIBUTE = "height";
 
+    private final RealNumberField maxAltitudeField = new RealNumberField(0, Double.MAX_VALUE);
+
+    private double maxAltitude = 0;
+
     public DiscreteTreeBuilder() {
     }
 
@@ -32,12 +38,17 @@ public class DiscreteTreeBuilder implements Builder {
 
     public JPanel getEditPanel() {
         if (editPanel == null) {
-            editPanel = new OptionsPanel();           
+            OptionsPanel editPanel = new OptionsPanel();
+            maxAltitudeField.setColumns(10);
+            editPanel.addComponentWithLabel("Maximum Altitude:", maxAltitudeField);
+            this.editPanel = editPanel;
         }
+        maxAltitudeField.setValue(maxAltitude);
         return editPanel;
     }
 
     public void setFromEditPanel() {
+        maxAltitude = maxAltitudeField.getValue(0.0);
     }
 
     private void buildTree(Layer layer, final RootedTree tree, final Node node) {
@@ -53,7 +64,6 @@ public class DiscreteTreeBuilder implements Builder {
             double time1 = (Double)node.getAttribute(TIME_ATTRIBUTE);
             Style style1 = new Style(Color.red, 1.0);
 
-            double maxAltitude = 10000;
             double duration = -1.0;
 
             Line line = new Line(

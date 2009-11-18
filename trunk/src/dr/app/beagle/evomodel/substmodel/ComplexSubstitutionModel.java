@@ -7,6 +7,7 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.MatrixEntryColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.Arrays;
@@ -172,14 +173,19 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
 
-        LogColumn[] columnList = new LogColumn[stateCount * stateCount];
-        int index = 0;
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++)
-                columnList[index++] = new MatrixEntryColumn(getId(), i, j, getQ());
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
         }
-        return columnList;
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
     private boolean doNormalization = true;

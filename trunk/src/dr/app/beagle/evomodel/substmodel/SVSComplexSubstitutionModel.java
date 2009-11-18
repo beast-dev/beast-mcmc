@@ -1,8 +1,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.inference.model.*;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.evolution.datatype.DataType;
 
 /**
@@ -69,26 +67,6 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
 
     private boolean isUsed = false;
-
-    // **************************************************************
-    // Loggable IMPLEMENTATION
-    // **************************************************************
-
-    public LogColumn[] getColumns() {
-        return new LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    protected class LikelihoodColumn extends NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
-    }
 
     private double[] probability = null;
 

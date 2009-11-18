@@ -9,7 +9,7 @@ import cern.colt.matrix.linalg.Property;
 import dr.evolution.datatype.DataType;
 import dr.evoxml.DataTypeUtils;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.MatrixEntryColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -376,15 +376,31 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     protected Parameter infinitesimalRates;
 
-    public LogColumn[] getColumns() {
+//    public LogColumn[] getColumns() {
+//
+//        LogColumn[] columnList = new LogColumn[stateCount * stateCount];
+//        int index = 0;
+//        for (int i = 0; i < stateCount; i++) {
+//            for (int j = 0; j < stateCount; j++)
+//                columnList[index++] = new MatrixEntryColumn(getId(), i, j, amat);
+//        }
+//        return columnList;
+//    }
 
-        LogColumn[] columnList = new LogColumn[stateCount * stateCount];
-        int index = 0;
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++)
-                columnList[index++] = new MatrixEntryColumn(getId(), i, j, amat);
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
         }
-        return columnList;
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
     }
 
 

@@ -7,6 +7,7 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.MatrixEntryColumn;
+import dr.math.matrixAlgebra.Vector;
 
 import java.util.Arrays;
 
@@ -40,10 +41,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         }
 
         double[] Evec = eigen.getEigenVectors();
-        double[] EvalImag = new double[stateCount];
-        System.arraycopy(Evec,stateCount,EvalImag,0,stateCount);
-        double[] Ievc = eigen.getInverseEigenVectors();
         double[] Eval = eigen.getEigenValues();
+        double[] EvalImag = new double[stateCount];
+        System.arraycopy(Eval,stateCount,EvalImag,0,stateCount);
+        double[] Ievc = eigen.getInverseEigenVectors();
 
         double[][] iexp = new double[stateCount][stateCount];
 

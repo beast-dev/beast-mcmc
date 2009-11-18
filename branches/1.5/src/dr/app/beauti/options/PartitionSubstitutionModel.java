@@ -111,7 +111,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     // only init in PartitionSubstitutionModel
     private void initSubstModelParaAndOpers() {
-        double substWeights = 1.0;
+        double substWeights = 0.1;
 
         //Substitution model parameters
         createParameterUniformPrior("frequencies", "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);

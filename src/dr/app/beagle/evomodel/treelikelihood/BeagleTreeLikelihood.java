@@ -224,8 +224,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             this.rescalingScheme = rescalingScheme;
-            if (rescalingScheme == PartialsRescalingScheme.DEFAULT && resourceDetails != null) {
-                if( (resourceDetails.getFlags() & BeagleFlag.GPU.getMask()) != 0) {
+            if (rescalingScheme == PartialsRescalingScheme.DEFAULT) {
+                if( (resourceDetails != null && (resourceDetails.getFlags() & BeagleFlag.GPU.getMask()) != 0)) {
                     // Default to old system
                     this.rescalingScheme = PartialsRescalingScheme.STATIC_RESCALING;
                 } else {
@@ -247,6 +247,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     alwaysRescale = false;
 //                    staticRescale = true;
                     allowRescale = true;
+                    break;
                 case DYNAMIC_RESCALING:
                     alwaysRescale = false;
                     allowRescale = true;

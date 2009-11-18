@@ -1,6 +1,7 @@
 package dr.app.phylogeography.spread;
 
-import jebl.evolution.trees.Tree;
+import dr.evolution.tree.Tree;
+import dr.app.phylogeography.builder.Builder;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -14,19 +15,30 @@ import java.io.File;
  * @version $Id$
  */
 public class SpreadDocument {
-    private final List<Trees> treeFiles = new ArrayList<Trees>();
+    private final List<DataFile> dataFiles = new ArrayList<DataFile>();
+    private final List<Builder> layerBuilders = new ArrayList<Builder>();
 
-    public void addTreeFile(Trees trees) {
-        treeFiles.add(trees);
+
+    public void addTreeFile(DataFile dataFile) {
+        dataFiles.add(dataFile);
         fireDataChanged();
     }
 
-    public List<Trees> getTreeFiles() {
-        return treeFiles;
+    public List<DataFile> getDataFiles() {
+        return dataFiles;
     }
 
-    class Trees {
-        Trees(File file, Tree firstTree) {
+    public void addLayerBuilder(Builder builder) {
+        layerBuilders.add(builder);
+        fireSettingsChanged();
+    }
+
+    public List<Builder> getLayerBuilders() {
+        return layerBuilders;
+    }
+
+    public static class DataFile {
+        DataFile(File file, Tree firstTree) {
             this.file = file;
             this.firstTree = firstTree;
         }
@@ -43,13 +55,13 @@ public class SpreadDocument {
         private final Tree firstTree;                                
     }
 
-    private void fireDataChanged() {
+    public void fireDataChanged() {
         for (Listener listener : listeners) {
             listener.dataChanged();
         }
     }
 
-    private void fireSettingsChanged() {
+    public void fireSettingsChanged() {
         for (Listener listener : listeners) {
             listener.settingsChanged();
         }

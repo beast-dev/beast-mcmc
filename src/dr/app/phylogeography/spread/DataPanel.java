@@ -24,6 +24,7 @@
 package dr.app.phylogeography.spread;
 
 import dr.app.phylogeography.builder.*;
+import dr.app.beauti.options.PartitionData;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -44,23 +45,18 @@ import java.util.List;
  * @version $Id$
  */
 public class DataPanel extends JPanel implements Exportable {
-    public final static BuilderFactory[] builderFactories = {
-            DiscreteTreeBuilder.FACTORY
-    };
-
     private JScrollPane scrollPane = new JScrollPane();
     private JTable dataTable = null;
     private DataTableModel dataTableModel = null;
 
     private SpreadFrame frame = null;
 
-    private List<Builder> layerBuilders = new ArrayList<Builder>();
+    private final SpreadDocument document;
 
-    private SelectBuilderDialog selectBuilderDialog = null;
-
-    public DataPanel(SpreadFrame parent) {
+    public DataPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction, final Action removeDataAction) {
 
         this.frame = parent;
+        this.document = document;
 
         dataTableModel = new DataTableModel();
         dataTable = new JTable(dataTableModel);
@@ -105,8 +101,6 @@ public class DataPanel extends JPanel implements Exportable {
 //        PanelUtils.setupComponent(button);
 //        toolBar1.add(button);
 
-        Action addDataAction = new AddDataAction();
-        Action removeDataAction = new RemoveDataAction();
 
         ActionPanel actionPanel1 = new ActionPanel(true);
         actionPanel1.setAddAction(addDataAction);
@@ -124,10 +118,14 @@ public class DataPanel extends JPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
-    }
 
-    private void fireDataChanged() {
-        frame.setDirty();
+        document.addListener(new SpreadDocument.Listener() {
+            public void dataChanged() {
+                dataTableModel.fireTableDataChanged();
+            }
+
+            public void settingsChanged() { }
+        });
     }
 
     public void selectionChanged() {
@@ -141,26 +139,20 @@ public class DataPanel extends JPanel implements Exportable {
     }
 
     public void removeSelection() {
-        dataTableModel.fireTableDataChanged();
-
-        fireDataChanged();
-    }
-
-    public void addData() {
-        if (selectBuilderDialog == null) {
-            selectBuilderDialog = new SelectBuilderDialog(frame);
+        int[] selRows = dataTable.getSelectedRows();
+        Set<SpreadDocument.DataFile> dataToRemove = new HashSet<SpreadDocument.DataFile>();
+        for (int row : selRows) {
+            dataToRemove.add(document.getDataFiles().get(row));
         }
 
-        int result = selectBuilderDialog.showDialog(builderFactories);
-        if (result != JOptionPane.CANCEL_OPTION) {
-            BuilderFactory builderFactory = selectBuilderDialog.getBuilderFactory();
-            Builder builder = builderFactory.getBuilder();
-            builder.setName(selectBuilderDialog.getName());
-            layerBuilders.add(builder);
+        // TODO: would probably be a good idea to check if the user wants to remove the last partition
+        document.getDataFiles().removeAll(dataToRemove);
+        document.fireDataChanged();
+        
+        if (document.getDataFiles().size() == 0) {
+            // all data partitions removed so reset the taxa
+            frame.setStatusMessage("No data loaded");
         }
-        dataTableModel.fireTableDataChanged();
-
-        fireDataChanged();
     }
 
     public void selectAll() {
@@ -170,7 +162,7 @@ public class DataPanel extends JPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Layer Type"};
+        String[] columnNames = {"File", "File Type"};
 
         public DataTableModel() {
         }
@@ -180,48 +172,24 @@ public class DataPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return layerBuilders.size();
+            return document.getDataFiles().size();
         }
 
         public Object getValueAt(int row, int col) {
-            Builder builder = layerBuilders.get(row);
+            SpreadDocument.DataFile dataFile = document.getDataFiles().get(row);
             switch (col) {
                 case 0:
-                    return builder.getName();
+                    return dataFile.getFile().getName();
                 case 1:
-                    return builder.getBuilderName();
+                    return "Trees";
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
         }
 
-        public void setValueAt(Object aValue, int row, int col) {
-            Builder builder = layerBuilders.get(row);
-            switch (col) {
-                case 0:
-                    String name = ((String) aValue).trim();
-                    if (name.length() > 0) {
-//                        layer.setName(name);
-                    }
-                    break;
-            }
-            fireDataChanged();
-        }
-
         public boolean isCellEditable(int row, int col) {
-            boolean editable;
-
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-                default:
-                    editable = false;
-            }
-
-            return editable;
+            return false;
         }
-
 
         public String getColumnName(int column) {
             return columnNames[column];
@@ -256,27 +224,4 @@ public class DataPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     }
-
-    public class AddDataAction extends AbstractAction {
-        public AddDataAction() {
-            super("Add");
-            setToolTipText("Use this button to create a new layer");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            addData();
-        }
-    }
-
-    public class RemoveDataAction extends AbstractAction {
-        public RemoveDataAction() {
-            super("Remove");
-            setToolTipText("Use this button to remove a selected layer from the table");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            removeSelection();
-        }
-    }
-
 }

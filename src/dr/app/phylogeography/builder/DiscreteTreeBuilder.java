@@ -37,6 +37,9 @@ public class DiscreteTreeBuilder implements Builder {
         return editPanel;
     }
 
+    public void setFromEditPanel() {
+    }
+
     private void buildTree(Layer layer, final RootedTree tree, final Node node) {
         if (!tree.isRoot(node)) {
             Node parent = tree.getParent(node);
@@ -110,7 +113,7 @@ public class DiscreteTreeBuilder implements Builder {
             return BUILDER_NAME;
         }
 
-        public Builder getBuilder() {
+        public Builder createBuilder() {
             return new DiscreteTreeBuilder();
         }
     };

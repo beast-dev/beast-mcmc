@@ -150,15 +150,13 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
             Parameter alphaParameter;
             Parameter switchingRateParameter;
 
-            XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
+            XMLObject cxo = xo.getChild(FREQUENCIES);
             Parameter frequencies = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(HIDDEN_FREQUENCIES);
+            cxo = xo.getChild(HIDDEN_FREQUENCIES);
             Parameter hiddenFrequencies = (Parameter) cxo.getChild(Parameter.class);
 
-            TwoStateCovarion dataType = TwoStateCovarion.INSTANCE;  // fancy new datatype courtesy of Helen
-
-            cxo = (XMLObject) xo.getChild(ALPHA);
+            cxo = xo.getChild(ALPHA);
             alphaParameter = (Parameter) cxo.getChild(Parameter.class);
 
             // alpha must be positive and less than 1.0 because the fast rate is normalized to 1.0
@@ -166,10 +164,10 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
             hiddenFrequencies.addBounds(new Parameter.DefaultBounds(1.0, 0.0, hiddenFrequencies.getDimension()));
             frequencies.addBounds(new Parameter.DefaultBounds(1.0, 0.0, frequencies.getDimension()));
 
-            cxo = (XMLObject) xo.getChild(SWITCHING_RATE);
+            cxo = xo.getChild(SWITCHING_RATE);
             switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            BinaryCovarionModel model = new BinaryCovarionModel(dataType,
+            BinaryCovarionModel model = new BinaryCovarionModel(TwoStateCovarion.INSTANCE,
                     frequencies, hiddenFrequencies, alphaParameter, switchingRateParameter);
 
             System.out.println(model);
@@ -212,8 +210,6 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
     private Parameter switchRate;
     private Parameter frequencies;
     private Parameter hiddenFrequencies;
-
-
 
 
 }

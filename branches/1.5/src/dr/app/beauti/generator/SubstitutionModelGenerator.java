@@ -7,6 +7,8 @@ import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStateCovarion;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
@@ -19,6 +21,8 @@ import dr.inference.model.ParameterParser;
 import dr.inference.model.CompoundParameter;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -330,20 +334,25 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
-//        writer.writeOpenTag(GeneralSubstitutionModel.FREQUENCIES);
-//        writer.writeOpenTag(
-//                FrequencyModel.FREQUENCY_MODEL,
-//                new Attribute[]{
-//                        new Attribute.Default<String>("dataType", dataTypeDescription)
-//                }
-//        );
-//
-//        writeAlignmentRefInFrequencies(writer, model, prefix);
+        // merge patterns then get frequencies.
 
-        writeFrequencyModelBinary(writer, model, prefix);
+        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
+            List<PartitionData> partitions = model.getAllPartitionData();
 
-//        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-//        writer.writeCloseTag(GeneralSubstitutionModel.FREQUENCIES);
+            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
+            for (int i = 1; i < partitions.size(); i++) {
+                patterns.addPatterns(partitions.get(i).getAlignment());
+            }
+            double[] frequencies = patterns.getStateFrequencies();
+            writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
+                            new Attribute.Default<String>(ParameterParser.VALUE, frequencies[0] + " " + frequencies[1]) }, true);
+            writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+
+        } else {
+           writeFrequencyModelBinary(writer, model, prefix);
+        }
 
         writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
                 prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer); // hfrequencies also 0.5 0.5
@@ -365,9 +374,8 @@ public class SubstitutionModelGenerator extends Generator {
                         new Attribute.Default<String>(ParameterParser.VALUE, "0.5 0.5") }, true);                
                 break;
                 
-            case EMPIRICAL:                
+            case EMPIRICAL:
                 writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
-                  
                 break;
         }
 //        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);

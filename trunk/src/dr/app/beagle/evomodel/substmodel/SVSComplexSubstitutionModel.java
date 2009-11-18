@@ -55,9 +55,9 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     /**
      * @return A detailed name of likelihood for debugging.
      */
-    public String prettyName() {
-        return "SVSComplexSubstitutionModel-connectedness";
-    }
+//    public String prettyName() {
+//        return "SVSComplexSubstitutionModel-connectedness";
+//    }
 
     @Override
     public boolean isUsed() {

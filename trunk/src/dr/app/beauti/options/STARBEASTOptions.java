@@ -32,7 +32,7 @@ import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.Generator;
 import dr.evolution.util.Taxon;
-import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
+
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
@@ -45,12 +45,14 @@ import dr.evomodelxml.YuleModelParser;
  */
 public class STARBEASTOptions extends ModelOptions {
 
+	
+	public static final String TREE_FILE_NAME = "trees";
 	// Instance variables
     private final BeautiOptions options;
    
     public final String POP_MEAN = "popMean";
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES 
-    							+ "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // species.trees
+    							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
  
 
     public STARBEASTOptions(BeautiOptions options) {    	

@@ -31,7 +31,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.util.OSType;
 import dr.app.phylogeography.generator.Generator;
-import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
+//import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 

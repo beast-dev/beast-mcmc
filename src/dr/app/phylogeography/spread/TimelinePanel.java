@@ -53,8 +53,12 @@ public class TimelinePanel extends JPanel {
 
     private final SpreadFrame frame;
 
-    public TimelinePanel(final SpreadFrame parent) {
+    private final SpreadDocument document;
+
+    public TimelinePanel(final SpreadFrame parent, final SpreadDocument document) {
+
         this.frame = parent;
+        this.document = document;
 
         setLayout(new BorderLayout());
 

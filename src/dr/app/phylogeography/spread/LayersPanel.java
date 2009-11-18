@@ -23,9 +23,6 @@
 
 package dr.app.phylogeography.spread;
 
-import dr.app.beauti.ComboBoxRenderer;
-import dr.app.beauti.options.*;
-import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.builder.*;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
@@ -37,11 +34,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -58,13 +53,14 @@ public class LayersPanel extends JPanel implements Exportable {
 
     private SpreadFrame frame = null;
 
-    private List<Builder> layerBuilders = new ArrayList<Builder>();
+    private LayerBuilderDialog layerBuilderDialog = null;
 
-    private SelectBuilderDialog selectBuilderDialog = null;
+    private final SpreadDocument document;
 
-    public LayersPanel(SpreadFrame parent) {
+    public LayersPanel(final SpreadFrame parent, final SpreadDocument document) {
 
         this.frame = parent;
+        this.document = document;
 
         layerTableModel = new LayerTableModel();
         layerTable = new JTable(layerTableModel);
@@ -89,7 +85,7 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    showAlignment();
+                    editSelection();
                 }
             }
         });
@@ -130,62 +126,21 @@ public class LayersPanel extends JPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
-    }
 
-    private void showAlignment() {
+        document.addListener(new SpreadDocument.Listener() {
+            public void dataChanged() {
+            }
 
-//        int[] selRows = layerTable.getSelectedRows();
-//        for (int row : selRows) {
-//            JFrame frame = new JFrame();
-//            frame.setSize(800, 600);
-//
-//            PartitionData partition = options.dataPartitions.get(row);
-//            Alignment alignment = partition.getAlignment();
-//            AlignmentViewer viewer = new AlignmentViewer();
-//            if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
-//                viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));
-//            } else if (alignment.getDataType().getType() == DataType.AMINO_ACIDS) {
-//                viewer.setCellDecorator(new StateCellDecorator(new AminoAcidDecorator(), false));
-//            } else {
-//                // no colouring
-//            }
-//            viewer.setAlignmentBuffer(new BeautiAlignmentBuffer(alignment));
-//
-//            JPanel panel = new JPanel(new BorderLayout());
-//            panel.setOpaque(false);
-//            panel.add(viewer, BorderLayout.CENTER);
-//
-//            JPanel infoPanel = new JPanel(new BorderLayout());
-//            infoPanel.setOpaque(false);
-//            panel.add(infoPanel, BorderLayout.SOUTH);
-//
-//            frame.setContentPane(panel);
-//            frame.setVisible(true);
-//        }
-
-    }
-
-    private void fireDataChanged() {
-        frame.setDirty();
+            public void settingsChanged() {
+                layerTableModel.fireTableDataChanged();
+            }
+        });
     }
 
     public void selectionChanged() {
         int[] selRows = layerTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
-//
-//        unlinkModelsAction.setEnabled(hasSelection);
-//        linkModelsAction.setEnabled(selRows != null && selRows.length > 1);
-//
-//        unlinkClocksAction.setEnabled(hasSelection);
-//        linkClocksAction.setEnabled(selRows != null && selRows.length > 1);
-//
-//        unlinkTreesAction.setEnabled(hasSelection);
-//        linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
-//
-//        showAction.setEnabled(hasSelection);
-////        unlinkAllAction.setEnabled(hasSelection);
-////        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
     }
 
     public JComponent getExportableComponent() {
@@ -193,72 +148,47 @@ public class LayersPanel extends JPanel implements Exportable {
     }
 
     public void removeSelection() {
-//        int[] selRows = layerTable.getSelectedRows();
-//        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
-//        for (int row : selRows) {
-//            partitionsToRemove.add(options.dataPartitions.get(row));
-//        }
+        int[] selRows = layerTable.getSelectedRows();
+        Set<Builder> buildersToRemove = new HashSet<Builder>();
+        for (int row : selRows) {
+            buildersToRemove.add(document.getLayerBuilders().get(row));
+        }
 //
 //        // TODO: would probably be a good idea to check if the user wants to remove the last partition
-//        options.dataPartitions.removeAll(partitionsToRemove);
-//
-//        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-//            uncheckAllowDifferentTaxa();
-//        }
-//
-//        if (options.dataPartitions.size() == 0) {
-//            // all data partitions removed so reset the taxa
-//            options.reset();
-//            frame.statusLabel.setText("");
-//            frame.setAllOptions();
-//        }
-
-        layerTableModel.fireTableDataChanged();
-
-        fireDataChanged();
+        document.getLayerBuilders().removeAll(buildersToRemove);
+        document.fireSettingsChanged();
     }
 
     public void editSelection() {
-//        int[] selRows = layerTable.getSelectedRows();
-//        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
-//        for (int row : selRows) {
-//            partitionsToRemove.add(options.dataPartitions.get(row));
-//        }
-//
-//        // TODO: would probably be a good idea to check if the user wants to remove the last partition
-//        options.dataPartitions.removeAll(partitionsToRemove);
-//
-//        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-//            uncheckAllowDifferentTaxa();
-//        }
-//
-//        if (options.dataPartitions.size() == 0) {
-//            // all data partitions removed so reset the taxa
-//            options.reset();
-//            frame.statusLabel.setText("");
-//            frame.setAllOptions();
-//        }
+        int selRow = layerTable.getSelectedRow();
+        if (selRow >= 0) {
+            Builder builder = document.getLayerBuilders().get(selRow);
+            editSettings(builder);
+        }
+    }
 
-        layerTableModel.fireTableDataChanged();
+    private void editSettings(Builder builder) {
+        if (layerBuilderDialog == null) {
+            layerBuilderDialog = new LayerBuilderDialog(frame);
+        }
 
-        fireDataChanged();
+        int result = layerBuilderDialog.showDialog(builder);
+        layerBuilderDialog.getBuilder(); // force update of builder settings
+        if (result != JOptionPane.CANCEL_OPTION) {
+            document.fireSettingsChanged();
+        }
     }
 
     public void addLayer() {
-        if (selectBuilderDialog == null) {
-            selectBuilderDialog = new SelectBuilderDialog(frame);
+        if (layerBuilderDialog == null) {
+            layerBuilderDialog = new LayerBuilderDialog(frame);
         }
 
-        int result = selectBuilderDialog.showDialog(builderFactories);
+        int result = layerBuilderDialog.showDialog(builderFactories);
         if (result != JOptionPane.CANCEL_OPTION) {
-            BuilderFactory builderFactory = selectBuilderDialog.getBuilderFactory();
-            Builder builder = builderFactory.getBuilder();
-            builder.setName(selectBuilderDialog.getName());
-            layerBuilders.add(builder);
+            Builder builder = layerBuilderDialog.getBuilder();
+            document.addLayerBuilder(builder);
         }
-        layerTableModel.fireTableDataChanged();
-
-        fireDataChanged();
     }
 
     public void selectAll() {
@@ -278,11 +208,11 @@ public class LayersPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return layerBuilders.size();
+            return document.getLayerBuilders().size();
         }
 
         public Object getValueAt(int row, int col) {
-            Builder builder = layerBuilders.get(row);
+            Builder builder = document.getLayerBuilders().get(row);
             switch (col) {
                 case 0:
                     return builder.getName();
@@ -294,16 +224,16 @@ public class LayersPanel extends JPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            Builder builder = layerBuilders.get(row);
+            Builder builder = document.getLayerBuilders().get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
                     if (name.length() > 0) {
-//                        layer.setName(name);
+                        builder.setName(name);
                     }
                     break;
             }
-            fireDataChanged();
+            document.fireSettingsChanged();
         }
 
         public boolean isCellEditable(int row, int col) {

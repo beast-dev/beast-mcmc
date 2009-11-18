@@ -228,7 +228,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			
 		} else {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
-			
+						
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
 			}

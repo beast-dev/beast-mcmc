@@ -1,6 +1,7 @@
 package dr.app.phylogeography.builder;
 
 import dr.app.phylogeography.structure.*;
+import dr.app.phylogeography.spread.SpreadDocument;
 import jebl.evolution.trees.RootedTree;
 import jebl.evolution.graphs.Node;
 
@@ -15,13 +16,15 @@ import org.virion.jam.components.RealNumberField;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class DiscreteTreeBuilder implements Builder {
+public class DiscreteTreeBuilder extends AbstractBuilder {
 
     private static final String BUILDER_NAME = "Discrete Diffusion Tree";
 
     public static final String LONGITUDE_ATTRIBUTE = "long";
     public static final String LATITUDE_ATTRIBUTE = "lat";
     public static final String TIME_ATTRIBUTE = "height";
+
+    private JPanel editPanel = null;
 
     private final RealNumberField maxAltitudeField = new RealNumberField(0, Double.MAX_VALUE);
 
@@ -31,8 +34,8 @@ public class DiscreteTreeBuilder implements Builder {
     }
 
     public Layer buildLayer() {
-        Layer layer = new Layer(name, description, isVisible);
-        buildTree(layer, tree, tree.getRootNode());
+        Layer layer = new Layer(getName(), getDescription(), isVisible());
+        buildTree(layer, (RootedTree)getDataFile().getFirstTree());
         return layer;
     }
 
@@ -49,6 +52,10 @@ public class DiscreteTreeBuilder implements Builder {
 
     public void setFromEditPanel() {
         maxAltitude = maxAltitudeField.getValue(0.0);
+    }
+
+    private void buildTree(Layer layer, final RootedTree tree) {
+        buildTree(layer, tree, tree.getRootNode());
     }
 
     private void buildTree(Layer layer, final RootedTree tree, final Node node) {
@@ -84,39 +91,6 @@ public class DiscreteTreeBuilder implements Builder {
         return FACTORY.getBuilderName();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    public RootedTree getTree() {
-        return tree;
-    }
-
-    public void setTree(final RootedTree tree) {
-        this.tree = tree;
-    }
-
-    public boolean isVisible() {
-        return isVisible;
-    }
-
-    public void setVisible(final boolean visible) {
-        isVisible = visible;
-    }
-
-
     public final static BuilderFactory FACTORY = new BuilderFactory() {
 
         public String getBuilderName() {
@@ -128,10 +102,4 @@ public class DiscreteTreeBuilder implements Builder {
         }
     };
 
-    private RootedTree tree;
-    private String name;
-    private String description;
-    private boolean isVisible;
-
-    private JPanel editPanel = null;
 }

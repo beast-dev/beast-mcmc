@@ -137,7 +137,7 @@ public class PriorOptions extends ModelOptions {
 
                     case UNITY_SCALE:
                         param.lower = 0.0;
-                        //param.upper = 1.0;
+                        param.upper = 1.0;
                         break;
 
                     case ROOT_RATE_SCALE:

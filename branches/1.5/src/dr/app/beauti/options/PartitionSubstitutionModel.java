@@ -165,13 +165,13 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 100.0);
+        createParameterUniformPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameterUniformPrior("alpha", "gamma shape parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameterUniformPrior("CP1.alpha", "gamma shape parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameterUniformPrior("CP2.alpha", "gamma shape parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameterUniformPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
-        createParameterUniformPrior("CP3.alpha", "gamma shape parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameterUniformPrior("alpha", "gamma shape parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 1E-8, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1.alpha", "gamma shape parameter for codon position 1", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 1E-8, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP2.alpha", "gamma shape parameter for codon position 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 1E-8, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 1E-8, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP3.alpha", "gamma shape parameter for codon position 3", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 1E-8, Double.POSITIVE_INFINITY);
 
         createParameterUniformPrior("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0);
         createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", PriorScaleType.NONE, 0.5, 0.0, 1.0);
@@ -247,9 +247,6 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     ////////////////////////////////////////////////////////////////
 
-    /**
-     * @param includeRelativeRates true if relative rate parameters should be added
-     */
     public void selectParameters(List<Parameter> params) {
     	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
 

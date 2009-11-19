@@ -47,6 +47,12 @@ _still to do:_
         createParameterUniformPrior("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
+==Tree Models==
+
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| treeModel.rootHeight || root height of the tree || 0,+Inf || Tree Prior || ||
+|| treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || ||
+
 ==Tree Priors==
 
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||

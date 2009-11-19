@@ -1,6 +1,7 @@
 package dr.app.phylogeography.builder;
 
 import dr.app.phylogeography.structure.Layer;
+import dr.app.phylogeography.spread.SpreadDocument;
 
 import javax.swing.*;
 
@@ -16,6 +17,10 @@ public interface Builder {
     void setName(String name);
     
     String getDescription();
+
+    SpreadDocument.DataFile getDataFile();
+
+    void setDataFile(SpreadDocument.DataFile dataFile);
 
     Layer buildLayer();
 

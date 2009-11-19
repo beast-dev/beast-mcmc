@@ -1,5 +1,7 @@
 package dr.app.phylogeography.builder;
 
+import dr.app.phylogeography.spread.SpreadDocument;
+
 import javax.swing.*;
 
 /**

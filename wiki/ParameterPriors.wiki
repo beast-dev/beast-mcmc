@@ -6,6 +6,19 @@ A description of the default priors on each parameter of the standard models in 
 The aim is to provide every parameter with a proper and reasonable prior. This document is to describe our choices and the rationale behind each.
 
 = Parameters =
-|| *Parameter* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| HKY.kappa || 0,+Inf || 1/x || ||
-|| SiteModel.alpha || 1E-8,+Inf || 1/x || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values ||
+
+== Substitution Models ==
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| `*`.frequencies || base frequencies || 0,1 || uniform || ||
+|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || 1/x || ||
+|| `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || 1/x || ||
+|| `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || 1/x || ||
+|| `*`.ac etc. || GTR A-C, etc. substitution parameter  || 1E-8,+Inf || 1/x || The lower bound is to prevent issues with 1/x prior when this value approaches zero - a better solution would be to change the prior on this ||
+|| hfrequencies || Binary Covarion frequencies of the hidden rates  || 0,1 || uniform || ||
+|| bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || uniform || ||
+|| bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || uniform || ||
+
+== Site Models ==
+|| `*`.alpha || Gamma shape parameter || 1E-8,+Inf || uniform || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values ||
+|| `*`.pInv || proportion of invariant sites parameter || 0,1 || uniform || ||
+|| `*`.mu || relative rate parameter || 0,+Inf || uniform || ||

@@ -172,7 +172,7 @@ public class LayersPanel extends JPanel implements Exportable {
             layerBuilderDialog = new LayerBuilderDialog(frame);
         }
 
-        int result = layerBuilderDialog.showDialog(builder);
+        int result = layerBuilderDialog.showDialog(builder, document);
         layerBuilderDialog.getBuilder(); // force update of builder settings
         if (result != JOptionPane.CANCEL_OPTION) {
             document.fireSettingsChanged();
@@ -184,7 +184,7 @@ public class LayersPanel extends JPanel implements Exportable {
             layerBuilderDialog = new LayerBuilderDialog(frame);
         }
 
-        int result = layerBuilderDialog.showDialog(builderFactories);
+        int result = layerBuilderDialog.showDialog(builderFactories, document);
         if (result != JOptionPane.CANCEL_OPTION) {
             Builder builder = layerBuilderDialog.getBuilder();
             document.addLayerBuilder(builder);
@@ -198,7 +198,7 @@ public class LayersPanel extends JPanel implements Exportable {
     class LayerTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Layer Type"};
+        String[] columnNames = {"Name", "Layer Type", "Input File"};
 
         public LayerTableModel() {
         }
@@ -218,6 +218,8 @@ public class LayersPanel extends JPanel implements Exportable {
                     return builder.getName();
                 case 1:
                     return builder.getBuilderName();
+                case 2:
+                    return builder.getDataFile();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

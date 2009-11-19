@@ -39,6 +39,9 @@ public class SpreadDocument {
 
     public static class DataFile {
         DataFile(File file, Tree firstTree) {
+            if (file == null) {
+                throw new IllegalArgumentException("File argument to DataFile cannot be null");
+            }
             this.file = file;
             this.firstTree = firstTree;
         }
@@ -49,6 +52,11 @@ public class SpreadDocument {
 
         public Tree getFirstTree() {
             return firstTree;
+        }
+
+        @Override
+        public String toString() {
+            return file.getName();
         }
 
         private final File file;

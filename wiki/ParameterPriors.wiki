@@ -8,3 +8,4 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 = Parameters =
 || *Parameter* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
 || HKY.kappa || 0,+Inf || 1/x || ||
+|| SiteModel.alpha || 1E-8,+Inf || 1/x || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values ||

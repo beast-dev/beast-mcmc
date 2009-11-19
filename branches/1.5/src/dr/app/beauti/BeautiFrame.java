@@ -238,6 +238,12 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel.getOptions(beautiOptions);
     }
 
+    public void doSelectAll() {
+        if (currentPanel == dataPanel) {
+            dataPanel.selectAll();
+        }
+    }
+
     public final void dataSelectionChanged(boolean isSelected) {
         getDeleteAction().setEnabled(isSelected);
     }

@@ -6,5 +6,5 @@ A description of the default priors on each parameter of the standard models in 
 The aim is to provide every parameter with a proper and reasonable prior. This document is to describe our choices and the rationale behind each.
 
 = Parameters =
-|| *Parameter* || *Bounds* || *Default Prior* ||
-|| HKY.kappa || 0,+Inf || 1/x ||
+|| *Parameter* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| HKY.kappa || 0,+Inf || 1/x || ||

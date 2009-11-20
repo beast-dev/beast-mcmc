@@ -10,7 +10,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 == Substitution Models ==
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
 || `*`.frequencies || base frequencies || 0 <= \pi_i <= \sum pi_i = 1 || Dirichlet || Dirichlet(1,\ldots,1) is uniform over this hyperplane ||
-|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma || Gamma(1/a,a) for a large is relatively uninformative ||
+|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05, 20) || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are between 1 and 20 ||
 || `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma || ||
 || `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma || ||
 || `*`.ac etc. || GTR A-C, etc. substitution parameter  || 1E-8,+Inf || Gamma || The lower bound is to prevent issues with 1/x prior when this value approaches zero - a better solution would be to change the prior on this ||

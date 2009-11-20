@@ -14,7 +14,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 ||
 || `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 ||
 || `*`.ac, `*`.at, `*`.cg, `*`.gt || GTR A-C, A-T, C-G, G-T substitution parameters  || 0,+Inf || Gamma(0.05,10) || If the GTR parameters are scale to C-T (a transition) then these four transversions should have a prior with a mean below 1. This prior is diffuse with a mean of 0.5 ||
-|| `*`.ac etc. || GTR A-G substitution parameter  || 0,+Inf || Gamma(0.05,20) || If the GTR parameters are scaled to C-T (a transition) then the other transition should have a prior with a mean of 1. This prior is moderately diffuse with a mean of 1 ||
+|| `*`.ag || GTR A-G substitution parameter  || 0,+Inf || Gamma(0.05,20) || If the GTR parameters are scaled to C-T (a transition) then the other transition should have a prior with a mean of 1. This prior is moderately diffuse with a mean of 1 ||
 || hfrequencies || Binary Covarion frequencies of the hidden rates  || 0 <= \pi_i <= \sum \pi_i = 1 || Dirichlet || ||
 || bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || Beta ||  Beta(1,1) is uniform ||
 || bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma || ||

@@ -10,10 +10,10 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 == Substitution Models ==
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
 || `*`.frequencies || base frequencies || 0 <= \pi_i <= \sum pi_i = 1 || Dirichlet || Dirichlet(1,\ldots,1) is uniform over this hyperplane ||
-|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05,20) || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are between 1 and 20 ||
-|| `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,20) || ||
-|| `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,20) || ||
-|| `*`.ac etc. || GTR A-C, etc. substitution parameter  || 1E-8,+Inf || Gamma(0.05,20) || The lower bound is to prevent issues with 1/x prior when this value approaches zero - a better solution would be to change the prior on this ||
+|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse and with a mean of 2 ||
+|| `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse and with a mean of 2 ||
+|| `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse and with a mean of 2 ||
+|| `*`.ac etc. || GTR A-C, etc. substitution parameter  || 1E-8,+Inf || Gamma(0.05,10) || If the GTR parameters are scale to C-T (a transition) then the transversions should have a prior with a mean below 1. This prior is diffuse with a mean of 0.5 ||
 || hfrequencies || Binary Covarion frequencies of the hidden rates  || 0 <= \pi_i <= \sum \pi_i = 1 || Dirichlet || ||
 || bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || Beta ||  Beta(1,1) is uniform ||
 || bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma || ||

@@ -1,12 +1,10 @@
 package dr.app.phylogeography.spread;
 
 import jam.framework.*;
-import jam.framework.MenuBarFactory;
+import jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
-
-import jam.mac.Utils;
 
 /**
  * @author Andrew Rambaut

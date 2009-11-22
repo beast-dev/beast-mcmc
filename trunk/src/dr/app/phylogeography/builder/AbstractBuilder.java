@@ -1,16 +1,7 @@
 package dr.app.phylogeography.builder;
 
-import dr.app.phylogeography.structure.*;
 import dr.app.phylogeography.spread.SpreadDocument;
-import jebl.evolution.trees.RootedTree;
-import jebl.evolution.graphs.Node;
-
-import javax.swing.*;
-import java.awt.*;
-
-import jam.panels.OptionsPanel;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
+import dr.app.phylogeography.structure.Layer;
 
 /**
  * @author Andrew Rambaut
@@ -18,7 +9,7 @@ import org.virion.jam.components.RealNumberField;
  */
 public abstract class AbstractBuilder implements Builder {
 
-    private SpreadDocument.DataFile dataFile;
+    private SpreadDocument.DataFile dataFile = null;
 
     public String getName() {
         return name;
@@ -52,8 +43,30 @@ public abstract class AbstractBuilder implements Builder {
         isVisible = visible;
     }
 
+    public boolean isBuilt() {
+        return layer != null;
+    }
+
+    public void invalidate() {
+        layer = null;
+    }
+
+    public void build() throws BuildException {
+        layer = buildLayer();
+    }
+
+    protected abstract Layer buildLayer() throws BuildException;
+
+    public Layer getLayer() {
+        if (layer == null) {
+            throw new IllegalArgumentException("getLayer accessed but layer has not been built");
+        }
+        return layer;
+    }
 
     private String name;
     private String description;
     private boolean isVisible;
+
+    private Layer layer = null;
 }

@@ -1,7 +1,7 @@
 package dr.app.phylogeography.builder;
 
-import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.spread.SpreadDocument;
+import dr.app.phylogeography.structure.Layer;
 
 import javax.swing.*;
 
@@ -22,9 +22,15 @@ public interface Builder {
 
     void setDataFile(SpreadDocument.DataFile dataFile);
 
-    Layer buildLayer();
-
     JPanel getEditPanel();
 
     void setFromEditPanel();
+
+    boolean isBuilt();
+
+    void invalidate();
+
+    void build() throws BuildException;
+
+    Layer getLayer();
 }

@@ -1,14 +1,13 @@
 package dr.app.phylogeography.spread;
 
-import dr.app.util.Utils;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.phylogeography.generator.Generator;
 import dr.app.phylogeography.generator.KMLGenerator;
+import dr.app.util.Utils;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
-import dr.evolution.util.TaxonList;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
@@ -17,10 +16,7 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
-import java.util.List;
-
-import org.jdom.JDOMException;
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -92,13 +88,13 @@ public class SpreadFrame extends DocumentFrame {
         panel.add(tabbedPane, BorderLayout.CENTER);
         panel.setPreferredSize(new java.awt.Dimension(800, 600));
 
-        getExportAction().setEnabled(false);
-        JButton generateButton = new JButton(getExportAction());
-        generateButton.putClientProperty("JButton.buttonType", "roundRect");
+//        getExportAction().setEnabled(false);
+//        JButton generateButton = new JButton(getExportAction());
+//        generateButton.putClientProperty("JButton.buttonType", "roundRect");
 
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
         panel2.add(statusLabel, BorderLayout.CENTER);
-        panel2.add(generateButton, BorderLayout.EAST);
+//        panel2.add(generateButton, BorderLayout.EAST);
 
         panel.add(panel2, BorderLayout.SOUTH);
 
@@ -114,8 +110,7 @@ public class SpreadFrame extends DocumentFrame {
 
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
-        exportChooser.setFileFilter(new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
-        exportChooser.setDialogTitle("Generate BEAST XML File...");
+        exportChooser.setDialogTitle("Generate Map File...");
 
 
         importChooser = new JFileChooser(Utils.getCWD());
@@ -189,27 +184,23 @@ public class SpreadFrame extends DocumentFrame {
                     } catch (IOException ioe) {
                         JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
                                 "Unable to read file", JOptionPane.ERROR_MESSAGE);
-                        ioe.printStackTrace();
                         return;
 
                     } catch (NexusImporter.MissingBlockException ex) {
                         JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
                                 "Missing Block in Nexus File",
                                 JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace();
 
                     } catch (Importer.ImportException ime) {
                         JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
                                 "Error reading file",
                                 JOptionPane.ERROR_MESSAGE);
-                        ime.printStackTrace();
                         return;
 
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                                 "Error reading file",
                                 JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace();
                         return;
                     }
                 }

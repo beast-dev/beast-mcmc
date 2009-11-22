@@ -1,29 +1,9 @@
-/*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.phylogeography.spread;
 
-import dr.app.phylogeography.builder.*;
+import dr.app.phylogeography.builder.Builder;
+import dr.app.phylogeography.builder.BuilderFactory;
+import dr.app.phylogeography.builder.DiscreteTreeBuilder;
+import dr.app.phylogeography.builder.BuildException;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -35,8 +15,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -105,20 +88,22 @@ public class LayersPanel extends JPanel implements Exportable {
 //        PanelUtils.setupComponent(button);
 //        toolBar1.add(button);
 
-        Action addLayerAction = new AddLayerAction();
-        Action removeLayerAction = new RemoveLayerAction();
-        Action editLayerAction = new EditLayerAction();
-
         ActionPanel actionPanel1 = new ActionPanel(true);
-        actionPanel1.setAddAction(addLayerAction);
-        actionPanel1.setRemoveAction(removeLayerAction);
-        actionPanel1.setActionAction(editLayerAction);
+        actionPanel1.setAddAction(addAction);
+        actionPanel1.setRemoveAction(removeAction);
+        actionPanel1.setActionAction(editAction);
 
-        removeLayerAction.setEnabled(false);
+        removeAction.setEnabled(false);
 
-        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel controlPanel1 = new JPanel(new BorderLayout());
         controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
+        controlPanel1.add(actionPanel1, BorderLayout.WEST);
+
+        buildAction.setEnabled(false);
+        JButton generateButton = new JButton(buildAction);
+        generateButton.putClientProperty("JButton.buttonType", "roundRect");
+        controlPanel1.add(generateButton, BorderLayout.EAST);
+
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
@@ -131,8 +116,8 @@ public class LayersPanel extends JPanel implements Exportable {
             public void dataChanged() {
             }
 
-            public void settingsChanged() {
-                layerTableModel.fireTableDataChanged();
+            public void settingsChanged() {  
+                LayersPanel.this.settingsChanged();
             }
         });
     }
@@ -173,8 +158,9 @@ public class LayersPanel extends JPanel implements Exportable {
         }
 
         int result = layerBuilderDialog.showDialog(builder, document);
-        layerBuilderDialog.getBuilder(); // force update of builder settings
+
         if (result != JOptionPane.CANCEL_OPTION) {
+            layerBuilderDialog.getBuilder(); // force update of builder settings
             document.fireSettingsChanged();
         }
     }
@@ -195,10 +181,35 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.selectAll();
     }
 
+    private void buildAll() {
+        for (Builder builder : document.getLayerBuilders()) {
+            try {
+                builder.build();
+            } catch (BuildException be) {
+                JOptionPane.showMessageDialog(frame, "For layer, " + builder.getName() + ": " + be.getMessage(),
+                        "Error building layer",
+                        JOptionPane.ERROR_MESSAGE);
+
+            }
+        }
+        document.fireSettingsChanged();
+    }
+
+    private void settingsChanged() {
+        boolean needsBuilding = false;
+        for (Builder builder : document.getLayerBuilders()) {
+            if (!builder.isBuilt()) {
+                needsBuilding = true;
+            }
+        }
+        buildAction.setEnabled(needsBuilding);
+        layerTableModel.fireTableDataChanged();
+    }
+
     class LayerTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Layer Type", "Input File"};
+        String[] columnNames = {"Name", "Layer Type", "Input File", "Built?"};
 
         public LayerTableModel() {
         }
@@ -220,6 +231,8 @@ public class LayersPanel extends JPanel implements Exportable {
                     return builder.getBuilderName();
                 case 2:
                     return builder.getDataFile();
+                case 3:
+                    return (builder.isBuilt() ? "Yes" : "No");
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -287,6 +300,11 @@ public class LayersPanel extends JPanel implements Exportable {
         }
     }
 
+    private final Action addAction = new AddLayerAction();
+    private final Action removeAction = new RemoveLayerAction();
+    private final Action editAction = new EditLayerAction();
+    private final Action buildAction = new BuildAction();
+
     public class AddLayerAction extends AbstractAction {
         public AddLayerAction() {
             super("Add");
@@ -320,5 +338,16 @@ public class LayersPanel extends JPanel implements Exportable {
         }
     }
 
+
+    public class BuildAction extends AbstractAction {
+        public BuildAction() {
+            super("Build");
+            setToolTipText("Use this button to build the layers");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            buildAll();
+        }
+    }
 
 }

@@ -1,13 +1,13 @@
 package dr.app.phylogeography.spread;
 
-import jam.framework.MenuFactory;
 import jam.framework.AbstractFrame;
 import jam.framework.Application;
 import jam.framework.MenuBarFactory;
+import jam.framework.MenuFactory;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Andrew Rambaut

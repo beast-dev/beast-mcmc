@@ -1,15 +1,14 @@
 package dr.app.phylogeography.generator;
 
 import dr.app.phylogeography.structure.*;
-import dr.app.phylogeography.structure.Style;
 import dr.app.phylogeography.structure.Container;
-import dr.app.phylogeography.structure.Place;
+import dr.app.phylogeography.structure.Style;
 import dr.app.phylogeography.structure.Polygon;
-
-import java.util.*;
-import java.io.*;
-
 import org.boehn.kmlframework.kml.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
 
 
 /**

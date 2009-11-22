@@ -1,15 +1,17 @@
 package dr.app.phylogeography;
 
-import jebl.evolution.trees.RootedTree;
-import jebl.evolution.io.*;
-import jebl.evolution.graphs.Node;
-
-import java.io.*;
-import java.util.*;
-
+import dr.app.phylogeography.spread.Location;
 import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.structure.TimeLine;
-import dr.app.phylogeography.spread.Location;
+import jebl.evolution.graphs.Node;
+import jebl.evolution.io.ImportException;
+import jebl.evolution.io.NexusImporter;
+import jebl.evolution.io.TreeImporter;
+import jebl.evolution.trees.RootedTree;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut

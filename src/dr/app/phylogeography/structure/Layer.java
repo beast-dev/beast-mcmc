@@ -1,7 +1,5 @@
 package dr.app.phylogeography.structure;
 
-import java.util.*;
-
 /**
  * @author Andrew Rambaut
  * @version $Id$

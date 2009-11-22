@@ -1,15 +1,14 @@
 package dr.app.phylogeography.spread;
 
-import dr.app.phylogeography.builder.BuilderFactory;
 import dr.app.phylogeography.builder.Builder;
+import dr.app.phylogeography.builder.BuilderFactory;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.text.Document;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut

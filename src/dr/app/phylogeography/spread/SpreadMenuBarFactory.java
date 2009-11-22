@@ -1,11 +1,10 @@
 package dr.app.phylogeography.spread;
 
-import jam.mac.MacHelpMenuFactory;
-import jam.mac.MacWindowMenuFactory;
-import jam.framework.DefaultMenuBarFactory;
 import jam.framework.DefaultEditMenuFactory;
 import jam.framework.DefaultHelpMenuFactory;
-
+import jam.framework.DefaultMenuBarFactory;
+import jam.mac.MacHelpMenuFactory;
+import jam.mac.MacWindowMenuFactory;
 import jam.mac.Utils;
 
 /**

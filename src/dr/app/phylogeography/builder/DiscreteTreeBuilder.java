@@ -1,16 +1,16 @@
 package dr.app.phylogeography.builder;
 
-import dr.app.phylogeography.structure.*;
-import dr.app.phylogeography.spread.SpreadDocument;
-import jebl.evolution.trees.RootedTree;
-import jebl.evolution.graphs.Node;
+import dr.app.phylogeography.structure.Coordinates;
+import dr.app.phylogeography.structure.Layer;
+import dr.app.phylogeography.structure.Line;
+import dr.app.phylogeography.structure.Style;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.NodeRef;
+import jam.panels.OptionsPanel;
+import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
 import java.awt.*;
-
-import jam.panels.OptionsPanel;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
 
 /**
  * @author Andrew Rambaut
@@ -33,9 +33,10 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
     public DiscreteTreeBuilder() {
     }
 
-    public Layer buildLayer() {
+    protected Layer buildLayer() throws BuildException {
         Layer layer = new Layer(getName(), getDescription(), isVisible());
-        buildTree(layer, (RootedTree)getDataFile().getFirstTree());
+        buildTree(layer, getDataFile().getFirstTree());
+
         return layer;
     }
 
@@ -52,23 +53,24 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
 
     public void setFromEditPanel() {
         maxAltitude = maxAltitudeField.getValue(0.0);
+        invalidate();
     }
 
-    private void buildTree(Layer layer, final RootedTree tree) {
-        buildTree(layer, tree, tree.getRootNode());
+    private void buildTree(Layer layer, final Tree tree) throws BuildException {
+        buildTree(layer, tree, tree.getRoot());
     }
 
-    private void buildTree(Layer layer, final RootedTree tree, final Node node) {
+    private void buildTree(Layer layer, final Tree tree, final NodeRef node) throws BuildException {
         if (!tree.isRoot(node)) {
-            Node parent = tree.getParent(node);
-            double long0 = (Double)parent.getAttribute(LONGITUDE_ATTRIBUTE);
-            double lat0 = (Double)parent.getAttribute(LATITUDE_ATTRIBUTE);
-            double time0 = (Double)parent.getAttribute(TIME_ATTRIBUTE);
+            NodeRef parent = tree.getParent(node);
+            double long0 = getDoubleAttribute(tree, parent, LONGITUDE_ATTRIBUTE);
+            double lat0 = getDoubleAttribute(tree, parent, LATITUDE_ATTRIBUTE);
+            double time0 = getDoubleAttribute(tree, parent, TIME_ATTRIBUTE);
             Style style0 = new Style(Color.red, 1.0);
 
-            double long1 = (Double)node.getAttribute(LONGITUDE_ATTRIBUTE);
-            double lat1 = (Double)node.getAttribute(LATITUDE_ATTRIBUTE);
-            double time1 = (Double)node.getAttribute(TIME_ATTRIBUTE);
+            double long1 = getDoubleAttribute(tree, node, LONGITUDE_ATTRIBUTE);
+            double lat1 = getDoubleAttribute(tree, node, LATITUDE_ATTRIBUTE);
+            double time1 = getDoubleAttribute(tree, node, TIME_ATTRIBUTE);
             Style style1 = new Style(Color.red, 1.0);
 
             double duration = -1.0;
@@ -82,11 +84,21 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
             );
             layer.addItem(line);
         }
-        for (Node child : tree.getChildren(node)) {
-            buildTree(layer, tree, child);
+        if (!tree.isExternal(node)) {
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef child = tree.getChild(node, i);
+                buildTree(layer, tree, child);
+            }
         }
     }
 
+    private double getDoubleAttribute(Tree tree, NodeRef node, String attributeName) throws BuildException {
+        Double value = (Double)tree.getNodeAttribute(node, attributeName);
+        if (value == null) {
+            throw new BuildException("Tree doesn't have attribute, " + attributeName + ", for one or more nodes");
+        }
+        return value;
+    }
     public String getBuilderName() {
         return FACTORY.getBuilderName();
     }

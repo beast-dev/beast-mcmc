@@ -1,13 +1,13 @@
 package dr.app.phylogeography.spread;
 
-import dr.evolution.tree.Tree;
 import dr.app.phylogeography.builder.Builder;
+import dr.evolution.tree.Tree;
 
-import java.util.Set;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
-import java.io.File;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -17,7 +17,6 @@ import java.io.File;
 public class SpreadDocument {
     private final List<DataFile> dataFiles = new ArrayList<DataFile>();
     private final List<Builder> layerBuilders = new ArrayList<Builder>();
-
 
     public void addTreeFile(DataFile dataFile) {
         dataFiles.add(dataFile);

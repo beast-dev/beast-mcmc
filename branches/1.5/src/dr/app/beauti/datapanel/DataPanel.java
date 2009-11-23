@@ -345,6 +345,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             options.reset();
             frame.statusLabel.setText("");
             frame.setAllOptions();
+            frame.getExportAction().setEnabled(false);
         }
 
         dataTableModel.fireTableDataChanged();

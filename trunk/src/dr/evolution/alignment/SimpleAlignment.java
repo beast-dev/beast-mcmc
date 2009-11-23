@@ -31,6 +31,8 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.Arrays;
+
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
  *
@@ -268,8 +270,14 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
      * @return number of invariant sites
      */
     public int getInvariantCount() {
-        // @todo this method should be implemented at some point AD
-        throw new RuntimeException("Not implemented yet");
+        int invariantSites = 0;
+        for(int i=0; i<getSiteCount(); i++) {
+            int[] pattern = getSitePattern(i);
+            if (Patterns.isInvariant(pattern)) {
+                invariantSites++;
+            }
+        }
+        return invariantSites;
     }
 
     /**
@@ -340,6 +348,8 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
 
         StringBuffer buffer = new StringBuffer();
+        buffer.append("Site count = ").append(getSiteCount()).append("\n");
+        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n\n");
         for (int i = 0; i < getSequenceCount(); i++) {
             String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
             buffer.append(">" + name + "\n");

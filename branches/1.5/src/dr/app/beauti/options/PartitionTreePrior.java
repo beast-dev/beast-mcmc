@@ -110,7 +110,8 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createParameterUniformPrior("skyride.popSize", "GMRF Bayesian skyride population sizes", PriorScaleType.TIME_SCALE, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
-        createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision", PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
+                PriorScaleType.NONE, 1.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
 //        {
 //            final Parameter p = createParameter("skyride.precision", "GMRF Bayesian skyride precision", PriorScaleType.NONE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 //            p.priorType = PriorType.GAMMA_PRIOR;

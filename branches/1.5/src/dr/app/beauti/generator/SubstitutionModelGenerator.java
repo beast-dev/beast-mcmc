@@ -6,8 +6,6 @@ import dr.app.beauti.enumTypes.FrequencyPolicyType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.datatype.TwoStateCovarion;
-import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -325,7 +323,7 @@ public class SubstitutionModelGenerator extends Generator {
      * @param model  the partition model to write
      */
     public void writeBinaryCovarionModel(XMLWriter writer, PartitionSubstitutionModel model) {
-        String dataTypeDescription = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion" for COVARION_MODEL
+//        String dataTypeDescription = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion" for COVARION_MODEL
         String prefix = model.getPrefix();
 
         writer.writeComment("The Binary covarion model");

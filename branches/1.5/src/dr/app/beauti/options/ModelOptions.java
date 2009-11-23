@@ -63,9 +63,9 @@ public class ModelOptions {
     }
 
     public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
+                                          double shape, double scale, double lower, double upper, boolean priorFixed) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                  .initial(initial).shape(shape).scale(scale).priorFixed(priorFixed).build(parameters);
+                  .initial(initial).shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).build(parameters);
     }
 
     public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,

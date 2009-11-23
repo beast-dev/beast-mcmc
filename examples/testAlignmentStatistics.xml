@@ -1,0 +1,23 @@
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<taxon id="C"/>
+		<taxon id="D"/>
+		<taxon id="E"/>
+	</taxa>
+	
+	<alignment id="alignment" dataType="nucleotide">
+		<sequence> <taxon idref="A"/> AACAAA </sequence>
+		<sequence> <taxon idref="B"/> AACCAG </sequence>
+		<sequence> <taxon idref="C"/> AACTCC </sequence>
+		<sequence> <taxon idref="D"/> AACACC </sequence>
+		<sequence> <taxon idref="E"/> AACAAG </sequence>	
+	</alignment>
+	
+	<report>
+		<alignment idref="alignment"/>
+	</report>
+	
+</beast>

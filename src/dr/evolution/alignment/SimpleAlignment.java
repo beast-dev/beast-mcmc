@@ -407,11 +407,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
         StringBuffer buffer = new StringBuffer();
         buffer.append("Site count = ").append(getSiteCount()).append("\n");
-        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n\n");
-        buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n\n");
-        buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n\n");
-        buffer.append("Unique site patters = ").append(getUniquePatternCount()).append("\n\n");
-        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n\n");
+        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n");
+        buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n");
+        buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n");
+        buffer.append("Unique site patterns = ").append(getUniquePatternCount()).append("\n\n");
         for (int i = 0; i < getSequenceCount(); i++) {
             String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
             buffer.append(">" + name + "\n");

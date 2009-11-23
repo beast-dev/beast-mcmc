@@ -48,7 +48,7 @@ public class RateIndicatorBF {
 
         arguments.printUsage(commandName, "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: " + commandName + " test.trees out.kml");
+        progressStream.println("  Example: " + commandName + " indicator.log rates.out");
         progressStream.println();
     }
 

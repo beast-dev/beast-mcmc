@@ -53,14 +53,16 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JTable priorTable = null;
     PriorTableModel priorTableModel = null;
 
-    public ArrayList parameters = new ArrayList();
+    public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
     BeautiFrame frame = null;
     BeautiOptions options = null;
 
-    public PriorsPanel(BeautiFrame parent) {
+    private final boolean isDefaultOnly;
 
+    public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
+        this.isDefaultOnly = isDefaultOnly;
 
         priorTableModel = new PriorTableModel(this);
         priorTable = new JTable(priorTableModel);
@@ -83,7 +85,15 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(2).setPreferredWidth(400);
+        if (isDefaultOnly) {
+            priorTable.getColumnModel().getColumn(2).setPreferredWidth(60);
+        } else {
+            priorTable.getColumnModel().getColumn(2).setPreferredWidth(30);
+        }
+
+        priorTable.getColumnModel().getColumn(3).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        priorTable.getColumnModel().getColumn(3).setPreferredWidth(400);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 
@@ -99,10 +109,18 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
-        panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
-                "You should check that these are appropriate."), BorderLayout.SOUTH);
+
+        if (isDefaultOnly) {
+            scrollPane.setPreferredSize(new java.awt.Dimension(800, 600));
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(new JLabel("Please check the default priors listed above, especially the upper and lower limits. "
+                    + "These appeared priors are those that the user hasen't clicked on in the prior panel."), BorderLayout.SOUTH);
+        } else {
+            panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
+                    "You should check that these are appropriate."), BorderLayout.SOUTH);
+        }
 
         add(panel, BorderLayout.CENTER);
     }
@@ -117,11 +135,22 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
+    public void setParametersList(BeautiOptions options) {
+        this.options = options;
+
+        parameters.clear();
+        for (Parameter param : options.selectParameters()) {
+            if (!param.isPriorEdited()) {
+                parameters.add(param);
+            }
+        }
+    }
+
     private PriorDialog priorDialog = null;
     private DiscretePriorDialog discretePriorDialog = null;
 
     private void priorButtonPressed(int row) {
-        Parameter param = (Parameter) parameters.get(row);
+        Parameter param = parameters.get(row);
 
         if (param.isDiscrete) {
             if (discretePriorDialog == null) {
@@ -141,6 +170,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         }
         param.setPriorEdited(true);
+
+        if (isDefaultOnly) {             
+            setParametersList(options);
+        }
         
         if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA 
         	if (options.clockModelOptions.isNodeCalibrated(param)) {
@@ -189,9 +222,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     public class ButtonRenderer extends JButton implements TableCellRenderer {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -2416184092883649169L;
 
         public ButtonRenderer(int alignment, Insets insets) {
@@ -217,9 +247,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ButtonEditor extends DefaultCellEditor {
-        /**
-         *
-         */
+        
         private static final long serialVersionUID = 6372738480075411674L;
         protected JButton button;
         private String label;

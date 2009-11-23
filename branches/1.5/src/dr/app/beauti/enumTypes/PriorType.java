@@ -182,4 +182,35 @@ public enum PriorType {
 
         return buffer.toString();
     }
+
+    public String getPriorBoundString(Parameter param) {
+
+        NumberFormat formatter = NumberFormat.getNumberInstance();
+        StringBuffer buffer = new StringBuffer();
+
+        switch (param.priorType) {
+            case NONE:
+//                buffer.append("None");
+//                break;
+            case UNIFORM_PRIOR:
+            case EXPONENTIAL_PRIOR:
+            case LAPLACE_PRIOR:
+            case NORMAL_PRIOR:
+            case LOGNORMAL_PRIOR:
+            case GAMMA_PRIOR:
+            case INVERSE_GAMMA_PRIOR:
+            case JEFFREYS_PRIOR:
+            case POISSON_PRIOR:
+            case TRUNC_NORMAL_PRIOR:
+                buffer.append("[");
+                buffer.append(formatter.format(param.lower));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.upper));
+                buffer.append("]");
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown prior type");
+        }
+        return buffer.toString();
+    }
 }

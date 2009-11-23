@@ -32,6 +32,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
@@ -280,6 +281,63 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return invariantSites;
     }
 
+    public int getUniquePatternCount() {
+        Patterns patterns = new Patterns(this);
+        return patterns.getPatternCount();
+    }
+
+    public int getInformativeCount() {
+        Patterns patterns = new Patterns(this);
+        int informativeCount = 0;
+
+        for(int i = 0; i < patterns.getPatternCount(); i++) {
+            int[] pattern = patterns.getPattern(i);
+
+            if (isInformative(pattern)) {
+                informativeCount += patterns.getPatternWeight(i);
+            }
+        }
+
+        return informativeCount;
+    }
+
+    public int getSingletonCount() {
+        Patterns patterns = new Patterns(this);
+        int singletonCount = 0;
+
+        for(int i = 0; i < patterns.getPatternCount(); i++) {
+            int[] pattern = patterns.getPattern(i);
+
+            if (!Patterns.isInvariant(pattern) && !isInformative(pattern)) {
+                singletonCount += patterns.getPatternWeight(i);
+            }
+        }
+
+        return singletonCount;
+    }
+
+    private boolean isInformative(int[] pattern) {
+        int[] stateCounts = new int[getStateCount()];
+        for (int j = 0; j < pattern.length; j++) {
+            stateCounts[pattern[j]] ++;
+        }
+
+        boolean oneStateGreaterThanOne = false;
+        boolean secondStateGreaterThanOne = false;
+        for (int j = 0; j < stateCounts.length; j++) {
+            if (stateCounts[j] > 1) {
+                if (!oneStateGreaterThanOne) {
+                    oneStateGreaterThanOne = true;
+                } else {
+                    secondStateGreaterThanOne = true;
+                }
+
+            }
+        }
+
+        return  secondStateGreaterThanOne;
+    }
+
     /**
      * @return number of states for this siteList
      */
@@ -350,11 +408,16 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         StringBuffer buffer = new StringBuffer();
         buffer.append("Site count = ").append(getSiteCount()).append("\n");
         buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n\n");
+        buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n\n");
+        buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n\n");
+        buffer.append("Unique site patters = ").append(getUniquePatternCount()).append("\n\n");
+        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n\n");
         for (int i = 0; i < getSequenceCount(); i++) {
             String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
             buffer.append(">" + name + "\n");
             buffer.append(getAlignedSequenceString(i) + "\n");
         }
+
         return buffer.toString();
     }
 
@@ -392,6 +455,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     // **************************************************************
 
     private DataType dataType = null;
-	private int siteCount = 0;
-	private boolean siteCountKnown = false;
+    private int siteCount = 0;
+    private boolean siteCountKnown = false;
 }

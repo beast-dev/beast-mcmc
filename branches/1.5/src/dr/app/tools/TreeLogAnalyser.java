@@ -261,7 +261,7 @@ public class TreeLogAnalyser {
 
         if (inputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            inputFileName = Utils.getLoadFileName("TreeLogAnalyser v1.3 - Select log file to analyse");
+            inputFileName = Utils.getLoadFileName("TreeLogAnalyser " + version.getVersionString() + " - Select log file to analyse");
         }
 
         new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, exportFileName,

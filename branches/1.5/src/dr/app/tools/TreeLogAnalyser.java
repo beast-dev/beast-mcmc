@@ -49,7 +49,7 @@ public class TreeLogAnalyser {
     static boolean combine = true;
 
     public TreeLogAnalyser(int burnin, String inputFileName, String outputFileName, String trueTreeFileName,
-                           String exportFileName, double minSupport, int maxExport, boolean verbose) throws IOException {
+                           String exportFileName, double minSupport, double credibleSetProbability, int maxExport, boolean verbose) throws IOException {
 
         List<File> files = new ArrayList<File>();
         File inputFile = new File(inputFileName);
@@ -80,7 +80,7 @@ public class TreeLogAnalyser {
             }
         }
 
-        analyze(files, burnin, trueTree, verbose, exportFileName, minSupport, maxExport, new boolean[]{true});
+        analyze(files, burnin, trueTree, verbose, exportFileName, minSupport, credibleSetProbability, maxExport, new boolean[]{true});
     }
 
     private static void collectFiles(File file, List<File> files) {
@@ -98,7 +98,7 @@ public class TreeLogAnalyser {
     }
 
     private static void analyze(List<File> files, int burnin, Tree tree, boolean verbose, String exportFileName,
-                                double minSupport, int maxExport, boolean[] drawHeader) {
+                                double minSupport, double credibleSetProbability, int maxExport, boolean[] drawHeader) {
 
         if (combine) {
             try {
@@ -113,7 +113,7 @@ public class TreeLogAnalyser {
                     analysis.export(exportStream, minSupport, maxExport, verbose);
                 } else {
                     if (verbose) {
-                        analysis.report(0.05, (int)(minSupport+.5));
+                        analysis.report(0.05, credibleSetProbability, (int)(minSupport+.5));
                     } else {
                         final String name = files.size() > 1 ? "combined" : files.get(0).toString();
                         analysis.shortReport(name, tree, drawHeader[0]);
@@ -185,10 +185,11 @@ public class TreeLogAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
                         new Arguments.StringOption("export", "file-name", "name of file to export"),
-                        new Arguments.RealOption("limit", "don't export trees with support lower than limit"),
-                        new Arguments.IntegerOption("max", "export no more than max trees"),
+                        new Arguments.RealOption("limit", "don't export trees with support lower than limit [default = 0.0]"),
+                        new Arguments.RealOption("probability", "credible set probability limit [default = 0.95]"),
+                        new Arguments.IntegerOption("max", "export no more than max trees [default = all]"),
                         new Arguments.Option("short", "use this option to produce a short report"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -221,6 +222,11 @@ public class TreeLogAnalyser {
         double minSupport = 0.0;
         if (arguments.hasOption("limit")) {
             minSupport = arguments.getRealOption("limit");
+        }
+
+        double credibleSetProbability = 0.95;
+        if (arguments.hasOption("probability")) {
+            credibleSetProbability = arguments.getRealOption("probability");
         }
 
         int maxExport = -1;
@@ -259,7 +265,7 @@ public class TreeLogAnalyser {
         }
 
         new TreeLogAnalyser(burnin, inputFileName, outputFileName, trueTreeFileName, exportFileName,
-                minSupport, maxExport, !shortReport);
+                minSupport, credibleSetProbability, maxExport, !shortReport);
 
         System.exit(0);
     }

@@ -74,21 +74,8 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 ==Star BEAST==
 
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-
-_still to do:_
-        createParameterJeffreysPrior(TraitGuesser.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        // species tree Yule
-        createParameterJeffreysPrior(TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
-                "Speices tree: Yule process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        // species tree Birth Death
-        createParameterJeffreysPrior(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME,
-                "Speices tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Speices tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
-
-        createParameterJeffreysPrior(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-
-        createParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlide.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
+|| species.popMean ||  Hype-prior on population sizes  || 0,+Inf || Jeffreys (1/x) || ||
+|| species.yule.birthRate || Tree birth rate || 0,+Inf || Jeffreys (1/x) || ||
+|| species.birthDeath.meanGrowthRate || Tree mean growth rate (birth-death) || 0,+Inf || Jeffreys (1/x) || ||
+|| species.birthDeath.relativeDeathRate || Tree relative death rate (death/birth) || [0,1] || uniform on [0,1] || ||
+|| speciesTree.splitPopSize || species tree population sizes || 0,+Inf || Gamma(2, species.popMean) for internal, Gamma(4, species.popMean) for tips || || 

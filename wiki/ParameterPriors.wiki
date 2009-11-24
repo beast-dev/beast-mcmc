@@ -47,15 +47,15 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 ==Tree Priors==
 
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || ||
-|| exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || ||
+|| constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
+|| exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
 || exponential.growthRate || coalescent growth rate parameter || -Inf,+Inf || || ||
 || exponential.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
-|| logistic.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || ||
+|| logistic.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
 || logistic.growthRate || coalescent logistic growth rate parameter || 0,+Inf || || ||
 || logistic.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
 || logistic.t50 || logistic shape parameter || 0,+Inf || || ||
-|| expansion.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || ||
+|| expansion.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
 || expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf || || ||
 || expansion.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
 || expansion.ancestralProportion || ancestral population proportion || 0,1 || || ||
@@ -65,7 +65,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || skyride.precision || GMRF Bayesian skyride precision || 0,+Inf || Gamma || || In Code ||
 || demographic.popSize || Extended Bayesian Skyline population sizes || 0,+Inf || || ||
 || demographic.indicators || Extended Bayesian Skyline population switch || 1,node count || Integer || ||
-|| demographic.populationMean || Extended Bayesian Skyline population prior mean || 0,+Inf || Jeffreys (1/x) || ||
+|| demographic.populationMean || Extended Bayesian Skyline population prior mean || 0,+Inf || Jeffreys (1/x) || || In Code ||
 || demographic.populationSizeChanges || Average number of population change points || 0,x || Poisson || ||
 || yule.birthRate || Yule speciation process birth rate || 0,+Inf || || ||
 || birthDeath.birthDiff || Birth-Death speciation process rate || 0,+Inf || || ||

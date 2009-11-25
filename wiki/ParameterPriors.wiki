@@ -8,68 +8,68 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 = Parameters =
 
 == Substitution Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| `*`.frequencies || base frequencies || 0 <= \pi_i <= \sum pi_i = 1 || Uniform / Dirichlet(1,...,1) || Dirichlet(1,\ldots,1) is uniform over this hyperplane || In Code ||
-|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
-|| `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
-|| `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
-|| `*`.ac, `*`.at, `*`.cg, `*`.gt || GTR A-C, A-T, C-G, G-T substitution parameters  || 0,+Inf || Gamma(0.05,10) || If the GTR parameters are scale to C-T (a transition) then these four transversions should have a prior with a mean below 1. This prior is diffuse with a mean of 0.5 || In Code ||
-|| `*`.ag || GTR A-G substitution parameter  || 0,+Inf || Gamma(0.05,20) || If the GTR parameters are scaled to C-T (a transition) then the other transition should have a prior with a mean of 1. This prior is moderately diffuse with a mean of 1 || In Code ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| `*`.frequencies || base frequencies || 0 <= \pi_i <= \sum pi_i = 1 || Uniform / Dirichlet(1,...,1) || Y || Dirichlet(1,\ldots,1) is uniform over this hyperplane || In Code ||
+|| `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
+|| `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
+|| `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
+|| `*`.ac, `*`.at, `*`.cg, `*`.gt || GTR A-C, A-T, C-G, G-T substitution parameters  || 0,+Inf || Gamma(0.05,10) || Y || If the GTR parameters are scale to C-T (a transition) then these four transversions should have a prior with a mean below 1. This prior is diffuse with a mean of 0.5 || In Code ||
+|| `*`.ag || GTR A-G substitution parameter || 0,+Inf || Gamma(0.05,20) || Y || If the GTR parameters are scaled to C-T (a transition) then the other transition should have a prior with a mean of 1. This prior is moderately diffuse with a mean of 1 || In Code ||
 || hfrequencies || Binary Covarion frequencies of the hidden rates  || 0 <= \pi_i <= \sum \pi_i = 1 || Uniform / Dirichlet(1,1) || || In Code ||
-|| bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || Beta ||  Beta(1,1) is uniform || In Code ||
-|| bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma(0.05, 10) || The covarion model is normalized by setting the fast rate to 1.0. If the switching rate is much faster than the fast rate, then the covarion aspect of the model is a bit pointless. I have no good feeling for this, but would suggest a diffuse prior with a mean below 1. || In Code ||
+|| bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || Beta || Y ||  Beta(1,1) is uniform || In Code ||
+|| bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma(0.05, 10) || Y || The covarion model is normalized by setting the fast rate to 1.0. If the switching rate is much faster than the fast rate, then the covarion aspect of the model is a bit pointless. I have no good feeling for this, but would suggest a diffuse prior with a mean below 1. || In Code ||
 
 == Site Models ==
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| `*`.alpha || Gamma shape parameter || 1E-8,+Inf || Gamma || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values || 
-|| `*`.pInv || proportion of invariant sites parameter || 0,1 || Beta || Beta(1,1) is uniform ||
-|| `*`.mu || relative rate parameter || 0,+Inf || Gamma || || 
+|| `*`.alpha || Gamma shape parameter || 1E-8,+Inf || Gamma || Y || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values || 
+|| `*`.pInv || proportion of invariant sites parameter || 0,1 || Beta || Y || Beta(1,1) is uniform ||
+|| `*`.mu || relative rate parameter || 0,+Inf || Gamma || Y || || 
 
 == Clock Models ==
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| clock.rate || Strict clock substitution rate || 0,+Inf || Gamma || ||
-|| uced.mean || uncorrelated exponential relaxed clock mean || 0,+Inf || Gamma || ||
-|| ucld.mean || uncorrelated lognormal relaxed clock mean || 0,+Inf || Gamma || ||
-|| ucld.stdev || uncorrelated lognormal relaxed clock stdev || 0,+Inf || Gamma || ||
-|| branchRates.var || autocorrelated lognormal relaxed clock rate variance || 0,+Inf || Gamma || || 
-|| branchRates.categories || relaxed clock branch rate categories || 0,branches || integer || ||
-|| `*`.rates || random local clock rates || 0,+Inf || Gamma || ||
-|| `*`. changes || random local clock rate change indicator || 0,1|| Integer || ||
-|| treeModel.rootRate || autocorrelated lognormal relaxed clock root rate || 0,+Inf || Gamma || || 
-|| treeModel.nodeRates || autocorrelated lognormal relaxed clock non-root rates || 0,+Inf || Uniform || ||
+|| clock.rate || Strict clock substitution rate || 0,+Inf || Gamma || Y || ||
+|| uced.mean || uncorrelated exponential relaxed clock mean || 0,+Inf || Gamma || Y || ||
+|| ucld.mean || uncorrelated lognormal relaxed clock mean || 0,+Inf || Gamma || Y || ||
+|| ucld.stdev || uncorrelated lognormal relaxed clock stdev || 0,+Inf || Gamma || Y || ||
+|| branchRates.var || autocorrelated lognormal relaxed clock rate variance || 0,+Inf || Gamma || Y || || 
+|| branchRates.categories || relaxed clock branch rate categories || 0,branches || integer || N || ||
+|| `*`.rates || random local clock rates || 0,+Inf || Gamma || N || ||
+|| `*`. changes || random local clock rate change indicator || 0,1|| Integer || N || ||
+|| treeModel.rootRate || autocorrelated lognormal relaxed clock root rate || 0,+Inf || Gamma || N || || 
+|| treeModel.nodeRates || autocorrelated lognormal relaxed clock non-root rates || 0,+Inf || Uniform || N || ||
 
 ==Tree Models==
 
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| treeModel.rootHeight || root height of the tree || 0,+Inf || Tree Prior || ||
-|| treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || ||
+|| treeModel.rootHeight || root height of the tree || 0,+Inf || Tree Prior || Y || ||
+|| treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || || ||
 
 ==Tree Priors==
 
 || *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
-|| exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
-|| exponential.growthRate || coalescent growth rate parameter || -Inf,+Inf || || ||
-|| exponential.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
-|| logistic.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
-|| logistic.growthRate || coalescent logistic growth rate parameter || 0,+Inf || || ||
-|| logistic.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
-|| logistic.t50 || logistic shape parameter || 0,+Inf || || ||
-|| expansion.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || || In Code ||
-|| expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf || || ||
-|| expansion.doublingTime || coalescent doubling time parameter || 0,+Inf || || ||
-|| expansion.ancestralProportion || ancestral population proportion || 0,1 || || ||
+|| constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
+|| exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
+|| exponential.growthRate || coalescent growth rate parameter || -Inf,+Inf || || Y ||  ||
+|| exponential.doublingTime || coalescent doubling time parameter || 0,+Inf || || Y || ||
+|| logistic.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
+|| logistic.growthRate || coalescent logistic growth rate parameter || 0,+Inf || || || ||
+|| logistic.doublingTime || coalescent doubling time parameter || 0,+Inf || || Y || ||
+|| logistic.t50 || logistic shape parameter || 0,+Inf || || Y ||  ||
+|| expansion.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
+|| expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf || Y ||  || ||
+|| expansion.doublingTime || coalescent doubling time parameter || 0,+Inf || Y ||  || ||
+|| expansion.ancestralProportion || ancestral population proportion || 0,1 || || Y ||  ||
 || skyline.popSize || Bayesian Skyline population sizes || 0,+Inf || Exponential Markov || ||
-|| skyline.groupSize || Bayesian Skyline group sizes || 1,node count || Integer || ||
-|| skyride.logPopSize || GMRF Bayesian skyride population sizes || -Inf,+Inf || GMRF || skyride.logPopSize is log unit unlike other popSize || In Code ||
-|| skyride.precision || GMRF Bayesian skyride precision || 0,+Inf || Gamma || || In Code ||
-|| demographic.popSize || Extended Bayesian Skyline population sizes || 0,+Inf || || ||
-|| demographic.indicators || Extended Bayesian Skyline population switch || 1,node count || Integer || ||
-|| demographic.populationMean || Extended Bayesian Skyline population prior mean || 0,+Inf || Jeffreys (1/x) || || In Code ||
-|| demographic.populationSizeChanges || Average number of population change points || 0,x || Poisson || ||
-|| yule.birthRate || Yule speciation process birth rate || 0,+Inf || || ||
-|| birthDeath.meanGrowthRate || Birth-Death speciation process rate || 0,+Inf || || ||
-|| birthDeath.relativeDeath || Death/Birth speciation process relative death rate || 0,+Inf || || ||
+|| skyline.groupSize || Bayesian Skyline group sizes || 1,node count || Integer || Y || ||
+|| skyride.logPopSize || GMRF Bayesian skyride population sizes || -Inf,+Inf || GMRF || N || skyride.logPopSize is log unit unlike other popSize || In Code ||
+|| skyride.precision || GMRF Bayesian skyride precision || 0,+Inf || Gamma || Y ||  || In Code ||
+|| demographic.popSize || Extended Bayesian Skyline population sizes || 0,+Inf || || N ||  ||
+|| demographic.indicators || Extended Bayesian Skyline population switch || 1,node count || Integer || N || ||
+|| demographic.populationMean || Extended Bayesian Skyline population prior mean || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
+|| demographic.populationSizeChanges || Average number of population change points || 0,x || Poisson || Y ||  ||
+|| yule.birthRate || Yule speciation process birth rate || 0,+Inf || || Y ||  ||
+|| birthDeath.meanGrowthRate || Birth-Death speciation process rate || 0,+Inf || || Y ||  ||
+|| birthDeath.relativeDeath || Death/Birth speciation process relative death rate || 0,+Inf || || Y ||  ||
 
 ==Star BEAST==
 

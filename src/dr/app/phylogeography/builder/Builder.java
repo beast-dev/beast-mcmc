@@ -1,6 +1,7 @@
 package dr.app.phylogeography.builder;
 
-import dr.app.phylogeography.spread.SpreadDocument;
+import dr.app.phylogeography.spread.InputFile;
+import dr.app.phylogeography.spread.MultiLineTableCellContent;
 import dr.app.phylogeography.structure.Layer;
 
 import javax.swing.*;
@@ -9,22 +10,18 @@ import javax.swing.*;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public interface Builder {
+public interface Builder extends MultiLineTableCellContent {
     String getBuilderName();
 
     String getName();
-    
-    void setName(String name);
-    
-    String getTableCellContent();
 
-    String getToolTipContent();
+    void setName(String name);
 
     String getDescription();
 
-    SpreadDocument.DataFile getDataFile();
+    InputFile getInputFile();
 
-    void setDataFile(SpreadDocument.DataFile dataFile);
+    void setInputFile(InputFile inputFile);
 
     JPanel getEditPanel();
 

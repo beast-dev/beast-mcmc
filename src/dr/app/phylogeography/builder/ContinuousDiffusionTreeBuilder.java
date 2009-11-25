@@ -38,7 +38,7 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
 
     protected Layer buildLayer() throws BuildException {
         Layer layer = new Layer(getName(), getDescription(), isVisible());
-        buildTree(layer, getDataFile().getFirstTree());
+        buildTree(layer, getInputFile().getTree());
 
         return layer;
     }
@@ -53,7 +53,7 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
             this.editPanel = editPanel;
         }
         maxAltitudeField.setValue(maxAltitude);
-        Tree tree = getDataFile().getFirstTree();
+        Tree tree = getInputFile().getTree();
         return editPanel;
     }
 
@@ -113,7 +113,7 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<b>").append(getName()).append("</b><br>");
-        sb.append(getBuilderName()).append(": ").append(getDataFile().getFile().getName()).append("<br>");
+        sb.append(getBuilderName()).append(": ").append(getInputFile().getFile().getName()).append("<br>");
         sb.append("Max Altitude: ").append(maxAltitude).append("<br>");
         sb.append("</html>");
         return sb.toString();
@@ -123,7 +123,7 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<b>").append(getName()).append("</b><br>");
-        sb.append(getBuilderName()).append(": ").append(getDataFile().getFile().getName()).append("<br>");
+        sb.append(getBuilderName()).append(": ").append(getInputFile().getFile().getName()).append("<br>");
         sb.append("Max Altitude: ").append(maxAltitude).append("<br>");
         sb.append("</html>");
         return sb.toString();

@@ -6,13 +6,11 @@ import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
@@ -31,7 +29,7 @@ import dr.evolution.io.Importer;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class DataPanel extends JPanel implements Exportable {
+public class InputPanel extends JPanel implements Exportable {
     private JScrollPane scrollPane = new JScrollPane();
     private JTable dataTable = null;
     private DataTableModel dataTableModel = null;
@@ -40,7 +38,7 @@ public class DataPanel extends JPanel implements Exportable {
 
     private final SpreadDocument document;
 
-    public DataPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction, final Action removeDataAction) {
+    public InputPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction, final Action removeDataAction) {
 
         this.frame = parent;
         this.document = document;
@@ -51,6 +49,11 @@ public class DataPanel extends JPanel implements Exportable {
         dataTable.getTableHeader().setReorderingAllowed(false);
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
+        TableColumn col = dataTable.getColumnModel().getColumn(0);
+        col.setCellRenderer(new MultiLineTableCellRenderer());
+
+        dataTable.setRowHeight(dataTable.getRowHeight() * 2);
 
         dataTable.setDragEnabled(false);
         dataTable.setTransferHandler(new FSTransfer());
@@ -125,16 +128,16 @@ public class DataPanel extends JPanel implements Exportable {
 
     public void removeSelection() {
         int[] selRows = dataTable.getSelectedRows();
-        Set<SpreadDocument.DataFile> dataToRemove = new HashSet<SpreadDocument.DataFile>();
+        Set<InputFile> dataToRemove = new HashSet<InputFile>();
         for (int row : selRows) {
-            dataToRemove.add(document.getDataFiles().get(row));
+            dataToRemove.add(document.getInputFiles().get(row));
         }
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
-        document.getDataFiles().removeAll(dataToRemove);
+        document.getInputFiles().removeAll(dataToRemove);
         document.fireDataChanged();
 
-        if (document.getDataFiles().size() == 0) {
+        if (document.getInputFiles().size() == 0) {
             // all data partitions removed so reset the taxa
             frame.setStatusMessage("No data loaded");
         }
@@ -147,7 +150,7 @@ public class DataPanel extends JPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"File", "File Type"};
+        String[] columnNames = {"Input Files"};
 
         public DataTableModel() {
         }
@@ -157,16 +160,14 @@ public class DataPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return document.getDataFiles().size();
+            return document.getInputFiles().size();
         }
 
         public Object getValueAt(int row, int col) {
-            SpreadDocument.DataFile dataFile = document.getDataFiles().get(row);
+            InputFile inputFile = document.getInputFiles().get(row);
             switch (col) {
                 case 0:
-                    return dataFile.getFile().getName();
-                case 1:
-                    return "Trees";
+                    return inputFile;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

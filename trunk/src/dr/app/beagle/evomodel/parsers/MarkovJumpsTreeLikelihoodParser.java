@@ -3,28 +3,30 @@ package dr.app.beagle.evomodel.parsers;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
+import dr.inference.model.Parameter;
+import dr.inference.markovjumps.MarkovJumpsCore;
 
 /**
  * @author Marc Suchard
- * @author Andrew Rambaut
  */
 
-public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
+public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoodParser {
 
-    public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
-    public static final String RECONSTRUCTION_TAG = "state";
-    public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
+    public static final String MARKOV_JUMP_TREE_LIKELIHOOD = "markovJumpsTreeLikelihood";
+    public static final String JUMP_TAG = "jumps";
+    public static final String JUMP_TAG_NAME = "jumpTagName";
+
 
     public String getParserName() {
-        return RECONSTRUCTING_TREE_LIKELIHOOD;
+        return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
@@ -37,10 +39,24 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 
         DataType dataType = substModel.getDataType();
 
-        // default tag is RECONSTRUCTION_TAG
-        String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
+        String stateTag = xo.getAttribute(RECONSTRUCTION_TAG_NAME,RECONSTRUCTION_TAG);
+        String jumpTag = xo.getAttribute(JUMP_TAG_NAME, JUMP_TAG);
 
-        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
+        Parameter registerMatrixParameter = (Parameter) xo.getChild(Parameter.class);
+
+        if (registerMatrixParameter != null) {
+            if (registerMatrixParameter.getDimension() != dataType.getStateCount() * dataType.getStateCount() ) {
+                throw new XMLParseException("Matrix "+registerMatrixParameter.getId()+" is of the wrong dimension");
+            }
+        } else { // Some default values for testing
+            int from = 1;
+            int to = 2;
+            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
+            MarkovJumpsCore.fillRegistrationMatrix(registration,from,to,dataType.getStateCount());
+            registerMatrixParameter = new Parameter.Default(registration);
+        }
+
+        return new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
                 branchSiteModel,
@@ -49,8 +65,10 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 useAmbiguities,
                 scalingScheme,
                 dataType,
-                tag,
-                substModel
+                stateTag,
+                substModel,
+                registerMatrixParameter,
+                jumpTag
         );
     }
 
@@ -58,12 +76,14 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return new XMLSyntaxRule[] {
             AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
+            AttributeRule.newStringRule(JUMP_TAG_NAME, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class),
-            AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
+            AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
+            new ElementRule(Parameter.class,true),
         };
     }
 }

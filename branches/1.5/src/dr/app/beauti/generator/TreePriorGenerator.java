@@ -450,7 +450,8 @@ public class TreePriorGenerator extends Generator {
 	
 	            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 	            writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
-	            writeParameter(prior.getParameter("skyride.popSize"), skyrideIntervalCount, writer);
+                writer.writeComment("skyride.logPopSize is log unit unlike other popSize");
+	            writeParameter(prior.getParameter("skyride.logPopSize"), skyrideIntervalCount, writer);
 	            writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
 	
 	            writer.writeOpenTag(GMRFSkyrideLikelihood.GROUP_SIZES);
@@ -661,7 +662,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case GMRF_SKYRIDE:
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyride.precision");
-                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyride.popSize");
+                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyride.logPopSize");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyride.groupSize");
                 break;
             case YULE:

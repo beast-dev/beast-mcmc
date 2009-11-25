@@ -1,9 +1,6 @@
 package dr.app.phylogeography.spread;
 
-import dr.app.phylogeography.builder.Builder;
-import dr.app.phylogeography.builder.BuilderFactory;
-import dr.app.phylogeography.builder.DiscreteTreeBuilder;
-import dr.app.phylogeography.builder.BuildException;
+import dr.app.phylogeography.builder.*;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -14,12 +11,22 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.dnd.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.io.IOException;
+
+import jam.mac.Utils;
 
 /**
  * @author Andrew Rambaut
@@ -27,16 +34,17 @@ import java.util.Set;
  */
 public class LayersPanel extends JPanel implements Exportable {
     public final static BuilderFactory[] builderFactories = {
-            DiscreteTreeBuilder.FACTORY
+            DiscreteDiffusionTreeBuilder.FACTORY,
+            ContinuousDiffusionTreeBuilder.FACTORY
     };
 
-    private JScrollPane scrollPane = new JScrollPane();
     private JTable layerTable = null;
     private LayerTableModel layerTableModel = null;
 
     private SpreadFrame frame = null;
 
-    private LayerBuilderDialog layerBuilderDialog = null;
+    private CreateBuilderDialog createBuilderDialog = null;
+    private EditBuilderDialog editBuilderDialog = null;
 
     private final SpreadDocument document;
 
@@ -52,10 +60,17 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-//        TableColumn col = layerTable.getColumnModel().getColumn(5);
-//        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-//        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-//        col.setCellRenderer(comboBoxRenderer);
+        TableColumn col = layerTable.getColumnModel().getColumn(0);
+        col.setCellRenderer(new MyTableCellRenderer());
+
+        layerTable.setRowHeight(layerTable.getRowHeight() * 3);
+
+        layerTable.setDragEnabled(true);
+        layerTable.setDropMode(DropMode.INSERT);
+
+        layerTable.setTransferHandler(new MyListDropHandler(layerTable));
+
+        new MyDragListener(layerTable);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(layerTable);
 
@@ -73,7 +88,7 @@ public class LayersPanel extends JPanel implements Exportable {
             }
         });
 
-        scrollPane = new JScrollPane(layerTable,
+        JScrollPane scrollPane = new JScrollPane(layerTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
@@ -116,7 +131,7 @@ public class LayersPanel extends JPanel implements Exportable {
             public void dataChanged() {
             }
 
-            public void settingsChanged() {  
+            public void settingsChanged() {
                 LayersPanel.this.settingsChanged();
             }
         });
@@ -153,27 +168,28 @@ public class LayersPanel extends JPanel implements Exportable {
     }
 
     private void editSettings(Builder builder) {
-        if (layerBuilderDialog == null) {
-            layerBuilderDialog = new LayerBuilderDialog(frame);
+        if (editBuilderDialog == null) {
+            editBuilderDialog = new EditBuilderDialog(frame);
         }
 
-        int result = layerBuilderDialog.showDialog(builder, document);
+        int result = editBuilderDialog.showDialog(builder, document);
 
         if (result != JOptionPane.CANCEL_OPTION) {
-            layerBuilderDialog.getBuilder(); // force update of builder settings
+            editBuilderDialog.getBuilder(); // force update of builder settings
             document.fireSettingsChanged();
         }
     }
 
     public void addLayer() {
-        if (layerBuilderDialog == null) {
-            layerBuilderDialog = new LayerBuilderDialog(frame);
+        if (createBuilderDialog == null) {
+            createBuilderDialog = new CreateBuilderDialog(frame);
         }
 
-        int result = layerBuilderDialog.showDialog(builderFactories, document);
+        int result = createBuilderDialog.showDialog(builderFactories, document);
         if (result != JOptionPane.CANCEL_OPTION) {
-            Builder builder = layerBuilderDialog.getBuilder();
+            Builder builder = createBuilderDialog.getBuilder();
             document.addLayerBuilder(builder);
+            editSettings(builder);
         }
     }
 
@@ -209,7 +225,8 @@ public class LayersPanel extends JPanel implements Exportable {
     class LayerTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Layer Type", "Input File", "Built?"};
+        //        String[] columnNames = {"Name", "Layer Type", "Input File", "Built?"};
+        String[] columnNames = {"Layers"};
 
         public LayerTableModel() {
         }
@@ -224,44 +241,45 @@ public class LayersPanel extends JPanel implements Exportable {
 
         public Object getValueAt(int row, int col) {
             Builder builder = document.getLayerBuilders().get(row);
-            switch (col) {
-                case 0:
-                    return builder.getName();
-                case 1:
-                    return builder.getBuilderName();
-                case 2:
-                    return builder.getDataFile();
-                case 3:
-                    return (builder.isBuilt() ? "Yes" : "No");
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
-            }
+            return builder;
+//            switch (col) {
+//                case 0:
+//                    return builder.getName();
+//                case 1:
+//                    return builder.getBuilderName();
+//                case 2:
+//                    return builder.getDataFile();
+//                case 3:
+//                    return (builder.isBuilt() ? "Yes" : "No");
+//                default:
+//                    throw new IllegalArgumentException("unknown column, " + col);
+//            }
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            Builder builder = document.getLayerBuilders().get(row);
-            switch (col) {
-                case 0:
-                    String name = ((String) aValue).trim();
-                    if (name.length() > 0) {
-                        builder.setName(name);
-                    }
-                    break;
-            }
-            document.fireSettingsChanged();
+//            Builder builder = document.getLayerBuilders().get(row);
+//            switch (col) {
+//                case 0:
+//                    String name = ((String) aValue).trim();
+//                    if (name.length() > 0) {
+//                        builder.setName(name);
+//                    }
+//                    break;
+//            }
+//            document.fireSettingsChanged();
         }
 
         public boolean isCellEditable(int row, int col) {
-            boolean editable;
+            boolean editable = false;
 
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-                default:
-                    editable = false;
-            }
-
+//            switch (col) {
+//                case 0:// name
+//                    editable = true;
+//                    break;
+//                default:
+//                    editable = false;
+//            }
+//
             return editable;
         }
 
@@ -350,4 +368,106 @@ public class LayersPanel extends JPanel implements Exportable {
         }
     }
 
+    public class MyTableCellRenderer extends DefaultTableCellRenderer {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if ((row % 2 == 0) && !isSelected) {
+                Color newColour = alternateRowColor(table.getSelectionBackground());
+                label.setBackground(newColour);
+            } else if (!isSelected) {
+                label.setBackground(table.getBackground());
+            }
+            return label;
+        }
+
+        public Color alternateRowColor(Color selectionColor) {
+            Color useColor = selectionColor;
+            if (Utils.isMacOSX()) {
+                useColor = UIManager.getColor("Focus.color");
+            }
+            return new Color(255 - (255 - useColor.getRed()) / 10, 255 - (255 - useColor.getGreen()) / 10, 255 - (255 - useColor.getBlue()) / 10);
+
+        }
+
+        protected void setValue(Object value) {
+            Builder builder = (Builder)value;
+
+            setText(builder.getTableCellContent());
+            setToolTipText(builder.getToolTipContent());
+        }
+    }
+
+    class MyDragListener implements DragSourceListener, DragGestureListener {
+        JTable table;
+
+        DragSource ds = new DragSource();
+
+        public MyDragListener(JTable table) {
+            this.table = table;
+            DragGestureRecognizer dgr = ds.createDefaultDragGestureRecognizer(table, DnDConstants.ACTION_MOVE, this);
+        }
+
+        public void dragGestureRecognized(DragGestureEvent dge) {
+            StringSelection transferable = new StringSelection(Integer.toString(table.getSelectedRow()));
+            ds.startDrag(dge, DragSource.DefaultCopyDrop, transferable, this);
+        }
+
+        public void dragEnter(DragSourceDragEvent dsde) {
+        }
+
+        public void dragExit(DragSourceEvent dse) {
+        }
+
+        public void dragOver(DragSourceDragEvent dsde) {
+        }
+
+        public void dragDropEnd(DragSourceDropEvent dsde) {
+        }
+
+        public void dropActionChanged(DragSourceDragEvent dsde) {
+        }
+    }
+
+    class MyListDropHandler extends TransferHandler {
+        JTable table;
+
+        public MyListDropHandler(JTable table) {
+            this.table = table;
+        }
+
+        public boolean canImport(TransferHandler.TransferSupport support) {
+            if (!support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                return false;
+            }
+            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+            return dl.getRow() != -1;
+        }
+
+        public boolean importData(TransferHandler.TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            Transferable transferable = support.getTransferable();
+            String indexString;
+            try {
+                indexString = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+            } catch (Exception e) {
+                return false;
+            }
+
+            int index = Integer.parseInt(indexString);
+            Builder builder = document.getLayerBuilders().get(index);
+
+            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+            int dropTargetIndex = dl.getRow();
+
+            document.getLayerBuilders().add(dropTargetIndex, builder);
+            document.getLayerBuilders().remove(builder);
+
+            document.fireSettingsChanged();
+
+            return true;
+        }
+    }
 }

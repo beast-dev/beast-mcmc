@@ -16,21 +16,24 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class DiscreteTreeBuilder extends AbstractBuilder {
+public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
 
-    private static final String BUILDER_NAME = "Discrete Diffusion Tree";
+    private static final String BUILDER_NAME = "Continuous Diffusion Tree";
 
     public static final String LONGITUDE_ATTRIBUTE = "long";
     public static final String LATITUDE_ATTRIBUTE = "lat";
     public static final String TIME_ATTRIBUTE = "height";
 
-    private JPanel editPanel = null;
-
-    private final RealNumberField maxAltitudeField = new RealNumberField(0, Double.MAX_VALUE);
-
     private double maxAltitude = 0;
+    private String longitudeAttribute = LONGITUDE_ATTRIBUTE;
+    private String latitudeAttribute = LATITUDE_ATTRIBUTE;
 
-    public DiscreteTreeBuilder() {
+    private JPanel editPanel = null;
+    private final RealNumberField maxAltitudeField = new RealNumberField(0, Double.MAX_VALUE);
+    private final JComboBox longitudeAttributeCombo = new JComboBox();
+    private final JComboBox latitudeAttributeCombo = new JComboBox();
+
+    public ContinuousDiffusionTreeBuilder() {
     }
 
     protected Layer buildLayer() throws BuildException {
@@ -45,9 +48,12 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
             OptionsPanel editPanel = new OptionsPanel();
             maxAltitudeField.setColumns(10);
             editPanel.addComponentWithLabel("Maximum Altitude:", maxAltitudeField);
+            editPanel.addComponentWithLabel("Longitude Attribute:", longitudeAttributeCombo);
+            editPanel.addComponentWithLabel("Latitude Attribute:", latitudeAttributeCombo);
             this.editPanel = editPanel;
         }
         maxAltitudeField.setValue(maxAltitude);
+        Tree tree = getDataFile().getFirstTree();
         return editPanel;
     }
 
@@ -63,13 +69,13 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
     private void buildTree(Layer layer, final Tree tree, final NodeRef node) throws BuildException {
         if (!tree.isRoot(node)) {
             NodeRef parent = tree.getParent(node);
-            double long0 = getDoubleAttribute(tree, parent, LONGITUDE_ATTRIBUTE);
-            double lat0 = getDoubleAttribute(tree, parent, LATITUDE_ATTRIBUTE);
+            double long0 = getDoubleAttribute(tree, parent, longitudeAttribute);
+            double lat0 = getDoubleAttribute(tree, parent, latitudeAttribute);
             double time0 = getDoubleAttribute(tree, parent, TIME_ATTRIBUTE);
             Style style0 = new Style(Color.red, 1.0);
 
-            double long1 = getDoubleAttribute(tree, node, LONGITUDE_ATTRIBUTE);
-            double lat1 = getDoubleAttribute(tree, node, LATITUDE_ATTRIBUTE);
+            double long1 = getDoubleAttribute(tree, node, longitudeAttribute);
+            double lat1 = getDoubleAttribute(tree, node, latitudeAttribute);
             double time1 = getDoubleAttribute(tree, node, TIME_ATTRIBUTE);
             Style style1 = new Style(Color.red, 1.0);
 
@@ -103,6 +109,26 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
         return FACTORY.getBuilderName();
     }
 
+    public String getTableCellContent() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>");
+        sb.append("<b>").append(getName()).append("</b><br>");
+        sb.append(getBuilderName()).append(": ").append(getDataFile().getFile().getName()).append("<br>");
+        sb.append("Max Altitude: ").append(maxAltitude).append("<br>");
+        sb.append("</html>");
+        return sb.toString();
+    }
+
+    public String getToolTipContent() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>");
+        sb.append("<b>").append(getName()).append("</b><br>");
+        sb.append(getBuilderName()).append(": ").append(getDataFile().getFile().getName()).append("<br>");
+        sb.append("Max Altitude: ").append(maxAltitude).append("<br>");
+        sb.append("</html>");
+        return sb.toString();
+    }
+
     public final static BuilderFactory FACTORY = new BuilderFactory() {
 
         public String getBuilderName() {
@@ -110,7 +136,7 @@ public class DiscreteTreeBuilder extends AbstractBuilder {
         }
 
         public Builder createBuilder() {
-            return new DiscreteTreeBuilder();
+            return new ContinuousDiffusionTreeBuilder();
         }
     };
 

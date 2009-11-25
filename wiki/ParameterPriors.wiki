@@ -61,7 +61,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || expansion.ancestralProportion || ancestral population proportion || 0,1 || || ||
 || skyline.popSize || Bayesian Skyline population sizes || 0,+Inf || Exponential Markov || ||
 || skyline.groupSize || Bayesian Skyline group sizes || 1,node count || Integer || ||
-|| skyride.popSize || GMRF Bayesian skyride population sizes || 0,+Inf || GMRF || ||
+|| skyride.logPopSize || GMRF Bayesian skyride population sizes || -Inf,+Inf || GMRF || skyride.logPopSize is log unit unlike other popSize || In Code ||
 || skyride.precision || GMRF Bayesian skyride precision || 0,+Inf || Gamma || || In Code ||
 || demographic.popSize || Extended Bayesian Skyline population sizes || 0,+Inf || || ||
 || demographic.indicators || Extended Bayesian Skyline population switch || 1,node count || Integer || ||

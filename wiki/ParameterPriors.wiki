@@ -68,7 +68,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || demographic.populationMean || Extended Bayesian Skyline population prior mean || 0,+Inf || Jeffreys (1/x) || || In Code ||
 || demographic.populationSizeChanges || Average number of population change points || 0,x || Poisson || ||
 || yule.birthRate || Yule speciation process birth rate || 0,+Inf || || ||
-|| birthDeath.birthDiff || Birth-Death speciation process rate || 0,+Inf || || ||
+|| birthDeath.meanGrowthRate || Birth-Death speciation process rate || 0,+Inf || || ||
 || birthDeath.relativeDeath || Death/Birth speciation process relative death rate || 0,+Inf || || ||
 
 ==Star BEAST==

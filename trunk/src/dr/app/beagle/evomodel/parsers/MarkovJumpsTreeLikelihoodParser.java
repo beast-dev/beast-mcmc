@@ -49,10 +49,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 throw new XMLParseException("Matrix "+registerMatrixParameter.getId()+" is of the wrong dimension");
             }
         } else { // Some default values for testing
-            int from = 1;
-            int to = 2;
             double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
-            MarkovJumpsCore.fillRegistrationMatrix(registration,from,to,dataType.getStateCount());
+            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
             registerMatrixParameter = new Parameter.Default(registration);
         }
 

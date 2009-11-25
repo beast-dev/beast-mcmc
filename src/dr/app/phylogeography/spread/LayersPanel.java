@@ -12,11 +12,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
@@ -24,9 +22,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
-import java.io.IOException;
-
-import jam.mac.Utils;
 
 /**
  * @author Andrew Rambaut
@@ -61,7 +56,7 @@ public class LayersPanel extends JPanel implements Exportable {
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = layerTable.getColumnModel().getColumn(0);
-        col.setCellRenderer(new MyTableCellRenderer());
+        col.setCellRenderer(new MultiLineTableCellRenderer());
 
         layerTable.setRowHeight(layerTable.getRowHeight() * 3);
 
@@ -248,7 +243,7 @@ public class LayersPanel extends JPanel implements Exportable {
 //                case 1:
 //                    return builder.getBuilderName();
 //                case 2:
-//                    return builder.getDataFile();
+//                    return builder.getInputFile();
 //                case 3:
 //                    return (builder.isBuilt() ? "Yes" : "No");
 //                default:
@@ -365,35 +360,6 @@ public class LayersPanel extends JPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             buildAll();
-        }
-    }
-
-    public class MyTableCellRenderer extends DefaultTableCellRenderer {
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if ((row % 2 == 0) && !isSelected) {
-                Color newColour = alternateRowColor(table.getSelectionBackground());
-                label.setBackground(newColour);
-            } else if (!isSelected) {
-                label.setBackground(table.getBackground());
-            }
-            return label;
-        }
-
-        public Color alternateRowColor(Color selectionColor) {
-            Color useColor = selectionColor;
-            if (Utils.isMacOSX()) {
-                useColor = UIManager.getColor("Focus.color");
-            }
-            return new Color(255 - (255 - useColor.getRed()) / 10, 255 - (255 - useColor.getGreen()) / 10, 255 - (255 - useColor.getBlue()) / 10);
-
-        }
-
-        protected void setValue(Object value) {
-            Builder builder = (Builder)value;
-
-            setText(builder.getTableCellContent());
-            setToolTipText(builder.getToolTipContent());
         }
     }
 

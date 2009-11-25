@@ -1,7 +1,9 @@
 package dr.app.phylogeography.builder;
 
-import dr.app.phylogeography.spread.SpreadDocument;
+import dr.app.phylogeography.spread.InputFile;
 import dr.app.phylogeography.structure.Layer;
+
+import javax.swing.*;
 
 /**
  * @author Andrew Rambaut
@@ -9,7 +11,7 @@ import dr.app.phylogeography.structure.Layer;
  */
 public abstract class AbstractBuilder implements Builder {
 
-    private SpreadDocument.DataFile dataFile = null;
+    private InputFile inputFile = null;
 
     public String getName() {
         return name;
@@ -27,12 +29,12 @@ public abstract class AbstractBuilder implements Builder {
         this.description = description;
     }
 
-    public SpreadDocument.DataFile getDataFile() {
-        return dataFile;
+    public InputFile getInputFile() {
+        return inputFile;
     }
 
-    public void setDataFile(SpreadDocument.DataFile dataFile) {
-        this.dataFile = dataFile;
+    public void setInputFile(InputFile inputFile) {
+        this.inputFile = inputFile;
     }
 
     public boolean isVisible() {
@@ -62,6 +64,10 @@ public abstract class AbstractBuilder implements Builder {
             throw new IllegalArgumentException("getLayer accessed but layer has not been built");
         }
         return layer;
+    }
+
+    public Icon getTableCellIcon() {
+        return null;
     }
 
     private String name;

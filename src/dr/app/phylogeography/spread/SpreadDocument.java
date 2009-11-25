@@ -1,9 +1,7 @@
 package dr.app.phylogeography.spread;
 
 import dr.app.phylogeography.builder.Builder;
-import dr.evolution.tree.Tree;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,16 +13,16 @@ import java.util.Set;
  * @version $Id$
  */
 public class SpreadDocument {
-    private final List<DataFile> dataFiles = new ArrayList<DataFile>();
+    private final List<InputFile> inputFiles = new ArrayList<InputFile>();
     private final List<Builder> layerBuilders = new ArrayList<Builder>();
 
-    public void addTreeFile(DataFile dataFile) {
-        dataFiles.add(dataFile);
+    public void addTreeFile(InputFile inputFile) {
+        inputFiles.add(inputFile);
         fireDataChanged();
     }
 
-    public List<DataFile> getDataFiles() {
-        return dataFiles;
+    public List<InputFile> getInputFiles() {
+        return inputFiles;
     }
 
     public void addLayerBuilder(Builder builder) {
@@ -34,32 +32,6 @@ public class SpreadDocument {
 
     public List<Builder> getLayerBuilders() {
         return layerBuilders;
-    }
-
-    public static class DataFile {
-        DataFile(File file, Tree firstTree) {
-            if (file == null) {
-                throw new IllegalArgumentException("File argument to DataFile cannot be null");
-            }
-            this.file = file;
-            this.firstTree = firstTree;
-        }
-
-        public File getFile() {
-            return file;
-        }
-
-        public Tree getFirstTree() {
-            return firstTree;
-        }
-
-        @Override
-        public String toString() {
-            return file.getName();
-        }
-
-        private final File file;
-        private final Tree firstTree;                                
     }
 
     public void fireDataChanged() {

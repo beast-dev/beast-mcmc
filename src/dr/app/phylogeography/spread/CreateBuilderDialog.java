@@ -7,8 +7,6 @@ import org.virion.jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut
@@ -54,7 +52,7 @@ public class CreateBuilderDialog {
 
         dataFileCombo = new JComboBox();
         dataFileCombo.addItem(SELECT_INPUT_FILE);
-        for (Object dataFile : document.getDataFiles()) {
+        for (Object dataFile : document.getInputFiles()) {
             dataFileCombo.addItem(dataFile);
         }
 
@@ -113,7 +111,7 @@ public class CreateBuilderDialog {
     public Builder getBuilder() {
         Builder builder = ((BuilderFactory)builderCombo.getSelectedItem()).createBuilder();
         builder.setName("Layer " + BuilderFactory.nextCount());
-        builder.setDataFile((SpreadDocument.DataFile)dataFileCombo.getSelectedItem());
+        builder.setInputFile((InputFile)dataFileCombo.getSelectedItem());
         builder.setFromEditPanel();
         return builder;
     }

@@ -52,8 +52,8 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable = new JTable(layerTableModel);
 
         layerTable.getTableHeader().setReorderingAllowed(false);
-        layerTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        layerTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = layerTable.getColumnModel().getColumn(0);
         col.setCellRenderer(new MultiLineTableCellRenderer());
@@ -88,10 +88,10 @@ public class LayersPanel extends JPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
 
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+//        JToolBar toolBar1 = new JToolBar();
+//        toolBar1.setFloatable(false);
+//        toolBar1.setOpaque(false);
+//        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
 //        JButton button = new JButton(unlinkModelsAction);
 //        unlinkModelsAction.setEnabled(false);
@@ -118,7 +118,7 @@ public class LayersPanel extends JPanel implements Exportable {
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(toolBar1, BorderLayout.NORTH);
+//        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 

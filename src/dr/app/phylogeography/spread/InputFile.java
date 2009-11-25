@@ -1,6 +1,7 @@
 package dr.app.phylogeography.spread;
 
 import dr.evolution.tree.Tree;
+import dr.util.NumberFormatter;
 
 import javax.swing.*;
 import java.io.File;
@@ -9,6 +10,7 @@ import jam.util.IconUtils;
 
 public class InputFile implements MultiLineTableCellContent {
     private final Icon treeIcon = IconUtils.getIcon(this.getClass(), "images/tree.png");
+    private final Icon treesIcon = IconUtils.getIcon(this.getClass(), "images/small_trees.png");
 
     public enum Type {
         POSTERIOR_TREES,
@@ -40,15 +42,32 @@ public class InputFile implements MultiLineTableCellContent {
         this.tree = tree;
     }
 
-    public Icon getTableCellIcon() {
-        return treeIcon;
+    public double getMostRecentSampleDate() {
+        return mostRecentSampleDate;
     }
+
+    public void setMostRecentSampleDate(double mostRecentSampleDate) {
+        this.mostRecentSampleDate = mostRecentSampleDate;
+    }
+
+    public Icon getTableCellIcon() {
+        return treesIcon;
+    }
+
+    private static final NumberFormatter nf = new NumberFormatter(6);
 
     public String getTableCellContent() {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<b>").append(file.getName()).append(": </b>").append(type.name()).append("<br>");
-        sb.append("<small>Tip count: 200 | Most recent tip: ").append("2008.9").append("</small><br>");
+        sb.append("<small>Tip count: ").append(tree.getExternalNodeCount());
+        if (mostRecentSampleDate != 0.0) {
+            sb.append(" | Root TMRCA: ").append(nf.format(mostRecentSampleDate - tree.getNodeHeight(tree.getRoot())));
+            sb.append(" | Most recent tip: ").append(mostRecentSampleDate);
+        } else {
+            sb.append(" | Root height: ").append(nf.format(tree.getNodeHeight(tree.getRoot())));
+        }
+        sb.append("</small><br>");
         sb.append("</html>");
         return sb.toString();
     }
@@ -59,6 +78,7 @@ public class InputFile implements MultiLineTableCellContent {
 
     @Override
     public String toString() {
+
         return file.getName();
     }
 
@@ -66,5 +86,6 @@ public class InputFile implements MultiLineTableCellContent {
     private final Type type;
     private final File file;
 
-    private Tree tree;
+    private Tree tree = null;
+    private double mostRecentSampleDate = 0.0;
 }

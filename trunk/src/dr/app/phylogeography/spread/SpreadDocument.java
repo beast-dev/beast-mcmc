@@ -50,7 +50,7 @@ public class SpreadDocument {
         listeners.add(listener);
     }
 
-    interface Listener {
+    public interface Listener {
         void dataChanged();
         void settingsChanged();
     }

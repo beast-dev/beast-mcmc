@@ -1,11 +1,14 @@
-package dr.app.phylogeography.spread;
+package dr.app.phylogeography.spread.inputpanel;
 
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.components.RealNumberField;
+import org.virion.jam.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+
+import dr.app.phylogeography.spread.InputFile;
 
 /**
  * @author Andrew Rambaut
@@ -15,6 +18,7 @@ public class InputFileSettingsDialog {
 
     private JFrame frame;
 
+    private WholeNumberField burninField;
     private RealNumberField mrsdField;
 
     private OptionsPanel optionPanel;
@@ -23,6 +27,9 @@ public class InputFileSettingsDialog {
 
     public InputFileSettingsDialog(JFrame frame) {
         this.frame = frame;
+
+        burninField = new WholeNumberField(0, Integer.MAX_VALUE);
+        burninField.setColumns(8);
 
         mrsdField = new RealNumberField(0, Double.POSITIVE_INFINITY);
         mrsdField.setColumns(20);
@@ -34,6 +41,11 @@ public class InputFileSettingsDialog {
         optionPanel.removeAll();
 
         if (inputFile.getTree() != null) {
+            if (inputFile.getType() == InputFile.Type.POSTERIOR_TREES) {
+                optionPanel.addComponentWithLabel("Burnin (number of trees):", burninField);
+                burninField.setValue(inputFile.getBurnin());
+            }
+
             optionPanel.addComponentWithLabel("Most recently sampled date:", mrsdField);
             mrsdField.setValue(inputFile.getMostRecentSampleDate());
         }
@@ -71,6 +83,7 @@ public class InputFileSettingsDialog {
     }
 
     public InputFile getInputFile() {
+        inputFile.setBurnin(burninField.getValue());
         inputFile.setMostRecentSampleDate(mrsdField.getValue());
         return inputFile;
     }

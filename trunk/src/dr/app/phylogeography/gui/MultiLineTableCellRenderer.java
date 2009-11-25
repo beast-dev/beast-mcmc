@@ -1,6 +1,4 @@
-package dr.app.phylogeography.spread;
-
-import dr.app.phylogeography.builder.Builder;
+package dr.app.phylogeography.gui;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.*;

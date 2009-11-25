@@ -876,6 +876,17 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (getLastDelimiter() == ':') {
                         // in case the root has a branch length, skip it
                         readToken(";");
+
+                        if (getLastMetaComment() != null) {
+                            // There was a meta-comment which should be in the form:
+                            // \[&label[=value][,label[=value]>[,/..]]\]
+                            try {
+                                parseMetaCommentPairs(getLastMetaComment(), root);
+                            } catch (BadFormatException bfe) {
+                                // ignore it
+                            }
+                            clearLastMetaComment();
+                        }
                     }
 
                     if (getLastDelimiter() != ';') {

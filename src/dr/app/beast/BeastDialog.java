@@ -184,8 +184,8 @@ public class BeastDialog {
         return optionPane.getValue().equals("Run");
     }
 
-    public int getSeed() {
-        return seedText.getValue();
+    public long getSeed() {
+        return seedText.getLongValue();
     }
 
     public boolean useBeagle() {

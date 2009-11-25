@@ -265,7 +265,7 @@ public class TreePriorGenerator extends Generator {
 	                    }
 	            );
 	
-	            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, prior, writer);
+	            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, prior, writer);
 	            writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
 	            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
 	            
@@ -668,7 +668,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "yule.birthRate");
                 break;
             case BIRTH_DEATH:
-                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
                 break;
             case SPECIES_YULE:

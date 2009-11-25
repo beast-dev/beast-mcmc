@@ -115,10 +115,14 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
         //Substitution model parameters
         createParameterUniformPrior("frequencies", "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
 
         createParameterGammaPrior("kappa", "HKY transition-transversion parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
@@ -192,38 +196,44 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates",
+                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode",
+                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0);
         createParameterGammaPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
 
-        createParameterGammaPrior("alpha", "gamma shape parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 40, 1E-8, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1.alpha", "gamma shape parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 40, 1E-8, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP2.alpha", "gamma shape parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 40, 1E-8, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 40, 1E-8, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP3.alpha", "gamma shape parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 40, 1E-8, Double.POSITIVE_INFINITY, false);
+        createParameterUniformPrior("alpha", "gamma shape parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameterUniformPrior("CP1.alpha", "gamma shape parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameterUniformPrior("CP2.alpha", "gamma shape parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameterUniformPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
+        createParameterUniformPrior("CP3.alpha", "gamma shape parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0);
 
         createParameterUniformPrior("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", PriorScaleType.NONE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2", PriorScaleType.NONE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", PriorScaleType.NONE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0);
+        createParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0);
 
-        createParameterGammaPrior("mu", "relative rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1.mu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP2.mu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP3.mu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
+        createParameterUniformPrior("mu", "relative rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");

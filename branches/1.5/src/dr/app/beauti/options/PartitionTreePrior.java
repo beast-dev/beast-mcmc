@@ -122,7 +122,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
 
         createParameterUniformPrior("skyride.popSize", "GMRF Bayesian skyride population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
@@ -138,7 +138,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameterUniformPrior(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, "Birth-Death speciation process rate",
+        createParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
@@ -170,7 +170,7 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
-        createScaleOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
         createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
 
     }
@@ -218,7 +218,7 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
-            params.add(getParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            params.add(getParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
         }
 
@@ -269,7 +269,7 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
-            ops.add(getOperator(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME));
+            ops.add(getOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
         }
     }

@@ -31,7 +31,7 @@ public class SpreadFrame extends DocumentFrame {
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
-    private final DataPanel dataPanel;
+    private final InputPanel inputPanel;
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
@@ -59,7 +59,7 @@ public class SpreadFrame extends DocumentFrame {
 
         getZoomWindowAction().setEnabled(false);
 
-        dataPanel = new DataPanel(this, document, getImportAction(), getDeleteAction());
+        inputPanel = new InputPanel(this, document, getImportAction(), getDeleteAction());
 
         document.addListener(new SpreadDocument.Listener() {
             public void dataChanged() {
@@ -78,7 +78,7 @@ public class SpreadFrame extends DocumentFrame {
         final LayersPanel layersPanel = new LayersPanel(this, document);
         final OutputPanel outputPanel = new OutputPanel(this, document, generators);
 
-        tabbedPane.addTab("Input", dataPanel);
+        tabbedPane.addTab("Input", inputPanel);
         tabbedPane.addTab("Timeline", timeLinePanel);
         tabbedPane.addTab("Layers", layersPanel);
         tabbedPane.addTab("Output", outputPanel);
@@ -130,7 +130,7 @@ public class SpreadFrame extends DocumentFrame {
     }
 
     public void doDelete() {
-        dataPanel.removeSelection();
+        inputPanel.removeSelection();
     }
 
     public boolean requestClose() {
@@ -223,7 +223,10 @@ public class SpreadFrame extends DocumentFrame {
             // is a NEXUS file
             Tree tree = importFirstTree(file);
             if (tree != null) {
-                document.addTreeFile(new SpreadDocument.DataFile(file, tree));
+                InputFile inputFile = new InputFile(file, InputFile.Type.POSTERIOR_TREES);
+                inputFile.setTree(tree);
+                document.addTreeFile(inputFile);
+
             }
         } else {
             JOptionPane.showMessageDialog(this, "Error parsing imported file. This may not be a NEXUS file",

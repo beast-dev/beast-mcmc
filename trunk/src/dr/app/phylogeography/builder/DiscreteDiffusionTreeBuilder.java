@@ -31,7 +31,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
 
     protected Layer buildLayer() throws BuildException {
         Layer layer = new Layer(getName(), getDescription(), isVisible());
-        buildTree(layer, getDataFile().getFirstTree());
+        buildTree(layer, getInputFile().getTree());
 
         return layer;
     }
@@ -45,7 +45,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
             this.editPanel = editPanel;
         }
         maxAltitudeField.setValue(maxAltitude);
-        Tree tree = getDataFile().getFirstTree();
+        Tree tree = getInputFile().getTree();
         return editPanel;
     }
 
@@ -97,7 +97,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
         }
         return value;
     }
-    
+
     public String getBuilderName() {
         return FACTORY.getBuilderName();
     }
@@ -106,7 +106,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<b>").append(getName()).append(": </b>").append(getBuilderName()).append("<br>");
-        sb.append("<small>Input file: ").append(getDataFile().getFile().getName()).append("</small><br>");
+        sb.append("<small>Input file: ").append(getInputFile().getFile().getName()).append("</small><br>");
         sb.append("<small>Max Altitude: ").append(maxAltitude).append("</small><br>");
         sb.append("</html>");
         return sb.toString();
@@ -116,7 +116,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<b>").append(getName()).append(": </b>").append(getBuilderName()).append("<br>");
-        sb.append("Input file: ").append(getDataFile().getFile().getName()).append("<br>");
+        sb.append("Input file: ").append(getInputFile().getFile().getName()).append("<br>");
         sb.append("Max Altitude: ").append(maxAltitude).append("<br>");
         sb.append("</html>");
         return sb.toString();

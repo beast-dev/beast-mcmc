@@ -13,4 +13,11 @@ public abstract class BuilderFactory {
     public String toString() {
         return getBuilderName();
     }
+
+    public static int nextCount() {
+        return ++count;
+    }
+
+
+    private static int count = 0;
 }

@@ -1,9 +1,10 @@
-package dr.app.phylogeography.spread;
+package dr.app.phylogeography.spread.layerspanel;
 
 import dr.app.phylogeography.builder.*;
+import dr.app.phylogeography.spread.*;
+import dr.app.phylogeography.gui.MultiLineTableCellRenderer;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;

@@ -6,6 +6,7 @@ import jam.framework.DefaultMenuBarFactory;
 import jam.mac.MacHelpMenuFactory;
 import jam.mac.MacWindowMenuFactory;
 import jam.mac.Utils;
+import dr.app.phylogeography.spread.layerspanel.DefaultFileMenuFactory;
 
 /**
  * @author Andrew Rambaut

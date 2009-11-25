@@ -1,8 +1,7 @@
-package dr.app.phylogeography.spread;
+package dr.app.phylogeography.spread.inputpanel;
 
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
@@ -24,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 
 import dr.evolution.io.Importer;
+import dr.app.phylogeography.spread.*;
+import dr.app.phylogeography.gui.MultiLineTableCellRenderer;
 
 /**
  * @author Andrew Rambaut

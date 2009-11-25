@@ -4,6 +4,7 @@ import dr.app.phylogeography.structure.Coordinates;
 import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.structure.Line;
 import dr.app.phylogeography.structure.Style;
+import dr.app.phylogeography.spread.InputFile;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import jam.panels.OptionsPanel;
@@ -133,6 +134,10 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
 
         public String getBuilderName() {
             return BUILDER_NAME;
+        }
+
+        public InputFile.Type requiresInputType() {
+            return InputFile.Type.MODAL_TREE;
         }
 
         public Builder createBuilder() {

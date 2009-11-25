@@ -6,15 +6,26 @@ import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Iterator;
+import java.io.File;
+import java.io.IOException;
+
+import dr.evolution.io.Importer;
 
 /**
  * @author Andrew Rambaut
@@ -41,10 +52,8 @@ public class DataPanel extends JPanel implements Exportable {
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-//        TableColumn col = layerTable.getColumnModel().getColumn(5);
-//        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-//        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-//        col.setCellRenderer(comboBoxRenderer);
+        dataTable.setDragEnabled(false);
+        dataTable.setTransferHandler(new FSTransfer());
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
@@ -124,7 +133,7 @@ public class DataPanel extends JPanel implements Exportable {
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         document.getDataFiles().removeAll(dataToRemove);
         document.fireDataChanged();
-        
+
         if (document.getDataFiles().size() == 0) {
             // all data partitions removed so reset the taxa
             frame.setStatusMessage("No data loaded");
@@ -198,6 +207,48 @@ public class DataPanel extends JPanel implements Exportable {
             }
 
             return buffer.toString();
+        }
+    }
+
+    public class FSTransfer extends TransferHandler {
+        public boolean importData(JComponent comp, Transferable t) {
+            // Make sure we have the right starting points
+            if (!(comp instanceof JTable)) {
+                return false;
+            }
+            if (!t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                return false;
+            }
+
+            try {
+                java.util.List data = (java.util.List) t.getTransferData(DataFlavor.javaFileListFlavor);
+                Iterator i = data.iterator();
+                while (i.hasNext()) {
+                    File f = (File) i.next();
+                    frame.importDataFile(f);
+                }
+                return true;
+            } catch (UnsupportedFlavorException ufe) {
+                System.err.println("Ack! we should not be here.\nBad Flavor.");
+            } catch (IOException ioe) {
+                System.out.println("Something failed during import:\n" + ioe);
+            } catch (Importer.ImportException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            return false;
+        }
+
+        // We only support file lists on FSTrees...
+        public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+            if (comp instanceof JTable) {
+                for (int i = 0; i < transferFlavors.length; i++) {
+                    if (!transferFlavors[i].equals(DataFlavor.javaFileListFlavor)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
     }
 }

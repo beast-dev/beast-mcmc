@@ -16,6 +16,10 @@ public interface Builder {
     
     void setName(String name);
     
+    String getTableCellContent();
+
+    String getToolTipContent();
+
     String getDescription();
 
     SpreadDocument.DataFile getDataFile();

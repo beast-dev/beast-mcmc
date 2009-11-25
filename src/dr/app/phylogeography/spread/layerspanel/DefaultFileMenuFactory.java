@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread;
+package dr.app.phylogeography.spread.layerspanel;
 
 import jam.framework.AbstractFrame;
 import jam.framework.Application;

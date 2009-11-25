@@ -1,6 +1,7 @@
 package dr.app.phylogeography.builder;
 
 import dr.app.phylogeography.structure.Layer;
+import dr.app.phylogeography.spread.InputFile;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import jam.panels.OptionsPanel;
@@ -126,6 +127,10 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
 
         public String getBuilderName() {
             return BUILDER_NAME;
+        }
+
+        public InputFile.Type requiresInputType() {
+            return InputFile.Type.MODAL_TREE;
         }
 
         public Builder createBuilder() {

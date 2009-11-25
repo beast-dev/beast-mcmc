@@ -3,6 +3,8 @@ package dr.app.phylogeography.spread;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.phylogeography.generator.Generator;
 import dr.app.phylogeography.generator.KMLGenerator;
+import dr.app.phylogeography.spread.layerspanel.LayersPanel;
+import dr.app.phylogeography.spread.inputpanel.InputPanel;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
@@ -79,8 +81,8 @@ public class SpreadFrame extends DocumentFrame {
         final OutputPanel outputPanel = new OutputPanel(this, document, generators);
 
         tabbedPane.addTab("Input", inputPanel);
-        tabbedPane.addTab("Timeline", timeLinePanel);
         tabbedPane.addTab("Layers", layersPanel);
+        tabbedPane.addTab("Timeline", timeLinePanel);
         tabbedPane.addTab("Output", outputPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
@@ -220,13 +222,29 @@ public class SpreadFrame extends DocumentFrame {
         }
 
         if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+            int treeCount = 0;
+
+            do {
+                line = bufferedReader.readLine();
+            } while (line != null && !line.startsWith("tree STATE"));
+
+            while (line != null) {
+                if (line.startsWith("tree STATE")) {
+                    treeCount++;
+                }
+                line = bufferedReader.readLine();
+            }
+
             // is a NEXUS file
             Tree tree = importFirstTree(file);
             if (tree != null) {
-                InputFile inputFile = new InputFile(file, InputFile.Type.POSTERIOR_TREES);
-                inputFile.setTree(tree);
-                document.addTreeFile(inputFile);
-
+                if (treeCount > 0) {
+                    InputFile inputFile = new InputFile(file, tree, treeCount);
+                    document.addTreeFile(inputFile);
+                } else {
+                    InputFile inputFile = new InputFile(file, tree);
+                    document.addTreeFile(inputFile);
+                }
             }
         } else {
             JOptionPane.showMessageDialog(this, "Error parsing imported file. This may not be a NEXUS file",

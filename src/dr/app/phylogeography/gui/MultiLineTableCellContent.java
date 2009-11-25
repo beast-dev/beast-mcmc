@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread;
+package dr.app.phylogeography.gui;
 
 import javax.swing.*;
 

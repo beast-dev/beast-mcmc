@@ -15,18 +15,18 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || `*`.kappa2 || TN93 2nd transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
 || `*`.ac, `*`.at, `*`.cg, `*`.gt || GTR A-C, A-T, C-G, G-T substitution parameters  || 0,+Inf || Gamma(0.05,10) || Y || If the GTR parameters are scale to C-T (a transition) then these four transversions should have a prior with a mean below 1. This prior is diffuse with a mean of 0.5 || In Code ||
 || `*`.ag || GTR A-G substitution parameter || 0,+Inf || Gamma(0.05,20) || Y || If the GTR parameters are scaled to C-T (a transition) then the other transition should have a prior with a mean of 1. This prior is moderately diffuse with a mean of 1 || In Code ||
-|| hfrequencies || Binary Covarion frequencies of the hidden rates  || 0 <= \pi_i <= \sum \pi_i = 1 || Uniform / Dirichlet(1,1) || || In Code ||
+|| hfrequencies || Binary Covarion frequencies of the hidden rates  || 0 <= \pi_i <= \sum \pi_i = 1 || Uniform / Dirichlet(1,1) || Y || || In Code ||
 || bcov.alpha || Binary Covarion rate of evolution in slow mode  || 0,1 || Beta || Y ||  Beta(1,1) is uniform || In Code ||
 || bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma(0.05, 10) || Y || The covarion model is normalized by setting the fast rate to 1.0. If the switching rate is much faster than the fast rate, then the covarion aspect of the model is a bit pointless. I have no good feeling for this, but would suggest a diffuse prior with a mean below 1. || In Code ||
 
 == Site Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
 || `*`.alpha || Gamma shape parameter || 1E-8,+Inf || Gamma || Y || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values || 
 || `*`.pInv || proportion of invariant sites parameter || 0,1 || Beta || Y || Beta(1,1) is uniform ||
 || `*`.mu || relative rate parameter || 0,+Inf || Gamma || Y || || 
 
 == Clock Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
 || clock.rate || Strict clock substitution rate || 0,+Inf || Gamma || Y || ||
 || uced.mean || uncorrelated exponential relaxed clock mean || 0,+Inf || Gamma || Y || ||
 || ucld.mean || uncorrelated lognormal relaxed clock mean || 0,+Inf || Gamma || Y || ||
@@ -40,13 +40,13 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 
 ==Tree Models==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
 || treeModel.rootHeight || root height of the tree || 0,+Inf || Tree Prior || Y || ||
 || treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || || ||
 
 ==Tree Priors==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
 || constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
 || exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
 || exponential.growthRate || coalescent growth rate parameter || -Inf,+Inf || || Y ||  ||

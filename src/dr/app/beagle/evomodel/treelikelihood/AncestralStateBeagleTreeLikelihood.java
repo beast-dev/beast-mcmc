@@ -95,7 +95,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return internalNodeCount + 2;
     }
 
-     private boolean areStatesRedrawn = false;
+     protected boolean areStatesRedrawn = false;
 
      public void redrawAncestralStates() {
          // Setup cumulate scale buffers
@@ -134,7 +134,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return sb.toString();
     }
 
-    private void getPartials(int number, double[] partials) {
+    protected void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
 //        if (useScaleFactors) {
 //            cumulativeBufferIndex = scaleBufferIndex;
@@ -145,7 +145,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number),cumulativeBufferIndex,partials);
     }
 
-    private void getMatrix(int matrixNum, double[] probabilities) {
+    protected void getMatrix(int matrixNum, double[] probabilities) {
         beagle.getTransitionMatrix(matrixBufferHelper.getOffsetIndex(matrixNum),probabilities);
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
@@ -246,6 +246,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
                 }
+
+                hookCalculation(tree, parent, node, parentState, state, probabilities);
             }
 
             // Traverse down the two child nodes
@@ -274,7 +276,15 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                 }
             }
+
+            hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null);
         }
+    }
+
+    protected void hookCalculation(Tree tree, NodeRef parentNode, NodeRef childNode,
+                                   int[] parentStates, int[] childStates,
+                                   double[] probabilities) {
+        // Do nothing
     }
 
     private DataType dataType;

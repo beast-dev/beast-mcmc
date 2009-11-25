@@ -37,6 +37,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         rateReg = new double[stateCount * stateCount];
     }
 
+    public void setRegistration(double[] registration) {
+        makeRateRegistrationMatrix(registration,rateReg);
+    }
+
     private void makeRateRegistrationMatrix(double[] registration,
                                             double[] rateReg) {
 
@@ -50,15 +54,17 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         }
     }
 
-    public void computeCondMeanMarkovJumps(double[] registration,
-                                              double time,
-                                              double[] countMatrix) {
+    public void computeCondMeanMarkovJumps(double time,
+                                           double[] countMatrix) {
 
         substModel.getTransitionProbabilities(time, transitionProbs);
+        computeCondMeanMarkovJumps(time,transitionProbs,countMatrix);
+    }
 
-        // TODO this requires work, only do once per traversal
-        makeRateRegistrationMatrix(registration, rateReg);
-
+    public void computeCondMeanMarkovJumps(double time,
+                                           double[] transitionProbs,
+                                           double[] countMatrix) {
+       
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
         double[] eval = eigenDecomposition.getEigenValues();
@@ -66,12 +72,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         markovJumpsCore.computeCondMeanMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbs, countMatrix);
     }
 
-    public void computeJointMeanMarkovJumps(double[] registration,
-                                               double time,
-                                               double[] countMatrix) {
-
-        // TODO this requires work, only do once per traversal
-        makeRateRegistrationMatrix(registration, rateReg);
+    public void computeJointMeanMarkovJumps(double time,
+                                            double[] countMatrix) {
 
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
@@ -116,15 +118,16 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         double time = 1.0;
         int from = 0; // A
         int to = 1; // C
-        MarkovJumpsCore.fillRegistrationMatrix(r, from, to, states);
+        MarkovJumpsCore.fillRegistrationMatrix(r, from, to, states, 1.0);
+        markovjumps.setRegistration(r);
 
         substModel.getInfinitesimalMatrix(q);
 
         substModel.getTransitionProbabilities(time, p);
 
-        markovjumps.computeJointMeanMarkovJumps(r, time, j);
+        markovjumps.computeJointMeanMarkovJumps(time, j);
 
-        markovjumps.computeCondMeanMarkovJumps(r, time, c);
+        markovjumps.computeCondMeanMarkovJumps(time, c);
 
         MarkovJumpsCore.makeComparableToRPackage(q);
         System.err.println("Q = " + new Vector(q));

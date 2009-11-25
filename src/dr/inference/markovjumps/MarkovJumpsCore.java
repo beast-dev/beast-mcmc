@@ -174,7 +174,7 @@ public class MarkovJumpsCore {
             }
         }
 
-        //Take factorial.moments = rate.eigen$vectors%*%
+        // Take factorial.moments = rate.eigen$vectors%*%
         //      (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
         //        rate.eigen$invvectors
         index = 0;
@@ -197,8 +197,12 @@ public class MarkovJumpsCore {
     }
 
     public static void fillRegistrationMatrix(double[] matrix, int from, int to, int dim) {
+       fillRegistrationMatrix(matrix,from,to,dim,1.0);
+    }
+
+    public static void fillRegistrationMatrix(double[] matrix, int from, int to, int dim, double value) {
         Arrays.fill(matrix,0.0);
-        matrix[from*dim + to] = 1.0;
+        matrix[from*dim + to] = value;
     }
 
     public static void swapRows(double[] matrix, int swap1, int swap2, int dim) {

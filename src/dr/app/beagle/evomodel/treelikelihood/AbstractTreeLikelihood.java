@@ -150,7 +150,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // do nothing
     }
 

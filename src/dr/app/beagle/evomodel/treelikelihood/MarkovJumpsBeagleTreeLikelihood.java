@@ -12,6 +12,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard
@@ -108,14 +111,46 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         
         final double branchRate = branchRateModel.getBranchRate(tree, childNode);
         final double branchTime = branchRate * (tree.getNodeHeight(parentNode) - tree.getNodeHeight(childNode));
+        double[] categoryRates = this.siteRateModel.getCategoryRates();
 
+        if (categoryRates.length > 1) {
+            throw new RuntimeException("MarkovJumps only implemented for one rate category");
+        }
+
+        final double substTime = categoryRates[0] * branchTime;
+        
         // Fill condJumps with conditional mean values for this branch
-        markovjumps.computeCondMeanMarkovJumps(branchTime,probabilities,condJumps);
+        markovjumps.computeCondMeanMarkovJumps(substTime,probabilities,condJumps);
 
         for(int j=0; j<patternCount; j++) { // Pick out values given parent and child states
             expectedJumps[childNum][j] = condJumps[parentStates[j] * stateCount + childStates[j]];
         }
         
+    }
+
+    public LogColumn[] getColumns() {
+        LogColumn[] allColumns = new LogColumn[patternCount];
+        for(int j=0; j<patternCount; j++) {
+            allColumns[j] = new CountColumn(getId(),j);
+        }
+        return allColumns;
+    }
+
+    protected class CountColumn extends NumberColumn {
+        private int index;
+
+        public CountColumn(String label, int j) {
+            super(label+"["+j+"]");
+            index = j;
+        }
+
+        public double getDoubleValue() {
+            double total = 0;
+            for(int i=0; i<treeModel.getNodeCount(); i++) {
+                total += expectedJumps[i][index];
+            }
+            return total;
+        }
     }
 
     private MarkovJumpsSubstitutionModel markovjumps;

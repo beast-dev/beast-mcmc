@@ -8,7 +8,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 = Parameters =
 
 == Substitution Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || `*`.frequencies || base frequencies || 0 <= \pi_i <= \sum pi_i = 1 || Uniform / Dirichlet(1,...,1) || Y || Dirichlet(1,\ldots,1) is uniform over this hyperplane || In Code ||
 || `*`.kappa || HKY transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || Gamma(1/a,a) for a large is relatively uninformative - biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
 || `*`.kappa1 || TN93 1st transition-transversion parameter  || 0,+Inf || Gamma(0.05,40) || Y || biological kappa values are greater than 1, but not much greater than 10. This prior is moderately diffuse with a mean of 2 || In Code ||
@@ -20,13 +20,13 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || bcov.s || Binary Covarion rate of flipping between slow and fast modes  || 0,+Inf || Gamma(0.05, 10) || Y || The covarion model is normalized by setting the fast rate to 1.0. If the switching rate is much faster than the fast rate, then the covarion aspect of the model is a bit pointless. I have no good feeling for this, but would suggest a diffuse prior with a mean below 1. || In Code ||
 
 == Site Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || `*`.alpha || Gamma shape parameter || 1E-8,+Inf || Gamma || Y || The lower bound is to prevent numerical issues with the quantiles for exceptionally low values || 
 || `*`.pInv || proportion of invariant sites parameter || 0,1 || Beta || Y || Beta(1,1) is uniform ||
 || `*`.mu || relative rate parameter || 0,+Inf || Gamma || Y || || 
 
 == Clock Models ==
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || clock.rate || Strict clock substitution rate || 0,+Inf || Gamma || Y || ||
 || uced.mean || uncorrelated exponential relaxed clock mean || 0,+Inf || Gamma || Y || ||
 || ucld.mean || uncorrelated lognormal relaxed clock mean || 0,+Inf || Gamma || Y || ||
@@ -40,13 +40,13 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 
 ==Tree Models==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || treeModel.rootHeight || root height of the tree || 0,+Inf || Tree Prior || Y || ||
-|| treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || || ||
+|| treeModel.internalNodeHeights || internal node heights of the tree (except the root) || dynamic || Tree Prior || N || ||
 
 ==Tree Priors==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || constant.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
 || exponential.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
 || exponential.growthRate || coalescent growth rate parameter || -Inf,+Inf || || Y ||  ||
@@ -59,7 +59,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf ||  || Y || ||
 || expansion.doublingTime || coalescent doubling time parameter || 0,+Inf ||  || Y || ||
 || expansion.ancestralProportion || ancestral population proportion || 0,1 || || Y ||  ||
-|| skyline.popSize || Bayesian Skyline population sizes || 0,+Inf || Exponential Markov || ||
+|| skyline.popSize || Bayesian Skyline population sizes || 0,+Inf || Exponential Markov || Y || ||
 || skyline.groupSize || Bayesian Skyline group sizes || 1,node count || Integer || Y || ||
 || skyride.logPopSize || GMRF Bayesian skyride population sizes || -Inf,+Inf || GMRF || N || skyride.logPopSize is log unit unlike other popSize || In Code ||
 || skyride.precision || GMRF Bayesian skyride precision || 0,+Inf || Gamma || Y ||  || In Code ||
@@ -73,7 +73,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 
 ==Star BEAST==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Editable in BEAUTi* || *Rationale/Comments* ||
 || species.popMean ||  Hype-prior on population sizes  || 0,+Inf || Jeffreys (1/x) || Y || ||
 || species.yule.birthRate || Tree birth rate || 0,+Inf || Jeffreys (1/x) || Y || ||
 || species.birthDeath.meanGrowthRate || Tree mean growth rate (birth-death) || 0,+Inf || Jeffreys (1/x) || Y || ||

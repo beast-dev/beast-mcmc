@@ -56,8 +56,8 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || logistic.doublingTime || coalescent doubling time parameter || 0,+Inf || || Y || ||
 || logistic.t50 || logistic shape parameter || 0,+Inf || || Y ||  ||
 || expansion.popSize || coalescent population size parameter || 0,+Inf || Jeffreys (1/x) || Y ||  || In Code ||
-|| expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf || Y ||  || ||
-|| expansion.doublingTime || coalescent doubling time parameter || 0,+Inf || Y ||  || ||
+|| expansion.growthRate || coalescent logistic growth rate parameter || 0,+Inf ||  || Y || ||
+|| expansion.doublingTime || coalescent doubling time parameter || 0,+Inf ||  || Y || ||
 || expansion.ancestralProportion || ancestral population proportion || 0,1 || || Y ||  ||
 || skyline.popSize || Bayesian Skyline population sizes || 0,+Inf || Exponential Markov || ||
 || skyline.groupSize || Bayesian Skyline group sizes || 1,node count || Integer || Y || ||
@@ -73,9 +73,9 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 
 ==Star BEAST==
 
-|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Rationale/Comments* ||
-|| species.popMean ||  Hype-prior on population sizes  || 0,+Inf || Jeffreys (1/x) || ||
-|| species.yule.birthRate || Tree birth rate || 0,+Inf || Jeffreys (1/x) || ||
-|| species.birthDeath.meanGrowthRate || Tree mean growth rate (birth-death) || 0,+Inf || Jeffreys (1/x) || ||
-|| species.birthDeath.relativeDeathRate || Tree relative death rate (death/birth) || [0,1] || uniform on [0,1] || ||
-|| speciesTree.splitPopSize || species tree population sizes || 0,+Inf || Gamma(2, species.popMean) for internal, Gamma(4, species.popMean) for tips || || 
+|| *Parameter* || *Description* || *Bounds* || *Default Prior* || *Displayed in BEAUTi* || *Rationale/Comments* ||
+|| species.popMean ||  Hype-prior on population sizes  || 0,+Inf || Jeffreys (1/x) || Y || ||
+|| species.yule.birthRate || Tree birth rate || 0,+Inf || Jeffreys (1/x) || Y || ||
+|| species.birthDeath.meanGrowthRate || Tree mean growth rate (birth-death) || 0,+Inf || Jeffreys (1/x) || Y || ||
+|| species.birthDeath.relativeDeathRate || Tree relative death rate (death/birth) || [0,1] || uniform on [0,1] || Y || ||
+|| speciesTree.splitPopSize || species tree population sizes || 0,+Inf || Gamma(2, species.popMean) for internal, Gamma(4, species.popMean) for tips || N || || 

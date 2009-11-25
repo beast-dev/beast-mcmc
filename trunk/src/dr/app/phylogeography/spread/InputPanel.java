@@ -36,6 +36,7 @@ public class InputPanel extends JPanel implements Exportable {
 
     private SpreadFrame frame = null;
 
+    private InputFileSettingsDialog inputFileSettingsDialog = null;
     private final SpreadDocument document;
 
     public InputPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction, final Action removeDataAction) {
@@ -47,8 +48,8 @@ public class InputPanel extends JPanel implements Exportable {
         dataTable = new JTable(dataTableModel);
 
         dataTable.getTableHeader().setReorderingAllowed(false);
-        dataTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        dataTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = dataTable.getColumnModel().getColumn(0);
         col.setCellRenderer(new MultiLineTableCellRenderer());
@@ -69,7 +70,7 @@ public class InputPanel extends JPanel implements Exportable {
         dataTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-//                    showAlignment();
+                    editSelection();
                 }
             }
         });
@@ -79,10 +80,10 @@ public class InputPanel extends JPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
 
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+//        JToolBar toolBar1 = new JToolBar();
+//        toolBar1.setFloatable(false);
+//        toolBar1.setOpaque(false);
+//        toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
 //        JButton button = new JButton(unlinkModelsAction);
 //        unlinkModelsAction.setEnabled(false);
@@ -103,7 +104,7 @@ public class InputPanel extends JPanel implements Exportable {
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(toolBar1, BorderLayout.NORTH);
+//        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
@@ -124,6 +125,27 @@ public class InputPanel extends JPanel implements Exportable {
 
     public JComponent getExportableComponent() {
         return dataTable;
+    }
+
+    public void editSelection() {
+        int selRow = dataTable.getSelectedRow();
+        if (selRow >= 0) {
+            InputFile inputFile = document.getInputFiles().get(selRow);
+            editSettings(inputFile);
+        }
+    }
+
+    private void editSettings(InputFile inputFile) {
+        if (inputFileSettingsDialog == null) {
+            inputFileSettingsDialog = new InputFileSettingsDialog(frame);
+        }
+
+        int result = inputFileSettingsDialog.showDialog(inputFile);
+
+        if (result != JOptionPane.CANCEL_OPTION) {
+            inputFileSettingsDialog.getInputFile(); // force update of builder settings
+            document.fireDataChanged();
+        }
     }
 
     public void removeSelection() {

@@ -327,7 +327,7 @@ public class PriorDialog {
 			optionPanel.addComponent(optionsPanels.get(priorType));
 		}
 
-        if (priorType != PriorType.JEFFREYS_PRIOR) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             optionPanel.addSeparator();
             optionPanel.addLabel("Set a sepcial value in the selected text field above.");
             SpecialNumberPanel specialNumberPanel = new SpecialNumberPanel (this);

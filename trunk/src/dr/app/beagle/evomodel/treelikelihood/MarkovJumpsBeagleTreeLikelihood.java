@@ -14,7 +14,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard
@@ -83,9 +82,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private void setupRegistration() {
 
         double[] registration = registerMatrixParameter.getParameterValues();
-        for (int i = 0; i < stateCount; i++) {
-            registration[i * stateCount + i] = 0;  // Ensure that the diagonals are zero
-        }
         markovjumps.setRegistration(registration);
         areStatesRedrawn = false;
     }

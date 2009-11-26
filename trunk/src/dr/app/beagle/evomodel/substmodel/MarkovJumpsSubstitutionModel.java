@@ -35,10 +35,15 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         rateMatrix = new double[stateCount * stateCount];
         transitionProbs = new double[stateCount * stateCount];
         rateReg = new double[stateCount * stateCount];
+        registration = new double[stateCount * stateCount];
     }
 
-    public void setRegistration(double[] registration) {
-        makeRateRegistrationMatrix(registration,rateReg);
+    public void setRegistration(double[] inRegistration) {
+        System.arraycopy(inRegistration, 0, registration, 0, stateCount * stateCount);
+        for (int i = 0; i < stateCount; i++) {
+            registration[i * stateCount + i] = 0;
+        }
+        regRateChanged = true;
     }
 
     private void makeRateRegistrationMatrix(double[] registration,
@@ -52,6 +57,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
                 index++;
             }
         }
+        regRateChanged = false;
     }
 
     public void computeCondMeanMarkovJumps(double time,
@@ -64,7 +70,11 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     public void computeCondMeanMarkovJumps(double time,
                                            double[] transitionProbs,
                                            double[] countMatrix) {
-       
+
+        if (regRateChanged) {
+            makeRateRegistrationMatrix(registration,rateReg);
+        }
+
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
         double[] eval = eigenDecomposition.getEigenValues();
@@ -75,6 +85,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     public void computeJointMeanMarkovJumps(double time,
                                             double[] countMatrix) {
 
+        if (regRateChanged) {
+            makeRateRegistrationMatrix(registration,rateReg);
+        }
+
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
         double[] eval = eigenDecomposition.getEigenValues();
@@ -83,7 +97,9 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // Do nothing
+        if (model == substModel) {
+            regRateChanged = true;
+        }
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -149,10 +165,13 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private double[] rateReg;
     private double[] transitionProbs;
     private double[] rateMatrix;
+    private double[] registration;
 
     private SubstitutionModel substModel;
     private EigenDecomposition eigenDecomposition;
     private MarkovJumpsCore markovJumpsCore;
+
+    private boolean regRateChanged = true;
 }
 
 /*

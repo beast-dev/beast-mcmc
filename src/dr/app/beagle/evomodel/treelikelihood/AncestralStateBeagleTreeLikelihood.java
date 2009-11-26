@@ -212,7 +212,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 for (int j = 0; j < patternCount; j++) {
 
                     System.arraycopy(partials, j * stateCount, conditionalProbabilities, 0, stateCount);
-                    try { // TODO This is a hack, need to fix properly
+                    double[] frequencies = substitutionModel.getFrequencyModel().getFrequencies();
+                    for (int i = 0; i < stateCount; i++) {
+                        conditionalProbabilities[i] *= frequencies[i];
+                    }
+                    try {
                         state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                     } catch (Error e) {
                         System.err.println(e.toString());

@@ -405,6 +405,9 @@ public class BeastMain {
             if (dialog.preferBeagleCPU()) {
                 beagleFlags |= BeagleFlag.CPU.getMask();
             }
+            if (dialog.preferBeagleSSE()) {
+                beagleFlags |= BeagleFlag.SSE.getMask();
+            }
             if (dialog.preferBeagleGPU()) {
                 beagleFlags |= BeagleFlag.GPU.getMask();
             }

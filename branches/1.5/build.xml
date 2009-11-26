@@ -541,7 +541,7 @@
 		                infostring="${BEAST_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >
 			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-			<javaproperty name="java.library.path" value="$JAVAROOT/lib:/usr/local/lib"/>
+			<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
                 <include name="**/beast-beagle.jar"/>

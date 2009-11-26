@@ -357,9 +357,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                 } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
-                    // Currently this event type is not used.
-                    System.err.println("Full tree update event - these events currently aren't used\n" +
-                            "so either this is in error or a new feature is using them so remove this message.");
+                    // This event type is now used for EmpiricalTreeDistributions.
+//                    System.err.println("Full tree update event - these events currently aren't used\n" +
+//                            "so either this is in error or a new feature is using them so remove this message.");
                     updateAllNodes();
                 } else {
                     // Other event types are ignored (probably trait changes).

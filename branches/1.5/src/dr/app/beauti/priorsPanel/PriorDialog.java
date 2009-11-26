@@ -33,7 +33,7 @@ import dr.gui.chart.LinearAxis;
 import dr.gui.chart.PDFPlot;
 import dr.math.distributions.*;
 import dr.util.NumberFormatter;
-import org.virion.jam.components.RealNumberField;
+//import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -47,6 +47,7 @@ import java.util.EnumSet;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Walter Xie
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorDialog {
@@ -59,6 +60,7 @@ public class PriorDialog {
 	private JComboBox rootHeightPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE, PriorType.TRUNC_NORMAL_PRIOR).toArray());
     private JCheckBox meanInRealSpaceCheck = new JCheckBox();
 	private RealNumberField initialField = new RealNumberField();
+    private RealNumberField selectedField;
 
 	private OptionsPanel optionPanel;
 	private JChart chart;
@@ -134,16 +136,16 @@ public class PriorDialog {
 		priorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setupComponents();
-				dialog.pack();
 				dialog.repaint();
+                dialog.pack();
 			}
 		});
 
 		rootHeightPriorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setupComponents();
-				dialog.pack();
 				dialog.repaint();
+                dialog.pack();
 			}
 		});
 
@@ -175,10 +177,20 @@ public class PriorDialog {
 				dialog.repaint();
 			}
 		};
+        FocusListener flistener = new FocusAdapter() {
+			public void focusGained(FocusEvent e) {
+                if (e.getComponent() instanceof RealNumberField) {
+                    selectedField = (RealNumberField) e.getComponent();
+                }
+			}
+		};
 
 		for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
 			for (JComponent component : optionsPanel.getJComponents()) {
-                if (component instanceof RealNumberField) component.addKeyListener(listener);
+                if (component instanceof RealNumberField) {
+                    component.addKeyListener(listener);
+                    component.addFocusListener(flistener);
+                }
 			}
 		}
 
@@ -296,7 +308,7 @@ public class PriorDialog {
 		if (parameter.isNodeHeight) {
 			optionPanel.addComponents(new JLabel("Prior Distribution:"), rootHeightPriorCombo);
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
-				return;
+				return; // PriorType.NONE
 			} else {
 				priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
 			}
@@ -312,9 +324,15 @@ public class PriorDialog {
 
 		if (priorType != PriorType.JEFFREYS_PRIOR) {
 			optionPanel.addSeparator();
-
 			optionPanel.addComponent(optionsPanels.get(priorType));
 		}
+
+        if (priorType != PriorType.JEFFREYS_PRIOR) {
+            optionPanel.addSeparator();
+            optionPanel.addLabel("Set a sepcial value in the selected text field above.");
+            SpecialNumberPanel specialNumberPanel = new SpecialNumberPanel (this);
+            optionPanel.addSpanningComponent(specialNumberPanel);
+        }
 
 		if (!parameter.isStatistic) {
 			optionPanel.addSeparator();
@@ -332,6 +350,14 @@ public class PriorDialog {
 			optionPanel.addComponents(quantileLabels, quantileText);
 		}
 	}
+
+    public void setSelectedField(RealNumberField selectedField) {
+        this.selectedField = selectedField;
+    }
+    
+    public RealNumberField getSelectedField() {
+        return selectedField;
+    }
 
 	NumberFormatter formatter = new NumberFormatter(4);
 

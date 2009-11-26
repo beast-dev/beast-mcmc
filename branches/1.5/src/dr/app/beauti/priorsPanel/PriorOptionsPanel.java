@@ -2,7 +2,7 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
 import dr.math.distributions.Distribution;
-import org.virion.jam.components.RealNumberField;
+//import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public abstract class PriorOptionsPanel extends OptionsPanel {
 

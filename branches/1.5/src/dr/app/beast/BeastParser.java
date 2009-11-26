@@ -52,7 +52,7 @@ public class BeastParser extends XMLParser {
     public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
     public String parsers;
 
-    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean strictXML) {
+    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarning, boolean strictXML) {
         super(strictXML);
 
         setup(args);
@@ -69,9 +69,6 @@ public class BeastParser extends XMLParser {
 
         // Try to find and load the additional 'core' parsers
         try {
-            // always load release_parsers.properties !!!
-            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose);
-
             Properties properties = new Properties();
             properties.load(this.getClass().getResourceAsStream("beast.properties"));
 
@@ -84,6 +81,14 @@ public class BeastParser extends XMLParser {
                 parsers = properties.getProperty("parsers");
             }
 
+            if (parsers.equalsIgnoreCase(DEV)) {
+                parserWarning = true; // if dev, then auto turn on, otherwise default to turn off
+            }
+
+            // always load release_parsers.properties !!!
+            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
+
+            // suppose to load developement_parsers.properties
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase(DEV)) {
@@ -91,12 +96,12 @@ public class BeastParser extends XMLParser {
                             + ", which is additional set of parsers only available for development version ...");
                     System.out.println();
                 }
-                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose);
+                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
             }
-
+            // load additional parsers
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose);
+                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
                 }
             }
         } catch (IOException e) {
@@ -111,7 +116,7 @@ public class BeastParser extends XMLParser {
 //        }
     }
 
-    private void loadProperties(Class c, String parsersFile, boolean verbose) throws IOException {
+    private void loadProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning) throws IOException {
 
         if (verbose) {
             if (parsersFile.equalsIgnoreCase(RELEASE + PARSER_PROPERTIES_SUFFIX)) {
@@ -141,7 +146,7 @@ public class BeastParser extends XMLParser {
                         boolean replaced = addXMLObjectParser((XMLObjectParser) parser.newInstance(), true);
                         if (verbose) {
                             System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName());
-                        } else if (replaced) {
+                        } else if (parserWarning && replaced) {
                             System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
                                     + "which is REPLACING the same parser loaded previously.\n");
                         }
@@ -156,7 +161,7 @@ public class BeastParser extends XMLParser {
                                     if (verbose) {
                                         System.out.println((replaced ? "Replaced" : "Loaded") + " parser: "
                                                 + parser.getName() + "." + field.getName());
-                                    } else if (replaced) {
+                                    } else if (parserWarning && replaced) {
                                         System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
                                                 + "which is REPLACING the same parser loaded previously.\n");                                        
                                     }

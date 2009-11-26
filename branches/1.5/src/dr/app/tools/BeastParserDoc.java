@@ -26,7 +26,6 @@
 package dr.app.tools;
 
 import dr.app.util.Arguments;
-import dr.app.util.Utils;
 import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
 import dr.xml.*;
@@ -35,8 +34,7 @@ import dr.util.Version;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Properties;
+
 
 public class BeastParserDoc {
 
@@ -51,20 +49,29 @@ public class BeastParserDoc {
     public final static String LINK1 = "http://beast.bio.ed.ac.uk/";
     public final static String LINK2 = "http://code.google.com/p/beast-mcmc/";
 
-    private final BeastParser parser;
-
     public BeastParserDoc(BeastParser parser, String directory, boolean wikiFormat) throws java.io.IOException {
-        this.parser = parser;
 
-        File file = new File(directory);
+        try {
+            // Create multiple directories
+            boolean success = (new File(directory)).mkdirs();
+            if (success) {
+                System.out.println("Directories: " + directory + " created");
+            }
 
-        if (!file.exists()) {
-            file.mkdir();
+        } catch (Exception e) {//Catch exception if any
+            System.err.println("Error: " + e.getMessage());
         }
 
-        if (!file.isDirectory()) {
-            throw new IllegalArgumentException(directory + " is not a directory!");
-        }
+//
+//        File file = new File(directory);
+//
+//        if (!file.exists()) {
+//            file.mkdir();
+//        }
+//
+//        if (!file.isDirectory()) {
+//            throw new IllegalArgumentException(directory + " is not a directory!");
+//        }
 
         if (wikiFormat) {
             XMLDocumentationHandler handler = new WikiDocumentationHandler(parser);
@@ -175,11 +182,10 @@ public class BeastParserDoc {
 
         if (outputDirectory == null) {
             // No input file name was given so throw up a dialog box...
-            outputDirectory = Utils.getSaveFileName("BeastParserDoc " + version.getVersionString()
-                    + " - Select output directory");
+            outputDirectory = "/release/common/doc/BeastParserDoc_" + version.getVersionString();
         }
 
-        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false), outputDirectory, false);
+        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false), outputDirectory, false);
 
         System.exit(0);
     }

@@ -27,7 +27,6 @@ package dr.app.beast;
 import dr.app.plugin.*;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.app.util.OSType;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
@@ -69,9 +68,8 @@ public class BeastMain {
         }
     }
 
-    public BeastMain(File inputFile, BeastConsoleApp consoleApp,
-                     int maxErrorCount, final boolean verbose, boolean strictXML,
-                     List<String> additionalParsers) {
+    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
+                     boolean parserWarning, boolean strictXML, List<String> additionalParsers) {
 
         if (inputFile == null) {
             System.err.println();
@@ -86,7 +84,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -241,6 +239,8 @@ public class BeastMain {
                 new Arguments.Option[]{
 
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("pwarning", "Warning messages to avoid the dupication " +
+                                "between released BEAST parsers and developement/additional parsers"),
                         new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("options", "display an options dialog"),
@@ -282,6 +282,7 @@ public class BeastMain {
         List<String> additionalParsers = new ArrayList<String>();
 
         final boolean verbose = arguments.hasOption("verbose");
+        final boolean parserWarning = arguments.hasOption("pwarning"); // if dev, then auto turn on, otherwise default to turn off
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
@@ -370,16 +371,6 @@ public class BeastMain {
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
-
-//        if (OSType.isWindows()) {
-//            System.out.println(System.getProperty("user.dir"));
-//            System.out.println(System.getProperty("java.library.path"));
-//
-//            String currentDir = System.getProperty("user.dir") + "\\lib";
-//            System.setProperty("java.library.path", currentDir);
-//            System.out.println(currentDir);
-//            System.out.println(System.getProperty("java.library.path"));
-//        }
 
         printTitle();
 
@@ -484,7 +475,7 @@ public class BeastMain {
         System.out.println();
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers);
         } catch (RuntimeException rte) {
             if (window) {
                 // This sleep for 2 seconds is to ensure that the final message

@@ -8,8 +8,8 @@
 	</taxa>
 	
 	<alignment id="alignment" dataType="nucleotide">
-		<sequence> <taxon idref="A"/> N </sequence>
-		<sequence> <taxon idref="B"/> N </sequence>
+		<sequence> <taxon idref="A"/> A </sequence>
+		<sequence> <taxon idref="B"/> A </sequence>
 		<!--<sequence> <taxon idref="C"/> N </sequence>		-->
 	</alignment>
 	
@@ -39,13 +39,13 @@
 	  <frequencies>
 	    <frequencyModel dataType="nucleotide">
 	      <frequencies>
-		    <!--<parameter id="hky.frequencies" value="0.34 0.16 0.16 0.34"/>-->
-              <parameter id="hky.frequencies" value="0.25 0.25 0.25 0.25"/>
+		  	<parameter id="hky.frequencies" value="0.40 0.25 0.25 0.10"/>
+          	<!--<parameter id="hky.frequencies" value="0.25 0.25 0.25 0.25"/>-->
 	      </frequencies>
 	    </frequencyModel>
 	  </frequencies>
 	  <kappa>
-	    <parameter id="hky.kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
+	    <parameter id="hky.kappa" value="10.0" lower="1.0E-8" upper="Infinity"/>
 	  </kappa>
 	</hkyModel>
 	
@@ -54,7 +54,7 @@
 	    <hkyModel idref="hky"/>
 	  </substitutionModel>
 	  <mutationRate>
-	    <parameter id="clock.rate"  value="0.03" lower="0.0" upper="10.0"/>
+	    <parameter id="clock.rate"  value="0.5" lower="0.0" upper="10.0"/>
 	  </mutationRate>
 	</siteModel>	
 
@@ -95,5 +95,28 @@
 <!--
 
 java -cp build/dist/beast.jar dr.app.tools.TreeAnnotator -heights mean testMarkovJumps.trees markov.tree
+
+# R script using 'markovjumps'
+
+library(markovjumps)
+
+stat.dist = c(0.25,0.25,0.25,0.25)
+#stat.dist = c(0.40,0.25,0.25,0.10)
+kappa = 10
+
+subst.model.eigen = as.eigen.hky(c(kappa,1),
+	stat.dist,scale=T)
+
+R = matrix(1,nrow=4,ncol=4)
+R = R - diag(c(1,1,1,1))
+
+tree = read.tree(text="(A:0.5,B:0.5);")
+
+data = c(1,1) # A,A
+ 
+markov = tree.mean.jumps(tree, data, subst.model.eigen,
+		stat.dist, R)
+		
+J = sum(markov$cond.mean)
 
 -->

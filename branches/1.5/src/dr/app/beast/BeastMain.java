@@ -238,9 +238,8 @@ public class BeastMain {
                 new Arguments.Option[]{
 
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
-                        new Arguments.Option("pwarning", "Warning messages to avoid the dupication " +
-                                "between released BEAST parsers and developement/additional parsers"),
-                        new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
+                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
+                        new Arguments.Option("strict", "Fail on non-conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("options", "display an options dialog"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
@@ -281,7 +280,7 @@ public class BeastMain {
         List<String> additionalParsers = new ArrayList<String>();
 
         final boolean verbose = arguments.hasOption("verbose");
-        final boolean parserWarning = arguments.hasOption("pwarning"); // if dev, then auto turn on, otherwise default to turn off
+        final boolean parserWarning = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
@@ -391,21 +390,23 @@ public class BeastMain {
             threadCount = dialog.getThreadPoolSize();
 
             useBeagle = dialog.useBeagle();
-            beagleShowInfo = dialog.showBeagleInfo();
-            if (dialog.preferBeagleCPU()) {
-                beagleFlags |= BeagleFlag.CPU.getMask();
-            }
-            if (dialog.preferBeagleSSE()) {
-                beagleFlags |= BeagleFlag.SSE.getMask();
-            }
-            if (dialog.preferBeagleGPU()) {
-                beagleFlags |= BeagleFlag.GPU.getMask();
-            }
-            if (dialog.preferBeagleDouble()) {
-                beagleFlags |= BeagleFlag.DOUBLE.getMask();
-            }
-            if (dialog.preferBeagleSingle()) {
-                beagleFlags |= BeagleFlag.SINGLE.getMask();
+            if (useBeagle) {
+                beagleShowInfo = dialog.showBeagleInfo();
+                if (dialog.preferBeagleCPU()) {
+                    beagleFlags |= BeagleFlag.CPU.getMask();
+                }
+                if (dialog.preferBeagleSSE()) {
+                    beagleFlags |= BeagleFlag.SSE.getMask();
+                }
+                if (dialog.preferBeagleGPU()) {
+                    beagleFlags |= BeagleFlag.GPU.getMask();
+                }
+                if (dialog.preferBeagleDouble()) {
+                    beagleFlags |= BeagleFlag.DOUBLE.getMask();
+                }
+                if (dialog.preferBeagleSingle()) {
+                    beagleFlags |= BeagleFlag.SINGLE.getMask();
+                }
             }
 
             inputFile = dialog.getInputFile();

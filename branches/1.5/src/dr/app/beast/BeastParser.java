@@ -52,8 +52,8 @@ public class BeastParser extends XMLParser {
     public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
     public String parsers;
 
-    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarning, boolean strictXML) {
-        super(strictXML);
+    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
+        super(parserWarnings, strictXML);
 
         setup(args);
 
@@ -82,11 +82,11 @@ public class BeastParser extends XMLParser {
             }
 
             if (parsers.equalsIgnoreCase(DEV)) {
-                parserWarning = true; // if dev, then auto turn on, otherwise default to turn off
+                this.parserWarnings = true; // if dev, then auto turn on, otherwise default to turn off
             }
 
             // always load release_parsers.properties !!!
-            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
+            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
 
             // suppose to load developement_parsers.properties
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
@@ -96,12 +96,12 @@ public class BeastParser extends XMLParser {
                             + ", which is additional set of parsers only available for development version ...");
                     System.out.println();
                 }
-                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
+                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
             }
             // load additional parsers
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, parserWarning);
+                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
                 }
             }
         } catch (IOException e) {

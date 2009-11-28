@@ -859,11 +859,21 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (translationList != null) {
                         // this ensures that if a translation list is used, the external node numbers
                         // of the trees correspond as well.
-                        
+
                         Map<Taxon, Integer> taxonNumberMap = new HashMap<Taxon, Integer>();
+                        int count = 0;
                         for (String label : translationList.keySet()) {
                             Taxon taxon = translationList.get(label);
-                            taxonNumberMap.put(taxon, Integer.parseInt(label) - 1);
+                            int number;
+
+                            try {
+                                number = Integer.parseInt(label) - 1;
+                            } catch (NumberFormatException nfe) {
+                                number = count;
+                            }
+
+                            taxonNumberMap.put(taxon, number);
+                            count ++;
                         }
 
                         tree = new FlexibleTree(root, false, true, taxonNumberMap);
@@ -917,7 +927,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                 }
                                 c = c.substring(e);
                             } else {
-                                c = c.substring(1);                                
+                                c = c.substring(1);
                             }
                         }
                     }

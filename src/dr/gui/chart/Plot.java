@@ -559,10 +559,13 @@ public interface Plot {
                     selectedPoints.add(i);
                 }
             }
+
+            fireSelectionChanged();
         }
 
         public void clearSelection() {
             selectedPoints.clear();
+            fireSelectionChanged();
         }
 
         public void setSelectedPoints(final Collection<Integer> selectedPoints) {

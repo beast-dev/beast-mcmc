@@ -74,7 +74,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Set mark style
      */
-    void setHilightedMarkStyle(Stroke hilightedMarkStroke,
+    public void setHilightedMarkStyle(Stroke hilightedMarkStroke,
                                Paint hilightedMarkPaint,
                                Paint hilightedMarkFillPaint) {
 

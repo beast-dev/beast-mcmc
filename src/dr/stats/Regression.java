@@ -172,6 +172,16 @@ public class Regression {
         return yData;
     }
 
+    public Variate getYResidualData() {
+        Variate.Double rd = new Variate.Double();
+
+        for (int i = 0; i < xData.getCount(); i++) {
+            rd.add(getResidual(xData.get(i), yData.get(i)));
+        }
+
+        return rd;
+    }
+
     private void calculateRegression() {
         int i, n = xData.getCount();
         double meanX = 0.0, meanY = 0.0;

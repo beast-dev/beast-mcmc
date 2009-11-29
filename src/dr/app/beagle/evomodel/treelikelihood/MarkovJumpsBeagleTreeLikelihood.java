@@ -15,6 +15,9 @@ import dr.inference.model.Variable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author Marc Suchard
  * @author Vladimir Minin
@@ -31,44 +34,53 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme, DataType dataType, String stateTag,
-                                           SubstitutionModel substModel, Parameter registerMatrixParameter,
-                                           String jumpTag) {
+                                           SubstitutionModel substModel) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
                 scalingScheme, dataType, stateTag, substModel);
 
-        if (registerMatrixParameter.getDimension() != stateCount * stateCount) {
-            throw new RuntimeException("Registration parameter of wrong dimension");
-        }
-
-        markovjumps = new MarkovJumpsSubstitutionModel(substModel);        
-
-        this.registerMatrixParameter = registerMatrixParameter;
-        addVariable(registerMatrixParameter);
-        setupRegistration();
-
-        this.jumpTag = jumpTag;
-
-        expectedJumps = new double[treeModel.getNodeCount()][patternCount];
+        markovjumps = new ArrayList<MarkovJumpsSubstitutionModel>();
+        registerParameter = new ArrayList<Parameter>();
+        jumpTag = new ArrayList<String>();
+        expectedJumps = new ArrayList<double[][]>();
+        
         tmpProbabilities = new double[stateCount * stateCount];
         condJumps = new double[stateCount * stateCount];
     }
 
-    private String[] copyStringPtrsAndAppend(String[] values, String append) {
-        String[] rtn = new String[values.length + 1];
-        System.arraycopy(values, 0, rtn, 0, values.length);
-        rtn[values.length] = append;
-        return rtn;
+    public void addRegister(Parameter addRegisterParameter) {
+
+        if (addRegisterParameter.getDimension() != stateCount * stateCount) {
+            throw new RuntimeException("Register parameter of wrong dimension");
+        }
+        addVariable(addRegisterParameter);
+        registerParameter.add(addRegisterParameter);
+        markovjumps.add(new MarkovJumpsSubstitutionModel(substitutionModel));
+        setupRegistration(numRegisters);
+        numRegisters++;
+        jumpTag.add(addRegisterParameter.getId());
+        expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
     }
 
     public String[] getNodeAttributeLabel() {
-        return copyStringPtrsAndAppend(super.getNodeAttributeLabel(), jumpTag);
+        String[] old = super.getNodeAttributeLabel();
+        String[] rtn = new String[old.length + numRegisters];
+        System.arraycopy(old,0,rtn,0,old.length);
+        for(int r = 0; r < numRegisters; r++) {
+            rtn[old.length+r] = jumpTag.get(r);
+        }
+        return rtn;
     }
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        return copyStringPtrsAndAppend(super.getAttributeForNode(tree, node),
-                formattedValue(expectedJumps[node.getNumber()])
-        );
+        String[] old = super.getAttributeForNode(tree,node);
+        String[] rtn = new String[old.length + numRegisters];
+        System.arraycopy(old,0,rtn,0,old.length);
+        for(int r = 0; r < numRegisters; r++) {
+            double[][] thisExpectedJumps = expectedJumps.get(r);
+            rtn[old.length + r] = formattedValue(thisExpectedJumps[node.getNumber()]);
+        }
+        return rtn;
     }
 
     private static String formattedValue(double[] values) {
@@ -79,16 +91,19 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         return Double.toString(total); // Currently return the sum across sites
     }
 
-    private void setupRegistration() {
+    private void setupRegistration(int whichRegistration) {
 
-        double[] registration = registerMatrixParameter.getParameterValues();
-        markovjumps.setRegistration(registration);
+        double[] registration = registerParameter.get(whichRegistration).getParameterValues();
+        markovjumps.get(whichRegistration).setRegistration(registration);
         areStatesRedrawn = false;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == registerMatrixParameter) {
-            setupRegistration();
+        for(int r = 0; r < numRegisters; r++) {
+            if (variable == registerParameter.get(r)) {
+                setupRegistration(r);
+                return;
+            }
         }
         super.handleVariableChangedEvent(variable, index, type);
     }
@@ -114,45 +129,55 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
 
         final double substTime = categoryRates[0] * branchTime;
-        
-        // Fill condJumps with conditional mean values for this branch
-        markovjumps.computeCondMeanMarkovJumps(substTime,probabilities,condJumps);
 
-        for(int j=0; j<patternCount; j++) { // Pick out values given parent and child states
-            expectedJumps[childNum][j] = condJumps[parentStates[j] * stateCount + childStates[j]];
+        for(int r = 0; r < markovjumps.size(); r++) {
+            // Fill condJumps with conditional mean values for this branch
+            markovjumps.get(r).computeCondMeanMarkovJumps(substTime,probabilities,condJumps);
+
+            double[][] thisExpectedJumps = expectedJumps.get(r);
+
+            for(int j=0; j<patternCount; j++) { // Pick out values given parent and child states
+                thisExpectedJumps[childNum][j] = condJumps[parentStates[j] * stateCount + childStates[j]];
+            }
         }
         
     }
 
     public LogColumn[] getColumns() {
-        LogColumn[] allColumns = new LogColumn[patternCount];
-        for(int j=0; j<patternCount; j++) {
-            allColumns[j] = new CountColumn(getId(),j);
+        LogColumn[] allColumns = new LogColumn[patternCount * numRegisters];
+        for(int r=0; r<numRegisters; r++) {
+            for(int j=0; j<patternCount; j++) {
+                allColumns[r*patternCount + j] = new CountColumn(jumpTag.get(r),r,j);
+            }
         }
         return allColumns;
     }
 
     protected class CountColumn extends NumberColumn {
-        private int index;
+        private int indexSite;
+        private int indexRegistration;
 
-        public CountColumn(String label, int j) {
-            super(label+"["+j+"]");
-            index = j;
+        public CountColumn(String label, int r, int j) {
+            super(label+"["+(j+1)+"]");
+            indexRegistration = r;
+            indexSite = j;
         }
 
         public double getDoubleValue() {
             double total = 0;
+            double[][] thisExpectedJumps = expectedJumps.get(indexRegistration);
             for(int i=0; i<treeModel.getNodeCount(); i++) {
-                total += expectedJumps[i][index];
+                total += thisExpectedJumps[i][indexSite];
             }
             return total;
         }
     }
 
-    private MarkovJumpsSubstitutionModel markovjumps;
-    private Parameter registerMatrixParameter;
-    private String jumpTag;
-    private double[][] expectedJumps;
+    private List<MarkovJumpsSubstitutionModel> markovjumps;
+    private List<Parameter> registerParameter;
+    private List<String> jumpTag;
+    private List<double[][]> expectedJumps;
     private double[] tmpProbabilities;
     private double[] condJumps;
+    private int numRegisters;
 }

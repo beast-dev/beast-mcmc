@@ -63,6 +63,14 @@
 	  <treeModel idref="treeModel"/>
 	  <siteModel idref="siteModel"/>
 	  <hkyModel idref="hky"/>
+	  <parameter value="0 1 1 1
+	                    1 0 1 1
+	                    1 1 0 0	                    
+	                    1 1 1 0"/>
+	  <parameter value="0 1 1 1
+	                    0 0 1 1
+	                    0 0 0 1	                    
+	                    0 0 0 0" id="upper"/>
 	</markovJumpsTreeLikelihood>	
 	
 	<operators id="operators">
@@ -100,8 +108,8 @@ java -cp build/dist/beast.jar dr.app.tools.TreeAnnotator -heights mean testMarko
 
 library(markovjumps)
 
-stat.dist = c(0.25,0.25,0.25,0.25)
-#stat.dist = c(0.40,0.25,0.25,0.10)
+#stat.dist = c(0.25,0.25,0.25,0.25)
+stat.dist = c(0.40,0.25,0.25,0.10)
 kappa = 10
 
 subst.model.eigen = as.eigen.hky(c(kappa,1),
@@ -118,5 +126,16 @@ markov = tree.mean.jumps(tree, data, subst.model.eigen,
 		stat.dist, R)
 		
 J = sum(markov$cond.mean)
+
+R2 = matrix(c(0, 1, 1, 1,
+	          0, 0, 1, 1,
+	          0, 0, 0, 1,	                    
+	          0, 0, 0, 0),nrow=4,by.row=T)
+	          
+markov2 = tree.mean.jumps(tree, data, subst.model.eigen,
+		   stat.dist, R2)
+		   
+J2 = sum(markov2$cond.mean)
+
 
 -->

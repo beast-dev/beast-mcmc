@@ -75,7 +75,7 @@ doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
 lib/            Java & native libraries used by BEAST 
 native/         some C code to compile into native libraries
-scritps/        Scripts of the corresponding OS
+bin/        Scripts of the corresponding OS
 
 ___________________________________________________________________________
 3) CONVERTING SEQUENCES

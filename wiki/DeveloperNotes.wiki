@@ -34,4 +34,13 @@ Try to avoid circular dependencies between packages. Certain packages are intend
 
   * From now, any parser not ready for release should stay in development_parser.properties. Once it is ready for release, it should be moved into release_parser.properties.
 
-  * I suggest to move all parsers in BeastParser into release_parser.properties in next stage.  
+  * I suggest to move all parsers in BeastParser into release_parser.properties in next stage. 
+
+= 'SVN Changes Regarding Development and Release' =
+
+We recently create the Branch 1.5 for BEAST, and we will only release the code in Branch 1.5 not Trunk from next release 1.5.3. The trunk will be used for development only. Therefore, any bug fixing will require to check in to the branch, and I will merge branch and trunk when major version updating, such as 1.6, 1.7 ...
+
+To work on Branch 1.5, it is simply to create a new project (e.g. BEAST1.5) and check out code from /branches/1.5/ like what you did for trunk, and then work on this project as same as you are working on the trunk. 
+
+Branch 1.5 is for bug fixing and is the release version, but trunk is only for development which is not showing in the release. I will merge branch 1.5 into trunk after each release.
+ 

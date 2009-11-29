@@ -1,4 +1,4 @@
-                    BEAST v1.5.2 2002-2009
+                    BEAST v1.5.3 2002-2009
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,7 +17,87 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 9th October 2009
+Last updated: alexei@cs.auckland.ac.nz - 1st December 2009
+
+================================================================================
+
+Version 1.5.3 released 1st December 2009
+
+    Bug Fixes
+		Many bugs fixed that were introduced in 1.5.2 including:
+
+        Issue 55:  MCMC Screen log doesn't currently work.
+        Issue 70:  beauty and partition into codon positions
+        Issue 72:  Beauti should hard limit GTR model parameters
+        Issue 122: Ctrl-A in Beauti -> Exception
+        Issue 127: BEAUTi prior panel, prior upper and lower does not show
+                   INFINITY
+        Issue 128: BEAUTi: tree prior Logistic Growth is not available for
+                   calibration
+        Issue 146: BEAUTi: binary COVARION model
+        Issue 169: Editing the file name stem in BEAUti causes the insertion
+                   point to jump to the end
+        Issue 173: BEAUTi: partially link exception
+        Issue 181: BEAUTi: need enhancement to default behaviour when adding
+                   additional alignment after unlinking all
+        Issue 193: Improved convergence diagnostic: compute effective size of
+                   combined runs by concatenating the samples
+        Issue 194: BEAUTi: prior setting exception when changing value
+        Issue 199: Tracer shows only first log file entry when multiples
+                   entries have the same name
+        Issue 201: Editing file name stem in MCMC panel causes insertion point
+                   to jump to end
+        Issue 202: Build scripts producing JDK 1.6 classes so distribution fails
+                   on machines with JDK 1.5
+        Issue 203: Launch4j bug affecting the link of NucleotideLikelihoodCore.dll
+        Issue 204: BEAUTi: tree prior Constant Size is not working for node calibration
+        Issue 205: Tittle information disappeared in the console using windows
+                   paramter to run BEAST
+        Issue 209: pathogen dose not compile
+        Issue 211: BEAUTi: Amino Acid site model xml is wrong
+        Issue 212: BEAST Linux version: need chmod 755 *
+        Issue 215: Default memory allocations for Mac packaging are too small
+        Issue 216: Default memory allocations for Linux packaging are too small
+        Issue 217: Problems with the Mac OS X packaging
+        Issue 218: BeastMain options dialog giving error "Illegal entry value
+                   must be between 1 and 21474863647"
+        Issue 220: The shell scripts to launch BEAST in command line can't cope
+                   with spaces in the path.
+        Issue 221: Reweight the substitution model operators in BEAUti
+        Issue 222: Naming of 'treeLikelihood' when only 1 partition
+        Issue 223: Set the 'operator analysis' file name as an attribute in
+                   MCMC element
+        Issue 225: TreePartitionCoalescent is not existing
+        Issue 226: The parsers in release_parsers.properties need to be updated
+        Issue 227: Fix BeastDoc to generate tag doc for BEAST users
+        Issue 229: Another failure of testing framework
+        Issue 231: Delay the start of the performance measurement until after
+                   full evaluation
+        Issue 232: Mac (Windows?) version of BEAST closes console on error
+        Issue 234: Make the dreaded "The initial posterior is zero" error a bit
+                   more friendly to debug
+        Issue 236: dr.evomodel.operators.TraitGibbsOperator is duplicated with
+                   parsers in either release_parser.properties or BeastParser.java
+        Issue 237: BEAUTi: taxon set not handling multi-tree partition
+        Issue 238: Naming of 'patterns' when only 1 partition
+        Issue 240: BEAUTi: useAmbiguities of treeLikelihood should be default
+                   as true for binay Covarion
+        Issue 242: BEAUTi: create a check box to choose useAmbiguities in
+                   treeLikelihood for binary data
+        Issue 244: URGENT: Default prior review
+        Issue 247: BEAUTi: wrong XML in frequecies choosing EMPIRICAL binary
+                   COVARION model
+        Issue 248: BEAUTi exception (*BEAST) when linking some same taxa for a
+                   tree model by given different taxa in total
+        Issue 250: BEAUTi: wrong alignment blocks for multi-gene when choosing
+                   "create empty alignment"
+        Issue 253: BEAUTi add a pop-up box to check the default priors when
+                   click Generate BEAST file
+        Issue 254: BEAUTi generate XML button should be disable after all data
+                   partition removed
+        Issue 255: Turn off parser WARNINGs by default for released version
+        Issue 256: BEAUTi: Add comment in XML "skyride.logPopSize is log unit
+                   unlike other popSize"
 
 ================================================================================
 

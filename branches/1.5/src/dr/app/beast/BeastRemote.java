@@ -56,8 +56,7 @@ public class BeastRemote extends BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
-                        new Arguments.Option("pwarning", "Warning messages to avoid the dupication " +
-                                "between released BEAST parsers and developement/additional parsers"),
+                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),

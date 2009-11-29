@@ -494,7 +494,10 @@
 		</tar>-->
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
         <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files." />
-		<echo message="Linux/Unix version release is finished." />
+		<!-- tar -cvzf BEASTv1.5.3.tgz BEASTv1.5.3/ -->
+        <!-- cksum BEASTv1.5.3.tgz -->
+        <!-- tar -xvzf BEASTv1.5.3.tgz -->
+        <echo message="Linux/Unix version release is finished." />
 	</target>
 
 	<target name="mac_Release"  depends="build_jar_all_BEAST_NoJUnitTest"

@@ -297,7 +297,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     private int[][] tipStates;
 
-    private SubstitutionModel substitutionModel;
+    protected SubstitutionModel substitutionModel;
 
     private double[] probabilities;
     private double[] partials;

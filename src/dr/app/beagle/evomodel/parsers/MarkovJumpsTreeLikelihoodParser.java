@@ -42,19 +42,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         String stateTag = xo.getAttribute(RECONSTRUCTION_TAG_NAME,RECONSTRUCTION_TAG);
         String jumpTag = xo.getAttribute(JUMP_TAG_NAME, JUMP_TAG);
 
-        Parameter registerMatrixParameter = (Parameter) xo.getChild(Parameter.class);
-
-        if (registerMatrixParameter != null) {
-            if (registerMatrixParameter.getDimension() != dataType.getStateCount() * dataType.getStateCount() ) {
-                throw new XMLParseException("Matrix "+registerMatrixParameter.getId()+" is of the wrong dimension");
-            }
-        } else { // Some default values for testing
-            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
-            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
-            registerMatrixParameter = new Parameter.Default(registration);
-        }
-
-        return new MarkovJumpsBeagleTreeLikelihood(
+        MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
                 branchSiteModel,
@@ -64,10 +52,34 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 scalingScheme,
                 dataType,
                 stateTag,
-                substModel,
-                registerMatrixParameter,
-                jumpTag
+                substModel
         );
+
+        int registersFound = 0;
+        for(int i = 0; i < xo.getChildCount(); i++) {
+            Object obj = xo.getChild(i);
+            if (obj instanceof Parameter) {
+                Parameter registerParameter = (Parameter) obj;
+                if (registerParameter.getDimension() != dataType.getStateCount() * dataType.getStateCount() ) {
+                    throw new XMLParseException("Register parameter "+registerParameter.getId()+" is of the wrong dimension");
+                }
+                if (registerParameter.getId() == null) {
+                    registerParameter.setId(jumpTag+(registersFound+1));
+                }
+                treeLikelihood.addRegister(registerParameter);
+                registersFound++;
+            }
+        }
+
+        if (registersFound == 0) { // Some default values for testing
+            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
+            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
+            Parameter registerParameter = new Parameter.Default(registration);
+            registerParameter.setId(jumpTag);
+            treeLikelihood.addRegister(registerParameter);
+        }
+
+        return treeLikelihood;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

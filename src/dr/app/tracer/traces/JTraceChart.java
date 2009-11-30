@@ -40,7 +40,6 @@ public class JTraceChart extends JChart {
 
     private boolean useSample = true;
     private boolean isLinePlot = true;
-    private final boolean isTranslucent = false;
 
     private class Trace {
         int stateStart;
@@ -102,7 +101,6 @@ public class JTraceChart extends JChart {
         traces.add(new Trace(stateStart, stateStep, values));
 
         Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
-
             protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
             }
         };
@@ -115,24 +113,24 @@ public class JTraceChart extends JChart {
         repaint();
     }
 
-    public void addBurnin(String name, int stateStart, int stateStep, double[] values, Paint paint, boolean isBurnin) {
+    public void addBurnin(String name, int stateStep, double[] values, Paint paint, boolean scaleForBurnin) {
 
         Variate.Double yd = new Variate.Double(values);
 
-        traces.add(new Trace(stateStart, stateStep, values));
+        traces.add(new Trace(0, stateStep, values));
 
         Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
             protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
             }
         };
 
-        xAxis.addRange(0, stateStart + (values.length * stateStep) - stateStep);
-        if (!isBurnin) {
+        xAxis.addRange(0, 0);
+        if (scaleForBurnin) {
             yAxis.addRange(yd.getMin(), yd.getMax());
-            plot.setLineColor(paint);
-            plot.setName(name);
-            addPlot(plot);
         }
+        plot.setLineColor(paint);
+        plot.setName(name);
+        addPlot(plot);
 
         recalibrate();
         repaint();

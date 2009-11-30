@@ -13,6 +13,8 @@ public interface AnalysisMenuHandler {
 
 	Action getBayesianSkylineAction();
 
+    Action getGMRFSkyrideAction();
+
 	Action getLineagesThroughTimeAction();
 
     Action getTraitThroughTimeAction();

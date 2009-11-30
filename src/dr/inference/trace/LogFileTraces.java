@@ -78,6 +78,13 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     /**
+     * @return the number of states in the burnin
+     */
+    public int getBurninStateCount() {
+        return (getBurnIn() / stepSize);
+    }
+
+    /**
      * @return the size of the step between states
      */
     public int getStepSize() {
@@ -154,6 +161,10 @@ public class LogFileTraces extends AbstractTraceList {
         getTrace(index).getValues((burnIn / stepSize), destination, offset);
     }
 
+    public void getBurninValues(int index, double[] destination) {
+        getTrace(index).getValues(0, (burnIn / stepSize), destination, 0);
+    }
+
     public void loadTraces() throws TraceException, IOException {
 
         FileReader reader = new FileReader(file);
@@ -179,7 +190,7 @@ public class LogFileTraces extends AbstractTraceList {
         if (tokens == null) {
             throw new TraceException("Trace file is empty.");
         }
-        
+
         // read over empty lines
         while (!tokens.hasMoreTokens()) {
             tokens = reader.tokenizeLine();

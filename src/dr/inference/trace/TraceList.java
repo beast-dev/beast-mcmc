@@ -58,7 +58,7 @@ public interface TraceList {
     String getTraceName(int index);
 
     /**
-     * @return the burn-in for this trace list (the number of sampled states to discard)
+     * @return the burn-in for this trace list (the number of actual states to discard)
      */
     int getBurnIn();
 
@@ -66,6 +66,11 @@ public interface TraceList {
      * @return the number of states in the traces (without the burnin)
      */
     int getStateCount();
+
+    /**
+     * @return the number of states in the burnin
+     */
+    int getBurninStateCount();
 
     /**
      * @return the size of the step between states
@@ -95,6 +100,14 @@ public interface TraceList {
      * @param offset      the start position for copying into the destination array
      */
     void getValues(int index, double[] destination, int offset);
+
+    /**
+     * get the values of the burnin of the trace
+     *
+     * @param index       the index of trace
+     * @param destination the array to copy values into
+     */
+    void getBurninValues(int index, double[] destination);
 
     /**
      * @param traceIndex the index of the trace

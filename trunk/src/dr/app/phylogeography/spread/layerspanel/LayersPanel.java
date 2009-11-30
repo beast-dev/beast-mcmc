@@ -62,8 +62,8 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.setRowHeight(layerTable.getRowHeight() * 3);
 
         layerTable.setDragEnabled(true);
-        layerTable.setDropMode(DropMode.INSERT);
-
+        
+//        layerTable.setDropMode(DropMode.INSERT);
 //        layerTable.setTransferHandler(new MyListDropHandler(layerTable));
 
         new MyDragListener(layerTable);

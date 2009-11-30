@@ -64,7 +64,7 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.setDragEnabled(true);
         layerTable.setDropMode(DropMode.INSERT);
 
-        layerTable.setTransferHandler(new MyListDropHandler(layerTable));
+//        layerTable.setTransferHandler(new MyListDropHandler(layerTable));
 
         new MyDragListener(layerTable);
 
@@ -395,46 +395,46 @@ public class LayersPanel extends JPanel implements Exportable {
         }
     }
 
-    class MyListDropHandler extends TransferHandler {
-        JTable table;
-
-        public MyListDropHandler(JTable table) {
-            this.table = table;
-        }
-
-        public boolean canImport(TransferHandler.TransferSupport support) {
-            if (!support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                return false;
-            }
-            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
-            return dl.getRow() != -1;
-        }
-
-        public boolean importData(TransferHandler.TransferSupport support) {
-            if (!canImport(support)) {
-                return false;
-            }
-
-            Transferable transferable = support.getTransferable();
-            String indexString;
-            try {
-                indexString = (String) transferable.getTransferData(DataFlavor.stringFlavor);
-            } catch (Exception e) {
-                return false;
-            }
-
-            int index = Integer.parseInt(indexString);
-            Builder builder = document.getLayerBuilders().get(index);
-
-            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
-            int dropTargetIndex = dl.getRow();
-
-            document.getLayerBuilders().add(dropTargetIndex, builder);
-            document.getLayerBuilders().remove(builder);
-
-            document.fireSettingsChanged();
-
-            return true;
-        }
-    }
+//    class MyListDropHandler extends TransferHandler {
+//        JTable table;
+//
+//        public MyListDropHandler(JTable table) {
+//            this.table = table;
+//        }
+//
+//        public boolean canImport(TransferHandler.TransferSupport support) {
+//            if (!support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+//                return false;
+//            }
+//            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+//            return dl.getRow() != -1;
+//        }
+//
+//        public boolean importData(TransferHandler.TransferSupport support) {
+//            if (!canImport(support)) {
+//                return false;
+//            }
+//
+//            Transferable transferable = support.getTransferable();
+//            String indexString;
+//            try {
+//                indexString = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+//            } catch (Exception e) {
+//                return false;
+//            }
+//
+//            int index = Integer.parseInt(indexString);
+//            Builder builder = document.getLayerBuilders().get(index);
+//
+//            JTable.DropLocation dl = (JTable.DropLocation) support.getDropLocation();
+//            int dropTargetIndex = dl.getRow();
+//
+//            document.getLayerBuilders().add(dropTargetIndex, builder);
+//            document.getLayerBuilders().remove(builder);
+//
+//            document.fireSettingsChanged();
+//
+//            return true;
+//        }
+//    }
 }

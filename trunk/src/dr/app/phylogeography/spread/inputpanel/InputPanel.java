@@ -24,7 +24,7 @@ import java.io.IOException;
 
 import dr.evolution.io.Importer;
 import dr.app.phylogeography.spread.*;
-import dr.app.phylogeography.gui.MultiLineTableCellRenderer;
+import dr.app.gui.MultiLineTableCellRenderer;
 
 /**
  * @author Andrew Rambaut

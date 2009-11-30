@@ -101,7 +101,7 @@
     </target>
 
     <property name="version" value="1.2" />
-    <property name="release_dir" value="pathogen_release" />
+    <property name="release_dir" value="release_pathogen" />
     <property name="name" value="Path-O-Gen" />
 
     <property name="common_dir" value="${release_dir}/common" />

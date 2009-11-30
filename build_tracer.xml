@@ -55,10 +55,11 @@
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/colt.jar:${lib}/commons-math-1.2.jar:${lib}/jebl.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar:${lib}/mtj.jar:${lib}/JRI.jar:${lib}/mpj.jar">
+        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+               classpath="${lib}/colt.jar:${lib}/commons-math-2.0.jar:${lib}/jebl.jar:${lib}/jam.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar:${lib}/mtj.jar:${lib}/JRI.jar:${lib}/mpj.jar">
             <include name="dr/app/tracer/**"/>
             <include name="dr/app/util/**"/>
+            <include name="dr/app/gui/**"/>
             <include name="dr/app/java16compat/**/"/>
             <include name="dr/evolution/alignment/**"/>
             <include name="dr/evolution/coalescent/**"/>
@@ -93,6 +94,7 @@
             </manifest>
             <fileset dir="${build}">
                 <include name="dr/app/tracer/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/app/java16compat/**/*.class"/>
                 <include name="dr/evolution/alignment/**/*.class"/>
@@ -120,8 +122,9 @@
                 <include name="org/virion/jam/**/*.png"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="jam.jar"/>
             <zipgroupfileset dir="${lib}" includes="itext-1.4.5.jar"/>
-            <zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar"/>
+            <zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar"/>
         </jar>
 
     </target>
@@ -214,14 +217,17 @@
                         jvmversion="1.5+"
                         arguments=""
                         version="${version}"
-                        infostring="${name} v${version}, Copyright 2006-2009, Andrew Rambaut &amp; Alexei J. Drummond"
+                        infostring="${name} v${version}, Copyright 2003-2009, Andrew Rambaut &amp; Alexei J. Drummond"
                         bundleid="tracer" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">
                 <include name="**/tracer.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_dir}/lib">
-                <include name="**/*.jar"/>
+                <include name="**/quaqua.jar"/>
+            </jarfileset>
+            <jarfileset dir="${Mac_dir}/lib">
+                <include name="libquaqua*.jnilib"/>
             </jarfileset>
         </jarbundler>
 

@@ -679,10 +679,10 @@ public class SubstitutionModelGenerator extends Generator {
         switch (model.getBinarySubstitutionModel()) {
             case BIN_SIMPLE:
                 //writer.writeIDref(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, "bsimple");
-                writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, "bsimple");
+                writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, prefix + "bsimple");
                 break;
             case BIN_COVARION:
-                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, "bcov");
+                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, prefix + "bcov");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");

@@ -64,6 +64,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
+    private GMRFSkyrideDialog gmrfSkyrideDialog = null;
     private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private TraitThroughTimeDialog traitThroughTimeDialog = null;
@@ -213,6 +214,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     public void setAnalysesEnabled(boolean enabled) {
         getDemographicAction().setEnabled(enabled);
         getBayesianSkylineAction().setEnabled(enabled);
+        getGMRFSkyrideAction().setEnabled(enabled);
+        getLineagesThroughTimeAction().setEnabled(enabled);
         getBayesFactorsAction().setEnabled(enabled);
         getCreateTemporalAnalysisAction().setEnabled(enabled);
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
@@ -904,6 +907,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
 
+    public void doGMRFSkyride(boolean add) {
+        if (gmrfSkyrideDialog == null) {
+            gmrfSkyrideDialog = new GMRFSkyrideDialog(this);
+        }
+
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (but not the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        if (add) {
+            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            gmrfSkyrideDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+        } else {
+            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            gmrfSkyrideDialog.createGMRFSkyrideFrame(currentTraceLists.get(0), this);
+        }
+    }
+
+
     public void doLineagesThroughTime(boolean add) {
         if (lineagesThroughTimeDialog == null) {
             lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
@@ -1148,6 +1179,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
+    public Action getGMRFSkyrideAction() {
+        return gmrfSkyrideAction;
+    }
+
     public Action getLineagesThroughTimeAction() {
         return lineagesThroughTimeAction;
     }
@@ -1185,6 +1220,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(false);
+        }
+    };
+
+    private final AbstractAction gmrfSkyrideAction = new AbstractAction(AnalysisMenuFactory.GMRF_SKYRIDE_RECONSTRUCTION) {
+        public void actionPerformed(ActionEvent ae) {
+            doGMRFSkyride(false);
         }
     };
 

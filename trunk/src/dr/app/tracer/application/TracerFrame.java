@@ -668,7 +668,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
 
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log", "txt");
         chooser.setFileFilter(filter);
 
         final int returnVal = chooser.showOpenDialog(this);

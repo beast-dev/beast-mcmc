@@ -110,6 +110,14 @@ public class CombinedTraces implements TraceList {
         return sum;
     }
 
+    /**
+     * @return the number of states in the burnin
+     */
+    public int getBurninStateCount() {
+        return 0;
+    }
+
+
     public boolean isIncomplete() {
         return false;
     }
@@ -147,17 +155,21 @@ public class CombinedTraces implements TraceList {
         }
     }
 
+    public void getBurninValues(int index, double[] destination) {
+        throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
+    }
+
     /**
      * @return the trace distribution statistic object for the given index
      */
     public TraceDistribution getDistributionStatistics(int index) {
-	return getCorrelationStatistics(index); 
+	return getCorrelationStatistics(index);
     }
 
     /**
      * @return the trace correlation statistic object for the given index
      */
-    public TraceCorrelation getCorrelationStatistics(int index) 
+    public TraceCorrelation getCorrelationStatistics(int index)
     {
         if (traceStatistics == null) {
 	    throw new RuntimeException("No ESS for combined traces? This is not supposed to happen.");

@@ -14,6 +14,7 @@ public class AnalysisMenuFactory implements MenuFactory {
 
     public static final String DEMOGRAPHIC_RECONSTRUCTION = "Demographic Reconstruction...";
     public static final String BAYESIAN_SKYLINE_RECONSTRUCTION = "Bayesian Skyline Reconstruction...";
+    public static final String GMRF_SKYRIDE_RECONSTRUCTION = "GMRF Skyride Reconstruction...";
     public static final String LINEAGES_THROUGH_TIME = "Lineages Through Time...";
     public static final String TRAIT_THROUGH_TIME = "Trait Through Time...";
 
@@ -36,6 +37,9 @@ public class AnalysisMenuFactory implements MenuFactory {
             menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesianSkylineAction());
+            menu.add(item);
+
+            item = new JMenuItem(((AnalysisMenuHandler) frame).getGMRFSkyrideAction());
             menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getLineagesThroughTimeAction());
@@ -69,6 +73,10 @@ public class AnalysisMenuFactory implements MenuFactory {
             menu.add(item);
 
             item = new JMenuItem(BAYESIAN_SKYLINE_RECONSTRUCTION);
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem(GMRF_SKYRIDE_RECONSTRUCTION);
             item.setEnabled(false);
             menu.add(item);
 

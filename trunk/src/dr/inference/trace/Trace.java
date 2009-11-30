@@ -99,6 +99,10 @@ public class Trace {
 		System.arraycopy(values, start, destination, offset, valueCount - start);
 	}
 
+    public void getValues(int start, int count, double[] destination, int offset) {
+        System.arraycopy(values, start, destination, offset, count);
+    }
+
 	public String getName() { return name; }
 
 	//************************************************************************

@@ -575,7 +575,7 @@ public class GMRFSkyrideDialog {
                         int intervalCount = intervals.getIntervalCount();
 
                         // get the coalescent intervals only
-                        coalescentTimes[state] = new double[intervalCount];
+                        coalescentTimes[state] = new double[popSizeCount];
                         double totalTime = 0.0;
                         int coalescentIndex = 0;
 
@@ -627,12 +627,12 @@ public class GMRFSkyrideDialog {
                             double lastCoalescentTime = 0.0;
 
                             int index = 0;
-                            while (index < coalescentTimes[state].length && coalescentTimes[state][index] < height) {
+                            while (index < popSizeCount && coalescentTimes[state][index] < height) {
                                 lastCoalescentTime = coalescentTimes[state][index];
                                 index += 1;
                             }
 
-                            if (index < coalescentTimes[state].length - 1) {
+                            if (index < popSizeCount - 1) {
                                 double t = (height - lastCoalescentTime) / (coalescentTimes[state][index] - lastCoalescentTime);
                                 double p1 = getPopSize(index, state);
                                 double p2 = getPopSize(index + 1, state);
@@ -699,7 +699,7 @@ public class GMRFSkyrideDialog {
         }
 
         private double getPopSize(int index, int state) {
-            return popSizes[index][state];
+            return Math.exp(popSizes[index][state]);
         }
     }
 }

@@ -38,8 +38,9 @@ public class JTraceChart extends JChart {
 
     private static final int SAMPLE_POINTS = 1000;
 
-    private boolean useSample = true;
+    private boolean useSample = false;
     private boolean isLinePlot = true;
+    private static final int BURNIN_TRANSLUCENCY = 72;
 
     private class Trace {
         int stateStart;
@@ -78,6 +79,7 @@ public class JTraceChart extends JChart {
     }
 
     private final ArrayList<Trace> traces = new ArrayList<Trace>();
+    private final ArrayList<Trace> burninTraces = new ArrayList<Trace>();
 
     public JTraceChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
@@ -91,7 +93,7 @@ public class JTraceChart extends JChart {
         this.isLinePlot = isLinePlot;
     }
 
-    public void addTrace(String name, int stateStart, int stateStep, double[] values, Paint paint) {
+    public void addTrace(String name, int stateStart, int stateStep, double[] values, double[] burninValues, Paint paint) {
 
         Variate.Double yd = new Variate.Double(values);
 
@@ -99,35 +101,15 @@ public class JTraceChart extends JChart {
         yAxis.addRange(yd.getMin(), yd.getMax());
 
         traces.add(new Trace(stateStart, stateStep, values));
-
-        Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
-            protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
-            }
-        };
-
-        plot.setLineColor(paint);
-        plot.setName(name);
-        addPlot(plot);
-
-        recalibrate();
-        repaint();
-    }
-
-    public void addBurnin(String name, int stateStep, double[] values, Paint paint, boolean scaleForBurnin) {
-
-        Variate.Double yd = new Variate.Double(values);
-
-        traces.add(new Trace(0, stateStep, values));
-
-        Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
-            protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
-            }
-        };
-
-        xAxis.addRange(0, 0);
-        if (scaleForBurnin) {
-            yAxis.addRange(yd.getMin(), yd.getMax());
+        if (burninValues != null) {
+            burninTraces.add(new Trace(0, stateStep, burninValues));
         }
+
+        Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
+            protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+            }
+        };
+
         plot.setLineColor(paint);
         plot.setName(name);
         addPlot(plot);
@@ -148,6 +130,7 @@ public class JTraceChart extends JChart {
 
     public void removeAllTraces() {
         traces.clear();
+        burninTraces.clear();
         xAxis.setRange(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
         yAxis.setRange(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
         removeAllPlots();
@@ -172,45 +155,56 @@ public class JTraceChart extends JChart {
 
 
         for (int i = 0; i < traces.size(); i++) {
-
             Trace trace = traces.get(i);
 
-            float x = (float) transformX(trace.states[0]);
-            float y = (float) transformY(trace.values[0]);
-
-            GeneralPath path = new GeneralPath();
-            path.moveTo(x, y);
-            if (!isLinePlot) {
-                path.lineTo(x, y);
-            }
-
-            int n = trace.states.length;
-            int ik = 1;
+            int sampleFrequency = 1;
 
             if (useSample) {
-                n = trace.sampleCount;
-                ik = trace.states.length / n;
+                sampleFrequency = trace.states.length / trace.sampleCount;
             }
 
-            int k = ik;
+            paintTrace(g2, trace, getPlot(i).getLineColor(), sampleFrequency);
 
-            for (int j = 1; j < n; j++) {
-
-                x = (float) transformX(trace.states[k]);
-                y = (float) transformY(trace.values[k]);
-
-                if (!isLinePlot) {
-                    path.moveTo(x, y);
-                }
-                path.lineTo(x, y);
-
-                k += ik;
+            if (i < burninTraces.size()) {
+                Trace burninTrace = burninTraces.get(i);
+                Color colour = (Color)getPlot(i).getLineColor();
+                Color burninColor = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), BURNIN_TRANSLUCENCY);
+                paintTrace(g2, burninTrace, burninColor, sampleFrequency);
             }
-
-            g2.setPaint(getPlot(i).getLineColor());
-            g2.draw(path);
         }
 
+    }
+
+    private void paintTrace(Graphics2D g2, Trace trace, Paint paint, int sampleFrequency) {
+        float x = (float) transformX(trace.states[0]);
+        float y = (float) transformY(trace.values[0]);
+
+        GeneralPath path = new GeneralPath();
+        path.moveTo(x, y);
+        if (!isLinePlot) {
+            path.lineTo(x, y);
+        }
+
+        int k = sampleFrequency;
+
+        for (int j = 1; j < trace.states.length; j++) {
+
+            x = (float) transformX(trace.states[k]);
+            y = (float) transformY(trace.values[k]);
+
+            if (!isLinePlot) {
+                path.moveTo(x, y);
+            }
+            path.lineTo(x, y);
+
+            k += sampleFrequency;
+            if (k >= trace.states.length) {
+                break;
+            }
+        }
+
+        g2.setPaint(paint);
+        g2.draw(path);
     }
 
 }

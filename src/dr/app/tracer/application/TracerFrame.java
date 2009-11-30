@@ -14,17 +14,24 @@ import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 import dr.inference.trace.TraceList;
 import dr.app.java16compat.FileNameExtensionFilter;
+import dr.app.gui.FileDrop;
+import dr.gui.chart.ChartRuntimeException;
+import dr.evolution.io.Importer;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
 import org.virion.jam.util.LongTask;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -35,6 +42,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 
@@ -184,10 +192,21 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         splitPane2.setBorder(null);
         splitPane2.setDividerLocation(300);
 
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
+        splitPane1.setBorder(BorderFactory.createEmptyBorder( 2, 2, 2, 2 ));
+        new FileDrop( null, splitPane1, focusBorder, new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {
+                importFiles(files);
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
         getContentPane().add(splitPane2, BorderLayout.CENTER);
 
         splitPane1.setDividerLocation(2000);
+
     }
 
     public void setVisible(boolean b) {
@@ -437,7 +456,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         } else {
             TraceList[] tl = new TraceList[currentTraceLists.size()];
             currentTraceLists.toArray(tl);
-            tracePanel.setTraces(tl, selectedTraces);
+            try {
+                tracePanel.setTraces(tl, selectedTraces);
+            } catch(ChartRuntimeException cre) {
+                JOptionPane.showMessageDialog(this, "One or more traces contain invalid values and \rare not able to be displayed.",
+                        "Problem with tree file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -649,14 +674,18 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         final int returnVal = chooser.showOpenDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File[] files = chooser.getSelectedFiles();
-            LogFileTraces[] traces = new LogFileTraces[files.length];
-
-            for(int i = 0; i < files.length; i++) {
-                traces[i] = new LogFileTraces(files[i].getName(), files[i]);
-            }
-
-            processTraces(traces);
+            importFiles(files);
         }
+    }
+
+    private void importFiles(File[] files) {
+        LogFileTraces[] traces = new LogFileTraces[files.length];
+
+        for(int i = 0; i < files.length; i++) {
+            traces[i] = new LogFileTraces(files[i].getName(), files[i]);
+        }
+
+        processTraces(traces);
     }
 
     private File openDefaultDirectory = null;
@@ -1288,4 +1317,5 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             doExportPDF();
         }
     };
+
 }

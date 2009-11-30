@@ -172,7 +172,9 @@ public class CombinedTraces implements TraceList {
     public TraceCorrelation getCorrelationStatistics(int index)
     {
         if (traceStatistics == null) {
-	    throw new RuntimeException("No ESS for combined traces? This is not supposed to happen.");
+            return null;
+            // this can happen if the ESS has not been calculated yet.
+//	    throw new RuntimeException("No ESS for combined traces? This is not supposed to happen.");
         }
 
         return traceStatistics[index];

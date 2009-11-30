@@ -1,4 +1,4 @@
-package dr.app.phylogeography.gui;
+package dr.app.gui;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.*;

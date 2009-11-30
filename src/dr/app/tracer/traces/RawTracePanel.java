@@ -53,7 +53,6 @@ public class RawTracePanel extends JPanel implements Exportable {
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private int colourBy = COLOUR_BY_TRACE;
-    //private boolean sampleOnly = true;
 
     /**
      * Creates new RawTracePanel
@@ -82,7 +81,7 @@ public class RawTracePanel extends JPanel implements Exportable {
         burninCheckBox.setOpaque(false);
         toolBar.add(burninCheckBox);
 
-        sampleCheckBox.setSelected(true);
+        sampleCheckBox.setSelected(false);
         sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         sampleCheckBox.setOpaque(false);
         toolBar.add(sampleCheckBox);
@@ -116,7 +115,6 @@ public class RawTracePanel extends JPanel implements Exportable {
         add(messageLabel, BorderLayout.NORTH);
         add(toolBar, BorderLayout.SOUTH);
         add(chartPanel, BorderLayout.CENTER);
-
 
         chartSetupButton.addActionListener(
                 new java.awt.event.ActionListener() {
@@ -251,16 +249,15 @@ public class RawTracePanel extends JPanel implements Exportable {
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                traceChart.addTrace(name, stateStart, stateStep, values, paints[i]);
 
-                if (burninCheckBox.isSelected()) {
-                    double burninValues[] = new double[tl.getBurninStateCount()];
+                double[] burninValues = null;
+                if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                    burninValues = new double[tl.getBurninStateCount()];
                     tl.getBurninValues(traceIndex, burninValues);
-
-                    Color burninColor = new Color(paints[i].getRed(), paints[i].getGreen(), paints[i].getBlue(), 96);
-                    traceChart.addBurnin(name, stateStep, burninValues, burninColor, false);
                 }
-                
+
+                traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
+
                 if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
                     i++;
                 }

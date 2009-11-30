@@ -71,7 +71,7 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
-    JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analaysis file:");
+    JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
     JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
 
     BeautiFrame frame = null;
@@ -214,7 +214,7 @@ public class MCMCPanel extends BeautiPanel {
         operatorAnalaysisFileNameField.setColumns(32);
         operatorAnalaysisFileNameField.setEditable(false);
         operatorAnalaysisFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Operator analaysis file name:", operatorAnalaysisFileNameField);
+        optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalaysisFileNameField);
 
         optionsPanel.addSeparator();
 

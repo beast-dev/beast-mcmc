@@ -58,7 +58,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck
-            = new JCheckBox("Use ambiguities in those treeLikelihood associating this substitution model");
+            = new JCheckBox("Use ambiguities in the tree likelihood associated with this model");
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 

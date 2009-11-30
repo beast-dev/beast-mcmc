@@ -113,8 +113,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (isDefaultOnly) {
             scrollPane.setPreferredSize(new java.awt.Dimension(800, 600));
             panel.add(scrollPane, BorderLayout.CENTER);
-            panel.add(new JLabel("Please check the default priors listed above, especially the upper and lower limits. "
-                    + "These appeared priors are those that the user hasen't clicked on in the prior panel."), BorderLayout.SOUTH);
+            panel.add(new JLabel("These priors listed above are still set to the default values " +
+                    "and need to be reviewed, especially their upper and lower limits."), BorderLayout.SOUTH);
         } else {
             panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
             panel.add(scrollPane, BorderLayout.CENTER);

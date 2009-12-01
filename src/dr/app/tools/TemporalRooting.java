@@ -215,6 +215,8 @@ public class TemporalRooting {
                 if (!contemporaneous) {
                     Regression r = new Regression(dates, y);
                     return -r.getCorrelationCoefficient();
+//                    return -r.getRSquared();
+//                    return r.getResidualMeanSquared();
                 } else {
                     return DiscreteStatistics.variance(y);
                 }

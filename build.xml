@@ -148,6 +148,7 @@
 			<fileset dir="${build}">
 				<include name="dr/app/beast/BeastVersion.class" />
 				<include name="dr/app/beauti/**/*.class" />
+                <include name="dr/app/java16compat/*.class" />
 				<include name="dr/app/oldbeauti/**/*.class" />
 				<include name="dr/app/util/**/*.class" />
                 <include name="dr/app/java16compat/**/*.class"/>

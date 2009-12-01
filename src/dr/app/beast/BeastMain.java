@@ -27,7 +27,6 @@ package dr.app.beast;
 import dr.app.plugin.*;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.app.util.OSType;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
@@ -63,8 +62,7 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
-//                thread.stop(); http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
-                thread = null;
+                thread.stop(); //http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
     }

@@ -52,7 +52,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     public static final String OFFSET = "offset";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
 
-    boolean isMeanInRealSpace = true;
+    boolean isMeanInRealSpace;
     boolean usesStDev = true;
 
     /**

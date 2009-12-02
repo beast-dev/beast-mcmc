@@ -281,7 +281,7 @@ public class LogFileTraces extends AbstractTraceList {
      */
     private void addTrace(String name, int numberOfLines) {
         int suffix = 0;
-        String uniqueName = name;
+        String uniqueName;
         boolean isNameUnique;
 
         // check if name is unique and keep incrementing a suffix until it is.

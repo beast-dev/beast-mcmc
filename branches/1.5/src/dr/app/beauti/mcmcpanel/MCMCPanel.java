@@ -81,7 +81,7 @@ public class MCMCPanel extends BeautiPanel {
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
 
-        optionsPanel = new OptionsPanel(12, 24);
+        optionsPanel = new OptionsPanel(12, 6);
 
         this.frame = parent;
 
@@ -232,10 +232,12 @@ public class MCMCPanel extends BeautiPanel {
 //        substTreeFileNameField.addKeyListener(listener);
 
         optionsPanel.setPreferredSize(new java.awt.Dimension(1024, 700));
-        JScrollPane scrollPane = new JScrollPane(optionsPanel);
-        scrollPane.setOpaque(false);
-        add(scrollPane, BorderLayout.CENTER);
+        optionsPanel.setMinimumSize(new java.awt.Dimension(1024, 700));
+//        JScrollPane scrollPane = new JScrollPane(optionsPanel);
+//        scrollPane.setOpaque(false);
+//        add(scrollPane, BorderLayout.CENTER);
 
+        add(optionsPanel, BorderLayout.CENTER);
     }
 
     private void updateTreeFileNameList(){

@@ -102,6 +102,7 @@ public final class MarkovChain {
      */
     public int runChain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
+        likelihood.makeDirty();
         currentScore = evaluate(likelihood, prior);
 
         int currentState = currentLength;

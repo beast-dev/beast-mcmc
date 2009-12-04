@@ -231,7 +231,10 @@ public class MCMCPanel extends BeautiPanel {
         //mapTreeFileNameField.addKeyListener(listener);
 //        substTreeFileNameField.addKeyListener(listener);
 
-        add(optionsPanel, BorderLayout.CENTER);
+        optionsPanel.setPreferredSize(new java.awt.Dimension(1024, 700));
+        JScrollPane scrollPane = new JScrollPane(optionsPanel);
+        scrollPane.setOpaque(false);
+        add(scrollPane, BorderLayout.CENTER);
 
     }
 

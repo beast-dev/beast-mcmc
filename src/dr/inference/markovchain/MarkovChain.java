@@ -102,6 +102,7 @@ public final class MarkovChain {
      */
     public int runChain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
+        likelihood.makeDirty();
         currentScore = evaluate(likelihood, prior);
 
         int currentState = currentLength;
@@ -306,7 +307,7 @@ public final class MarkovChain {
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName());
                     if( d1.length() > 0 ) {
-                      logger.severe(d1);
+                        logger.severe(d1);
                         final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
                         logger.severe(d1);
                         logger.severe(d2);
@@ -319,22 +320,24 @@ public final class MarkovChain {
                 coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
             }
 
-            if (usingFullEvaluation &&
-                    schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
-                    currentState >= fullEvaluationCount) {
-                // full evaluation is only switched off when each operator has done a
-                // minimum number of operations (currently 1) and fullEvalationCount
-                // operations in total.
+            if (usingFullEvaluation) {
+                if (schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
+                        currentState >= fullEvaluationCount) {
+                    // full evaluation is only switched off when each operator has done a
+                    // minimum number of operations (currently 1) and fullEvalationCount
+                    // operations in total.
 
-                usingFullEvaluation = false;
-                if (fullEvaluationError) {
-                    // If there has been an error then stop with an error
-                    throw new RuntimeException(
-                            "One or more evaluation errors occured during the test phase of this\n" +
-                                    "run. These errors imply critical errors which may produce incorrect\n" +
-                                    "results.");
+                    usingFullEvaluation = false;
+                    if (fullEvaluationError) {
+                        // If there has been an error then stop with an error
+                        throw new RuntimeException(
+                                "One or more evaluation errors occured during the test phase of this\n" +
+                                        "run. These errors imply critical errors which may produce incorrect\n" +
+                                        "results.");
+                    }
                 }
             }
+
             currentState += 1;
         }
 

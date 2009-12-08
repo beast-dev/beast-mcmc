@@ -12,8 +12,8 @@ import java.io.File;
  */
 public class BeastRemote extends BeastMain {
 
-    public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose) {
-        super(inputFile, consoleApp, 0, verbose, true, null);
+    public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose, boolean parserWarning) {
+        super(inputFile, consoleApp, 0, verbose, parserWarning, true, null);
     }
 
     public static void terminateSlaves() {
@@ -43,7 +43,7 @@ public class BeastRemote extends BeastMain {
             args[i] = oldArgs[i + 3];
             System.err.println(i + " : " + args[i]);
             if (args[i].contains(".xml")) { // append rank
-                args[i] = args[i].replace(".xml", new String(rank + ".xml"));
+                args[i] = args[i].replace(".xml", Integer.toString(rank) + ".xml");
                 System.err.println("Attempting to load: " + args[i]);
             }
         }
@@ -56,6 +56,7 @@ public class BeastRemote extends BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
@@ -82,7 +83,8 @@ public class BeastRemote extends BeastMain {
         }
 
         boolean verbose = arguments.hasOption("verbose");
-        boolean window = arguments.hasOption("window");
+        boolean parserWarning = arguments.hasOption("pwarning"); // if dev, then auto turn on, otherwise default to turn off
+//        boolean window = arguments.hasOption("window");
         boolean working = arguments.hasOption("working");
 
         long seed = MathUtils.getSeed();
@@ -124,7 +126,7 @@ public class BeastRemote extends BeastMain {
 			consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
 		}*/      // Remote can never be interactive
 
-        String inputFileName = null;
+        String inputFileName;
 
         String[] args2 = arguments.getLeftoverArguments();
 
@@ -159,7 +161,7 @@ public class BeastRemote extends BeastMain {
         System.out.println("Random number seed: " + seed);
         System.out.println();
 
-        new BeastRemote(inputFile, consoleApp, verbose);
+        new BeastRemote(inputFile, consoleApp, verbose, parserWarning);
         //System.err.println("Did I get here");
         if (rank == 0)
             terminateSlaves();

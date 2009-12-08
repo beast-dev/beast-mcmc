@@ -32,7 +32,6 @@ import dr.util.Attributable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * data structure for binary rooted trees
@@ -91,7 +90,11 @@ public class FlexibleTree implements MutableTree {
      * clone constructor
      */
     public FlexibleTree(FlexibleNode root) {
-        this(root, true, true, null);
+
+        adoptNodes(root);
+
+        this.heightsKnown = true;
+        this.lengthsKnown = true;
     }
 
     /**
@@ -99,22 +102,7 @@ public class FlexibleTree implements MutableTree {
      */
     public FlexibleTree(FlexibleNode root, boolean heightsKnown, boolean lengthsKnown) {
 
-        this(root, heightsKnown, lengthsKnown, null);
-    }
-
-    /**
-     * clone constructor
-     */
-    public FlexibleTree(FlexibleNode root, Map<Taxon, Integer> taxonNumberMap) {
-        this(root, true, true, taxonNumberMap);
-    }
-
-    /**
-     * clone constructor
-     */
-    public FlexibleTree(FlexibleNode root, boolean heightsKnown, boolean lengthsKnown, Map<Taxon, Integer> taxonNumberMap) {
-
-        adoptNodes(root, taxonNumberMap);
+        adoptNodes(root);
 
         this.heightsKnown = heightsKnown;
         this.lengthsKnown = lengthsKnown;
@@ -154,7 +142,7 @@ public class FlexibleTree implements MutableTree {
      * Adopt a node hierarchy as its own. Only called by the FlexibleTree(FlexibleNode, TaxonList).
      * This creates the node list and stores the nodes in post-traversal order.
      */
-    protected void adoptNodes(FlexibleNode node, Map<Taxon, Integer> taxonNumberMap) {
+    protected void adoptNodes(FlexibleNode node) {
 
         if (inEdit) throw new RuntimeException("Mustn't be in an edit transaction to call this method!");
 
@@ -186,17 +174,10 @@ public class FlexibleTree implements MutableTree {
             node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
             //System.out.print("node = " + node.getId() + " ");
             if (node.isExternal()) {
-                if (taxonNumberMap != null) {
-                    i = taxonNumberMap.get(node.getTaxon());
-                }
-
                 node.setNumber(i);
                 //System.out.println("  leaf number " + i);
                 nodes[i] = node;
-
-                if (taxonNumberMap == null) {
-                    i++;
-                }
+                i++;
             } else {
                 node.setNumber(j);
                 //System.out.println("  ancestor number " + j);
@@ -594,7 +575,7 @@ public class FlexibleTree implements MutableTree {
             }
         }
 
-        adoptNodes(root, null);
+        adoptNodes(root);
 
         fireTreeChanged();
     }

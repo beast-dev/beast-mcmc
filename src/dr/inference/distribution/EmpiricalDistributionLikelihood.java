@@ -51,11 +51,10 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
     private static final double MIN_DENSITY_PROPORTION = 1E-2;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private int from = -1;
     private int to = Integer.MAX_VALUE;
-    private double offset = 0;
 
     public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
@@ -178,10 +177,6 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
     }
 
-    public void setOffset(double offset) {
-        this.offset = offset;
-    }
-
 
     public void setRange(int from, int to) {
         this.from = from;
@@ -207,7 +202,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
-                double value = attributeValue[j] + offset;
+                double value = attributeValue[j];
                 logL += logPDF(value);
 
                 if (DEBUG) {

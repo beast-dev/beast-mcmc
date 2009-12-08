@@ -437,11 +437,11 @@ public class BeautiTesterConfig {
             java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(charSet.getName(), fileName,
+                    partitions.add(new PartitionData(beautiOptions, charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(beautiOptions, fileNameStem, fileName, alignment));
             }
             for (PartitionData partition : partitions) {
                 if (model != null) {

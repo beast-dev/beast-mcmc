@@ -143,7 +143,7 @@ public class MarkovModulatedGY94CodonModel extends GY94CodonModel {
                 new Parameter.Default(1.0), new Parameter.Default(2.0),
                 new FrequencyModel(Codons.UNIVERSAL, new Parameter.Default(61, 1.0 / 61.0)));
         EigenDecomposition ed1 = codonModel.getEigenDecomposition();
-//        double[][] q = codonModel.getQ();
+        double[][] q = codonModel.getQ();
 
 //        System.err.println("matrixQ = \n"+codonModel.printQ());// new Matrix(q));
         FrequencyModel freqModel = new FrequencyModel(HiddenCodons.UNIVERSAL_HIDDEN_2, new Parameter.Default(122, 1.0 / 122.0));

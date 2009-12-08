@@ -28,9 +28,6 @@ import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.distance.DistanceMatrix;
-import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
@@ -249,7 +246,7 @@ public class CommandLineBeauti {
                     new String[]{"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
             if (alignment != null) {
-                PartitionData partition = new PartitionData(beautiOptions.fileNameStem, file.getName(), alignment);
+                PartitionData partition = new PartitionData(beautiOptions, beautiOptions.fileNameStem, file.getName(), alignment);
                 beautiOptions.dataPartitions.add(partition);
                 beautiOptions.dataType = alignment.getDataType();
 

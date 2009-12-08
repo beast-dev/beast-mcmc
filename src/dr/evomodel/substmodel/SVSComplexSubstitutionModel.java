@@ -5,6 +5,8 @@ import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Vector;
+import cern.colt.bitvector.BitVector;
+
 
 /**
  * @author Marc A. Suchard
@@ -46,39 +48,39 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 //        return logL;
 //    }
 
-//    private boolean hasEdge(int i, int j) {
-//        return i != j && getIndicators().getParameterValue(getEntry(i,j,stateCount)) == 1;
-//    }
-//
-//    private static int getEntry(int i, int j, int dim) {
-//        int entry = i * (dim - 1) + j;
-//        if( j > i )
-//            entry--;
-//        return entry;
-//    }
-//
-//    private void depthFirstSearch(int node, BitVector visited) {
-//        visited.set(node);
-//        for(int v=0; v<stateCount; v++) {
-//            if (hasEdge(node,v) && !visited.get(v))
-//                depthFirstSearch(v,visited);
-//        }
-//    }
+    private boolean hasEdge(int i, int j) {
+        return i != j && getIndicators().getParameterValue(getEntry(i,j,stateCount)) == 1;
+    }
 
-//    /* Determines if the graph is strongly connected, such that there exists
-//     * a directed path from any vertex to any other vertex
-//     *
-//     */
-//    public boolean isStronglyConnected() {
-//        BitVector visited = new BitVector(stateCount);
-//        boolean connected = true;
-//        for(int i=0; i<stateCount && connected; i++) {
-//            visited.clear();
-//            depthFirstSearch(i,visited);
-//            connected = visited.cardinality() == stateCount;
-//        }
-//        return connected;
-//    }
+    private static int getEntry(int i, int j, int dim) {
+        int entry = i * (dim - 1) + j;
+        if( j > i )
+            entry--;
+        return entry;
+    }
+
+    private void depthFirstSearch(int node, BitVector visited) {
+        visited.set(node);
+        for(int v=0; v<stateCount; v++) {
+            if (hasEdge(node,v) && !visited.get(v))
+                depthFirstSearch(v,visited);
+        }
+    }
+
+    /* Determines if the graph is strongly connected, such that there exists
+     * a directed path from any vertex to any other vertex
+     *
+     */
+    public boolean isStronglyConnected() {
+        BitVector visited = new BitVector(stateCount);
+        boolean connected = true;
+        for(int i=0; i<stateCount && connected; i++) {
+            visited.clear();
+            depthFirstSearch(i,visited);
+            connected = visited.cardinality() == stateCount;
+        }
+        return connected;
+    }
 
     public boolean validState() {
         return getLogLikelihood() == 0;

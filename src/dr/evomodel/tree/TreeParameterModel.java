@@ -152,26 +152,26 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
 
             if (rootNodeNumber > newRootNodeNumber) {
 
-                final double oldValue = parameter.getParameterValue(newRootNodeNumber);
+                final double oldIndex = parameter.getParameterValue(newRootNodeNumber);
 
                 final int end = Math.min(parameter.getDimension() - 1, rootNodeNumber);
                 for (int i = newRootNodeNumber; i < end; i++) {
                     parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
                 }
 
-                parameter.setParameterValue(end, oldValue);
+                parameter.setParameterValue(end, oldIndex);
 
             } else if (rootNodeNumber < newRootNodeNumber) {
 
                 final int end = Math.min(parameter.getDimension() - 1, newRootNodeNumber);
 
-                final double oldValue = parameter.getParameterValue(end);
+                final int oldIndex = (int) Math.round(parameter.getParameterValue(end));
 
                 for (int i = end; i > rootNodeNumber; i--) {
                     parameter.setParameterValue(i, parameter.getParameterValue(i - 1));
                 }
 
-                parameter.setParameterValue(rootNodeNumber, oldValue);
+                parameter.setParameterValue(rootNodeNumber, oldIndex);
             }
             rootNodeNumber = newRootNodeNumber;
         }

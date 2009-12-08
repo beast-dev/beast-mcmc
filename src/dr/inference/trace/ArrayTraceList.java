@@ -60,13 +60,6 @@ public class ArrayTraceList extends AbstractTraceList {
         return traces.get(0).getCount();
     }
 
-    /**
-     * @return the number of states in the burnin
-     */
-    public int getBurninStateCount() {
-        return (getBurnIn() / stepSize);
-    }
-
     public int getStepSize() {
         return stepSize;
     }
@@ -92,10 +85,6 @@ public class ArrayTraceList extends AbstractTraceList {
 
     public void getValues(int index, double[] destination, int offset) {
         traces.get(index).getValues(0, destination, offset);
-    }
-
-    public void getBurninValues(int index, double[] destination) {
-        getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
     Trace getTrace(int index) {

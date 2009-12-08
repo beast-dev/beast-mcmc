@@ -28,7 +28,6 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.math.distributions.*;
 import dr.xml.*;
-import dr.util.Attribute;
 
 import java.util.ArrayList;
 
@@ -61,11 +60,24 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         this.distribution = distribution;
     }
 
+    public void addData(Variable.D data) {
+        ((DefaultModel) getModel()).addVariable(data);
+        dataList.add(data);
+    }
+
+    // This is really bad for debugging
+//    public String toString() {
+//        return getId() + "(" + calculateLogLikelihood() + ")";
+//    }
+
+    protected ArrayList<Variable.D> dataList = new ArrayList<Variable.D>();
+
+
     public double calculateLogLikelihood() {
         double logL = 0.0;
 
-        for( Attribute<double[]> data : dataList ) {
-            logL += distribution.logPdf(data.getAttributeValue());
+        for (Variable.D variable : dataList) {
+            logL += distribution.logPdf(variable.peekValues());
         }
         return logL;
     }

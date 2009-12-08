@@ -345,6 +345,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             options.reset();
             frame.statusLabel.setText("");
             frame.setAllOptions();
+            frame.getExportAction().setEnabled(false);
         }
 
         dataTableModel.fireTableDataChanged();
@@ -516,6 +517,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
+        options.taxonSets.clear();
+        options.taxonSetsMono.clear();
         repaint();
     }
 
@@ -529,6 +532,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
         }
+
+        if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
+            if (selectedPartitionData.size() > 1) {
+                if (!options.validateDiffTaxa(selectedPartitionData)) {
+                    throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                }
+            }
+        }
+
         Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
         if (selectTreeDialog == null) {
@@ -555,6 +567,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
+        options.taxonSets.clear();
+        options.taxonSetsMono.clear();
         repaint();
     }
 

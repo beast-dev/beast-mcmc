@@ -251,7 +251,7 @@ public class MCMC implements Identifiable, Spawnable {
         out.println();
         out.println("Operator analysis");
         out.println(formatter.formatToFieldWidth("Operator", 50) +
-                formatter.formatToFieldWidth("Tuning", 9) +
+                formatter.formatToFieldWidth("Tuning", 8) +
                 formatter.formatToFieldWidth("Count", 11) +
                 formatter.formatToFieldWidth("Time", 9) +
                 formatter.formatToFieldWidth("Time/Op", 9) +

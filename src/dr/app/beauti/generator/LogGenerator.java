@@ -36,7 +36,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
-
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesTreeModel;
@@ -224,7 +224,7 @@ public class LogGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
 
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
             } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
@@ -241,7 +241,8 @@ public class LogGenerator extends Generator {
         }
 
         for (Taxa taxa : options.taxonSets) {
-            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
+            // make tmrca(tree.name) eay to read in log for Tracer
+            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")");
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
@@ -336,9 +337,9 @@ public class LogGenerator extends Generator {
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             String treeFileName;
             if (options.substTreeLog) {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             } else {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
 
             List<Attribute> attributes = new ArrayList<Attribute>();
@@ -415,7 +416,7 @@ public class LogGenerator extends Generator {
                                 new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
                                 new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
                                 new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + tree.getPrefix() +
-                                        "(subst)." + STARBEASTOptions.TREE_FILE_NAME),
+                                        "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME),
                                 new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS)
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);

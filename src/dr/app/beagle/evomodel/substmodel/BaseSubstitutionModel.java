@@ -185,7 +185,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * @param distance the expected number of substitutions
      * @param matrix   an array to store the matrix
      */
-    public void getTransitionProbabilities(double distance, double[] matrix) {
+     public void getTransitionProbabilities(double distance, double[] matrix) {
         double temp;
 
         EigenDecomposition eigen = getEigenDecomposition();
@@ -231,7 +231,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     public EigenDecomposition getEigenDecomposition() {
         synchronized (this) {
             if (updateMatrix) {
-                decompose();
+                setupMatrix();
             }
         }
         return eigenDecomposition;
@@ -252,9 +252,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     /**
      * setup substitution matrix
      */
-    private void decompose() {
+    private void setupMatrix() {
 
-        double normalization = setupMatrix();
+        setupRelativeRates(relativeRates);
+        double[] pi = freqModel.getFrequencies();
+        setupQMatrix(relativeRates, pi, q);
+        makeValid(q, stateCount);
+        double normalization = getNormalizationValue(q,pi);
 
         eigenDecomposition = eigenSystem.decomposeMatrix(q);
 
@@ -262,26 +266,6 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             eigenDecomposition.normalizeEigenValues(normalization);
 
         updateMatrix = false;
-    }
-
-    private double setupMatrix() {
-        setupRelativeRates(relativeRates);
-        double[] pi = freqModel.getFrequencies();
-        setupQMatrix(relativeRates, pi, q);
-        makeValid(q, stateCount);
-        return getNormalizationValue(q, pi);
-    }
-
-    public void getInfinitesimalMatrix(double[] out) {
-
-        double normalization = setupMatrix();
-        int index = 0;
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                out[index] = q[i][j] / normalization;
-                index++;
-            }
-        }
     }
 
     /**
@@ -303,24 +287,21 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     static String format = "%2.1e";
 
     public String printQ() {
-        double[] out = new double[stateCount * stateCount];
-        getInfinitesimalMatrix(out);
 
-        StringBuffer sb = new StringBuffer();
-        int index = 0;
-        for (int i = 0; i < stateCount; i++) {
-            if (i > 0)
-                sb.append(String.format(format, out[index]));
-            for (int j = 1; j < stateCount; j++) {
+         StringBuffer sb = new StringBuffer();
+        for(int i=0; i<stateCount; i++) {
+            if (i>0)
+                sb.append(String.format(format,savedQ[i][0]));
+            for(int j=1; j<stateCount; j++) {
                 sb.append("\t");
                 if (j != i)
-                    sb.append(String.format(format, out[index]));
-                index++;
+                    sb.append(String.format(format,savedQ[i][j]));
             }
             sb.append("\n");
         }
         return sb.toString();
     }
+
 
     // Make it a valid rate matrix (make sum of rows = 0)
     private void makeValid(double[][] matrix, int dimension) {
@@ -333,7 +314,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             matrix[i][i] = -sum;
         }
     }
-
+   
     /**
      * Ensures that frequencies are not smaller than MINFREQ and
      * that two frequencies differ by at least 2*MINFDIFF.
@@ -382,7 +363,10 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
     protected double getMINFREQ()  { return 1.0E-10; }
 
+    public double[][] getQ() { return savedQ; }
+
     private final double q[][];
+    private double savedQ[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
 

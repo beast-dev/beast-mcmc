@@ -5,11 +5,9 @@ package dr.app.beagle.evomodel.treelikelihood;
  * @author Andrew Rambaut
  */
 public enum PartialsRescalingScheme {
-
-    DEFAULT("default"),
+    
     NONE("none"),
     ALWAYS_RESCALE("alwaysRescale"),
-    STATIC_RESCALING("staticRescaling"),
     DYNAMIC_RESCALING("dynamicRescaling");
 
     PartialsRescalingScheme(String text) {

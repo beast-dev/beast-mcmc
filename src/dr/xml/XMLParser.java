@@ -41,16 +41,18 @@ public class XMLParser {
     public static final String CONCURRENT = "concurrent";
 
     private Vector<Thread> threads = new Vector<Thread>();
-    private boolean strictXML;
+    protected boolean strictXML;
+    protected boolean parserWarnings;
 
-    public XMLParser(boolean strictXML) {
+    public XMLParser(boolean parserWarnings, boolean strictXML) {
+        this.parserWarnings = parserWarnings;
         this.strictXML = strictXML;
         addXMLObjectParser(new ArrayParser(), false);
         addXMLObjectParser(Report.PARSER, false);
     }
 
-    public XMLParser(boolean verbose, boolean strictXML) {
-        this(strictXML);
+    public XMLParser(boolean verbose, boolean parserWarnings, boolean strictXML) {
+        this(parserWarnings, strictXML);
         this.verbose = verbose;
     }
 
@@ -206,7 +208,7 @@ public class XMLParser {
                         " does not match stored object with same id and tag name " + restoredXMLObject.getName();
                 if (strictXML) {
                     throw new XMLParseException(msg);
-                } else {
+                } else if (parserWarnings) {
 //                    System.err.println("WARNING: " + msg);
                     java.util.logging.Logger.getLogger("dr.xml").warning(msg);
                 }

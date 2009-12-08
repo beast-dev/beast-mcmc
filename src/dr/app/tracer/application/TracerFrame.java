@@ -14,24 +14,17 @@ import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 import dr.inference.trace.TraceList;
 import dr.app.java16compat.FileNameExtensionFilter;
-import dr.app.gui.FileDrop;
-import dr.gui.chart.ChartRuntimeException;
-import dr.evolution.io.Importer;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
 import org.virion.jam.util.LongTask;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -42,7 +35,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Iterator;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 
@@ -72,7 +64,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
-    private GMRFSkyrideDialog gmrfSkyrideDialog = null;
     private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private TraitThroughTimeDialog traitThroughTimeDialog = null;
@@ -192,21 +183,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         splitPane2.setBorder(null);
         splitPane2.setDividerLocation(300);
 
-        Color focusColor = UIManager.getColor("Focus.color");
-        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
-        splitPane1.setBorder(BorderFactory.createEmptyBorder( 2, 2, 2, 2 ));
-        new FileDrop( null, splitPane1, focusBorder, new FileDrop.Listener()
-        {   public void filesDropped( java.io.File[] files )
-            {
-                importFiles(files);
-            }   // end filesDropped
-        }); // end FileDrop.Listener
-
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
         getContentPane().add(splitPane2, BorderLayout.CENTER);
 
         splitPane1.setDividerLocation(2000);
-
     }
 
     public void setVisible(boolean b) {
@@ -233,8 +213,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     public void setAnalysesEnabled(boolean enabled) {
         getDemographicAction().setEnabled(enabled);
         getBayesianSkylineAction().setEnabled(enabled);
-        getGMRFSkyrideAction().setEnabled(enabled);
-        getLineagesThroughTimeAction().setEnabled(enabled);
         getBayesFactorsAction().setEnabled(enabled);
         getCreateTemporalAnalysisAction().setEnabled(enabled);
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
@@ -456,13 +434,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         } else {
             TraceList[] tl = new TraceList[currentTraceLists.size()];
             currentTraceLists.toArray(tl);
-            try {
-                tracePanel.setTraces(tl, selectedTraces);
-            } catch(ChartRuntimeException cre) {
-                JOptionPane.showMessageDialog(this, "One or more traces contain invalid values and \rare not able to be displayed.",
-                        "Problem with tree file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            tracePanel.setTraces(tl, selectedTraces);
         }
     }
 
@@ -668,24 +640,20 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
 
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log", "txt");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log");
         chooser.setFileFilter(filter);
 
         final int returnVal = chooser.showOpenDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {
             File[] files = chooser.getSelectedFiles();
-            importFiles(files);
+            LogFileTraces[] traces = new LogFileTraces[files.length];
+
+            for(int i = 0; i < files.length; i++) {
+                traces[i] = new LogFileTraces(files[i].getName(), files[i]);
+            }
+
+            processTraces(traces);
         }
-    }
-
-    private void importFiles(File[] files) {
-        LogFileTraces[] traces = new LogFileTraces[files.length];
-
-        for(int i = 0; i < files.length; i++) {
-            traces[i] = new LogFileTraces(files[i].getName(), files[i]);
-        }
-
-        processTraces(traces);
     }
 
     private File openDefaultDirectory = null;
@@ -936,34 +904,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
 
-    public void doGMRFSkyride(boolean add) {
-        if (gmrfSkyrideDialog == null) {
-            gmrfSkyrideDialog = new GMRFSkyrideDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            gmrfSkyrideDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            gmrfSkyrideDialog.createGMRFSkyrideFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-
     public void doLineagesThroughTime(boolean add) {
         if (lineagesThroughTimeDialog == null) {
             lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
@@ -1208,10 +1148,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
-    public Action getGMRFSkyrideAction() {
-        return gmrfSkyrideAction;
-    }
-
     public Action getLineagesThroughTimeAction() {
         return lineagesThroughTimeAction;
     }
@@ -1249,12 +1185,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(false);
-        }
-    };
-
-    private final AbstractAction gmrfSkyrideAction = new AbstractAction(AnalysisMenuFactory.GMRF_SKYRIDE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doGMRFSkyride(false);
         }
     };
 
@@ -1317,5 +1247,4 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             doExportPDF();
         }
     };
-
 }

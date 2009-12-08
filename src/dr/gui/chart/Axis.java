@@ -424,7 +424,7 @@ public interface Axis {
             if( Double.isInfinite(minValue) || Double.isNaN(minValue) ||
                     Double.isInfinite(maxValue) || Double.isNaN(maxValue)) {
                 // I am not sure which exception is appropriate here.
-                throw new ChartRuntimeException("Bad values in trace file, can't calibrate");
+                throw new RuntimeException("Bad values in trace file, can't calibrate");
             }
             
             if (minAxisFlag==AT_ZERO ) {

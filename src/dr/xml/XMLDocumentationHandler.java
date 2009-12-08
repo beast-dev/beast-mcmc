@@ -26,16 +26,20 @@
 package dr.xml;
 
 import dr.app.tools.BeastParserDoc;
+import dr.app.beast.BeastParser;
 
 import java.io.PrintWriter;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class XMLDocumentationHandler {
 
+    protected Set<Class> requiredTypes = new TreeSet<Class>(ClassComparator.INSTANCE);
+    protected BeastParser parser = null;
+
     private final Random random = new Random();
 
-    public XMLDocumentationHandler(XMLParser parser) {
-
+    public XMLDocumentationHandler(BeastParser parser) {
         this.parser = parser;
 
         Iterator iterator = parser.getParsers();
@@ -53,10 +57,34 @@ public class XMLDocumentationHandler {
         }
     }
 
+    private void printDocTitle(PrintWriter writer, String page) {
+        writer.println("<head>");
+        writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
+        writer.println("  <title>" + page + "</title>");
+        writer.println("</head>");
+        writer.println("<h1>" + BeastParserDoc.TITTLE + "</h1>");
+        
+        Calendar date = Calendar.getInstance();
+        SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
+
+        if (parser.parsers != null) {
+            if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {
+                writer.println("<p>Release Version (" + dateformatter.format(date.getTime()) + ")</p>");
+                System.out.println("Release Version");
+            } else if (parser.parsers.equalsIgnoreCase(BeastParser.DEV)) {
+                writer.println("<p>Development Version (" + dateformatter.format(date.getTime()) + ")</p>");
+                System.out.println("Development Version");
+            }
+        }
+        writer.println("<!-- " + BeastParserDoc.AUTHORS + " -->");
+        writer.println("<!-- " + BeastParserDoc.LINK1 + " -->");
+        writer.println("<!-- " + BeastParserDoc.LINK2 + " -->");
+    }
+
     public void outputElements(PrintWriter writer) {
 
         writer.println("<html>");
-        BeastParserDoc.printDocTitle(writer, BeastParserDoc.DEATAIL_HTML);
+        printDocTitle(writer, BeastParserDoc.DEATAIL_HTML);
         writer.println("<p>");
         writer.println("The following is a list of valid elements in a beast file.<br>");
         writer.println("<span class=\"required\">&nbsp;&nbsp;&nbsp;&nbsp;</span> required<br>");
@@ -309,7 +337,7 @@ public class XMLDocumentationHandler {
     public void outputIndex(PrintWriter writer) {
 
         writer.println("<html>");
-        BeastParserDoc.printDocTitle(writer, BeastParserDoc.INDEX_HTML);
+        printDocTitle(writer, BeastParserDoc.INDEX_HTML);
         writer.println("<p>");
         writer.println("The following is a list of generic types that elements represent in a beast file.<br>");
         writer.println("</p>");
@@ -460,6 +488,4 @@ public class XMLDocumentationHandler {
          }
      }*/
 
-    protected Set<Class> requiredTypes = new TreeSet<Class>(ClassComparator.INSTANCE);
-    protected XMLParser parser = null;
 }

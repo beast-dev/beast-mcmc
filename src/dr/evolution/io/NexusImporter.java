@@ -44,7 +44,6 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -855,48 +854,12 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     clearLastMetaComment();
 
                     FlexibleNode root = readInternalNode(translationList);
-
-                    if (translationList != null) {
-                        // this ensures that if a translation list is used, the external node numbers
-                        // of the trees correspond as well.
-
-                        Map<Taxon, Integer> taxonNumberMap = new HashMap<Taxon, Integer>();
-                        int count = 0;
-                        for (String label : translationList.keySet()) {
-                            Taxon taxon = translationList.get(label);
-                            int number;
-
-                            try {
-                                number = Integer.parseInt(label) - 1;
-                            } catch (NumberFormatException nfe) {
-                                number = count;
-                            }
-
-                            taxonNumberMap.put(taxon, number);
-                            count ++;
-                        }
-
-                        tree = new FlexibleTree(root, false, true, taxonNumberMap);
-                    } else {
-                        tree = new FlexibleTree(root, false, true, null);
-                    }
-
+                    tree = new FlexibleTree(root, false, true);
                     tree.setId(token2);
 
                     if (getLastDelimiter() == ':') {
                         // in case the root has a branch length, skip it
                         readToken(";");
-
-                        if (getLastMetaComment() != null) {
-                            // There was a meta-comment which should be in the form:
-                            // \[&label[=value][,label[=value]>[,/..]]\]
-                            try {
-                                parseMetaCommentPairs(getLastMetaComment(), root);
-                            } catch (BadFormatException bfe) {
-                                // ignore it
-                            }
-                            clearLastMetaComment();
-                        }
                     }
 
                     if (getLastDelimiter() != ';') {
@@ -927,7 +890,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                 }
                                 c = c.substring(e);
                             } else {
-                                c = c.substring(1);
+                                c = c.substring(1);                                
                             }
                         }
                     }

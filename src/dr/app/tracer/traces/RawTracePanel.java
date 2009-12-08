@@ -20,7 +20,7 @@ public class RawTracePanel extends JPanel implements Exportable {
     public static int COLOUR_BY_FILE = 1;
     public static int COLOUR_BY_ALL = 2;
 
-    private static final Color[] paints = new Color[]{
+    private static final Paint[] paints = new Paint[]{
             Color.BLACK,
             new Color(64, 35, 225),
             new Color(229, 35, 60),
@@ -40,7 +40,6 @@ public class RawTracePanel extends JPanel implements Exportable {
             new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
-    private JCheckBox burninCheckBox = new JCheckBox("Show Burn-in");
     private JCheckBox sampleCheckBox = new JCheckBox("Sample only");
     private JCheckBox linePlotCheckBox = new JCheckBox("Draw line plot");
     private JComboBox legendCombo = new JComboBox(
@@ -53,6 +52,7 @@ public class RawTracePanel extends JPanel implements Exportable {
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private int colourBy = COLOUR_BY_TRACE;
+    //private boolean sampleOnly = true;
 
     /**
      * Creates new RawTracePanel
@@ -76,12 +76,7 @@ public class RawTracePanel extends JPanel implements Exportable {
         chartSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(chartSetupButton);
 
-        burninCheckBox.setSelected(true);
-        burninCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
-        burninCheckBox.setOpaque(false);
-        toolBar.add(burninCheckBox);
-
-        sampleCheckBox.setSelected(false);
+        sampleCheckBox.setSelected(true);
         sampleCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         sampleCheckBox.setOpaque(false);
         toolBar.add(sampleCheckBox);
@@ -116,6 +111,7 @@ public class RawTracePanel extends JPanel implements Exportable {
         add(toolBar, BorderLayout.SOUTH);
         add(chartPanel, BorderLayout.CENTER);
 
+
         chartSetupButton.addActionListener(
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(ActionEvent actionEvent) {
@@ -128,14 +124,6 @@ public class RawTracePanel extends JPanel implements Exportable {
                         chartSetupDialog.showDialog(traceChart);
                         validate();
                         repaint();
-                    }
-                }
-        );
-
-        burninCheckBox.addActionListener(
-                new java.awt.event.ActionListener() {
-                    public void actionPerformed(java.awt.event.ActionEvent ev) {
-                        setupTraces();
                     }
                 }
         );
@@ -238,25 +226,20 @@ public class RawTracePanel extends JPanel implements Exportable {
 
         int i = 0;
         for (TraceList tl : traceLists) {
+            int n = tl.getStateCount();
+
             int stateStart = tl.getBurnIn();
             int stateStep = tl.getStepSize();
 
             for (String traceName : traceNames) {
-                double values[] = new double[tl.getStateCount()];
+                double values[] = new double[n];
                 int traceIndex = tl.getTraceIndex(traceName);
                 tl.getValues(traceIndex, values);
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-
-                double[] burninValues = null;
-                if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                    burninValues = new double[tl.getBurninStateCount()];
-                    tl.getBurninValues(traceIndex, burninValues);
-                }
-
-                traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
+                traceChart.addTrace(name, stateStart, stateStep, values, paints[i]);
 
                 if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
                     i++;

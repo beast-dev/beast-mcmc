@@ -38,22 +38,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                     BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
-                                                     BranchRateModel branchRateModel,
-                                                     boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
-                                                     XMLObject xo) throws XMLParseException {
-           return new BeagleTreeLikelihood(
-                    patternList,
-                    treeModel,
-                    branchSiteModel,
-                    siteRateModel,
-                    branchRateModel,
-                    useAmbiguities,
-                    scalingScheme
-            );
-    }
-
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
@@ -77,7 +61,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
+        PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
         if (xo.hasAttribute(SCALING_SCHEME)) {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
@@ -87,15 +71,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (instanceCount == 1) {
-            return createTreeLikelihood(
+            return new BeagleTreeLikelihood(
                     patternList,
                     treeModel,
                     branchSiteModel,
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
-                    scalingScheme,
-                    xo
+                    scalingScheme
             );
         }
 
@@ -103,15 +86,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         for (int i = 0; i < instanceCount; i++) {
             Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
 
-            BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
+            BeagleTreeLikelihood treeLikelihood = new BeagleTreeLikelihood(
                     subPatterns,
                     treeModel,
                     branchSiteModel,
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
-                    scalingScheme,
-                    xo);
+                    scalingScheme);
             treeLikelihood.setId(xo.getId() + "_" + instanceCount);
             likelihoods.add(treeLikelihood);
         }
@@ -132,13 +114,15 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[] {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
-        };
-    }
+    };
 }

@@ -40,7 +40,7 @@ public class NormaliseMeanTreeRate {
         File parentFile = new File(inputFileName);
 
         if (parentFile.isFile()) {
-            System.out.println("Analysing tree file: " + inputFileName);
+            System.out.println("Analysing log file: " + inputFileName);
         } else {
             System.err.println("File " + inputFileName + " does not exist!");
             System.exit(0);
@@ -224,7 +224,7 @@ public class NormaliseMeanTreeRate {
 
         new NormaliseMeanTreeRate(inputFileName, outputFileName, normaliseMeanRateTo);
 
-        System.out.println("Please bear in mind that the trees files are unchanged and results may vary slightly from if you ran them internally");
+        System.out.println("Please bear in mind that the log files are unchanged and results may vary slightly from if you ran them internally");
 
         System.exit(0);
     }

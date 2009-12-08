@@ -26,7 +26,7 @@
 package dr.inference.trace;
 
 import dr.util.NumberFormatter;
-import dr.xml.XMLParseException;
+import dr.util.FileHelpers;
 
 import java.io.File;
 
@@ -74,8 +74,9 @@ public class TraceAnalysis {
         formatter.setPadding(true);
         formatter.setFieldWidth(fieldWidth);
 
-        File file = new File(fileName);
-
+//        File file = new File(fileName);
+        final File file = FileHelpers.getFile(fileName);
+        
         LogFileTraces traces = new LogFileTraces(fileName, file);
         if (traces == null) {
             throw new TraceException("Trace file is empty.");
@@ -168,7 +169,9 @@ public class TraceAnalysis {
      * @param burnin     the number of states of burnin or if -1 then use 10%
      * @param filename   the file name of the log file to report on
      * @param drawHeader if true then draw header
+     * @param individualESSs  boolean
      * @param stdErr     if true then report the standard deviation of the mean
+     * @param likelihoodName  String
      * @param hpds       if true then report 95% hpd upper and lower
      * @return the traces loaded from given file to create this short report
      * @throws java.io.IOException if general error reading file

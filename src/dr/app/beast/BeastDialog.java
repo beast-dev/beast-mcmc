@@ -51,6 +51,7 @@ public class BeastDialog {
     private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
+    private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions");
     private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Single", "Double" });
 
     private final JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
@@ -117,6 +118,8 @@ public class BeastDialog {
         OptionsPanel optionPanel2 = new OptionsPanel(0,12);
         optionPanel2.setBorder(BorderFactory.createEmptyBorder());
         final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
+//        optionPanel2.addComponent(beagleSSECheckBox);
+        beagleSSECheckBox.setSelected(true);
         final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
         optionPanel2.addComponent(beagleInfoCheckBox);
 
@@ -141,6 +144,7 @@ public class BeastDialog {
                 beagleInfoCheckBox.setEnabled(beagleCheckBox.isSelected());
                 label1.setEnabled(beagleCheckBox.isSelected());
                 beagleResourceCombo.setEnabled(beagleCheckBox.isSelected());
+                beagleSSECheckBox.setEnabled(beagleCheckBox.isSelected());
                 label2.setEnabled(beagleCheckBox.isSelected());
                 beaglePrecisionCombo.setEnabled(beagleCheckBox.isSelected());
             }
@@ -198,6 +202,11 @@ public class BeastDialog {
 
     public boolean preferBeagleCPU() {
         return beagleResourceCombo.getSelectedItem().equals("CPU");
+    }
+
+    public boolean preferBeagleSSE() {
+        // for the moment we will alway use SSE if CPU is selected...
+        return preferBeagleCPU();
     }
 
     public boolean preferBeagleSingle() {

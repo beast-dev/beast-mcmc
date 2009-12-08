@@ -105,7 +105,7 @@ public class Columns {
 
                 for (int j = 0; j < cols.length; j++) {
 
-                    if (!label.equals("")) {
+                    if (label != null) {
                         if (cols.length > 1) {
                             cols[j].setLabel(label + Integer.toString(j + 1));
                         } else {

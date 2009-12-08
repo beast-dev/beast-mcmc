@@ -520,7 +520,7 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME, writer);
+            writeParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, writer);
             writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
             writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
             writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
@@ -2605,7 +2605,7 @@ public class BeastGenerator extends BeautiOptions {
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "yule.birthRate"), true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME), true);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME), true);
         }
 

@@ -244,7 +244,7 @@ public class ClockModelOptions extends ModelOptions {
 
                 Parameter tmrcaStatistic = options.getStatistic(taxa);
 
-                double taxonSetCalibrationTime = tmrcaStatistic.getPriorExpectation();
+                double taxonSetCalibrationTime = tmrcaStatistic.getPriorExpectationMean();
 
                 // the calibration distance is the patristic genetic distance back to the common ancestor of
                 // the set of taxa.

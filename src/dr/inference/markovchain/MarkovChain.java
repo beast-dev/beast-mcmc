@@ -127,9 +127,9 @@ public final class MarkovChain {
                 }
             }
 
-            String message = "The initial likelihood is zero";
+            String message = "The initial likelihood is zero (log likelihood is negative infinity)";
             if (likelihood instanceof CompoundLikelihood) {
-                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis(2);
             } else {
                 message += "!";
             }
@@ -294,7 +294,7 @@ public final class MarkovChain {
                 // that before the operation was made.
 
                 final String d1 = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+                        ((CompoundLikelihood)likelihood).getDiagnosis(-1) : "";
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
@@ -307,8 +307,8 @@ public final class MarkovChain {
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName());
                     if( d1.length() > 0 ) {
-                        logger.severe(d1);
-                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
+                      logger.severe(d1);
+                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis(-1);
                         logger.severe(d1);
                         logger.severe(d2);
                     }
@@ -320,24 +320,22 @@ public final class MarkovChain {
                 coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
             }
 
-            if (usingFullEvaluation) {
-                if (schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
-                        currentState >= fullEvaluationCount) {
-                    // full evaluation is only switched off when each operator has done a
-                    // minimum number of operations (currently 1) and fullEvalationCount
-                    // operations in total.
+            if (usingFullEvaluation &&
+                    schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
+                    currentState >= fullEvaluationCount) {
+                // full evaluation is only switched off when each operator has done a
+                // minimum number of operations (currently 1) and fullEvalationCount
+                // operations in total.
 
-                    usingFullEvaluation = false;
-                    if (fullEvaluationError) {
-                        // If there has been an error then stop with an error
-                        throw new RuntimeException(
-                                "One or more evaluation errors occured during the test phase of this\n" +
-                                        "run. These errors imply critical errors which may produce incorrect\n" +
-                                        "results.");
-                    }
+                usingFullEvaluation = false;
+                if (fullEvaluationError) {
+                    // If there has been an error then stop with an error
+                    throw new RuntimeException(
+                            "One or more evaluation errors occured during the test phase of this\n" +
+                                    "run. These errors imply critical errors which may produce incorrect\n" +
+                                    "results.");
                 }
             }
-
             currentState += 1;
         }
 

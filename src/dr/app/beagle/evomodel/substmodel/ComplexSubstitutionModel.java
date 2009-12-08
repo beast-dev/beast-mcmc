@@ -2,20 +2,12 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.inference.model.Model;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.MatrixEntryColumn;
-import dr.inference.loggers.NumberColumn;
-import dr.math.matrixAlgebra.Vector;
-
 import java.util.Arrays;
 
 /**
  * @author Marc Suchard
  */
-public class ComplexSubstitutionModel extends GeneralSubstitutionModel implements Likelihood {
+public class ComplexSubstitutionModel extends GeneralSubstitutionModel {
 
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
@@ -42,10 +34,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         }
 
         double[] Evec = eigen.getEigenVectors();
-        double[] Eval = eigen.getEigenValues();
         double[] EvalImag = new double[stateCount];
-        System.arraycopy(Eval,stateCount,EvalImag,0,stateCount);
+        System.arraycopy(Evec,stateCount,EvalImag,0,stateCount);
         double[] Ievc = eigen.getInverseEigenVectors();
+        double[] Eval = eigen.getEigenValues();
 
         double[][] iexp = new double[stateCount][stateCount];
 
@@ -136,56 +128,6 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         if (doNormalization)
             return super.getNormalizationValue(matrix, pi);
         return 1.0;
-    }
-
-    public double getLogLikelihood() {
-        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this))
-            return 0;
-        return Double.NEGATIVE_INFINITY;
-    }
-
-    public String prettyName() {
-        return Abstract.getPrettyName(this);
-    }
-
-    public void setNormalization(boolean doNormalization) {
-        this.doNormalization = doNormalization;
-    }
-
-    public void makeDirty() {
-
-    }
-
-    @Override
-    public boolean isUsed() {
-        return super.isUsed() && isUsed;
-    }
-
-    public void setUsed() {
-        isUsed = true;
-    }
-
-    private boolean isUsed = false;
-    private double[] probability;
-
-    public Model getModel() {
-        return this;
-    }
-
-    public LogColumn[] getColumns() {
-        return new LogColumn[]{
-                new LikelihoodColumn(getId())
-        };
-    }
-
-    protected class LikelihoodColumn extends NumberColumn {
-        public LikelihoodColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getLogLikelihood();
-        }
     }
 
     private boolean doNormalization = true;

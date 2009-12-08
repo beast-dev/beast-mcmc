@@ -342,7 +342,7 @@ public class Patterns implements PatternList {
     /**
      * @return true if the pattern is invariant
      */
-    public static boolean isInvariant(int[] pattern) {
+    private boolean isInvariant(int[] pattern) {
         int len = pattern.length;
 
         int state = pattern[0];

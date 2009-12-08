@@ -52,7 +52,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         ArrayList<Logger> loggers = new ArrayList<Logger>();
 
         likelihood.setUsed();
-        
+
         // check that all models, parameters and likelihoods are being used
 //        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
 //            if (!l.isUsed()) {
@@ -111,7 +111,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         if (initialScore == Double.NEGATIVE_INFINITY) {
             String message = "The initial posterior is zero";
             if (likelihood instanceof CompoundLikelihood) {
-                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis(2);
             } else {
                 message += "!";
             }

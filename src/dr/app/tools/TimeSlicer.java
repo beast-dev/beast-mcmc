@@ -1144,6 +1144,223 @@ public class TimeSlicer {
         return null;
     }
 
+    public static void main(String[] args) throws IOException {
+
+        String inputFileName = null;
+        String outputFileName = null;
+        String[] traitNames = null;
+        double[] sliceHeights = null;
+        OutputFormat outputFormat = OutputFormat.KML;
+        boolean impute = false;
+        boolean trueNoise = true;
+        boolean summaryOnly = true;
+        ContourMode contourMode = ContourMode.SNYDER;
+        Normalization normalize = Normalization.LENGTH;
+        int burnin = -1;
+        double mrsd = 0;
+        double hpdValue = 0.80;
+        String outputFileSDR = null;
+        boolean getSDR = false;
+        String progress = null;
+
+
+//        if (args.length == 0) {
+//          // TODO Make flash GUI
+//        }
+
+        printTitle();
+
+        Arguments arguments = new Arguments(
+                new Arguments.Option[]{
+                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
+                        new Arguments.StringOption(SLICE_TIMES,"time","specifies an slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICE_FILE,"fileTimes","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
+                        new Arguments.IntegerOption(SLICE_COUNT,"the number of time slices to use [default=0]"),
+                        new Arguments.RealOption(START_TIME,"the time of the earliest slice [default=0]"),
+                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.Option(HELP, "option to print this message"),
+                        new Arguments.StringOption(NOISE, falseTrue, false,
+                                "add true noise [default = true])"),
+                        new Arguments.StringOption(IMPUTE, falseTrue, false,
+                                "impute trait at time-slice [default = false]"),
+                        new Arguments.StringOption(SUMMARY, falseTrue, false,
+                                "compute summary statistics [default = true]"),
+                        new Arguments.StringOption(FORMAT, enumNamesToStringArray(OutputFormat.values()),false,
+                                "summary output format [default = KML]"),
+                        new Arguments.IntegerOption(HPD,"mass (1 - 99%) to include in HPD regions [default = 80]"),
+                        new Arguments.StringOption(MODE,enumNamesToStringArray(ContourMode.values()), false,
+                                "contouring model [default = synder]"),
+                        new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
+                                "tree normalization [default = length"),
+                        new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
+                        new Arguments.StringOption(PROGRESS,"progress report","reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
+
+                });
+
+        try {
+            arguments.parseArguments(args);
+        } catch (Arguments.ArgumentException ae) {
+            progressStream.println(ae);
+            printUsage(arguments);
+            System.exit(1);
+        }
+
+        if (arguments.hasOption(HELP)) {
+            printUsage(arguments);
+            System.exit(0);
+        }
+
+        try { // Make sense of arguments
+
+            String sliceFileString = arguments.getStringOption(SLICE_FILE);
+            if (sliceFileString != null) {
+                sliceHeights = parseFileWithArray(sliceFileString);
+            }
+
+
+            if (arguments.hasOption(BURNIN)) {
+                burnin = arguments.getIntegerOption(BURNIN);
+            }
+
+
+            if (arguments.hasOption(MRSD)) {
+                mrsd = arguments.getRealOption(MRSD);
+            }
+
+
+            if (arguments.hasOption(HPD)) {
+                int intValue = arguments.getIntegerOption(HPD);
+                if (intValue < 1 || intValue > 99) {
+                    progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
+                    System.exit(-1);
+                }
+                hpdValue = intValue / 100.0;
+            }
+
+            String traitString = arguments.getStringOption(TRAIT);
+            if (traitString != null) {
+                traitNames = parseVariableLengthStringArray(traitString);
+//employed to get dispersal rates across the whole tree
+//                for (int y = 0; y < traitNames.length; y++) {
+//                    if (traitNames[y].equals(LOCATIONTRAIT)){
+//                       containsLocation =  true;
+//                    }
+//                }
+            }
+
+            if (traitNames == null) {
+                traitNames = new String[1];
+                traitNames[0] = "location.rate";
+            }
+
+            String sliceTimeString = arguments.getStringOption(SLICE_TIMES);
+            if (sliceTimeString != null) {
+                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimeString);
+                sliceHeights = new double[sliceTimes.length];
+                for (int i = 0; i < sliceTimes.length; i++) {
+                    if (mrsd == 0) {
+                        sliceHeights[i] = sliceTimes[i];
+                    } else {
+                        sliceHeights[i] = mrsd - sliceTimes[i];
+                    }
+                }
+            }
+
+            if (arguments.hasOption(SLICE_COUNT)) {
+                int sliceCount = arguments.getIntegerOption(SLICE_COUNT);
+                double startTime = arguments.getRealOption(START_TIME);
+                double delta;
+                if (mrsd != 0) {
+                    delta = (mrsd - startTime) / (sliceCount - 1);
+                } else {
+                    delta = startTime / (sliceCount - 1);                    
+                }
+                sliceHeights = new double[sliceCount];
+                double height = mrsd - startTime;
+                for (int i = 0; i < sliceCount; i++) {
+                   sliceHeights[i] = height;
+                   height -= delta;
+                }
+            }
+
+            String imputeString = arguments.getStringOption(IMPUTE);
+            if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
+                impute = true;
+
+            String noiseString = arguments.getStringOption(NOISE);
+            if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
+                trueNoise = false;
+
+            String summaryString = arguments.getStringOption(SUMMARY);
+            if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
+                summaryOnly = true;
+
+            String modeString = arguments.getStringOption(MODE);
+            if (modeString != null) {
+                contourMode = ContourMode.valueOf(modeString.toUpperCase());
+                if (contourMode == ContourMode.R && !ContourWithR.processWithR)
+                    contourMode = ContourMode.SNYDER;
+            }
+
+            String normalizeString = arguments.getStringOption(NORMALIZATION);
+            if (normalizeString != null) {
+                normalize = Normalization.valueOf(normalizeString.toUpperCase());
+            }
+
+            String summaryFormat = arguments.getStringOption(FORMAT);
+            if (summaryFormat != null) {
+                outputFormat = OutputFormat.valueOf(summaryFormat.toUpperCase());
+            }
+
+            String sdrString = arguments.getStringOption(SDR);
+            if (sdrString != null) {
+                outputFileSDR = sdrString;
+                getSDR = true;
+            }
+
+            String progressString = arguments.getStringOption(PROGRESS);
+            if (progressString != null) {
+                progress = progressString;
+            }
+
+        } catch (Arguments.ArgumentException e) {
+            progressStream.println(e);
+            printUsage(arguments);
+            System.exit(-1);
+        }
+
+
+        final String[] args2 = arguments.getLeftoverArguments();
+
+        switch (args2.length) {
+            case 0:
+                printUsage(arguments);
+                System.exit(1);
+            case 2:
+                outputFileName = args2[1];
+                // fall to
+            case 1:
+                inputFileName = args2[0];
+                break;
+            default: {
+                System.err.println("Unknown option: " + args2[2]);
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
+        }
+
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceHeights, impute,
+                trueNoise, mrsd, contourMode, normalize, getSDR, progress);
+        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
+
+        System.exit(0);
+    }
+
+
+
+
     public static String getKMLColor(double value, double[] minMaxMedian, String startColor, String endColor) {
 
         startColor = startColor.toLowerCase();
@@ -1344,242 +1561,4 @@ public class TimeSlicer {
         return returnArray;
     }
 
-    public static void main(String[] args) throws IOException {
-
-        String inputFileName = null;
-        String outputFileName = null;
-        String[] traitNames = null;
-        double[] sliceHeights = null;
-        OutputFormat outputFormat = OutputFormat.KML;
-        boolean impute = false;
-        boolean trueNoise = true;
-        boolean summaryOnly = true;
-        ContourMode contourMode = ContourMode.SNYDER;
-        Normalization normalize = Normalization.LENGTH;
-        int burnin = -1;
-        double mrsd = 0;
-        double hpdValue = 0.80;
-        String outputFileSDR = null;
-        boolean getSDR = false;
-        String progress = null;
-
-
-//        if (args.length == 0) {
-//          // TODO Make flash GUI
-//        }
-
-        printTitle();
-
-        Arguments arguments = new Arguments(
-                new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
-                        new Arguments.StringOption(SLICE_TIMES,"slice_times","specifies a slice time-list [default=none]"),
-                        new Arguments.StringOption(SLICE_HEIGHTS,"slice_heights","specifies a slice height-list [default=none]"),
-                        new Arguments.StringOption(SLICE_FILE,"times_file","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
-                        new Arguments.IntegerOption(SLICE_COUNT,"the number of time slices to use [default=0]"),
-                        new Arguments.RealOption(START_TIME,"the time of the earliest slice [default=0]"),
-                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.Option(HELP, "option to print this message"),
-                        new Arguments.StringOption(NOISE, falseTrue, false,
-                                "add true noise [default = true])"),
-                        new Arguments.StringOption(IMPUTE, falseTrue, false,
-                                "impute trait at time-slice [default = false]"),
-                        new Arguments.StringOption(SUMMARY, falseTrue, false,
-                                "compute summary statistics [default = true]"),
-                        new Arguments.StringOption(FORMAT, enumNamesToStringArray(OutputFormat.values()),false,
-                                "summary output format [default = KML]"),
-                        new Arguments.IntegerOption(HPD,"mass (1 - 99%) to include in HPD regions [default = 80]"),
-                        new Arguments.StringOption(MODE,enumNamesToStringArray(ContourMode.values()), false,
-                                "contouring model [default = synder]"),
-                        new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
-                                "tree normalization [default = length"),
-                        new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
-                        new Arguments.StringOption(PROGRESS,"progress report","reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
-
-                });
-
-        try {
-            arguments.parseArguments(args);
-        } catch (Arguments.ArgumentException ae) {
-            progressStream.println(ae);
-            printUsage(arguments);
-            System.exit(1);
-        }
-
-        if (arguments.hasOption(HELP)) {
-            printUsage(arguments);
-            System.exit(0);
-        }
-
-        try { // Make sense of arguments
-
-            String sliceFileString = arguments.getStringOption(SLICE_FILE);
-            if (sliceFileString != null) {
-                sliceHeights = parseFileWithArray(sliceFileString);
-            }
-
-
-            if (arguments.hasOption(BURNIN)) {
-                burnin = arguments.getIntegerOption(BURNIN);
-            }
-
-
-            if (arguments.hasOption(MRSD)) {
-                mrsd = arguments.getRealOption(MRSD);
-            }
-
-
-            if (arguments.hasOption(HPD)) {
-                int intValue = arguments.getIntegerOption(HPD);
-                if (intValue < 1 || intValue > 99) {
-                    progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
-                    System.exit(-1);
-                }
-                hpdValue = intValue / 100.0;
-            }
-
-            String traitString = arguments.getStringOption(TRAIT);
-            if (traitString != null) {
-                traitNames = parseVariableLengthStringArray(traitString);
-//employed to get dispersal rates across the whole tree
-//                for (int y = 0; y < traitNames.length; y++) {
-//                    if (traitNames[y].equals(LOCATIONTRAIT)){
-//                       containsLocation =  true;
-//                    }
-//                }
-            }
-
-            if (traitNames == null) {
-                traitNames = new String[1];
-                traitNames[0] = "location.rate";
-            }
-
-            String sliceTimeString = arguments.getStringOption(SLICE_TIMES);
-            if (sliceTimeString != null) {
-                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimeString);
-                sliceHeights = new double[sliceTimes.length];
-                for (int i = 0; i < sliceTimes.length; i++) {
-                    if (mrsd == 0) {
-                        sliceHeights[i] = sliceTimes[i];
-                    } else {
-                        sliceHeights[i] = mrsd - sliceTimes[i];
-                    }
-                }
-            }
-
-            String sliceHeightString = arguments.getStringOption(SLICE_HEIGHTS);
-            if (sliceHeightString != null) {
-                if (sliceTimeString != null)  {
-                    progressStream.println("Either sliceTimes, sliceHeights, timesFile or sliceCount" +
-                            "nt.");
-                    System.exit(-1);
-                }
-
-                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimeString);
-                sliceHeights = new double[sliceTimes.length];
-                for (int i = 0; i < sliceTimes.length; i++) {
-                    if (mrsd == 0) {
-                        sliceHeights[i] = sliceTimes[i];
-                    } else {
-                        sliceHeights[i] = mrsd - sliceTimes[i];
-                    }
-                }
-            }
-
-            if (arguments.hasOption(SLICE_COUNT)) {
-                int sliceCount = arguments.getIntegerOption(SLICE_COUNT);
-                double startTime = arguments.getRealOption(START_TIME);
-                double delta;
-                if (mrsd != 0) {
-                    delta = (mrsd - startTime) / (sliceCount - 1);
-                } else {
-                    delta = startTime / (sliceCount - 1);
-                }
-                sliceHeights = new double[sliceCount];
-//                double height = mrsd - startTime;
-//                for (int i = 0; i < sliceCount; i++) {
-//                   sliceHeights[i] = height;
-//                   height -= delta;
-//                }
-                double height = 0;
-                for (int i = 0; i < sliceCount; i++) {
-                   sliceHeights[i] = height;
-                   height += delta;
-                }
-            }
-
-            String imputeString = arguments.getStringOption(IMPUTE);
-            if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
-                impute = true;
-
-            String noiseString = arguments.getStringOption(NOISE);
-            if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
-                trueNoise = false;
-
-            String summaryString = arguments.getStringOption(SUMMARY);
-            if (summaryString != null && summaryString.compareToIgnoreCase("true") == 0)
-                summaryOnly = true;
-
-            String modeString = arguments.getStringOption(MODE);
-            if (modeString != null) {
-                contourMode = ContourMode.valueOf(modeString.toUpperCase());
-                if (contourMode == ContourMode.R && !ContourWithR.processWithR)
-                    contourMode = ContourMode.SNYDER;
-            }
-
-            String normalizeString = arguments.getStringOption(NORMALIZATION);
-            if (normalizeString != null) {
-                normalize = Normalization.valueOf(normalizeString.toUpperCase());
-            }
-
-            String summaryFormat = arguments.getStringOption(FORMAT);
-            if (summaryFormat != null) {
-                outputFormat = OutputFormat.valueOf(summaryFormat.toUpperCase());
-            }
-
-            String sdrString = arguments.getStringOption(SDR);
-            if (sdrString != null) {
-                outputFileSDR = sdrString;
-                getSDR = true;
-            }
-
-            String progressString = arguments.getStringOption(PROGRESS);
-            if (progressString != null) {
-                progress = progressString;
-            }
-
-        } catch (Arguments.ArgumentException e) {
-            progressStream.println(e);
-            printUsage(arguments);
-            System.exit(-1);
-        }
-
-
-        final String[] args2 = arguments.getLeftoverArguments();
-
-        switch (args2.length) {
-            case 0:
-                printUsage(arguments);
-                System.exit(1);
-            case 2:
-                outputFileName = args2[1];
-                // fall to
-            case 1:
-                inputFileName = args2[0];
-                break;
-            default: {
-                System.err.println("Unknown option: " + args2[2]);
-                System.err.println();
-                printUsage(arguments);
-                System.exit(1);
-            }
-        }
-
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceHeights, impute,
-                trueNoise, mrsd, contourMode, normalize, getSDR, progress);
-        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
-
-        System.exit(0);
-    }
 }

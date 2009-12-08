@@ -14,37 +14,7 @@ public interface BayesianStochasticSearchVariableSelection {
     public boolean validState();
 
     public class Utils {
-
-        private static double defaultExpectedMutations = 1.0;
-
-        public static boolean connectedAndWellConditioned(double[] probability,
-                                                          dr.app.beagle.evomodel.substmodel.SubstitutionModel substModel) {
-            if (probability == null) {
-                int stateCount = substModel.getDataType().getStateCount();
-                probability = new double[stateCount*stateCount];
-            }
-            try {
-                substModel.getTransitionProbabilities(defaultExpectedMutations,probability);
-                return connectedAndWellConditioned(probability);
-            } catch (Exception e) { // Any numerical error is bad news
-                return false;
-            }
-        }
-
-        public static boolean connectedAndWellConditioned(double[] probability,
-                                                          dr.evomodel.substmodel.SubstitutionModel substModel) {
-            if (probability == null) {
-                int stateCount = substModel.getDataType().getStateCount();
-                probability = new double[stateCount*stateCount];
-            }
-            try {
-                substModel.getTransitionProbabilities(defaultExpectedMutations,probability);
-                return connectedAndWellConditioned(probability);
-            } catch (Exception e) { // Any numerical error is bad news
-                return false;
-            }
-        }
-                
+        
         public static boolean connectedAndWellConditioned(double[] probability) {
             for(double prob : probability) {
                 if(prob <= 0 || prob > 1)

@@ -78,13 +78,6 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     /**
-     * @return the number of states in the burnin
-     */
-    public int getBurninStateCount() {
-        return (getBurnIn() / stepSize);
-    }
-
-    /**
      * @return the size of the step between states
      */
     public int getStepSize() {
@@ -159,10 +152,6 @@ public class LogFileTraces extends AbstractTraceList {
 
     public void getValues(int index, double[] destination, int offset) {
         getTrace(index).getValues((burnIn / stepSize), destination, offset);
-    }
-
-    public void getBurninValues(int index, double[] destination) {
-        getTrace(index).getValues(0, (burnIn / stepSize), destination, 0);
     }
 
     public void loadTraces() throws TraceException, IOException {
@@ -291,7 +280,24 @@ public class LogFileTraces extends AbstractTraceList {
      * @param numberOfLines a hint about the number of lines, must be > 0
      */
     private void addTrace(String name, int numberOfLines) {
-        traces.add(new Trace(name, numberOfLines));
+        int suffix = 0;
+        String uniqueName;
+        boolean isNameUnique;
+
+        // check if name is unique and keep incrementing a suffix until it is.
+        do {
+            isNameUnique = true;
+            uniqueName = name + (suffix > 0 ? "_" + suffix : "");
+            for (Trace trace : traces) {
+                if (trace.getName().equalsIgnoreCase(uniqueName)) {
+                    suffix++;
+                    isNameUnique = false;
+                    break;
+                }
+            }
+        } while (!isNameUnique);
+
+        traces.add(new Trace(uniqueName, numberOfLines));
     }
 
     /**

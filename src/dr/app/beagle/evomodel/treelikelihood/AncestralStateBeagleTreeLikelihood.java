@@ -95,7 +95,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return internalNodeCount + 2;
     }
 
-     protected boolean areStatesRedrawn = false;
+     private boolean areStatesRedrawn = false;
 
      public void redrawAncestralStates() {
          // Setup cumulate scale buffers
@@ -134,7 +134,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return sb.toString();
     }
 
-    protected void getPartials(int number, double[] partials) {
+    private void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
 //        if (useScaleFactors) {
 //            cumulativeBufferIndex = scaleBufferIndex;
@@ -145,7 +145,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number),cumulativeBufferIndex,partials);
     }
 
-    protected void getMatrix(int matrixNum, double[] probabilities) {
+    private void getMatrix(int matrixNum, double[] probabilities) {
         beagle.getTransitionMatrix(matrixBufferHelper.getOffsetIndex(matrixNum),probabilities);
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
@@ -212,11 +212,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 for (int j = 0; j < patternCount; j++) {
 
                     System.arraycopy(partials, j * stateCount, conditionalProbabilities, 0, stateCount);
-                    double[] frequencies = substitutionModel.getFrequencyModel().getFrequencies();
-                    for (int i = 0; i < stateCount; i++) {
-                        conditionalProbabilities[i] *= frequencies[i];
-                    }
-                    try {
+                    try { // TODO This is a hack, need to fix properly
                         state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                     } catch (Error e) {
                         System.err.println(e.toString());
@@ -250,8 +246,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
                 }
-
-                hookCalculation(tree, parent, node, parentState, state, probabilities);
             }
 
             // Traverse down the two child nodes
@@ -280,15 +274,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                 }
             }
-
-            hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null);
         }
-    }
-
-    protected void hookCalculation(Tree tree, NodeRef parentNode, NodeRef childNode,
-                                   int[] parentStates, int[] childStates,
-                                   double[] probabilities) {
-        // Do nothing
     }
 
     private DataType dataType;
@@ -297,7 +283,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     private int[][] tipStates;
 
-    protected SubstitutionModel substitutionModel;
+    private SubstitutionModel substitutionModel;
 
     private double[] probabilities;
     private double[] partials;

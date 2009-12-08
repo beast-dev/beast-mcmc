@@ -54,17 +54,12 @@ public interface SubstitutionModel extends Model {
     EigenDecomposition getEigenDecomposition();
 
     /**
+     * /**
      * get the state frequencies
      *
      * @return the frequencies
      */
     FrequencyModel getFrequencyModel();
-
-    /**
-     * Get the infinitesimal rate matrix
-     * @return the rates
-     */
-    public void getInfinitesimalMatrix(double[] matrix);
 
     /**
      * @return the data type

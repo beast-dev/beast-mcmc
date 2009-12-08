@@ -30,7 +30,6 @@ import dr.evolution.tree.*;
 import dr.gui.chart.*;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
-import dr.stats.Variate;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.TableRenderer;
@@ -75,9 +74,6 @@ public class TreesPanel extends JPanel implements Exportable {
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
     ScatterPlot rootToTipPlot;
-    JChartPanel residualPanel;
-    JChart residualChart;
-    ScatterPlot residualPlot;
 
     Map<Node, Integer> pointMap = new HashMap<Node, Integer>();
 
@@ -121,24 +117,14 @@ public class TreesPanel extends JPanel implements Exportable {
                 treeSelectionChanged();
             }
         });
-
         rootToTipChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
 
-        ChartSelector selector1 = new ChartSelector(rootToTipChart);
+        ChartSelector selector = new ChartSelector(rootToTipChart);
 
         rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
         rootToTipPanel.setOpaque(false);
 
         tabbedPane.add("Root-to-tip", rootToTipPanel);
-
-        residualChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
-
-        ChartSelector selector2 = new ChartSelector(residualChart);
-
-        residualPanel = new JChartPanel(residualChart, "", "time", "residual");
-        residualPanel.setOpaque(false);
-
-        tabbedPane.add("Residuals", residualPanel);
 
 //        textArea.setEditable(false);
 
@@ -176,7 +162,6 @@ public class TreesPanel extends JPanel implements Exportable {
                 selectedPoints.add(pointMap.get(node));
             }
             rootToTipPlot.setSelectedPoints(selectedPoints);
-            residualPlot.setSelectedPoints(selectedPoints);
         }
     }
 
@@ -251,46 +236,15 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append("User root");
             }
 
-            if (temporalRooting.isContemporaneous()) {
-                if (tabbedPane.getSelectedIndex() == 2) {
-                    tabbedPane.setSelectedIndex(1);
-                }
-                tabbedPane.setEnabledAt(2, false);
-            } else {
-                tabbedPane.setEnabledAt(2, true);
-            }
-
             RootedTree jtree = Tree.Utils.asJeblTree(currentTree);
 
             if (temporalRooting.isContemporaneous()) {
                 double values[] = temporalRooting.getRootToTipDistances(currentTree);
 
                 rootToTipChart.removeAllPlots();
-                DensityPlot dp = new DensityPlot(values, 20);
-                dp.setLineColor(new Color(9,70,15));
-
-                double yOffset = dp.getYData().getMax() / 2;
-                double[] dummyValues = new double[values.length];
-                for (int i = 0; i < dummyValues.length; i++) {
-                    dummyValues[i] = yOffset;
-                }
-
-                rootToTipPlot = new ScatterPlot(values, dummyValues);
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
-                rootToTipPlot.addListener(new Plot.Adaptor() {
-                    public void selectionChanged(final Set<Integer> selectedPoints) {
-                        plotSelectionChanged(selectedPoints);
-                    }
-                });
-
-                rootToTipChart.addPlot(rootToTipPlot);
-                rootToTipChart.addPlot(dp);
-                rootToTipPanel.setXAxisTitle("root-to-tip divergence");
-                rootToTipPanel.setYAxisTitle("proportion");
-
-                residualChart.removeAllPlots();
-
+                rootToTipChart.addPlot(new DensityPlot(values, 20));
+                rootToTipPanel.setXAxisTitle("time");
+                rootToTipPanel.setYAxisTitle("root-to-tip divergence");
                 sb.append(", contemporaneous tips");
                 sb.append(", mean root-tip distance: " + nf.format(DiscreteStatistics.mean(values)));
                 sb.append(", coefficient of variation: " + nf.format(DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values)));
@@ -315,49 +269,11 @@ public class TreesPanel extends JPanel implements Exportable {
                         plotSelectionChanged(selectedPoints);
                     }
                 });
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
                 rootToTipChart.addPlot(rootToTipPlot);
                 rootToTipChart.addPlot(new RegressionPlot(r));
                 rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
-                rootToTipPanel.setXAxisTitle("time");
-                rootToTipPanel.setYAxisTitle("root-to-tip divergence");
-
-                residualChart.removeAllPlots();
-                Variate values = r.getYResidualData();
-                DensityPlot dp = new DensityPlot(values, 20);
-                dp.setLineColor(new Color(103,128,144));
-
-                double yOffset = dp.getYData().getMax() / 2;
-                double[] dummyValues = new double[values.getCount()];
-                for (int i = 0; i < dummyValues.length; i++) {
-                    dummyValues[i] = yOffset;
-                }
-                Variate yOffsetValues = new Variate.Double(dummyValues);
-                residualPlot = new ScatterPlot(values, yOffsetValues);
-                residualPlot.addListener(new Plot.Adaptor() {
-                    public void selectionChanged(final Set<Integer> selectedPoints) {
-                        plotSelectionChanged(selectedPoints);
-                    }
-                });
-                residualPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                residualPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
-
-                residualChart.addPlot(residualPlot);
-                residualChart.addPlot(dp);
-                residualPanel.setXAxisTitle("residual");
-                residualPanel.setYAxisTitle("proportion");
-
-//                residualChart.removeAllPlots();
-//                residualPlot = new ScatterPlot(r.getXData(), r.getYResidualData());
-//                residualPlot.addListener(new Plot.Adaptor() {
-//                    public void selectionChanged(final Set<Integer> selectedPoints) {
-//                        plotSelectionChanged(selectedPoints);
-//                    }
-//                });
-//                residualChart.addPlot(residualPlot);
-//                residualPanel.setXAxisTitle("residual");
-//                residualPanel.setYAxisTitle("proportion");
+                rootToTipPanel.setXAxisTitle("root-to-tip divergence");
+                rootToTipPanel.setYAxisTitle("proportion");
 
                 sb.append(", dated tips");
                 sb.append(", date range: " + nf.format(temporalRooting.getDateRange()));

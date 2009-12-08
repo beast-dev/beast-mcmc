@@ -524,7 +524,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
                 new ElementRule(INDEPENDENT_VARIABLES,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class,true),
-                                new ElementRule(DesignMatrix.class),                                
+                                new ElementRule(DesignMatrix.class),
                                 new ElementRule(INDICATOR,
                                         new XMLSyntaxRule[]{
                                                 new ElementRule(Parameter.class)

@@ -33,11 +33,13 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.text.NumberFormat;
 
 
 /**
@@ -90,7 +92,16 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
         double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
 
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("error").severe("CoalescentLikelihood is " + Double.toString(lnL));
+            NumberFormat format = NumberFormat.getNumberInstance();
+            format.setMaximumFractionDigits(10);
+
+            StringBuilder parameterString = new StringBuilder();
+            for (int i = 0; i < demoModel.getVariableCount(); i++) {
+                Variable v = demoModel.getVariable(i);
+                parameterString.append(v.getVariableName()).append("=").append(format.format(v.getValue(0))).append("; ");
+            }
+            Logger.getLogger("error").severe("CoalescentLikelihood is " + Double.toString(lnL) + "; " + parameterString.toString());
+
 		}
 
 		return lnL;

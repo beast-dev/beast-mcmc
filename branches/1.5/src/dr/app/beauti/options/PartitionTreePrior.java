@@ -112,8 +112,8 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior("expansion.growthRate", "coalescent logistic growth rate parameter",
                 PriorScaleType.GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("expansion.doublingTime", "coalescent doubling time parameter",
-                PriorScaleType.TIME_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+        createParameterJeffreysPrior("expansion.doublingTime", "coalescent doubling time parameter",
+                PriorScaleType.TIME_SCALE, 0.5, 0.0001, Double.POSITIVE_INFINITY);
         createParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion",
                 PriorScaleType.NONE, 0.1, 0.0, 1.0);
 

@@ -144,12 +144,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL ||
-//                treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC || //TODO Issue 93
-                treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
+        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL) {
+//                || treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC  //TODO Issue 93
+//                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
             addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
             
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC) {//TODO Issue 93
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC //) {//TODO Issue 93
+                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
         	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
         	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
 

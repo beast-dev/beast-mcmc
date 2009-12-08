@@ -1,0 +1,109 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+	<normalDistributionModel id="normalDistribution" meanInRealSpace="false" >
+		<mean>
+   			<parameter id="mu" value="0"/>
+ 		</mean>
+ 		<precision>
+   			<parameter id="tau" value="2"/>
+		</precision>
+	</normalDistributionModel>
+
+	<distributionLikelihood id="hierarchicalModel">
+		<distribution>
+			<logNormalDistributionModel idref="normalDistribution"/>
+		</distribution>
+		<data>
+			<parameter id="data" value="1 2 3 4 5 6 7 8 9"/>
+ 		</data>
+	</distributionLikelihood>
+
+    <normalPrior id="normalMeanPrior" mean="0" stdev="1000">
+        <parameter idref="mu"/>
+    </normalPrior>
+
+    <gammaPrior id="gammaPrecisionPrior" shape="0.001" scale="1000" offset="0">
+        <parameter idref="tau"/>
+    </gammaPrior>
+
+    <reciprocalStatistic id="sigma2">
+        <parameter idref="tau"/>
+    </reciprocalStatistic>
+
+	<operators id="operators">
+        <normalNormalMeanGibbsOperator weight="1">
+            <likelihood>
+                <distributionLikelihood idref="hierarchicalModel"/>
+            </likelihood>
+            <prior>
+                <normalPrior idref="normalMeanPrior"/>
+            </prior>
+        </normalNormalMeanGibbsOperator>
+
+        <!--<randomWalkOperator windowSize="0.75" weight="1">-->
+            <!--<parameter idref="mu"/>-->
+        <!--</randomWalkOperator>-->
+
+        <normalGammaPrecisionGibbsOperator weight="1">
+            <likelihood>
+                <distributionLikelihood idref="hierarchicalModel"/>
+            </likelihood>
+            <prior>
+                <gammaPrior idref="gammaPrecisionPrior"/>
+            </prior>
+        </normalGammaPrecisionGibbsOperator>
+
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="tau"/>-->
+        <!--</scaleOperator>-->
+
+	</operators>
+
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood">
+                <distributionLikelihood idref="hierarchicalModel"/>
+            </likelihood>
+            <prior id="prior">
+                <!--<normalPrior idref="normalMeanPrior"/>-->
+                <gammaPrior idref="gammaPrecisionPrior"/>
+                <!--<jeffreysPrior>-->
+                    <!--<parameter idref="tau"/>-->
+                <!--</jeffreysPrior>-->
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+                <prior idref="prior"/>
+			</column>
+			<column label="Mean" sf="6" width="12">
+				<parameter idref="mu"/>
+			</column>
+			<column label="Precision" sf="6" width="12">
+				<parameter idref="tau"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testNormalModelGibbs.log">
+			<likelihood idref="likelihood"/>
+            <prior idref="prior"/>
+			<parameter idref="mu"/>
+			<parameter idref="tau"/>
+            <reciprocalStatistic idref="sigma2"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testNormalModelGibbs.log" stdError="true"/>
+	
+</beast>

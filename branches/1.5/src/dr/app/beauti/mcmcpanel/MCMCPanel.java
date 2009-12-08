@@ -42,6 +42,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import jam.mac.Utils;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -81,7 +83,12 @@ public class MCMCPanel extends BeautiPanel {
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
 
-        optionsPanel = new OptionsPanel(12, 6);
+        int verticalSpacing = 24;
+        if (Utils.isMacOSX()) {
+            // Mac OS X components have more spacing round them
+            verticalSpacing = 6;
+        }
+        optionsPanel = new OptionsPanel(12, verticalSpacing);
 
         this.frame = parent;
 

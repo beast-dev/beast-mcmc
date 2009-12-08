@@ -17,7 +17,7 @@
 
 
 Windows version README
-Last updated: alexei@cs.auckland.ac.nz - 3rd September 2009
+Last updated: alexei@cs.auckland.ac.nz - 9th December 2009
 
 Contents:
 1) INTRODUCTION
@@ -75,7 +75,7 @@ doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
 lib/            Java & native libraries used by BEAST 
 native/         some C code to compile into native libraries
-bin/        Scripts of the corresponding OS
+bin/            Scripts of the corresponding OS
 
 ___________________________________________________________________________
 3) CONVERTING SEQUENCES

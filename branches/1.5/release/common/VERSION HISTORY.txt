@@ -17,11 +17,11 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 1st December 2009
+Last updated: alexei@cs.auckland.ac.nz - 9th December 2009
 
 ================================================================================
 
-Version 1.5.3 released 1st December 2009
+Version 1.5.3 released 9th December 2009
 
     Bug Fixes
 		Many bugs fixed that were introduced in 1.5.2 including:
@@ -98,6 +98,15 @@ Version 1.5.3 released 1st December 2009
         Issue 255: Turn off parser WARNINGs by default for released version
         Issue 256: BEAUTi: Add comment in XML "skyride.logPopSize is log unit
                    unlike other popSize"
+        Issue 257: BEAUTi: Binary data and multiple partitions does not generate
+                   the siteModel correctly
+        Issue 259: BEAUTi: Mac OS MCMC panel problem
+        Issue 260: BEAUTi: correct English
+        Issue 261: Error parsing <traceAnalysis> element with id null
+        Issue 262: wrong XML of testCataclysmCoalescent.xml
+        Issue 264: ImportException: Number format error for <treeTraceAnalysis ...
+
+
 
 ================================================================================
 

@@ -221,12 +221,15 @@ public class MarkovJumpsCore {
         }
     }
 
-    public static void makeComparableToRPackage(double[] matrix) {
-        if (matrix.length != 16) {
-            throw new RuntimeException("Function constucted for nucleotides");
+    public static void makeComparableToRPackage(double[] matrix) {        
+        if (matrix.length == 16) {
+            swapRows(matrix,1,2,4);
+            swapCols(matrix,1,2,4);
+        } else if (matrix.length == 4) {
+            swapCols(matrix,1,2,1);
+        } else {
+             throw new RuntimeException("Function constructed for nucleotides");
         }
-        swapRows(matrix,1,2,4);
-        swapCols(matrix,1,2,4);
     }
 
     private int stateCount;

@@ -468,7 +468,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 }
 
                 if (xo.hasChildNamed(MISSING)) {
-                    XMLObject cxo = (XMLObject) xo.getChild(MISSING);
+                    XMLObject cxo = xo.getChild(MISSING);
                     Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
                     for (int i : missingIndices) {
                         missingParameter.setParameterValue(i, 1.0);
@@ -492,16 +492,16 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
-                XMLObject cxo = (XMLObject) xo.getChild(SAMPLING_DENSITY);
+                XMLObject cxo = xo.getChild(SAMPLING_DENSITY);
                 samplingDensity = (Model) cxo.getChild(Model.class);
             }
             if (xo.hasChildNamed(RANDOMIZE)) {
-                XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
+                XMLObject cxo = xo.getChild(RANDOMIZE);
                 traits = (Parameter) cxo.getChild(Parameter.class);
             }
 
             if (xo.hasChildNamed(CHECK)) {
-                XMLObject cxo = (XMLObject) xo.getChild(CHECK);
+                XMLObject cxo = xo.getChild(CHECK);
                 check = (Parameter) cxo.getChild(Parameter.class);
             }
 

@@ -61,17 +61,18 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
     }
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        if (tree != treeModel) {
-            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
-        }
+        return new String[]{formattedState(getStatesForNode(tree,node), dataType)};
+    }
 
-        if (!areStatesRedrawn) {
-            redrawAncestralStates();
-        }
+    public int[] getStatesForNode(Tree tree, NodeRef node) {
+         if (tree != treeModel) {
+             throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+         }
 
-        return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
-
-
+         if (!areStatesRedrawn) {
+             redrawAncestralStates();
+         }
+         return reconstructedStates[node.getNumber()];
     }
 
     private boolean areStatesRedrawn = false;

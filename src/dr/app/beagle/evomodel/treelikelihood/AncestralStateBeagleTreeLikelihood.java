@@ -78,6 +78,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     }
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
+        return new String[]{formattedState(getStatesForNode(tree,node), dataType)};
+    }
+
+    public int[] getStatesForNode(Tree tree, NodeRef node) {
          if (tree != treeModel) {
              throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
          }
@@ -85,10 +89,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
          if (!areStatesRedrawn) {
              redrawAncestralStates();
          }
-
-         return new String[]{formattedState(reconstructedStates[node.getNumber()], dataType)};
-
-     }
+         return reconstructedStates[node.getNumber()];
+    }
 
     @Override
      protected int getScaleBufferCount() {

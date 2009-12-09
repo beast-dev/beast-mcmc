@@ -79,7 +79,7 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
+        final Logger infoLogger = Logger.getLogger("dr.app.beast");
         try {
 
             FileReader fileReader = new FileReader(inputFile);

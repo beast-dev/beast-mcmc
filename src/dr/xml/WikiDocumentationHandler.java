@@ -25,6 +25,8 @@
 
 package dr.xml;
 
+import dr.app.beast.BeastParser;
+
 import java.io.*;
 import java.util.*;
 
@@ -33,7 +35,7 @@ import java.util.*;
  */
 public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
-    public WikiDocumentationHandler(XMLParser parser) {
+    public WikiDocumentationHandler(BeastParser parser) {
         super(parser);
     }
 
@@ -59,6 +61,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
     /**
      * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
+     * @param writer PrintWriter
      */
     public void outputTypes(PrintWriter writer) {
 

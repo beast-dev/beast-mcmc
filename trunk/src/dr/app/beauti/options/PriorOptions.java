@@ -26,7 +26,6 @@ package dr.app.beauti.options;
 import java.util.List;
 
 import dr.app.beauti.enumTypes.FixRateType;
-import dr.math.MathUtils;
 
 
 /**
@@ -54,10 +53,10 @@ public class PriorOptions extends ModelOptions {
     public void selectParameters(List<Parameter> params) {    	    	
         
         double growthRateMaximum = 1E6;
-        double birthRateMaximum = 1E6;
-        double substitutionRateMaximum = 100;
-        double logStdevMaximum = 10;
-        double substitutionParameterMaximum = 100;
+//        double birthRateMaximum = 1E6;
+//        double substitutionRateMaximum = 100;
+//        double logStdevMaximum = 10;
+//        double substitutionParameterMaximum = 100;
                 
         double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.dataPartitions);
         double avgInitialRootHeight = rootAndRate[0];
@@ -67,7 +66,7 @@ public class PriorOptions extends ModelOptions {
     			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
         	
             growthRateMaximum = 1E6 * avgInitialRate;
-            birthRateMaximum = 1E6 * avgInitialRate;   
+//            birthRateMaximum = 1E6 * avgInitialRate;
         }
         
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
@@ -90,7 +89,7 @@ public class PriorOptions extends ModelOptions {
 //            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
 //        }
 
-        double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
+//        double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
 
         for (Parameter param : params) {
             if (!options.hasData()) param.setPriorEdited(false);
@@ -98,41 +97,41 @@ public class PriorOptions extends ModelOptions {
             if (!param.isPriorEdited()) {
                 switch (param.scaleType) {
                     case TIME_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(timeScaleMaximum, param.upper);
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight;
                         break;
                         
                     case T50_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(timeScaleMaximum, param.upper);
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight / 5.0;
                         break;
                         
                     case GROWTH_RATE_SCALE:
-                        param.lower = Math.max(-growthRateMaximum, param.lower);
-                        param.upper = Math.min(growthRateMaximum, param.upper);
+//                        param.lower = Math.max(-growthRateMaximum, param.lower);
+                        //param.upper = Math.min(growthRateMaximum, param.upper);
                         break;
                         
                     case BIRTH_RATE_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(birthRateMaximum, param.upper);
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(birthRateMaximum, param.upper);
                         break;
                         
                     case SUBSTITUTION_RATE_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(substitutionRateMaximum, param.upper);                        
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(substitutionRateMaximum, param.upper);
                         param.initial = avgInitialRate;                                             
                         break;
                         
                     case LOG_STDEV_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(logStdevMaximum, param.upper);
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(logStdevMaximum, param.upper);
                         break;
                         
                     case SUBSTITUTION_PARAMETER_SCALE:
-                        param.lower = Math.max(0.0, param.lower);
-                        param.upper = Math.min(substitutionParameterMaximum, param.upper);
+//                        param.lower = Math.max(0.0, param.lower);
+                        //param.upper = Math.min(substitutionParameterMaximum, param.upper);
                         break;
 
                     case UNITY_SCALE:
@@ -156,7 +155,7 @@ public class PriorOptions extends ModelOptions {
                 
                 if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
                     param.lower = options.maximumTipHeight;
-                    param.upper = timeScaleMaximum;
+//                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
                     if (param.getOptions() instanceof PartitionTreeModel) {
                         param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();

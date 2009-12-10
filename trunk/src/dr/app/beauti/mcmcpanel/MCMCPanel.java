@@ -29,9 +29,8 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.util.OSType;
-
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
@@ -64,13 +63,16 @@ public class MCMCPanel extends BeautiPanel {
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
     JTextField logFileNameField = new JTextField(fileNameStem + ".log");
-    JTextField treeFileNameField = new JTextField(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JTextField treeFileNameField = new JTextField(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
 
     JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
     JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
 
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
+
+    JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
+    JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
 
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
@@ -79,7 +81,12 @@ public class MCMCPanel extends BeautiPanel {
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
 
-        optionsPanel = new OptionsPanel(12, 24);
+        int verticalSpacing = 24;
+        if (OSType.isMac()) {
+            // Mac OS X components have more spacing round them
+            verticalSpacing = 6;
+        }
+        optionsPanel = new OptionsPanel(12, verticalSpacing);
 
         this.frame = parent;
 
@@ -196,7 +203,23 @@ public class MCMCPanel extends BeautiPanel {
         substTreeFileNameField.setColumns(32);
         substTreeFileNameField.setEditable(false);
         substTreeFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);       
+        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
+
+        optionsPanel.addComponent(operatorAnalaysisCheck);
+        operatorAnalaysisCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
+                
+                updateOtherFileNames(options);
+
+                frame.setDirty();
+            }
+        });
+        
+        operatorAnalaysisFileNameField.setColumns(32);
+        operatorAnalaysisFileNameField.setEditable(false);
+        operatorAnalaysisFileNameField.setEnabled(false);
+        optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalaysisFileNameField);
 
         optionsPanel.addSeparator();
 
@@ -213,8 +236,13 @@ public class MCMCPanel extends BeautiPanel {
         //mapTreeFileNameField.addKeyListener(listener);
 //        substTreeFileNameField.addKeyListener(listener);
 
-        add(optionsPanel, BorderLayout.CENTER);
+        optionsPanel.setPreferredSize(new java.awt.Dimension(1024, 700));
+        optionsPanel.setMinimumSize(new java.awt.Dimension(1024, 700));
+//        JScrollPane scrollPane = new JScrollPane(optionsPanel);
+//        scrollPane.setOpaque(false);
+//        add(scrollPane, BorderLayout.CENTER);
 
+        add(optionsPanel, BorderLayout.CENTER);
     }
 
     private void updateTreeFileNameList(){
@@ -224,15 +252,15 @@ public class MCMCPanel extends BeautiPanel {
             
     	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
     		if (options.substTreeLog) {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             } else {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFN = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
             if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
             options.treeFileName.add(treeFN);
             
             if (options.substTreeLog) {
-            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
+            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
             	options.substTreeFileName.add(treeFN);
             }            
@@ -272,7 +300,9 @@ public class MCMCPanel extends BeautiPanel {
             fileNameStemField.setText(fileNameStem);
             fileNameStemField.setEnabled(false);
         }
-        
+
+        operatorAnalaysisCheck.setSelected(options.operatorAnalysis);
+
         updateOtherFileNames(options);
 
         samplePriorCheckBox.setSelected(options.samplePriorOnly);
@@ -304,6 +334,17 @@ public class MCMCPanel extends BeautiPanel {
                 substTreeFileNameField.setText("");
             }
 
+            options.operatorAnalysisFileName = options.fileNameStem + ".ops";
+            if (addTxt.isSelected()) {
+                options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
+            }
+            operatorAnalaysisFileNameField.setEnabled(options.operatorAnalysis);
+            if (options.operatorAnalysis) {
+                operatorAnalaysisFileNameField.setText(options.operatorAnalysisFileName);
+            } else {
+                operatorAnalaysisFileNameField.setText("");
+            }
+            
 //            mapTreeLogCheck.setEnabled(true);
 //            mapTreeLogCheck.setSelected(options.mapTreeLog);
 //            mapTreeFileNameField.setEnabled(options.mapTreeLog);
@@ -315,13 +356,15 @@ public class MCMCPanel extends BeautiPanel {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
             logFileNameField.setText(fileNameStem + ".log");
-            treeFileNameField.setText(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+            treeFileNameField.setText(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");
-            substTreeLogCheck.setEnabled(false);
+            substTreeLogCheck.setSelected(false);
             substTreeFileNameField.setEnabled(false);
-            substTreeFileNameField.setText("untitled");
+            substTreeFileNameField.setText("");
+            operatorAnalaysisCheck.setSelected(false);
+            operatorAnalaysisFileNameField.setText("");
         }
     }
 
@@ -334,6 +377,9 @@ public class MCMCPanel extends BeautiPanel {
 
         options.substTreeLog = substTreeLogCheck.isSelected();
         updateTreeFileNameList();
+
+        options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
+        options.operatorAnalysisFileName = operatorAnalaysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
     }

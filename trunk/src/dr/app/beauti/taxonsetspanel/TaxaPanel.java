@@ -28,10 +28,12 @@ package dr.app.beauti.taxonsetspanel;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
+import dr.evolution.alignment.Alignment;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
@@ -65,10 +67,12 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     BeautiOptions options = null;
 
-    private TaxonList taxa = null;
+//    private TaxonList taxa = null;
     private JTable taxonSetsTable = null;
+    private final TableColumnModel tableColumnModel;
     private TaxonSetsTableModel taxonSetsTableModel = null;
-
+    ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
+    
     private JPanel taxonSetEditingPanel = null;
 
     private Taxa currentTaxonSet = null;
@@ -103,12 +107,17 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         // Taxon Sets
         taxonSetsTableModel = new TaxonSetsTableModel();
         taxonSetsTable = new JTable(taxonSetsTableModel);
-        final TableColumnModel model = taxonSetsTable.getColumnModel();
-        final TableColumn tableColumn0 = model.getColumn(0);
-        tableColumn0.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        tableColumn0.setMinWidth(20);
+        taxonSetsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        //final TableColumn tableColumn1 = model.getColumn(1);
+        tableColumnModel = taxonSetsTable.getColumnModel();
+        TableColumn tableColumn = tableColumnModel.getColumn(0);
+        tableColumn.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        tableColumn.setMinWidth(20);
+        tableColumn = tableColumnModel.getColumn(1);
+        tableColumn.setPreferredWidth(10);
+        tableColumn = tableColumnModel.getColumn(2);
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        tableColumn.setCellRenderer(comboBoxRenderer);
 
         taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
@@ -245,7 +254,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         c.gridx = 0;
         c.gridy = 0;
-        c.weightx = 0.4;
+        c.weightx = 0.5;
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
@@ -263,7 +272,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         c.gridx = 1;
         c.gridy = 0;
-        c.weightx = 0.6;
+        c.weightx = 0.5;
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.CENTER;
@@ -380,11 +389,16 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         frame.setDirty();
     }
+
+    private void treeModelsChanged() {
+        Object[] modelArray = options.getPartitionTreeModels().toArray();
+        TableColumn col = tableColumnModel.getColumn(2);
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+    }
     
     private void resetPanel() {
-        if (!options.hasData()) {
-            includedTaxa.clear();
-            excludedTaxa.clear();
+        if (!options.hasData() || options.taxonSets == null || options.taxonSets.size() < 1) {
+            setCurrentTaxonSet(null);
         }
     }
 
@@ -394,14 +408,13 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         
         resetPanel();
 
-        taxa = options.taxonList;
-        if (taxa == null) {
+        if (options.taxonSets == null) {
             addTaxonSetAction.setEnabled(false);
             removeTaxonSetAction.setEnabled(false);
         } else {
             addTaxonSetAction.setEnabled(true);
         }
-
+                
         taxonSetsTableSelectionChanged();
         taxonSetsTableModel.fireTableDataChanged();
 
@@ -431,6 +444,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     }
 
     private void taxonSetsTableSelectionChanged() {
+        treeModelsChanged();
+                
         int[] rows = taxonSetsTable.getSelectedRows();
         if (rows.length == 0) {
             removeTaxonSetAction.setEnabled(false);
@@ -462,7 +477,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             taxonSetCount++;
-            currentTaxonSet = new Taxa("untitled" + taxonSetCount);
+            // initialize currentTaxonSet with 1st PartitionTreeModel            
+            currentTaxonSet = new Taxa("untitled" + taxonSetCount, options.getPartitionTreeModels().get(0));
 
             options.taxonSets.add(currentTaxonSet);
             Collections.sort(options.taxonSets);
@@ -516,6 +532,9 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             }
             Collections.sort(includedTaxa);
 
+            // get taxa associated to each tree
+            Alignment alignment = currentTaxonSet.getTreeModel().getAllPartitionData().get(0).getAlignment();
+            Taxa taxa = new Taxa(alignment);    
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 excludedTaxa.add(taxa.getTaxon(i));
             }
@@ -599,18 +618,29 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
+    /**
+     * The table on the left side of panel
+     */
     class TaxonSetsTableModel extends AbstractTableModel {
-
-        /**
-         *
-         */
         private static final long serialVersionUID = 3318461381525023153L;
 
         public TaxonSetsTableModel() {
         }
 
         public int getColumnCount() {
-            return 2;
+            return 3;
+        }        
+
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0:
+                    return "Taxon Sets";
+                case 1:
+                    return "Monophyletic?";
+                case 2:
+                    return "Tree";
+            }
+            return null;
         }
 
         public int getRowCount() {
@@ -625,6 +655,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                     return taxonSet.getId();
                 case 1:
                     return options.taxonSetsMono.get(taxonSet);
+                case 2:
+                    return taxonSet.getTreeModel();
             }
             return null;
         }
@@ -648,21 +680,14 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                     }
                     break;
                 }
+                case 2:
+                    taxonSet.setTreeModel((PartitionTreeModel) aValue);
+                    break;
             }
         }
 
         public boolean isCellEditable(int row, int col) {
             return true;
-        }
-
-        public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Taxon Sets";
-                case 1:
-                    return "Monophyletic?";
-            }
-            return null;
         }
 
         public Class getColumnClass(int c) {

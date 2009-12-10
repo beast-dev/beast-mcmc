@@ -196,9 +196,9 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 
-            para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME);
+            para = options.starBEASTOptions.getParameter(TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.BIRTHDIFF_RATE_PARAM_NAME),
+                    new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME),
                     new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
                     new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
                     new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);

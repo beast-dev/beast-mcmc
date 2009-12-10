@@ -30,9 +30,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.enumTypes.TipDateSamplingType;
-import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
 import dr.evoxml.DateUnitsType;
@@ -220,7 +218,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 tipDateSamplingLabel.setEnabled(enabled);
                 
                 frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
-                
+                    
             }
         });
 
@@ -247,7 +245,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 break;
         }
 
-        boolean backwards = (DateUnitsType) directionCombo.getSelectedItem() == DateUnitsType.BACKWARDS;
+        boolean backwards = directionCombo.getSelectedItem() == DateUnitsType.BACKWARDS;
 
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             Date date = options.taxonList.getTaxon(i).getDate();
@@ -260,6 +258,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         calculateHeights();
 
+        if (options.clockModelOptions.isTipCalibrated()) {
+            options.clockModelOptions.tipTimeCalibration();
+        }
+        
         dataTableModel.fireTableDataChanged();
         frame.setDirty();
     }
@@ -433,17 +435,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
             }
         }
-        
-        if (options.clockModelOptions.isTipCalibrated()) {
-//        	frame.removeSpecifiedTreePrior(true);
-            options.clockModelOptions.tipTimeCalibration();
-                
-//        } else if (options.clockModelOptions.getRateOptionClockModel() != FixRateType.NODE_CALIBRATED 
-//                && options.clockModelOptions.getRateOptionClockModel() != FixRateType.RATE_CALIBRATED){
-//            frame.removeSpecifiedTreePrior(false);
-//            options.clockModelOptions.fixRateOfFirstClockPartition();
-        }   
-        
+
         frame.setStatusMessage();
     }
 

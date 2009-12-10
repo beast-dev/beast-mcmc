@@ -3,17 +3,13 @@ package dr.app.beauti.generator;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.evomodel.substmodel.NucModelType;
 import dr.app.beauti.options.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.BinaryCovarionModel;
-import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GTR;
-import dr.evomodel.substmodel.TN93;
+import dr.evomodel.substmodel.*;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
 import dr.evoxml.AlignmentParser;
@@ -23,6 +19,8 @@ import dr.inference.model.ParameterParser;
 import dr.inference.model.CompoundParameter;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -274,7 +272,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
                 for (PartitionData partition : model.getAllPartitionData()) { //?
-                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getName() + "." + SitePatternsParser.PATTERNS);                        
+                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);                        
                 }           
             } else { 
                 for (PartitionData partition : model.getAllPartitionData()) { //?
@@ -300,7 +298,7 @@ public class SubstitutionModelGenerator extends Generator {
                 BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bsimple")}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeOpenTag(GeneralSubstitutionModel.FREQUENCIES);
         writer.writeOpenTag(
                 FrequencyModel.FREQUENCY_MODEL,
                 new Attribute[]{
@@ -313,7 +311,7 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelBinary(writer, model, prefix);
         
         writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeCloseTag(GeneralSubstitutionModel.FREQUENCIES);
 
         writer.writeCloseTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
     }
@@ -325,6 +323,7 @@ public class SubstitutionModelGenerator extends Generator {
      * @param model  the partition model to write
      */
     public void writeBinaryCovarionModel(XMLWriter writer, PartitionSubstitutionModel model) {
+//        String dataTypeDescription = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion" for COVARION_MODEL
         String prefix = model.getPrefix();
 
         writer.writeComment("The Binary covarion model");
@@ -333,13 +332,30 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
-        writeParameter(BinaryCovarionModel.FREQUENCIES, // TODO
-                prefix + "frequencies", 2, 0.5, 0.0, 1.0, writer);
+        // merge patterns then get frequencies.
+
+        if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
+            List<PartitionData> partitions = model.getAllPartitionData();
+
+            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
+            for (int i = 1; i < partitions.size(); i++) {
+                patterns.addPatterns(partitions.get(i).getAlignment());
+            }
+            double[] frequencies = patterns.getStateFrequencies();
+            writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
+                            new Attribute.Default<String>(ParameterParser.VALUE, frequencies[0] + " " + frequencies[1]) }, true);
+            writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+
+        } else {
+           writeFrequencyModelBinary(writer, model, prefix);
+        }
 
         writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
-                prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer);
+                prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer); // hfrequencies also 0.5 0.5
 
-        writeParameter(BinaryCovarionModel.ALPHA, "alpha", model, writer);
+        writeParameter(BinaryCovarionModel.ALPHA, "bcov.alpha", model, writer);
         writeParameter(BinaryCovarionModel.SWITCHING_RATE, "bcov.s", model, writer);
 
         writer.writeCloseTag(BinaryCovarionModel.COVARION_MODEL);
@@ -356,9 +372,8 @@ public class SubstitutionModelGenerator extends Generator {
                         new Attribute.Default<String>(ParameterParser.VALUE, "0.5 0.5") }, true);                
                 break;
                 
-            case EMPIRICAL:                
+            case EMPIRICAL:
                 writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
-                  
                 break;
         }
 //        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -510,7 +525,7 @@ public class SubstitutionModelGenerator extends Generator {
                     case BIN_SIMPLE:
                         break;
                     case BIN_COVARION:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "alpha");
+                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.alpha");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.s");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "frequencies");
                         writer.writeIDref(ParameterParser.PARAMETER, prefix + "hfrequencies");
@@ -664,10 +679,10 @@ public class SubstitutionModelGenerator extends Generator {
         switch (model.getBinarySubstitutionModel()) {
             case BIN_SIMPLE:
                 //writer.writeIDref(dr.evomodel.substmodel.GeneralSubstitutionModel.GENERAL_SUBSTITUTION_MODEL, "bsimple");
-                writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, "bsimple");
+                writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, prefix + "bsimple");
                 break;
             case BIN_COVARION:
-                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, "bcov");
+                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, prefix + "bcov");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");

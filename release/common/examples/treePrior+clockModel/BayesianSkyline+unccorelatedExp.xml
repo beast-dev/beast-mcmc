@@ -102,24 +102,11 @@
 		<alignment idref="alignment"/>
 	</patterns>
 	
-	<!-- A prior assumption that the population size has grown exponentially     -->
-	<!-- from some ancestral population size in the past.                        -->
-	<expansion id="expansion" units="substitutions">
-		<populationSize>
-			<parameter id="expansion.popSize" value="1.0" lower="0.0" upper="Infinity"/>
-		</populationSize>
-		<growthRate>
-			<parameter id="expansion.growthRate" value="0.0010" lower="0.0" upper="1000000.0"/>
-		</growthRate>
-		<ancestralPopulationProportion>
-			<parameter id="expansion.ancestralProportion" value="0.1" lower="0.0" upper="1.0"/>
-		</ancestralPopulationProportion>
-	</expansion>
 	<!-- This is a simple constant population size coalescent model              -->
 	<!-- that is used to generate an initial tree for the chain.                 -->
 	<constantSize id="initialDemo" units="substitutions">
 		<populationSize>
-			<parameter idref="expansion.popSize"/>
+			<parameter id="initialDemo.popSize" value="100.0"/>
 		</populationSize>
 	</constantSize>
 	
@@ -144,22 +131,54 @@
 		</nodeHeights>
 	</treeModel>
 	
-	<!-- Generate a coalescent likelihood                                        -->
-	<coalescentLikelihood id="coalescent">
-		<model>
-			<expansion idref="expansion"/>
-		</model>
+	<!-- Generate a generalizedSkyLineLikelihood for Bayesian Skyline            -->
+	<generalizedSkyLineLikelihood id="skyline" linear="false">
+		<populationSizes>
+			<parameter id="skyline.popSize" dimension="10" value="1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0" lower="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" upper="1000.0 1000.0 1000.0 1000.0 1000.0 1000.0 1000.0 1000.0 1000.0 1000.0"/>
+		</populationSizes>
+		<groupSizes>
+			<parameter id="skyline.groupSize" dimension="10"/>
+		</groupSizes>
 		<populationTree>
 			<treeModel idref="treeModel"/>
 		</populationTree>
-	</coalescentLikelihood>
+	</generalizedSkyLineLikelihood>
 	
-	<!-- The strict clock (Uniform rates across branches)                        -->
-	<strictClockBranchRates id="branchRates">
-		<rate>
-			<parameter id="clock.rate" value="1.0"/>
-		</rate>
-	</strictClockBranchRates>
+	<exponentialMarkovLikelihood id="eml1" jeffreys="true">
+		<chainParameter>
+			<parameter idref="skyline.popSize"/>
+		</chainParameter>
+	</exponentialMarkovLikelihood>
+	
+	<!-- The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006) -->
+	<discretizedBranchRates id="branchRates">
+		<treeModel idref="treeModel"/>
+		<distribution>
+			<exponentialDistributionModel>
+				<mean>
+					<parameter id="uced.mean" value="1.0"/>
+				</mean>
+			</exponentialDistributionModel>
+		</distribution>
+		<rateCategories>
+			<parameter id="branchRates.categories" dimension="30"/>
+		</rateCategories>
+	</discretizedBranchRates>
+	
+	<rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">
+		<treeModel idref="treeModel"/>
+		<discretizedBranchRates idref="branchRates"/>
+	</rateStatistic>
+	
+	<rateStatistic id="coefficientOfVariation" name="coefficientOfVariation" mode="coefficientOfVariation" internal="true" external="true">
+		<treeModel idref="treeModel"/>
+		<discretizedBranchRates idref="branchRates"/>
+	</rateStatistic>
+	
+	<rateCovarianceStatistic id="covariance" name="covariance">
+		<treeModel idref="treeModel"/>
+		<discretizedBranchRates idref="branchRates"/>
+	</rateCovarianceStatistic>
 	
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="hky">
@@ -186,7 +205,7 @@
 		<patterns idref="Darwins-finches.patterns"/>
 		<treeModel idref="treeModel"/>
 		<siteModel idref="siteModel"/>
-		<strictClockBranchRates idref="branchRates"/>
+		<discretizedBranchRates idref="branchRates"/>
 	</treeLikelihood>
 	
 	<!-- Define operators                                                        -->
@@ -209,15 +228,21 @@
 		<uniformOperator weight="30">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="expansion.popSize"/>
+		<scaleOperator scaleFactor="0.75" weight="15">
+			<parameter idref="skyline.popSize"/>
 		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="expansion.growthRate"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="expansion.ancestralProportion"/>
-		</scaleOperator>
+		<deltaExchange delta="1" integer="true" weight="6" autoOptimize="false">
+			<parameter idref="skyline.groupSize"/>
+		</deltaExchange>
+		<swapOperator size="1" weight="10" autoOptimize="false">
+			<parameter idref="branchRates.categories"/>
+		</swapOperator>
+		<randomWalkIntegerOperator windowSize="1" weight="10">
+			<parameter idref="branchRates.categories"/>
+		</randomWalkIntegerOperator>
+		<uniformIntegerOperator weight="10">
+			<parameter idref="branchRates.categories"/>
+		</uniformIntegerOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="kappa"/>
 		</scaleOperator>
@@ -231,12 +256,10 @@
 		<posterior id="posterior">
 			<prior id="prior">
 				<oneOnXPrior>
-					<parameter idref="expansion.popSize"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
 					<parameter idref="kappa"/>
 				</oneOnXPrior>
-				<coalescentLikelihood idref="coalescent"/>
+				<generalizedSkyLineLikelihood idref="skyline"/>
+				<exponentialMarkovLikelihood idref="eml1"/>
 				
 			</prior>
 			<likelihood id="likelihood">
@@ -259,29 +282,31 @@
 				<parameter idref="treeModel.rootHeight"/>
 			</column>
 			<column label="Rate" sf="6" width="12">
-				<parameter idref="clock.rate"/>
+				<rateStatistic idref="meanRate"/>
 			</column>
 		</log>
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="x4.log">
+		<log id="fileLog" logEvery="1000" fileName="x5.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
 			<parameter idref="treeModel.rootHeight"/>
-			<parameter idref="clock.rate"/>
-			<parameter idref="expansion.popSize"/>
-			<parameter idref="expansion.growthRate"/>
-			<parameter idref="expansion.ancestralProportion"/>
+			<rateStatistic idref="meanRate"/>
+			<parameter idref="skyline.popSize"/>
+			<parameter idref="skyline.groupSize"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
+			<parameter idref="uced.mean"/>
+			<rateStatistic idref="coefficientOfVariation"/>
+			<rateCovarianceStatistic idref="covariance"/>
 			<treeLikelihood idref="Darwins-finches.treeLikelihood"/>
-			<coalescentLikelihood idref="coalescent"/>
+			<generalizedSkyLineLikelihood idref="skyline"/>
 			
 		</log>
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="x4.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="x5.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
-			<strictClockBranchRates idref="branchRates"/>
+			<discretizedBranchRates idref="branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
 	</mcmc>

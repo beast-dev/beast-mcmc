@@ -807,30 +807,11 @@
 	</alignment>
 	
 	
-	<!-- The unique patterns for codon positions 1                               -->
-	<mergePatterns id="26.CP1.26.patterns">
-		<!-- The unique patterns from 1 to end every 3                               -->
-		<!-- npatterns=78                                                            -->
-		<patterns from="1" every="3">
-			<alignment idref="alignment1"/>
-		</patterns>
-	</mergePatterns>
-	<!-- The unique patterns for codon positions 2                               -->
-	<mergePatterns id="26.CP2.26.patterns">
-		<!-- The unique patterns from 2 to end every 3                               -->
-		<!-- npatterns=67                                                            -->
-		<patterns from="2" every="3">
-			<alignment idref="alignment1"/>
-		</patterns>
-	</mergePatterns>
-	<!-- The unique patterns for codon positions 3                               -->
-	<mergePatterns id="26.CP3.26.patterns">
-		<!-- The unique patterns from 3 to end every 3                               -->
-		<!-- npatterns=69                                                            -->
-		<patterns from="3" every="3">
-			<alignment idref="alignment1"/>
-		</patterns>
-	</mergePatterns>
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=144                                                           -->
+	<patterns id="26.patterns" from="1">
+		<alignment idref="alignment1"/>
+	</patterns>
 	
 	
 	<!-- The unique patterns from 1 to end                                       -->
@@ -1085,8 +1066,8 @@
 		</rate>
 	</strictClockBranchRates>
 	
-	<!-- The general time reversible (GTR) substitution model                    -->
-	<gtrModel id="26.gtr">
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<HKYModel id="26.hky">
 		<frequencies>
 			<frequencyModel dataType="nucleotide">
 				<frequencies>
@@ -1094,22 +1075,10 @@
 				</frequencies>
 			</frequencyModel>
 		</frequencies>
-		<rateAC>
-			<parameter id="26.ac" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</rateAC>
-		<rateAG>
-			<parameter id="26.ag" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</rateAG>
-		<rateAT>
-			<parameter id="26.at" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</rateAT>
-		<rateCG>
-			<parameter id="26.cg" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</rateCG>
-		<rateGT>
-			<parameter id="26.gt" value="1.0" lower="1.0E-8" upper="Infinity"/>
-		</rateGT>
-	</gtrModel>
+		<kappa>
+			<parameter id="26.kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
+		</kappa>
+	</HKYModel>
 	
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
 	<HKYModel id="29.hky">
@@ -1196,50 +1165,16 @@
 	</HKYModel>
 	
 	<!-- site model                                                              -->
-	<siteModel id="26.CP1.siteModel">
+	<siteModel id="26.siteModel">
 		<substitutionModel>
-			<gtrModel idref="26.gtr"/>
-			<relativeRate>
-				<parameter id="26.CP1.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
+			<HKYModel idref="26.hky"/>
 		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="26.CP1.alpha" value="0.5" lower="0.0" upper="1000.0"/>
-		</gammaShape>
 	</siteModel>
-	<!-- site model                                                              -->
-	<siteModel id="26.CP2.siteModel">
-		<substitutionModel>
-			<gtrModel idref="26.gtr"/>
-			<relativeRate>
-				<parameter id="26.CP2.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
-		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="26.CP2.alpha" value="0.5" lower="0.0" upper="1000.0"/>
-		</gammaShape>
-	</siteModel>
-	<!-- site model                                                              -->
-	<siteModel id="26.CP3.siteModel">
-		<substitutionModel>
-			<gtrModel idref="26.gtr"/>
-			<relativeRate>
-				<parameter id="26.CP3.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
-		</substitutionModel>
-		<gammaShape gammaCategories="4">
-			<parameter id="26.CP3.alpha" value="0.5" lower="0.0" upper="1000.0"/>
-		</gammaShape>
-	</siteModel>
-
 	
 	<!-- site model                                                              -->
 	<siteModel id="29.siteModel">
 		<substitutionModel>
 			<HKYModel idref="29.hky"/>
-			<relativeRate>
-				<parameter id="29.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1247,9 +1182,6 @@
 	<siteModel id="47.siteModel">
 		<substitutionModel>
 			<HKYModel idref="47.hky"/>
-			<relativeRate>
-				<parameter id="47.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1257,9 +1189,6 @@
 	<siteModel id="53.siteModel">
 		<substitutionModel>
 			<HKYModel idref="53.hky"/>
-			<relativeRate>
-				<parameter id="53.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1267,9 +1196,6 @@
 	<siteModel id="59.siteModel">
 		<substitutionModel>
 			<HKYModel idref="59.hky"/>
-			<relativeRate>
-				<parameter id="59.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1277,9 +1203,6 @@
 	<siteModel id="64.siteModel">
 		<substitutionModel>
 			<HKYModel idref="64.hky"/>
-			<relativeRate>
-				<parameter id="64.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
@@ -1287,40 +1210,13 @@
 	<siteModel id="72.siteModel">
 		<substitutionModel>
 			<HKYModel idref="72.hky"/>
-			<relativeRate>
-				<parameter id="72.mu" value="1.0" lower="0.0" upper="Infinity"/>
-			</relativeRate>
 		</substitutionModel>
 	</siteModel>
 	
-	<compoundParameter id="allMus">
-		<parameter idref="26.CP1.mu"/>
-		<parameter idref="26.CP2.mu"/>
-		<parameter idref="26.CP3.mu"/>
-		<parameter idref="29.mu"/>
-		<parameter idref="47.mu"/>
-		<parameter idref="53.mu"/>
-		<parameter idref="59.mu"/>
-		<parameter idref="64.mu"/>
-		<parameter idref="72.mu"/>
-	</compoundParameter>
-	
-	<treeLikelihood id="26.CP1.26.treeLikelihood" useAmbiguities="false">
-		<mergePatterns idref="26.CP1.26.patterns"/>
+	<treeLikelihood id="26.26.treeLikelihood" useAmbiguities="false">
+		<patterns idref="26.patterns"/>
 		<treeModel idref="26.treeModel"/>
-		<siteModel idref="26.CP1.siteModel"/>
-		<strictClockBranchRates idref="26.26.branchRates"/>
-	</treeLikelihood>
-	<treeLikelihood id="26.CP2.26.treeLikelihood" useAmbiguities="false">
-		<mergePatterns idref="26.CP2.26.patterns"/>
-		<treeModel idref="26.treeModel"/>
-		<siteModel idref="26.CP2.siteModel"/>
-		<strictClockBranchRates idref="26.26.branchRates"/>
-	</treeLikelihood>
-	<treeLikelihood id="26.CP3.26.treeLikelihood" useAmbiguities="false">
-		<mergePatterns idref="26.CP3.26.patterns"/>
-		<treeModel idref="26.treeModel"/>
-		<siteModel idref="26.CP3.siteModel"/>
+		<siteModel idref="26.siteModel"/>
 		<strictClockBranchRates idref="26.26.branchRates"/>
 	</treeLikelihood>
 	
@@ -1431,17 +1327,20 @@
 		</sppSplitPopulations>
 	</speciesTree>
 	<!-- Species Tree: tree prior                                                -->
-	<!-- Species Tree: Yule Model                                                -->
-	<yuleModel id="yule" units="substitutions">
-		<birthRate>
-			<parameter id="species.yule.birthRate" value="1.0" lower="0.0" upper="Infinity"/>
-		</birthRate>
-	</yuleModel>
+	<!-- Species Tree: Birth Death Model                                         -->
+	<birthDeathModel id="birthDeath" units="substitutions">
+		<birthMinusDeathRate>
+			<parameter id="species.birthDeath.meanGrowthRate" value="1.0" lower="0.0" upper="Infinity"/>
+		</birthMinusDeathRate>
+		<relativeDeathRate>
+			<parameter id="species.birthDeath.relativeDeathRate" value="0.5" lower="0.0" upper="1.0"/>
+		</relativeDeathRate>
+	</birthDeathModel>
 	<!-- Species Tree: Likelihood of species tree                                -->
-	<!-- Species Tree: Yule Model                                                -->
+	<!-- Species Tree: Birth Death Model                                         -->
 	<speciationLikelihood id="speciation.likelihood">
 		<model>
-			<yuleModel idref="yule"/>
+			<birthDeathModel idref="birthDeath"/>
 		</model>
 		<speciesTree>
 			<speciesTree idref="sptree"/>
@@ -1500,28 +1399,7 @@
 	<!-- Define operators                                                        -->
 	<operators id="operators">
 		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.ac"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.ag"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.at"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.cg"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.gt"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.CP1.alpha"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.CP2.alpha"/>
-		</scaleOperator>
-		<scaleOperator scaleFactor="0.75" weight="1">
-			<parameter idref="26.CP3.alpha"/>
+			<parameter idref="26.kappa"/>
 		</scaleOperator>
 		<deltaExchange delta="0.01" weight="1">
 			<parameter idref="26.frequencies"/>
@@ -1562,9 +1440,6 @@
 		<deltaExchange delta="0.01" weight="1">
 			<parameter idref="72.frequencies"/>
 		</deltaExchange>
-		<deltaExchange delta="0.75" parameterWeights="205 205 204 601 819 621 553 471 706" weight="9">
-			<parameter idref="allMus"/>
-		</deltaExchange>
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="29.clock.rate"/>
 		</scaleOperator>
@@ -1591,7 +1466,7 @@
 				<parameter idref="59.clock.rate"/>
 				<parameter idref="64.clock.rate"/>
 				<parameter idref="72.clock.rate"/>
-				<parameter idref="species.yule.birthRate"/>
+				<parameter idref="species.birthDeath.meanGrowthRate"/>
 			</up>
 			<down>
 				<speciesTree idref="sptree"/>
@@ -1791,7 +1666,10 @@
 			<parameter idref="species.popMean"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.75" weight="3">
-			<parameter idref="species.yule.birthRate"/>
+			<parameter idref="species.birthDeath.meanGrowthRate"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="species.birthDeath.relativeDeathRate"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.5" weight="94">
 			<parameter idref="speciesTree.splitPopSize"/>
@@ -1810,19 +1688,7 @@
 				<mixedDistributionLikelihood idref="species.popSize"/>
 				<speciationLikelihood idref="speciation.likelihood"/>
 				<oneOnXPrior>
-					<parameter idref="26.ac"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="26.ag"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="26.at"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="26.cg"/>
-				</oneOnXPrior>
-				<oneOnXPrior>
-					<parameter idref="26.gt"/>
+					<parameter idref="26.kappa"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
 					<parameter idref="29.kappa"/>
@@ -1864,7 +1730,7 @@
 					<parameter idref="species.popMean"/>
 				</oneOnXPrior>
 				<oneOnXPrior>
-					<parameter idref="species.yule.birthRate"/>
+					<parameter idref="species.birthDeath.meanGrowthRate"/>
 				</oneOnXPrior>
 				
 				
@@ -1875,9 +1741,7 @@
 				
 			</prior>
 			<likelihood id="likelihood">
-				<treeLikelihood idref="26.CP1.26.treeLikelihood"/>
-				<treeLikelihood idref="26.CP2.26.treeLikelihood"/>
-				<treeLikelihood idref="26.CP3.26.treeLikelihood"/>
+				<treeLikelihood idref="26.26.treeLikelihood"/>
 				<treeLikelihood idref="29.29.treeLikelihood"/>
 				<treeLikelihood idref="47.47.treeLikelihood"/>
 				<treeLikelihood idref="53.53.treeLikelihood"/>
@@ -1921,7 +1785,7 @@
 			</column>
 		</log>
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="g10.log">
+		<log id="fileLog" logEvery="1000" fileName="g11.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -1930,7 +1794,8 @@
 			<speciationLikelihood idref="speciation.likelihood"/>
 			<parameter idref="species.popMean"/>
 			<parameter idref="speciesTree.splitPopSize"/>
-			<parameter idref="species.yule.birthRate"/>
+			<parameter idref="species.birthDeath.meanGrowthRate"/>
+			<parameter idref="species.birthDeath.relativeDeathRate"/>
 			<tmrcaStatistic idref="speciesTree.rootHeight"/>
 			<parameter idref="26.treeModel.rootHeight"/>
 			<parameter idref="29.treeModel.rootHeight"/>
@@ -1939,15 +1804,8 @@
 			<parameter idref="59.treeModel.rootHeight"/>
 			<parameter idref="64.treeModel.rootHeight"/>
 			<parameter idref="72.treeModel.rootHeight"/>
-			<parameter idref="26.ac"/>
-			<parameter idref="26.ag"/>
-			<parameter idref="26.at"/>
-			<parameter idref="26.cg"/>
-			<parameter idref="26.gt"/>
+			<parameter idref="26.kappa"/>
 			<parameter idref="26.frequencies"/>
-			<parameter idref="26.CP1.alpha"/>
-			<parameter idref="26.CP2.alpha"/>
-			<parameter idref="26.CP3.alpha"/>
 			<parameter idref="29.kappa"/>
 			<parameter idref="29.frequencies"/>
 			<parameter idref="47.kappa"/>
@@ -1960,7 +1818,6 @@
 			<parameter idref="64.frequencies"/>
 			<parameter idref="72.kappa"/>
 			<parameter idref="72.frequencies"/>
-			<parameter idref="allMus"/>
 			<parameter idref="26.clock.rate"/>
 			<parameter idref="29.clock.rate"/>
 			<parameter idref="47.clock.rate"/>
@@ -1968,9 +1825,7 @@
 			<parameter idref="59.clock.rate"/>
 			<parameter idref="64.clock.rate"/>
 			<parameter idref="72.clock.rate"/>
-			<treeLikelihood idref="26.CP1.26.treeLikelihood"/>
-			<treeLikelihood idref="26.CP2.26.treeLikelihood"/>
-			<treeLikelihood idref="26.CP3.26.treeLikelihood"/>
+			<treeLikelihood idref="26.26.treeLikelihood"/>
 			<treeLikelihood idref="29.29.treeLikelihood"/>
 			<treeLikelihood idref="47.47.treeLikelihood"/>
 			<treeLikelihood idref="53.53.treeLikelihood"/>
@@ -1986,41 +1841,41 @@
 			
 		</log>
 		<!-- write tree log to file                                                  -->
-		<logTree id="species.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.species.trees" sortTranslationTable="true">
+		<logTree id="species.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.species.trees" sortTranslationTable="true">
 			<speciesTree idref="sptree"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="26.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.26.trees" sortTranslationTable="true">
+		<logTree id="26.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.26.trees" sortTranslationTable="true">
 			<treeModel idref="26.treeModel"/>
 			<strictClockBranchRates idref="26.26.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="29.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.29.trees" sortTranslationTable="true">
+		<logTree id="29.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.29.trees" sortTranslationTable="true">
 			<treeModel idref="29.treeModel"/>
 			<strictClockBranchRates idref="29.29.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="47.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.47.trees" sortTranslationTable="true">
+		<logTree id="47.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.47.trees" sortTranslationTable="true">
 			<treeModel idref="47.treeModel"/>
 			<strictClockBranchRates idref="47.47.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="53.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.53.trees" sortTranslationTable="true">
+		<logTree id="53.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.53.trees" sortTranslationTable="true">
 			<treeModel idref="53.treeModel"/>
 			<strictClockBranchRates idref="53.53.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="59.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.59.trees" sortTranslationTable="true">
+		<logTree id="59.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.59.trees" sortTranslationTable="true">
 			<treeModel idref="59.treeModel"/>
 			<strictClockBranchRates idref="59.59.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="64.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.64.trees" sortTranslationTable="true">
+		<logTree id="64.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.64.trees" sortTranslationTable="true">
 			<treeModel idref="64.treeModel"/>
 			<strictClockBranchRates idref="64.64.branchRates"/>
 			<posterior idref="posterior"/>
 		</logTree>
-		<logTree id="72.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g10.72.trees" sortTranslationTable="true">
+		<logTree id="72.treeFileLog" logEvery="1000" nexusFormat="true" fileName="g11.72.trees" sortTranslationTable="true">
 			<treeModel idref="72.treeModel"/>
 			<strictClockBranchRates idref="72.72.branchRates"/>
 			<posterior idref="posterior"/>

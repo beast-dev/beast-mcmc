@@ -32,7 +32,6 @@ import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
-import dr.xml.ObjectStore;
 import dr.xml.XMLParser;
 import org.virion.jam.console.ConsoleApplication;
 
@@ -68,7 +67,7 @@ public class BeastMC3 {
     }
 
     public BeastMC3(double[] chainTemperatures, int swapChainsEvery, File inputFile, BeastConsoleApp consoleApp,
-                    boolean verbose, boolean strictXML) {
+                    boolean verbose, boolean parserWarning, boolean strictXML) {
 
         if (inputFile == null) {
             System.err.println();
@@ -106,7 +105,7 @@ public class BeastMC3 {
 
             FileReader fileReader = new FileReader(inputFile);
 
-	        XMLParser parser = new BeastParser(new String[] {fileName}, null, verbose, strictXML);
+	        XMLParser parser = new BeastParser(new String[] {fileName}, null, verbose, parserWarning, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -131,7 +130,7 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
                 messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[] {fileName}, null, verbose, strictXML);
+                parser = new BeastParser(new String[] {fileName}, null, verbose, parserWarning, strictXML);
 
                 chains[i] = (MCMC)parser.parse(fileReader, MCMC.class);
                 if (chains[i] == null) {
@@ -337,6 +336,7 @@ public class BeastMC3 {
 
         final boolean strictXML = arguments.hasOption("strict");
         final boolean verbose = arguments.hasOption("verbose");
+        final boolean parserWarning = arguments.hasOption("pwarning"); // if dev, then auto turn on, otherwise default to turn off
         final boolean window = arguments.hasOption("window");
         final boolean working = arguments.hasOption("working");
 
@@ -395,7 +395,7 @@ public class BeastMC3 {
 
         printTitle();
         printHeader();
-        new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, strictXML);
+        new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, parserWarning, strictXML);
     }
 }
 

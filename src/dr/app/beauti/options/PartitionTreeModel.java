@@ -24,14 +24,11 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -25,10 +25,8 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.evolution.util.TaxonList;
-import dr.math.distributions.ExponentialDistribution;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.NormalDistribution;
+import dr.evolution.util.Taxa;
+import dr.math.distributions.*;
 
 import java.util.Map;
 
@@ -48,7 +46,7 @@ public class Parameter {
     private final String description;
     
     // final Builder para
-    public final TaxonList taxa;
+    public final Taxa taxa;
     public final boolean isNodeHeight;
     public final boolean isStatistic;
     private final PartitionOptions options;     
@@ -81,7 +79,7 @@ public class Parameter {
         private PriorScaleType scaleType = PriorScaleType.NONE;
         private double initial = Double.NaN;
         
-        private TaxonList taxa = null;
+        private Taxa taxa = null;
         private boolean isNodeHeight = false;
         private boolean isStatistic = false;
         private PartitionOptions options = null;    
@@ -116,7 +114,7 @@ public class Parameter {
             return this;
         }
         
-        public Builder taxa(TaxonList taxa) {
+        public Builder taxa(Taxa taxa) {
             this.taxa = taxa;
             return this;
         }
@@ -244,13 +242,13 @@ public class Parameter {
 
     public String getName() {
         if (taxa != null) {
-            return "tmrca(" + taxa.getId() + ")";
+            return "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")";
         } else {
             return getFullName();
         }
     }
 
-    public String getXMLName() {
+    public String getXMLName() { // only for BeautiTemplate
         if (taxa != null) {
             return "tmrca_" + taxa.getId();
         } else {
@@ -260,24 +258,30 @@ public class Parameter {
 
     public String getDescription() {
         if (taxa != null) {
-            return description + taxa.getId();
+            return "tmrca statistic for taxon set " + taxa.getId()
+                    + " referring to tree " + taxa.getTreeModel().getName();
         } else if (prefix != null) {
             return description + " of partition " + prefix;
         }
         return description;
     }
 
-    public double getPriorExpectation() {
+    public double getPriorExpectationMean() {
+        double expMean = 1.0;
+        Distribution dist = priorType.getDistributionClass(this);
+        if (dist != null) {
+            expMean = dist.mean();
 
-        switch (priorType) {
-            case LOGNORMAL_PRIOR:
-                return LogNormalDistribution.mean(mean, stdev) + offset;
-            case NORMAL_PRIOR:
-                return NormalDistribution.mean(mean, stdev);
-            case EXPONENTIAL_PRIOR:
-                return ExponentialDistribution.mean(mean) + offset;
+            if (expMean == 0) {
+                expMean = dist.quantile(0.975);
+            }
+            
+            if (expMean == 0) {
+                expMean = 1.0;
+            }
         }
-        return 1.0;
+        
+        return expMean;
     }
 
     public PartitionOptions getOptions() {

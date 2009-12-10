@@ -33,7 +33,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -41,9 +40,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
-import dr.evomodel.tree.MonophylyStatistic;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeModel;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
@@ -71,6 +67,7 @@ public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
 
+    private final AlignmentGenerator alignmentGenerator;
     private final TreePriorGenerator treePriorGenerator;
     private final TreeLikelihoodGenerator treeLikelihoodGenerator;
     private final SubstitutionModelGenerator substitutionModelGenerator;
@@ -81,10 +78,13 @@ public class BeastGenerator extends Generator {
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
     private final STARBEASTGenerator starEASTGeneratorGenerator;
+    private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
 
+        alignmentGenerator = new AlignmentGenerator (options, components);   
+        tmrcaStatisticsGenerator = new TMRCAStatisticsGenerator (options, components);                
         substitutionModelGenerator = new SubstitutionModelGenerator(options, components);
         treePriorGenerator = new TreePriorGenerator(options, components);
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options, components);
@@ -199,11 +199,6 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon List ++++++++++++++++++
         writeTaxa(writer, options.taxonList);
 
-        List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) {
-            writeTaxonSets(writer, taxonSets); // TODO
-        }
-
         if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
             writer.writeText("");
             writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
@@ -214,57 +209,27 @@ public class BeastGenerator extends Generator {
             }
         }
 
+        //++++++++++++++++ Taxon Sets ++++++++++++++++++
+        List<Taxa> taxonSets = options.taxonSets;
+        if (taxonSets != null && taxonSets.size() > 0) {
+            tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets); 
+        }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
         //++++++++++++++++ Alignments ++++++++++++++++++
-        List<Alignment> alignments = new ArrayList<Alignment>();
+        alignmentGenerator.writeAlignments(writer);
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
 
-        for (PartitionData partition : options.dataPartitions) {
-            Alignment alignment = partition.getAlignment();
-            if (!alignments.contains(alignment)) {
-                alignments.add(alignment);
-            }
-        }
-
+        //++++++++++++++++ Pattern Lists ++++++++++++++++++
         if (!options.samplePriorOnly) {
-            int index = 1;
-            for (Alignment alignment : alignments) {
-                if (alignments.size() > 1) {
-                    //if (!options.allowDifferentTaxa) {
-                    alignment.setId(AlignmentParser.ALIGNMENT + index);
-                    //} else { // e.g. alignment_gene1
-                    // alignment.setId("alignment_" + mulitTaxaTagName + index);
-                    //}
-                } else {
-                    alignment.setId(AlignmentParser.ALIGNMENT);
-                }
-                writeAlignment(alignment, writer);
-                index += 1;
-                writer.writeText("");
-            }
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
-
-            //++++++++++++++++ Pattern Lists ++++++++++++++++++
-//            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-//                writePatternList(model, writer);
             for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                 writePatternList(partition, writer);
                 writer.writeText("");
             }
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
-        } else {
-            Alignment alignment = alignments.get(0);
-            alignment.setId(AlignmentParser.ALIGNMENT);
-            writeAlignment(alignment, writer);
-            writer.writeText("");
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         }
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
 
-        //++++++++++++++++ Tree Prior Model ++++++++++++++++++
+            //++++++++++++++++ Tree Prior Model ++++++++++++++++++
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             treePriorGenerator.writeTreePriorModel(prior, writer);
             writer.writeText("");
@@ -350,8 +315,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++  ++++++++++++++++++
         if (taxonSets != null && taxonSets.size() > 0) {
-            //TODO: need to suit for multi-gene-tree
-            writeTMRCAStatistics(writer);
+            tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
         }
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -441,67 +405,6 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(TaxaParser.TAXA);
     }
 
-    /**
-     * Generate additional taxon sets
-     *
-     * @param writer    the writer
-     * @param taxonSets a list of taxa to write
-     */
-    private void writeTaxonSets(XMLWriter writer, List<Taxa> taxonSets) {
-        writer.writeText("");
-
-        for (Taxa taxa : taxonSets) {
-            writer.writeOpenTag(
-                    TaxaParser.TAXA,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, taxa.getId())
-                    }
-            );
-
-            for (int j = 0; j < taxa.getTaxonCount(); j++) {
-                writer.writeIDref(TaxonParser.TAXON, taxa.getTaxon(j).getId());
-            }
-            writer.writeCloseTag(TaxaParser.TAXA);
-        }
-    }
-
-
-    /**
-     * Determine and return the datatype description for these beast options
-     * note that the datatype in XML may differ from the actual datatype
-     *
-     * @param alignment the alignment to get data type description of
-     * @return description
-     */
-
-    private String getAlignmentDataTypeDescription(Alignment alignment) {
-        String description;
-
-        switch (alignment.getDataType().getType()) {
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-
-                // TODO make this work
-//                throw new RuntimeException("TO DO!");
-
-                //switch (partition.getPartitionSubstitutionModel().binarySubstitutionModel) {
-                //    case ModelOptions.BIN_COVARION:
-                //        description = TwoStateCovarion.DESCRIPTION;
-                //        break;
-                //
-                //    default:
-                description = alignment.getDataType().getDescription();
-                //}
-                break;
-
-            default:
-                description = alignment.getDataType().getDescription();
-        }
-
-        return description;
-    }
-
-
     public void writeDifferentTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
         String data = dataPartition.getName();
         Alignment alignment = dataPartition.getAlignment();
@@ -515,45 +418,6 @@ public class BeastGenerator extends Generator {
         }
 
         writer.writeCloseTag(TaxaParser.TAXA);
-    }
-
-
-    /**
-     * Generate an alignment block from these beast options
-     *
-     * @param alignment the alignment to write
-     * @param writer    the writer
-     */
-    public void writeAlignment(Alignment alignment, XMLWriter writer) {
-
-        writer.writeText("");
-        writer.writeComment("The sequence alignment (each sequence refers to a taxon above).");
-        writer.writeComment("ntax=" + alignment.getTaxonCount() + " nchar=" + alignment.getSiteCount());
-        if (options.samplePriorOnly) {
-            writer.writeComment("Null sequences generated in order to sample from the prior only.");
-        }
-
-        writer.writeOpenTag(
-                AlignmentParser.ALIGNMENT,
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, alignment.getId()),
-                        new Attribute.Default<String>("dataType", getAlignmentDataTypeDescription(alignment))
-                }
-        );
-
-        for (int i = 0; i < alignment.getTaxonCount(); i++) {
-            Taxon taxon = alignment.getTaxon(i);
-
-            writer.writeOpenTag(SequenceParser.SEQUENCE);
-            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
-            if (!options.samplePriorOnly) {
-                writer.writeText(alignment.getAlignedSequenceString(i));
-            } else {
-                writer.writeText("N");
-            }
-            writer.writeCloseTag(SequenceParser.SEQUENCE);
-        }
-        writer.writeCloseTag(AlignmentParser.ALIGNMENT);
     }
 
     /**
@@ -608,7 +472,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
 //                for (PartitionData partition : options.dataPartitions) {
@@ -622,7 +486,7 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("The unique patterns for codon positions 3");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
 
@@ -641,7 +505,7 @@ public class BeastGenerator extends Generator {
                     writer.writeComment("The unique patterns for codon positions " + i);
                     writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getName() + "." + SitePatternsParser.PATTERNS),
+                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                             }
                     );
 
@@ -662,7 +526,7 @@ public class BeastGenerator extends Generator {
 
 //            writer.writeOpenTag(SitePatternsParser.PATTERNS,
 //                    new Attribute[]{
-//                            new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS),
+//                            new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + SitePatternsParser.PATTERNS),
 //                    }
 //            );
             writePatternList(partition, 0, 1, writer);
@@ -710,7 +574,7 @@ public class BeastGenerator extends Generator {
 
         // no codon, unique patterns site patterns
         if (offset == 0 && every == 1)
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getName() + "." + SitePatternsParser.PATTERNS));
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix()+ SitePatternsParser.PATTERNS));
 
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
@@ -724,43 +588,6 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
-
-    /**
-     * Generate tmrca statistics
-     *
-     * @param writer the writer
-     */
-    public void writeTMRCAStatistics(XMLWriter writer) {
-
-        writer.writeText("");
-        for (Taxa taxa : options.taxonSets) {
-            writer.writeOpenTag(
-                    TMRCAStatistic.TMRCA_STATISTIC,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getId() + ")"),
-                    }
-            );
-            writer.writeOpenTag(TMRCAStatistic.MRCA);
-            writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-            writer.writeCloseTag(TMRCAStatistic.MRCA);
-            writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
-            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
-
-            if (options.taxonSetsMono.get(taxa)) {
-                writer.writeOpenTag(
-                        MonophylyStatistic.MONOPHYLY_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
-                        });
-                writer.writeOpenTag(MonophylyStatistic.MRCA);
-                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                writer.writeCloseTag(MonophylyStatistic.MRCA);
-                writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
-                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
-            }
-        }
-    }
-
 
     /**
      * Write the timer report block.
@@ -797,13 +624,17 @@ public class BeastGenerator extends Generator {
      */
     public void writeMCMC(XMLWriter writer) {
         writer.writeComment("Define MCMC");
-        writer.writeOpenTag(
-                "mcmc",
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, "mcmc"),
-                        new Attribute.Default<Integer>("chainLength", options.chainLength),
-                        new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false")
-                });
+
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
+        attributes.add(new Attribute.Default<Integer>("chainLength", options.chainLength));
+        attributes.add(new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false"));
+
+        if (options.operatorAnalysis) {
+            attributes.add(new Attribute.Default<String>("operatorAnalysis", options.operatorAnalysisFileName));
+        }
+
+        writer.writeOpenTag("mcmc",attributes);
 
         if (options.hasData()) {
             writer.writeOpenTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));

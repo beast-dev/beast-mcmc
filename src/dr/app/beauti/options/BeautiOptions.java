@@ -33,6 +33,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evolution.alignment.Alignment;
 import dr.evoxml.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
@@ -117,6 +118,8 @@ public class BeautiOptions extends ModelOptions {
         treeFileName.clear();
         substTreeLog = false;
         substTreeFileName.clear();
+        operatorAnalysis = false;
+        operatorAnalysisFileName = null;
         
 //        substitutionModelOptions = new SubstitutionModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
@@ -138,12 +141,13 @@ public class BeautiOptions extends ModelOptions {
     public void selectTaxonSetsStatistics(List<Parameter> params) {
     	
         if (taxonSets != null) {
-            for (Taxa taxonSet : taxonSets) {
-                Parameter statistic = statistics.get(taxonSet);
+            for (Taxa taxa : taxonSets) {
+                Parameter statistic = statistics.get(taxa);
                 if (statistic == null) {
-                    statistic = new Parameter.Builder(taxonSet.getId(), TMRCA).taxa(taxonSet).isStatistic(true).isNodeHeight(true)
-                            .scaleType(PriorScaleType.TIME_SCALE).lower(0.0).upper(Double.MAX_VALUE).build();
-                    statistics.put(taxonSet, statistic);
+                    statistic = new Parameter.Builder(taxa.getId(), "").taxa(taxa)
+                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.TIME_SCALE)
+                            .lower(0.0).upper(Double.MAX_VALUE).build();
+                    statistics.put(taxa, statistic);
                 }
                 params.add(statistic);
             }
@@ -388,6 +392,15 @@ public class BeautiOptions extends ModelOptions {
     
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+
+    public PartitionData getPartitionData(Alignment alignment) {
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getAlignment() == alignment) {
+                return pd;
+            }
+        }
+        return null;
     }
     
 //    public boolean isFixedSubstitutionRate() {
@@ -651,6 +664,30 @@ public class BeautiOptions extends ModelOptions {
 			return meanDistance / totalSite;
 		}
     }
+
+    public boolean validateDiffTaxa(List<PartitionData> partitionDataList) {
+        Alignment ref = null;
+        boolean legal = true;
+        for (PartitionData partition : partitionDataList) {
+            final Alignment a = partition.getAlignment();
+            if (ref == null) {
+                ref = a;
+            } else {
+                if (a.getTaxonCount() != ref.getTaxonCount()) {
+                    legal = false;
+                } else {
+                    for (int k = 0; k < a.getTaxonCount(); ++k) {
+                        if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
+                            legal = false;
+                        }
+                    }
+                }
+            }
+        }        
+        return legal;
+    }
+
+
 	
 	public String statusMessage() {
         String message = "";
@@ -697,7 +734,6 @@ public class BeautiOptions extends ModelOptions {
 //    public boolean dataReset = true;
 
     public Taxa taxonList = null;
-    public final String TMRCA = "tmrca statistic for taxon set ";
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
@@ -751,6 +787,8 @@ public class BeautiOptions extends ModelOptions {
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
+    public boolean operatorAnalysis = false;
+    public String operatorAnalysisFileName = null;
     
 //    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);

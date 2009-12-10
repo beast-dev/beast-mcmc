@@ -12,7 +12,7 @@ class PriorTableModel extends AbstractTableModel {
     
     private static final long serialVersionUID = -8864178122484971872L;
     
-    String[] columnNames = {"Parameter", "Prior", "Description"};
+    String[] columnNames = {"Parameter", "Prior", "Bound", "Description"};
     private PriorsPanel priorsPanel;
 
     public PriorTableModel(PriorsPanel priorsPanel) {
@@ -28,13 +28,15 @@ class PriorTableModel extends AbstractTableModel {
     }
 
     public Object getValueAt(int row, int col) {
-        Parameter param = (Parameter) priorsPanel.parameters.get(row);
+        Parameter param = priorsPanel.parameters.get(row);
         switch (col) {
             case 0:
                 return param.getName();
             case 1:
                 return param.priorType.getPriorString(param);
             case 2:
+                return param.priorType.getPriorBoundString(param);
+            case 3:
                 return param.getDescription();
         }
         return null;

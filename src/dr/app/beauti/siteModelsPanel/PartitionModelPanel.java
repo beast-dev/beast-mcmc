@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class PartitionModelPanel extends OptionsPanel {
 
@@ -56,6 +57,8 @@ public class PartitionModelPanel extends OptionsPanel {
 	private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(NucModelType.HKY, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
+    private JCheckBox useAmbiguitiesTreeLikelihoodCheck
+            = new JCheckBox("Use ambiguities in the tree likelihood associated with this model");
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 
@@ -84,39 +87,49 @@ public class PartitionModelPanel extends OptionsPanel {
 
     public PartitionModelPanel(PartitionSubstitutionModel partitionModel) {
 
-        super(12, 18);
+        super(12, 30);
 
         this.model = partitionModel;
 
         initCodonPartitionComponents();
 
         PanelUtils.setupComponent(nucSubstCombo);
-        nucSubstCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {                
+        nucSubstCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
                 model.setNucSubstitutionModel( (NucModelType) nucSubstCombo.getSelectedItem());                
             }
         });
         nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
 
         PanelUtils.setupComponent(aaSubstCombo);
-        aaSubstCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        aaSubstCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
                 model.setAaSubstitutionModel((AminoAcidModelType) aaSubstCombo.getSelectedItem());
             }
         });
         aaSubstCombo.setToolTipText("<html>Select the type of amino acid substitution model.</html>");
 
         PanelUtils.setupComponent(binarySubstCombo);
-        binarySubstCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        binarySubstCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
                 model.setBinarySubstitutionModel((BinaryModelType) binarySubstCombo.getSelectedItem());
+                useAmbiguitiesTreeLikelihoodCheck.setSelected(binarySubstCombo.getSelectedItem() == BinaryModelType.BIN_COVARION);
+                useAmbiguitiesTreeLikelihoodCheck.setEnabled(binarySubstCombo.getSelectedItem() != BinaryModelType.BIN_COVARION);
             }
         });
         binarySubstCombo.setToolTipText("<html>Select the type of binary substitution model.</html>");
 
+        PanelUtils.setupComponent(useAmbiguitiesTreeLikelihoodCheck);
+        useAmbiguitiesTreeLikelihoodCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+            	model.setUseAmbiguitiesTreeLikelihood(useAmbiguitiesTreeLikelihoodCheck.isSelected());
+            }
+        });
+        useAmbiguitiesTreeLikelihoodCheck.setToolTipText("<html>Detemine useAmbiguities in &lt treeLikelihood &gt .</html>");
+
         PanelUtils.setupComponent(frequencyCombo);
-        frequencyCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        frequencyCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
                 model.setFrequencyPolicy((FrequencyPolicyType) frequencyCombo.getSelectedItem());
             }
         });
@@ -125,8 +138,8 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(heteroCombo);
         heteroCombo.setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
         heteroCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
 
                         boolean gammaHetero = heteroCombo.getSelectedIndex() == 1 || heteroCombo.getSelectedIndex() == 3;
 
@@ -151,13 +164,18 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(gammaCatCombo);
         gammaCatCombo.setToolTipText("<html>Select the number of categories to use for<br>the discrete gamma rate heterogeneity model.</html>");
-        gammaCatCombo.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent ev) {
+        gammaCatCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
 
                 model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
             }
         });
 
+        Action setSRD06Action = new AbstractAction("Use SRD06 Model") {
+            public void actionPerformed(ActionEvent actionEvent) {
+                setSRD06Model();
+            }
+        };
         setSRD06Button = new JButton(setSRD06Action);
         PanelUtils.setupComponent(setSRD06Button);
         setSRD06Button.setToolTipText("<html>Sets the SRD06 model as described in<br>" +
@@ -208,6 +226,7 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 binarySubstCombo.setSelectedItem(model.getBinarySubstitutionModel());
+                useAmbiguitiesTreeLikelihoodCheck.setSelected(model.isUseAmbiguitiesTreeLikelihood());
                 
                 break;
 
@@ -305,6 +324,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 gammaCatLabel = addComponentWithLabel("Number of Gamma Categories:", gammaCatCombo);
                 gammaCatCombo.setEnabled(false);
 
+                addSeparator();
+                
+                addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
+
                 break;
 
             default:
@@ -392,12 +415,5 @@ public class PartitionModelPanel extends OptionsPanel {
         }
         );
     }
-
-    // Actions
-
-    private Action setSRD06Action = new AbstractAction("Use SRD06 Model") {
-        public void actionPerformed(ActionEvent actionEvent) {
-            setSRD06Model();
-        }
-    };
+   
 }

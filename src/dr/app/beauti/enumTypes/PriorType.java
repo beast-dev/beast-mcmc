@@ -1,6 +1,7 @@
 package dr.app.beauti.enumTypes;
 
 import dr.app.beauti.options.Parameter;
+import dr.math.distributions.*;
 
 import java.text.NumberFormat;
 
@@ -50,6 +51,43 @@ public enum PriorType {
             default:
                 return "";
         }
+    }
+
+    public Distribution getDistributionClass(Parameter param) {
+        Distribution dist = null;
+        switch (this) {
+            case UNIFORM_PRIOR:
+                dist = new UniformDistribution(param.lower, param.upper);
+                break;
+            case EXPONENTIAL_PRIOR:
+                if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0."); 
+                dist = new OffsetPositiveDistribution(new ExponentialDistribution(1/param.mean), param.offset);
+                break;
+            case LAPLACE_PRIOR:
+                dist = new LaplaceDistribution(param.mean, param.stdev);
+                break;
+            case NORMAL_PRIOR:
+                dist = new NormalDistribution(param.mean, param.stdev);
+                break;
+            case LOGNORMAL_PRIOR:
+                dist = new OffsetPositiveDistribution(new LogNormalDistribution(param.mean, param.stdev), param.offset);
+                break;
+            case GAMMA_PRIOR:
+                dist = new OffsetPositiveDistribution(new GammaDistribution(param.shape, param.scale), param.offset);
+                break;
+            case INVERSE_GAMMA_PRIOR:
+                dist = new OffsetPositiveDistribution(new InverseGammaDistribution(param.shape, param.scale), param.offset);
+                break;
+//            case JEFFREYS_PRIOR:
+//                return ;
+            case POISSON_PRIOR:
+                dist = new OffsetPositiveDistribution(new PoissonDistribution(param.mean), param.offset);
+                break;
+            case TRUNC_NORMAL_PRIOR:
+                dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.lower, param.upper);
+                break;
+        }
+        return dist;
     }
 
     public String getPriorString(Parameter param) {
@@ -142,6 +180,37 @@ public enum PriorType {
             buffer.append(", initial=").append(param.initial);
         }
 
+        return buffer.toString();
+    }
+
+    public String getPriorBoundString(Parameter param) {
+
+        NumberFormat formatter = NumberFormat.getNumberInstance();
+        StringBuffer buffer = new StringBuffer();
+
+        switch (param.priorType) {
+            case NONE:
+//                buffer.append("None");
+//                break;
+            case UNIFORM_PRIOR:
+            case EXPONENTIAL_PRIOR:
+            case LAPLACE_PRIOR:
+            case NORMAL_PRIOR:
+            case LOGNORMAL_PRIOR:
+            case GAMMA_PRIOR:
+            case INVERSE_GAMMA_PRIOR:
+            case JEFFREYS_PRIOR:
+            case POISSON_PRIOR:
+            case TRUNC_NORMAL_PRIOR:
+                buffer.append("[");
+                buffer.append(formatter.format(param.lower));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.upper));
+                buffer.append("]");
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown prior type");
+        }
         return buffer.toString();
     }
 }

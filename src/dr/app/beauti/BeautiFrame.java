@@ -20,6 +20,7 @@ import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.taxonsetspanel.TaxaPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
@@ -117,7 +118,7 @@ public class BeautiFrame extends DocumentFrame {
         oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
-        priorsPanel = new PriorsPanel(this);
+        priorsPanel = new PriorsPanel(this, false);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
 
@@ -236,6 +237,12 @@ public class BeautiFrame extends DocumentFrame {
         priorsPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
+    }
+
+    public void doSelectAll() {
+        if (currentPanel == dataPanel) {
+            dataPanel.selectAll();
+        }
     }
 
     public final void dataSelectionChanged(boolean isSelected) {
@@ -573,6 +580,11 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.ERROR_MESSAGE);
             return false;
         }
+
+        DefaultPriorDialog defaultPriorDialog = new DefaultPriorDialog(this);
+        if (!defaultPriorDialog.showDialog(beautiOptions)) {
+           return false;
+        }                   
 
         // offer stem as default
         exportChooser.setSelectedFile(new File(beautiOptions.fileNameStem + ".xml"));

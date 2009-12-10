@@ -57,15 +57,16 @@ public class ModelOptions {
         new Parameter.Builder(name, description).build(parameters);
     }
 
-    public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial, double lower, double upper) {
+    public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                            double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
                   .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 
     public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
+                                          double shape, double scale, double lower, double upper, boolean priorFixed) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                  .initial(initial).shape(shape).scale(scale).priorFixed(priorFixed).build(parameters);
+                  .initial(initial).shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).build(parameters);
     }
 
     public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,

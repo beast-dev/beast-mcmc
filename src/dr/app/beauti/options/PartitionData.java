@@ -28,8 +28,6 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 
-import java.util.List;
-
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -49,16 +47,19 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
     private int toSite;
     private int every = 1;
 
+    private final BeautiOptions options;
+
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
 
 
-    public PartitionData(String name, String fileName, Alignment alignment) {
-        this(name, fileName, alignment, -1, -1, 1);
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
+        this(options, name, fileName, alignment, -1, -1, 1);
     }
 
-    public PartitionData(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+        this.options = options;
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
@@ -163,6 +164,15 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
         } else {
             return 0;
         }
+    }
+
+    public String getPrefix() {
+        String prefix = "";
+        if (options.dataPartitions != null && options.dataPartitions.size() > 1) { 
+            // There is more than one active partition model
+            prefix += getName() + ".";
+        }
+        return prefix;
     }
 
 }

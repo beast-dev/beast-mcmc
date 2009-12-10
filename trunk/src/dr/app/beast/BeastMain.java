@@ -62,14 +62,13 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
-                thread.stop(); //http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
     }
 
-    public BeastMain(File inputFile, BeastConsoleApp consoleApp,
-                     int maxErrorCount, final boolean verbose, boolean strictXML,
-                     List<String> additionalParsers) {
+    public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
+                     boolean parserWarning, boolean strictXML, List<String> additionalParsers) {
 
         if (inputFile == null) {
             System.err.println();
@@ -84,7 +83,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -239,7 +238,8 @@ public class BeastMain {
                 new Arguments.Option[]{
 
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
-                        new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
+                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
+                        new Arguments.Option("strict", "Fail on non-conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("options", "display an options dialog"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
@@ -280,6 +280,7 @@ public class BeastMain {
         List<String> additionalParsers = new ArrayList<String>();
 
         final boolean verbose = arguments.hasOption("verbose");
+        final boolean parserWarning = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
@@ -369,16 +370,6 @@ public class BeastMain {
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
 
-//        if (OSType.isWindows()) {
-//            System.out.println(System.getProperty("user.dir"));
-//            System.out.println(System.getProperty("java.library.path"));
-//
-//            String currentDir = System.getProperty("user.dir") + "\\lib";
-//            System.setProperty("java.library.path", currentDir);
-//            System.out.println(currentDir);
-//            System.out.println(System.getProperty("java.library.path"));
-//        }
-
         printTitle();
 
         File inputFile = null;
@@ -399,18 +390,23 @@ public class BeastMain {
             threadCount = dialog.getThreadPoolSize();
 
             useBeagle = dialog.useBeagle();
-            beagleShowInfo = dialog.showBeagleInfo();
-            if (dialog.preferBeagleCPU()) {
-                beagleFlags |= BeagleFlag.CPU.getMask();
-            }
-            if (dialog.preferBeagleGPU()) {
-                beagleFlags |= BeagleFlag.GPU.getMask();
-            }
-            if (dialog.preferBeagleDouble()) {
-                beagleFlags |= BeagleFlag.DOUBLE.getMask();
-            }
-            if (dialog.preferBeagleSingle()) {
-                beagleFlags |= BeagleFlag.SINGLE.getMask();
+            if (useBeagle) {
+                beagleShowInfo = dialog.showBeagleInfo();
+                if (dialog.preferBeagleCPU()) {
+                    beagleFlags |= BeagleFlag.CPU.getMask();
+                }
+                if (dialog.preferBeagleSSE()) {
+                    beagleFlags |= BeagleFlag.SSE.getMask();
+                }
+                if (dialog.preferBeagleGPU()) {
+                    beagleFlags |= BeagleFlag.GPU.getMask();
+                }
+                if (dialog.preferBeagleDouble()) {
+                    beagleFlags |= BeagleFlag.DOUBLE.getMask();
+                }
+                if (dialog.preferBeagleSingle()) {
+                    beagleFlags |= BeagleFlag.SINGLE.getMask();
+                }
             }
 
             inputFile = dialog.getInputFile();
@@ -479,7 +475,7 @@ public class BeastMain {
         System.out.println();
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, strictXML, additionalParsers);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers);
         } catch (RuntimeException rte) {
             if (window) {
                 // This sleep for 2 seconds is to ensure that the final message

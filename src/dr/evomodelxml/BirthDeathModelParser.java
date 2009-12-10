@@ -47,7 +47,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     public static final String CONDITIONAL_ON_ROOT = "conditionalOnRoot";
 
     public static final String BIRTH_DEATH = "birthDeath";
-    public static final String BIRTHDIFF_RATE_PARAM_NAME = BIRTH_DEATH + ".meanGrowthRate";
+    public static final String MEAN_GROWTH_RATE_PARAM_NAME = BIRTH_DEATH + ".meanGrowthRate";
     public static final String RELATIVE_DEATH_RATE_PARAM_NAME = BIRTH_DEATH + "." + RELATIVE_DEATH_RATE;
 
     public String getParserName() {

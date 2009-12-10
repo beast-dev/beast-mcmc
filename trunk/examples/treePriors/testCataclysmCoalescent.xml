@@ -141,9 +141,10 @@
             <likelihood idref="coalescent1"/>
             <parameter idref="treeModel1.rootHeight"/>
         </log>
-        <log id="logTree1" logEvery="100" fileName="coalescentPrior_trees.log">
+        <logTree id="logTree1" logEvery="100" nexusFormat="true"
+                 fileName="coalescentPrior.trees">
             <treeModel idref="treeModel1"/>
-        </log>
+        </logTree>
         <operators>
             <subtreeSlide weight="1" gaussian="true" size="14000">
                 <treeModel idref="treeModel1"/>
@@ -162,7 +163,7 @@
         <expectation name="treeModel1.rootHeight" value="15000"/>
     </traceAnalysis>
 
-    <treeTraceAnalysis fileName="coalescentPrior_trees.log"/>
+    <treeTraceAnalysis fileName="coalescentPrior.trees"/>
 
 
     <mcmc id="mcmc2" chainLength="1000000" verbose="false">
@@ -179,9 +180,10 @@
             <likelihood idref="coalescent2"/>
             <parameter idref="treeModel2.rootHeight"/>
         </log>
-        <log id="logTree2" logEvery="100" fileName="coalescentPrior_2_trees.log">
+        <logTree id="logTree2" logEvery="100" nexusFormat="true"
+                 fileName="coalescentPrior_2.trees">
             <treeModel idref="treeModel2"/>
-        </log>
+        </logTree>
         <operators>
             <subtreeSlide weight="1" gaussian="true" size="14000">
                 <treeModel idref="treeModel2"/>
@@ -201,7 +203,7 @@
         <expectation name="treeModel2.rootHeight" value="19344.2178"/>
     </traceAnalysis>
 
-    <treeTraceAnalysis fileName="coalescentPrior_2_trees.log"/>
+    <treeTraceAnalysis fileName="coalescentPrior_2.trees"/>
 
 
 </beast>

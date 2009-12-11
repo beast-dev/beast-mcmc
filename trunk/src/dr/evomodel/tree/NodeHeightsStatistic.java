@@ -83,9 +83,9 @@ public class NodeHeightsStatistic extends Statistic.Abstract implements TreeStat
     }
 
     private void calculateHeights() {
-        heights = new double[getDimension()];
+        heights = new double[tree.getInternalNodeCount()];
 
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+        for (int i = 0; i < heights.length; i++) {
             heights[i] = tree.getNodeHeight(tree.getInternalNode(i));
         }
         Arrays.sort(heights);
@@ -96,7 +96,7 @@ public class NodeHeightsStatistic extends Statistic.Abstract implements TreeStat
             int k = 0;
             for (int i = 0; i < groupSizes.getDimension(); i++) {
                 k += groupSizes.getValue(i);
-                heights[i] = allHeights[k];
+                heights[i] = allHeights[k - 1];
             }
         }
     }

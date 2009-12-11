@@ -29,6 +29,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
+import dr.evomodel.tree.TreeLengthStatistic;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -163,7 +164,7 @@ public class BeastParser extends XMLParser {
                                                 + parser.getName() + "." + field.getName());
                                     } else if (parserWarning && replaced) {
                                         System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
-                                                + "which is REPLACING the same parser loaded previously.\n");                                        
+                                                + "which is REPLACING the same parser loaded previously.\n");
                                     }
                                 } catch (IllegalArgumentException iae) {
                                     System.err.println("Failed to install parser: " + iae.getMessage());
@@ -282,7 +283,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evomodelxml.MicrosatelliteSamplerTreeModelParser());
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
+        addXMLObjectParser(TreeLengthStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.MRCATraitStatistic.PARSER);

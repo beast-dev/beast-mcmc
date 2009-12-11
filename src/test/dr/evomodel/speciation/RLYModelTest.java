@@ -7,9 +7,8 @@ import dr.evomodel.operators.TreeBitRandomWalkOperator;
 import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -92,7 +91,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
+        TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         Parameter m = new Parameter.Default("m", 1.0, 0.0, Double.MAX_VALUE);

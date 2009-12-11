@@ -29,7 +29,7 @@ import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -284,6 +284,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
         addXMLObjectParser(TreeLengthStatistic.PARSER);
+        addXMLObjectParser(NodeHeightsStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.MRCATraitStatistic.PARSER);

@@ -39,6 +39,15 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
     final boolean cacheCumulativeIntensities = true;
 
     /**
+     * Construct demographic model with default settings
+     *
+     * @param units of time
+     */
+    public PiecewiseConstantPopulation(Type units) {
+        super(units);
+    }
+
+    /**
      * Creates a piecewise constant model with the given break points.
      *
      * @param intervals an array of intervals, Each interval represents time
@@ -49,6 +58,10 @@ public class PiecewiseConstantPopulation extends DemographicFunction.Abstract {
      */
     public PiecewiseConstantPopulation(double[] intervals, double[] thetas, Type units) {
         super(units);
+        setIntervals(intervals, thetas);
+    }
+
+    public void setIntervals(final double[] intervals, final double[] thetas) {
         if (thetas == null || intervals == null) {
             throw new IllegalArgumentException();
         }

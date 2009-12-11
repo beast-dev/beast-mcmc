@@ -35,6 +35,15 @@ public class PiecewiseLinearPopulation extends PiecewiseConstantPopulation {
 
     /**
      * Construct demographic model with default settings
+     *
+     * @param units of time
+     */
+    public PiecewiseLinearPopulation(Type units) {
+        super(units);
+    }
+
+    /**
+     * Construct demographic model with default settings
      */
     public PiecewiseLinearPopulation(double[] intervals, double[] thetas, Type units) {
 

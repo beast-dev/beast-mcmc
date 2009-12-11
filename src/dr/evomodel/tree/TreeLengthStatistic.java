@@ -36,11 +36,11 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TreelengthStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeLengthStatistic extends Statistic.Abstract implements TreeStatistic {
 
     public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
 
-    public TreelengthStatistic(String name, Tree tree) {
+    public TreeLengthStatistic(String name, Tree tree) {
         super(name);
         this.tree = tree;
     }
@@ -85,7 +85,7 @@ public class TreelengthStatistic extends Statistic.Abstract implements TreeStati
             String name = xo.getAttribute(NAME, xo.getId());
             Tree tree = (Tree) xo.getChild(Tree.class);
 
-            return new TreelengthStatistic(name, tree);
+            return new TreeLengthStatistic(name, tree);
         }
 
         //************************************************************************

@@ -7,9 +7,8 @@ import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -88,7 +87,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
+        TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);

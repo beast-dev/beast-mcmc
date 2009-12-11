@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package test.dr.evomodel.operators;
 
@@ -13,10 +13,8 @@ import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeLogger;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
@@ -58,7 +56,7 @@ public abstract class OperatorAssert extends TestCase {
                 "(((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:3.0):1.0,E:4.0),F:5.0);");
         tree6 = (FlexibleTree) importer.importTree(null);
     }
-    
+
  // 5 taxa trees should sample all 105 topologies
     public void testIrreducibility5() throws IOException, Importer.ImportException {
         irreducibilityTester(tree5, 105, 1000000, 10);
@@ -68,7 +66,7 @@ public abstract class OperatorAssert extends TestCase {
     public void testIrreducibility6() throws IOException, Importer.ImportException {
         irreducibilityTester(tree6, 945, 2000000, 4);
     }
-    
+
     /**
      * @param ep    the expected (binomial) probability of success
      * @param ap    the actual proportion of successes
@@ -99,7 +97,7 @@ public abstract class OperatorAssert extends TestCase {
         options.setFullEvaluationCount(2000);
 
         TreeModel treeModel = new TreeModel("treeModel", tree);
-        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
+        TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         OperatorSchedule schedule = getOperatorSchedule(treeModel);
@@ -169,18 +167,18 @@ public abstract class OperatorAssert extends TestCase {
         }
 
         TestCase.assertEquals(numLabelledTopologies, uniqueTrees.size());
-        
+
         TestCase.assertEquals(sampleSize, chainLength / sampleTreeEvery + 1);
-        
+
         Set<String> keys = topologies.keySet();
     	double ep = 1.0 / topologies.size();
         for (String topology : keys){
           	double ap = ((double)topologies.get(topology)) / (sampleSize);
 //          	assertExpectation(ep, ap, sampleSize);
-          	
+
           	HashMap<String, Integer> counts = treeCounts.get(topology);
           	Set<String> trees = counts.keySet();
-          	
+
           	double MSE = 0;
         	double ep1 = 1.0 / counts.size();
             for (String t : trees){
@@ -189,7 +187,7 @@ public abstract class OperatorAssert extends TestCase {
               	MSE += (ep1-ap1)*(ep1-ap1);
             }
             MSE /= counts.size();
-            
+
             System.out.println("The Mean Square Error for the topolgy " + topology + " is " + MSE);
         }
     }

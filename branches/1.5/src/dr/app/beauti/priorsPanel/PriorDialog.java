@@ -294,7 +294,7 @@ public class PriorDialog {
 			parameter.priorType = (PriorType) priorCombo.getSelectedItem();
 		}
 
-		if (initialField.getValue() != null) parameter.initial = initialField.getValue();
+		if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
 
 		if (parameter.priorType != PriorType.JEFFREYS_PRIOR) optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
 	}

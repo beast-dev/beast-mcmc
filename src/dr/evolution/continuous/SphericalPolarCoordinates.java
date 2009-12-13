@@ -51,8 +51,12 @@ public class SphericalPolarCoordinates implements Contrastable {
 	 * Create spherical polar coordinates from given latitude and longitude
 	 */
 	public SphericalPolarCoordinates(double latitude, double longitude) {
+        this(latitude,longitude,VOLUMETRIC_RADIUS_OF_EARTH);
+    }
+
+    public SphericalPolarCoordinates(double latitude, double longitude, double radius) {
 	
-		radius = VOLUMETRIC_RADIUS_OF_EARTH;
+		this.radius = radius;
 		theta = (90.0-latitude)*Math.PI/180.0;
 		
 		if (longitude < 0) longitude += 360;

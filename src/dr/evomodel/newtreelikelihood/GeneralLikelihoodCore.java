@@ -27,7 +27,6 @@ package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 
 public class GeneralLikelihoodCore implements LikelihoodCore {
 

@@ -2,7 +2,7 @@ package dr.app.tools;
 
 
 import dr.app.util.Arguments;
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 import dr.stats.DiscreteStatistics;
 import org.jdom.Element;
 import org.jdom.output.Format;

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evolution.continuous;
+package dr.geo.math;
 
 public final class Vector3D {
 

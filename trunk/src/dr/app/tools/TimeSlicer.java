@@ -8,7 +8,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 import dr.util.Version;
 import dr.util.HeapSort;
 import dr.math.distributions.MultivariateNormalDistribution;

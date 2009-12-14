@@ -27,8 +27,6 @@ package dr.evomodel.newtreelikelihood;
 
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
 
 import java.util.Map;
 import java.util.HashMap;

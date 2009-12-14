@@ -1,7 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.Parameter;
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 import cern.jet.math.Bessel;
 
 /**

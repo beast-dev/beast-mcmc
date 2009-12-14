@@ -25,7 +25,7 @@
 
 package dr.evoxml;
 
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 import dr.xml.*;
 
 /**

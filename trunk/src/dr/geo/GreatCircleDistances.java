@@ -2,7 +2,7 @@ package dr.geo;
 
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;

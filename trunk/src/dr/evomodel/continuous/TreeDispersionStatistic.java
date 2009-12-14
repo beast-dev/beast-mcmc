@@ -6,7 +6,7 @@ import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.inference.model.Statistic;
-import dr.evolution.continuous.SphericalPolarCoordinates;
+import dr.geo.math.SphericalPolarCoordinates;
 
 /**
  * @author Marc Suchard

@@ -23,7 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evolution.continuous;
+package dr.geo.math;
+
+import dr.evolution.continuous.Contrastable;
 
 public class SphericalPolarCoordinates implements Contrastable {
 	

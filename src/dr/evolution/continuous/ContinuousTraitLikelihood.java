@@ -29,6 +29,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
 import dr.matrix.Matrix;
 import dr.matrix.MutableMatrix;
+import dr.geo.math.SphericalPolarCoordinates;
 
 import java.io.StringReader;
 

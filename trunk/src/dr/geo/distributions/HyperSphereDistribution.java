@@ -27,8 +27,6 @@ public abstract class HyperSphereDistribution implements MultivariateDistributio
         return new double[0];
     }
 
-    public Vector hi;
-
     public String getType() {
         return "Hyperspherical";
     }

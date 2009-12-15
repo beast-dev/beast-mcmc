@@ -113,7 +113,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public Double getValue() {
         try {
-            if (getText().equals(POSITIVE_INFINITY)) {
+            if (getText().trim() == "" || getText().trim() == null) {
+//                System.out.println("null");
+                return null;
+            } else if (getText().equals(POSITIVE_INFINITY)) {
                 return Double.POSITIVE_INFINITY;
             } else if (getText().equals(NEGATIVE_INFINITY)) {
                 return Double.NEGATIVE_INFINITY;
@@ -124,6 +127,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             } else if (getText().equals(NaN)) {
                 return Double.NaN;
             } else {
+//                System.out.println("=" + getText() + "=");
                 return new Double(getText());
             }
         } catch (NumberFormatException e) {

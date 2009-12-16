@@ -38,10 +38,13 @@ import java.io.FileWriter;
 
 public class BeastParserDoc {
 
-    public final static String INDEX_HTML = "index.html";
-    public final static String DEATAIL_HTML = "detail.html";
-
     private final static Version version = new BeastVersion();
+
+    public final static String INDEX_HTML = "index_" + version.getVersionString() + ".html";
+    public final static String DETAIL_HTML = "detail_" + version.getVersionString() + ".html";
+    public final static String INDEX_WIKI = "index_" + version.getVersionString() + ".wiki";
+    public final static String DETAIL_WIKI = "detail_" + version.getVersionString() + ".wiki";
+
 
     public final static String TITTLE = "BEAST " + version.getVersionString() + " Parser Library ("
             + version.getDateString() + ")";
@@ -72,35 +75,39 @@ public class BeastParserDoc {
 //        if (!file.isDirectory()) {
 //            throw new IllegalArgumentException(directory + " is not a directory!");
 //        }
-
+        PrintWriter writer;
         if (wikiFormat) {
             XMLDocumentationHandler handler = new WikiDocumentationHandler(parser);
 
-            PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, "xml_format.wiki")));
+//            writer = new PrintWriter(new FileWriter(new File(directory, INDEX_WIKI)));
+//            System.out.println("Building types table in " + INDEX_WIKI + " ...");
+//
+//            handler.outputIndex(writer);
+//            System.out.println("done.");
+//            writer.flush();
+//            writer.close();
 
-            System.out.println("Building element descriptions...");
+            writer = new PrintWriter(new FileWriter(new File(directory, DETAIL_WIKI)));
+            System.out.println("Building element descriptions in " + DETAIL_WIKI + " ...");
+
             handler.outputElements(writer);
             System.out.println("done.");
-
-            System.out.println("Building types table...");
-            handler.outputIndex(writer);
-            System.out.println("done.");
-
             writer.flush();
             writer.close();
+
         } else {
             XMLDocumentationHandler handler = new XMLDocumentationHandler(parser);
 
             System.out.println("Generate " + INDEX_HTML + " ...");
-            PrintWriter writer = new PrintWriter(new FileWriter(new File(directory, INDEX_HTML)));
+            writer = new PrintWriter(new FileWriter(new File(directory, INDEX_HTML)));
 
             handler.outputIndex(writer); // generate index.html
             System.out.println("done.");
             writer.flush();
             writer.close();
 
-            System.out.println("Generate " + DEATAIL_HTML + " ...");
-            writer = new PrintWriter(new FileWriter(new File(directory, DEATAIL_HTML)));
+            System.out.println("Generate " + DETAIL_HTML + " ...");
+            writer = new PrintWriter(new FileWriter(new File(directory, DETAIL_HTML)));
 
             handler.outputElements(writer);
             System.out.println("done.");
@@ -182,10 +189,11 @@ public class BeastParserDoc {
 
         if (outputDirectory == null) {
             // No input file name was given so throw up a dialog box...
-            outputDirectory = "/release/common/doc/BeastParserDoc_" + version.getVersionString();
+            outputDirectory = System.getProperty("user.dir") + "\\release\\common\\doc\\BEASTParserLibrary";
         }
 
-        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false), outputDirectory, false);
+        // BeastParserDoc(BeastParser parser, String directory, boolean wikiFormat)
+        new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false), outputDirectory, true);
 
         System.exit(0);
     }

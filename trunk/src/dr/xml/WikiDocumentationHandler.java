@@ -26,8 +26,10 @@
 package dr.xml;
 
 import dr.app.beast.BeastParser;
+import dr.app.tools.BeastParserDoc;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -41,10 +43,7 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
     public void outputElements(PrintWriter writer) {
 
-        writer.println("==BEAST elements==");
-        writer.println("");
-        writer.println("The following is a list of valid elements in a beast file.");
-        writer.println("");
+        printDocWikiTitle(writer);
 
         Iterator iterator = parser.getParsers();
         while (iterator.hasNext()) {
@@ -58,6 +57,28 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
     }
 
+    private void printDocWikiTitle(PrintWriter writer) {
+
+        Calendar date = Calendar.getInstance();
+        SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
+
+        writer.println("=" + BeastParserDoc.TITTLE + "=");
+
+        if (parser.parsers != null) {
+            if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {
+                writer.println("Release Version (" + dateformatter.format(date.getTime()) + ")");
+                System.out.println("Release Version");
+            } else if (parser.parsers.equalsIgnoreCase(BeastParser.DEV)) {
+                writer.println("Development Version (" + dateformatter.format(date.getTime()) + ")");
+                System.out.println("Development Version");
+            }
+        }
+
+        writer.println("");
+        writer.println("The following is a list of valid elements in a beast file.");
+        writer.println("");
+
+    }
 
     /**
      * Outputs all types that appear as required attributes or elements in an HTML table to the given writer.
@@ -112,6 +133,19 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
         }
     }
 
+    /**
+     * Outputs an example of a particular element, using the syntax information.
+     * @param writer     PrintWriter
+     * @param parser     XMLObjectParser
+     */
+    public void outputExampleXML(PrintWriter writer, XMLObjectParser parser) {
+
+        if (parser.hasExample()) {
+            outputHTMLSafeText(writer, parser.getExample());
+        } else {
+            outputExampleXML(writer, parser, 0);
+        }
+    }
 
     public String getHTMLForClass(Class c) {
         return getWikiLink(ClassComparator.getName(c));

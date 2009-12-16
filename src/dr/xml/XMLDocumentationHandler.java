@@ -57,7 +57,7 @@ public class XMLDocumentationHandler {
         }
     }
 
-    private void printDocTitle(PrintWriter writer, String page) {
+    private void printDocXMLTitle(PrintWriter writer, String page) {
         writer.println("<head>");
         writer.println("  <link rel=\"stylesheet\" href=\"../beast.css\">");
         writer.println("  <title>" + page + "</title>");
@@ -84,7 +84,7 @@ public class XMLDocumentationHandler {
     public void outputElements(PrintWriter writer) {
 
         writer.println("<html>");
-        printDocTitle(writer, BeastParserDoc.DEATAIL_HTML);
+        printDocXMLTitle(writer, BeastParserDoc.DETAIL_HTML);
         writer.println("<p>");
         writer.println("The following is a list of valid elements in a beast file.<br>");
         writer.println("<span class=\"required\">&nbsp;&nbsp;&nbsp;&nbsp;</span> required<br>");
@@ -337,7 +337,7 @@ public class XMLDocumentationHandler {
     public void outputIndex(PrintWriter writer) {
 
         writer.println("<html>");
-        printDocTitle(writer, BeastParserDoc.INDEX_HTML);
+        printDocXMLTitle(writer, BeastParserDoc.INDEX_HTML);
         writer.println("<p>");
         writer.println("The following is a list of generic types that elements represent in a beast file.<br>");
         writer.println("</p>");
@@ -378,7 +378,7 @@ public class XMLDocumentationHandler {
 //                                + xmlParser.getParserName() + "&gt;</a></div>");
                             writer.println("<div id=\"" + xmlParser.getParserName() + "\" class=\"element\">");
 //                            writer.println("  <div class=\"elementheader\">");
-                            writer.println("    <span class=\"elementname\"><a href=\"" + BeastParserDoc.DEATAIL_HTML
+                            writer.println("    <span class=\"elementname\"><a href=\"" + BeastParserDoc.DETAIL_HTML
                                      + "#" + xmlParser.getParserName() + "\"> <h3>&lt;" + xmlParser.getParserName()
                                     + "&gt;</h3></a></span>");
                             writer.println("    <div class=\"description\"><b>Description:</b><br>");

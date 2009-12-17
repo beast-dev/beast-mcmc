@@ -1,8 +1,9 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.Parameter;
-import dr.geo.math.SphericalPolarCoordinates;
-import cern.jet.math.Bessel;
+import dr.geo.math.Space;
+import dr.geo.distributions.VonMisesFisherDistribution;
+import dr.xml.*;
 
 /**
  * @author Marc Suchard
@@ -19,8 +20,8 @@ import cern.jet.math.Bessel;
 
 public class VonMisesFisherDiffusionModel extends MultivariateDiffusionModel {
 
-    private static double LOG_2_PI = Math.log(2 * Math.PI);
-
+    public static final String VON_MISES_FISHER_MODEL = "vonMisesFisherDiffusionModel";
+    public static final String KAPPA = "kappa";
 
     public VonMisesFisherDiffusionModel(Parameter concentrationParameter) {
         this(3, concentrationParameter); // Default is distribution on a sphere
@@ -42,48 +43,10 @@ public class VonMisesFisherDiffusionModel extends MultivariateDiffusionModel {
         // Nothing gets stored
     }
 
-    private static double computeLogNormalization(double kappa, int p) {
-
-        if (p == 3) {
-            // 'sinh' has some numerical instability for small arguments
-            if (kappa < 1E-10) {
-                return -Math.log(2) - LOG_2_PI;
-            }
-            return Math.log(kappa) - LOG_2_PI - Math.log(Math.exp(+kappa) - Math.exp(-kappa));
-        } else if (p == 2) { // Bessel function of order (p/2-1)
-            return Bessel.i0(kappa);
-        }
-        return 0;
-    }
-
-    private double cartesianInnerProduct(double[] x, double[] y, double radius) {
-
-        // x[] and y[] should be in the form (lat, long)
-        if (x.length != 2 || y.length != 2) {
-            throw new RuntimeException("Wrong dimensions");
-        }
-
-        final SphericalPolarCoordinates coordX = new SphericalPolarCoordinates(x[0], x[1], radius);
-        final SphericalPolarCoordinates coordY = new SphericalPolarCoordinates(y[0], y[1], radius);
-
-        return coordX.getCartesianCoordinates().dot(coordY.getCartesianCoordinates());
-    }
-
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
 
-        double innerProduct;
-        if (p == 3 && start.length == 2) { // Given in (lat, long)
-            innerProduct = cartesianInnerProduct(start, stop, 1.0);   // Distributional form assume ||x|| = ||y|| = 1
-        } else if (p == 2 && start.length == 1) {
-            innerProduct = Math.cos(stop[0] - start[0]); // Assumed to already be in radians   
-        } else {
-            innerProduct = 0;
-            for(int i = 0; i < start.length; i++) {
-                innerProduct += start[i] * stop[i];
-            }
-        }
         final double kappa = concentrationParameter.getParameterValue(0) / time;
-        return computeLogNormalization(kappa,p) + kappa * innerProduct;
+        return VonMisesFisherDistribution.logPdf(start, stop, kappa, Space.LAT_LONG);
     }
 
     private Parameter concentrationParameter;
@@ -91,9 +54,56 @@ public class VonMisesFisherDiffusionModel extends MultivariateDiffusionModel {
 
     public static void main(String[] arg) {
 
-        double kappa = 1E-15;
-        double r = computeLogNormalization(kappa,3);
-        System.err.println("t(r) = " + r);
+        Parameter kappa = new Parameter.Default(2.0);
+        VonMisesFisherDiffusionModel model = new VonMisesFisherDiffusionModel(kappa);
+
+        double[] start = {90,0}; // North-pole
+        double[] stop  = {0,90}; // Somewhere in the East
+        double time = 0.1;
+
+        System.err.println("logPDF = "+model.calculateLogDensity(start,stop,time)+" ?= -18.84214");
+
+// R code check
+// north = c(0,0,1)
+// east  = c(0,1,0)
+// log(vmf(north,east,2/0.1,3))
+
     }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return VON_MISES_FISHER_MODEL;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            XMLObject cxo = xo.getChild(KAPPA);
+            Parameter kappa = (Parameter) cxo.getChild(Parameter.class);
+
+            return new VonMisesFisherDiffusionModel(kappa);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Describes a von Mises-Fisher distributed diffusion process on a sphere.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(KAPPA,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+        };
+
+        public Class getReturnType() {
+            return MultivariateDiffusionModel.class;
+        }
+    };
 
 }

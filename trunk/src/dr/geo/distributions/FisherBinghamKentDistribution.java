@@ -1,14 +1,18 @@
 package dr.geo.distributions;
 
+import dr.geo.math.Space;
+
 /**
  * @author Marc Suchard
  */
 public class FisherBinghamKentDistribution extends HyperSphereDistribution {
 
-    public FisherBinghamKentDistribution(int dim, double[] mean, double[] major, double[] minor) {
-        super(dim, mean);
+    public FisherBinghamKentDistribution(int dim, Space space, double[] mean, double[] major, double[] minor,
+                                         double kappa, double beta) {
+        super(dim, space, mean, kappa);
         this.major = major;
         this.minor = minor;
+        this.beta = beta;
     }
 
     public double logPdf(double[] x) {
@@ -29,4 +33,5 @@ public class FisherBinghamKentDistribution extends HyperSphereDistribution {
 
     private double[] major;
     private double[] minor;
+    private double beta;
 }

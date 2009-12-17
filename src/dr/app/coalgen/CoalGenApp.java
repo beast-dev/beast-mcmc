@@ -25,7 +25,7 @@
 
 package dr.app.coalgen;
 
-import org.virion.jam.framework.SingleDocApplication;
+import jam.framework.SingleDocApplication;
 
 import javax.swing.*;
 

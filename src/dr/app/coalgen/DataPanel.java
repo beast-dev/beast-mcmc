@@ -25,15 +25,16 @@
 
 package dr.app.coalgen;
 
-import dr.evolution.util.Date;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableRenderer;
+import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.tipdatepanel.GuessDatesDialog;
+import dr.app.beauti.util.PanelUtils;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -47,6 +48,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.virion.jam.components.RealNumberField;
+import org.virion.jam.table.TableEditorStopper;
 
 /**
  * @author Andrew Rambaut
@@ -63,16 +67,17 @@ public class DataPanel extends JPanel implements Exportable {
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
     JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
-    JComboBox directionCombo = new JComboBox(new String[]{"Before the present", "Since some time in the past"});
-    //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
-
-    JComboBox translationCombo = new JComboBox();
-
-    TableRenderer sequenceRenderer = null;
+    JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
 
     CoalGenFrame frame = null;
 
     CoalGenData data = null;
+
+    DateGuesser guesser = new DateGuesser();
+
+    double[] heights = null;
+
+    GuessDatesDialog guessDatesDialog = null;
 
     public DataPanel(CoalGenFrame frame, CoalGenData data) {
 
@@ -85,7 +90,6 @@ public class DataPanel extends JPanel implements Exportable {
 
         sorter.setTableHeader(dataTable.getTableHeader());
 
-        dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         dataTable.getTableHeader().setReorderingAllowed(false);
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -93,11 +97,18 @@ public class DataPanel extends JPanel implements Exportable {
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+
         dataTable.getColumnModel().getColumn(1).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
         dataTable.getColumnModel().getColumn(1).setCellEditor(
                 new DateCellEditor());
+
+        dataTable.getColumnModel().getColumn(2).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
         dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
@@ -110,35 +121,30 @@ public class DataPanel extends JPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
 
-        clearDatesAction.setEnabled(false);
-        guessDatesAction.setEnabled(false);
-        unitsCombo.setOpaque(false);
-        unitsCombo.setEnabled(false);
-        unitsCombo.setFont(unitsCombo.getFont().deriveFont(12.0f));
-        directionCombo.setOpaque(false);
-        directionCombo.setEnabled(false);
-        directionCombo.setFont(directionCombo.getFont().deriveFont(12.0f));
-        //originField.setEnabled(false);
-        //originField.setValue(0.0);
-        //originField.setColumns(12);
+        PanelUtils.setupComponent(unitsCombo);
+        PanelUtils.setupComponent(directionCombo);
 
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
-//		toolBar1.setLayout(new BoxLayout(toolBar1, javax.swing.BoxLayout.X_AXIS));
+
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        toolBar1.add(clearDatesAction);
+        JButton button = new JButton(clearDatesAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
+        button = new JButton(guessDatesAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        toolBar1.add(guessDatesAction);
-        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
-        toolBar1.add(new JLabel("Dates specified as "));
+        final JLabel unitsLabel = new JLabel("Dates specified as ");
+        toolBar1.add(unitsLabel);
         toolBar1.add(unitsCombo);
         toolBar1.add(directionCombo);
-        //toolBar.add(originField);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
+
         add(toolBar1, "North");
         add(scrollPane, "Center");
 
@@ -149,10 +155,6 @@ public class DataPanel extends JPanel implements Exportable {
         };
         unitsCombo.addItemListener(listener);
         directionCombo.addItemListener(listener);
-        //originField.addKeyListener(new java.awt.event.KeyAdapter() {
-        //	public void keyTyped(java.awt.event.KeyEvent ev) {
-        //		timeScaleChanged();
-        //	}});
 
     }
 
@@ -168,7 +170,7 @@ public class DataPanel extends JPanel implements Exportable {
 
         }
 
-        dataTableModel.fireTableDataChanged();
+        timeScaleChanged();
     }
 
     public final void timeScaleChanged() {
@@ -185,9 +187,7 @@ public class DataPanel extends JPanel implements Exportable {
                 break;
         }
 
-        boolean backwards = directionCombo.getSelectedIndex() == 0;
-
-        //double origin = originField.getValue().doubleValue();
+        boolean backwards = directionCombo.getSelectedIndex() == 1;
 
         for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
             Date date = data.taxonList.getTaxon(i).getDate();
@@ -198,8 +198,10 @@ public class DataPanel extends JPanel implements Exportable {
             data.taxonList.getTaxon(i).setDate(newDate);
         }
 
+        calculateHeights();
+
         dataTableModel.fireTableDataChanged();
-        frame.fireDataChanged();
+        frame.fireTaxaChanged();
     }
 
     private Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
@@ -224,42 +226,6 @@ public class DataPanel extends JPanel implements Exportable {
         }
     }
 
-    public void deleteSelection() {
-/*		int option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\n"+
-														 "the selected taxa?\n"+
-														 "This operation cannot be undone.", 
-													"Warning",
-													JOptionPane.YES_NO_OPTION,
-													JOptionPane.WARNING_MESSAGE);
-											
-		if (option == JOptionPane.YES_OPTION) {
-			int[] selRows = dataTable.getSelectedRows();
-			String[] names = new String[selRows.length];
-			
-			TableModel model = dataTable.getModel();
-			
-			for (int i = 0; i < names.length; i++) {
-				names[i] = (String)model.getValueAt(selRows[i], 0);
-			}
-			
-			for (int i = 0; i < names.length; i++) {
-				int index = data.taxonList.getTaxonIndex(names[i]);
-				data.taxonList.removeTaxon(index);
-			}
-			
-			if (options.originalAlignment.getTaxonCount() == 0) {
-				// if all the sequences are deleted we may as well throw
-				// away the alignment...
-			
-				options.originalAlignment = null;
-				options.alignment = null;
-			}
-			
-			dataTableModel.fireTableDataChanged();
-			frame.dataChanged();
-		}
-		*/
-    }
 
     public void clearDates() {
         for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
@@ -275,231 +241,50 @@ public class DataPanel extends JPanel implements Exportable {
         timeScaleChanged();
 
         dataTableModel.fireTableDataChanged();
-        frame.fireDataChanged();
+        frame.fireTaxaChanged();
     }
 
     public void guessDates() {
 
-        OptionsPanel optionPanel = new OptionsPanel();
+        if (guessDatesDialog == null) {
+            guessDatesDialog = new GuessDatesDialog(frame);
+        }
 
-        optionPanel.addLabel("The date is given by a numerical field in the taxon label that is:");
+        int result = guessDatesDialog.showDialog();
 
-        final JLabel orderLabel = new JLabel("Defined by its order:");
-        final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
-                "fourth", "fourth from last",
-                "third from last", "second from last", "last"});
-
-        optionPanel.addComponents(orderLabel, orderCombo);
-        optionPanel.addSeperator();
-
-        final JCheckBox prefixCheckBox = new JCheckBox("Defined by a prefix", false);
-        final JTextField prefixText = new JTextField(16);
-        prefixText.setEnabled(false);
-        optionPanel.addComponents(prefixCheckBox, prefixText);
-        optionPanel.addSeperator();
-
-        final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
-        final RealNumberField offsetText = new RealNumberField();
-        offsetText.setValue(1900);
-        offsetText.setColumns(16);
-        offsetText.setEnabled(false);
-        offsetCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                offsetText.setEnabled(offsetCheck.isSelected());
-            }
-        });
-        optionPanel.addComponents(offsetCheck, offsetText);
-
-        final JCheckBox unlessCheck = new JCheckBox("...unless less than:", false);
-        final RealNumberField unlessText = new RealNumberField();
-        unlessText.setValue(4);
-        unlessText.setColumns(16);
-        unlessText.setEnabled(false);
-        optionPanel.addComponents(unlessCheck, unlessText);
-
-        final RealNumberField offset2Text = new RealNumberField();
-        offset2Text.setValue(2000);
-        offset2Text.setColumns(16);
-        offset2Text.setEnabled(false);
-        optionPanel.addComponentWithLabel("...in which case add:", offset2Text);
-
-        unlessCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                unlessText.setEnabled(unlessCheck.isSelected());
-                offset2Text.setEnabled(unlessCheck.isSelected());
-            }
-        });
-
-        prefixCheckBox.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                prefixText.setEnabled(prefixCheckBox.isSelected());
-            }
-        });
-
-        JOptionPane optionPane = new JOptionPane(optionPanel,
-                JOptionPane.QUESTION_MESSAGE,
-                JOptionPane.OK_CANCEL_OPTION,
-                null,
-                null,
-                null);
-        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        JDialog dialog = optionPane.createDialog(frame, "Guess Dates");
-//		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.pack();
-        dialog.setVisible(true);
-
-        if (optionPane.getValue() == null) {
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
-        int value = (Integer) optionPane.getValue();
-        if (value == -1 || value == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
+        guesser.guessDates = true;
+        guessDatesDialog.setupGuesser(guesser);
 
-        for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
-            java.util.Date origin = new java.util.Date(0);
+        String warningMessage = null;
 
-            double d = 0.0;
+        guesser.guessDates(data.taxonList);
 
-            try {
-                int order = orderCombo.getSelectedIndex();
-                boolean fromLast = false;
-                if (order > 3) {
-                    fromLast = true;
-                    order = 8 - order - 1;
-                }
-
-                String prefix;
-                if (prefixCheckBox.isSelected()) {
-                    prefix = prefixText.getText();
-                    d = guessDateFromPrefix(data.taxonList.getTaxonId(i), prefix, order, fromLast);
-                } else {
-                    d = guessDateFromOrder(data.taxonList.getTaxonId(i), order, fromLast);
-                }
-
-            } catch (NumberFormatException nfe) {
-            }
-
-            if (offsetCheck.isSelected()) {
-                double offset = offsetText.getValue();
-                if (unlessCheck.isSelected()) {
-                    double unless = unlessText.getValue();
-                    double offset2 = offset2Text.getValue();
-                    if (d < unless) {
-                        d += offset2;
-                    } else {
-                        d += offset;
-                    }
-                } else {
-                    d += offset;
-                }
-            }
-
-            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            data.taxonList.getTaxon(i).setAttribute("date", date);
+        if (warningMessage != null) {
+            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+                    "Error guessing dates",
+                    JOptionPane.WARNING_MESSAGE);
         }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
         dataTableModel.fireTableDataChanged();
-        frame.fireDataChanged();
-    }
-
-    public double guessDateFromOrder(String label, int order, boolean fromLast) throws NumberFormatException {
-
-        List<String> fields = new ArrayList<String>();
-
-        int i = 0;
-
-        char c = label.charAt(i);
-
-        do {
-            // first find a part of a number
-            while (!Character.isDigit(c) && c != '.') {
-                i++;
-                if (i == label.length()) break;
-                c = label.charAt(i);
-            }
-            int j = i;
-
-            if (i < label.length()) {
-
-                // now find the end of the number
-                while (Character.isDigit(c) || c == '.') {
-                    i++;
-                    if (i == label.length()) break;
-                    c = label.charAt(i);
-                }
-
-                fields.add(label.substring(j, i));
-            }
-
-        } while (i < label.length());
-
-        int index;
-
-        if (fromLast) {
-            index = fields.size() - order - 1;
-        } else {
-            index = order;
-        }
-
-        if (index < 0 || index >= fields.size()) {
-            throw new NumberFormatException("Missing number field in taxon label");
-        }
-
-        return Double.parseDouble(fields.get(index));
-    }
-
-    public double guessDateFromPrefix(String label, String prefix, int order, boolean fromLast) throws NumberFormatException {
-
-        List<String> fields = new ArrayList<String>();
-
-        String subLabel = label;
-
-        int i = subLabel.indexOf(prefix);
-        while (i != -1) {
-            i += prefix.length();
-            int j = i;
-
-            if (i < label.length()) {
-                // now find the beginning of the number
-                char c = subLabel.charAt(i);
-                while (i < subLabel.length() && (Character.isDigit(c) || c == '.')) {
-                    i++;
-                    if (i == subLabel.length()) break;
-                    c = subLabel.charAt(i);
-                }
-
-                fields.add(subLabel.substring(j, i));
-            }
-
-            subLabel = subLabel.substring(i);
-            i = subLabel.indexOf(prefix);
-        }
-
-        int index;
-
-        if (fromLast) {
-            index = fields.size() - order - 1;
-        } else {
-            index = order;
-        }
-
-        if (index < 0 || index >= fields.size()) {
-            new NumberFormatException("Missing number field in taxon label");
-        }
-
-        return Double.parseDouble(fields.get(index));
+        frame.fireTaxaChanged();
     }
 
     public class ClearDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -7281309694753868635L;
+
         public ClearDatesAction() {
             super("Clear Dates");
-            setToolTipText("Use this tool to add zero sampling dates to each taxon");
+            setToolTipText("Use this tool to remove sampling dates from each taxon");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -508,6 +293,11 @@ public class DataPanel extends JPanel implements Exportable {
     }
 
     public class GuessDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 8514706149822252033L;
+
         public GuessDatesAction() {
             super("Guess Dates");
             setToolTipText("Use this tool to guess the sampling dates from the taxon labels");
@@ -518,9 +308,40 @@ public class DataPanel extends JPanel implements Exportable {
         }
     }
 
+    private void calculateHeights() {
+
+        double maximumTipHeight = 0.0;
+        if (data.taxonList == null || data.taxonList.getTaxonCount() == 0) return;
+
+        heights = null;
+
+        dr.evolution.util.Date mostRecent = null;
+        for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
+            Date date = data.taxonList.getTaxon(i).getDate();
+            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
+                mostRecent = date;
+            }
+        }
+
+        if (mostRecent != null) {
+            heights = new double[data.taxonList.getTaxonCount()];
+
+            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
+
+            for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
+                Date date = data.taxonList.getTaxon(i).getDate();
+                if (date != null) {
+                    heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                    if (heights[i] > maximumTipHeight) maximumTipHeight = heights[i];
+                }
+            }
+        }
+    }
+
     class DataTableModel extends AbstractTableModel {
 
-        String[] columnNames = {"Name", "Date"};
+        String[] columnNames = {"Name", "Date", "Height"};
 
         public DataTableModel() {
         }
@@ -544,6 +365,12 @@ public class DataPanel extends JPanel implements Exportable {
                     } else {
                         return "-";
                     }
+                case 2:
+                    if (heights != null) {
+                        return heights[row];
+                    } else {
+                        return "0.0";
+                    }
             }
             return null;
         }
@@ -560,7 +387,7 @@ public class DataPanel extends JPanel implements Exportable {
                 }
             }
 
-            dataChanged();
+            timeScaleChanged();
         }
 
         public boolean isCellEditable(int row, int col) {
@@ -602,5 +429,4 @@ public class DataPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     }
-
 }

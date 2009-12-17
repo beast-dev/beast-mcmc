@@ -26,9 +26,9 @@
 
 package dr.app.coalgen;
 
-import org.virion.jam.framework.Application;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.framework.SingleDocMenuBarFactory;
+import jam.framework.Application;
+import jam.framework.DocumentFrame;
+import jam.framework.SingleDocMenuBarFactory;
 
 import javax.swing.*;
 

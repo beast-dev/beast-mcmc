@@ -25,10 +25,8 @@
 
 package dr.app.coalgen;
 
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,29 +34,30 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.IOException;
+
+import org.virion.jam.components.RealNumberField;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id$
  */
-public class ModelPanel extends OptionsPanel implements Exportable {
+public class ModelPanel extends JPanel implements Exportable {
 
-    CoalGenFrame frame = null;
-    CoalGenData data = null;
+    private final CoalGenFrame frame;
+    private final CoalGenData data;
 
     private JComboBox demographicCombo;
 
     private OptionsPanel optionPanel;
 
-    private WholeNumberField replicatesField = new WholeNumberField(1, Integer.MAX_VALUE);
-
     private RealNumberField[] argumentFields = new RealNumberField[CoalGenData.argumentNames.length];
     private JCheckBox[] argumentCheckBoxes = new JCheckBox[CoalGenData.argumentNames.length];
     private JComboBox[] argumentCombos = new JComboBox[CoalGenData.argumentNames.length];
 
-
-    public ModelPanel(CoalGenFrame frame, CoalGenData data) {
+    public ModelPanel(final CoalGenFrame frame, final CoalGenData data) {
 
         super();
 
@@ -68,8 +67,9 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         setOpaque(false);
         setLayout(new BorderLayout());
 
-        replicatesField.setColumns(8);
-
+        optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
+        add(optionPanel, BorderLayout.NORTH);
+        
         demographicCombo = new JComboBox();
         demographicCombo.setOpaque(false);
 
@@ -80,12 +80,14 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         demographicCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setDemographicArguments();
+                frame.fireModelChanged();
             }
         });
 
         for (int i = 0; i < CoalGenData.argumentNames.length; i++) {
             argumentFields[i] = new RealNumberField();
             argumentFields[i].setColumns(8);
+            argumentFields[i].setValue(data.argumentValues[i]);
             argumentCheckBoxes[i] = new JCheckBox("From Trace:");
             argumentCheckBoxes[i].setOpaque(false);
             argumentCombos[i] = new JComboBox();
@@ -94,9 +96,6 @@ public class ModelPanel extends OptionsPanel implements Exportable {
             argumentCheckBoxes[i].addActionListener(
                     new ArgumentActionListener(argumentCheckBoxes[i], argumentFields[i], argumentCombos[i]));
         }
-
-        optionPanel = new OptionsPanel();
-        add(optionPanel, BorderLayout.CENTER);
 
         setDemographicArguments();
     }
@@ -129,13 +128,9 @@ public class ModelPanel extends OptionsPanel implements Exportable {
     private void setDemographicArguments() {
         optionPanel.removeAll();
 
-        optionPanel.addComponentWithLabel("Number of replicates (ignored if using a trace file):", replicatesField);
-
-        optionPanel.addSeperator();
-
         optionPanel.addComponents(new JLabel("Demographic Model:"), demographicCombo);
 
-        optionPanel.addSeperator();
+        optionPanel.addSeparator();
 
         optionPanel.addLabel("Select the parameter values (or obtain from a trace file):");
 
@@ -156,8 +151,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         repaint();
     }
 
-    public final void dataChanged() {
-        replicatesField.setValue(data.replicateCount);
+    public final void tracesChanged() {
         demographicCombo.setSelectedIndex(data.demographicModel);
 
         if (data.traces != null) {
@@ -191,9 +185,7 @@ public class ModelPanel extends OptionsPanel implements Exportable {
         setDemographicArguments();
     }
 
-    public final void updateData() {
-        data.replicateCount = replicatesField.getValue();
-
+    public final void collectSettings() {
         data.demographicModel = demographicCombo.getSelectedIndex();
         for (int i = 0; i < CoalGenData.argumentNames.length; i++) {
             data.argumentValues[i] = argumentFields[i].getValue();

@@ -33,8 +33,8 @@ import dr.evolution.tree.Tree;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.util.FileHelpers;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.framework.Exportable;
+import jam.framework.DocumentFrame;
+import jam.framework.Exportable;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -50,9 +50,11 @@ public class CoalGenFrame extends DocumentFrame {
 
     private CoalGenData data = null;
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
+    private final JTabbedPane tabbedPane = new JTabbedPane();
+    private InputsPanel inputsPanel;
     private DataPanel dataPanel;
     private ModelPanel modelPanel;
+    private SimulationsPanel simulationsPanel;
 
     private JLabel statusLabel;
 
@@ -68,12 +70,16 @@ public class CoalGenFrame extends DocumentFrame {
 
         setSize(new java.awt.Dimension(800, 600));
 
+        inputsPanel = new InputsPanel(this, data);
         dataPanel = new DataPanel(this, data);
         modelPanel = new ModelPanel(this, data);
-
+        simulationsPanel = new SimulationsPanel(this, data);
+        
+        tabbedPane.addTab("Inputs", null, inputsPanel);
         tabbedPane.addTab("Taxa", null, dataPanel);
         tabbedPane.addTab("Model", null, modelPanel);
-
+        tabbedPane.addTab("Simulations", null, simulationsPanel);
+        
         statusLabel = new JLabel("No taxa loaded");
 
         JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
@@ -94,22 +100,20 @@ public class CoalGenFrame extends DocumentFrame {
 
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
         getContentPane().add(panel, BorderLayout.CENTER);
-
-        fireDataChanged();
     }
 
-    public void setTraces(LogFileTraces traces) {
-
-        data.traces = traces;
-        data.reset();
-
-        fireDataChanged();
+    public void fireTaxaChanged() {
     }
 
-    public void fireDataChanged() {
+    public void fireModelChanged() {
+        modelPanel.collectSettings();
+    }
 
-        dataPanel.dataChanged();
-        modelPanel.dataChanged();
+
+    public void fireTracesChanged() {
+        inputsPanel.tracesChanged();
+        modelPanel.tracesChanged();
+        simulationsPanel.tracesChanged();
     }
 
     public final void dataSelectionChanged(boolean isSelected) {
@@ -121,19 +125,21 @@ public class CoalGenFrame extends DocumentFrame {
     }
 
     public void doDelete() {
-        if (tabbedPane.getSelectedComponent() == dataPanel) {
-            dataPanel.deleteSelection();
-        } else {
-            throw new RuntimeException("Delete should only be accessable from the Data panel");
-        }
+//        if (tabbedPane.getSelectedComponent() == dataPanel) {
+//            dataPanel.deleteSelection();
+//        } else {
+//            throw new RuntimeException("Delete should only be accessable from the Data panel");
+//        }
     }
 
     protected boolean writeToFile(File file) {
-        modelPanel.updateData();
+        inputsPanel.collectSettings();
+        modelPanel.collectSettings();
+        simulationsPanel.collectSettings();
         return false;
     }
 
-    protected boolean readFromFile(File file) throws IOException {
+    protected boolean readFromFile(final File file) throws IOException {
 
         try {
             final String fileName = file.getName();
@@ -156,7 +162,9 @@ public class CoalGenFrame extends DocumentFrame {
                         EventQueue.invokeLater(
                                 new Runnable() {
                                     public void run() {
-                                        setTraces(traces);
+                                        data.logFile = file;
+                                        data.traces = traces;
+                                        fireTracesChanged();
                                     }
                                 });
 
@@ -259,7 +267,7 @@ public class CoalGenFrame extends DocumentFrame {
         statusLabel.setText(Integer.toString(data.taxonList.getTaxonCount()) + " taxa loaded.");
         reader.close();
 
-        fireDataChanged();
+        fireTaxaChanged();
     }
 
     public final void doExport() {
@@ -287,8 +295,6 @@ public class CoalGenFrame extends DocumentFrame {
     protected void generateFile(File outFile) throws IOException {
 
         PrintWriter writer = new PrintWriter(new FileWriter(outFile));
-
-        modelPanel.updateData();
 
         dr.evolution.coalescent.CoalescentSimulator simulator = new dr.evolution.coalescent.CoalescentSimulator();
 

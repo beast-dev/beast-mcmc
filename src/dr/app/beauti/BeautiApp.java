@@ -133,7 +133,7 @@ public class BeautiApp extends MultiDocApplication {
                         version.getHTMLCredits() +
                         "</div></center></div></html>";
 
-                String websiteURLString = "http://beast.bio.ed.ac.uk";
+                String websiteURLString = "http://beast.bio.ed.ac.uk/BEAUti";
                 String helpURLString = "http://beast.bio.ed.ac.uk/BEAUti";
 
                 System.setProperty("BEAST & BEAUTi Version", version.getVersion());

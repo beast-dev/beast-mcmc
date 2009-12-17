@@ -487,8 +487,7 @@ public class BayesianSkylineDialog {
         private boolean isRatePlot;
 
         public AnalyseBayesianSkylineTask(TraceList traceList, File treeFile, int firstPopSize, int popSizeCount,
-                                          int firstGroupSize, int groupSizeCount,
-                                          TemporalAnalysisFrame frame) {
+                                          int firstGroupSize, int groupSizeCount, TemporalAnalysisFrame frame) {
             this.traceList = traceList;
             this.frame = frame;
             this.treeFile = treeFile;
@@ -629,12 +628,31 @@ public class BayesianSkylineDialog {
                     state += 1;
                 }
 
-                current = 0;
+                int treeStateCount = state;
 
-                // the age of the end of this group
-                double[][] groupTimes = new double[stateCount][];
+                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
+                    JOptionPane.showMessageDialog(frame, "The number of log state and tree state not match !",
+                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+                double[][] groupTimes;
+                if (treeStateCount > stateCount) {
+                    // the age of the end of this group
+                    groupTimes = new double[treeStateCount][];
+                } else {
+                    // the age of the end of this group
+                    groupTimes = new double[stateCount][];
+                }
+
+                //int treeState = 0;
+                //int logState = 0;
+                // increment treeState by 1
+                // increment logState by totalLogStates / totalTreeState
+
+
                 //int tips = 0;
                 state = 0;
+                current = 0;
 
                 try {
                     while (importer.hasTree()) {
@@ -690,7 +708,7 @@ public class BayesianSkylineDialog {
                             "Error parsing file",
                             JOptionPane.ERROR_MESSAGE);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Fatal exception (email the authors):" + ex.getMessage(),
+                    JOptionPane.showMessageDialog(frame, "Fatal exception during initializing group size:" + ex.getMessage(),
                             "Fatal exception",
                             JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace(System.out);
@@ -709,7 +727,7 @@ public class BayesianSkylineDialog {
                     bins[k] = new Variate.Double();
 
                     if (height >= 0.0 && height <= maxHeight) {
-                        for (state = 0; state < stateCount; state++) {
+                        for (state = 0; state < groupTimes.length;) {
 
                             if (isLinearOrExponential) {
                                 double lastGroupTime = 0.0;
@@ -745,6 +763,7 @@ public class BayesianSkylineDialog {
                                     }
                                 }
                             } else {
+
                                 int index = 0;
                                 while (index < groupTimes[state].length && groupTimes[state][index] < height) {
                                     index += 1;
@@ -761,6 +780,12 @@ public class BayesianSkylineDialog {
                                     // Do we really want to do this?
 //                                bins[k].add(getPopSize(popSizeCount - 1,state));
                                 }
+                            }
+
+                            if (treeStateCount > stateCount) {
+                                state += treeStateCount / stateCount;
+                            } else {
+                                state += stateCount / treeStateCount;
                             }
                         }
                     }
@@ -811,7 +836,7 @@ public class BayesianSkylineDialog {
                         "Error reading file",
                         JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "Fatal exception (email the authors):" + ex.getMessage(),
+                JOptionPane.showMessageDialog(frame, "Fatal exception during plot:" + ex.getMessage(),
                         "Fatal exception",
                         JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace(System.out);

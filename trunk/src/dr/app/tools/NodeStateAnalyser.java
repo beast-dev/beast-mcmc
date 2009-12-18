@@ -47,7 +47,7 @@ public class NodeStateAnalyser {
     private final static Version version = new BeastVersion();
 
 
-    public NodeStateAnalyser(int burnin, double mrsd, String inputFileName, String outputFileName) throws IOException {
+    public NodeStateAnalyser(int burnin, double mrsd, double scale, String inputFileName, String outputFileName) throws IOException {
 
         File parentFile = new File(inputFileName);
 
@@ -65,7 +65,7 @@ public class NodeStateAnalyser {
             System.setOut(new PrintStream(outputStream));
         }
 
-        analyze(parentFile, burnin, mrsd);
+        analyze(parentFile, burnin, mrsd, scale);
     }
 
     /**
@@ -76,14 +76,14 @@ public class NodeStateAnalyser {
      * @throws dr.inference.trace.TraceException
      *          if the trace file is in the wrong format or corrupted
      */
-    private void analyze(File file, int burnin, double mrsd) {
+    private void analyze(File file, int burnin, double mrsd, double scale) {
 
         if (file.isFile()) {
             try {
 
                 String name = file.getCanonicalPath();
 
-                report(name, burnin, mrsd);
+                report(name, burnin, mrsd, scale);
                 //TraceAnalysis.report(name, burnin, marginalLikelihood);
 
             } catch (IOException e) {
@@ -93,9 +93,9 @@ public class NodeStateAnalyser {
             File[] files = file.listFiles();
             for (File f : files) {
                 if (f.isDirectory()) {
-                    analyze(f, burnin, mrsd);
+                    analyze(f, burnin, mrsd, scale);
                 } else if (f.getName().endsWith(".trees")) {
-                    analyze(f, burnin, mrsd);
+                    analyze(f, burnin, mrsd, scale);
                 }
             }
         }
@@ -108,7 +108,7 @@ public class NodeStateAnalyser {
      * @param name       the file to analyze (if this is a directory then the files within it are analyzed)
      * @param burnin     the burnin to use
      */
-    private void report(String name, int burnin, double mrsd) {
+    private void report(String name, int burnin, double mrsd, double scale) {
         int count = 0;
 
         Map<String, List<Double>> heightMap = new HashMap<String, List<Double>>();
@@ -131,7 +131,7 @@ public class NodeStateAnalyser {
                                 heightMap.put(state, heights);
                                 states.add(state);
                             }
-                            double h = tree.getNodeHeight(node);
+                            double h = tree.getNodeHeight(node) * scale;
                             if (Double.isNaN(mrsd)) {
                                 heights.add(h);
                             } else {
@@ -234,6 +234,7 @@ public class NodeStateAnalyser {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.RealOption("mrsd","specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.RealOption("scale","Provide a scaling factor for the node heights [default=1]"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -254,6 +255,12 @@ public class NodeStateAnalyser {
         if (arguments.hasOption("burnin")) {
             burnin = arguments.getIntegerOption("burnin");
         }
+
+        double scale = 1.0;
+        if (arguments.hasOption("scale")) {
+            scale = arguments.getRealOption("scale");
+        }
+
 
         double mrsd = Double.NaN;
         if (arguments.hasOption("mrsd")) {
@@ -290,7 +297,7 @@ public class NodeStateAnalyser {
             burnin = Integer.parseInt(br.readLine());
         }
 
-        new NodeStateAnalyser(burnin, mrsd, inputFileName, outputFileName);
+        new NodeStateAnalyser(burnin, mrsd, scale, inputFileName, outputFileName);
 
         System.exit(0);
     }

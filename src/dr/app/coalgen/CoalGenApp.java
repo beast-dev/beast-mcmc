@@ -49,7 +49,7 @@ public class CoalGenApp {
             }
 
             String nameString = "CoalGen";
-            String aboutString = "Coalescent Tree Simulator\nVersion 1.0\n \nCopyright 2004 Andrew Rambaut and Alexei Drummond\nAll Rights Reserved.";
+            String aboutString = "Coalescent Tree Simulator\nVersion 2.0\n \nCopyright 2004-2009 Andrew Rambaut and Alexei Drummond\nAll Rights Reserved.";
 
 
             SingleDocApplication app = new SingleDocApplication(new CoalGenMenuFactory(), nameString, aboutString, icon);

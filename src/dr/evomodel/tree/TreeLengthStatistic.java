@@ -97,7 +97,7 @@ public class TreeLengthStatistic extends Statistic.Abstract implements TreeStati
         }
 
         public Class getReturnType() {
-            return RateStatistic.class;
+            return TreeLengthStatistic.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

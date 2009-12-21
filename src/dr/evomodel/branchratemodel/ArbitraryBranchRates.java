@@ -28,38 +28,79 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Variable;
 import dr.xml.*;
+import dr.evomodelxml.DiscretizedBranchRatesParser;
 
 import java.util.logging.Logger;
 
 /**
- * Hijacks the DiscretizedBranchRates model to allow branch rates to take on any double value
+ * Allows branch rates to take on any double value
  * This is useful for forming a scaled mixture of normals for the continuous diffusion model
  *
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends DiscretizedBranchRates {
+public class ArbitraryBranchRates extends AbstractModel implements BranchRateModel {
 
 
     public static final String ARBITRARY_BRANCH_RATES = "arbitraryBranchRates";
     public static final String RATES = "rates";
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rate) {
-        super(tree, rate, null, 1);
+    // The rates of each branch
+    final TreeParameterModel rates;
+    final Parameter rateParameter;
 
+
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter) {
+
+        super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+
+        for(int i = 0; i < rateParameter.getDimension(); i++) {
+            rateParameter.setValue(i, 1.0);
+        }
         //Force the boundaries of rate
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rate.getDimension());
-        rate.addBounds(bound);
-    }
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
+        rateParameter.addBounds(bound);
 
-    protected void setupRates() {
-    }
+        this.rates = new TreeParameterModel(tree, rateParameter, false);
+        this.rateParameter = rateParameter;
 
+        addModel(rates);
+    }
+   
     public double getBranchRate(Tree tree, NodeRef node) {
+        return rates.getNodeValue(tree, node);
+    }
 
-        return rateCategories.getNodeValue(tree, node);
+    public void handleModelChangedEvent(Model model, Object object, int index) {
+        // Should be called by TreeParameterModel
+        fireModelChanged(null, index);
+    }
+
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        // Changes to rateParameter are handled by model changed events
+    }
+
+    protected void storeState() {
+    }
+
+    protected void restoreState() {
+    }
+
+    protected void acceptState() {
+    }
+
+    public String getBranchAttributeLabel() {
+        return "rate";
+    }
+
+    public String getAttributeForBranch(Tree tree, NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -72,7 +113,9 @@ public class ArbitraryBranchRates extends DiscretizedBranchRates {
 
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-            Parameter rateCategoryParameter = (Parameter) xo.getChild(RATES);
+            XMLObject cxo = xo.getChild(RATES);
+
+            Parameter rateCategoryParameter = (Parameter) cxo.getChild(Parameter.class);
 
             Logger.getLogger("dr.evomodel").info("Using an scaled mixture of normals model.");
             Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
@@ -105,6 +148,4 @@ public class ArbitraryBranchRates extends DiscretizedBranchRates {
                 new ElementRule(RATES, Parameter.class, "The rate parameter"),
         };
     };
-
-
 }

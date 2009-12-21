@@ -90,6 +90,7 @@ public class XMLDocumentationHandler {
         writer.println("<span class=\"required\">&nbsp;&nbsp;&nbsp;&nbsp;</span> required<br>");
         writer.println("<span class=\"optional\">&nbsp;&nbsp;&nbsp;&nbsp;</span> optional<br>");
         writer.println("</p>");
+        writer.println("\n");
 
         Iterator iterator = parser.getParsers();
         while (iterator.hasNext()) {
@@ -435,6 +436,10 @@ public class XMLDocumentationHandler {
         }
         writer.println("</body>");
         writer.println("</html>");
+    }
+
+    public void outputTypes(PrintWriter writer) {
+
     }
 
 /*

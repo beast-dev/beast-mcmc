@@ -1,5 +1,5 @@
 /*
- * TreeLengthFinder.java
+ * MixtureModelLogAnalyser.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -22,8 +22,6 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * @author Wai Lok Sibon Li
- *
  */
 
 package dr.app.tools;
@@ -31,15 +29,8 @@ package dr.app.tools;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.app.treestat.statistics.TreeLength;
-import dr.app.treestat.statistics.TreeSummaryStatistic;
-import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceException;
 import dr.util.Version;
-import dr.evolution.io.TreeImporter;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.Importer;
-import dr.evolution.tree.Tree;
 
 import java.io.*;
 import java.util.*;
@@ -72,7 +63,7 @@ public class MixtureModelLogAnalyser {
             System.setOut(new PrintStream(outputStream));
         }
 
-        analyze(parentFile, burnin, discreteVariableName/*, verbose, new boolean[]{true}, hpds, ess, stdErr, marginalLikelihood*/);
+        analyze(parentFile, burnin, discreteVariableName);
     }
 
     /**
@@ -80,6 +71,7 @@ public class MixtureModelLogAnalyser {
      *
      * @param file       the file to analyze (if this is a directory then the files within it are analyzed)
      * @param burnin     the burnin to use
+     * @param discreteVariableName  tag for the name of the discrete variable
      * @throws dr.inference.trace.TraceException
      *          if the trace file is in the wrong format or corrupted
      */
@@ -91,7 +83,6 @@ public class MixtureModelLogAnalyser {
                 String name = file.getCanonicalPath();
 
                 report(name, burnin, discreteVariableName);
-                //TraceAnalysis.report(name, burnin, marginalLikelihood);
 
             } catch (IOException e) {
                 //e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -101,7 +92,6 @@ public class MixtureModelLogAnalyser {
             for (File f : files) {
                 if (f.isDirectory()) {
                     analyze(f, burnin, discreteVariableName);
-                //} else if (f.getName().endsWith(".tree") || f.getName().endsWith(".p")) {
                 } else if (f.getName().endsWith(".log")) {
                     analyze(f, burnin, discreteVariableName);
                 }
@@ -113,11 +103,11 @@ public class MixtureModelLogAnalyser {
     /**
      * Recursively analyzes trees files.
      *
-     * @param name       the file to analyze (if this is a directory then the files within it are analyzed)
-     * @param burnin     the burnin to use
+     * @param name                  the file to analyze (if this is a directory then the files within it are analyzed)
+     * @param burnin                the burnin to use
+     * @param discreteVariableName  tag for the name of the discrete variable
      */
     private void report(String name, int burnin, String discreteVariableName) {
-        double treeLength = 0.0;
         int count = 0;
 
         try {
@@ -138,7 +128,6 @@ public class MixtureModelLogAnalyser {
                             String s = headerSplit[i];
                             if(s.equals(discreteVariableName)) {
                                 discreteVariableIndex = i;
-                                //System.out.println("discreteVariableIndex\t" + i);
                             }
                         }
                     }
@@ -159,11 +148,6 @@ public class MixtureModelLogAnalyser {
 
                 previousLine = line;
             }
-            //Set<String> set = hash.keySet();
-            //String[] set = hash.keySet().toArray(new String[hash.keySet().size()]);
-
-            //List list = new List(set);
-            //Collections.sort(set);
 
             Vector<String> v = new Vector(hash.keySet());
             Collections.sort(v);
@@ -181,32 +165,12 @@ public class MixtureModelLogAnalyser {
                 System.out.print("state " + (int) state + "\t");
             }
             System.out.print("\n" + name + "\t");
-            //for(String s : set) {
-            Iterator it = v.iterator();
-            while (it.hasNext()) {
-               String element =  (String)it.next();
-               System.out.print((Integer)hash.get(element) + "\t");
+            for (String aV : v) {
+                String element = aV;
+                System.out.print(hash.get(element) + "\t");
             }
             System.out.println();
-                //System.out.print(hash.get(s) + "\t");
-            //}
-
-            /*TreeImporter importer = new NexusImporter(fileReader);
-            while (importer.hasTree()) {
-                Tree tree = importer.importNextTree();
-                if(count>=burnin) {
-                    treeLength += TreeLength.FACTORY.createStatistic().getSummaryStatistic(tree)[0];
-
-                }
-                count++;
-            }
-            treeLength /= (count-burnin);
-            System.out.println(name + "\t" + burnin + "\t" + treeLength);
-            */
             br.close();
-        /*} catch (Importer.ImportException e) {
-            System.err.println("Error Parsing Input log: " + e.getMessage());
-            */
         } catch (IOException e) {
             System.err.println("Error Parsing Input log: " + e.getMessage());
         }
@@ -242,11 +206,10 @@ public class MixtureModelLogAnalyser {
 
     public static void printUsage(Arguments arguments) {
 
-        //arguments.printUsage("loganalyser", "[-burnin <burnin>] [-short][-hpd] [-std] [<input-file-name> [<output-file-name>]]");
         arguments.printUsage("mixturemodelloganalyser", "[-burnin <burnin>][<input-file-name> [<output-file-name>]]");
         System.out.println();
         System.out.println("  Example: treelengthfinder test.log");
-        System.out.println("  Example: treelengthfinder -burnin 10000 trees.log out.txt");
+        System.out.println("  Example: treelengthfinder -burnin 10000 -discreteVariable branchRates.distributionIndex trees.log out.txt");
         System.out.println();
 
     }
@@ -259,13 +222,6 @@ public class MixtureModelLogAnalyser {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        /*new Arguments.Option("short", "use this option to produce a short report"),
-                        new Arguments.Option("hpd", "use this option to produce hpds for each trace"),
-                        new Arguments.Option("ess", "use this option to produce ESSs for each trace"),
-                        new Arguments.Option("stdErr", "use this option to produce standard Error"),
-                        new Arguments.StringOption("marginal", "trace_name", "specify the trace to use to calculate the marginal likelihood"),*/
-//				new Arguments.Option("html", "format output as html"),
-//				new Arguments.Option("svg", "generate svg graphics"),
                         new Arguments.StringOption("discreteVariable", "variable_name", "indicates the name of a variable that is actually discrete in nature"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -292,17 +248,6 @@ public class MixtureModelLogAnalyser {
         if (arguments.hasOption("discreteVariable")) {
             discreteVariableName = arguments.getStringOption("discreteVariable");
         }
-
-
-        /*boolean hpds = arguments.hasOption("hpd");
-        boolean ess = arguments.hasOption("ess");
-        boolean stdErr = arguments.hasOption("stdErr");
-        boolean shortReport = arguments.hasOption("short");
-
-        String marginalLikelihood = null;
-        if (arguments.hasOption("marginal")) {
-            marginalLikelihood = arguments.getStringOption("marginal");
-        }*/
 
         String inputFileName = null;
         String outputFileName = null;

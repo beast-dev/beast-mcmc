@@ -37,6 +37,8 @@ import java.util.*;
  */
 public class WikiDocumentationHandler extends XMLDocumentationHandler {
 
+    private final static String WIKILINK = "[[Main Page|BEAST Documentation]]-> BEAST v1.5.x XML Reference";
+
     public WikiDocumentationHandler(BeastParser parser) {
         super(parser);
     }
@@ -62,7 +64,8 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
         Calendar date = Calendar.getInstance();
         SimpleDateFormat dateformatter = new SimpleDateFormat("'updated on' d MMMM yyyy zzz");
 
-        writer.println("=" + BeastParserDoc.TITTLE + "=");
+        writer.println(WIKILINK + "\n");
+        writer.println("==" + BeastParserDoc.TITTLE + "==\n");
 
         if (parser.parsers != null) {
             if (parser.parsers.equalsIgnoreCase(BeastParser.RELEASE)) {
@@ -131,20 +134,6 @@ public class WikiDocumentationHandler extends XMLDocumentationHandler {
             }
 
         }
-    }
-
-    /**
-     * Outputs an example of a particular element, using the syntax information.
-     * @param writer     PrintWriter
-     * @param parser     XMLObjectParser
-     */
-    public void outputExampleXML(PrintWriter writer, XMLObjectParser parser) {
-
-        if (parser.hasExample()) {
-            outputHTMLSafeText(writer, parser.getExample());
-        } else {
-            outputExampleXML(writer, parser, 0);
-        }        
     }
 
     public String getHTMLForClass(Class c) {

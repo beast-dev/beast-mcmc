@@ -79,21 +79,22 @@ public class BeastParserDoc {
         if (wikiFormat) {
             XMLDocumentationHandler handler = new WikiDocumentationHandler(parser);
 
-//            writer = new PrintWriter(new FileWriter(new File(directory, INDEX_WIKI)));
-//            System.out.println("Building types table in " + INDEX_WIKI + " ...");
-//
-//            handler.outputIndex(writer);
-//            System.out.println("done.");
-//            writer.flush();
-//            writer.close();
-
             writer = new PrintWriter(new FileWriter(new File(directory, DETAIL_WIKI)));
             System.out.println("Building element descriptions in " + DETAIL_WIKI + " ...");
 
             handler.outputElements(writer);
             System.out.println("done.");
+//            writer.flush();
+//            writer.close();
+
+//            writer = new PrintWriter(new FileWriter(new File(directory, INDEX_WIKI)));
+            System.out.println("Building types table ...");
+
+            handler.outputTypes(writer);
+            System.out.println("done.");
             writer.flush();
             writer.close();
+
 
         } else {
             XMLDocumentationHandler handler = new XMLDocumentationHandler(parser);

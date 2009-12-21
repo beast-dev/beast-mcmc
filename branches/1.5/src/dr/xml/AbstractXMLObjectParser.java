@@ -233,8 +233,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         buffer.append(sw.toString());
         buffer.append("</div>\n");
         }
-        buffer.append("</div>\n");
-        buffer.append("<p/>\n");
+        buffer.append("</div>\n");        
         return buffer.toString();
     }
 

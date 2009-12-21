@@ -22,8 +22,6 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
- * @author Wai Lok Sibon Li
- *
  */
 
 package dr.app.tools;
@@ -32,8 +30,6 @@ import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.app.treestat.statistics.TreeLength;
-import dr.app.treestat.statistics.TreeSummaryStatistic;
-import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceException;
 import dr.util.Version;
 import dr.evolution.io.TreeImporter;
@@ -43,6 +39,9 @@ import dr.evolution.tree.Tree;
 
 import java.io.*;
 
+/**
+ * @author Wai Lok Sibon Li
+ */
 
 public class TreeLengthFinder {
 

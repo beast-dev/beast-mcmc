@@ -9,6 +9,7 @@ import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.xml.*;
+import dr.math.MathUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -36,6 +37,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String REPORT_MULTIVARIATE = "reportAsMultivariate";
     public static final String DEFAULT_TRAIT_NAME = "trait";
     public static final String RANDOMIZE = "randomize";
+    public static final String RANDOMIZE_LOWER = "lower";
+    public static final String RANDOMIZE_UPPER = "upper";
     public static final String CHECK = "check";
     public static final String USE_TREE_LENGTH = "useTreeLength";
     public static final String SCALE_BY_TIME = "scaleByTime";
@@ -380,8 +383,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return value;
     }
 
-    public void randomize(Parameter trait) {
-        diffusionModel.randomize(trait);
+    public void randomize(Parameter trait, double lower, double upper) {
+        // Draws each dimension in each trait from U[lower, upper)
+        for(int i = 0; i < trait.getDimension(); i++) {
+            final double newValue = MathUtils.uniform(lower,upper);
+            trait.setParameterValue(i, newValue);    
+        }
+        //diffusionModel.randomize(trait);
     }
 
     public void check(Parameter trait) throws XMLParseException {
@@ -495,15 +503,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 XMLObject cxo = xo.getChild(SAMPLING_DENSITY);
                 samplingDensity = (Model) cxo.getChild(Model.class);
             }
-            if (xo.hasChildNamed(RANDOMIZE)) {
-                XMLObject cxo = xo.getChild(RANDOMIZE);
-                traits = (Parameter) cxo.getChild(Parameter.class);
-            }
-
-            if (xo.hasChildNamed(CHECK)) {
-                XMLObject cxo = xo.getChild(CHECK);
-                check = (Parameter) cxo.getChild(Parameter.class);
-            }
 
             boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
 
@@ -523,11 +522,17 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
 
-            if (traits != null) {
-                like.randomize(traits);
+            if (xo.hasChildNamed(RANDOMIZE)) {
+                XMLObject cxo = xo.getChild(RANDOMIZE);
+                traits = (Parameter) cxo.getChild(Parameter.class);
+                double randomizeLower = cxo.getAttribute(RANDOMIZE_LOWER,-90.0);
+                double randomizeUpper = cxo.getAttribute(RANDOMIZE_UPPER,+90.0);
+                like.randomize(traits, randomizeLower, randomizeUpper);
             }
 
-            if (check != null) {
+            if (xo.hasChildNamed(CHECK)) {
+                XMLObject cxo = xo.getChild(CHECK);
+                check = (Parameter) cxo.getChild(Parameter.class);            
                 like.check(check);
             }
 
@@ -573,6 +578,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
+                        AttributeRule.newDoubleRule(RANDOMIZE_LOWER,true),
+                        AttributeRule.newDoubleRule(RANDOMIZE_UPPER,true),
                         new ElementRule(Parameter.class)
                 }, true),
                 new ElementRule(CHECK, new XMLSyntaxRule[]{

@@ -34,7 +34,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.xml.*;
-import dr.evomodelxml.DiscretizedBranchRatesParser;
 
 import java.util.logging.Logger;
 
@@ -47,18 +46,18 @@ import java.util.logging.Logger;
  */
 public class ArbitraryBranchRates extends AbstractModel implements BranchRateModel {
 
-
     public static final String ARBITRARY_BRANCH_RATES = "arbitraryBranchRates";
     public static final String RATES = "rates";
+    public static final String RECIPROCAL = "reciprocal";
 
     // The rates of each branch
     final TreeParameterModel rates;
     final Parameter rateParameter;
+    final boolean reciprocal;
 
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal) {
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter) {
-
-        super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+        super(ARBITRARY_BRANCH_RATES);
 
         for(int i = 0; i < rateParameter.getDimension(); i++) {
             rateParameter.setValue(i, 1.0);
@@ -71,10 +70,19 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
         this.rateParameter = rateParameter;
 
         addModel(rates);
+
+        this.reciprocal = reciprocal;
     }
    
     public double getBranchRate(Tree tree, NodeRef node) {
-        return rates.getNodeValue(tree, node);
+        // Branch rates are proportional to time.
+        // In the traitLikelihoods, time is proportional to variance
+        // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
+        final double rate = rates.getNodeValue(tree,node);
+        if (reciprocal) {
+            return 1.0 / rate;
+        }
+        return rate;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -117,12 +125,14 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
 
             Parameter rateCategoryParameter = (Parameter) cxo.getChild(Parameter.class);
 
+            boolean reciprocal = xo.getAttribute(RECIPROCAL,false);
+
             Logger.getLogger("dr.evomodel").info("Using an scaled mixture of normals model.");
             Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
             Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood");
+            Logger.getLogger("dr.evomodel").info("  reciprocal = "+reciprocal);
 
-
-            return new ArbitraryBranchRates(tree, rateCategoryParameter);
+            return new ArbitraryBranchRates(tree, rateCategoryParameter, reciprocal);
         }
 
         //************************************************************************
@@ -130,9 +140,8 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
         //************************************************************************
 
         public String getParserDescription() {
-            return
-                    "This element returns an arbitrary rate model." +
-                            "The branch rates are drawn from an arbitrary distribution determine by the prior.";
+            return "This element returns an arbitrary rate model." +
+                   "The branch rates are drawn from an arbitrary distribution determine by the prior.";
         }
 
         public Class getReturnType() {
@@ -146,6 +155,7 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class),
                 new ElementRule(RATES, Parameter.class, "The rate parameter"),
+                AttributeRule.newBooleanRule(RECIPROCAL,true),
         };
     };
 }

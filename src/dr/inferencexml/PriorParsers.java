@@ -41,6 +41,7 @@ public class PriorParsers {
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
     public static final String INVGAMMA_PRIOR = "invgammaPrior";
+    public static final String INVGAMMA_PRIOR_CORRECT = "inverseGammaPrior";
     public static final String LAPLACE_PRIOR = "laplacePrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
@@ -357,6 +358,11 @@ public class PriorParsers {
 
         public String getParserName() {
             return INVGAMMA_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[] { INVGAMMA_PRIOR, INVGAMMA_PRIOR_CORRECT };
+
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {

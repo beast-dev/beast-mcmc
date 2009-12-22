@@ -152,8 +152,8 @@ public class TreeLoggerParser extends LoggerParser {
 
         TreeLogger logger = new TreeLogger(tree, branchRateProvider,
                 treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
-                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition,
-                normaliseMeanRateTo);
+                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition/*,
+                normaliseMeanRateTo*/);
 
         if (title != null) {
             logger.setTitle(title);
@@ -179,6 +179,8 @@ public class TreeLoggerParser extends LoggerParser {
                     "Whether to use the NEXUS format for the tree log"),
             AttributeRule.newBooleanRule(SORT_TRANSLATION_TABLE, true,
                     "Whether the translation table is sorted."),
+            /*AttributeRule.newDoubleRule(NORMALISE_MEAN_RATE_TO, true,
+                    "Value to normalise the mean rate to."),*/
             new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in",
                     new String[]{TIME, SUBSTITUTIONS}, true),
             new ElementRule(Tree.class, "The tree which is to be logged"),

@@ -23,17 +23,23 @@ public class Polygon2D {
     public static final String POLYGON = "polygon";
     public static final String CLOSED = "closed";
     public static final String FILL_VALUE = "fillValue";
+    public static final String CIRCLE = "circle";
+    public static final String NUMBER_OF_POINTS = "numberOfPoints";
+    public static final String RADIUS = "radius";
+    public static final String CENTER = "center";
+    public static final String LATITUDE = "latitude";
+    public static final String LONGITUDE = "longitude";
 
-    public Polygon2D(double[] x, double[]y) {
+    public Polygon2D(double[] x, double[] y) {
         if (x.length != y.length) {
             throw new RuntimeException("Unbalanced arrays");
         }
 
-        if (x[0] != x[x.length-1] && y[0] != y[y.length-1]) {
-            double[] newX = new double[x.length+1];
-            double[] newY = new double[y.length+1];
-            System.arraycopy(x,0,newX,0,x.length);
-            System.arraycopy(y,0,newY,0,y.length);
+        if (x[0] != x[x.length - 1] && y[0] != y[y.length - 1]) {
+            double[] newX = new double[x.length + 1];
+            double[] newY = new double[y.length + 1];
+            System.arraycopy(x, 0, newX, 0, x.length);
+            System.arraycopy(y, 0, newY, 0, y.length);
             newX[x.length] = x[0];
             newY[y.length] = y[0];
             this.x = newX;
@@ -43,7 +49,7 @@ public class Polygon2D {
             this.y = y;
         }
         length = this.x.length - 1;
-        
+
     }
 
     public Polygon2D(LinkedList<Point2D> points, boolean closed) {
@@ -61,13 +67,15 @@ public class Polygon2D {
         point2Ds = new LinkedList<Point2D>();
     }
 
-    public String getID() { return id; }
+    public String getID() {
+        return id;
+    }
 
     public Polygon2D(Element e) {
 
         List<Element> children = e.getChildren();
         id = e.getAttributeValue(XMLParser.ID);
-        for(Element childElement : children) {
+        for (Element childElement : children) {
             if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 
                 String value = childElement.getTextTrim();
@@ -100,7 +108,7 @@ public class Polygon2D {
             y = new double[length];
         }
         Iterator<Point2D> it = point2Ds.iterator();
-        for(int i=0; i<length; i++) {
+        for (int i = 0; i < length; i++) {
             final Point2D point = it.next();
             x[i] = point.getX();
             y[i] = point.getY();
@@ -116,7 +124,7 @@ public class Polygon2D {
         } else {
             Point2D last = point2Ds.removeLast();
             point2Ds.add(Point2D);
-            if(!last.equals(Point2D))
+            if (!last.equals(Point2D))
                 point2Ds.add(last);
         }
         convertPointsToArrays();
@@ -132,7 +140,7 @@ public class Polygon2D {
         // Take a horizontal ray from (inX,inY) to the right.
         // If ray across the polygon edges an odd # of times, the point is inside.
         for (int i = 0, j = length - 1; i < length; j = i++) {
-             if ((((y[i] <= inY) && (inY < y[j])) ||
+            if ((((y[i] <= inY) && (inY < y[j])) ||
                     ((y[j] <= inY) && (inY < y[i]))) &&
                     (inX < (x[j] - x[i]) * (inY - y[i]) / (y[j] - y[i]) + x[i]))
                 contains = !contains;
@@ -222,45 +230,46 @@ public class Polygon2D {
             // we have to keep on working with our new clipped polygon
             workPoly = new LinkedList<Point2D>(clippedPolygon);
         }
-        return new Polygon2D(clippedPolygon,true);
+        return new Polygon2D(clippedPolygon, true);
     }
 
-    public void transformByMapping(CartogramMapping mapping){
-        for (int i = 0; i < length +1; i++) {
+    public void transformByMapping(CartogramMapping mapping) {
+        for (int i = 0; i < length + 1; i++) {
             point2Ds.set(i, mapping.map(point2Ds.get(i)));
         }
         convertPointsToArrays();
     }
-    public void swapXYs(){
-        for (int i = 0; i < length +1; i++) {
+
+    public void swapXYs() {
+        for (int i = 0; i < length + 1; i++) {
             point2Ds.set(i, new Point2D.Double(point2Ds.get(i).getY(), point2Ds.get(i).getX()));
         }
         convertPointsToArrays();
     }
 
-    public void rescale(double longMin, double longwidth, double gridXSize, double latMax, double latwidth, double gridYSize){
-        for (int i = 0; i < length +1; i++) {
-            point2Ds.set(i, new Point2D.Double(((point2Ds.get(i).getX()-longMin)*(gridXSize/longwidth)),((latMax- point2Ds.get(i).getY())*(gridYSize/latwidth))));
+    public void rescale(double longMin, double longwidth, double gridXSize, double latMax, double latwidth, double gridYSize) {
+        for (int i = 0; i < length + 1; i++) {
+            point2Ds.set(i, new Point2D.Double(((point2Ds.get(i).getX() - longMin) * (gridXSize / longwidth)), ((latMax - point2Ds.get(i).getY()) * (gridYSize / latwidth))));
         }
         convertPointsToArrays();
     }
 
 
-     // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:
-     //   Area = 1/2 [(x1*y2 - x2*y1) + (x2*y3 - x3*y2) + ... + (xn*y1 - x1*yn)].
-     //   This formula appears in an Article by Gil Strang of MIT
-     //   on p. 253 of the March 1993 issue of The American Mathematical Monthly, with the note that it is
-     //   "known, but not well known". There is also a very brief discussion of proofs and other references,
-     //   including an article by Bart Braden of Northern Kentucky U., a known Mathematica enthusiast.
-    public double calculateArea(){
+    // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:
+    //   Area = 1/2 [(x1*y2 - x2*y1) + (x2*y3 - x3*y2) + ... + (xn*y1 - x1*yn)].
+    //   This formula appears in an Article by Gil Strang of MIT
+    //   on p. 253 of the March 1993 issue of The American Mathematical Monthly, with the note that it is
+    //   "known, but not well known". There is also a very brief discussion of proofs and other references,
+    //   including an article by Bart Braden of Northern Kentucky U., a known Mathematica enthusiast.
+    public double calculateArea() {
 
         double area = 0;
         //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
         for (int i = 0; i < length; i++) {
-            area += (x[i]*y[i+1] - x[i+1]*y[i]);
+            area += (x[i] * y[i + 1] - x[i + 1] * y[i]);
         }
 
-        return (Math.abs(area/2));
+        return (Math.abs(area / 2));
     }
 
     private static LinkedList<Point2D> getCirclePoints(double centerLat, double centerLong, int numberOfPoints, double radius) {
@@ -277,19 +286,19 @@ public class Polygon2D {
         long1 = Math.toRadians(centerLong);
 
         //radius is in meters
-        d_rad = radius/6378137;
+        d_rad = radius / 6378137;
 
         // loop through the array and write points
-        for(int i=0; i<=numberOfPoints; i++) {
-            delta_pts = 360/(double)numberOfPoints;
-            radial = Math.toRadians((double)i*delta_pts);
+        for (int i = 0; i <= numberOfPoints; i++) {
+            delta_pts = 360 / (double) numberOfPoints;
+            radial = Math.toRadians((double) i * delta_pts);
 
             //This algorithm is limited to distances such that dlon < pi/2
-            lat_rad = Math.asin(Math.sin(lat1)* Math.cos(d_rad) + Math.cos(lat1)* Math.sin(d_rad)* Math.cos(radial));
-            dlon_rad = Math.atan2(Math.sin(radial)* Math.sin(d_rad)* Math.cos(lat1), Math.cos(d_rad)- Math.sin(lat1)* Math.sin(lat_rad));
-            lon_rad = ((long1 + dlon_rad + Math.PI) % (2*Math.PI)) - Math.PI;
+            lat_rad = Math.asin(Math.sin(lat1) * Math.cos(d_rad) + Math.cos(lat1) * Math.sin(d_rad) * Math.cos(radial));
+            dlon_rad = Math.atan2(Math.sin(radial) * Math.sin(d_rad) * Math.cos(lat1), Math.cos(d_rad) - Math.sin(lat1) * Math.sin(lat_rad));
+            lon_rad = ((long1 + dlon_rad + Math.PI) % (2 * Math.PI)) - Math.PI;
 
-            Point2Ds.add(new Point2D.Double(Math.toDegrees(lat_rad),Math.toDegrees(lon_rad)));
+            Point2Ds.add(new Point2D.Double(Math.toDegrees(lat_rad), Math.toDegrees(lon_rad)));
 
         }
         return Point2Ds;
@@ -330,7 +339,7 @@ public class Polygon2D {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append(POLYGON).append("[\n");
-        for(Point2D pt : point2Ds) {
+        for (Point2D pt : point2Ds) {
             sb.append("\t");
             sb.append(pt);
             sb.append("\n");
@@ -353,7 +362,7 @@ public class Polygon2D {
                 throw new RuntimeException("Not a KML file");
 
             List<Element> children = root.getChildren();
-            for(Element e : children) {
+            for (Element e : children) {
                 if (e.getName().equalsIgnoreCase(POLYGON)) {
                     Polygon2D polygon = new Polygon2D(e);
                     polygons.add(polygon);
@@ -382,28 +391,14 @@ public class Polygon2D {
 
             LinkedList<Point2D> Point2Ds = new LinkedList<Point2D>();
             boolean closed;
-            if (xo.hasChildNamed("circle")) {
-                XMLObject circle = xo.getChild("circle");
-                if (!circle.hasChildNamed("radius")) {
-                    throw new XMLParseException("no radius defined for circle");
-                }
-                if (!circle.hasChildNamed("center")) {
-                    throw new XMLParseException("no center defined for circle");
-                }
+            Polygon2D polygon;
 
-                int numberOfPoints = 50;
-                if (circle.hasChildNamed("numberOfPoints")) {
-                    XMLObject points = circle.getChild("numberOfPoints");
-                    numberOfPoints = points.getIntegerChild(0);
-                }
+            if (xo.getChild(Polygon2D.class) != null) { // This is a regular polygon
 
-                XMLObject radius = circle.getChild("radius");
-                XMLObject center = circle.getChild("center");
+                polygon = (Polygon2D) xo.getChild(Polygon2D.class);
 
-                Point2Ds = getCirclePoints(center.getDoubleAttribute("latitude"),center.getDoubleAttribute("longitude"),numberOfPoints,radius.getDoubleChild(0));
-                closed = true;
+            } else { // This is an arbitrary polygon
 
-            }  else {
                 KMLCoordinates coordinates = (KMLCoordinates) xo.getChild(KMLCoordinates.class);
                 closed = xo.getAttribute(CLOSED, false);
 
@@ -414,10 +409,9 @@ public class Polygon2D {
                 for (int i = 0; i < coordinates.length; i++)
                     Point2Ds.add(new Point2D.Double(coordinates.x[i], coordinates.y[i]));
 
-            }
+                polygon = new Polygon2D(Point2Ds, closed);
 
-            Polygon2D polygon = new Polygon2D(Point2Ds, closed);
-            System.out.println(polygon.toString());
+            }
 
             polygon.setFillValue(xo.getAttribute(FILL_VALUE, 0.0));
 
@@ -441,28 +435,76 @@ public class Polygon2D {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                //new ElementRule(KMLCoordinates.class),
+                new XORRule(
+                        new ElementRule(KMLCoordinates.class),
+                        new ElementRule(Polygon2D.class)
+                    ),
                 AttributeRule.newBooleanRule(CLOSED, true),
                 AttributeRule.newDoubleRule(FILL_VALUE, true),
         };
     };
 
+    public static XMLObjectParser CIRCLE_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return CIRCLE;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double latitude = xo.getDoubleAttribute(LATITUDE);
+            double longitude = xo.getDoubleAttribute(LONGITUDE);
+            double radius = xo.getDoubleAttribute(RADIUS);
+            int num = xo.getAttribute(NUMBER_OF_POINTS, 50); // default = 50
+
+            LinkedList<Point2D> Point2Ds = getCirclePoints(latitude,
+                    longitude,
+                    num,
+                    radius);
+
+            return new Polygon2D(Point2Ds, true);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "This element represents a regular circle polygon.";
+        }
+
+        public Class getReturnType() {
+            return Polygon2D.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newDoubleRule(LATITUDE),
+                AttributeRule.newDoubleRule(LONGITUDE),
+                AttributeRule.newDoubleRule(RADIUS),
+                AttributeRule.newIntegerRule(NUMBER_OF_POINTS, true),
+        };
+    };
+
     public static void main(String[] args) {
         Polygon2D polygon = new Polygon2D();
-        polygon.addPoint2D(new Point2D.Double(-10,-10));
-        polygon.addPoint2D(new Point2D.Double(-10,50));
-        polygon.addPoint2D(new Point2D.Double(10,50));
-        polygon.addPoint2D(new Point2D.Double(10,-10));
+        polygon.addPoint2D(new Point2D.Double(-10, -10));
+        polygon.addPoint2D(new Point2D.Double(-10, 50));
+        polygon.addPoint2D(new Point2D.Double(10, 50));
+        polygon.addPoint2D(new Point2D.Double(10, -10));
         System.out.println(polygon);
         System.out.println("");
 
-        Point2D pt = new Point2D.Double(0,0);
-        System.out.println("polygon contains "+pt+": "+polygon.containsPoint2D(pt));
-        pt = new Point2D.Double(100,100);
-        System.out.println("polygon contains "+pt+": "+polygon.containsPoint2D(pt));
+        Point2D pt = new Point2D.Double(0, 0);
+        System.out.println("polygon contains " + pt + ": " + polygon.containsPoint2D(pt));
+        pt = new Point2D.Double(100, 100);
+        System.out.println("polygon contains " + pt + ": " + polygon.containsPoint2D(pt));
         System.out.println("");
 
-        Rectangle2D boundingBox = new Rectangle2D.Double(0,0,100,100);  // defines lower-left corner and width/height
+        Rectangle2D boundingBox = new Rectangle2D.Double(0, 0, 100, 100);  // defines lower-left corner and width/height
         System.out.println(boundingBox);
         Polygon2D myClip = polygon.clip(boundingBox);
         System.out.println(myClip);

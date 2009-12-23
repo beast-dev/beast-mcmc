@@ -46,7 +46,7 @@ public class PathSamplingAnalysis {
 //  }
 
         Map<Double, List<Double>> map = new HashMap<Double, List<Double>>();
-        List<Double> orderedTheta = new ArrayList<Double>();
+        orderedTheta = new ArrayList<Double>();
 
         for (int i = 0; i < logLikelihoodSample.length; i++) {
             if (!map.containsKey(thetaSample[i])) {
@@ -58,7 +58,7 @@ public class PathSamplingAnalysis {
 
         Collections.sort(orderedTheta);
 
-        List<Double> meanLogLikelihood = new ArrayList<Double>();
+        meanLogLikelihood = new ArrayList<Double>();
         for (double t : orderedTheta) {
             double totalMean = 0;
             int lengthMean = 0;
@@ -79,11 +79,21 @@ public class PathSamplingAnalysis {
     }
 
     public String toString() {
+        double bf = getLogBayesFactor();
         StringBuffer sb = new StringBuffer();
-        sb.append("log Bayes factor from ");
+        sb.append("PathParameter\tMeanPathLikelihood\n");
+        for (int i = 0; i < orderedTheta.size(); ++i) {
+            sb.append(String.format(FORMAT, orderedTheta.get(i)));
+            sb.append("\t");
+            sb.append(String.format(FORMAT, meanLogLikelihood.get(i)));
+            sb.append("\n");
+        }
+
+
+        sb.append("\nlog Bayes factor from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
-        sb.append(String.format(FORMAT, getLogBayesFactor()));
+        sb.append(String.format(FORMAT, bf));
         return sb.toString();
     }
 
@@ -204,6 +214,8 @@ public class PathSamplingAnalysis {
     private double logBayesFactor;
     private final double[] logLikelihoodSample;
     private final double[] thetaSample;
+    private List<Double> meanLogLikelihood;
     private final String logLikelihoodName;
+    List<Double> orderedTheta;
     //private final String thetaName;
 }

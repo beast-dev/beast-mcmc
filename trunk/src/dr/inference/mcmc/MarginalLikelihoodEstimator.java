@@ -31,6 +31,7 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
+import dr.inference.operators.CombinedOperatorSchedule;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
@@ -273,8 +274,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
          */
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MCMC mcmc = (MCMC) xo.getChild(MCMC.class);
-
             PathLikelihood pathLikelihood = (PathLikelihood) xo.getChild(PathLikelihood.class);
             MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
 
@@ -300,12 +299,26 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 }
             }
 
+            CombinedOperatorSchedule os = new CombinedOperatorSchedule();
+
+            XMLObject mcmcXML = xo.getChild(MCMC);
+            for (int i = 0; i < mcmcXML.getChildCount(); ++i) {
+                if (mcmcXML.getChild(i) instanceof MCMC) {
+                    MCMC mcmc = (MCMC) mcmcXML.getChild(i);
+                    os.addOperatorSchedule(mcmc.getOperatorSchedule());
+                }
+            }
+
+            if (os.getScheduleCount() == 0) {
+                System.err.println("Error: no mcmc objects provided in construction. Bayes Factor estimation will likely fail.");
+            }
+
             java.util.logging.Logger.getLogger("dr.inference").info("Creating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
                     "\n  pathSteps=" + pathSteps);
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    burninLength, pathSteps, linear, lacing, pathLikelihood, mcmc.getOperatorSchedule(), logger);
+                    burninLength, pathSteps, linear, lacing, pathLikelihood, os, logger);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -336,7 +349,9 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
-                new ElementRule(MCMC.class),
+                new ElementRule(MCMC,
+                        new XMLSyntaxRule[]{new ElementRule(MCMC.class, 1, Integer.MAX_VALUE)}, false),
+                //new ElementRule(MCMC.class),
                 new ElementRule(PathLikelihood.class),
                 new ElementRule(MCLogger.class)
         };
@@ -382,4 +397,5 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String LACING = "lacing";
     public static final String SPAWN = "spawn";
     public static final String BURNIN = "burnin";
+    public static final String MCMC = "samplers";
 }

@@ -263,6 +263,38 @@ public class Polygon2D {
         return (Math.abs(area/2));
     }
 
+    private static LinkedList<Point2D> getCirclePoints(double centerLat, double centerLong, int numberOfPoints, double radius) {
+
+        LinkedList<Point2D> Point2Ds = new LinkedList<Point2D>();
+
+        double lat1, long1;
+        double d_rad;
+        double delta_pts;
+        double radial, lat_rad, dlon_rad, lon_rad;
+
+        // convert coordinates to radians
+        lat1 = Math.toRadians(centerLat);
+        long1 = Math.toRadians(centerLong);
+
+        //radius is in meters
+        d_rad = radius/6378137;
+
+        // loop through the array and write points
+        for(int i=0; i<=numberOfPoints; i++) {
+            delta_pts = 360/(double)numberOfPoints;
+            radial = Math.toRadians((double)i*delta_pts);
+
+            //This algorithm is limited to distances such that dlon < pi/2
+            lat_rad = Math.asin(Math.sin(lat1)* Math.cos(d_rad) + Math.cos(lat1)* Math.sin(d_rad)* Math.cos(radial));
+            dlon_rad = Math.atan2(Math.sin(radial)* Math.sin(d_rad)* Math.cos(lat1), Math.cos(d_rad)- Math.sin(lat1)* Math.sin(lat_rad));
+            lon_rad = ((long1 + dlon_rad + Math.PI) % (2*Math.PI)) - Math.PI;
+
+            Point2Ds.add(new Point2D.Double(Math.toDegrees(lat_rad),Math.toDegrees(lon_rad)));
+
+        }
+        return Point2Ds;
+    }
+
     private static boolean isInsideClip(Point2D p, Side side, Rectangle2D boundingBox) {
         if (side == Side.top)
             return (p.getY() <= boundingBox.getMaxY());
@@ -348,18 +380,45 @@ public class Polygon2D {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            KMLCoordinates coordinates = (KMLCoordinates) xo.getChild(KMLCoordinates.class);
-            boolean closed = xo.getAttribute(CLOSED, false);
-
-            if ((!closed && coordinates.length < 3) ||
-                    (closed && coordinates.length < 4))
-                throw new XMLParseException("Insufficient point2Ds in polygon '" + xo.getId() + "' to define a polygon in 2D");
-
             LinkedList<Point2D> Point2Ds = new LinkedList<Point2D>();
-            for (int i = 0; i < coordinates.length; i++)
-                Point2Ds.add(new Point2D.Double(coordinates.x[i], coordinates.y[i]));
+            boolean closed;
+            if (xo.hasChildNamed("circle")) {
+                XMLObject circle = xo.getChild("circle");
+                if (!circle.hasChildNamed("radius")) {
+                    throw new XMLParseException("no radius defined for circle");
+                }
+                if (!circle.hasChildNamed("center")) {
+                    throw new XMLParseException("no center defined for circle");
+                }
+
+                int numberOfPoints = 50;
+                if (circle.hasChildNamed("numberOfPoints")) {
+                    XMLObject points = circle.getChild("numberOfPoints");
+                    numberOfPoints = points.getIntegerChild(0);
+                }
+
+                XMLObject radius = circle.getChild("radius");
+                XMLObject center = circle.getChild("center");
+
+                Point2Ds = getCirclePoints(center.getDoubleAttribute("latitude"),center.getDoubleAttribute("longitude"),numberOfPoints,radius.getDoubleChild(0));
+                closed = true;
+
+            }  else {
+                KMLCoordinates coordinates = (KMLCoordinates) xo.getChild(KMLCoordinates.class);
+                closed = xo.getAttribute(CLOSED, false);
+
+                if ((!closed && coordinates.length < 3) ||
+                        (closed && coordinates.length < 4))
+                    throw new XMLParseException("Insufficient point2Ds in polygon '" + xo.getId() + "' to define a polygon in 2D");
+
+                for (int i = 0; i < coordinates.length; i++)
+                    Point2Ds.add(new Point2D.Double(coordinates.x[i], coordinates.y[i]));
+
+            }
 
             Polygon2D polygon = new Polygon2D(Point2Ds, closed);
+            System.out.println(polygon.toString());
+
             polygon.setFillValue(xo.getAttribute(FILL_VALUE, 0.0));
 
             return polygon;
@@ -382,7 +441,7 @@ public class Polygon2D {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(KMLCoordinates.class),
+                //new ElementRule(KMLCoordinates.class),
                 AttributeRule.newBooleanRule(CLOSED, true),
                 AttributeRule.newDoubleRule(FILL_VALUE, true),
         };

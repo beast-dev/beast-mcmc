@@ -495,8 +495,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             }
 
-            Parameter traits = null;
-            Parameter check = null;
             Model samplingDensity = null;
 
             if (xo.hasChildNamed(SAMPLING_DENSITY)) {
@@ -524,7 +522,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             if (xo.hasChildNamed(RANDOMIZE)) {
                 XMLObject cxo = xo.getChild(RANDOMIZE);
-                traits = (Parameter) cxo.getChild(Parameter.class);
+                Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                 double randomizeLower = cxo.getAttribute(RANDOMIZE_LOWER,-90.0);
                 double randomizeUpper = cxo.getAttribute(RANDOMIZE_UPPER,+90.0);
                 like.randomize(traits, randomizeLower, randomizeUpper);
@@ -532,7 +530,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             if (xo.hasChildNamed(CHECK)) {
                 XMLObject cxo = xo.getChild(CHECK);
-                check = (Parameter) cxo.getChild(Parameter.class);            
+                Parameter check = (Parameter) cxo.getChild(Parameter.class);
                 like.check(check);
             }
 

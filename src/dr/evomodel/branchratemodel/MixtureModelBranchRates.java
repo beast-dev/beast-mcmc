@@ -7,6 +7,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.MixtureModelBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.InverseGaussianDistributionModel;
 import dr.inference.model.*;
 
 /**

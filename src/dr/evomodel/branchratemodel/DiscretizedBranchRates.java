@@ -31,10 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 /**
  * @author Alexei Drummond
@@ -52,6 +49,10 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
     private final int categoryCount;
     private final double step;
     private final double[] rates;
+    private boolean normalize = false;
+    private double normalizeBranchRateTo = Double.NaN;
+    private double scaleFactor = 1.0;
+    private TreeModel treeModel;
 
     //overSampling control the number of effective categories
 
@@ -60,6 +61,17 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
             Parameter rateCategoryParameter,
             ParametricDistributionModel model,
             int overSampling) {
+        this(tree, rateCategoryParameter, model, overSampling, false, Double.NaN);
+
+    }
+
+    public DiscretizedBranchRates(
+            TreeModel tree,
+            Parameter rateCategoryParameter,
+            ParametricDistributionModel model,
+            int overSampling,
+            boolean normalize,
+            double normalizeBranchRateTo) {
 
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
@@ -70,7 +82,11 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         rates = new double[categoryCount];
 
+        this.normalize = normalize;
+
+        this.treeModel = tree;
         this.distributionModel = model;
+        this.normalizeBranchRateTo = normalizeBranchRateTo;
 
         //Force the boundaries of rateCategoryParameter to match the category count
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
@@ -88,7 +104,46 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         // AR - commented out: changes to rateCategoryParameter are handled by model changed events fired by rateCategories
 //        addVariable(rateCategoryParameter);
 
+        if (normalize) {
+            tree.addModelListener(new ModelListener() {
+
+                public void modelChangedEvent(Model model, Object object, int index) {
+                    computeFactor();
+                }
+
+                public void modelRestored(Model model) {
+                    computeFactor();
+                }
+            });
+        }
+
         setupRates();
+    }
+
+    // compute scale factor
+    private void computeFactor() {
+
+
+        //scale mean rate to 1.0 or separate parameter
+
+        double treeRate = 0.0;
+        double treeTime = 0.0;
+
+        //normalizeBranchRateTo = 1.0;
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if(!treeModel.isRoot(node)) {
+                int rateCategory = (int) Math.round(rateCategories.getNodeValue(treeModel, node));
+                treeRate += rates[rateCategory] * treeModel.getBranchLength(node);
+                treeTime += treeModel.getBranchLength(node);
+
+                System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
+            }
+        }
+        //treeRate /= treeTime;
+
+        scaleFactor = normalizeBranchRateTo / (treeRate / treeTime);
+        System.out.println("scaleFactor\t\t\t\t\t" + scaleFactor);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -123,7 +178,8 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
 
-        return rates[rateCategory];
+        //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
+        return rates[rateCategory] * scaleFactor;
     }
 
     public String getBranchAttributeLabel() {
@@ -142,7 +198,14 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
         double z = step / 2.0;
         for (int i = 0; i < categoryCount; i++) {
             rates[i] = distributionModel.quantile(z);
+            //System.out.print(rates[i]+"\t");
             z += step;
         }
+        /*if(distributionModel.getClass().getName().equals("dr.inference.distribution.LogNormalDistributionModel")) {
+            LogNormalDistributionModel lndm = (LogNormalDistributionModel) distributionModel;
+            System.out.println("chur " + lndm.getS() +"\t" + lndm.getM());
+        }
+        else { System.out.println(distributionModel.getClass().getName());}*/
+        if (normalize) computeFactor();
     }
 }

@@ -18,6 +18,8 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
     public static final String RATE_CATEGORIES = "rateCategories";
     public static final String SINGLE_ROOT_RATE = "singleRootRate";
     public static final String OVERSAMPLING = "overSampling";
+    public static final String NORMALIZE = "normalize";
+    public static final String NORMALIZE_BRANCH_RATE_TO = "normalizeBranchRateTo";
     //public static final String NORMALIZED_MEAN = "normalizedMean";
 
 
@@ -29,6 +31,14 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
 
         final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
 
+        //final boolean normalize = xo.getBooleanAttribute(NORMALIZE, false);
+        final boolean normalize = xo.getAttribute(NORMALIZE, false);
+        /*if(xo.hasAttribute(NORMALIZE))
+            normalize = xo.getBooleanAttribute(NORMALIZE);
+        }*/
+        //final double normalizeBranchRateTo = xo.getDoubleAttribute(NORMALIZE_BRANCH_RATE_TO);
+        final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
+
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
 
@@ -38,6 +48,9 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
         Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
         Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
+        if(normalize) {
+            Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
+        }
 
         if (xo.hasAttribute(SINGLE_ROOT_RATE)) {
             //singleRootRate = xo.getBooleanAttribute(SINGLE_ROOT_RATE);
@@ -48,7 +61,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
         }*/
 
-        return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling);
+        return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling, normalize, normalizeBranchRateTo);
     }
 
     //************************************************************************
@@ -72,6 +85,9 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
             //AttributeRule.newDoubleRule(NORMALIZED_MEAN, true, "The mean rate to constrain branch rates to once branch lengths are taken into account"),
+            AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
+            AttributeRule.newBooleanRule(NORMALIZE, true, "Whether the mean rate has to be normalized to a particular value"),
+            AttributeRule.newDoubleRule(NORMALIZE_BRANCH_RATE_TO, true, "The mean rate to normalize to, if normalizing"),
             AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
             new ElementRule(TreeModel.class),
             new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),

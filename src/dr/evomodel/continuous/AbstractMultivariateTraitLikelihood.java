@@ -13,9 +13,7 @@ import dr.math.MathUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -45,6 +43,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SAMPLING_DENSITY = "samplingDensity";
     public static final String INTEGRATE = "integrateInternalTraits";
+    public static final String JITTER = "jitter";
+    public static final String WINDOW = "window";
+    public static final String DUPLICATES = "duplicatesOnly";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                        TreeModel treeModel,
@@ -394,6 +395,87 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         //diffusionModel.randomize(trait);
     }
 
+    public void jitter(Parameter trait, int dim, double[] window, boolean duplicates, boolean verbose) {
+        int numTraits = trait.getDimension() / dim;
+        boolean[] update = new boolean[numTraits];
+        if (!duplicates) {
+            Arrays.fill(update, true);
+        } else {
+            DoubleArray[] traitArray = new DoubleArray[numTraits];
+            for (int i = 0; i < numTraits; i++) {
+                double[] x = new double[dim];
+                for (int j = 0; j < dim; j++) {
+                    x[j] = trait.getParameterValue(i * dim + j);
+                }
+                traitArray[i] = new DoubleArray(x,i);
+            }
+            Arrays.sort(traitArray);
+            // Mark duplicates
+            for (int i = 1; i < numTraits; i++) {
+                if (traitArray[i].compareTo(traitArray[i-1]) == 0) {
+                    update[traitArray[i-1].getIndex()] = true;
+                    update[traitArray[i].getIndex()] = true;
+                }
+            }
+        }
+        for (int i = 0; i < numTraits; i++) {
+            if (update[i]) {
+                StringBuffer sb1 = null;
+                StringBuffer sb2 = null;
+                if (verbose) {
+                    sb1 = new StringBuffer();
+                    sb2 = new StringBuffer();
+                }
+                for (int j = 0; j < dim; j++) {
+                    final double oldValue = trait.getParameterValue(i * dim + j);
+                    final double newValue = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
+                            oldValue;
+                    trait.setParameterValue(i * dim + j, newValue);
+                    if (verbose) {
+                        sb1.append(" ").append(oldValue);
+                        sb2.append(" ").append(newValue);
+                    }
+                }
+                if (verbose) {
+                    Logger.getLogger("dr.evomodel.continuous").info(
+                            "  Replacing trait #"+(i+1)+"  Old:"+sb1.toString()+" New: "+sb2.toString()
+                    );
+                }
+            }
+        }        
+    }
+
+    class DoubleArray implements Comparable {
+
+        double[] value;
+        int index;
+
+        DoubleArray(double[] value, int index) {
+            this.value = value;
+            this.index = index;
+        }
+
+        public double[] getValues() {
+            return value;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public int compareTo(Object o) {
+            double[] x = ((DoubleArray) o).getValues();
+            for(int i = 0; i < value.length; i++) {
+                if (value[i] > x[i]) {
+                    return 1;
+                } else if (value[i] < x[i]) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    }
+
     public void check(Parameter trait) throws XMLParseException {
         diffusionModel.check(trait);
     }
@@ -540,6 +622,14 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 like.randomize(traits, randomizeLower, randomizeUpper);
             }
 
+            if (xo.hasChildNamed(JITTER)) {
+                XMLObject cxo = xo.getChild(JITTER);
+                Parameter traits = (Parameter) cxo.getChild(Parameter.class);
+                double[] window = cxo.getDoubleArrayAttribute(WINDOW); // Must be included, no default value
+                boolean duplicates = cxo.getAttribute(DUPLICATES,true); // default = true
+                like.jitter(traits, diffusionModel.getPrecisionmatrix().length, window, duplicates, true);
+            }
+
             if (xo.hasChildNamed(CHECK)) {
                 XMLObject cxo = xo.getChild(CHECK);
                 Parameter check = (Parameter) cxo.getChild(Parameter.class);
@@ -591,6 +681,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         AttributeRule.newDoubleRule(RANDOMIZE_LOWER,true),
                         AttributeRule.newDoubleRule(RANDOMIZE_UPPER,true),
                         new ElementRule(Parameter.class)
+                }, true),
+                new ElementRule(JITTER, new XMLSyntaxRule[] {
+                        AttributeRule.newDoubleArrayRule(WINDOW),
+                        AttributeRule.newBooleanRule(DUPLICATES, true),
+                        new ElementRule(Parameter.class),
+
                 }, true),
                 new ElementRule(CHECK, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)

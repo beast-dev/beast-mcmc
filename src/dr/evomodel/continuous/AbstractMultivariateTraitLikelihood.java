@@ -383,10 +383,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return value;
     }
 
-    public void randomize(Parameter trait, double lower, double upper) {
+    public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
         for(int i = 0; i < trait.getDimension(); i++) {
-            final double newValue = MathUtils.uniform(lower,upper);
+            final int whichLower = i % lower.length;
+            final int whichUpper = i % upper.length;
+            final double newValue = MathUtils.uniform(lower[whichLower],upper[whichUpper]);
             trait.setParameterValue(i, newValue);    
         }
         //diffusionModel.randomize(trait);
@@ -523,8 +525,18 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             if (xo.hasChildNamed(RANDOMIZE)) {
                 XMLObject cxo = xo.getChild(RANDOMIZE);
                 Parameter traits = (Parameter) cxo.getChild(Parameter.class);
-                double randomizeLower = cxo.getAttribute(RANDOMIZE_LOWER,-90.0);
-                double randomizeUpper = cxo.getAttribute(RANDOMIZE_UPPER,+90.0);
+                double[] randomizeLower;
+                double[] randomizeUpper;
+                if (cxo.hasAttribute(RANDOMIZE_LOWER)) {
+                    randomizeLower = cxo.getDoubleArrayAttribute(RANDOMIZE_LOWER);
+                } else {
+                    randomizeLower = new double[] { -90.0 };
+                }
+                if (cxo.hasAttribute(RANDOMIZE_UPPER)) {
+                    randomizeUpper = cxo.getDoubleArrayAttribute(RANDOMIZE_UPPER);
+                } else {
+                    randomizeUpper = new double[] { +90.0 };
+                }
                 like.randomize(traits, randomizeLower, randomizeUpper);
             }
 

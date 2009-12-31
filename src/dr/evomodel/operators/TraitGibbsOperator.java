@@ -55,6 +55,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
     public static final String GIBBS_OPERATOR = "traitGibbsOperator";
     public static final String INTERNAL_ONLY = "onlyInternalNodes";
+    public static final String TIP_WITH_PRIORS_ONLY = "onlyTipsWithPriors";
     public static final String NODE_PRIOR = "nodePrior";
     public static final String NODE_LABEL = "taxon";
     public static final String ROOT_PRIOR = "rootPrior";
@@ -69,18 +70,21 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     private GeoSpatialCollectionModel parameterPrior = null;
 
     private boolean onlyInternalNodes = true;
+    private boolean onlyTipsWithPriors = true;
     private boolean sampleRoot = false;
     private double[] rootPriorMean;
     private double[][] rootPriorPrecision;
     private final int maxTries = 10000;
 
-    public TraitGibbsOperator(SampledMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes) {
+    public TraitGibbsOperator(SampledMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes,
+                              boolean onlyTipsWithPriors) {
         super();
         this.traitModel = traitModel;
         this.treeModel = traitModel.getTreeModel();
         this.precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
         this.traitName = traitModel.getTraitName();
         this.onlyInternalNodes = onlyInternalNodes;
+        this.onlyTipsWithPriors = onlyTipsWithPriors;
         this.dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
         Logger.getLogger("dr.evomodel").info("Using *NEW* trait Gibbs operator");
     }
@@ -106,6 +110,9 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         return 1;
     }
 
+    private boolean nodePriorExists(NodeRef node) {
+        return nodePrior != null && nodePrior.containsKey(treeModel.getNodeTaxon(node));
+    }
 
     public double doOperation() throws OperatorFailedException {
 
@@ -116,9 +123,15 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             if (onlyInternalNodes)
                 node = treeModel.getInternalNode(MathUtils.nextInt(
                         treeModel.getInternalNodeCount()));
-            else
+            else {
                 node = treeModel.getNode(MathUtils.nextInt(
                         treeModel.getNodeCount()));
+                if (onlyTipsWithPriors &&
+                    (treeModel.getChildCount(node) == 0) && // Is a tip
+                    !nodePriorExists(node)) { // Does not have a prior
+                    node = null;
+                }
+            }
             if (!sampleRoot && node == root)
                 node = null;
         } // select any internal (or internal/external) node
@@ -136,12 +149,12 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         final boolean nodePriorExists = nodePrior != null && nodePrior.containsKey(taxon);
 
-        if (!onlyInternalNodes) {
-            final boolean isTip = (treeModel.getChildCount(node) == 0);
-            if (!nodePriorExists && isTip)
-                System.err.println("Warning: sampling taxon '"+treeModel.getNodeTaxon(node).getId()
-                        +"' tip trait without a prior!!!");
-        }
+//        if (!onlyInternalNodes) {
+//            final boolean isTip = (treeModel.getChildCount(node) == 0);
+//            if (!nodePriorExists && isTip)
+//                System.err.println("Warning: sampling taxon '"+treeModel.getNodeTaxon(node).getId()
+//                        +"' tip trait without a prior!!!");
+//        }
 
         int count = 0;
 
@@ -220,7 +233,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
     private MeanPrecision operateRoot(NodeRef node) {
 
-        double[] trait = null;
+        double[] trait;
         double weightTotal = 0.0;
 
         double[] weightedAverage = new double[dim];
@@ -249,12 +262,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
 
+        trait = new double[dim];
         for (int i=0; i<dim; i++) {
-            // todo: (FIXME) if code is correct in using the arbitrary last trait from 2 loops above that
-            // todo: (FIXME) requires at least a comment.
-            assert trait != null;
-            
-            trait[i] = 0;
             for (int j=0; j<dim; j++)
                 trait[i] += variance[i][j] * weightedAverage[j];
         }
@@ -284,9 +293,10 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);
+            boolean onlyTipsWithPriors = xo.getAttribute(TIP_WITH_PRIORS_ONLY, true);
             SampledMultivariateTraitLikelihood traitModel = (SampledMultivariateTraitLikelihood) xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
-            TraitGibbsOperator operator = new TraitGibbsOperator(traitModel, onlyInternalNodes);
+            TraitGibbsOperator operator = new TraitGibbsOperator(traitModel, onlyInternalNodes, onlyTipsWithPriors);
             operator.setWeight(weight);
 
             // Get root prior
@@ -313,7 +323,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                         // Get taxon node from tree
                         int index = treeModel.getTaxonIndex(nodeLabel);
                         if (index == -1) {
-                            throw new XMLParseException("taxon '" + nodeLabel + "' not found for geoSpatialDistribution element in traitGibbsOperator element");
+                            throw new XMLParseException("Taxon '" + nodeLabel + "' not found for geoSpatialDistribution element in traitGibbsOperator element");
                         }
                         operator.setTaxonPrior(treeModel.getTaxon(index),prior);
                         System.err.println("Adding truncated prior for taxon '"+treeModel.getTaxon(index)+"'");
@@ -350,6 +360,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(INTERNAL_ONLY, true),
+                AttributeRule.newBooleanRule(TIP_WITH_PRIORS_ONLY, true),
                 new ElementRule(SampledMultivariateTraitLikelihood.class),
 //                new ElementRule(NODE_PRIOR, new XMLSyntaxRule[] {
 //                        AttributeRule.newStringRule(NODE_LABEL),

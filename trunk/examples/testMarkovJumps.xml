@@ -65,12 +65,15 @@
 	  <hkyModel idref="hky"/>
 	  <parameter value="0 1 1 1
 	                    1 0 1 1
-	                    1 1 0 0	                    
+	                    1 1 0 1	                    
 	                    1 1 1 0"/>
 	  <parameter value="0 1 1 1
 	                    0 0 1 1
 	                    0 0 0 1	                    
 	                    0 0 0 0" id="upper"/>
+	  <rewards>
+	    <parameter value="1 0 0 1" id="reward"/>
+	  </rewards>
 	</markovJumpsTreeLikelihood>	
 	
 	<operators id="operators">
@@ -130,12 +133,18 @@ J = sum(markov$cond.mean)
 R2 = matrix(c(0, 1, 1, 1,
 	          0, 0, 1, 1,
 	          0, 0, 0, 1,	                    
-	          0, 0, 0, 0),nrow=4,by.row=T)
+	          0, 0, 0, 0),nrow=4,byrow=T)
 	          
 markov2 = tree.mean.jumps(tree, data, subst.model.eigen,
 		   stat.dist, R2)
 		   
 J2 = sum(markov2$cond.mean)
 
+rewards = c(1,0,0,1) # A,T
+
+markov3 = tree.mean.rewards(tree, data, subst.model.eigen,
+			stat.dist, rewards)
+
+R = sum(markov3$cond.mean) / 0.5 # divided by clock.rate
 
 -->

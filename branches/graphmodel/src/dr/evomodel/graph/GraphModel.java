@@ -30,7 +30,7 @@ public class GraphModel extends TreeModel {
     /* 
      * Creates a new GraphModel
      */
-   public GraphModel(Tree tree, boolean copyAttributes, SiteList siteList) 
+   public GraphModel(Tree tree, boolean copyAttributes, PartitionModel partitionModel) 
    {
 	   // use the superconstructor but then convert all nodes
 	   // from tree nodes to graph nodes
@@ -48,11 +48,13 @@ public class GraphModel extends TreeModel {
        nodes = tmp;
        storedNodes = tmp2;
        
-       // attach the siteRange to all nodes
-       SiteRange range = new SiteRange(siteList);
-       for(int i=0; i<nodes.length; i++)
-       {
-    	   ((Node)nodes[i]).addObject(range);
+       // attach all siteRanges in the PartitionModel to each node
+       for(int sr = 0; sr < partitionModel.getSiteRangeCount(); sr++){
+           SiteRange range = partitionModel.getSiteRange(sr);
+           for(int i=0; i<nodes.length; i++)
+           {
+        	   ((Node)nodes[i]).addObject(range);
+           }
        }
    }
 	

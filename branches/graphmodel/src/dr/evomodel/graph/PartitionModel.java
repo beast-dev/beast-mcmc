@@ -163,6 +163,13 @@ public class PartitionModel extends AbstractModel {
 		freeSiteRanges.push(siteRange);
 		siteRangeModels.remove(siteRange);
 	}
+	
+	SiteRange getSiteRange(int i){
+		return siteRanges[i];
+	}
+	int getSiteRangeCount(){
+		return siteRanges.length;
+	}
 
 	@Override
 	protected void acceptState() {

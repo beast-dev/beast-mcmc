@@ -33,7 +33,7 @@ public class GraphModelParser extends TreeModelParser{
 		Tree tree = (Tree) xo.getChild(Tree.class);
 		PartitionModel partitionModel = (PartitionModel) xo.getChild(PartitionModel.class);
 		
-		GraphModel graphModel = new GraphModel(xo.getId(), tree, null);
+		GraphModel graphModel = new GraphModel(xo.getId(), tree, partitionModel);
 		
 		Logger.getLogger("dr.evomodel").info("Creating the graph model, '" + xo.getId() + "'");
 

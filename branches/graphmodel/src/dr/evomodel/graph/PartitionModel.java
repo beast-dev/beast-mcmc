@@ -48,17 +48,23 @@ public class PartitionModel extends AbstractModel {
     protected boolean inEdit = false;
     protected final List<PartitionChangedEvent> partitionChangedEvents = new ArrayList<PartitionChangedEvent>();
 
-	public PartitionModel(SiteList siteList, SiteModel siteModel)
+    /**
+     * Construct a Partition Model over one or more SiteList objects (alignments)
+     * @param siteLists
+     */
+	public PartitionModel(List<SiteList> siteLists)
 	{
 		super(PARTITION_MODEL);
-		siteLists.add(siteList);
-		this.addModel(siteModel);
-		siteRanges = new SiteRange[1];
-		storedSiteRanges = new SiteRange[1];
-		siteRanges[0] = new SiteRange(siteList);
-		siteRanges[0].setNumber(0);
-		storedSiteRanges[0] = new SiteRange(siteList);
-		storedSiteRanges[0].setNumber(0);
+		this.siteLists.addAll(siteLists);
+		siteRanges = new SiteRange[siteLists.size()];
+		storedSiteRanges = new SiteRange[siteLists.size()];
+		for(int i=0; i<siteLists.size(); i++)
+		{
+			siteRanges[i] = new SiteRange(siteLists.get(i));
+			siteRanges[i].setNumber(i);
+			storedSiteRanges[i] = new SiteRange(siteLists.get(i));
+			storedSiteRanges[i].setNumber(i);
+		}
 		siteRangeModels = new HashMap<SiteRange, List<Model>>();
 	}
 	

@@ -162,16 +162,23 @@ public class PartitionModel extends AbstractModel {
 		siteRange.setRightSite(newRight);
 	}
 	
-	void removeSiteRange(SiteRange siteRange){
+	public void removeSiteRange(SiteRange siteRange){
 		freeSiteRanges.push(siteRange);
 		siteRangeModels.remove(siteRange);
 	}
 	
-	SiteRange getSiteRange(int i){
+	public SiteRange getSiteRange(int i){
 		return siteRanges[i];
 	}
-	int getSiteRangeCount(){
+	public int getSiteRangeCount(){
 		return siteRanges.length;
+	}
+	
+	public SiteList getSiteList(int i){
+		return siteLists.elementAt(i);
+	}
+	public int getSiteListCount(){
+		return siteLists.size();
 	}
 
 	@Override
@@ -191,7 +198,7 @@ public class PartitionModel extends AbstractModel {
 
 	}
 	
-	List<Model> getSiteRangeModels(SiteRange siteRange)
+	public List<Model> getSiteRangeModels(SiteRange siteRange)
 	{
 		return siteRangeModels.get(siteRange);
 	}

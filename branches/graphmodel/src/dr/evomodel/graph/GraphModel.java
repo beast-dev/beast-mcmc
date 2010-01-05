@@ -2,12 +2,15 @@ package dr.evomodel.graph;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 
 import dr.evolution.alignment.SiteList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 
 /*
  * A class to represent phylogenetic graphs where each node can have
@@ -83,11 +86,23 @@ public class GraphModel extends TreeModel {
 	       nodes = tmp;
 	       storedNodes = tmp2;
        }
-	   // simply return a node from the free list
+
+       // simply return a node from the free list
        Node newNode = freeNodes.pop();
        internalNodeCount++;	// assume this is an internal node.  might not be true if there are partitions with subsets of taxa
        pushTreeChangedEvent(newNode);	// push a changed event onto the stack
-	   return newNode;
+
+       // add height, rate, and trait parameters
+       // FIXME: do these parameters need to be created with default values?
+       if(nhp!=null) nhp.addParameter(newNode.heightParameter);
+       if(nrp!=null) nrp.addParameter(newNode.rateParameter);
+       if(ntp!=null) {
+           for (Map.Entry<String, Parameter> entry : newNode.getTraitMap().entrySet()) {
+        	   ntp.addParameter(entry.getValue());
+           }
+       }
+       
+       return newNode;
    }
 
    /*
@@ -101,6 +116,15 @@ public class GraphModel extends TreeModel {
     	   throw new RuntimeException("Deleted node is linked to others!");
        }
        freeNodes.push(n);
+       
+       // remove from height, rate, and trait parameters
+       if(nhp!=null) nhp.removeParameter(n.heightParameter);
+       if(nrp!=null) nrp.removeParameter(n.rateParameter);
+       if(ntp!=null) {
+           for (Map.Entry<String, Parameter> entry : n.getTraitMap().entrySet()) {
+        	   ntp.removeParameter(entry.getValue());
+           }
+       }
    }
    
    public void removeSiteRange(NodeRef node, SiteRange range)
@@ -173,6 +197,23 @@ public class GraphModel extends TreeModel {
    }
    
 
+   CompoundParameter nhp = null, nrp = null, ntp = null;
+   public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	   nhp = (CompoundParameter)super.createNodeHeightsParameter(rootNode, internalNodes, leafNodes);
+	   return nhp;
+   }
+   public Parameter createNodeRatesParameter(double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes) {
+	   nrp = (CompoundParameter)super.createNodeRatesParameter(initialValues, rootNode, internalNodes, leafNodes);
+	   return nrp;
+   }
+   public Parameter createNodeTraitsParameter(String name, int dim, double[] initialValues,
+           boolean rootNode, boolean internalNodes,
+           boolean leafNodes, boolean firesTreeEvents) {
+	   ntp = (CompoundParameter)createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, firesTreeEvents);
+	   return ntp;
+   }
+   
+   
    protected void handleModelChangedEvent(Model model, Object object, int index) 
    {
        // presumably a constituent partition has changed

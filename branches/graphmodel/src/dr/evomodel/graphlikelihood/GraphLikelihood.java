@@ -1,9 +1,7 @@
 package dr.evomodel.graphlikelihood;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.graph.GraphModel;
 import dr.evomodel.graph.PartitionModel;
 import dr.evomodel.graph.PartitionModel.PartitionChangedEvent;
@@ -15,10 +13,9 @@ import dr.inference.model.Model;
 
 public class GraphLikelihood extends TreeLikelihood {
 
-    public GraphLikelihood(PatternList patternList,
+    public GraphLikelihood(
             GraphModel graphModel,
-            SiteModel siteModel,
-            BranchRateModel branchRateModel,
+            PartitionModel partitionModel,
             TipPartialsModel tipPartialsModel,
             boolean useAmbiguities,
             boolean allowMissingTaxa,
@@ -26,7 +23,10 @@ public class GraphLikelihood extends TreeLikelihood {
             boolean forceJavaCore,
             boolean forceRescaling) 
     {
-    	super(patternList,graphModel,siteModel,branchRateModel,
+    	super(partitionModel.getSiteList(0),
+    			graphModel,
+    			(SiteModel)partitionModel.getSiteRangeModels(partitionModel.getSiteRange(0)).get(0),
+    			null,
     			tipPartialsModel,useAmbiguities,allowMissingTaxa,
     			storePartials,forceJavaCore,forceRescaling);
     	updatePattern = new boolean[patternList.getPatternCount()];
@@ -70,5 +70,10 @@ public class GraphLikelihood extends TreeLikelihood {
      */
     protected boolean traverse(Tree tree, NodeRef node) 
     {
+    	return true;
+    }
+
+    protected double calculateLogLikelihood() {
+    	return 1;
     }
 }

@@ -194,6 +194,8 @@ public class GraphModel extends TreeModel {
     	
         public Node() {
         	super();
+        	
+        	objects = new HashSet<Object>();
         }
 
         public Node getChild(int n) {

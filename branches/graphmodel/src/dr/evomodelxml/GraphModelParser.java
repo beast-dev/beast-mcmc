@@ -41,6 +41,9 @@ public class GraphModelParser extends TreeModelParser{
 		
 		graphModel.setupHeightBounds();
 		
+		Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(graphModel, graphModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("  tree height = " + graphModel.getNodeHeight(graphModel.getRoot()));
+		
 		return graphModel;
 	}
 

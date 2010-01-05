@@ -37,7 +37,7 @@ public class PartitionModel extends AbstractModel {
 
     public static final String PARTITION_MODEL = "partitionModel";
 	
-    protected Vector<SiteList> siteLists;	// the set of one or more siteLists on which this partition exists
+    protected List<SiteList> siteLists;	// the set of one or more siteLists on which this partition exists
 
 	protected SiteRange[] siteRanges;
 	protected SiteRange[] storedSiteRanges;
@@ -55,6 +55,9 @@ public class PartitionModel extends AbstractModel {
 	public PartitionModel(List<SiteList> siteLists)
 	{
 		super(PARTITION_MODEL);
+		
+		this.siteLists = new ArrayList<SiteList>(siteLists.size());
+		
 		this.siteLists.addAll(siteLists);
 		siteRanges = new SiteRange[siteLists.size()];
 		storedSiteRanges = new SiteRange[siteLists.size()];

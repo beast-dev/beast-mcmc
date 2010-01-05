@@ -2,6 +2,7 @@ package dr.evomodelxml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import dr.evolution.alignment.SiteList;
 import dr.evomodel.graph.PartitionModel;
@@ -34,12 +35,15 @@ public class PartitionModelParser extends AbstractXMLObjectParser{
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		List<SiteList> listOfSiteLists = new ArrayList<SiteList>();
 		
+		Logger.getLogger("dr.evomodel").info("Creating a partition model, '" + xo.getId() + "', using alignments");
 		for(int i = 0; i < xo.getChildCount(); i++){
-			XMLObject cxo = (XMLObject) xo.getChild(i);
+			SiteList cxo = (SiteList) xo.getChild(i);
 			
-			listOfSiteLists.add( (SiteList) cxo);
+			listOfSiteLists.add(cxo);
+
+			Logger.getLogger("dr.evomodel").info("\t" + cxo.getId() + "");
 		}
-				
+		
 		PartitionModel partitionModel = new PartitionModel(listOfSiteLists);
 		
 		return partitionModel;

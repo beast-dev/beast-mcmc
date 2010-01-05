@@ -593,7 +593,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * in the same way as this TreeModel is set up. This method is package
      * private.
      */
-    void copyNodeStructure(Node[] destination) {
+    protected void copyNodeStructure(Node[] destination) {
 
         if (nodes.length != destination.length) {
             throw new IllegalArgumentException("Node arrays are of different lengths");
@@ -1078,7 +1078,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         //public Parameter traitParameter = null;
         public Taxon taxon = null;
 
-        Map<String, Parameter> traitParameters = new HashMap<String, Parameter>();
+        protected Map<String, Parameter> traitParameters = new HashMap<String, Parameter>();
 
         public Node() {
             parent = null;
@@ -1353,37 +1353,37 @@ public class TreeModel extends AbstractModel implements MutableTree {
     /**
      * root node
      */
-    private Node root = null;
-    private int storedRootNumber;
+    protected Node root = null;
+    protected int storedRootNumber;
 
     /**
      * list of internal nodes (including root)
      */
-    private Node[] nodes = null;
-    private Node[] storedNodes = null;
+    protected Node[] nodes = null;
+    protected Node[] storedNodes = null;
 
     /**
      * number of nodes (including root and tips)
      */
-    private final int nodeCount;
+    protected int nodeCount;
 
     /**
      * number of external nodes
      */
-    private final int externalNodeCount;
+    protected int externalNodeCount;
 
     /**
      * number of internal nodes (including root)
      */
-    private final int internalNodeCount;
+    protected int internalNodeCount;
 
     /**
      * holds the units of the trees branches.
      */
-    private Type units = Type.SUBSTITUTIONS;
+    protected Type units = Type.SUBSTITUTIONS;
 
-    private boolean inEdit = false;
+    protected boolean inEdit = false;
 
-    private boolean hasRates = false;
-    private boolean hasTraits = false;
+    protected boolean hasRates = false;
+    protected boolean hasTraits = false;
 }

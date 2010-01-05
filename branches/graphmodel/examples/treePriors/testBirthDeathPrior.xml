@@ -1,0 +1,201 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="tip1"/>
+        <taxon id="tip2"/>
+        <taxon id="tip3"/>
+        <taxon id="tip4"/>
+        <taxon id="tip5"/>
+        <taxon id="tip6"/>
+        <taxon id="tip7"/>
+        <taxon id="tip8"/>
+        <taxon id="tip9"/>
+        <taxon id="tip10"/>
+        <taxon id="tip11"/>
+        <taxon id="tip12"/>
+        <taxon id="tip13"/>
+        <taxon id="tip14"/>
+        <taxon id="tip15"/>
+        <taxon id="tip16"/>
+        <taxon id="tip17"/>
+        <taxon id="tip18"/>
+        <taxon id="tip19"/>
+        <taxon id="tip20"/>
+        <taxon id="tip21"/>
+        <taxon id="tip22"/>
+        <taxon id="tip23"/>
+        <taxon id="tip24"/>
+        <taxon id="tip25"/>
+        <taxon id="tip26"/>
+        <taxon id="tip27"/>
+        <taxon id="tip28"/>
+        <taxon id="tip29"/>
+        <taxon id="tip30"/>
+        <taxon id="tip31"/>
+        <taxon id="tip32"/>
+        <taxon id="tip33"/>
+        <taxon id="tip34"/>
+        <taxon id="tip35"/>
+        <taxon id="tip36"/>
+        <taxon id="tip37"/>
+        <taxon id="tip38"/>
+        <taxon id="tip39"/>
+        <taxon id="tip40"/>
+        <taxon id="tip41"/>
+        <taxon id="tip42"/>
+        <taxon id="tip43"/>
+        <taxon id="tip44"/>
+        <taxon id="tip45"/>
+        <taxon id="tip46"/>
+        <taxon id="tip47"/>
+        <taxon id="tip48"/>
+        <taxon id="tip49"/>
+        <taxon id="tip50"/>
+        <taxon id="tip51"/>
+        <taxon id="tip52"/>
+        <taxon id="tip53"/>
+        <taxon id="tip54"/>
+        <taxon id="tip55"/>
+        <taxon id="tip56"/>
+        <taxon id="tip57"/>
+        <taxon id="tip58"/>
+        <taxon id="tip59"/>
+        <taxon id="tip60"/>
+        <taxon id="tip61"/>
+        <taxon id="tip62"/>
+        <taxon id="tip63"/>
+        <taxon id="tip64"/>
+        <taxon id="tip65"/>
+        <taxon id="tip66"/>
+        <taxon id="tip67"/>
+        <taxon id="tip68"/>
+        <taxon id="tip69"/>
+        <taxon id="tip70"/>
+        <taxon id="tip71"/>
+        <taxon id="tip72"/>
+        <taxon id="tip73"/>
+        <taxon id="tip74"/>
+        <taxon id="tip75"/>
+        <taxon id="tip76"/>
+        <taxon id="tip77"/>
+        <taxon id="tip78"/>
+        <taxon id="tip79"/>
+        <taxon id="tip80"/>
+        <taxon id="tip81"/>
+        <taxon id="tip82"/>
+        <taxon id="tip83"/>
+        <taxon id="tip84"/>
+        <taxon id="tip85"/>
+        <taxon id="tip86"/>
+        <taxon id="tip87"/>
+        <taxon id="tip88"/>
+        <taxon id="tip89"/>
+        <taxon id="tip90"/>
+        <taxon id="tip91"/>
+        <taxon id="tip92"/>
+        <taxon id="tip93"/>
+        <taxon id="tip94"/>
+        <taxon id="tip95"/>
+        <taxon id="tip96"/>
+        <taxon id="tip97"/>
+        <taxon id="tip98"/>
+        <taxon id="tip99"/>
+        <taxon id="tip100"/>
+    </taxa>
+
+    <!-- This is a single tree simulated under a birth-death process with birth rate = 1.0, death rate = 0.5. -->
+    <newick id="simulatedTree">
+        (((((tip1:1.20791721,(tip2:0.50949764,((tip3:0.12632084,tip4:0.12632084):0.03816032,tip5:0.16448116):0.34501648):0.69841957):0.00121403,((tip6:0.60293102,tip7:0.60293102):0.02978706,(tip8:0.24931717,tip9:0.24931717):0.38340092):0.57641315):1.53569698,((tip10:1.46762800,tip11:1.46762800):0.32625437,(tip12:1.12891006,(tip13:0.47626495,(tip14:0.24391747,tip15:0.24391747):0.23234749):0.65264511):0.66497231):0.95094585):3.69088173,((((tip16:2.76857901,((((tip17:0.13179016,tip18:0.13179016):0.10064316,tip19:0.23243332):1.20712948,((tip20:0.99302101,(tip21:0.78857422,tip22:0.78857422):0.20444679):0.28961086,((tip23:0.41138268,tip24:0.41138268):0.23216057,(tip25:0.10758686,tip26:0.10758686):0.53595638):0.63908863):0.15693092):0.31820154,(tip27:0.74673748,tip28:0.74673748):1.01102686):1.01081467):0.25254393,((tip29:1.49258137,(((tip30:0.10649109,tip31:0.10649109):0.99165440,(tip32:0.71433258,tip33:0.71433258):0.38381290):0.28869343,((tip34:0.00334454,tip35:0.00334454):0.12233639,tip36:0.12568092):1.26115799):0.10574245):0.85545588,((tip37:0.51106739,tip38:0.51106739):1.78268051,tip39:2.29374790):0.05428934):0.67308569):0.20778227,(((tip40:0.40490150,tip41:0.40490150):1.45906639,(tip42:0.84532070,tip43:0.84532070):1.01864719):1.29320717,(((tip44:0.81946659,tip45:0.81946659):0.16922474,(tip46:0.55652046,(tip47:0.43512726,(tip48:0.40571880,(tip49:0.22338772,tip50:0.22338772):0.18233109):0.02940845):0.12139320):0.43217087):0.99585533,(((tip51:0.78262043,(tip52:0.34968567,tip53:0.34968567):0.43293476):0.18325901,tip54:0.96587944):0.22667408,((tip55:0.02516270,tip56:0.02516270):0.94123077,(((tip57:0.00911808,tip58:0.00911808):0.49863911,(tip59:0.19620037,tip60:0.19620037):0.31155682):0.41388416,(tip61:0.67364311,(tip62:0.30887794,tip63:0.30887794):0.36476517):0.24799824):0.04475212):0.22616005):0.79199314):1.17262840):0.07173014):0.61978912,(tip64:0.32649136,tip65:0.32649136):3.52220297):2.58701563):0.63912511,((((((tip66:2.37998533,tip67:2.37998533):0.15529919,tip68:2.53528452):0.87359858,(tip69:3.23685026,(((tip70:2.35227680,(tip71:0.70795155,tip72:0.70795155):1.64432526):0.71682310,(((tip73:0.07384491,tip74:0.07384491):0.11439991,(tip75:0.00774956,tip76:0.00774956):0.18049526):2.67313051,(tip77:1.67117739,tip78:1.67117739):1.19019794):0.20772457):0.08866835,tip79:3.15776825):0.07908201):0.17203283):0.56388426,(tip80:3.18542814,(tip81:0.75517941,tip82:0.75517941):2.43024874):0.78733921):0.00860691,((((tip83:0.06365013,tip84:0.06365013):0.19551182,(tip85:0.07890511,tip86:0.07890511):0.18025684):1.36365891,((tip87:0.58280849,tip88:0.58280849):0.16872025,tip89:0.75152874):0.87129211):0.33483744,((tip90:1.24944210,tip91:1.24944210):0.29822111,tip92:1.54766321):0.40999508):2.02371597):2.36188245,(((tip93:0.28300476,tip94:0.28300476):0.78349304,(((tip95:0.29428864,tip96:0.29428864):0.03626537,tip97:0.33055401):0.25226307,(tip98:0.19550991,tip99:0.19550991):0.38730717):0.48368073):0.16538048,tip100:1.23187828):5.11137843):0.73157835);
+    </newick>
+
+    <!-- A prior on the distribution node heights defined given                  -->
+    <!-- a Birth-Death speciation process (Yang & Rannala, 1997).                -->
+    <birthDeathModel id="birthDeath" units="substitutions">
+        <birthRate>
+            <parameter id="birthDeath.birthRate" value="1.0" lower="0.0" upper="10.0"/>
+        </birthRate>
+        <deathRate>
+            <parameter id="birthDeath.deathRate" value="0.5" lower="0.0" upper="10.0"/>
+        </deathRate>
+        <samplingProportion>
+            <parameter id="birthDeath.samplingProportion" value="1.0"/>
+        </samplingProportion>
+    </birthDeathModel>
+
+    <treeModel id="treeModel">
+        <tree idref="simulatedTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <speciationLikelihood id="speciation">
+        <model>
+            <birthDeathModel idref="birthDeath"/>
+        </model>
+        <speciesTree>
+            <treeModel idref="treeModel"/>
+        </speciesTree>
+    </speciationLikelihood>
+
+    <operators id="operators">
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="birthDeath.birthRate"/>
+        </scaleOperator>
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="birthDeath.deathRate"/>
+        </scaleOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true" preBurnin="0">
+        <posterior id="posterior">
+            <prior id="prior">
+                <booleanLikelihood>
+                    <!-- Constrains birthrate>deathrate -->
+                    <test>
+                        <parameter idref="birthDeath.birthRate"/>
+                        <greaterThan>
+                            <parameter idref="birthDeath.deathRate"/>
+                        </greaterThan>
+                    </test>
+                </booleanLikelihood>
+                <speciationLikelihood idref="speciation"/>
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="10000">
+            <column label="Birth Rate" sf="6" width="12">
+                <parameter idref="birthDeath.birthRate"/>
+            </column>
+            <column label="Death Rate" sf="6" width="12">
+                <parameter idref="birthDeath.deathRate"/>
+            </column>
+            <column label="L(speciation)" dp="4" width="12">
+                <speciationLikelihood idref="speciation"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="1000" fileName="testBirthDeath.log">
+            <posterior idref="posterior"/>
+            <parameter idref="birthDeath.birthRate"/>
+            <parameter idref="birthDeath.deathRate"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc"/>
+        </property>
+    </report>
+
+    <traceAnalysis fileName="testBirthDeath.log" burnIn="100000">
+        <expectation name="birthDeath.birthRate" value="1.0"/>
+        <expectation name="birthDeath.deathRate" value="0.5"/>
+    </traceAnalysis>
+</beast>

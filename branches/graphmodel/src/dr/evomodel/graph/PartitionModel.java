@@ -1,6 +1,7 @@
 package dr.evomodel.graph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -42,6 +43,8 @@ public class PartitionModel extends AbstractModel {
 	protected SiteRange[] storedSiteRanges;
 	protected LinkedList<SiteRange> freeSiteRanges;
 
+	protected HashMap<SiteRange,List<Model>> siteRangeModels;
+	
     protected boolean inEdit = false;
     protected final List<PartitionChangedEvent> partitionChangedEvents = new ArrayList<PartitionChangedEvent>();
 
@@ -56,6 +59,7 @@ public class PartitionModel extends AbstractModel {
 		siteRanges[0].setNumber(0);
 		storedSiteRanges[0] = new SiteRange(siteList);
 		storedSiteRanges[0].setNumber(0);
+		siteRangeModels = new HashMap<SiteRange, List<Model>>();
 	}
 	
     public void pushPartitionChangedEvent(SiteRange siteRange, int left, int right) {
@@ -124,7 +128,12 @@ public class PartitionModel extends AbstractModel {
        newSR.setLeftSite(siteRange.getLeftSite());
        newSR.setRightSite(siteRange.getRightSite());
        newSR.setSiteList(siteRange.getSiteList());
-	   return newSR;
+
+       // add a model list for it
+       ArrayList<Model> al = new ArrayList<Model>();
+       siteRangeModels.put(newSR, al);
+
+       return newSR;
 	}
 	
 	void changeRange(SiteRange siteRange, int newLeft, int newRight)
@@ -143,6 +152,11 @@ public class PartitionModel extends AbstractModel {
 		siteRange.setLeftSite(newLeft);
 		siteRange.setRightSite(newRight);
 	}
+	
+	void removeSiteRange(SiteRange siteRange){
+		freeSiteRanges.push(siteRange);
+		siteRangeModels.remove(siteRange);
+	}
 
 	@Override
 	protected void acceptState() {
@@ -159,6 +173,21 @@ public class PartitionModel extends AbstractModel {
 			ChangeType type) {
 		// TODO Auto-generated method stub
 
+	}
+	
+	List<Model> getSiteRangeModels(SiteRange siteRange)
+	{
+		return siteRangeModels.get(siteRange);
+	}
+	
+	void addSiteRangeModel(SiteRange siteRange, SiteModel model){
+		List<Model> l = siteRangeModels.get(siteRange);
+		l.add(model);
+	}
+	
+	void removeSiteRangeModel(SiteRange siteRange, SiteModel model){
+		List<Model> l = siteRangeModels.get(siteRange);
+		l.remove(model);
 	}
 
 	@Override

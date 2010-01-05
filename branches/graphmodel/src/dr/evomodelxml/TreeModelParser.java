@@ -103,6 +103,10 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public String getParserName() {
         return TreeModel.TREE_MODEL;
     }
+    
+    protected void handleUnknownXMLChild(XMLObject xo, int index) throws XMLParseException{
+    	throw new XMLParseException("illegal child element in " + getParserName() + ": " + xo.getName());
+    }
 
     protected void replaceParameters(XMLObject xo, TreeModel treeModel) throws XMLParseException{
     	for (int i = 0; i < xo.getChildCount(); i++) {
@@ -211,7 +215,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
             } else if (xo.getChild(i) instanceof Tree) {
                 // do nothing - already handled
             } else {
-                throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
+            	//moved this code to function below
+            	handleUnknownXMLChild(xo, i);
             }
         }
     }

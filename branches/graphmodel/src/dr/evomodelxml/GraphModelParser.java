@@ -36,7 +36,7 @@ public class GraphModelParser extends TreeModelParser{
 		GraphModel graphModel = new GraphModel(xo.getId(), tree, partitionModel);
 		
 		Logger.getLogger("dr.evomodel").info("Creating the graph model, '" + xo.getId() + "'");
-
+		
 		super.replaceParameters(xo, graphModel);
 		
 		graphModel.setupHeightBounds();
@@ -47,6 +47,12 @@ public class GraphModelParser extends TreeModelParser{
 		return graphModel;
 	}
 
+	public void handleUnknownXMLChild(XMLObject xo, int index) throws XMLParseException{
+		if(!(xo.getChild(index) instanceof PartitionModel)){
+			super.handleUnknownXMLChild(xo, index);
+		}
+	}
+	
 	public String getParserName() {
 		return GraphModel.GRAPH_MODEL;
 	}

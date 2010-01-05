@@ -175,7 +175,7 @@ public class PartitionModel extends AbstractModel {
 	}
 	
 	public SiteList getSiteList(int i){
-		return siteLists.elementAt(i);
+		return siteLists.get(i);
 	}
 	public int getSiteListCount(){
 		return siteLists.size();

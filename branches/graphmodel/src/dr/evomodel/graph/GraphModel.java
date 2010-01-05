@@ -18,12 +18,12 @@ public class GraphModel extends TreeModel {
     public static final String GRAPH_MODEL = "graphModel";
 	LinkedList<Node> freeNodes;	// a list of nodes for which storage exists 
 	
-    public GraphModel(Tree tree, SiteList siteList) {
-        this(tree, false, siteList);
+    public GraphModel(Tree tree, PartitionModel partitionModel) {
+        this(tree, false, partitionModel);
 	}
 
-	public GraphModel(String id, Tree tree, SiteList siteList) {
-        this(tree, false, siteList);
+	public GraphModel(String id, Tree tree, PartitionModel partitionModel) {
+        this(tree, false, partitionModel);
         setId(id);
 	}
 

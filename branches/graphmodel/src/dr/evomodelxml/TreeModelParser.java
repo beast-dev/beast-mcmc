@@ -104,17 +104,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         return TreeModel.TREE_MODEL;
     }
 
-    /**
-     * @return a tree object based on the XML element it was passed.
-     */
-    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        Tree tree = (Tree) xo.getChild(Tree.class);
-        TreeModel treeModel = new TreeModel(xo.getId(), tree);
-
-        Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
-
-        for (int i = 0; i < xo.getChildCount(); i++) {
+    protected void replaceParameters(XMLObject xo, TreeModel treeModel) throws XMLParseException{
+    	for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {
 
                 XMLObject cxo = (XMLObject) xo.getChild(i);
@@ -223,10 +214,22 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
+    }
+    
+    /**
+     * @return a tree object based on the XML element it was passed.
+     */
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        Tree tree = (Tree) xo.getChild(Tree.class);
+        TreeModel treeModel = new TreeModel(xo.getId(), tree);
+
+        Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
+
+        replaceParameters(xo,treeModel);
 
         treeModel.setupHeightBounds();
-        //System.err.println("done constructing treeModel");
-
+     
         Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
@@ -272,5 +275,5 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules;
+    protected XMLSyntaxRule[] rules;
 }

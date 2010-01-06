@@ -12,18 +12,11 @@ import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 
 /*
- * how to do this?
- * should PartitionModel keep a set of SiteRange
- * and a separate list of SiteModel?
- * Then each SiteRange would have a reference to
- * the corresponding SiteModel and SiteList?
- * would have modifiers to add and remove SiteRanges
- * change the SiteModel of a SiteRange, or change the
- * range of a SiteRange
- * When a range of a SiteRange changes, one pushes a SiteRangeChanged event
- * When a new SiteRange emerges, one pushes a NewSiteRange event
- * When a constituent SiteModel changes, the event is propagated
- * When a SiteRange's SiteModel is changed, a SiteRangeSiteModelChanged event
+ * A PartitionModel stores one or more SiteLists (e.g. alignments) and a partitioning
+ * over each SiteList into one or more contiguous segments.
+ * Each Partition has an associated list of evolutionary models, such as SiteModels
+ * or BranchRateModels or BranchSiteModels.
+ * 
  */
 public class PartitionModel extends AbstractModel {
 

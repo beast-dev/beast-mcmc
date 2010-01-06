@@ -87,7 +87,7 @@ public class PartitionModel extends AbstractModel {
 
         // TODO:
         // check that the partition over sites is complete and
-        // no siteranges overlap
+        // no partitions overlap
 
         for (PartitionChangedEvent partitionChangedEvent : partitionChangedEvents) {
             listenerHelper.fireModelChanged(this, partitionChangedEvent);
@@ -100,7 +100,7 @@ public class PartitionModel extends AbstractModel {
 	 * The new SiteRange will overlap, so it is necessary to 
 	 * change the boundaries of new and/or old SiteRanges
 	 */
-	Partition newSiteRange(Partition siteRange)
+	Partition newPartition(Partition siteRange)
 	{
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
        if(freePartitions.size()==0){
@@ -228,12 +228,12 @@ public class PartitionModel extends AbstractModel {
             this(null, -1, -1);
         }
 
-        public PartitionChangedEvent(Partition siteRange) {
-            this(siteRange, -1, -1);
+        public PartitionChangedEvent(Partition partition) {
+            this(partition, -1, -1);
         }
 
-        public PartitionChangedEvent(Partition siteRange, int newSectionLeft, int newSectionRight) {
-            this.partition = siteRange;
+        public PartitionChangedEvent(Partition partition, int newSectionLeft, int newSectionRight) {
+            this.partition = partition;
             this.newSectionLeft = newSectionLeft;
             this.newSectionRight = newSectionRight;
         }

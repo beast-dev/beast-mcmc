@@ -44,6 +44,8 @@ public class GraphModel extends TreeModel {
        {
     	   tmp[i] = new Node();
     	   tmp2[i] = new Node();
+    	   tmp[i].number = i;
+    	   tmp2[i].number = i;
        }
        super.copyNodeStructure(tmp);
        nodes = storedNodes;
@@ -198,9 +200,10 @@ public class GraphModel extends TreeModel {
    
 
    CompoundParameter nhp = null, nrp = null, ntp = null;
-   public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
-	   nhp = (CompoundParameter)super.createNodeHeightsParameter(rootNode, internalNodes, leafNodes);
-	   return nhp;
+   public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {	   
+	   CompoundParameter tmp = (CompoundParameter)super.createNodeHeightsParameter(rootNode, internalNodes, leafNodes);
+	   if(internalNodes&&!rootNode) nhp = tmp;
+	   return tmp;
    }
    public Parameter createNodeRatesParameter(double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes) {
 	   nrp = (CompoundParameter)super.createNodeRatesParameter(initialValues, rootNode, internalNodes, leafNodes);

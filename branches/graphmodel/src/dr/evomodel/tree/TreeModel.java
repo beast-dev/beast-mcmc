@@ -610,19 +610,19 @@ public class TreeModel extends AbstractModel implements MutableTree {
             node1.traitParameters = node0.traitParameters;
 
             if (node0.parent != null) {
-                node1.parent = storedNodes[node0.parent.getNumber()];
+                node1.parent = destination[node0.parent.getNumber()];
             } else {
                 node1.parent = null;
             }
 
             if (node0.leftChild != null) {
-                node1.leftChild = storedNodes[node0.leftChild.getNumber()];
+                node1.leftChild = destination[node0.leftChild.getNumber()];
             } else {
                 node1.leftChild = null;
             }
 
             if (node0.rightChild != null) {
-                node1.rightChild = storedNodes[node0.rightChild.getNumber()];
+                node1.rightChild = destination[node0.rightChild.getNumber()];
             } else {
                 node1.rightChild = null;
             }

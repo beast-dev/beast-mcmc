@@ -90,7 +90,7 @@
 		<rootHeight>
 			<parameter id="treeModel.rootHeight"/>
 		</rootHeight>
-		<nodeHeights internalNodes="true">
+		<nodeHeights internalNodes="true" rootNode="false">
 			<parameter id="treeModel.internalNodeHeights"/>
 		</nodeHeights>
 		<nodeHeights internalNodes="true" rootNode="true">
@@ -109,17 +109,17 @@
 		</uniformOperator>
 	</operators>
 
-	<mcmc id="mcmc" chainLength="1" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="5" autoOptimize="true">
 		<graphLikelihood idref="graphLikelihood"/>
 		<operators idref="operators"/>
-		<log logEvery="10000">
-			<column label="Likelihood" dp="4" width="12">
+		<log logEvery="1">
+			<column label="Internal Node Heights" dp="4" width="12">
 				<parameter idref="treeModel.internalNodeHeights"/>
 			</column>
 		</log>
 		<log logEvery="1000" fileName="testMCMC.log">
 			<parameter idref="treeModel.internalNodeHeights"/>
-		</log>
+		</log> 
 	</mcmc>
 	
 

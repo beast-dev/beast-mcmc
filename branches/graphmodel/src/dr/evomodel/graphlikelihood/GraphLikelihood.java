@@ -13,6 +13,8 @@ import dr.inference.model.Model;
 
 public class GraphLikelihood extends TreeLikelihood {
 
+	public static final String GRAPH_LIKELIHOOD = "graphLikelihood";
+	
     public GraphLikelihood(
             GraphModel graphModel,
             PartitionModel partitionModel,

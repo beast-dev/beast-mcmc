@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 
 import dr.evolution.alignment.SiteList;
 import dr.evomodel.graph.PartitionModel;
+import dr.inference.model.Model;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -14,9 +15,11 @@ import dr.xml.XMLSyntaxRule;
 
 public class PartitionModelParser extends AbstractXMLObjectParser{
 
+	public static final String PARTITION = "partition";
+	
 	public PartitionModelParser(){
 		rules = new XMLSyntaxRule[]{
-			new ElementRule(SiteList.class,1,Integer.MAX_VALUE),	
+			
 		};
 	}
 	
@@ -36,15 +39,33 @@ public class PartitionModelParser extends AbstractXMLObjectParser{
 		List<SiteList> listOfSiteLists = new ArrayList<SiteList>();
 		
 		Logger.getLogger("dr.evomodel").info("Creating a partition model, '" + xo.getId() + "', using alignments");
+		
 		for(int i = 0; i < xo.getChildCount(); i++){
-			SiteList cxo = (SiteList) xo.getChild(i);
+			XMLObject cxo = (XMLObject) xo.getChild(i);
 			
-			listOfSiteLists.add(cxo);
+			SiteList siteList = (SiteList) cxo.getChild(SiteList.class);
+			
+			listOfSiteLists.add(siteList);
 
-			Logger.getLogger("dr.evomodel").info("\t" + cxo.getId() + "");
+			Logger.getLogger("dr.evomodel").info("\t" + siteList.getId() + "");
 		}
 		
 		PartitionModel partitionModel = new PartitionModel(listOfSiteLists);
+		
+		for(int i = 0; i < xo.getChildCount(); i++){
+			XMLObject cxo = (XMLObject) xo.getChild(i);
+			
+			for(int j = 0; j < cxo.getChildCount(); j++){
+				if(cxo.getChild(j) instanceof Model){
+					partitionModel.addModelToPartition(partitionModel.getSiteRange(i), 
+							(Model) cxo.getChild(j));
+				}else if(cxo.getChild(j) instanceof SiteList){
+					//don't do anything
+				}else{
+					throw new XMLParseException("Something is wrong");
+				}
+			}
+		}
 		
 		return partitionModel;
 	}

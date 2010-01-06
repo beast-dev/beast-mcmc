@@ -46,14 +46,16 @@ public class PartitionModel extends AbstractModel {
 		this.siteLists.addAll(siteLists);
 		partitions = new Partition[siteLists.size()];
 		storedPartitions = new Partition[siteLists.size()];
+		modelsOnPartition = new HashMap<Partition, List<Model>>();
 		for(int i=0; i<siteLists.size(); i++)
 		{
 			partitions[i] = new Partition(siteLists.get(i));
 			partitions[i].setNumber(i);
 			storedPartitions[i] = new Partition(siteLists.get(i));
 			storedPartitions[i].setNumber(i);
+			modelsOnPartition.put(partitions[i], new ArrayList<Model>());
+			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>());
 		}
-		modelsOnPartition = new HashMap<Partition, List<Model>>();
 	}
 	
     public void pushPartitionChangedEvent(Partition siteRange, int left, int right) {
@@ -188,12 +190,12 @@ public class PartitionModel extends AbstractModel {
 		return modelsOnPartition.get(siteRange);
 	}
 	
-	void addModelToPartition(Partition siteRange, Model model){
+	public void addModelToPartition(Partition siteRange, Model model){
 		List<Model> l = modelsOnPartition.get(siteRange);
 		l.add(model);
 	}
 	
-	void removeModelFromPartition(Partition siteRange, Model model){
+	public void removeModelFromPartition(Partition siteRange, Model model){
 		List<Model> l = modelsOnPartition.get(siteRange);
 		l.remove(model);
 	}

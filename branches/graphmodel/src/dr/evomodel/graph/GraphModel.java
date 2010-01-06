@@ -138,21 +138,21 @@ public class GraphModel extends TreeModel {
        }
    }
    
-   public void removeSiteRange(NodeRef node, Partition range)
+   public void removePartition(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   Node n = (Node)node;
 	   if(!n.hasObject(range)) throw new RuntimeException("Error, removing a nonexistant siterange!");
 	   n.removeObject(range);
    }
-   public void removeSiteRangeFollowToRoot(NodeRef node, Partition range)
+   public void removePartitionFollowToRoot(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   // walk from node to root removing a site range
 	   Node n = (Node)node;
 	   while(n!=null){
 		   if(n.hasObject(range)){
-			   throw new RuntimeException("Error, removing a nonexistant siterange!");
+			   throw new RuntimeException("Error, removing a nonexistant partition!");
 		   }
 		   n.removeObject(range);
 		   if(n.parent!=null && ((Node)n.parent).hasObject(range)){
@@ -160,12 +160,12 @@ public class GraphModel extends TreeModel {
 		   }else if(n.parent2!=null && n.parent2.hasObject(range)){
 			   n = (GraphModel.Node)n.parent2;
 		   }else if(n.parent != null){
-			   throw new RuntimeException("Error, no parent has relevant siterange!");
+			   throw new RuntimeException("Error, no parent has relevant partition!");
 		   }
 	   }
    }
 
-   public void addSiteRange(NodeRef node, Partition range)
+   public void addPartition(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   // walk from node to root removing a site range

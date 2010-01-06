@@ -36,6 +36,8 @@ import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.xml.*;
+import org.apache.commons.math.distribution.BetaDistributionImpl;
+import org.apache.commons.math.MathException;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -47,7 +49,8 @@ import dr.xml.*;
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
     public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps,
-                                       boolean linear, boolean lacing,
+//                                       boolean linear, boolean lacing,
+                                       PathScheme scheme,
                                        PathLikelihood pathLikelihood,
                                        OperatorSchedule schedule,
                                        MCLogger logger) {
@@ -55,8 +58,12 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.id = id;
         this.chainLength = chainLength;
         this.pathSteps = pathSteps;
-        this.linear = linear;
-        this.lacing = lacing;
+        this.scheme = scheme;
+
+        // depricated
+//        this.linear = (scheme == PathScheme.LINEAR);
+//        this.lacing = false; // Was not such a good idea
+       
         this.burninLength = burninLength;
 
         MCMCCriterion criterion = new MCMCCriterion();
@@ -72,11 +79,16 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.logger = logger;
     }
 
-    public void linearIntegration() {
-        if (burninLength == -1)
+    private void setDefaultBurnin() {
+        if (burninLength == -1) {
             burnin = (int) (0.1 * chainLength);
-        else
+        } else {
             burnin = burninLength;
+        }
+    }
+
+    public void linearIntegration() {
+        setDefaultBurnin();
         mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
@@ -91,12 +103,33 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         mc.runChain(chainLength + burnin, false/*, 0*/);
     }
 
-    public void linearShoeLacing() {
-        if (burninLength == -1) {
-            burnin = (int) (0.1 * chainLength);
-        } else {
-            burnin = burninLength;
+    public void oneSidedBetaIntegration() {
+        setDefaultBurnin();
+        mc.setCurrentLength(0);
+
+        BetaDistributionImpl beta = new BetaDistributionImpl(1.0, betaFactor);
+
+        for (int step = 0; step < pathSteps; step++) {
+            if (step == 0) {
+                pathParameter = 1.0;
+            } else if (step + 1 < pathSteps) {
+                double ratio = (double) step / (double) (pathSteps-1);
+                try {
+                    pathParameter = 1.0 - beta.inverseCumulativeProbability(ratio);
+                } catch(MathException e){
+                    e.printStackTrace(); 
+                }
+            } else {
+                pathParameter = 0.0;
+            }
+            pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter, chainLength, burnin);
+            mc.runChain(chainLength + burnin, false/*, 0*/);           
         }
+    }
+
+    public void linearShoeLacing() {
+        setDefaultBurnin();
         mc.setCurrentLength(0);
         if (pathSteps % 2 == 0) //Works only for odd number of steps
             pathSteps += 1;
@@ -196,16 +229,24 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         logger.startLogging();
         mc.addMarkovChainListener(chainListener);
 
-        if (linear) {
-            if (lacing)
-                linearShoeLacing();
-            else
-                linearIntegration();
-        } else {
-            if (lacing)
-                geometricShoeLacing();
-            else
-                geometricIntegration();
+        // depricated
+//        if (linear) {
+//            if (lacing)
+//                linearShoeLacing();
+//            else
+//                linearIntegration();
+//        } else {
+//            if (lacing)
+//                geometricShoeLacing();
+//            else
+//                geometricIntegration();
+//        }
+        
+        switch(scheme) {
+            case LINEAR: linearIntegration(); break;
+            case OLD_GEOMETRIC: geometricIntegration(); break;
+            case ONE_SIDED_BETA: oneSidedBetaIntegration(); break;
+            default: throw new RuntimeException("Illegal path scheme");
         }
 
         mc.removeMarkovChainListener(chainListener);
@@ -283,15 +324,21 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             if (xo.hasAttribute(BURNIN)) {
                 burninLength = xo.getIntegerAttribute(BURNIN);
             }
-            boolean linear = true;
-            boolean lacing = false;
 
-            if (!xo.getAttribute(LINEAR, true))
-                linear = false;
+            // deciprated
+            boolean linear = xo.getAttribute(LINEAR,true);
+//            boolean lacing = xo.getAttribute(LACING,false);
+            PathScheme scheme;
+            if (linear) {
+                scheme = PathScheme.LINEAR;
+            } else {
+                scheme = PathScheme.OLD_GEOMETRIC;
+            }
 
-            if (xo.getAttribute(LACING, true))
-                lacing = true;
-
+            // new approach
+            if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once depricated approach removed
+                scheme = PathScheme.parseFromString(xo.getAttribute(PATH_SCHEME,PathScheme.LINEAR.getText()));
+            }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
@@ -315,10 +362,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             java.util.logging.Logger.getLogger("dr.inference").info("Creating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
-                    "\n  pathSteps=" + pathSteps);
+                    "\n  pathSteps=" + pathSteps +
+                    "\n  pathScheme=" + scheme.getText());
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    burninLength, pathSteps, linear, lacing, pathLikelihood, os, logger);
+                    burninLength, pathSteps, scheme, pathLikelihood, os, logger);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -349,6 +397,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
+                AttributeRule.newStringRule(PATH_SCHEME, true),
                 new ElementRule(MCMC,
                         new XMLSyntaxRule[]{new ElementRule(MCMC.class, 1, Integer.MAX_VALUE)}, false),
                 //new ElementRule(MCMC.class),
@@ -366,6 +415,34 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.id = id;
     }
 
+
+    enum PathScheme {
+        LINEAR("linear"),
+        OLD_GEOMETRIC("oldGeometric"),
+        SYMMETRIC_BETA("symmetricBeta"),
+        ONE_SIDED_BETA("oneSidedBeta");
+
+
+            PathScheme(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    private final String text;
+
+    public static PathScheme parseFromString(String text) {
+        for (PathScheme scheme : PathScheme.values()) {
+            if (scheme.getText().compareToIgnoreCase(text) == 0)
+                return scheme;
+        }
+        return null;
+    }
+    }
+
+
     // PRIVATE TRANSIENTS
 
     /**
@@ -381,8 +458,10 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     private int burnin;
     private final int burninLength;
     private int pathSteps;
-    private final boolean linear;
-    private final boolean lacing;
+//    private final boolean linear;
+//    private final boolean lacing;
+    private final PathScheme scheme;
+    private final double betaFactor = 0.5;
     private final double pathDelta;
     private double pathParameter;
 
@@ -398,4 +477,5 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String SPAWN = "spawn";
     public static final String BURNIN = "burnin";
     public static final String MCMC = "samplers";
+    public static final String PATH_SCHEME = "pathScheme";
 }

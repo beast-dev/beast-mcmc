@@ -48,10 +48,19 @@ public class GraphModel extends TreeModel {
     	   tmp2[i].number = i;
        }
        super.copyNodeStructure(tmp);
+       for(int i=0; i<tmp.length; i++)
+       {
+    	   tmp[i].taxon = nodes[i].taxon;
+       }
        nodes = storedNodes;
        super.copyNodeStructure(tmp2);
+       for(int i=0; i<tmp.length; i++)
+       {
+    	   tmp2[i].taxon = nodes[i].taxon;
+       }
        nodes = tmp;
        storedNodes = tmp2;
+       root = nodes[root.number];
        
        // attach all siteRanges in the PartitionModel to each node
        for(int sr = 0; sr < partitionModel.getSiteRangeCount(); sr++){

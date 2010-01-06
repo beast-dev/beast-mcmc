@@ -80,7 +80,7 @@
 	</partitionModel>
 	
 	<newick id="startTree">
-	((human:1,chimp:1):2,(bonobo:2,gorilla:2):1);
+	((human:0.25,chimp:0.25):0.75,(bonobo:0.75,gorilla:0.75):0.25);
 	</newick>
 	
 	<graphModel id="graphModel">
@@ -104,23 +104,28 @@
 	</graphLikelihood>
 	
 	<operators id="operators">
-		<uniformOperator scaleFactor="0.5" weight="1">
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</uniformOperator>
+		<scaleOperator scaleFactor="0.5" weight="1">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
 	</operators>
 
-	<mcmc id="mcmc" chainLength="5" autoOptimize="true">
-		<graphLikelihood idref="graphLikelihood"/>
+	<mcmc id="mcmc" chainLength="500000" autoOptimize="true">
+		<posterior>
+			<graphLikelihood idref="graphLikelihood"/>
+			<gammaPrior scale="1" shape="1">
+				<parameter idref="treeModel.rootHeight"/>
+			</gammaPrior>
+		</posterior>
 		<operators idref="operators"/>
-		<log logEvery="1">
+		<log logEvery="10000">
 			<column label="Internal Node Heights" dp="4" width="12">
 				<parameter idref="treeModel.internalNodeHeights"/>
 			</column>
 		</log>
-		<log logEvery="1000" fileName="testMCMC.log">
-			<parameter idref="treeModel.internalNodeHeights"/>
+		<log logEvery="100" fileName="testGraphModel.log">
+			<parameter idref="treeModel.allInternalNodeHeights"/>
 		</log> 
 	</mcmc>
 	
-
+	<traceAnalysis fileName="testGraphModel.log"/>
 </beast>

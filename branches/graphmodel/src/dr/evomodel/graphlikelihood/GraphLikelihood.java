@@ -25,7 +25,7 @@ public class GraphLikelihood extends TreeLikelihood {
     {
     	super(partitionModel.getSiteList(0),
     			graphModel,
-    			(SiteModel)partitionModel.getSiteRangeModels(partitionModel.getSiteRange(0)).get(0),
+    			(SiteModel)partitionModel.getModelsOnPartition(partitionModel.getSiteRange(0)).get(0),
     			null,
     			tipPartialsModel,useAmbiguities,allowMissingTaxa,
     			storePartials,forceJavaCore,forceRescaling);

@@ -4,18 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
 import dr.evolution.alignment.SiteList;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.MutableTree.InvalidTreeException;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeModel.Node;
-import dr.evomodel.tree.TreeModel.TreeChangedEvent;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 
@@ -39,11 +31,11 @@ public class PartitionModel extends AbstractModel {
 	
     protected List<SiteList> siteLists;	// the set of one or more siteLists on which this partition exists
 
-	protected SiteRange[] siteRanges;
-	protected SiteRange[] storedSiteRanges;
-	protected LinkedList<SiteRange> freeSiteRanges;
+	protected Partition[] partitions;
+	protected Partition[] storedPartitions;
+	protected LinkedList<Partition> freePartitions;
 
-	protected HashMap<SiteRange,List<Model>> siteRangeModels;
+	protected HashMap<Partition,List<Model>> modelsOnPartition;
 	
     protected boolean inEdit = false;
     protected final List<PartitionChangedEvent> partitionChangedEvents = new ArrayList<PartitionChangedEvent>();
@@ -59,19 +51,19 @@ public class PartitionModel extends AbstractModel {
 		this.siteLists = new ArrayList<SiteList>(siteLists.size());
 		
 		this.siteLists.addAll(siteLists);
-		siteRanges = new SiteRange[siteLists.size()];
-		storedSiteRanges = new SiteRange[siteLists.size()];
+		partitions = new Partition[siteLists.size()];
+		storedPartitions = new Partition[siteLists.size()];
 		for(int i=0; i<siteLists.size(); i++)
 		{
-			siteRanges[i] = new SiteRange(siteLists.get(i));
-			siteRanges[i].setNumber(i);
-			storedSiteRanges[i] = new SiteRange(siteLists.get(i));
-			storedSiteRanges[i].setNumber(i);
+			partitions[i] = new Partition(siteLists.get(i));
+			partitions[i].setNumber(i);
+			storedPartitions[i] = new Partition(siteLists.get(i));
+			storedPartitions[i].setNumber(i);
 		}
-		siteRangeModels = new HashMap<SiteRange, List<Model>>();
+		modelsOnPartition = new HashMap<Partition, List<Model>>();
 	}
 	
-    public void pushPartitionChangedEvent(SiteRange siteRange, int left, int right) {
+    public void pushPartitionChangedEvent(Partition siteRange, int left, int right) {
     	PartitionChangedEvent pce = new PartitionChangedEvent(siteRange, left, right);
     	pushPartitionChangedEvent(pce);
     }
@@ -108,44 +100,44 @@ public class PartitionModel extends AbstractModel {
 	 * The new SiteRange will overlap, so it is necessary to 
 	 * change the boundaries of new and/or old SiteRanges
 	 */
-	SiteRange newSiteRange(SiteRange siteRange)
+	Partition newSiteRange(Partition siteRange)
 	{
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
-       if(freeSiteRanges.size()==0){
+       if(freePartitions.size()==0){
 	       // need to expand storage to accommodate additional nodes
-	       SiteRange[] tmp = new SiteRange[siteRanges.length*2];
-	       SiteRange[] tmp2 = new SiteRange[storedSiteRanges.length*2];
-	       System.arraycopy(siteRanges, 0, tmp, 0, siteRanges.length);
-	       System.arraycopy(storedSiteRanges, 0, tmp2, 0, storedSiteRanges.length);
-	       for(int i=siteRanges.length; i<tmp.length; i++)
+	       Partition[] tmp = new Partition[partitions.length*2];
+	       Partition[] tmp2 = new Partition[storedPartitions.length*2];
+	       System.arraycopy(partitions, 0, tmp, 0, partitions.length);
+	       System.arraycopy(storedPartitions, 0, tmp2, 0, storedPartitions.length);
+	       for(int i=partitions.length; i<tmp.length; i++)
 	       {
-	    	   tmp[i] = new SiteRange();
+	    	   tmp[i] = new Partition();
 	    	   tmp[i].setNumber(i);
-	    	   freeSiteRanges.push(tmp[i]);
+	    	   freePartitions.push(tmp[i]);
 	       }
-	       for(int i=storedSiteRanges.length; i<tmp2.length; i++)
+	       for(int i=storedPartitions.length; i<tmp2.length; i++)
 	       {
-	    	   tmp2[i] = new SiteRange();
+	    	   tmp2[i] = new Partition();
 	    	   tmp2[i].setNumber(i);
 	       }
-	       siteRanges = tmp;
-	       storedSiteRanges = tmp2;
+	       partitions = tmp;
+	       storedPartitions = tmp2;
        }
 
        // get a new SiteRange and copy the values of the provided one
-       SiteRange newSR = freeSiteRanges.pop();
+       Partition newSR = freePartitions.pop();
        newSR.setLeftSite(siteRange.getLeftSite());
        newSR.setRightSite(siteRange.getRightSite());
        newSR.setSiteList(siteRange.getSiteList());
 
        // add a model list for it
        ArrayList<Model> al = new ArrayList<Model>();
-       siteRangeModels.put(newSR, al);
+       modelsOnPartition.put(newSR, al);
 
        return newSR;
 	}
 	
-	void changeRange(SiteRange siteRange, int newLeft, int newRight)
+	void changeRange(Partition siteRange, int newLeft, int newRight)
 	{
 	       if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 		// check whether the range has expanded or shrunk
@@ -162,16 +154,16 @@ public class PartitionModel extends AbstractModel {
 		siteRange.setRightSite(newRight);
 	}
 	
-	public void removeSiteRange(SiteRange siteRange){
-		freeSiteRanges.push(siteRange);
-		siteRangeModels.remove(siteRange);
+	public void removeSiteRange(Partition siteRange){
+		freePartitions.push(siteRange);
+		modelsOnPartition.remove(siteRange);
 	}
 	
-	public SiteRange getSiteRange(int i){
-		return siteRanges[i];
+	public Partition getSiteRange(int i){
+		return partitions[i];
 	}
 	public int getSiteRangeCount(){
-		return siteRanges.length;
+		return partitions.length;
 	}
 	
 	public SiteList getSiteList(int i){
@@ -198,37 +190,37 @@ public class PartitionModel extends AbstractModel {
 
 	}
 	
-	public List<Model> getSiteRangeModels(SiteRange siteRange)
+	public List<Model> getModelsOnPartition(Partition siteRange)
 	{
-		return siteRangeModels.get(siteRange);
+		return modelsOnPartition.get(siteRange);
 	}
 	
-	void addSiteRangeModel(SiteRange siteRange, SiteModel model){
-		List<Model> l = siteRangeModels.get(siteRange);
+	void addModelToPartition(Partition siteRange, Model model){
+		List<Model> l = modelsOnPartition.get(siteRange);
 		l.add(model);
 	}
 	
-	void removeSiteRangeModel(SiteRange siteRange, SiteModel model){
-		List<Model> l = siteRangeModels.get(siteRange);
+	void removeModelFromPartition(Partition siteRange, Model model){
+		List<Model> l = modelsOnPartition.get(siteRange);
 		l.remove(model);
 	}
 
 	@Override
 	protected void restoreState() {
-		siteRanges = storedSiteRanges;
+		partitions = storedPartitions;
 	}
 
 	@Override
 	protected void storeState() {
-		for(int i = 0; i<siteRanges.length; i++){
-			storedSiteRanges[i].setLeftSite(siteRanges[i].getLeftSite());
-			storedSiteRanges[i].setRightSite(siteRanges[i].getRightSite());
-			storedSiteRanges[i].setSiteList(siteRanges[i].getSiteList());
+		for(int i = 0; i<partitions.length; i++){
+			storedPartitions[i].setLeftSite(partitions[i].getLeftSite());
+			storedPartitions[i].setRightSite(partitions[i].getRightSite());
+			storedPartitions[i].setSiteList(partitions[i].getSiteList());
 		}
 	}
 
     public class PartitionChangedEvent {
-        final SiteRange siteRange;
+        final Partition partition;
         final int newSectionLeft;
         final int newSectionRight;
 
@@ -236,18 +228,18 @@ public class PartitionModel extends AbstractModel {
             this(null, -1, -1);
         }
 
-        public PartitionChangedEvent(SiteRange siteRange) {
+        public PartitionChangedEvent(Partition siteRange) {
             this(siteRange, -1, -1);
         }
 
-        public PartitionChangedEvent(SiteRange siteRange, int newSectionLeft, int newSectionRight) {
-            this.siteRange = siteRange;
+        public PartitionChangedEvent(Partition siteRange, int newSectionLeft, int newSectionRight) {
+            this.partition = siteRange;
             this.newSectionLeft = newSectionLeft;
             this.newSectionRight = newSectionRight;
         }
 
-        public SiteRange getSiteRange() {
-            return siteRange;
+        public Partition getPartition() {
+            return partition;
         }
         public boolean hasNewSection() {
             return newSectionRight != -1;

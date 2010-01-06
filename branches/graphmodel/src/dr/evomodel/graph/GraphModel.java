@@ -53,7 +53,7 @@ public class GraphModel extends TreeModel {
        
        // attach all siteRanges in the PartitionModel to each node
        for(int sr = 0; sr < partitionModel.getSiteRangeCount(); sr++){
-           SiteRange range = partitionModel.getSiteRange(sr);
+           Partition range = partitionModel.getSiteRange(sr);
            for(int i=0; i<nodes.length; i++)
            {
         	   ((Node)nodes[i]).addObject(range);
@@ -127,14 +127,14 @@ public class GraphModel extends TreeModel {
        }
    }
    
-   public void removeSiteRange(NodeRef node, SiteRange range)
+   public void removeSiteRange(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   Node n = (Node)node;
 	   if(!n.hasObject(range)) throw new RuntimeException("Error, removing a nonexistant siterange!");
 	   n.removeObject(range);
    }
-   public void removeSiteRangeFollowToRoot(NodeRef node, SiteRange range)
+   public void removeSiteRangeFollowToRoot(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   // walk from node to root removing a site range
@@ -154,7 +154,7 @@ public class GraphModel extends TreeModel {
 	   }
    }
 
-   public void addSiteRange(NodeRef node, SiteRange range)
+   public void addSiteRange(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   // walk from node to root removing a site range
@@ -163,7 +163,7 @@ public class GraphModel extends TreeModel {
 	   pushTreeChangedEvent(n);
    }
 
-   public void addSiteRangeFollowToRoot(NodeRef node, SiteRange range, SiteRange rangeToFollow)
+   public void addSiteRangeFollowToRoot(NodeRef node, Partition range, Partition rangeToFollow)
    {
 	   Node n = (Node)node;
 	   while(n!=null){

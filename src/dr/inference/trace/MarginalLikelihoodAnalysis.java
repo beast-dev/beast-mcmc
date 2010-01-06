@@ -205,9 +205,9 @@ public class MarginalLikelihoodAnalysis {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("log P(")
+        sb.append("log P(Data|")
                 .append(traceName)
-                .append("|Data) = ")
+                .append(") = ")
                 .append(String.format("%5.4f", getLogMarginalLikelihood()));
         if (bootstrapLength > 1) {
             sb.append(" +/- ")

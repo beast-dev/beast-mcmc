@@ -66,7 +66,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     private final int dim;
     private final String traitName;
 
-    private Map<Taxon, GeoSpatialDistribution> nodePrior;
+    private Map<Taxon, GeoSpatialDistribution> nodeGeoSpatialPrior;
+    private Map<Taxon, MultivariateNormalDistribution> nodeMVNPrior;
     private GeoSpatialCollectionModel parameterPrior = null;
 
     private boolean onlyInternalNodes = true;
@@ -95,11 +96,22 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         sampleRoot = true;
     }
 
-    public void setTaxonPrior(Taxon taxon, GeoSpatialDistribution distribution) {
-        if (nodePrior == null)
-            nodePrior = new HashMap<Taxon, GeoSpatialDistribution>();
+    public void setTaxonPrior(Taxon taxon, MultivariateDistribution distribution) {
 
-        nodePrior.put(taxon, distribution);
+        if (distribution instanceof GeoSpatialDistribution) {
+            if (nodeGeoSpatialPrior == null) {
+                nodeGeoSpatialPrior = new HashMap<Taxon, GeoSpatialDistribution>();
+            }
+            nodeGeoSpatialPrior.put(taxon, (GeoSpatialDistribution)distribution);
+
+        } else if (distribution instanceof MultivariateNormalDistribution) {
+            if (nodeMVNPrior == null) {
+                nodeMVNPrior = new HashMap<Taxon, MultivariateNormalDistribution>();
+            }
+            nodeMVNPrior.put(taxon, (MultivariateNormalDistribution)distribution);
+        } else {
+            throw new RuntimeException("Only flat/truncated geospatial and multivariate normal distributions allowed");
+        }
     }
 
     public void setParameterPrior(GeoSpatialCollectionModel distribution) {
@@ -110,8 +122,12 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         return 1;
     }
 
-    private boolean nodePriorExists(NodeRef node) {
-        return nodePrior != null && nodePrior.containsKey(treeModel.getNodeTaxon(node));
+    private boolean nodeGeoSpatialPriorExists(NodeRef node) {
+        return nodeGeoSpatialPrior != null && nodeGeoSpatialPrior.containsKey(treeModel.getNodeTaxon(node));
+    }
+
+    private boolean nodeMVNPriorExists(NodeRef node) {
+        return nodeMVNPrior != null && nodeMVNPrior.containsKey(treeModel.getNodeTaxon(node));
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -128,7 +144,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                         treeModel.getNodeCount()));
                 if (onlyTipsWithPriors &&
                     (treeModel.getChildCount(node) == 0) && // Is a tip
-                    !nodePriorExists(node)) { // Does not have a prior
+                    !nodeGeoSpatialPriorExists(node)) { // Does not have a prior
                     node = null;
                 }
             }
@@ -147,7 +163,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         final Taxon taxon = treeModel.getNodeTaxon(node);
 
-        final boolean nodePriorExists = nodePrior != null && nodePrior.containsKey(taxon);
+//        final boolean nodePriorExists = nodeGeoSpatialPrior != null && nodeGeoSpatialPrior.containsKey(taxon);
+        final boolean nodePriorExists = nodeGeoSpatialPriorExists(node);
 
 //        if (!onlyInternalNodes) {
 //            final boolean isTip = (treeModel.getChildCount(node) == 0);
@@ -174,7 +191,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                 count++;
 
             } while (nodePriorExists &&  // There is a prior for this node
-                    (nodePrior.get(taxon)).logPdf(draw) == Double.NEGATIVE_INFINITY); // And draw is invalid under prior
+                    (nodeGeoSpatialPrior.get(taxon)).logPdf(draw) == Double.NEGATIVE_INFINITY); // And draw is invalid under prior
             // TODO Currently only works for flat/truncated priors, make work for MVN
 
             treeModel.setMultivariateTrait(node, traitName, draw);
@@ -182,8 +199,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         } while (parameterPriorExists &&
                 (parameterPrior.getLogLikelihood() == Double.NEGATIVE_INFINITY));
 
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-
+        return 0;
     }
 
     private MeanPrecision operateNotRoot(NodeRef node) {
@@ -218,6 +234,11 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             for (int j = i; j < dim; j++)
                 precision[j][i] = precision[i][j] *= weightTotal;
         }
+
+        if (nodeMVNPriorExists(node)) {
+            throw new RuntimeException("Still trying to implement multivariate normal taxon priors");
+        }
+        
         return new MeanPrecision(mean,precision);
     }
 

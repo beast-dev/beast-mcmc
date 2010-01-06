@@ -37,7 +37,6 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
     GMRFSkyrideLikelihood gmrfField;
 
-    private DenseMatrix I;
     private double[] zeros;
 
     public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
@@ -55,12 +54,6 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
         this.maxIterations = maxIterations;
         this.stopValue = stopValue;
-
-        I = new DenseMatrix(fieldLength, fieldLength);
-
-        for (int i = 0; i < fieldLength; i++) {
-            I.set(i, i, 1.0);
-        }
         setWeight(weight);
 
         zeros = new double[fieldLength];
@@ -304,8 +297,9 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
         backwardQW.mult(diagonal1, diagonal3);
 
-        hRatio += 0.5 * 2 * logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        hRatio -= 0.5 * 2 * logGeneralizedDeterminant(forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm);
+        // Removed 0.5 * 2
+        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
 
 
         return hRatio;

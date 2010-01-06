@@ -330,12 +330,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
 		likelihoodKnown = false;
-	}
-
-	protected void handleParameterChangedEvent(Parameter parameter, int index) {
-		likelihoodKnown = false;
-		// Parameters (precision and popsizes do not change intervals or GMRF Q matrix
-
+        // Parameters (precision and popsizes do not change intervals or GMRF Q matrix
 	}
 
 	/**
@@ -499,16 +494,16 @@ model {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
+			XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
 			Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
+			cxo = xo.getChild(PRECISION_PARAMETER);
 			Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject) xo.getChild(POPULATION_TREE);
+			cxo = xo.getChild(POPULATION_TREE);
 			TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
-			cxo = (XMLObject) xo.getChild(GROUP_SIZES);
+			cxo = xo.getChild(GROUP_SIZES);
 			Parameter groupParameter = (Parameter) cxo.getChild(Parameter.class);
 
 			if (popParameter.getDimension() != groupParameter.getDimension())
@@ -516,7 +511,7 @@ model {
 
 			Parameter lambda;
 			if (xo.getChild(LAMBDA_PARAMETER) != null) {
-				cxo = (XMLObject) xo.getChild(LAMBDA_PARAMETER);
+				cxo = xo.getChild(LAMBDA_PARAMETER);
 				lambda = (Parameter) cxo.getChild(Parameter.class);
 			} else {
 				lambda = new Parameter.Default(1.0);
@@ -524,13 +519,13 @@ model {
 
 			Parameter beta = null;
 			if (xo.getChild(BETA_PARAMETER) != null) {
-				cxo = (XMLObject) xo.getChild(BETA_PARAMETER);
+				cxo = xo.getChild(BETA_PARAMETER);
 				beta = (Parameter) cxo.getChild(Parameter.class);
 			}
 
 			MatrixParameter dMatrix = null;
 			if (xo.getChild(COVARIATE_MATRIX) != null) {
-				cxo = (XMLObject) xo.getChild(COVARIATE_MATRIX);
+				cxo = xo.getChild(COVARIATE_MATRIX);
 				dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 			}
 

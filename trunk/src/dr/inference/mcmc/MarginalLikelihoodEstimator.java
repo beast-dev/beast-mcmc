@@ -103,11 +103,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         mc.runChain(chainLength + burnin, false/*, 0*/);
     }
 
-    public void oneSidedBetaIntegration() {
+    public void betaIntegration(double alpha, double beta) {
         setDefaultBurnin();
         mc.setCurrentLength(0);
 
-        BetaDistributionImpl beta = new BetaDistributionImpl(1.0, betaFactor);
+        BetaDistributionImpl betaDistribution = new BetaDistributionImpl(alpha, beta);
 
         for (int step = 0; step < pathSteps; step++) {
             if (step == 0) {
@@ -115,7 +115,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             } else if (step + 1 < pathSteps) {
                 double ratio = (double) step / (double) (pathSteps-1);
                 try {
-                    pathParameter = 1.0 - beta.inverseCumulativeProbability(ratio);
+                    pathParameter = 1.0 - betaDistribution.inverseCumulativeProbability(ratio);
                 } catch(MathException e){
                     e.printStackTrace(); 
                 }
@@ -243,10 +243,20 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 //        }
         
         switch(scheme) {
-            case LINEAR: linearIntegration(); break;
-            case OLD_GEOMETRIC: geometricIntegration(); break;
-            case ONE_SIDED_BETA: oneSidedBetaIntegration(); break;
-            default: throw new RuntimeException("Illegal path scheme");
+            case LINEAR:
+                linearIntegration();
+                break;
+            case OLD_GEOMETRIC:
+                geometricIntegration();
+                break;
+            case ONE_SIDED_BETA:
+                betaIntegration(1.0, betaFactor);
+                break;
+            case BETA:
+                betaIntegration(alphaFactor, betaFactor);
+                break;
+            default:
+                throw new RuntimeException("Illegal path scheme");
         }
 
         mc.removeMarkovChainListener(chainListener);
@@ -302,6 +312,21 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.spawnable = spawnable;
     }
 
+    public void setAlphaFactor(double alpha) {
+        alphaFactor = alpha;
+    }
+
+    public void setBetaFactor(double beta) {
+        betaFactor = beta;
+    }
+
+    public double getAlphaFactor() {
+        return alphaFactor;
+    }
+
+    public double getBetaFactor() {
+        return betaFactor;
+    }
 
     //PRIVATE METHODS *****************************************
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -360,16 +385,33 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 System.err.println("Error: no mcmc objects provided in construction. Bayes Factor estimation will likely fail.");
             }
 
-            java.util.logging.Logger.getLogger("dr.inference").info("Creating the Marginal Likelihood Estimator chain:" +
-                    "\n  chainLength=" + chainLength +
-                    "\n  pathSteps=" + pathSteps +
-                    "\n  pathScheme=" + scheme.getText());
-
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
                     burninLength, pathSteps, scheme, pathLikelihood, os, logger);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
+
+            if (xo.hasAttribute(ALPHA)) {
+                mle.setAlphaFactor(xo.getAttribute(ALPHA, 0.5));
+            }
+
+            if (xo.hasAttribute(BETA)) {
+                mle.setBetaFactor(xo.getAttribute(BETA, 0.5));
+            }
+
+            String alphaBetaText = "(";
+            if (scheme == PathScheme.ONE_SIDED_BETA) {
+                alphaBetaText += "1," + mle.getBetaFactor()+")";
+            } else if (scheme == PathScheme.BETA) {
+                alphaBetaText += mle.getAlphaFactor()+","+mle.getBetaFactor()+")";
+            }
+
+            java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
+                    "\n  chainLength=" + chainLength +
+                    "\n  pathSteps=" + pathSteps +
+                    "\n  pathScheme=" + scheme.getText() + alphaBetaText +
+                    "\n  If you use these results, please cite:" +
+                    "\n    Alekseyenko, Rambaut, Lemey and Suchard (in preparation)");
 
             return mle;
         }
@@ -398,6 +440,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
                 AttributeRule.newStringRule(PATH_SCHEME, true),
+                AttributeRule.newDoubleRule(ALPHA, true),
+                AttributeRule.newDoubleRule(BETA, true),
                 new ElementRule(MCMC,
                         new XMLSyntaxRule[]{new ElementRule(MCMC.class, 1, Integer.MAX_VALUE)}, false),
                 //new ElementRule(MCMC.class),
@@ -415,31 +459,29 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.id = id;
     }
 
-
     enum PathScheme {
         LINEAR("linear"),
         OLD_GEOMETRIC("oldGeometric"),
-        SYMMETRIC_BETA("symmetricBeta"),
+        BETA("beta"),
         ONE_SIDED_BETA("oneSidedBeta");
 
-
-            PathScheme(String text) {
-        this.text = text;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    private final String text;
-
-    public static PathScheme parseFromString(String text) {
-        for (PathScheme scheme : PathScheme.values()) {
-            if (scheme.getText().compareToIgnoreCase(text) == 0)
-                return scheme;
+        PathScheme(String text) {
+            this.text = text;
         }
-        return null;
-    }
+
+        public String getText() {
+            return text;
+        }
+
+        private final String text;
+
+        public static PathScheme parseFromString(String text) {
+            for (PathScheme scheme : PathScheme.values()) {
+                if (scheme.getText().compareToIgnoreCase(text) == 0)
+                    return scheme;
+            }
+            return null;
+        }
     }
 
 
@@ -461,7 +503,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 //    private final boolean linear;
 //    private final boolean lacing;
     private final PathScheme scheme;
-    private final double betaFactor = 0.5;
+    private double alphaFactor = 0.5;
+    private double betaFactor = 0.5;
     private final double pathDelta;
     private double pathParameter;
 
@@ -478,4 +521,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String BURNIN = "burnin";
     public static final String MCMC = "samplers";
     public static final String PATH_SCHEME = "pathScheme";
+    public static final String ALPHA = "alpha";
+    public static final String BETA = "beta";
 }

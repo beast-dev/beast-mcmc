@@ -87,12 +87,16 @@ public class GraphModel extends TreeModel {
 	       {
 	    	   tmp[i] = new Node();
 	    	   tmp[i].setNumber(i);
+	           tmp[i].heightParameter = new Parameter.Default(0);
+	           addVariable(tmp[i].heightParameter);
 	    	   freeNodes.push((GraphModel.Node)tmp[i]);
 	       }
 	       for(int i=storedNodes.length; i<tmp2.length; i++)
 	       {
 	    	   tmp2[i] = new Node();
 	    	   tmp2[i].setNumber(i);
+	           tmp2[i].heightParameter = new Parameter.Default(0);
+	           addVariable(tmp2[i].heightParameter);
 	       }
 	       nodes = tmp;
 	       storedNodes = tmp2;

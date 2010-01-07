@@ -7,6 +7,7 @@ import java.util.Map;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeModel.Node;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -208,6 +209,15 @@ public class GraphModel extends TreeModel {
 		   }
 	   }
    }
+
+   public void addChild(NodeRef p, NodeRef c) {
+       if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+       Node parent = (Node) p;
+       Node child = (Node) c;
+       parent.addChild(child);
+       pushTreeChangedEvent(parent);
+   }
+   
    /**
     * Uses TreeModel to copy the data, then links up the second parent
     */

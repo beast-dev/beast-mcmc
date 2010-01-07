@@ -110,7 +110,7 @@ public class GraphModel extends TreeModel {
        // add height, rate, and trait parameters
        // FIXME: do these parameters need to be created with default values?
        if(nhp!=null) nhp.addParameter(newNode.heightParameter);
-       if(nrp!=null) nrp.addParameter(newNode.rateParameter);
+       if(nrp!=null&&newNode.rateParameter!=null) nrp.addParameter(newNode.rateParameter);
        if(ntp!=null) {
            for (Map.Entry<String, Parameter> entry : newNode.getTraitMap().entrySet()) {
         	   ntp.addParameter(entry.getValue());
@@ -336,6 +336,16 @@ public class GraphModel extends TreeModel {
 
         public String toString() {
             return "node " + number + ", height=" + getHeight() + (taxon != null ? ": " + taxon.getId() : "");
+        }
+        
+        public String linksToString() {
+        	StringBuilder sb = new StringBuilder();
+        	sb.append("node " + number);
+        	if(parent!=null) sb.append(" parent1 " + parent.number);
+        	if(parent2!=null) sb.append(" parent2 " + parent2.number);
+        	if(leftChild!=null) sb.append(" leftChild " + leftChild.number);
+        	if(rightChild!=null) sb.append(" rightChild " + rightChild.number);
+        	return sb.toString();
         }
     }
 

@@ -28,8 +28,17 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	
 	public double doOperation() throws OperatorFailedException {
 		if(graphModel.getNodeCount() > 7){
-			return 0;
+			return deleteOperation();
 		}
+		
+		return addOperation();
+		
+		
+	}
+	
+	private double addOperation() throws OperatorFailedException{
+		
+		
 		
 		graphModel.beginTreeEdit();
 		
@@ -43,7 +52,8 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		graphModel.removeChild(leafParent, leaf);
 		
 		graphModel.addChild(newNode1, leaf);
-		graphModel.addChild(newNode2, newNode1);
+		graphModel.addChild(newNode2,newNode1);
+		graphModel.addChild(newNode2,newNode1);
 		graphModel.addChild(leafParent, newNode2);
 		
 		graphModel.addPartition(newNode1, partitionModel.getSiteRange(0));
@@ -58,11 +68,37 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 			
 		}
 		
-		System.out.println(graphModel.linkDump());
+		return -10000;
+	}
+	
+	private double deleteOperation() throws OperatorFailedException{
 		
-		System.out.println("here");
+		NodeRef[] recombinationNodes = graphModel.getNodesByType(2);
 		
-		System.exit(-1);
+		NodeRef rNode = recombinationNodes[0];
+		NodeRef rNodeParent = graphModel.getParent(rNode);
+		NodeRef rNodeGrandParent = graphModel.getParent(rNodeParent);
+		NodeRef rChild = graphModel.getChild(rNode, 0);
+		
+		graphModel.beginTreeEdit();
+		
+		graphModel.removeChild(rNode, rChild);
+		graphModel.removeChild(rNodeGrandParent, rNodeParent);
+		graphModel.removeChild(rNodeParent, rNode);
+		graphModel.removeChild(rNodeParent, rNode);
+		
+		
+		graphModel.addChild(rNodeGrandParent, rChild);
+		
+		graphModel.deleteNode(rNode);
+		
+		graphModel.deleteNode(rNodeParent);
+		
+		try{
+			graphModel.endTreeEdit();
+		}catch(InvalidTreeException e){
+			
+		}
 		
 		return 0;
 	}

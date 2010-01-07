@@ -99,7 +99,9 @@ public class GraphModel extends TreeModel {
 		   }else
 			   if(type==1)a.add(nodes[i]);
 	   }
-	   return (NodeRef[])a.toArray();
+	   NodeRef[] b = new NodeRef[a.size()];
+	   
+	   return a.toArray(b);
    }
    
    /*
@@ -376,10 +378,10 @@ public class GraphModel extends TreeModel {
             } else {
                 throw new IllegalArgumentException("Unknown child node");
             }
-            if (node.parent == node) {
+            if (node.parent == this) {
                 node.parent = node.parent2;
                 node.parent2 = null;
-            } else if (node.parent2 == node) {
+            } else if (node.parent2 == this) {
                 node.parent2 = null;
             } else {
                 throw new IllegalArgumentException("Unknown parent node");

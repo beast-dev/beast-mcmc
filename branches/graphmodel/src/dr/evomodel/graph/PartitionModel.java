@@ -29,6 +29,7 @@ public class PartitionModel extends AbstractModel {
 	protected LinkedList<Partition> freePartitions;
 
 	protected HashMap<Partition,List<Model>> modelsOnPartition;
+	protected HashMap<Partition,List<Model>> storedModelsOnPartition;
 	
     protected boolean inEdit = false;
     protected final List<PartitionChangedEvent> partitionChangedEvents = new ArrayList<PartitionChangedEvent>();
@@ -203,6 +204,7 @@ public class PartitionModel extends AbstractModel {
 	@Override
 	protected void restoreState() {
 		partitions = storedPartitions;
+		modelsOnPartition = storedModelsOnPartition;
 	}
 
 	@Override
@@ -212,6 +214,7 @@ public class PartitionModel extends AbstractModel {
 			storedPartitions[i].setRightSite(partitions[i].getRightSite());
 			storedPartitions[i].setSiteList(partitions[i].getSiteList());
 		}
+		storedModelsOnPartition = modelsOnPartition;
 	}
 
     public class PartitionChangedEvent {

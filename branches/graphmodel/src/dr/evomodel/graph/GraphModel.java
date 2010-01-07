@@ -242,7 +242,7 @@ public class GraphModel extends TreeModel {
    public String linkDump(){
 	   StringBuilder sb = new StringBuilder();
 	   for(int i=0; i<nodes.length; i++)
-		   sb.append(((GraphModel.Node)nodes[i]).linksToString());
+		   sb.append(((GraphModel.Node)nodes[i]).linksToString() + "\n");
 	   return sb.toString();
    }
 

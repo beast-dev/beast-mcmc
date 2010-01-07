@@ -27,6 +27,10 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	public static final String GRAPH_MODEL_DIMENSION_OPERATOR = "graphModelDimensionOperator";
 	
 	public double doOperation() throws OperatorFailedException {
+		if(graphModel.getNodeCount() > 7){
+			return 0;
+		}
+		
 		graphModel.beginTreeEdit();
 		
 		NodeRef leaf = graphModel.getExternalNode(0);
@@ -48,7 +52,11 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		graphModel.setNodeHeight(newNode1, graphModel.getNodeHeight(leafParent)/3.0);
 		graphModel.setNodeHeight(newNode2, graphModel.getNodeHeight(leafParent)/3.0*2.0);
 		
-		
+		try{
+			graphModel.endTreeEdit();
+		}catch(InvalidTreeException e){
+			
+		}
 		
 		System.out.println(graphModel.linkDump());
 		

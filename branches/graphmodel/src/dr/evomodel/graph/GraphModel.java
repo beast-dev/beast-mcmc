@@ -395,7 +395,7 @@ public class GraphModel extends TreeModel {
         public Double getLowerLimit(int i) {
             Node node = (GraphModel.Node)getNodeOfParameter(nodeHeightParameter);
         	double l = node.leftChild != null ? node.leftChild.getHeight() : 0.0;
-        	double r = node.leftChild != null ? node.rightChild.getHeight() : 0.0;
+        	double r = node.rightChild != null ? node.rightChild.getHeight() : 0.0;
             return Math.max(l,r);
         }
     }

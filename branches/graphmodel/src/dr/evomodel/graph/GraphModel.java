@@ -69,8 +69,18 @@ public class GraphModel extends TreeModel {
         	   ((Node)nodes[i]).addObject(range);
            }
        }
+       setupGraphHeightBounds();
    }
-	
+
+   // do nothing -- this overrides tree behavior
+   public void setupHeightBounds() {}
+   public void setupGraphHeightBounds() {
+
+       for (int i = 0; i < nodeCount; i++) {
+           ((GraphModel.Node)nodes[i]).setupHeightBounds();
+       }
+   }
+   
    /*
     * Add a new, unlinked node to the graph
     */

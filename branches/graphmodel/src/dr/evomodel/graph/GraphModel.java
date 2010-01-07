@@ -254,7 +254,12 @@ public class GraphModel extends TreeModel {
            }
        }
    }
-   
+
+   public void removeChild(NodeRef p, NodeRef c) {
+       if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+       ((GraphModel.Node)p).removeChild((GraphModel.Node)c);
+   }
+
 
    CompoundParameter nhp = null, nrp = null, ntp = null;
    public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {	   

@@ -131,10 +131,11 @@ public class GraphModel extends TreeModel {
     	   throw new RuntimeException("Deleted node is linked to others!");
        }
        freeNodes.push(n);
+       internalNodeCount--;
        
        // remove from height, rate, and trait parameters
        if(nhp!=null) nhp.removeParameter(n.heightParameter);
-       if(nrp!=null) nrp.removeParameter(n.rateParameter);
+       if(nrp!=null&&n.rateParameter!=null) nrp.removeParameter(n.rateParameter);
        if(ntp!=null) {
            for (Map.Entry<String, Parameter> entry : n.getTraitMap().entrySet()) {
         	   ntp.removeParameter(entry.getValue());

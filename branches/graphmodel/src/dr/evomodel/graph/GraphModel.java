@@ -129,6 +129,7 @@ public class GraphModel extends TreeModel {
 	       {
 	    	   tmp2[i] = new Node();
 	    	   tmp2[i].setNumber(i);
+	           tmp2[i].heightParameter = tmp[i].heightParameter;
 	       }
 	       nodes = tmp;
 	       storedNodes = tmp2;
@@ -216,15 +217,27 @@ public class GraphModel extends TreeModel {
    
    int storedINC = -1;
    int storedNC = -1;
+   LinkedList<Node> storedFreeNodes = new LinkedList<Node>();
    protected void storeState() {
 	   super.storeState();
 	   storedINC = internalNodeCount;
 	   storedNC = nodeCount;
+	   equalizeLists(freeNodes, storedFreeNodes);
    }
    protected void restoreState() {
 	   super.restoreState();
 	   internalNodeCount = storedINC;
 	   nodeCount = storedNC;
+	   equalizeLists(storedFreeNodes, freeNodes);
+   }
+
+   static private void equalizeLists(LinkedList<Node> src, LinkedList<Node> dest){
+	   if(dest.size()<src.size()){
+		   dest.addAll(src.subList(dest.size(), src.size()));
+	   }
+	   while(dest.size()>src.size()){
+		   dest.removeLast();
+	   }
    }
 
    public void addPartition(NodeRef node, Partition range)
@@ -264,12 +277,14 @@ public class GraphModel extends TreeModel {
    /**
     * Uses TreeModel to copy the data, then links up the second parent
     */
-   void copyNodeStructure(Node[] destination) {
+   public void copyNodeStructure(TreeModel.Node[] destination) {
 	   super.copyNodeStructure(destination);
+	   if(destination.length>0 && !(destination[0] instanceof GraphModel.Node))
+		   return;	// these are really TreeModel.Node.  get the hell outta Dodge!
 
        for (int i = 0, n = nodes.length; i < n; i++) {
            Node node0 = (GraphModel.Node)nodes[i];
-           Node node1 = destination[i];
+           Node node1 = (GraphModel.Node)destination[i];
            if (node0.parent2 != null) {
                node1.parent2 = (GraphModel.Node)storedNodes[node0.parent2.getNumber()];
            } else {
@@ -331,11 +346,9 @@ public class GraphModel extends TreeModel {
     	public Node parent2 = null;	// an extra parent for recombinant nodes
 
     	protected HashSet<Object> objects;	// arbitrary objects tied to this node.  TODO: use the generic object mapper mentioned by Andrew
-    	
-    	
+    	    	
         public Node() {
-        	super();
-        	
+        	super();        	
         	objects = new HashSet<Object>();
         }
 
@@ -442,7 +455,6 @@ public class GraphModel extends TreeModel {
             super(parameter);
         }
         public Double getUpperLimit(int i) {
-
             Node node = (GraphModel.Node)getNodeOfParameter(nodeHeightParameter);
             if (node.isRoot()) {
                 return Double.POSITIVE_INFINITY;

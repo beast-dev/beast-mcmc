@@ -1,5 +1,6 @@
 package dr.evomodel.graph;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -80,6 +81,25 @@ public class GraphModel extends TreeModel {
        for (int i = 0; i < nodeCount; i++) {
            ((GraphModel.Node)nodes[i]).setupHeightBounds();
        }
+   }
+   
+   /**
+    * Return array of leaf, recombinant, or vertical nodes
+    * @param type   0 for leaf, 1 for vertical, 2 for recombinant
+    * @return
+    */
+   public NodeRef[] getNodesByType(int type){
+	   ArrayList<NodeRef> a = new ArrayList<NodeRef>(nodes.length);
+	   for(int i=0; i<nodes.length; i++){
+		   if(nodes[i].parent!=null&&((GraphModel.Node)nodes[i]).parent2!=null)
+		   {
+			   if(type==2)a.add(nodes[i]);
+		   }else if(nodes[i].leftChild==null&&nodes[i].rightChild==null){
+			   if(type==0)a.add(nodes[i]);
+		   }else
+			   if(type==1)a.add(nodes[i]);
+	   }
+	   return (NodeRef[])a.toArray();
    }
    
    /*

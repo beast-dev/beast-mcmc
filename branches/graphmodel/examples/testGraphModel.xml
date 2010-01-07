@@ -45,6 +45,10 @@
 		</sequence>
 	</alignment>
 	
+	<patterns id="patterns" from="1">
+        <alignment idref="YFG.A"/>
+    </patterns>
+	
 	<HKYModel id="hky">
         <frequencies>
             <frequencyModel dataType="nucleotide">
@@ -67,6 +71,12 @@
             <parameter id="alpha" value="0.5" lower="0.0" upper="100.0"/>
         </gammaShape>
     </siteModel>
+    
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0" upper="100.0"/>
+        </rate>
+    </strictClockBranchRates>
 
 	<partitionModel id="partitionModel">
 		<partition>
@@ -80,7 +90,7 @@
 	</partitionModel>
 	
 	<newick id="startTree">
-	((human:0.25,chimp:0.25):0.75,(bonobo:0.75,gorilla:0.75):0.25);
+	((human:1.0,chimp:1.0):3.0,(gorilla:2.0,bonobo:2.0):2.0);
 	</newick>
 	
 	<graphModel id="graphModel">
@@ -96,36 +106,78 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>	
-	</graphModel>
+	</graphModel> 
 	
-	<graphLikelihood id="graphLikelihood">
+	<!-- <graphLikelihood id="graphLikelihood">
 		<graphModel idref="graphModel"/>
 		<partitionModel idref="partitionModel"/>
-	</graphLikelihood>
+	</graphLikelihood>  -->
 	
 	<operators id="operators">
+		<!--  <scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="treeModel.rootHeight"/>
+        </scaleOperator>   -->
+
+		<!--<scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="kappa"/>
+        </scaleOperator>
+
 		<scaleOperator scaleFactor="0.5" weight="1">
-			<parameter idref="treeModel.rootHeight"/>
-		</scaleOperator>
+            <parameter idref="alpha"/>
+        </scaleOperator>
+
+		<narrowExchange weight="1">
+			<graphModel idref="graphModel"/>	
+		</narrowExchange> -->
+	
+		<graphModelDimensionOperator weight="1">
+			<graphModel idref="graphModel"/>
+			<partitionModel idref="partitionModel"/>
+		</graphModelDimensionOperator>
+
+        <!--  <uniformOperator weight="2">
+            <parameter idref="treeModel.internalNodeHeights"/>
+        </uniformOperator>   --> 
 	</operators>
 
-	<mcmc id="mcmc" chainLength="500000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="false">
 		<posterior>
-			<graphLikelihood idref="graphLikelihood"/>
-			<gammaPrior scale="1" shape="1">
+			<dummyLikelihood>
+				<graphModel idref="graphModel"/>
+			</dummyLikelihood>
+		 	<gammaPrior scale="0.1" shape="100">
 				<parameter idref="treeModel.rootHeight"/>
 			</gammaPrior>
+			<oneOnXPrior>
+					<parameter idref="treeModel.rootHeight"/>
+			</oneOnXPrior>
+			<oneOnXPrior>
+					<parameter idref="treeModel.rootHeight"/>
+			</oneOnXPrior>
+			<oneOnXPrior>
+					<parameter idref="treeModel.rootHeight"/>
+			</oneOnXPrior>
+			<oneOnXPrior>
+					<parameter idref="treeModel.rootHeight"/>
+			</oneOnXPrior> 
 		</posterior>
 		<operators idref="operators"/>
-		<log logEvery="10000">
+		<log logEvery="100000">
+			
 			<column label="Internal Node Heights" dp="4" width="12">
 				<parameter idref="treeModel.internalNodeHeights"/>
 			</column>
 		</log>
 		<log logEvery="100" fileName="testGraphModel.log">
+			<parameter idref="treeModel.rootHeight"/>
 			<parameter idref="treeModel.allInternalNodeHeights"/>
 		</log> 
+		<logTree logEvery="1000" fileName="testGraphModel.trees" nexusFormat="true">
+			<graphModel idref="graphModel"/>
+		</logTree> 
 	</mcmc>
 	
 	<traceAnalysis fileName="testGraphModel.log"/>
+	<treeTraceAnalysis fileName="testGraphModel.trees"/>
+
 </beast>

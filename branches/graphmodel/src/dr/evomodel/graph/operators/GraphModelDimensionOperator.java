@@ -38,8 +38,6 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	
 	private double addOperation() throws OperatorFailedException{
 		
-		
-		
 		graphModel.beginTreeEdit();
 		
 		NodeRef leaf = graphModel.getExternalNode(0);

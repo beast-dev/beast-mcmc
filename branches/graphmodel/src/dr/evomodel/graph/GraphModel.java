@@ -12,6 +12,7 @@ import dr.evomodel.tree.TreeModel.Node;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /*
  * A class to represent phylogenetic graphs where each node can have
@@ -21,6 +22,7 @@ public class GraphModel extends TreeModel {
 
     public static final String GRAPH_MODEL = "graphModel";
 	LinkedList<Integer> freeNodes = new LinkedList<Integer>();	// a list of nodes for which storage exists 
+	ArrayList<Integer> activeNodeNumbers = new ArrayList<Integer>();
 	
     public GraphModel(Tree tree, PartitionModel partitionModel) {
         this(tree, false, partitionModel);
@@ -62,6 +64,12 @@ public class GraphModel extends TreeModel {
        nodes = tmp;
        storedNodes = tmp2;
        root = nodes[root.number];
+       
+       // add node numbers to active nodes
+       for(int i=0; i<tmp.length; i++)
+       {
+    	   activeNodeNumbers.add(i);
+       }
        
        // attach all partitions in the PartitionModel to each node
        for(int sr = 0; sr < partitionModel.getPartitionCount(); sr++){
@@ -143,6 +151,7 @@ public class GraphModel extends TreeModel {
        Node newNode = (GraphModel.Node)nodes[freeNodes.removeLast()];
        internalNodeCount++;	// assume this is an internal node.  might not be true if there are partitions with subsets of taxa
        nodeCount++;
+       activeNodeNumbers.add(newNode.getNumber());
        pushTreeChangedEvent(newNode);	// push a changed event onto the stack
 
        // add height, rate, and trait parameters
@@ -175,6 +184,13 @@ public class GraphModel extends TreeModel {
        freeNodes.push(n.getNumber());
        internalNodeCount--;
        nodeCount--;
+       // remove from list of active nodes
+       for(int i=0; i<activeNodeNumbers.size(); i++){
+    	   if(activeNodeNumbers.get(i)==n.getNumber()){
+    		   activeNodeNumbers.remove(i);
+    		   break;
+    	   }
+       }
        
        // remove from height, rate, and trait parameters
        if(nhp!=null){ 
@@ -192,6 +208,10 @@ public class GraphModel extends TreeModel {
        pushTreeChangedEvent(n);	// push a changed event onto the stack
    }
    
+   public NodeRef getNode(int i) {
+       return nodes[activeNodeNumbers.get(i)];
+   }
+
    public void removePartition(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -222,17 +242,21 @@ public class GraphModel extends TreeModel {
    int storedINC = -1;
    int storedNC = -1;
    LinkedList<Integer> storedFreeNodes = new LinkedList<Integer>();
+   ArrayList<Integer> storedActiveNodeNumbers = new ArrayList<Integer>();
    protected void storeState() {
 	   super.storeState();
 	   storedINC = internalNodeCount;
 	   storedNC = nodeCount;
 	   equalizeLists(freeNodes, storedFreeNodes);
+	   storedActiveNodeNumbers.clear();
+	   storedActiveNodeNumbers.addAll(activeNodeNumbers);
    }
    protected void restoreState() {
 	   super.restoreState();
 	   internalNodeCount = storedINC;
 	   nodeCount = storedNC;
 	   equalizeLists(storedFreeNodes, freeNodes);
+	   activeNodeNumbers = storedActiveNodeNumbers;
    }
 
    static private void equalizeLists(LinkedList<Integer> src, LinkedList<Integer> dest){

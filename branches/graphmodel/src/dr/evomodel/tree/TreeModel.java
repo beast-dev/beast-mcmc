@@ -1106,7 +1106,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             }
         }
 
-        public final void setupHeightBounds() {
+        public void setupHeightBounds() {
             heightParameter.addBounds(new NodeHeightBounds(heightParameter));
         }
 
@@ -1311,7 +1311,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * This class provides bounds for parameters that represent a node height
      * in this tree model.
      */
-    private class NodeHeightBounds implements Bounds<Double> {
+    protected class NodeHeightBounds implements Bounds<Double> {
 
         public NodeHeightBounds(Parameter parameter) {
             nodeHeightParameter = parameter;
@@ -1342,7 +1342,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         }
 
 
-        private Parameter nodeHeightParameter = null;
+        protected Parameter nodeHeightParameter = null;
     }
 
     // ***********************************************************************

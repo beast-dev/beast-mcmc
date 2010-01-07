@@ -1,0 +1,7 @@
+
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(treeModel.rootHeight)                       0.5     2501142    1311     0.0      0.1629      good	
+graphModelDimensionOperator                       0.0     2498547    1578     0.0      1.0         very high	Write better operators
+uniform(nodeHeights(graphModel))                          5000311    3186     0.0      1.0         very high	
+

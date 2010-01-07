@@ -71,7 +71,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	
 	private double deleteOperation() throws OperatorFailedException{
 		
-		NodeRef[] recombinationNodes = graphModel.getNodesByType(2);
+		NodeRef[] recombinationNodes = graphModel.getNodesByType(GraphModel.NodeType.RECOMBINANT);
 		
 		NodeRef rNode = recombinationNodes[0];
 		NodeRef rNodeParent = graphModel.getParent(rNode);

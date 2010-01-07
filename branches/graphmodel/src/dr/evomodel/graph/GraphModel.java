@@ -83,21 +83,24 @@ public class GraphModel extends TreeModel {
        }
    }
    
+   public enum NodeType {
+	   LEAF, VERTICAL, RECOMBINANT
+   }
    /**
     * Return array of leaf, recombinant, or vertical nodes
     * @param type   0 for leaf, 1 for vertical, 2 for recombinant
     * @return
     */
-   public NodeRef[] getNodesByType(int type){
+   public NodeRef[] getNodesByType(NodeType type){
 	   ArrayList<NodeRef> a = new ArrayList<NodeRef>(nodes.length);
 	   for(int i=0; i<nodes.length; i++){
 		   if(nodes[i].parent!=null&&((GraphModel.Node)nodes[i]).parent2!=null)
 		   {
-			   if(type==2)a.add(nodes[i]);
+			   if(type==NodeType.RECOMBINANT)a.add(nodes[i]);
 		   }else if(nodes[i].leftChild==null&&nodes[i].rightChild==null){
-			   if(type==0)a.add(nodes[i]);
+			   if(type==NodeType.LEAF)a.add(nodes[i]);
 		   }else
-			   if(type==1)a.add(nodes[i]);
+			   if(type==NodeType.VERTICAL)a.add(nodes[i]);
 	   }
 	   NodeRef[] b = new NodeRef[a.size()];
 	   

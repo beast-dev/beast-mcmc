@@ -234,6 +234,17 @@ public class GraphModel extends TreeModel {
    {
        // presumably a constituent partition has changed
    }
+   
+   /**
+    * Converts all graph links to a string
+    * @return a string
+    */
+   public String linkDump(){
+	   StringBuilder sb = new StringBuilder();
+	   for(int i=0; i<nodes.length; i++)
+		   sb.append(((GraphModel.Node)nodes[i]).linksToString());
+	   return sb.toString();
+   }
 
     // **************************************************************
     // Private inner classes

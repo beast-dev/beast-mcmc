@@ -5,9 +5,11 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import dr.evolution.alignment.SiteList;
+import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeModel.TreeChangedEvent;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -90,6 +92,7 @@ public class GraphModel extends TreeModel {
 	           tmp[i].heightParameter = new Parameter.Default(1.0);
 	           tmp[i].heightParameter.setId("" + i);
 	           addVariable(tmp[i].heightParameter);
+	           tmp[i].setupHeightBounds();
 	    	   freeNodes.push((GraphModel.Node)tmp[i]);
 	       }
 	       for(int i=storedNodes.length; i<tmp2.length; i++)
@@ -140,6 +143,8 @@ public class GraphModel extends TreeModel {
         	   ntp.removeParameter(entry.getValue());
            }
        }
+
+       pushTreeChangedEvent(n);	// push a changed event onto the stack
    }
    
    public void removePartition(NodeRef node, Partition range)
@@ -168,7 +173,7 @@ public class GraphModel extends TreeModel {
 		   }
 	   }
    }
-
+   
    public void addPartition(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -178,7 +183,7 @@ public class GraphModel extends TreeModel {
 	   pushTreeChangedEvent(n);
    }
 
-   public void addSiteRangeFollowToRoot(NodeRef node, Partition range, Partition rangeToFollow)
+   public void addPartitionFollowToRoot(NodeRef node, Partition range, Partition rangeToFollow)
    {
 	   Node n = (Node)node;
 	   while(n!=null){
@@ -249,7 +254,7 @@ public class GraphModel extends TreeModel {
     // **************************************************************
     // Private inner classes
     // **************************************************************
-
+   
    	public class Node extends TreeModel.Node {
 
     	// a treeNode will have parent2 == null

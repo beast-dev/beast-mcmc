@@ -57,7 +57,7 @@ public class PartitionModelParser extends AbstractXMLObjectParser{
 			
 			for(int j = 0; j < cxo.getChildCount(); j++){
 				if(cxo.getChild(j) instanceof Model){
-					partitionModel.addModelToPartition(partitionModel.getSiteRange(i), 
+					partitionModel.addModelToPartition(partitionModel.getPartition(i), 
 							(Model) cxo.getChild(j));
 				}else if(cxo.getChild(j) instanceof SiteList){
 					//don't do anything

@@ -20,7 +20,7 @@ import dr.inference.model.Parameter;
 public class GraphModel extends TreeModel {
 
     public static final String GRAPH_MODEL = "graphModel";
-	LinkedList<Node> freeNodes = new LinkedList<Node>();	// a list of nodes for which storage exists 
+	LinkedList<Integer> freeNodes = new LinkedList<Integer>();	// a list of nodes for which storage exists 
 	
     public GraphModel(Tree tree, PartitionModel partitionModel) {
         this(tree, false, partitionModel);
@@ -123,7 +123,8 @@ public class GraphModel extends TreeModel {
 	           tmp[i].heightParameter.setId("" + i);
 	           addVariable(tmp[i].heightParameter);
 	           tmp[i].setupHeightBounds();
-	    	   freeNodes.push((GraphModel.Node)tmp[i]);
+	    	   freeNodes.addFirst(tmp[i].getNumber());
+	    	   storedFreeNodes.addFirst(tmp[i].getNumber()); // this is generic storage unrelated to logical state, so add it to the backup state also
 	       }
 	       for(int i=storedNodes.length; i<tmp2.length; i++)
 	       {
@@ -136,7 +137,7 @@ public class GraphModel extends TreeModel {
        }
 
        // simply return a node from the free list
-       Node newNode = freeNodes.pop();
+       Node newNode = (GraphModel.Node)nodes[freeNodes.removeLast()];
        internalNodeCount++;	// assume this is an internal node.  might not be true if there are partitions with subsets of taxa
        nodeCount++;
        pushTreeChangedEvent(newNode);	// push a changed event onto the stack
@@ -168,7 +169,7 @@ public class GraphModel extends TreeModel {
        if(!n.hasNoChildren()||n.parent!=null||n.parent2!=null){
     	   throw new RuntimeException("Deleted node is linked to others!");
        }
-       freeNodes.push(n);
+       freeNodes.push(n.getNumber());
        internalNodeCount--;
        nodeCount--;
        
@@ -217,7 +218,7 @@ public class GraphModel extends TreeModel {
    
    int storedINC = -1;
    int storedNC = -1;
-   LinkedList<Node> storedFreeNodes = new LinkedList<Node>();
+   LinkedList<Integer> storedFreeNodes = new LinkedList<Integer>();
    protected void storeState() {
 	   super.storeState();
 	   storedINC = internalNodeCount;
@@ -231,7 +232,7 @@ public class GraphModel extends TreeModel {
 	   equalizeLists(storedFreeNodes, freeNodes);
    }
 
-   static private void equalizeLists(LinkedList<Node> src, LinkedList<Node> dest){
+   static private void equalizeLists(LinkedList<Integer> src, LinkedList<Integer> dest){
 	   if(dest.size()<src.size()){
 		   dest.addAll(src.subList(dest.size(), src.size()));
 	   }
@@ -286,7 +287,7 @@ public class GraphModel extends TreeModel {
            Node node0 = (GraphModel.Node)nodes[i];
            Node node1 = (GraphModel.Node)destination[i];
            if (node0.parent2 != null) {
-               node1.parent2 = (GraphModel.Node)storedNodes[node0.parent2.getNumber()];
+               node1.parent2 = (GraphModel.Node)destination[node0.parent2.getNumber()];
            } else {
                node1.parent2 = null;
            }

@@ -19,7 +19,7 @@ import dr.inference.model.Parameter;
 public class GraphModel extends TreeModel {
 
     public static final String GRAPH_MODEL = "graphModel";
-	LinkedList<Node> freeNodes;	// a list of nodes for which storage exists 
+	LinkedList<Node> freeNodes = new LinkedList<Node>();	// a list of nodes for which storage exists 
 	
     public GraphModel(Tree tree, PartitionModel partitionModel) {
         this(tree, false, partitionModel);

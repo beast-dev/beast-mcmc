@@ -170,6 +170,30 @@ public class GraphModel extends TreeModel {
        
        return newNode;
    }
+   
+   public boolean isRecombination(NodeRef node){
+	   return !isBifurcation(node);
+   }
+   
+   public boolean isBifurcation(NodeRef node){
+	   Node mynode = (Node)node;
+	   
+	   if(mynode.parent==null || mynode.parent2==null){
+		   return true;
+	   }
+	   return false;
+   }
+   
+   /**
+    * index = 0 left parent, index = 1 right parent
+    */
+   public NodeRef getParent(NodeRef child, int index){
+	   if(index == 0){
+		   return ((Node)child).parent;
+	   }
+	   
+	   return ((Node)child).parent2;
+   }
 
    /*
     * remove an unlinked node from the graph

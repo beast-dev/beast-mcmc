@@ -63,9 +63,9 @@ public class GraphModel extends TreeModel {
        storedNodes = tmp2;
        root = nodes[root.number];
        
-       // attach all siteRanges in the PartitionModel to each node
-       for(int sr = 0; sr < partitionModel.getSiteRangeCount(); sr++){
-           Partition range = partitionModel.getSiteRange(sr);
+       // attach all partitions in the PartitionModel to each node
+       for(int sr = 0; sr < partitionModel.getPartitionCount(); sr++){
+           Partition range = partitionModel.getPartition(sr);
            for(int i=0; i<nodes.length; i++)
            {
         	   ((Node)nodes[i]).addObject(range);
@@ -196,7 +196,7 @@ public class GraphModel extends TreeModel {
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   Node n = (Node)node;
-	   if(!n.hasObject(range)) throw new RuntimeException("Error, removing a nonexistant siterange!");
+	   if(!n.hasObject(range)) throw new RuntimeException("Error, removing a nonexistant partition!");
 	   n.removeObject(range);
    }
    public void removePartitionFollowToRoot(NodeRef node, Partition range)
@@ -265,7 +265,7 @@ public class GraphModel extends TreeModel {
 				   n.parent2.hasObject(rangeToFollow)){
 			   n = n.parent2;
 		   }else{
-			   throw new RuntimeException("Error, following a nonexistant siterange!");
+			   throw new RuntimeException("Error, following a nonexistant partition!");
 		   }
 	   }
    }

@@ -58,8 +58,8 @@ public class PartitionModel extends AbstractModel {
 		}
 	}
 	
-    public void pushPartitionChangedEvent(Partition siteRange, int left, int right) {
-    	PartitionChangedEvent pce = new PartitionChangedEvent(siteRange, left, right);
+    public void pushPartitionChangedEvent(Partition partition, int left, int right) {
+    	PartitionChangedEvent pce = new PartitionChangedEvent(partition, left, right);
     	pushPartitionChangedEvent(pce);
     }
     public void pushPartitionChangedEvent(PartitionChangedEvent event) {
@@ -91,11 +91,11 @@ public class PartitionModel extends AbstractModel {
     }
 	
 	/*
-	 * Allocate a new SiteRange by copying an existing SiteRange
-	 * The new SiteRange will overlap, so it is necessary to 
-	 * change the boundaries of new and/or old SiteRanges
+	 * Allocate a new Partition by copying an existing Partition
+	 * The new Partition will overlap, so it is necessary to 
+	 * change the boundaries of new and/or old Partitions
 	 */
-	Partition newPartition(Partition siteRange)
+	Partition newPartition(Partition partition)
 	{
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
        if(freePartitions.size()==0){
@@ -119,11 +119,11 @@ public class PartitionModel extends AbstractModel {
 	       storedPartitions = tmp2;
        }
 
-       // get a new SiteRange and copy the values of the provided one
+       // get a new Partition and copy the values of the provided one
        Partition newSR = freePartitions.pop();
-       newSR.setLeftSite(siteRange.getLeftSite());
-       newSR.setRightSite(siteRange.getRightSite());
-       newSR.setSiteList(siteRange.getSiteList());
+       newSR.setLeftSite(partition.getLeftSite());
+       newSR.setRightSite(partition.getRightSite());
+       newSR.setSiteList(partition.getSiteList());
 
        // add a model list for it
        ArrayList<Model> al = new ArrayList<Model>();
@@ -132,32 +132,32 @@ public class PartitionModel extends AbstractModel {
        return newSR;
 	}
 	
-	void changeRange(Partition siteRange, int newLeft, int newRight)
+	void changeRange(Partition partition, int newLeft, int newRight)
 	{
 	       if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 		// check whether the range has expanded or shrunk
 		// if expanded, we need to compute new likelihoods
-		if(newLeft < siteRange.getLeftSite()){
-			int minnow = newRight < siteRange.getLeftSite() ? newRight : siteRange.getLeftSite();
-			pushPartitionChangedEvent(siteRange, newLeft, minnow);
+		if(newLeft < partition.getLeftSite()){
+			int minnow = newRight < partition.getLeftSite() ? newRight : partition.getLeftSite();
+			pushPartitionChangedEvent(partition, newLeft, minnow);
 		}
-		if(newRight > siteRange.getRightSite()){
-			int maxxow = newLeft > siteRange.getRightSite() ? newLeft : siteRange.getRightSite();
-			pushPartitionChangedEvent(siteRange, maxxow, siteRange.getRightSite());
+		if(newRight > partition.getRightSite()){
+			int maxxow = newLeft > partition.getRightSite() ? newLeft : partition.getRightSite();
+			pushPartitionChangedEvent(partition, maxxow, partition.getRightSite());
 		}
-		siteRange.setLeftSite(newLeft);
-		siteRange.setRightSite(newRight);
+		partition.setLeftSite(newLeft);
+		partition.setRightSite(newRight);
 	}
 	
-	public void removeSiteRange(Partition siteRange){
-		freePartitions.push(siteRange);
-		modelsOnPartition.remove(siteRange);
+	public void removePartition(Partition partition){
+		freePartitions.push(partition);
+		modelsOnPartition.remove(partition);
 	}
 	
-	public Partition getSiteRange(int i){
+	public Partition getPartition(int i){
 		return partitions[i];
 	}
-	public int getSiteRangeCount(){
+	public int getPartitionCount(){
 		return partitions.length;
 	}
 	
@@ -185,18 +185,18 @@ public class PartitionModel extends AbstractModel {
 
 	}
 	
-	public List<Model> getModelsOnPartition(Partition siteRange)
+	public List<Model> getModelsOnPartition(Partition partition)
 	{
-		return modelsOnPartition.get(siteRange);
+		return modelsOnPartition.get(partition);
 	}
 	
-	public void addModelToPartition(Partition siteRange, Model model){
-		List<Model> l = modelsOnPartition.get(siteRange);
+	public void addModelToPartition(Partition partition, Model model){
+		List<Model> l = modelsOnPartition.get(partition);
 		l.add(model);
 	}
 	
-	public void removeModelFromPartition(Partition siteRange, Model model){
-		List<Model> l = modelsOnPartition.get(siteRange);
+	public void removeModelFromPartition(Partition partition, Model model){
+		List<Model> l = modelsOnPartition.get(partition);
 		l.remove(model);
 	}
 

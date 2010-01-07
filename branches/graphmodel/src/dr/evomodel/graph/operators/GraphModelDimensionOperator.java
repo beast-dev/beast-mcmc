@@ -54,8 +54,8 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		graphModel.addChild(newNode2,newNode1);
 		graphModel.addChild(leafParent, newNode2);
 		
-		graphModel.addPartition(newNode1, partitionModel.getSiteRange(0));
-		graphModel.addPartition(newNode2, partitionModel.getSiteRange(1));
+		graphModel.addPartition(newNode1, partitionModel.getPartition(0));
+		graphModel.addPartition(newNode2, partitionModel.getPartition(1));
 		
 		graphModel.setNodeHeight(newNode1, graphModel.getNodeHeight(leafParent)/3.0);
 		graphModel.setNodeHeight(newNode2, graphModel.getNodeHeight(leafParent)/3.0*2.0);

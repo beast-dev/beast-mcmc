@@ -51,7 +51,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         String coreName = "Java general";
         // END TreeLikelihood LIKELIHOODCORE INIT CODE
 
-        SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(partitionModel.getSiteRange(0)).get(0);
+        SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(partitionModel.getPartition(0)).get(0);
         this.integrateAcrossCategories = siteModel.integrateAcrossCategories();
         this.categoryCount = siteModel.getCategoryCount();
 

@@ -33,6 +33,6 @@ public class GraphLikelihoodParser extends TreeLikelihoodParser{
 		PartitionModel pm = (PartitionModel) xo.getChild(PartitionModel.class);
 		
 		return new GraphLikelihood((GraphModel)treeModel, pm, null, useAmbiguities, 
-				true, true, false, false);
+				true, true);
 	}
 }

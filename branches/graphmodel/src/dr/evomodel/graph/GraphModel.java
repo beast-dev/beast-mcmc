@@ -140,7 +140,11 @@ public class GraphModel extends TreeModel {
 
        // add height, rate, and trait parameters
        // FIXME: do these parameters need to be created with default values?
-       if(nhp!=null) nhp.addParameter(newNode.heightParameter);
+       if(nhp!=null){ 
+    	   for(CompoundParameter cp : nhp){
+    		   cp.addParameter(newNode.heightParameter);
+    	   }
+       }
        if(nrp!=null&&newNode.rateParameter!=null) nrp.addParameter(newNode.rateParameter);
        if(ntp!=null) {
            for (Map.Entry<String, Parameter> entry : newNode.getTraitMap().entrySet()) {
@@ -166,7 +170,11 @@ public class GraphModel extends TreeModel {
        nodeCount--;
        
        // remove from height, rate, and trait parameters
-       if(nhp!=null) nhp.removeParameter(n.heightParameter);
+       if(nhp!=null){ 
+    	   for(CompoundParameter cp : nhp){
+    		   cp.removeParameter(n.heightParameter);
+    	   }
+       }
        if(nrp!=null&&n.rateParameter!=null) nrp.removeParameter(n.rateParameter);
        if(ntp!=null) {
            for (Map.Entry<String, Parameter> entry : n.getTraitMap().entrySet()) {
@@ -204,6 +212,19 @@ public class GraphModel extends TreeModel {
 	   }
    }
    
+   int storedINC = -1;
+   int storedNC = -1;
+   protected void storeState() {
+	   super.storeState();
+	   storedINC = internalNodeCount;
+	   storedNC = nodeCount;
+   }
+   protected void restoreState() {
+	   super.restoreState();
+	   internalNodeCount = storedINC;
+	   nodeCount = storedNC;
+   }
+
    public void addPartition(NodeRef node, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -261,10 +282,11 @@ public class GraphModel extends TreeModel {
    }
 
 
-   CompoundParameter nhp = null, nrp = null, ntp = null;
+   ArrayList<CompoundParameter> nhp = new ArrayList<CompoundParameter>();
+   CompoundParameter nrp = null, ntp = null;
    public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {	   
 	   CompoundParameter tmp = (CompoundParameter)super.createNodeHeightsParameter(rootNode, internalNodes, leafNodes);
-	   if(internalNodes&&!rootNode) nhp = tmp;
+	   if(internalNodes) nhp.add(tmp);
 	   return tmp;
    }
    public Parameter createNodeRatesParameter(double[] initialValues, boolean rootNode, boolean internalNodes, boolean leafNodes) {

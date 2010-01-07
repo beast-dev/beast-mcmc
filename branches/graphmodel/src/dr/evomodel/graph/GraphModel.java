@@ -4,12 +4,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
-import dr.evolution.alignment.SiteList;
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeModel.TreeChangedEvent;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -336,6 +333,10 @@ public class GraphModel extends TreeModel {
             }
         }
         
+        public final void setupHeightBounds() {
+            heightParameter.addBounds(new GraphModel.NodeHeightBounds(heightParameter));
+        }
+
         public HashSet<Object> getObjects() {
         	return objects;
         }
@@ -365,5 +366,27 @@ public class GraphModel extends TreeModel {
         	return sb.toString();
         }
     }
+    protected class NodeHeightBounds extends TreeModel.NodeHeightBounds {
+        public NodeHeightBounds(Parameter parameter) {
+            super(parameter);
+        }
+        public Double getUpperLimit(int i) {
 
+            Node node = (GraphModel.Node)getNodeOfParameter(nodeHeightParameter);
+            if (node.isRoot()) {
+                return Double.POSITIVE_INFINITY;
+            } else if(node.parent2!=null){
+                return Math.min(node.parent.getHeight(), node.parent2.getHeight());
+            }else{
+                return node.parent.getHeight();
+            }
+        }
+
+        public Double getLowerLimit(int i) {
+            Node node = (GraphModel.Node)getNodeOfParameter(nodeHeightParameter);
+        	double l = node.leftChild != null ? node.leftChild.getHeight() : 0.0;
+        	double r = node.leftChild != null ? node.rightChild.getHeight() : 0.0;
+            return Math.max(l,r);
+        }
+    }
 }

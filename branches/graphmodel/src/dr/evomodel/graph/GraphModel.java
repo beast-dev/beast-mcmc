@@ -114,6 +114,7 @@ public class GraphModel extends TreeModel {
        // simply return a node from the free list
        Node newNode = freeNodes.pop();
        internalNodeCount++;	// assume this is an internal node.  might not be true if there are partitions with subsets of taxa
+       nodeCount++;
        pushTreeChangedEvent(newNode);	// push a changed event onto the stack
 
        // add height, rate, and trait parameters
@@ -141,6 +142,7 @@ public class GraphModel extends TreeModel {
        }
        freeNodes.push(n);
        internalNodeCount--;
+       nodeCount--;
        
        // remove from height, rate, and trait parameters
        if(nhp!=null) nhp.removeParameter(n.heightParameter);

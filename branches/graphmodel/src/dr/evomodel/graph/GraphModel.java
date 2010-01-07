@@ -352,6 +352,7 @@ public class GraphModel extends TreeModel {
         public String linksToString() {
         	StringBuilder sb = new StringBuilder();
         	sb.append("node " + number);
+        	if(heightParameter!=null) sb.append(" (height= " + heightParameter.getParameterValue(0) + ")\t");
         	if(parent!=null) sb.append(" parent1 " + parent.number);
         	if(parent2!=null) sb.append(" parent2 " + parent2.number);
         	if(leftChild!=null) sb.append(" leftChild " + leftChild.number);

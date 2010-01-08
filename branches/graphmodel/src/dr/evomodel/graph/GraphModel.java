@@ -13,6 +13,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 
 /*
  * A class to represent phylogenetic graphs where each node can have
@@ -76,7 +77,7 @@ public class GraphModel extends TreeModel {
            Partition range = partitionModel.getPartition(sr);
            for(int i=0; i<nodes.length; i++)
            {
-        	   ((Node)nodes[i]).addObject(range);
+        	   ((Node)nodes[i]).addObject(0, range);
            }
        }
        setupGraphHeightBounds();
@@ -240,8 +241,12 @@ public class GraphModel extends TreeModel {
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   Node n = (Node)node;
-	   if(!n.hasObject(range)) throw new RuntimeException("Error, removing a nonexistant partition!");
-	   n.removeObject(range);
+	   if(n.hasObject(0,range)) 
+		   n.removeObject(0, range);
+	   else if(n.hasObject(1,range)) 
+		   n.removeObject(0, range);
+	   else
+		   throw new RuntimeException("Error, removing a nonexistant partition!");
    }
    public void removePartitionFollowToRoot(NodeRef node, Partition range)
    {
@@ -249,17 +254,12 @@ public class GraphModel extends TreeModel {
 	   // walk from node to root removing a site range
 	   Node n = (Node)node;
 	   while(n!=null){
-		   if(n.hasObject(range)){
+		   if(!n.hasObject(0,range) && !n.hasObject(1, range)){
 			   throw new RuntimeException("Error, removing a nonexistant partition!");
 		   }
-		   n.removeObject(range);
-		   if(n.parent!=null && ((Node)n.parent).hasObject(range)){
-			   n = (GraphModel.Node)n.parent;
-		   }else if(n.parent2!=null && n.parent2.hasObject(range)){
-			   n = (GraphModel.Node)n.parent2;
-		   }else if(n.parent != null){
-			   throw new RuntimeException("Error, no parent has relevant partition!");
-		   }
+		   int i = n.hasObject(0, range) ? 0 : 1;
+		   n.removeObject(i, range);
+		   n = i == 0 ? (GraphModel.Node)n.parent : n.parent2;
 	   }
    }
    
@@ -292,28 +292,29 @@ public class GraphModel extends TreeModel {
 	   }
    }
 
-   public void addPartition(NodeRef node, Partition range)
+   public void addPartition(NodeRef node, int edge, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 	   // walk from node to root removing a site range
 	   Node n = (Node)node;
-	   n.addObject(range);
+	   n.addObject(edge, range);
 	   pushTreeChangedEvent(n);
    }
 
-   public void addPartitionFollowToRoot(NodeRef node, Partition range, Partition rangeToFollow)
+   public void addPartitionUntilCoalescence(NodeRef node, Partition partition)
    {
 	   Node n = (Node)node;
 	   while(n!=null){
-		   n.addObject(range);
-		   if(n.parent != null &&
-				   ((Node)n.parent).hasObject(rangeToFollow)){
-			   n = (Node)n.parent;
-		   }else if(n.parent2 != null && 
-				   n.parent2.hasObject(rangeToFollow)){
-			   n = n.parent2;
+		   if(n.hasObject(0,partition)||n.hasObject(1, partition))
+			   break;
+		   if(n.parent != null && n.parent2 != null )
+		   {
+			   boolean b = MathUtils.nextBoolean();
+			   n.addObject(b ? 0 : 1,partition);
+			   n = b ? (Node)n.parent : n.parent2;
 		   }else{
-			   throw new RuntimeException("Error, following a nonexistant partition!");
+			   n = (Node)n.parent;
+			   n.addObject(0,partition);
 		   }
 	   }
    }
@@ -397,11 +398,14 @@ public class GraphModel extends TreeModel {
 
     	public Node parent2 = null;	// an extra parent for recombinant nodes
 
-    	protected HashSet<Object> objects;	// arbitrary objects tied to this node.  TODO: use the generic object mapper mentioned by Andrew
+    	// TODO: make store/restore friendly
+    	protected HashSet<Object> objects0;	// arbitrary objects tied to this node.
+    	protected HashSet<Object> objects1;	// arbitrary objects tied to this node.  
     	    	
         public Node() {
         	super();        	
-        	objects = new HashSet<Object>();
+        	objects0 = new HashSet<Object>();
+        	objects1 = new HashSet<Object>();
         }
 
         public Node getChild(int n) {
@@ -473,17 +477,23 @@ public class GraphModel extends TreeModel {
             heightParameter.addBounds(new GraphModel.NodeHeightBounds(heightParameter));
         }
 
-        public HashSet<Object> getObjects() {
-        	return objects;
+        public HashSet<Object> getObjects(int i) {
+        	return i == 0 ? objects0 : objects1;
         }
-        public boolean hasObject(Object o) {
-        	return objects.contains(o);
+        public boolean hasObject(int i, Object o) {
+        	return i == 0 ? objects0.contains(o) : objects1.contains(o);
         }
-        public void addObject(Object o){
-        	objects.add(o);
+        public void addObject(int i, Object o){
+        	if(i==0)
+        		objects0.add(o);
+       		else
+       			objects1.add(o);
         }
-        public void removeObject(Object o){
-        	objects.remove(o);
+        public void removeObject(int i, Object o){
+        	if(i==0)
+        		objects0.remove(o);
+        	else
+        		objects1.remove(o);
         }
 
 

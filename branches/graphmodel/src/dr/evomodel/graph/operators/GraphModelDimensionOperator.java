@@ -47,13 +47,13 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
         double logq = 0;
 
         try {
-        	if (MathUtils.nextDouble() < Double.POSITIVE_INFINITY){//1.0 / (1 + Math.exp(-size))){
+        	if (MathUtils.nextDouble() < 1.0 / (1 + Math.exp(-size))){
             	logq = addOperation() - size;
             }else{
                 logq = removeOperation() + size;
             }
         } catch (NoReassortmentEventException nree) {
-            throw new OperatorFailedException("");
+            return Double.NEGATIVE_INFINITY;
         }
 
         assert !Double.isInfinite(logq) && !Double.isNaN(logq);
@@ -111,9 +111,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	}
 	
 	
-	private double addOperation() throws OperatorFailedException{
-		System.out.println(graphModel.linkDump());
-		
+	private double addOperation() throws OperatorFailedException{	
 		double logHastings = 0;
         
         //1. Draw some new heights.
@@ -127,6 +125,10 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
             newBifurcationHeight = MathUtils.nextExponential(theta);
             newReassortmentHeight = MathUtils.nextExponential(theta);
         }
+        
+        //This is very very bad, but only for testing purposes.
+        newBifurcationHeight = MathUtils.nextDouble()*treeHeight;
+        newReassortmentHeight = MathUtils.nextDouble()*treeHeight;
        
         logHastings += theta * (newBifurcationHeight + newReassortmentHeight) - Math.log(2.0)
                 - 2.0 * Math.log(theta) + Math.log(1 - Math.exp(-2.0 * treeHeight * theta));
@@ -240,9 +242,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		}catch(InvalidTreeException e){
 			
 		}
-
-		System.out.println(graphModel.linkDump() + "\n************************");
-		
+	
 		return 0;
 	}
 	
@@ -254,9 +254,9 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
         for (int i = 0; i < n; i++) {
             NodeRef node = graphModel.getNode(i);
             
-            if(!graphModel.isRecombination(node)){
-            	if(graphModel.isBifurcation(graphModel.getParent(node,0)) || 
-            			graphModel.isBifurcation(graphModel.getParent(node, 1))){
+            if(graphModel.isRecombination(node)){
+            	if(graphModel.isBifurcation(getParentWrapper(node,0)) || 
+            			graphModel.isBifurcation(getParentWrapper(node, 1))){
             		if(list != null){
             			list.add(node);
             		}
@@ -271,53 +271,80 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	private double removeOperation() throws OperatorFailedException{
 		 double logHastings = 0;
 	        
+		 System.out.println(graphModel.linkDump());
+		 
 	     // 1. Draw reassortment node uniform randomly
 
-	     ArrayList<NodeRef> potentialNodes = new ArrayList<NodeRef>();
+	     List<NodeRef> potentialNodes = new ArrayList<NodeRef>();
 	     int totalPotentials = findPotentialNodesToRemove(potentialNodes);
-
+	     
 	     if (totalPotentials == 0){ 
 	    	 throw new NoReassortmentEventException();
 	     }
 	     
 	     logHastings += Math.log((double) totalPotentials);
 
-	     NodeRef recNode = potentialNodes.get(MathUtils.nextInt(totalPotentials));
-	     return 0;
-	}
+	     NodeRef removeReassortNode = potentialNodes.get(MathUtils.nextInt(totalPotentials));
 	     
-
-	private double deleteOperation() throws OperatorFailedException{
-		
-		NodeRef[] recombinationNodes = graphModel.getNodesByType(GraphModel.NodeType.RECOMBINANT);
-		
-		NodeRef rNode = recombinationNodes[0];
-		NodeRef rNodeParent = graphModel.getParent(rNode);
-		NodeRef rNodeGrandParent = graphModel.getParent(rNodeParent);
-		NodeRef rChild = graphModel.getChild(rNode, 0);
-		
-		graphModel.beginTreeEdit();
-		
-		graphModel.removeChild(rNode, rChild);
-		graphModel.removeChild(rNodeGrandParent, rNodeParent);
-		graphModel.removeChild(rNodeParent, rNode);
-		graphModel.removeChild(rNodeParent, rNode);
-		
-		
-		graphModel.addChild(rNodeGrandParent, rChild);
-		
-		graphModel.deleteNode(rNode);
-		
-		graphModel.deleteNode(rNodeParent);
-		
-		try{
-			graphModel.endTreeEdit();
-		}catch(InvalidTreeException e){
-			
-		}
-		
-
-		return 0;
+	     NodeRef removeReassortNode1 = getParentWrapper(removeReassortNode,0);
+	     NodeRef removeReassortNode2 = getParentWrapper(removeReassortNode,1);
+	     NodeRef removeBifurcatioNode = removeReassortNode1;
+	     NodeRef keptNode   = removeReassortNode2;
+	     NodeRef removeReassortNodeChild = graphModel.getChild(removeReassortNode, 0);
+	     
+	     NodeRef removeBifurcationNodeParent = getParentWrapper(removeBifurcatioNode,0);
+	     NodeRef removeBifurcationNodeChild = graphModel.getChild(removeBifurcatioNode,0);
+	     
+	     if(removeBifurcationNodeChild == removeReassortNode){
+	    	 removeBifurcationNodeChild = graphModel.getChild(removeBifurcatioNode,1);
+	     }
+	     
+	     if(removeReassortNode1 != removeReassortNode2){
+	    	 if(graphModel.isBifurcation(removeReassortNode1) 
+	    			 && graphModel.isBifurcation(removeReassortNode2)){
+	    		 if(MathUtils.nextBoolean()){
+	    			 removeBifurcatioNode = removeReassortNode2;
+	    			 keptNode = removeReassortNode2;
+	    		 }else if(!graphModel.isBifurcation(removeReassortNode1)){
+	    			 removeBifurcatioNode = removeReassortNode2;
+	    			 keptNode = removeReassortNode2;
+	    		 }
+	    	 }
+	     }
+	     
+	     graphModel.beginTreeEdit();
+	     
+	     //Unlink model
+	     
+	     graphModel.removeChild(removeBifurcationNodeParent, removeBifurcatioNode);
+	     graphModel.removeChild(removeBifurcatioNode, removeBifurcationNodeChild);
+	     graphModel.removeChild(removeReassortNode,removeReassortNodeChild);
+	     graphModel.removeChild(keptNode, removeReassortNode);
+	     
+	     
+	     
+	     if(removeReassortNode1 != removeReassortNode2){
+	    	 graphModel.addChild(keptNode, removeReassortNodeChild);
+	     }
+	     graphModel.addChild(removeBifurcationNodeParent,removeBifurcationNodeChild);
+	     
+	     graphModel.removeChild(removeBifurcatioNode,removeReassortNode);
+	     
+	     graphModel.deleteNode(removeReassortNode);
+	     graphModel.deleteNode(removeBifurcatioNode);
+	     
+	     System.out.println(graphModel.linkDump());
+	     System.exit(-1);
+	     
+	     try{
+	     graphModel.endTreeEdit();
+	     }catch(InvalidTreeException e){
+	    	 
+	     }
+	     
+	     
+	     
+	     return 0;
 	}
 
 	public String getOperatorName() {

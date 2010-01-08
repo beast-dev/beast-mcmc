@@ -1,12 +1,16 @@
 package dr.evomodel.graph.operators;
 
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.MutableTree.InvalidTreeException;
 
 import dr.evomodel.graph.GraphModel;
+import dr.evomodel.graph.Partition;
 import dr.evomodel.graph.PartitionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
@@ -221,7 +225,17 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
       
       graphModel.setNodeHeight(newBifurcation, newBifurcationHeight);
      	
-		try{
+      // pick one of the partitions on newReassortment at random
+      // send it up the new recombination edge
+      HashSet<Object> parts = ((GraphModel.Node)reassortChild).getObjects(0);
+      for(Object o : parts){
+          Partition part = (Partition)o;
+          boolean b = MathUtils.nextBoolean();
+    	  graphModel.addPartition(newReassortment, b ? 0 : 1, part);
+		  graphModel.addPartitionUntilCoalescence(newReassortment, part);
+      }
+
+      try{
 			graphModel.endTreeEdit();
 		}catch(InvalidTreeException e){
 			

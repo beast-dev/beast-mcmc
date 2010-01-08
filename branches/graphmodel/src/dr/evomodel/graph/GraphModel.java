@@ -280,7 +280,9 @@ public class GraphModel extends TreeModel {
 	   internalNodeCount = storedINC;
 	   nodeCount = storedNC;
 	   equalizeLists(storedFreeNodes, freeNodes);
+	   ArrayList<Integer> tmp = activeNodeNumbers;
 	   activeNodeNumbers = storedActiveNodeNumbers;
+	   storedActiveNodeNumbers = tmp;
    }
 
    static private void equalizeLists(LinkedList<Integer> src, LinkedList<Integer> dest){

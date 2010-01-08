@@ -243,7 +243,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 			
 		}
 	
-		return 0;
+		return -0.5;
 	}
 	
 
@@ -347,7 +347,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     
 	     
 	     
-	     return -0.5;
+	     return 0;
 	}
 
 	public String getOperatorName() {

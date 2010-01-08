@@ -140,7 +140,7 @@
         </uniformOperator>   --> 
 	</operators>
 
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="false">
+	<mcmc id="mcmc" chainLength="50000" autoOptimize="false">
 		<posterior>
 			<dummyLikelihood>
 				<graphModel idref="graphModel"/>

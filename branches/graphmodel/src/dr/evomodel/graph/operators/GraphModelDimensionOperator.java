@@ -270,9 +270,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	
 	private double removeOperation() throws OperatorFailedException{
 		 double logHastings = 0;
-	        
-		 System.out.println(graphModel.linkDump());
-		 
+	        	 
 	     // 1. Draw reassortment node uniform randomly
 
 	     List<NodeRef> potentialNodes = new ArrayList<NodeRef>();
@@ -288,53 +286,58 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     
 	     NodeRef removeReassortNode1 = getParentWrapper(removeReassortNode,0);
 	     NodeRef removeReassortNode2 = getParentWrapper(removeReassortNode,1);
-	     NodeRef removeBifurcatioNode = removeReassortNode1;
+	     NodeRef removeBifurcationNode = removeReassortNode1;
 	     NodeRef keptNode   = removeReassortNode2;
 	     NodeRef removeReassortNodeChild = graphModel.getChild(removeReassortNode, 0);
 	     
-	     NodeRef removeBifurcationNodeParent = getParentWrapper(removeBifurcatioNode,0);
-	     NodeRef removeBifurcationNodeChild = graphModel.getChild(removeBifurcatioNode,0);
 	     
-	     if(removeBifurcationNodeChild == removeReassortNode){
-	    	 removeBifurcationNodeChild = graphModel.getChild(removeBifurcatioNode,1);
-	     }
 	     
 	     if(removeReassortNode1 != removeReassortNode2){
 	    	 if(graphModel.isBifurcation(removeReassortNode1) 
 	    			 && graphModel.isBifurcation(removeReassortNode2)){
 	    		 if(MathUtils.nextBoolean()){
-	    			 removeBifurcatioNode = removeReassortNode2;
-	    			 keptNode = removeReassortNode2;
-	    		 }else if(!graphModel.isBifurcation(removeReassortNode1)){
-	    			 removeBifurcatioNode = removeReassortNode2;
-	    			 keptNode = removeReassortNode2;
+	    			 removeBifurcationNode = removeReassortNode2;
+	    			 keptNode = removeReassortNode1;
 	    		 }
-	    	 }
+	    	}else if(!graphModel.isBifurcation(removeReassortNode1)){
+	    			 removeBifurcationNode = removeReassortNode2;
+	    			 keptNode = removeReassortNode1;
+	    	}
+	     }
+	     
+	     
+	     NodeRef removeBifurcationNodeParent = getParentWrapper(removeBifurcationNode,0);
+	     NodeRef removeBifurcationNodeChild = graphModel.getChild(removeBifurcationNode,0);
+	     
+	     if(removeBifurcationNodeChild == removeReassortNode){
+	    	 removeBifurcationNodeChild = graphModel.getChild(removeBifurcationNode,1);
+	     }
+	     
+	     if(graphModel.isRoot(removeBifurcationNode)){
+	    	 return -100;
 	     }
 	     
 	     graphModel.beginTreeEdit();
 	     
 	     //Unlink model
 	     
-	     graphModel.removeChild(removeBifurcationNodeParent, removeBifurcatioNode);
-	     graphModel.removeChild(removeBifurcatioNode, removeBifurcationNodeChild);
+	     graphModel.removeChild(removeBifurcationNodeParent, removeBifurcationNode);
+	     graphModel.removeChild(removeBifurcationNode, removeBifurcationNodeChild);
 	     graphModel.removeChild(removeReassortNode,removeReassortNodeChild);
 	     graphModel.removeChild(keptNode, removeReassortNode);
 	     
-	     
-	     
+	      
 	     if(removeReassortNode1 != removeReassortNode2){
 	    	 graphModel.addChild(keptNode, removeReassortNodeChild);
+	    	 graphModel.addChild(removeBifurcationNodeParent,removeBifurcationNodeChild);
+	    	  graphModel.removeChild(removeBifurcationNode,removeReassortNode);
+	   	   
+	     }else{
+	    	 graphModel.addChild(removeBifurcationNodeParent, removeReassortNodeChild);
 	     }
-	     graphModel.addChild(removeBifurcationNodeParent,removeBifurcationNodeChild);
-	     
-	     graphModel.removeChild(removeBifurcatioNode,removeReassortNode);
-	     
+	         
 	     graphModel.deleteNode(removeReassortNode);
-	     graphModel.deleteNode(removeBifurcatioNode);
-	     
-	     System.out.println(graphModel.linkDump());
-	     System.exit(-1);
+	     graphModel.deleteNode(removeBifurcationNode);
 	     
 	     try{
 	     graphModel.endTreeEdit();
@@ -344,7 +347,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     
 	     
 	     
-	     return 0;
+	     return -0.5;
 	}
 
 	public String getOperatorName() {

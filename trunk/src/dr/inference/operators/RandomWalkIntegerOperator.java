@@ -51,7 +51,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         // a random dimension to perturb
         int index;
@@ -177,7 +177,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
-    private int windowSize = 1;
-    private List<Integer> updateMap = null;
+    protected Parameter parameter = null;
+    protected int windowSize = 1;
+    protected List<Integer> updateMap = null;
 }

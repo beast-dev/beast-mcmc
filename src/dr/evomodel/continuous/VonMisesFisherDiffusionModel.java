@@ -43,7 +43,16 @@ public class VonMisesFisherDiffusionModel extends MultivariateDiffusionModel {
         // Nothing gets stored
     }
 
+    private boolean isInBounds(double[] x) {
+        final double latitude = x[0];
+        final double longitude = x[1];
+        return (latitude >= 0 && latitude < 180 && longitude > -180 && longitude < 180);
+    }
+
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
+
+        // TODO Write transition kernel that wraps these parameters
+        if (!isInBounds(start) || !isInBounds(stop)) return Double.NEGATIVE_INFINITY;
 
         final double kappa = concentrationParameter.getParameterValue(0) / time;
         return VonMisesFisherDistribution.logPdf(start, stop, kappa, Space.LAT_LONG);

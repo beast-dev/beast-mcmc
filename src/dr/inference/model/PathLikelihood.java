@@ -40,10 +40,21 @@ public class PathLikelihood implements Likelihood {
     public static final String PATH_LIKELIHOOD = "pathLikelihood";
     public static final String PATH_PARAMETER = "theta";
     public static final String DIFFERENCE = "delta";
+    public static final String SOURCE = "source";
+    public static final String DESTINATION ="destination";
+    public static final String PSUEDO_SOURCE ="sourcePseudoPrior";
+    public static final String PSUEDO_DESTINATION = "destinationPseudoPrior";
 
     public PathLikelihood(Likelihood source, Likelihood destination) {
+        this(source, destination, null, null);
+    }
+
+    public PathLikelihood(Likelihood source, Likelihood destination,
+                          Likelihood pseudoSource, Likelihood pseudoDestination) {
         this.source = source;
         this.destination = destination;
+        this.pseudoSource = pseudoSource;
+        this.pseudoDestination = pseudoDestination;
 
         compoundModel.addModel(source.getModel());
         compoundModel.addModel(destination.getModel());
@@ -66,6 +77,7 @@ public class PathLikelihood implements Likelihood {
     }
 
     public double getLogLikelihood() {
+        // Depends on complete model (include pseudo-densities)
         return (source.getLogLikelihood() * pathParameter) + (destination.getLogLikelihood() * (1.0 - pathParameter));
     }
 
@@ -101,7 +113,16 @@ public class PathLikelihood implements Likelihood {
         }
 
         public double getDoubleValue() {
-            return source.getLogLikelihood() - destination.getLogLikelihood();
+            // Remove pseudo-densities
+            double logDensity =  source.getLogLikelihood() - destination.getLogLikelihood();
+            if (pseudoSource != null) {
+                logDensity -= pseudoSource.getLogLikelihood();
+            }
+            if (pseudoDestination != null) {
+//                System.err.println("value = "+pseudoDestination.getLogLikelihood());
+//                logDensity += pseudoDestination.getLogLikelihood();
+            }
+            return logDensity;
         }
     }
 
@@ -153,10 +174,19 @@ public class PathLikelihood implements Likelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            Likelihood likelihood = (Likelihood) xo.getElementFirstChild("source");
-            Likelihood prior = (Likelihood) xo.getElementFirstChild("destination");
+            Likelihood likelihood = (Likelihood) xo.getElementFirstChild(SOURCE);
+            Likelihood prior = (Likelihood) xo.getElementFirstChild(DESTINATION);
 
-            return new PathLikelihood(likelihood, prior);
+            Likelihood pseudoLikelihood = null;
+            if (xo.hasChildNamed(PSUEDO_SOURCE)) {
+                pseudoLikelihood = (Likelihood) xo.getElementFirstChild(PSUEDO_SOURCE);
+            }
+            Likelihood pseudoPrior = null;
+            if (xo.hasChildNamed(PSUEDO_DESTINATION)) {
+                pseudoPrior = (Likelihood) xo.getElementFirstChild(PSUEDO_DESTINATION);
+            }
+
+            return new PathLikelihood(likelihood, prior, pseudoLikelihood, pseudoPrior);
         }
 
         //************************************************************************
@@ -172,10 +202,14 @@ public class PathLikelihood implements Likelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule("source",
+                new ElementRule(SOURCE,
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
-                new ElementRule("destination",
+                new ElementRule(DESTINATION,
                         new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}),
+                new ElementRule(PSUEDO_SOURCE,
+                        new XMLSyntaxRule[]{new ElementRule(Likelihood.class)},true),
+                new ElementRule(PSUEDO_DESTINATION,
+                        new XMLSyntaxRule[]{new ElementRule(Likelihood.class)},true),
         };
 
         public Class getReturnType() {
@@ -185,6 +219,8 @@ public class PathLikelihood implements Likelihood {
 
     private final Likelihood source;
     private final Likelihood destination;
+    private final Likelihood pseudoSource;
+    private final Likelihood pseudoDestination;
 
     private double pathParameter;
 

@@ -143,6 +143,7 @@ public class TimeSlicer {
     private Element rootElement;
     private Element documentElement;
     private Element folderElement;
+    private StringBuffer tabOutput = new StringBuffer();
 
     public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue, String sdrFile) {
 
@@ -199,17 +200,25 @@ public class TimeSlicer {
             if (sliceHeights == null)
                 summarizeSlice(0,Double.NaN, outputFormat, hpdValue);
             else {
+                if (outputFormat == OutputFormat.TAB) {
+                    tabOutput.append("slice\t"+"mean\t"+"stdev\t"+"HPDlow\t"+"HPDup");
+                }
                 for(int i=0; i< sliceHeights.length; i++)
                     summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
             }
 
-            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
-            try {
-                xmlOutputter.output(rootElement,resultsStream);
-            } catch (IOException e) {
-                System.err.println("IO Exception encountered: "+e.getMessage());
-                System.exit(-1);
+            if (outputFormat == OutputFormat.TAB) {
+                resultsStream.println(tabOutput);    
+            } else {
+                XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
+                try {
+                    xmlOutputter.output(rootElement,resultsStream);
+                } catch (IOException e) {
+                    System.err.println("IO Exception encountered: "+e.getMessage());
+                    System.exit(-1);
+                }                
             }
+
         }
 // writes out dispersal rate summaries for the whole tree, there is a beast xml statistic that can do this now
 //        if (containsLocation) {
@@ -382,7 +391,7 @@ public class TimeSlicer {
         
         boolean isNumber = thisTrait.get(0).isNumber();
         boolean isMultivariate = thisTrait.get(0).isMultivariate();
-        int dim = thisTrait.get(0).getValue().length;
+        int dim = thisTrait.get(0).getDim();
         boolean isBivariate = isMultivariate && dim == 2;
         if (sliceProgressReport) {
             progressStream.print("slice "+sliceValue+"\t");
@@ -394,7 +403,7 @@ public class TimeSlicer {
         if (isNumber) {
 
             Element traitElement = null;
-            if (outputFormat == OutputFormat.XML) {
+            if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 traitElement = new Element(TRAIT);
                 traitElement.setAttribute(NAME,traits[traitIndex]);
             }
@@ -414,7 +423,7 @@ public class TimeSlicer {
                     x[j][i] = value[j];
             }
 
-            if (outputFormat == OutputFormat.XML) {
+            if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 // Compute marginal means and standard deviations
                 for (int j = 0; j < dim; j++) {
                     TraceDistribution trace = new TraceDistribution(x[j]);
@@ -422,14 +431,24 @@ public class TimeSlicer {
                     addDimInfo(statsElement, j, dim);
                     StringBuffer sb = new StringBuffer();
                     sb.append(KMLCoordinates.NEWLINE);
+                    tabOutput.append(KMLCoordinates.NEWLINE);
+                    tabOutput.append(sliceValue+"\t");
                     sb.append(String.format(KMLCoordinates.FORMAT,
                             trace.getMean())).append(KMLCoordinates.SEPERATOR);
+                    tabOutput.append(String.format(KMLCoordinates.FORMAT,
+                            trace.getMean())).append("\t");
                     sb.append(String.format(KMLCoordinates.FORMAT,
                             trace.getStdError())).append(KMLCoordinates.SEPERATOR);
+                    tabOutput.append(String.format(KMLCoordinates.FORMAT,
+                            trace.getStdError())).append("\t");
                     sb.append(String.format(KMLCoordinates.FORMAT,
                             trace.getLowerHPD())).append(KMLCoordinates.SEPERATOR);
+                    tabOutput.append(String.format(KMLCoordinates.FORMAT,
+                            trace.getLowerHPD())).append("\t");
                     sb.append(String.format(KMLCoordinates.FORMAT,
                             trace.getUpperHPD())).append(KMLCoordinates.NEWLINE);
+                    tabOutput.append(String.format(KMLCoordinates.FORMAT,
+                            trace.getUpperHPD())).append("\t");
                     statsElement.addContent(sb.toString());
                     traitElement.addContent(statsElement);
                 }
@@ -504,8 +523,8 @@ public class TimeSlicer {
 
     private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
 
-        if (outputFormat == OutputFormat.TAB)
-            throw new RuntimeException("Only XML/KML output is implemented");
+        //if (outputFormat == OutputFormat.TAB)
+        //    throw new RuntimeException("Only XML/KML output is implemented");
 
         Element sliceElement = null;
 
@@ -721,8 +740,12 @@ public class TimeSlicer {
         public double[] getValue() {
             int dim = getDim();
             double[] result = new double[dim];
-            for(int i=0; i<dim; i++)
-                result[i] = (Double)array[i];
+            if (!isMultivariate) {
+                result[0] = (Double)obj;
+            } else {
+                for(int i=0; i<dim; i++)
+                    result[i] = (Double)array[i];
+            }
             return result;
         }
 
@@ -1353,7 +1376,7 @@ public class TimeSlicer {
         OutputFormat outputFormat = OutputFormat.KML;
         boolean impute = false;
         boolean trueNoise = true;
-        boolean summaryOnly = true;
+        boolean summaryOnly = false;
         ContourMode contourMode = ContourMode.SNYDER;
         Normalization normalize = Normalization.LENGTH;
         int burnin = -1;

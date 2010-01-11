@@ -71,6 +71,9 @@ public class TimeSlicer {
     public static final String SDR = "sdr";
     public static final String PROGRESS = "progress";
     public static final double treeLengthPercentage = 0.00;
+    public static final String BRANCH_NORMALIZE = "branchnorm";
+    public static final String BRANCHSET = "branchset";
+    public static final String BACKBONETAXA = "backbonetaxa";
 
     public static final String[] falseTrue = new String[] {"false","true"};
 
@@ -79,7 +82,7 @@ public class TimeSlicer {
 
     public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] sliceHeights, boolean impute,
                       boolean trueNoise, double mrsd, ContourMode contourMode,
-                      Normalization normalize, boolean getSRD, String progress) {
+                      Normalization normalize, boolean getSRD, String progress, boolean branchNormalization, BranchSet branchset, Set backboneTaxa) {
 
         this.traits = traits;
         traitCount = traits.length;
@@ -117,7 +120,7 @@ public class TimeSlicer {
         }
 
         try {
-            readAndAnalyzeTrees(treeFileName, burnin, traits, sliceHeights, impute, trueNoise, normalize);
+            readAndAnalyzeTrees(treeFileName, burnin, traits, sliceHeights, impute, trueNoise, normalize, branchNormalization, branchset, backboneTaxa);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
             System.exit(-1);
@@ -201,10 +204,14 @@ public class TimeSlicer {
                 summarizeSlice(0,Double.NaN, outputFormat, hpdValue);
             else {
                 if (outputFormat == OutputFormat.TAB) {
-                    tabOutput.append("slice\t"+"mean\t"+"stdev\t"+"HPDlow\t"+"HPDup");
+                    if (mostRecentSamplingDate > 0) {
+                        tabOutput.append("trait\t"+"sliceTime\t"+"mean\t"+"stdev\t"+"HPDlow\t"+"HPDup");
+                    } else {
+                        tabOutput.append("trait\t"+"sliceHeight\t"+"mean\t"+"stdev\t"+"HPDlow\t"+"HPDup");
+                    }
                 }
                 for(int i=0; i< sliceHeights.length; i++)
-                    summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
+                        summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
             }
 
             if (outputFormat == OutputFormat.TAB) {
@@ -365,6 +372,13 @@ public class TimeSlicer {
         XML
     }
 
+    enum BranchSet {
+        ALL,
+        INT,
+        EXT,
+        BACKBONE
+    }
+
     public static <T extends Enum<T>> String[] enumNamesToStringArray(T[] values) {
         int i = 0;
         String[] result = new String[values.length];
@@ -432,7 +446,12 @@ public class TimeSlicer {
                     StringBuffer sb = new StringBuffer();
                     sb.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(KMLCoordinates.NEWLINE);
-                    tabOutput.append(sliceValue+"\t");
+                    tabOutput.append(traits[traitIndex]+"\t");
+                    if (mostRecentSamplingDate > 0) {
+                        tabOutput.append((mostRecentSamplingDate - sliceValue)+"\t");
+                    } else {
+                        tabOutput.append(sliceValue+"\t");
+                    }
                     sb.append(String.format(KMLCoordinates.FORMAT,
                             trace.getMean())).append(KMLCoordinates.SEPERATOR);
                     tabOutput.append(String.format(KMLCoordinates.FORMAT,
@@ -671,7 +690,7 @@ public class TimeSlicer {
 
     private void readAndAnalyzeTrees(String treeFileName, int burnin,
                                      String[] traits, double[] slices,
-                                     boolean impute, boolean trueNoise, Normalization normalize)
+                                     boolean impute, boolean trueNoise, Normalization normalize, boolean divideByBranchLength, BranchSet branchset, Set backboneTaxa)
             throws IOException, Importer.ImportException {
 
         int totalTrees = 10000;
@@ -698,7 +717,7 @@ public class TimeSlicer {
             Tree treeTime = importer1.importNextTree();
             treesRead++;
             if (totalTrees > burnin)
-                analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize);
+                analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize, divideByBranchLength, branchset, backboneTaxa);
 
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
@@ -749,6 +768,16 @@ public class TimeSlicer {
             return result;
         }
 
+        public void multiplyBy(double factor) {
+            if (!isMultivariate) {
+                obj = ((Double)obj * factor);
+            } else {
+                for(int i=0; i<array.length; i++) {
+                    array[i] = ((Double)array[i]*factor);
+                }
+            }
+        }
+
         private Object obj;
         private Object[] array;
         private boolean isMultivariate = false;
@@ -788,8 +817,33 @@ public class TimeSlicer {
         resultsStream.print(sb);
     }
 
+    private static boolean onBackbone(Tree tree, NodeRef node, Set targetSet) {
+
+        if (tree.isExternal(node)) return false;
+
+        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        int size = leafSet.size();
+
+        leafSet.retainAll(targetSet);
+
+        if (leafSet.size() > 0) {
+
+            // if all leaves below are in target then check just above.
+                if (leafSet.size() == size) {
+
+                    Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                    superLeafSet.removeAll(targetSet);
+
+                    // the branch is on ancestral path if the super tree has some non-targets in it
+                return (superLeafSet.size() > 0);
+
+            } else return true;
+
+        } else return false;
+     }
+
     private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute,
-                             boolean trueNoise, Normalization normalize) {
+                             boolean trueNoise, Normalization normalize, boolean divideByBranchlength, BranchSet branchset, Set backboneTaxa) {
 
         double[][] precision = null;
 
@@ -840,6 +894,20 @@ public class TimeSlicer {
                 double nodeHeight = treeTime.getNodeHeight(node);
                 double parentHeight = treeTime.getNodeHeight(treeTime.getParent(node));
 
+                double branchlength = 1.0;
+                if (divideByBranchlength) {
+                    branchlength = treeTime.getBranchLength(node);
+                }
+
+                boolean proceed = false;
+                if (branchset == BranchSet.ALL && treeTime.isExternal(node)) {
+                    proceed = true;
+                } else if (branchset == BranchSet.INT && !treeTime.isExternal(node)) {
+                    proceed = true;
+                } else if (branchset == BranchSet.BACKBONE && onBackbone(treeTime, node, backboneTaxa)) {
+                    proceed = true; 
+                }
+
 //  employed to get dispersal rates across the whole tree
 //                if (containsLocation){
 //
@@ -856,14 +924,17 @@ public class TimeSlicer {
                         if (!doSlices ||
                                 (slices[i] <= nodeHeight)
                                 ) {
-                            treeSliceTime[i] += (parentHeight-nodeHeight);
-                            //TreeModel model = new TreeModel(treeTime, true);
-                            //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
-                            Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
-                            Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
-                            treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
-                            treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
-                            //treeSliceBranchCount[i] ++;
+                            if (proceed) {
+
+                                treeSliceTime[i] += (parentHeight-nodeHeight);
+                                //TreeModel model = new TreeModel(treeTime, true);
+                                //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
+                                Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
+                                Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
+                                treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
+                                treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
+                                //treeSliceBranchCount[i] ++;
+                            }
                         }
                     }
 
@@ -871,48 +942,52 @@ public class TimeSlicer {
                             (slices[i] >= nodeHeight && slices[i] < parentHeight)
                             ) {
 
-                        List<List<Trait>> thisSlice = values.get(i);
-                        for (int j = 0; j < traitCount; j++) {
+                        if (proceed) {
 
-                            List<Trait> thisTraitSlice = thisSlice.get(j);
-                            Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
-                            if (tmpTrait == null) {
-                                System.err.println("Trait '" + traits[j] + "' not found on branch.");
-                                System.exit(-1);
-                            }
-                            Trait trait = new Trait(tmpTrait);
-                            if (impute) {
-                                Double rateAttribute = (Double) treeTime.getNodeAttribute(node, RATE_STRING);
-                                double rate = 1.0;
-                                if (rateAttribute != null) {
-                                    rate = rateAttribute;
-                                    if (outputRateWarning) {
-                                        progressStream.println("Warning: using a rate attribute during imputation!");
-                                        outputRateWarning = false;
-                                    }
-                                }
-                                if (trueNoise && precision == null) {
-                                    progressStream.println("Error: not precision available for imputation with correct noise!");
+                            List<List<Trait>> thisSlice = values.get(i);
+                            for (int j = 0; j < traitCount; j++) {
+
+                                List<Trait> thisTraitSlice = thisSlice.get(j);
+                                Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
+                                if (tmpTrait == null) {
+                                    System.err.println("Trait '" + traits[j] + "' not found on branch.");
                                     System.exit(-1);
                                 }
-                                trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
-                                        slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
-                            }
-                            thisTraitSlice.add(trait);
+                                Trait trait = new Trait(tmpTrait);
+                                trait.multiplyBy(1.0/branchlength);
+                                if (impute) {
+                                    Double rateAttribute = (Double) treeTime.getNodeAttribute(node, RATE_STRING);
+                                    double rate = 1.0;
+                                    if (rateAttribute != null) {
+                                        rate = rateAttribute;
+                                        if (outputRateWarning) {
+                                            progressStream.println("Warning: using a rate attribute during imputation!");
+                                            outputRateWarning = false;
+                                        }
+                                    }
+                                    if (trueNoise && precision == null) {
+                                        progressStream.println("Error: not precision available for imputation with correct noise!");
+                                        System.exit(-1);
+                                    }
+                                    trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
+                                            slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                }
+                                thisTraitSlice.add(trait);
 
-                            //if trait is location
-                            if (sdr){
-                                treeSliceTime[i] += (parentHeight-slices[i]);
-                                Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
-                                treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
-                                treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i])))*(parentHeight-slices[i]);
-                                //treeSliceBranchCount[i] ++;
-                                double tempDistanceFromRoot =  getDistanceFromRoot(treeTime,traits[j],trait.getValue());
-                                if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
-                                    maxDistanceFromRoot[i] = tempDistanceFromRoot;
-                                    treeSliceMaxDistance[i] = getPathDistance(treeTime,node,traits[j],trait.getValue());
-                                    //putting this below here ensures that treeTimeFromRoot is never < 0
-                                    treeTimeFromRoot[i] = treeTime.getNodeHeight(treeTime.getRoot()) - slices[i];
+                                //if trait is location
+                                if (sdr){
+                                    treeSliceTime[i] += (parentHeight-slices[i]);
+                                    Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
+                                    treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
+                                    treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i])))*(parentHeight-slices[i]);
+                                    //treeSliceBranchCount[i] ++;
+                                    double tempDistanceFromRoot =  getDistanceFromRoot(treeTime,traits[j],trait.getValue());
+                                    if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
+                                        maxDistanceFromRoot[i] = tempDistanceFromRoot;
+                                        treeSliceMaxDistance[i] = getPathDistance(treeTime,node,traits[j],trait.getValue());
+                                        //putting this below here ensures that treeTimeFromRoot is never < 0
+                                        treeTimeFromRoot[i] = treeTime.getNodeHeight(treeTime.getRoot()) - slices[i];
+                                    }
                                 }
                             }
                         }
@@ -990,6 +1065,7 @@ public class TimeSlicer {
     private int treesAnalyzed = 0;
     private double mostRecentSamplingDate;
     private ContourMode contourMode;
+
 //  employed to get dispersal rates across the whole tree
 //    private static boolean containsLocation = false;
 //    private static ArrayList dispersalrates = new ArrayList();
@@ -1367,6 +1443,29 @@ public class TimeSlicer {
         return returnArray;
     }
 
+    private static Set getTargetSet(String x) {
+        Set targetSet = null;
+        targetSet = new HashSet();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(x));
+            try {
+                String line = reader.readLine().trim();
+                while (line != null && !line.equals("")) {
+                    targetSet.add(line);
+                    line = reader.readLine();
+                    if (line != null) line = line.trim();
+                    }
+                }
+            catch (IOException io) {
+                System.err.println("Error reading " + x);
+            }
+        }
+        catch (FileNotFoundException a) {
+            System.err.println("Error finding " + x);
+            }
+        return targetSet;
+    }
+
     public static void main(String[] args) throws IOException {
 
         String inputFileName = null;
@@ -1385,6 +1484,9 @@ public class TimeSlicer {
         String outputFileSDR = null;
         boolean getSDR = false;
         String progress = null;
+        boolean branchNormalization = false;
+        BranchSet set = BranchSet.ALL;
+        Set backboneTaxa = null;
 
 
 //        if (args.length == 0) {
@@ -1419,6 +1521,11 @@ public class TimeSlicer {
                                 "tree normalization [default = length"),
                         new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
                         new Arguments.StringOption(PROGRESS,"progress report","reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
+                        new Arguments.StringOption(BRANCH_NORMALIZE, falseTrue, false,
+                                "devide a branch trait by branch length (can be useful for 'rewards' [default = false]"),
+                        new Arguments.StringOption(BRANCHSET, TimeSlicer.enumNamesToStringArray(BranchSet.values()),false,
+                                "branch set [default = all]"),
+                        new Arguments.StringOption(BACKBONETAXA, "Backbone taxa file", "specifies a file with taxa that define the backbone"),
 
                 });
 
@@ -1536,6 +1643,10 @@ public class TimeSlicer {
             if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)
                 impute = true;
 
+            String branchNormString = arguments.getStringOption(BRANCH_NORMALIZE);
+            if (branchNormString != null && branchNormString.compareToIgnoreCase("true") == 0)
+                branchNormalization = true;
+
             String noiseString = arguments.getStringOption(NOISE);
             if (noiseString != null && noiseString.compareToIgnoreCase("false") == 0)
                 trueNoise = false;
@@ -1572,6 +1683,19 @@ public class TimeSlicer {
                 progress = progressString;
             }
 
+            String branch = arguments.getStringOption(BRANCHSET);
+            if (branch != null) {
+                set = BranchSet.valueOf(branch.toUpperCase());
+            }
+            if (set == set.BACKBONE) {
+                if (arguments.hasOption(BACKBONETAXA)) {
+                    backboneTaxa = getTargetSet(arguments.getStringOption(BACKBONETAXA));
+                } else {
+                    System.err.println("you want to summarize the backbone, but have no taxa to define it??");
+                }
+            }
+
+
         } catch (Arguments.ArgumentException e) {
             progressStream.println(e);
             printUsage(arguments);
@@ -1600,7 +1724,7 @@ public class TimeSlicer {
         }
 
         TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceHeights, impute,
-                trueNoise, mrsd, contourMode, normalize, getSDR, progress);
+                trueNoise, mrsd, contourMode, normalize, getSDR, progress, branchNormalization, set, backboneTaxa);
         timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
 
         System.exit(0);

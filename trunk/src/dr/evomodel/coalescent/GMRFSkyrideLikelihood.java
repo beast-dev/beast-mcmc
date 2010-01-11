@@ -82,6 +82,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected double[] sufficientStatistics;
 	protected double[] storedSufficientStatistics;
 
+    private double logFieldLikelihood;
+    private double storedLogFieldLikelihood;
+
 	protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
 	protected MatrixParameter dMatrix;
@@ -183,11 +186,20 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	public double getLogLikelihood() {
 		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
+			logLikelihood = calculateLogCoalescentLikelihood();
+            logFieldLikelihood = calculateLogFieldLikelihood();
 			likelihoodKnown = true;
 		}
-		return logLikelihood;
+		return logLikelihood + logFieldLikelihood;
 	}
+
+    protected double peakLogCoalescentLikelihood() {
+        return logLikelihood;
+    }
+
+    protected double peakLogFieldLikelihood() {
+        return logFieldLikelihood;
+    }
 
 	public double[] getSufficientStatistics() {
 		return sufficientStatistics;
@@ -317,6 +329,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
 		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
 		storedWeightMatrix = weightMatrix.copy();
+        storedLogFieldLikelihood = logFieldLikelihood;
 	}
 
 
@@ -325,6 +338,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
 		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
 		weightMatrix = storedWeightMatrix;
+        logFieldLikelihood = storedLogFieldLikelihood;
 
 	}
 
@@ -336,8 +350,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	/**
 	 * Calculates the log likelihood of this set of coalescent intervals,
 	 * given a demographic model.
+     * @return coalescent part of density
 	 */
-	public double calculateLogLikelihood() {
+	private double calculateLogCoalescentLikelihood() {
 
 		if (!intervalsKnown) {
 			// intervalsKnown -> false when handleModelChanged event occurs in super.
@@ -348,71 +363,42 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		// Matrix operations taken from block update sampler to calculate data likelihood and field prior
 
 		double currentLike = 0;
-		DenseVector diagonal1 = new DenseVector(fieldLength);
-		DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+        double[] currentGamma = popSizeParameter.getParameterValues();
 
 		for (int i = 0; i < fieldLength; i++) {
-			currentLike += -currentGamma.get(i) - sufficientStatistics[i] * Math.exp(-currentGamma.get(i));
+			currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
 		}
-		
-		SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
-		currentQ.mult(currentGamma, diagonal1);
-
-//        currentLike += 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
-
-		currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
-		if (lambdaParameter.getParameterValue(0) == 1) {
-			currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
-		} else {
-			currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
-		}
-	
-/*
-
-WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)
-
-model {
-
-    stat1 ~ dexp(rate[1])
-    stat2 ~ dexp(rate[2])
-    stat3 ~ dexp(rate[3])
-
-    rate[1] <- 1 / exp(theta[1])
-    rate[2] <- 1 / exp(theta[2])
-    rate[3] <- 1 / exp(theta[3])
-
-    theta[1] ~ dnorm(0, 0.001)
-    theta[2] ~ dnorm(theta[1], weight[1])
-    theta[3] ~ dnorm(theta[2], weight[2])
-
-    weight[1] <- tau / 1.0
-    weight[2] <- tau / 1.5
-
-    tau ~ dgamma(1,0.3333)
-
-    stat1 <- 9 / 2
-    stat2 <- 6 / 2
-    stat3 <- 4 / 2
-
-}
-
-*/
-		/*
-		 * This is a hard code for a normal prior on log(population size)
-		 * 
-		 * 8/14/08 Didn't really help much, but I left it in here in case we need it later 
-		 */
-
-//		double  realMean = 10000;
-//		double  realStandardDeviation = 100000;
-//		double  realVariance = realStandardDeviation*realStandardDeviation;
-//		
-//		double sigma2 = Math.log(realVariance/(realMean*realMean) + 1);
-//		double mu = Math.log(realMean) - 0.5*sigma2;
-//		double sigma = Math.sqrt(sigma2);
 
 		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
 	}
+
+    private double calculateLogFieldLikelihood() {
+
+        if (!intervalsKnown) {
+            // intervalsKnown -> false when handleModelChanged event occurs in super.
+            setupIntervals();
+            setupGMRFWeights();
+        }
+
+        double currentLike = 0;
+        DenseVector diagonal1 = new DenseVector(fieldLength);
+        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+
+        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
+        currentQ.mult(currentGamma, diagonal1);
+
+//        currentLike += 0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1);
+
+        currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
+        if (lambdaParameter.getParameterValue(0) == 1) {
+            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+        } else {
+            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
+        }
+
+        return currentLike;
+    }
+
 
 	public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
 		//Set up the eigenvalue solver
@@ -587,6 +573,34 @@ model {
 				AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
 		};
 	};
+}
 
+/*
+
+WinBUGS code to fixed tree:  (A:4.0,(B:2.0,(C:0.5,D:1.0):1.0):2.0)
+
+model {
+
+    stat1 ~ dexp(rate[1])
+    stat2 ~ dexp(rate[2])
+    stat3 ~ dexp(rate[3])
+
+    rate[1] <- 1 / exp(theta[1])
+    rate[2] <- 1 / exp(theta[2])
+    rate[3] <- 1 / exp(theta[3])
+
+    theta[1] ~ dnorm(0, 0.001)
+    theta[2] ~ dnorm(theta[1], weight[1])
+    theta[3] ~ dnorm(theta[2], weight[2])
+
+    weight[1] <- tau / 1.0
+    weight[2] <- tau / 1.5
+
+    tau ~ dgamma(1,0.3333)
+
+    stat1 <- 9 / 2
+    stat2 <- 6 / 2
+    stat3 <- 4 / 2
 
 }
+*/

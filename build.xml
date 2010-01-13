@@ -331,7 +331,7 @@
                     <include name="test/dr/evomodel/substmodel/**/LinearBiasTest.java" />
                     <include name="test/dr/evomodel/substmodel/**/MsatFullLikelihoodTest.java" />
 					<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
-                    <include name="test/dr/evomodel/substmodel/**/TwoPhaseModel.java" />
+                    <include name="test/dr/evomodel/substmodel/**/TwoPhaseModelTest.java" />
 					<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
 					<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
 					<include name="test/dr/evomodel/operators/**/NNITest.java" />

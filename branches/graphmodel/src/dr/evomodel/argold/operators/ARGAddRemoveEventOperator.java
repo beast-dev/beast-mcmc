@@ -246,7 +246,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
             		 }
             		 
-            		 logHastings -= LOG_TWO;
             	 }else{
             		 if(splitBifurcationLeftParent && splitReassortLeftParent){
             			 bifurcationChild.leftParent = newReassortment;
@@ -265,7 +264,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 		 }else{
                 			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
                 		 }
-            			 logHastings -= LOG_TWO;
             		   
             		 }else if(splitBifurcationLeftParent){
             			 //bifurcation on left, reassortment on right
@@ -369,8 +367,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                 		 }else{
                 			 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
                 		 }
-            			 
-            			 logHastings -= LOG_TWO; 
             			
             		 }
             	 }
@@ -427,8 +423,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
             	 }else{
             		 bifurcationSplitParent.leftChild = bifurcationSplitParent.rightChild = newBifurcation;
             	 }
-            	 
-            	 
             	 
              }
              
@@ -517,6 +511,10 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         	
         }
 
+        if(newReassortment.leftParent == newReassortment.rightParent){
+        	logHastings -= Math.log(2.0);
+        }
+        
 
         arg.pushTreeSizeChangedEvent();
 
@@ -532,13 +530,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         assert nodeCheck();
 
         logHastings -= Math.log((double) findPotentialNodesToRemove(null));
-//		logHastings -= Math.log((double)arg.getReassortmentNodeCount());
-
-//		if (newReassortment.leftParent != newReassortment.rightParent){
-//			if(newReassortment.leftParent.bifurcation
-//				&& newReassortment.rightParent.bifurcation) 
-//				logHastings -= LOG_TWO;
-//		}
 
         assert nodeCheck();
 
@@ -548,10 +539,6 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         		&& newReassortment.leftParent != newReassortment.rightParent){
         	logHastings -= LOG_TWO;
         }
-        
-        //You're done, return the hastings ratio!
-
-//		System.out.println(logHastings);
         
         logHastings += getPartitionAddHastingsRatio(newReassortment.partitioning.getParameterValues());
 
@@ -855,46 +842,19 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         double afterTreeHeight = arg.getNodeHeight(arg.getRoot());
 
-//		This is the ugly mixture proposal
-//		double meanRoot = 4.0 / afterTreeHeight;
-//		double case1 = 0.95;
-//		
-//		if(beforeBifurcationHeight < afterTreeHeight){
-//			logHastings -= 2.0*Math.log(afterTreeHeight) - Math.log(2.0*case1);
-//		}else{
-//			double additional = beforeBifurcationHeight - afterTreeHeight;
-//			logHastings -= Math.log(afterTreeHeight) + additional*meanRoot - 
-//				Math.log((1-case1)*meanRoot);
-//		}
-
         double theta = probBelowRoot / afterTreeHeight;
 
         logHastings -= theta * (beforeBifurcationHeight + beforeReassortmentHeight) - LOG_TWO
                 - 2.0 * Math.log(theta) + Math.log(1 - Math.exp(-2.0 * afterTreeHeight * theta));
-
-
         
 
         logHastings -= Math.log((double) findPotentialAttachmentPoints(beforeBifurcationHeight, null)
                 * findPotentialAttachmentPoints(beforeReassortmentHeight, null));
 
-
         logHastings -= getPartitionAddHastingsRatio(removePartitioningValues);
 
         logHastings -= LOG_TWO;
 
-//        if (!beforeBifurcationChild.bifurcation &&
-//                arg.getNodeHeight(beforeBifurcationChild.leftParent) > beforeBifurcationHeight &&
-//                arg.getNodeHeight(beforeBifurcationChild.rightParent) > beforeBifurcationHeight) {
-//            logHastings -= LOG_TWO;
-//
-//        }
-
-//        if (!beforeReassortChild.bifurcation &&
-//                arg.getNodeHeight(beforeReassortChild.leftParent) > beforeReassortmentHeight &&
-//                arg.getNodeHeight(beforeReassortChild.rightParent) > beforeReassortmentHeight) {
-//            logHastings -= LOG_TWO;
-//        }
         assert nodeCheck();
         assert !Double.isNaN(logHastings) && !Double.isInfinite(logHastings);
 

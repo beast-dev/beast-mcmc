@@ -95,7 +95,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		possibleSwaps.clear();
 		findAllNarrowSwaps(possibleSwaps);
-
+		
 		return Math.log((double) possibleSwapsBefore / possibleSwaps.size());
 	}
 
@@ -103,16 +103,25 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		for (int i = 0, n = arg.getInternalNodeCount(); i < n; i++) {
 			Node x = (Node) arg.getInternalNode(i);
-			if (x.bifurcation && !x.isRoot() && x.leftParent.bifurcation) {
-				NarrowSwap a = new NarrowSwap(x.leftChild, x, x.leftParent);
-				NarrowSwap b = new NarrowSwap(x.rightChild, x, x.leftParent);
+			if (x.bifurcation && !x.isRoot()){
+				Node xParent = x.leftParent;
+				
+				if(xParent.bifurcation && 
+						xParent.leftChild != x.leftChild  &&
+						xParent.leftChild != x.rightChild &&
+						xParent.rightChild != x.leftChild &&
+						xParent.rightChild != x.rightChild){
+					NarrowSwap a = new NarrowSwap(x.leftChild, x, x.leftParent);
+					NarrowSwap b = new NarrowSwap(x.rightChild, x, x.leftParent);
 
-				if (a.isValid())
-					moves.add(a);
-				if (b.isValid())
-					moves.add(b);
+					if (a.isValid())
+						moves.add(a);
+					if (b.isValid())
+						moves.add(b);
+				}
 			}
 		}
+		
 		return moves.size();
 	}
 
@@ -203,11 +212,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 	private double bifurcationSwap(NodeRef x) {
 		Node startNode = (Node) x;
 
-//		Node keepChild = startNode.leftChild;
 		Node moveChild = startNode.rightChild;
 
 		if (MathUtils.nextBoolean()) {
-//			keepChild = moveChild;
 			moveChild = startNode.leftChild;
 		}
 
@@ -217,16 +224,13 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		assert !possibleNodes.contains(startNode);
 		assert possibleNodes.size() > 0;
-
-
+		
 		Node swapNode = (Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
 		Node swapNodeParent = swapNode.leftParent;
-
 
 		arg.beginTreeEdit();
 
 		String before = arg.toARGSummary();
-
 
 		if (swapNode.bifurcation) {
 			swapNodeParent = swapNode.leftParent;
@@ -318,9 +322,12 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 			System.err.println(ite.getMessage());
 			System.exit(-1);
 		}
-
+		
+		
+		
 		return 0;
 	}
+	
 
 	private double reassortmentSwap(NodeRef x) {
 		Node startNode = (Node) x;
@@ -459,11 +466,10 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 			System.err.println(ite.getMessage());
 			System.exit(-1);
 		}
-
-
+		
 		return 0;
 	}
-
+	
 	private void setupBifurcationNodes(ArrayList<NodeRef> list) {
 		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
 			NodeRef x = arg.getNode(i);

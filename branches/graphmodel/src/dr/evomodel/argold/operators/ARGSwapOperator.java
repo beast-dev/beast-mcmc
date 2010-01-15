@@ -103,23 +103,19 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		for (int i = 0, n = arg.getInternalNodeCount(); i < n; i++) {
 			Node x = (Node) arg.getInternalNode(i);
-			if (x.bifurcation && !x.isRoot()){
-				Node xParent = x.leftParent;
-				
-				if(xParent.bifurcation && 
-						xParent.leftChild != x.leftChild  &&
-						xParent.leftChild != x.rightChild &&
-						xParent.rightChild != x.leftChild &&
-						xParent.rightChild != x.rightChild){
-					NarrowSwap a = new NarrowSwap(x.leftChild, x, x.leftParent);
-					NarrowSwap b = new NarrowSwap(x.rightChild, x, x.leftParent);
+			if (x.bifurcation && !x.isRoot() && x.leftParent.bifurcation){
+				NarrowSwap a = new NarrowSwap(x.leftChild, x, x.leftParent);
+				NarrowSwap b = new NarrowSwap(x.rightChild, x, x.leftParent);
 
-					if (a.isValid())
-						moves.add(a);
-					if (b.isValid())
-						moves.add(b);
-				}
+				if (a.isValid())
+					moves.add(a);
+				if (b.isValid())
+					moves.add(b);
 			}
+		}
+		
+		if(moves.size() == 0){
+			throw new RuntimeException();
 		}
 		
 		return moves.size();

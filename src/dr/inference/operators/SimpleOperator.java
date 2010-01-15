@@ -1,9 +1,7 @@
 /**
  *
  */
-package dr.evomodel.operators;
-
-import dr.inference.operators.MCMCOperator;
+package dr.inference.operators;
 
 /**
  * @author Sebastian Hoehna

@@ -9,6 +9,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import dr.xml.*;

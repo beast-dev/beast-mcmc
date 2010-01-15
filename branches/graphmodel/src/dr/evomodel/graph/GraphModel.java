@@ -136,7 +136,6 @@ public class GraphModel extends TreeModel {
 	           addVariable(tmp[i].heightParameter);
 	           tmp[i].setupHeightBounds();
 	    	   freeNodes.addFirst(tmp[i].getNumber());
-	    	   storedFreeNodes.addFirst(tmp[i].getNumber()); // this is generic storage unrelated to logical state, so add it to the backup state also
 	       }
 	       for(int i=storedNodes.length; i<tmp2.length; i++)
 	       {
@@ -195,7 +194,7 @@ public class GraphModel extends TreeModel {
        if(!n.hasNoChildren()||n.parent!=null||n.parent2!=null){
     	   throw new RuntimeException("Deleted node is linked to others!");
        }
-       freeNodes.push(n.getNumber());
+       freeNodes.addLast(n.getNumber());
        internalNodeCount--;
        nodeCount--;
        // remove from list of active nodes
@@ -245,7 +244,6 @@ public class GraphModel extends TreeModel {
    
    int storedINC = -1;
    int storedNC = -1;
-   LinkedList<Integer> storedFreeNodes = new LinkedList<Integer>();
    ArrayList<Integer> storedActiveNodeNumbers = new ArrayList<Integer>();
    LinkedList<Integer> nodeChanges = new LinkedList<Integer>();
    protected void storeState() {
@@ -253,7 +251,6 @@ public class GraphModel extends TreeModel {
 	   nodeChanges.clear();
 	   storedINC = internalNodeCount;
 	   storedNC = nodeCount;
-	   equalizeLists(freeNodes, storedFreeNodes);
 	   storedActiveNodeNumbers.clear();
 	   storedActiveNodeNumbers.addAll(activeNodeNumbers);
    }
@@ -261,7 +258,6 @@ public class GraphModel extends TreeModel {
 	   super.restoreState();
 	   internalNodeCount = storedINC;
 	   nodeCount = storedNC;
-	   equalizeLists(storedFreeNodes, freeNodes);
 	   ArrayList<Integer> tmp = activeNodeNumbers;
 	   activeNodeNumbers = storedActiveNodeNumbers;
 	   storedActiveNodeNumbers = tmp;
@@ -270,8 +266,11 @@ public class GraphModel extends TreeModel {
 		   Integer ii = nodeChanges.removeLast();
 		   if(ii<0){
 			   modifyExportedParameters((GraphModel.Node)nodes[-ii],true);
-		   }else
+			   freeNodes.removeLast();
+		   }else{
 			   modifyExportedParameters((GraphModel.Node)nodes[ii],false);
+			   freeNodes.add(ii);
+		   }
 	   }
    }
 

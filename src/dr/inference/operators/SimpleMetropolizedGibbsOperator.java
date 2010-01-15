@@ -6,7 +6,6 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.prior.Prior;
-import dr.inference.operators.SimpleOperator;
 
 import java.util.logging.Logger;
 
@@ -19,7 +18,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
      *
      */
     public SimpleMetropolizedGibbsOperator() {
-        // TODO Auto-generated constructor stub
+        // Do nothing
     }
 
     public abstract double doOperation(Prior prior, Likelihood likelihood)

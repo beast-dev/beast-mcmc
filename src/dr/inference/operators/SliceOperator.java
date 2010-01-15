@@ -7,6 +7,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.util.Attribute;
 import dr.math.distributions.NormalDistribution;
+import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +32,18 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
             throw new RuntimeException("Generic slice sampler is currently for univariate parameters only");
         }        
         this.variable = variable;
+        sliceInterval.setSliceSampler(this);
+    }
+
+    public Variable<Double> getVariable() {
+        return variable;
     }
 
     public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
-        double newValue = sliceInterval.drawFromInterval(this, 1.0, width);
-        variable.setValue(0, newValue);
+        double logPosterior = evaluate(likelihood, prior);
+        double cutoffDensity = logPosterior + MathUtils.randomLogDouble();
+        sliceInterval.drawFromInterval(prior, likelihood, cutoffDensity, width);
+        // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
         return 0;
     }
 
@@ -50,14 +58,14 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
     public static void main(String[] arg) {
 
         // Define normal model
-        Parameter mean = new Parameter.Default(1.0); // Starting value
+        Parameter meanParameter = new Parameter.Default(1.0); // Starting value
         Variable<Double> stdev = new Variable.D(1.0, 1); // Fixed value
-        ParametricDistributionModel densityModel = new NormalDistributionModel(mean, stdev);
+        ParametricDistributionModel densityModel = new NormalDistributionModel(meanParameter, stdev);
         DistributionLikelihood likelihood = new DistributionLikelihood(densityModel);
 
         // Define prior
         DistributionLikelihood prior = new DistributionLikelihood(new NormalDistribution(0.0, 1.0)); // Hyper-priors
-        prior.addData(mean);
+        prior.addData(meanParameter);
 
         // Define data
         likelihood.addData(new Attribute.Default<double[]>("Data", new double[] {0.0, 1.0, 2.0}));
@@ -66,10 +74,11 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         list.add(likelihood);
         list.add(prior);
         CompoundLikelihood posterior = new CompoundLikelihood(0, list);
-        SliceOperator sliceSampler = new SliceOperator(mean);
+        SliceOperator sliceSampler = new SliceOperator(meanParameter);
 
-        final int length = 1000;
-        double total = 0;
+        final int length = 10000;
+        double mean = 0;
+        double variance = 0;
 
         for(int i = 0; i < length; i++) {
             try {
@@ -77,9 +86,15 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
             } catch (OperatorFailedException e) {
                 System.err.println(e.getMessage());
             }
-            total += mean.getValue(0);
+            double x = meanParameter.getValue(0);
+            mean += x;
+            variance += x*x;
         }
-        System.out.println("E(x) = "+(total/length));
+        mean /= length;
+        variance /= length;
+        variance -= mean*mean;
+        System.out.println("E(x) = "+mean);
+        System.out.println("V(x) = "+variance);
     }
 
     private final SliceInterval sliceInterval;

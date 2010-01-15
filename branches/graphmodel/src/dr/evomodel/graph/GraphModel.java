@@ -156,19 +156,8 @@ public class GraphModel extends TreeModel {
        pushTreeChangedEvent(newNode);	// push a changed event onto the stack
 
        // add height, rate, and trait parameters
-       // FIXME: do these parameters need to be created with default values?
-       if(nhp!=null){ 
-    	   for(CompoundParameter cp : nhp){
-    		   cp.addParameter(newNode.heightParameter);
-    	   }
-       }
-       if(nrp!=null&&newNode.rateParameter!=null) nrp.addParameter(newNode.rateParameter);
-       if(ntp!=null) {
-           for (Map.Entry<String, Parameter> entry : newNode.getTraitMap().entrySet()) {
-        	   ntp.addParameter(entry.getValue());
-           }
-       }
-       
+       modifyExportedParameters(newNode, true);
+       nodeChanges.add(newNode.getNumber());	// record addition of node
        return newNode;
    }
    
@@ -218,17 +207,8 @@ public class GraphModel extends TreeModel {
        }
        
        // remove from height, rate, and trait parameters
-       if(nhp!=null){ 
-    	   for(CompoundParameter cp : nhp){
-    		   cp.removeParameter(n.heightParameter);
-    	   }
-       }
-       if(nrp!=null&&n.rateParameter!=null) nrp.removeParameter(n.rateParameter);
-       if(ntp!=null) {
-           for (Map.Entry<String, Parameter> entry : n.getTraitMap().entrySet()) {
-        	   ntp.removeParameter(entry.getValue());
-           }
-       }
+       modifyExportedParameters(n, false);
+       nodeChanges.add(-n.getNumber());	// record removal of node
 
        pushTreeChangedEvent(n);	// push a changed event onto the stack
    }
@@ -267,8 +247,10 @@ public class GraphModel extends TreeModel {
    int storedNC = -1;
    LinkedList<Integer> storedFreeNodes = new LinkedList<Integer>();
    ArrayList<Integer> storedActiveNodeNumbers = new ArrayList<Integer>();
+   LinkedList<Integer> nodeChanges = new LinkedList<Integer>();
    protected void storeState() {
 	   super.storeState();
+	   nodeChanges.clear();
 	   storedINC = internalNodeCount;
 	   storedNC = nodeCount;
 	   equalizeLists(freeNodes, storedFreeNodes);
@@ -283,6 +265,37 @@ public class GraphModel extends TreeModel {
 	   ArrayList<Integer> tmp = activeNodeNumbers;
 	   activeNodeNumbers = storedActiveNodeNumbers;
 	   storedActiveNodeNumbers = tmp;
+	   // undo each allocation or deallocation
+	   while(nodeChanges.size()>0){
+		   Integer ii = nodeChanges.removeLast();
+		   if(ii<0){
+			   modifyExportedParameters((GraphModel.Node)nodes[-ii],true);
+		   }else
+			   modifyExportedParameters((GraphModel.Node)nodes[ii],false);
+	   }
+   }
+
+   private void modifyExportedParameters(Node n, boolean add){
+       if(nhp!=null){ 
+    	   for(CompoundParameter cp : nhp){
+    		   if(add){
+    			   cp.addParameter(n.heightParameter);
+    		   }else{
+    			   cp.removeParameter(n.heightParameter);
+    		   }
+    	   }
+       }
+       if(nrp!=null&&n.rateParameter!=null&&add) nrp.addParameter(n.rateParameter);
+       if(nrp!=null&&n.rateParameter!=null&&!add) nrp.removeParameter(n.rateParameter);
+       if(ntp!=null) {
+           for (Map.Entry<String, Parameter> entry : n.getTraitMap().entrySet()) {
+    		   if(add){
+    			   ntp.addParameter(entry.getValue());
+    		   }else{
+    			   ntp.removeParameter(entry.getValue());
+    		   }
+           }
+       }
    }
 
    static private void equalizeLists(LinkedList<Integer> src, LinkedList<Integer> dest){

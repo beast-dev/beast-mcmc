@@ -6,7 +6,7 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.prior.Prior;
-import dr.evomodel.operators.SimpleOperator;
+import dr.inference.operators.SimpleOperator;
 
 import java.util.logging.Logger;
 
@@ -35,7 +35,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
     /*
       * (non-Javadoc)
       *
-      * @see dr.evomodel.operators.SimpleOperator#getOperatorName()
+      * @see dr.inference.operators.SimpleOperator#getOperatorName()
       */
     @Override
     public abstract String getOperatorName();

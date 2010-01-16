@@ -32,12 +32,13 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
 import dr.inference.operators.CombinedOperatorSchedule;
+import dr.inference.operators.OperatorAnalysisPrinter;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.xml.*;
-import org.apache.commons.math.distribution.BetaDistributionImpl;
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.BetaDistributionImpl;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -50,20 +51,20 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
     public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps,
 //                                       boolean linear, boolean lacing,
-                                       PathScheme scheme,
-                                       PathLikelihood pathLikelihood,
-                                       OperatorSchedule schedule,
-                                       MCLogger logger) {
+PathScheme scheme,
+PathLikelihood pathLikelihood,
+OperatorSchedule schedule,
+MCLogger logger) {
 
         this.id = id;
         this.chainLength = chainLength;
         this.pathSteps = pathSteps;
         this.scheme = scheme;
-
+        this.schedule = schedule;
         // depricated
 //        this.linear = (scheme == PathScheme.LINEAR);
 //        this.lacing = false; // Was not such a good idea
-       
+
         this.burninLength = burninLength;
 
         MCMCCriterion criterion = new MCMCCriterion();
@@ -74,7 +75,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.pathLikelihood = pathLikelihood;
         pathLikelihood.setPathParameter(pathParameter);
 
-        mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, 0, false);
+        mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, 0, true);
 
         this.logger = logger;
     }
@@ -113,18 +114,20 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             if (step == 0) {
                 pathParameter = 1.0;
             } else if (step + 1 < pathSteps) {
-                double ratio = (double) step / (double) (pathSteps-1);
+                double ratio = (double) step / (double) (pathSteps - 1);
                 try {
                     pathParameter = 1.0 - betaDistribution.inverseCumulativeProbability(ratio);
-                } catch(MathException e){
-                    e.printStackTrace(); 
+                } catch (MathException e) {
+                    e.printStackTrace();
                 }
             } else {
                 pathParameter = 0.0;
             }
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            mc.runChain(chainLength + burnin, false/*, 0*/);           
+            mc.runChain(chainLength + burnin, false/*, 0*/);
+            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            ((CombinedOperatorSchedule) schedule).reset();
         }
     }
 
@@ -241,8 +244,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 //            else
 //                geometricIntegration();
 //        }
-        
-        switch(scheme) {
+
+        switch (scheme) {
             case LINEAR:
                 linearIntegration();
                 break;
@@ -291,7 +294,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
          */
         public void finished(int chainLength) {
             currentState = chainLength;
-
+            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
 //            logger.log(currentState);
             logger.stopLogging();
         }
@@ -351,7 +354,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             }
 
             // deciprated
-            boolean linear = xo.getAttribute(LINEAR,true);
+            boolean linear = xo.getAttribute(LINEAR, true);
 //            boolean lacing = xo.getAttribute(LACING,false);
             PathScheme scheme;
             if (linear) {
@@ -362,7 +365,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             // new approach
             if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once depricated approach removed
-                scheme = PathScheme.parseFromString(xo.getAttribute(PATH_SCHEME,PathScheme.LINEAR.getText()));
+                scheme = PathScheme.parseFromString(xo.getAttribute(PATH_SCHEME, PathScheme.LINEAR.getText()));
             }
 
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -401,9 +404,9 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             String alphaBetaText = "(";
             if (scheme == PathScheme.ONE_SIDED_BETA) {
-                alphaBetaText += "1," + mle.getBetaFactor()+")";
+                alphaBetaText += "1," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA) {
-                alphaBetaText += mle.getAlphaFactor()+","+mle.getBetaFactor()+")";
+                alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             }
 
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
@@ -491,6 +494,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
      * this markov chain does most of the work.
      */
     private final MarkovChain mc;
+    private OperatorSchedule schedule;
 
     private String id = null;
 
@@ -501,7 +505,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     private final int burninLength;
     private int pathSteps;
 //    private final boolean linear;
-//    private final boolean lacing;
+    //    private final boolean lacing;
     private final PathScheme scheme;
     private double alphaFactor = 0.5;
     private double betaFactor = 0.5;

@@ -36,7 +36,20 @@ public class CombinedOperatorSchedule implements OperatorSchedule {
 
         final int v = MathUtils.nextInt(operatorSchedules.size());
 
-        return operatorSchedules.get(v).getNextOperatorIndex();
+        int offset = 0;
+        for (int i = 0; i < v; ++i) {
+            offset += operatorSchedules.get(i).getOperatorCount();
+        }
+
+        return offset + operatorSchedules.get(v).getNextOperatorIndex();
+    }
+
+    public void reset() {
+        for (OperatorSchedule os : operatorSchedules) {
+            for (int i = 0; i < os.getOperatorCount(); ++i) {
+                os.getOperator(i).reset();
+            }
+        }
     }
 
     public int getOperatorCount() {

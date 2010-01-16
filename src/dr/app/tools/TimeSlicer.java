@@ -30,6 +30,13 @@ import org.jdom.output.Format;
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
+ *
+ * example for location slices through time:
+ * -burnin1000 -trait location -sliceFile sliceTimes -summary true -mrsd 2007.63 -format KML -progress true -impute true -noise true -HPD 80 WNV_relaxed_geo_1.trees outpu.txt
+ *
+ * example for Markov reward o backbone summary (note we cannot imput here):
+ * -burnin1 -trait africa_R,canada_R,europe_R,hawai_R,indochina_R,new_zealand_R,russia_R,east_china_R,mideast_japan_R,midwest_china_R,midwest_japan_R,north_china_R,northeast_australia_R,northeast_japan_R,northeast_usa_R,northwest_australia_R,northwest_usa_R,south_america_R,south_asia_R,south_australia_R,south_china_R,south_korea_R,southeast_asia_R,southeast_usa_R,southwest_japan_R,southwest_usa_R -sliceTimes2003,2004,2005,2006 -summary true -mrsd 2007 -branchNorm true -format TAB -progress true -backbonetaxa taxaBackbone -branchset backbone H3N2_rev.trees output.txt
+ *  
  */
 
 public class TimeSlicer {
@@ -325,7 +332,7 @@ public class TimeSlicer {
                 }
             }
 
-            //print2DTransposedArray(sliceTreeWeightedAverageDiffusionCoefficients,"sliceTreeWeightedAverageDiffusionCoefficients.txt");
+            //print2DArray(sliceTreeWeightedAverageRates,"sliceTreeWeightedAverageRates.txt");
 
 
             try{
@@ -334,7 +341,7 @@ public class TimeSlicer {
                 if (mostRecentSamplingDate > 0) {
                     sliceDispersalRateFile.print("realTime"+"\t");
                 }
-                sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalDistance"+"\t"+"hpd low"+"\t"+"hpd up" +"\t"+ "mean DiffusionCoefficient"+"\t"+"hpd low"+"\t"+"hpd up" + "\r");
+                sliceDispersalRateFile.print("mean dispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalRate"+"\t"+"hpd low"+"\t"+"hpd up"+"\t"+"mean MaxDispersalDistance"+"\t"+"hpd low"+"\t"+"hpd up" +"\t"+ "mean cumulative DiffusionCoefficient"+"\t"+"hpd low"+"\t"+"hpd up" + "\r");
                 double[] meanWeightedAverageDispersalRates = meanColNoNaN(sliceTreeWeightedAverageRates);
                 double[][] hpdWeightedAverageDispersalRates = getArrayHPDintervals(sliceTreeWeightedAverageRates);
                 double[] meanMaxDispersalDistances = meanColNoNaN(sliceTreeMaxDistances);
@@ -879,15 +886,19 @@ public class TimeSlicer {
         double[] treeSliceMaxDistance = new double[sliceCount];
         double[] treeTimeFromRoot = new double[sliceCount];
         double[] maxDistanceFromRoot = new double[sliceCount];
-        double[] treeSliceDiffusionCoefficient = new double[sliceCount];
-        //int[] treeSliceBranchCount = new int[sliceCount];
+        //this one will used for weighted average (WA)
+        //double[] treeSliceDiffusionCoefficientWA = new double[sliceCount];
+        //this one is used for simple average
+        double[] treeSliceDiffusionCoefficientA = new double[sliceCount];
+        double[] treeSliceBranchCount = new double[sliceCount];
 
         treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
+
+        double test = 0;
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
             NodeRef node = treeTime.getNode(x);
-
 
             if (!(treeTime.isRoot(node))) {
 
@@ -900,14 +911,15 @@ public class TimeSlicer {
                 }
 
                 boolean proceed = false;
-                if (branchset == BranchSet.ALL && treeTime.isExternal(node)) {
+                if (branchset == BranchSet.ALL) {
+                    proceed = true;
+                } else if (branchset == BranchSet.EXT && treeTime.isExternal(node)) {
                     proceed = true;
                 } else if (branchset == BranchSet.INT && !treeTime.isExternal(node)) {
                     proceed = true;
                 } else if (branchset == BranchSet.BACKBONE && onBackbone(treeTime, node, backboneTaxa)) {
                     proceed = true; 
                 }
-
 //  employed to get dispersal rates across the whole tree
 //                if (containsLocation){
 //
@@ -919,10 +931,10 @@ public class TimeSlicer {
 //                }
 
                 for (int i = 0; i < sliceCount; i++) {
-
+                    //System.out.println(slices[i]);
                     if (sdr) {
                         if (!doSlices ||
-                                (slices[i] <= nodeHeight)
+                                (slices[i] < nodeHeight)
                                 ) {
                             if (proceed) {
 
@@ -932,10 +944,33 @@ public class TimeSlicer {
                                 Trait nodeLocationTrait = new Trait (treeTime.getNodeAttribute(node, LOCATIONTRAIT));
                                 Trait parentNodeLocationTrait = new Trait (treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
                                 treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue());
-                                treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
-                                //treeSliceBranchCount[i] ++;
+                                //treeSliceDiffusionCoefficientWA[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
+                                treeSliceDiffusionCoefficientA[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)));
+                                treeSliceBranchCount[i] ++;
                             }
                         }
+                    }
+                    //debugging
+                    if (sdr && proceed) {
+                        if (!doSlices ||
+                                (slices[i] < nodeHeight)
+                                ) {
+                            //System.out.println("included 1 !");
+                            test += (parentHeight-nodeHeight);
+                        } else if (!doSlices ||
+                            (slices[i] >= nodeHeight && slices[i] < parentHeight)
+                            ) {
+                            //System.out.println("included 2 !");
+                            test += (parentHeight-slices[i]);
+                        }  else {
+                            System.out.println("not included!");
+                            System.exit(0);
+
+                        }
+                    } else {
+                        System.out.println(sdr);
+                        System.out.println(proceed);
+                        System.exit(0);
                     }
 
                     if (!doSlices ||
@@ -969,8 +1004,10 @@ public class TimeSlicer {
                                         progressStream.println("Error: not precision available for imputation with correct noise!");
                                         System.exit(-1);
                                     }
-                                    trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
-                                            slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    if (slices[i] > nodeHeight) {
+                                        trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
+                                                slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    }
                                 }
                                 thisTraitSlice.add(trait);
 
@@ -979,8 +1016,8 @@ public class TimeSlicer {
                                     treeSliceTime[i] += (parentHeight-slices[i]);
                                     Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
                                     treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
-                                    treeSliceDiffusionCoefficient[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i])))*(parentHeight-slices[i]);
-                                    //treeSliceBranchCount[i] ++;
+                                    treeSliceDiffusionCoefficientA[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())),2.0)/(4.0*(parentHeight-slices[i])));
+                                    treeSliceBranchCount[i] ++;
                                     double tempDistanceFromRoot =  getDistanceFromRoot(treeTime,traits[j],trait.getValue());
                                     if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
                                         maxDistanceFromRoot[i] = tempDistanceFromRoot;
@@ -996,15 +1033,19 @@ public class TimeSlicer {
             }
         }
 
+        //System.out.println(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot())+"\t"+test);
+
         if (sdr){
             sliceTreeDistanceArrays.add(treeSliceDistance);
             sliceTreeTimeArrays.add(treeSliceTime);
             sliceTreeMaxDistanceArrays.add(treeSliceMaxDistance);
             sliceTreeTimeFromRootArrays.add(treeTimeFromRoot);
-            for (int i = 0; i < treeSliceDiffusionCoefficient.length; i++){
-                treeSliceDiffusionCoefficient[i] = treeSliceDiffusionCoefficient[i]/treeSliceTime[i];
+            for (int i = 0; i < treeSliceDiffusionCoefficientA.length; i++){
+                //treeSliceDiffusionCoefficientWA[i] = treeSliceDiffusionCoefficientWA[i]/treeSliceTime[i];
+                treeSliceDiffusionCoefficientA[i] = treeSliceDiffusionCoefficientA[i]/treeSliceBranchCount[i];
+                //System.out.println(treeSliceTime[i]+"\t"+treeLengths.get(i));
             }
-            sliceTreeDiffusionCoefficientArrays.add(treeSliceDiffusionCoefficient);
+            sliceTreeDiffusionCoefficientArrays.add(treeSliceDiffusionCoefficientA);
         }
 
 
@@ -1516,7 +1557,7 @@ public class TimeSlicer {
                                 "summary output format [default = KML]"),
                         new Arguments.IntegerOption(HPD,"mass (1 - 99%) to include in HPD regions [default = 80]"),
                         new Arguments.StringOption(MODE,enumNamesToStringArray(ContourMode.values()), false,
-                                "contouring model [default = synder]"),
+                                "contouring model [default = snyder]"),
                         new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
                                 "tree normalization [default = length"),
                         new Arguments.StringOption(SDR,"sliceDispersalRate","specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
@@ -1605,16 +1646,7 @@ public class TimeSlicer {
                             "nt.");
                     System.exit(-1);
                 }
-
-                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimeString);
-                sliceHeights = new double[sliceTimes.length];
-                for (int i = 0; i < sliceTimes.length; i++) {
-                    if (mrsd == 0) {
-                        sliceHeights[i] = sliceTimes[i];
-                    } else {
-                        sliceHeights[i] = mrsd - sliceTimes[i];
-                    }
-                }
+                sliceHeights = parseVariableLengthDoubleArray(sliceHeightString);
             }
 
             if (arguments.hasOption(SLICE_COUNT)) {

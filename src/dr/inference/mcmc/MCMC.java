@@ -102,7 +102,7 @@ public class MCMC implements Identifiable, Spawnable {
         options.setCoercionDelay(0);
         options.setChainLength(chainlength);
         MCMCCriterion criterion = new MCMCCriterion();
-        criterion.setTemperature(1);                                                                                        
+        criterion.setTemperature(1);
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         for (MCMCOperator operator : operators) schedule.addOperator(operator);
 
@@ -159,7 +159,7 @@ public class MCMC implements Identifiable, Spawnable {
                 // Run the chain for coercionDelay steps with coercion disabled
                 mc.runChain(coercionDelay, true);
                 chainLength -= coercionDelay;
-                
+
                 // reset operator acceptance levels
                 for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
@@ -213,7 +213,7 @@ public class MCMC implements Identifiable, Spawnable {
                     logger.stopLogging();
                 }
             }
-
+            // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
                 showOperatorAnalysis(System.out);
                 try {
@@ -441,7 +441,7 @@ public class MCMC implements Identifiable, Spawnable {
                 if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return delay;
             }
         }
-        
+
         return -1;
     }
 

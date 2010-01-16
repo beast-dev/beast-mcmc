@@ -28,7 +28,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	private GraphModel graphModel;
 	private PartitionModel partitionModel;
 	
-	private double probBelowRoot = 0.999;    //This gets transformed in the constructor step.
+	private double probBelowRoot = 0.90;    //This gets transformed in the constructor step.
 	private double size = 0.0;            //Translates into add probability of 50%
 	
 	public GraphModelDimensionOperator(CoercionMode mode, GraphModel graphModel,
@@ -125,11 +125,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
             newBifurcationHeight = MathUtils.nextExponential(theta);
             newReassortmentHeight = MathUtils.nextExponential(theta);
         }
-        
-        //This is very very bad, but only for testing purposes.
-        newBifurcationHeight = MathUtils.nextDouble()*treeHeight;
-        newReassortmentHeight = MathUtils.nextDouble()*treeHeight;
-       
+            
         logHastings += theta * (newBifurcationHeight + newReassortmentHeight) - Math.log(2.0)
                 - 2.0 * Math.log(theta) + Math.log(1 - Math.exp(-2.0 * treeHeight * theta));
         
@@ -174,7 +170,10 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
         
     	logHastings += Math.log(2.0);      
         
+    	System.out.println(graphModel.linkDump());
+    	
       	graphModel.beginTreeEdit();
+      	
         graphModel.removeChild(reassortSplitParent, reassortChild);
 		NodeRef newReassortment = graphModel.newNode();
 		graphModel.addChild(reassortSplitParent, newReassortment);
@@ -194,12 +193,10 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 
         NodeRef bifurcationChild = potentialBifurcationChildren.get(MathUtils
                 .nextInt(potentialBifurcationChildren.size()));
-
-
+        
         NodeRef bifurcationLeftParent =  getParentWrapper(bifurcationChild,0);
         NodeRef bifurcationRightParent = getParentWrapper(bifurcationChild,1);
         NodeRef bifurcationSplitParent = bifurcationLeftParent;
-
         
       if (graphModel.isRecombination(bifurcationChild)) {
     	  boolean[] tester = {graphModel.getNodeHeight(bifurcationLeftParent) > newBifurcationHeight,
@@ -213,20 +210,50 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
   			  bifurcationSplitParent = bifurcationRightParent;
     	  }
       }
+      System.out.println(graphModel.linkDump());
+
       
-      graphModel.removeChild(bifurcationSplitParent, bifurcationChild);
-	  NodeRef newBifurcation = graphModel.newNode();
-      graphModel.addChild(bifurcationSplitParent, newBifurcation);
-      graphModel.addChild(newBifurcation, newReassortment);
-      if(bifurcationChild==newReassortment){
+      NodeRef newBifurcation = graphModel.newNode();
+      
+     
+      if(newBifurcationHeight < treeHeight){
+    	  graphModel.removeChild(bifurcationSplitParent, bifurcationChild);
+    	  graphModel.addChild(bifurcationSplitParent, newBifurcation);
           graphModel.addChild(newBifurcation, newReassortment);
-          logHastings -= Math.log(2.0);
+          if(bifurcationChild==newReassortment){
+              graphModel.addChild(newBifurcation, newReassortment);
+              logHastings -= Math.log(2.0);
+          }else{
+        	  graphModel.addChild(newBifurcation, bifurcationChild);
+          }
+          
+          graphModel.setNodeHeight(newBifurcation, newBifurcationHeight);
+        
       }else{
-    	  graphModel.addChild(newBifurcation, bifurcationChild);
+    	  //add a new root.
+    	  
+    	  //swap out the root with newBifurcation
+    	  NodeRef root = graphModel.getRoot();
+    	  NodeRef rootChild1 = graphModel.getChild(root,0);
+    	  NodeRef rootChild2 = graphModel.getChild(root,1);
+    	  
+    	  graphModel.removeChild(root, rootChild1);
+    	  graphModel.removeChild(root, rootChild2);
+    	  
+    	  graphModel.addChild(newBifurcation,rootChild1);
+    	  graphModel.addChild(newBifurcation,rootChild2);
+    	  
+    	  graphModel.setNodeHeight(newBifurcation, graphModel.getNodeHeight(root));
+    	  
+    	  //link up the root 
+    	  graphModel.addChild(root,newBifurcation);
+    	  
+    	  graphModel.addChild(root, newReassortment);
+    	  
+    	  graphModel.setNodeHeight(root, newBifurcationHeight);
       }
       
-      graphModel.setNodeHeight(newBifurcation, newBifurcationHeight);
-     	
+      	
       // pick one of the partitions on newReassortment at random
       // send it up the new recombination edge
       HashSet<Object> parts = ((GraphModel.Node)reassortChild).getObjects(0);
@@ -243,7 +270,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 			
 		}
 	
-		return -0.5;
+		return 0.0;
 	}
 	
 

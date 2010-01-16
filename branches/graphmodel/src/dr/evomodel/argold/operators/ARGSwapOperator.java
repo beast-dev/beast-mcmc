@@ -2,6 +2,7 @@ package dr.evomodel.argold.operators;
 
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evomodel.argold.ARGModel;
 import dr.evomodel.argold.ARGModel.Node;
 import dr.inference.operators.OperatorFailedException;
@@ -12,6 +13,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -30,6 +32,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 	public static final String DUAL_SWAP = "dualSwap";
 	public static final String FULL_SWAP = "fullSwap";
 	public static final String NARROW_SWAP = "narrowSwap";
+	
+	public static final String WANG_RANNALA_BIFURCATION  = "wangRannalaBifurcation";
+	public static final String WANG_RANNALA_REASSORTMENT = "wangRannalaReassortment";
 
 	private ARGModel arg;
 	private String mode;
@@ -67,6 +72,8 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 		} else if (mode.equals(DUAL_SWAP)) {
 			reassortmentSwap(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
 			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
+		} else if (mode.equals(WANG_RANNALA_BIFURCATION)){
+			return wangRannalaBifurcation(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
 		}
 
 		bifurcationNodes.addAll(reassortmentNodes);
@@ -204,6 +211,136 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 	}
 
+	private double wangRannalaBifurcation(NodeRef x){
+		Node bifurcationNode = (Node) x;
+		
+		boolean moveLeftChild = true;
+		Node moveChild = bifurcationNode.leftChild;
+		Node keepChild = bifurcationNode.rightChild;
+	
+		if(MathUtils.nextBoolean()){
+			moveChild = bifurcationNode.rightChild;
+			keepChild = bifurcationNode.leftChild;
+			moveLeftChild = false;
+		}
+	
+		double beforeMoveHeight = bifurcationNode.getHeight();
+		double beforeMoveChildHeight = moveChild.getHeight();	
+		
+		double newHeight = beforeMoveChildHeight + 
+			MathUtils.nextDouble()*(arg.getNodeHeight(arg.getRoot()) - beforeMoveChildHeight);	
+		
+		List<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());
+		findNodesAtHeight(possibleNodes, newHeight);
+		
+		possibleNodes.remove(moveChild);
+		if(possibleNodes.contains(bifurcationNode)){
+			possibleNodes.remove(bifurcationNode);
+			possibleNodes.add(keepChild);
+		}
+		
+		double logHastings = Math.log(possibleNodes.size());
+		
+		
+		arg.beginTreeEdit();
+		
+		Node bifurcationNodeParent = bifurcationNode.leftParent;
+		
+		//first link up keepChild with bifurcationNodeParent.
+		arg.removeChild(bifurcationNode, keepChild);
+		arg.removeChild(bifurcationNodeParent, bifurcationNode);
+		
+		if(keepChild == moveChild){	
+			if(moveLeftChild){
+				keepChild.rightParent = bifurcationNodeParent;
+				moveChild.leftParent = bifurcationNode;
+				bifurcationNode.leftChild = moveChild;
+			}else{
+				keepChild.leftParent = bifurcationNodeParent;
+				moveChild.rightParent = bifurcationNode;
+				bifurcationNode.rightChild = moveChild;
+			}
+			
+			if(bifurcationNodeParent.leftChild == null)
+				bifurcationNodeParent.leftChild = keepChild;
+			if(bifurcationNodeParent.rightChild == null)
+				bifurcationNodeParent.rightChild = keepChild;
+		}else{
+			arg.addChild(bifurcationNodeParent, keepChild);
+		}
+		
+	
+		Node selectedNode = 
+				(Node) possibleNodes.get(MathUtils.nextInt(possibleNodes.size()));
+		
+		Node selectedNodeParent = selectedNode.leftParent;	
+		
+		if(selectedNode != moveChild){	
+			if(selectedNode.bifurcation){
+				arg.removeChild(selectedNodeParent, selectedNode);
+				arg.addChild(selectedNodeParent, bifurcationNode);
+				arg.addChild(bifurcationNode, selectedNode);		
+			}else if(selectedNode.leftParent == selectedNode.rightParent){
+				//Double linked 
+				if(MathUtils.nextBoolean()){
+					selectedNodeParent.leftChild = null;
+					selectedNode.leftParent = null;
+				}else{
+					selectedNodeParent.rightChild = null;
+					selectedNode.rightParent = null;
+				}
+				arg.addChild(bifurcationNode, selectedNode);
+				arg.addChild(selectedNodeParent, bifurcationNode);	
+			}else{
+				if(selectedNode.leftParent.getHeight() > newHeight &&
+					selectedNode.rightParent.getHeight() > newHeight){
+					if(MathUtils.nextBoolean()){
+					selectedNodeParent = selectedNode.rightParent;
+					}
+				}else if(selectedNode.rightParent.getHeight() > newHeight){
+					selectedNodeParent = selectedNode.rightParent;
+				}
+			
+				arg.removeChild(selectedNodeParent, selectedNode);
+				arg.addChild(selectedNodeParent, bifurcationNode);
+				arg.addChild(bifurcationNode,selectedNode);
+		
+			}
+		}else{
+			Node otherParent = selectedNode.leftParent;
+			if(otherParent == bifurcationNode){
+				otherParent = selectedNode.rightParent;
+			}
+			arg.removeChild(otherParent, selectedNode);
+			arg.addChild(bifurcationNode, selectedNode);
+			arg.addChild(otherParent, bifurcationNode);
+		}
+		
+		
+		bifurcationNode.setHeight(newHeight);
+		
+		
+		try{
+			arg.endTreeEdit();
+		}catch(InvalidTreeException e){
+			System.out.println("Something is wrong");
+			
+			System.exit(-1);
+		}
+		
+		possibleNodes.clear();
+		findNodesAtHeight(possibleNodes, beforeMoveHeight);
+		
+		possibleNodes.remove(moveChild);
+		if(possibleNodes.contains(bifurcationNode)){
+			possibleNodes.remove(bifurcationNode);
+			possibleNodes.add(keepChild);
+		}
+		
+		
+		return logHastings - Math.log(possibleNodes.size());
+		
+	}
 
 	private double bifurcationSwap(NodeRef x) {
 		Node startNode = (Node) x;
@@ -483,9 +620,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 			}
 		}
 	}
+	
 
-
-	private void findNodesAtHeight(ArrayList<NodeRef> x, double height) {
+	private void findNodesAtHeight(List<NodeRef> x, double height) {
 		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
 			Node test = (Node) arg.getNode(i);
 			if (test.getHeight() < height) {
@@ -540,7 +677,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 		}
 
 		private String[] validFormats = {BIFURCATION_SWAP, REASSORTMENT_SWAP,
-				DUAL_SWAP, FULL_SWAP, NARROW_SWAP};
+				DUAL_SWAP, FULL_SWAP, NARROW_SWAP, WANG_RANNALA_BIFURCATION};
 
 		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 				AttributeRule.newIntegerRule(WEIGHT),
@@ -572,6 +709,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 	};
 
 	public boolean nodeCheck() {
+		try{
 		for (int i = 0, n = arg.getNodeCount(); i < n; i++) {
 			Node x = (Node) arg.getNode(i);
 
@@ -599,6 +737,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 						x.rightChild.rightParent.getNumber() != i)
 					return false;
 			}
+		}
+		}catch(Exception e){
+			return false;
 		}
 
 		return true;

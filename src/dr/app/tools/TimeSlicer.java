@@ -32,7 +32,7 @@ import org.jdom.output.Format;
  * @author Philippe Lemey
  *
  * example for location slices through time:
- * -burnin1000 -trait location -sliceFile sliceTimes -summary true -mrsd 2007.63 -format KML -progress true -impute true -noise true -HPD 80 WNV_relaxed_geo_1.trees outpu.txt
+ * -burnin1000 -trait location -sliceFileHeights sliceTimes -summary true -mrsd 2007.63 -format KML -progress true -impute true -noise true -HPD 80 WNV_relaxed_geo_1.trees outpu.txt
  *
  * example for Markov reward o backbone summary (note we cannot imput here):
  * -burnin1 -trait africa_R,canada_R,europe_R,hawai_R,indochina_R,new_zealand_R,russia_R,east_china_R,mideast_japan_R,midwest_china_R,midwest_japan_R,north_china_R,northeast_australia_R,northeast_japan_R,northeast_usa_R,northwest_australia_R,northwest_usa_R,south_america_R,south_asia_R,south_australia_R,south_china_R,south_korea_R,southeast_asia_R,southeast_usa_R,southwest_japan_R,southwest_usa_R -sliceTimes2003,2004,2005,2006 -summary true -mrsd 2007 -branchNorm true -format TAB -progress true -backbonetaxa taxaBackbone -branchset backbone H3N2_rev.trees output.txt
@@ -43,7 +43,7 @@ public class TimeSlicer {
 
     public static final String sep = "\t";
     public static final String PRECISION_STRING = "precision";
-    public static final String RATE_STRING = "diffusionRate"; // TODO the rate used is supposed to be the relaxed diffusion rate, but relaxed clock models will also result in a "rate attribute", we somehow need to distinguis between them!
+    public static final String RATE_STRING = "rate"; // TODO the rate used is supposed to be the relaxed diffusion rate, but relaxed clock models will also result in a "rate attribute", we somehow need to distinguis between them!
 
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
@@ -65,7 +65,8 @@ public class TimeSlicer {
     public static final String SLICE_HEIGHTS = "sliceHeights";
     public static final String SLICE_COUNT = "sliceCount";
     public static final String START_TIME = "startTime";
-    public static final String SLICE_FILE = "sliceFile";
+    public static final String SLICE_FILE_HEIGHTS = "sliceFileHeights";
+    public static final String SLICE_FILE_TIMES = "sliceFileTimes";
     public static final String MRSD = "mrsd";
     public static final String HELP = "help";
     public static final String NOISE = "noise";
@@ -877,6 +878,7 @@ public class TimeSlicer {
             }
         }
 
+
 //  employed to get dispersal rates across the whole tree
 //        double treeNativeDistance = 0;
 //        double treeKilometerGreatCircleDistance = 0;
@@ -893,8 +895,6 @@ public class TimeSlicer {
         double[] treeSliceBranchCount = new double[sliceCount];
 
         treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
-
-        double test = 0;
 
         for (int x = 0; x < treeTime.getNodeCount(); x++) {
 
@@ -950,28 +950,6 @@ public class TimeSlicer {
                             }
                         }
                     }
-                    //debugging
-                    if (sdr && proceed) {
-                        if (!doSlices ||
-                                (slices[i] < nodeHeight)
-                                ) {
-                            //System.out.println("included 1 !");
-                            test += (parentHeight-nodeHeight);
-                        } else if (!doSlices ||
-                            (slices[i] >= nodeHeight && slices[i] < parentHeight)
-                            ) {
-                            //System.out.println("included 2 !");
-                            test += (parentHeight-slices[i]);
-                        }  else {
-                            System.out.println("not included!");
-                            System.exit(0);
-
-                        }
-                    } else {
-                        System.out.println(sdr);
-                        System.out.println(proceed);
-                        System.exit(0);
-                    }
 
                     if (!doSlices ||
                             (slices[i] >= nodeHeight && slices[i] < parentHeight)
@@ -989,6 +967,7 @@ public class TimeSlicer {
                                     System.exit(-1);
                                 }
                                 Trait trait = new Trait(tmpTrait);
+                                //System.out.println("trees "+treesAnalyzed+"\tslice "+slices[i]+"\t"+trait.toString());
                                 trait.multiplyBy(1.0/branchlength);
                                 if (impute) {
                                     Double rateAttribute = (Double) treeTime.getNodeAttribute(node, RATE_STRING);
@@ -1010,6 +989,7 @@ public class TimeSlicer {
                                     }
                                 }
                                 thisTraitSlice.add(trait);
+                                //System.out.println("trees "+treesAnalyzed+"\tslice "+slices[i]+"\t"+trait.toString());
 
                                 //if trait is location
                                 if (sdr){
@@ -1542,7 +1522,8 @@ public class TimeSlicer {
                         new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
                         new Arguments.StringOption(SLICE_TIMES,"slice_times","specifies a slice time-list [default=none]"),
                         new Arguments.StringOption(SLICE_HEIGHTS,"slice_heights","specifies a slice height-list [default=none]"),
-                        new Arguments.StringOption(SLICE_FILE,"times_file","specifies a file with a slice time-list, is overwritten by command-line specification of slice times [default=none]"),
+                        new Arguments.StringOption(SLICE_FILE_HEIGHTS,"heights_file","specifies a file with a slice heights-list, is overwritten by command-line specification of slice heights [default=none]"),
+                        new Arguments.StringOption(SLICE_FILE_TIMES,"Times_file","specifies a file with a slice Times-list, is overwritten by command-line specification of slice times [default=none]"),
                         new Arguments.IntegerOption(SLICE_COUNT,"the number of time slices to use [default=0]"),
                         new Arguments.RealOption(START_TIME,"the time of the earliest slice [default=0]"),
                         new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
@@ -1585,11 +1566,22 @@ public class TimeSlicer {
 
         try { // Make sense of arguments
 
-            String sliceFileString = arguments.getStringOption(SLICE_FILE);
-            if (sliceFileString != null) {
-                sliceHeights = parseFileWithArray(sliceFileString);
+            String sliceHeightsFileString = arguments.getStringOption(SLICE_FILE_HEIGHTS);
+            if (sliceHeightsFileString != null) {
+                sliceHeights = parseFileWithArray(sliceHeightsFileString);
             }
 
+            String sliceTimesFileString = arguments.getStringOption(SLICE_FILE_TIMES);
+            if (sliceTimesFileString != null) {
+                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimesFileString);
+                for (int i = 0; i < sliceTimes.length; i++) {
+                    if (mrsd == 0) {
+                        sliceHeights[i] = sliceTimes[i];
+                    } else {
+                        sliceHeights[i] = mrsd - sliceTimes[i];
+                    }
+                }
+            }
 
             if (arguments.hasOption(BURNIN)) {
                 burnin = arguments.getIntegerOption(BURNIN);

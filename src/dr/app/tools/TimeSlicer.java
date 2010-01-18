@@ -698,7 +698,8 @@ public class TimeSlicer {
 
     private void readAndAnalyzeTrees(String treeFileName, int burnin,
                                      String[] traits, double[] slices,
-                                     boolean impute, boolean trueNoise, Normalization normalize, boolean divideByBranchLength, BranchSet branchset, Set backboneTaxa)
+                                     boolean impute, boolean trueNoise, Normalization normalize,
+                                     boolean divideByBranchLength, BranchSet branchset, Set backboneTaxa)
             throws IOException, Importer.ImportException {
 
         int totalTrees = 10000;
@@ -724,8 +725,9 @@ public class TimeSlicer {
         while (importer1.hasTree()) {
             Tree treeTime = importer1.importNextTree();
             treesRead++;
-            if (totalTrees > burnin)
+            if (totalTrees >= burnin) {
                 analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize, divideByBranchLength, branchset, backboneTaxa);
+            }
 
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
@@ -905,9 +907,9 @@ public class TimeSlicer {
                 double nodeHeight = treeTime.getNodeHeight(node);
                 double parentHeight = treeTime.getNodeHeight(treeTime.getParent(node));
 
-                double branchlength = 1.0;
+                double oneOverBranchLength = 1.0;
                 if (divideByBranchlength) {
-                    branchlength = treeTime.getBranchLength(node);
+                    oneOverBranchLength = 1.0 / treeTime.getBranchLength(node);
                 }
 
                 boolean proceed = false;
@@ -968,7 +970,9 @@ public class TimeSlicer {
                                 }
                                 Trait trait = new Trait(tmpTrait);
                                 //System.out.println("trees "+treesAnalyzed+"\tslice "+slices[i]+"\t"+trait.toString());
-                                trait.multiplyBy(1.0/branchlength);
+                                if (divideByBranchlength) {
+                                    trait.multiplyBy(oneOverBranchLength);
+                                }
                                 if (impute) {
                                     Double rateAttribute = (Double) treeTime.getNodeAttribute(node, RATE_STRING);
                                     double rate = 1.0;
@@ -983,10 +987,11 @@ public class TimeSlicer {
                                         progressStream.println("Error: not precision available for imputation with correct noise!");
                                         System.exit(-1);
                                     }
-                                    if (slices[i] > nodeHeight) {
+//                                    if (slices[i] > nodeHeight) {
                                         trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
                                                 slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
-                                    }
+//                                    }
+                                    // QUESTION to PL: MAS does not see how slices[i] is ever less than nodeHeight
                                 }
                                 thisTraitSlice.add(trait);
                                 //System.out.println("trees "+treesAnalyzed+"\tslice "+slices[i]+"\t"+trait.toString());
@@ -1142,8 +1147,10 @@ public class TimeSlicer {
             }
         }
 
-        if (trueNoise)
-            mean = MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean, precision);
+        if (trueNoise) {
+            // MAS: Bug was here!   
+            mean = MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean, scaledPrecision);
+        }
         Object[] result = new Object[dim];
         for(int i=0; i<dim; i++)
             result[i] = mean[i];

@@ -78,10 +78,10 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            XMLObject cxo = (XMLObject) xo.getChild(DIAGONAL);
+            XMLObject cxo = xo.getChild(DIAGONAL);
             Parameter diagonalParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(OFF_DIAGONAL);
+            cxo = xo.getChild(OFF_DIAGONAL);
             Parameter offDiagonalParameter = (Parameter) cxo.getChild(Parameter.class);
 
             boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);

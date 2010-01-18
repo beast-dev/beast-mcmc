@@ -1124,15 +1124,14 @@ public class TimeSlicer {
         double[] nodeValue = nodeTrait.getValue();
         double[] parentValue = parentTrait.getValue();
 
-        final double timeTotal = parentHeight - nodeHeight;
-        final double timeChild = (time - nodeHeight);
-        final double timeParent = (parentHeight - time);
-        final double weightTotal = 1.0 / timeChild + 1.0 / timeParent;
+        final double scaledTimeChild = (time - nodeHeight) * rate;
+        final double scaledTimeParent = (parentHeight - time) * rate;;
+        final double scaledWeightTotal = 1.0 / scaledTimeChild + 1.0 / scaledTimeParent;
 
-        if (timeChild == 0)
+        if (scaledTimeChild == 0)
             return nodeTrait;
 
-        if (timeParent == 0)
+        if (scaledTimeParent == 0)
             return parentTrait;
 
         // Find mean value, weighted average
@@ -1140,15 +1139,14 @@ public class TimeSlicer {
         double[][] scaledPrecision = new double[dim][dim];
 
         for(int i=0; i<dim; i++) {
-            mean[i] = (nodeValue[i] / timeChild + parentValue[i] / timeParent) / weightTotal;
+            mean[i] = (nodeValue[i] / scaledTimeChild + parentValue[i] / scaledTimeParent) / scaledWeightTotal;
             if (trueNoise) {
                 for(int j=i; j<dim; j++)
-                    scaledPrecision[j][i] = scaledPrecision[i][j] = precision[i][j] / timeTotal / rate;
+                    scaledPrecision[j][i] = scaledPrecision[i][j] = precision[i][j] * scaledWeightTotal;
             }
         }
 
         if (trueNoise) {
-            // MAS: Bug was here!   
             mean = MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean, scaledPrecision);
         }
         Object[] result = new Object[dim];

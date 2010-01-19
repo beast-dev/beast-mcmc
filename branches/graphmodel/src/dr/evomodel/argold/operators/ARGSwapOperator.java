@@ -74,7 +74,10 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 			return bifurcationSwap(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
 		} else if (mode.equals(WANG_RANNALA_BIFURCATION)){
 			return wangRannalaBifurcation(bifurcationNodes.get(MathUtils.nextInt(bifurcationNodes.size())));
+		} else if (mode.equals(WANG_RANNALA_REASSORTMENT)){
+			return wangRannalaReassortment(reassortmentNodes.get(MathUtils.nextInt(reassortmentNodes.size())));
 		}
+		
 
 		bifurcationNodes.addAll(reassortmentNodes);
 
@@ -209,6 +212,43 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 					", P-brother: " + ((Node) pb).toString();
 		}
 
+	}
+	
+	private double wangRannalaReassortment(NodeRef x){
+		Node reassortmentNode = (Node) x;
+		Node reassortmentNodeChild = reassortmentNode.leftParent;
+		
+		boolean reattachThroughRightSide = true;
+		Node moveParent = reassortmentNode.leftParent;
+		Node keepParent = reassortmentNode.rightParent;
+		
+		if(MathUtils.nextBoolean()){
+			reattachThroughRightSide = false;
+			moveParent = reassortmentNode.rightParent;
+			keepParent = reassortmentNode.leftParent;	
+		}
+		
+		double logHastings = Math.log(2.0);
+		
+		//If we have a loop, it doesn't matter if 
+		//we pick the left or the right.
+		if(moveParent == keepParent){
+			logHastings -= Math.log(2.0);
+		}
+		
+		double oldReassortmentHeight = reassortmentNode.getHeight();
+		double oldMoveParentHeight = moveParent.getHeight();
+		
+		double newHeight = MathUtils.nextDouble()*oldMoveParentHeight;
+		
+		List<NodeRef> possibleNodes = new ArrayList<NodeRef>(arg.getNodeCount());
+		findNodesAtHeight(possibleNodes,newHeight);
+		
+		possibleNodes.remove(reassortmentNode);
+		
+		
+		
+		return 0;
 	}
 
 	private double wangRannalaBifurcation(NodeRef x){

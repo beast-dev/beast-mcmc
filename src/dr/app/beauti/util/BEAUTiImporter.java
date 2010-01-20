@@ -1,4 +1,4 @@
-package dr.app.beauti.util;
+package dr.app.SnAPhyl.util;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -11,12 +11,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.JOptionPane;
-
+import dr.app.beauti.util.NexusApplicationImporter;
 import org.jdom.JDOMException;
 
 
-import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionData;
@@ -50,7 +48,7 @@ public class BEAUTiImporter {
         this.options = options;
     }
  
-    public void importFromFile(BeautiFrame frame, File file) throws Exception {
+    public void importFromFile(File file) throws Exception {
         try {
             Reader reader = new FileReader(file);
 
@@ -62,7 +60,7 @@ public class BEAUTiImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                importNexusFile(frame, file);
+                importNexusFile(file);
             } else {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
@@ -87,7 +85,7 @@ public class BEAUTiImporter {
             TaxonList taxa = taxonLists.get(0);
 
             for (Alignment alignment : alignments) {
-                setData(null, taxa, alignment, null, null, null, file.getName());
+                setData(taxa, alignment, null, null, null, file.getName());
             }
         } catch (JDOMException e) {
             throw new JDOMException (e.getMessage());
@@ -100,7 +98,7 @@ public class BEAUTiImporter {
     }
     
     // nexus
-    private void importNexusFile(BeautiFrame frame, File file) throws Exception {
+    private void importNexusFile(File file) throws Exception {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -209,11 +207,11 @@ public class BEAUTiImporter {
             throw new Exception (e.getMessage());
         }
 
-        setData(frame, taxa, alignment, trees, model, charSets, file.getName());
+        setData(taxa, alignment, trees, model, charSets, file.getName());
     }
     
     //TODO need refactory to simplify
-    private void setData(BeautiFrame frame, TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
+    private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
             List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
@@ -263,26 +261,7 @@ public class BEAUTiImporter {
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
                     
-                    int adt = frame.allowDifferentTaxaJOptionPane();
-                    //TODO still have swing code
-                    if (adt == JOptionPane.YES_OPTION) {
-                        // set to Allow Different Taxa
-                        options.allowDifferentTaxa = true;
-                        //changeTabs();// can be added, if required in future
-
-                        List<String> prevTaxa = new ArrayList<String>();
-                        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                            prevTaxa.add(options.taxonList.getTaxon(i).getId());
-                        }
-                        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                            if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                                options.taxonList.addTaxon(taxa.getTaxon(i));
-                            }
-                        }
-
-                    } else {
-                        return;
-                    }
+                    
                 }
             } else { // allow Different Taxa
                 // AR - it will be much simpler just to consider options.taxonList

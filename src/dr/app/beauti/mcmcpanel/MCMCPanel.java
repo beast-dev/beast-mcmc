@@ -23,9 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.mcmcpanel;
+package dr.app.SnAPhyl.mcmcpanel;
 
-import dr.app.beauti.BeautiFrame;
+import dr.app.SnAPhyl.BeautiFrame;
+
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;

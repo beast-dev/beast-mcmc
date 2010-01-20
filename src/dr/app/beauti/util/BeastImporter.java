@@ -1,4 +1,4 @@
-package dr.app.beauti.util;
+package dr.app.SnAPhyl.util;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;

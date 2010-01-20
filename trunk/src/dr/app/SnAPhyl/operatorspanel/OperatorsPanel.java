@@ -40,7 +40,6 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -59,11 +58,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     JTable operatorTable = null;
     OperatorTableModel operatorTableModel = null;
 
-    JCheckBox autoOptimizeCheck = null;
-
     public List<Operator> operators = new ArrayList<Operator>();
 
-    private BeautiOptions options;
+//    private BeautiOptions options;
     BeautiFrame frame = null;
 
     public OperatorsPanel(BeautiFrame parent) {
@@ -112,26 +109,10 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         scrollPane.setOpaque(false);
 
-        autoOptimizeCheck = new JCheckBox("Auto Optimize - This option will attempt to tune the operators to maximum efficiency. Turn off to tune the operators manually.");
-        autoOptimizeCheck.setOpaque(false);
-        autoOptimizeCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                options.autoOptimize = autoOptimizeCheck.isSelected();
-                if (!autoOptimizeCheck.isSelected()) options.operatorAnalysis = true;
-                frame.setDirty();
-            }
-        });
-
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        toolBar1.add(autoOptimizeCheck);
-
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-        add(toolBar1, "North");
+
         add(scrollPane, "Center");
     }
 
@@ -140,9 +121,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     }
 
     public void setOptions(BeautiOptions options) {
-        this.options = options;
+//        this.options = options;
 
-        autoOptimizeCheck.setSelected(options.autoOptimize);
         operators = options.selectOperators();
         operatorTableModel.fireTableDataChanged();
     }

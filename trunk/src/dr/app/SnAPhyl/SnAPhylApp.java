@@ -94,7 +94,7 @@ public class SnAPhylApp extends MultiDocApplication {
                     icon = new ImageIcon(url);
                 }
 
-                final String nameString = "BEAUti";
+                final String nameString = "SnAPhyl";
                 final String versionString = version.getVersionString();
                 String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
                         "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Utility<br>" +

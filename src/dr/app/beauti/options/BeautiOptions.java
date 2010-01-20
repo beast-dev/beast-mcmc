@@ -27,7 +27,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
-import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
@@ -128,9 +127,7 @@ public class BeautiOptions extends ModelOptions {
         
         traitOptions = new TraitOptions(this);
         starBEASTOptions = new STARBEASTOptions(this);
-        
-        beautiImporter = new BEAUTiImporter(this);    
-        
+
         beautiTemplate = new BeautiTemplate(this);
         
         parameters.clear();
@@ -797,9 +794,7 @@ public class BeautiOptions extends ModelOptions {
 
     public TraitOptions traitOptions = new TraitOptions(this);
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);     
-        
-    public BEAUTiImporter beautiImporter = new BEAUTiImporter(this);    
-    
+
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
 }

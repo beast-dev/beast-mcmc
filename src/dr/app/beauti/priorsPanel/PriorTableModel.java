@@ -1,4 +1,4 @@
-package dr.app.beauti.priorsPanel;
+package dr.app.SnAPhyl.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
 

@@ -23,11 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.priorsPanel;
+package dr.app.SnAPhyl.priorsPanel;
 
-import dr.app.beauti.BeautiFrame;
+import dr.app.SnAPhyl.BeautiFrame;
+
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
+import dr.app.beauti.priorsPanel.DiscretePriorDialog;
+import dr.app.beauti.priorsPanel.PriorDialog;
+
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;

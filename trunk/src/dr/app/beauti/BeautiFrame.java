@@ -26,6 +26,7 @@ import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
+import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -330,7 +331,8 @@ public class BeautiFrame extends DocumentFrame {
                             "Invalid file name", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        beautiOptions.beautiImporter.importFromFile(this, file);
+                        BEAUTiImporter beautiImporter = new BEAUTiImporter(beautiOptions);
+                        beautiImporter.importFromFile(this, file);
 
                         setDirty();
 //                    } catch (FileNotFoundException fnfe) {

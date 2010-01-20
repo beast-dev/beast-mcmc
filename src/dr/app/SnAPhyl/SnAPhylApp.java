@@ -9,15 +9,11 @@ import org.virion.jam.framework.*;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
- */
-public class BeautiApp extends MultiDocApplication {
+
+public class SnAPhylApp extends MultiDocApplication {
     private final static Version version = new BeastVersion();
 
-    public BeautiApp(String nameString, String aboutString, Icon icon,
+    public SnAPhylApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
         super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
     }
@@ -91,7 +87,7 @@ public class BeautiApp extends MultiDocApplication {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
 
-                java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
+                java.net.URL url = SnAPhylApp.class.getResource("images/beauti.png");
                 Icon icon = null;
 
                 if (url != null) {
@@ -113,7 +109,7 @@ public class BeautiApp extends MultiDocApplication {
 
                 System.setProperty("BEAST & BEAUTi Version", version.getVersion());
 
-                BeautiApp app = new BeautiApp(nameString, aboutString, icon,
+                SnAPhylApp app = new SnAPhylApp(nameString, aboutString, icon,
                         websiteURLString, helpURLString);
                 app.setDocumentFrameFactory(new DocumentFrameFactory() {
                     public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {

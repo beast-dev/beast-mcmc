@@ -28,12 +28,14 @@ package dr.app.SnAPhyl.priorsPanel;
 import dr.app.SnAPhyl.BeautiFrame;
 
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.DiscretePriorDialog;
 import dr.app.beauti.priorsPanel.PriorDialog;
 
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
+import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
@@ -44,6 +46,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -63,6 +66,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     BeautiOptions options = null;
 
     private final boolean isDefaultOnly;
+
+    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH).toArray());
 
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
@@ -124,6 +129,19 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
                     "You should check that these are appropriate."), BorderLayout.SOUTH);
+
+            OptionsPanel treePriorPanel = new OptionsPanel(12, 18);
+            treePriorPanel.addComponentWithLabel("Species Tree Prior:", treePriorCombo);
+            treePriorCombo.addItemListener(
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
+//                    	partitionTreePrior.setNodeHeightPrior( (TreePriorType) treePriorCombo.getSelectedItem());
+                    }
+                }
+            );
+
+            add(treePriorPanel, BorderLayout.NORTH);
+                        
         }
 
         add(panel, BorderLayout.CENTER);

@@ -54,7 +54,7 @@ public class MCMCPanel extends BeautiPanel {
     private static final long serialVersionUID = -3710586474593827540L;
     
     WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
-    WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
@@ -67,11 +67,6 @@ public class MCMCPanel extends BeautiPanel {
     JTextField logFileNameField = new JTextField(fileNameStem + ".log");
     JTextField treeFileNameField = new JTextField(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
 
-    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
-    JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
-
-    JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
-    JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
     JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
     JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
@@ -110,18 +105,6 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addSeparator();
 
-        echoEveryField.setValue(1000);
-        echoEveryField.setColumns(10);
-        optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
-        echoEveryField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
-
-            public void keyReleased(KeyEvent e) {
-                options.echoEvery = echoEveryField.getValue();
-                frame.setDirty();
-            }
-        });
 
         logEveryField.setValue(100);
         logEveryField.setColumns(10);
@@ -174,38 +157,6 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
         treeFileNameField.setEditable(false);
 
-//        addComponent(mapTreeLogCheck);
-//        mapTreeLogCheck.setOpaque(false);
-//        mapTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                mapTreeFileNameField.setEnabled(mapTreeLogCheck.isSelected());
-//            }
-//        });
-//
-//        mapTreeFileNameField.setColumns(32);
-//        addComponentWithLabel("MAP tree file name:", mapTreeFileNameField);
-
-        optionsPanel.addComponent(substTreeLogCheck);
-        substTreeLogCheck.setOpaque(false);
-        substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-            	options.substTreeLog = substTreeLogCheck.isSelected();
-            	updateTreeFileNameList();
-            	substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
-                if (substTreeLogCheck.isSelected()) {
-                	substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
-                } else {
-                    substTreeFileNameField.setText("");
-                }
-
-                frame.setDirty();
-            }
-        });
-
-        substTreeFileNameField.setColumns(32);
-        substTreeFileNameField.setEditable(false);
-        substTreeFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
 
         optionsPanel.addComponent(operatorAnalaysisCheck);
         operatorAnalaysisCheck.addActionListener(new java.awt.event.ActionListener() {
@@ -293,7 +244,7 @@ public class MCMCPanel extends BeautiPanel {
         this.options = options;
 
         chainLengthField.setValue(options.chainLength);
-        echoEveryField.setValue(options.echoEvery);
+
         logEveryField.setValue(options.logEvery);
 
         if (options.fileNameStem != null) {
@@ -330,11 +281,7 @@ public class MCMCPanel extends BeautiPanel {
             updateTreeFileNameList();
             treeFileNameField.setText(displayTreeList(options.treeFileName));
 
-            if (options.substTreeLog) {
-                substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
-            } else {
-                substTreeFileNameField.setText("");
-            }
+
 
             options.operatorAnalysisFileName = options.fileNameStem + ".ops";
             if (addTxt.isSelected()) {
@@ -347,24 +294,13 @@ public class MCMCPanel extends BeautiPanel {
                 operatorAnalaysisFileNameField.setText("");
             }
             
-//            mapTreeLogCheck.setEnabled(true);
-//            mapTreeLogCheck.setSelected(options.mapTreeLog);
-//            mapTreeFileNameField.setEnabled(options.mapTreeLog);
 
-            substTreeLogCheck.setEnabled(true);
-            substTreeLogCheck.setSelected(options.substTreeLog);
 
         } else {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
             logFileNameField.setText(fileNameStem + ".log");
             treeFileNameField.setText(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
-//            mapTreeLogCheck.setEnabled(false);
-//            mapTreeFileNameField.setEnabled(false);
-//            mapTreeFileNameField.setText("untitled");
-            substTreeLogCheck.setSelected(false);
-            substTreeFileNameField.setEnabled(false);
-            substTreeFileNameField.setText("");
             operatorAnalaysisCheck.setSelected(false);
             operatorAnalaysisFileNameField.setText("");
         }
@@ -374,10 +310,7 @@ public class MCMCPanel extends BeautiPanel {
         options.fileNameStem = fileNameStemField.getText();
         options.logFileName = logFileNameField.getText();        
 
-//        options.mapTreeLog = mapTreeLogCheck.isSelected();
-//        options.mapTreeFileName = mapTreeFileNameField.getText();
 
-        options.substTreeLog = substTreeLogCheck.isSelected();
         updateTreeFileNameList();
 
         options.operatorAnalysis = operatorAnalaysisCheck.isSelected();

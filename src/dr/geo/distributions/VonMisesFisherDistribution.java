@@ -1,6 +1,7 @@
 package dr.geo.distributions;
 
 import dr.geo.math.Space;
+import dr.math.LogTricks;
 
 /**
  * @author Marc Suchard
@@ -28,7 +29,8 @@ public class VonMisesFisherDistribution extends HyperSphereDistribution {
         if (kappa < 1E-10) {
             return -Math.log(2) - LOG_2_PI;
         }
-        return Math.log(kappa) - LOG_2_PI - Math.log(Math.exp(+kappa) - Math.exp(-kappa));
+        return Math.log(kappa) - LOG_2_PI - LogTricks.logDiff(kappa, -kappa);
+//        return Math.log(kappa) - LOG_2_PI - Math.log(Math.exp(+kappa) - Math.exp(-kappa));
     }
 
     public static double logPdf(double[] x, double[] mean, double kappa, Space space) {

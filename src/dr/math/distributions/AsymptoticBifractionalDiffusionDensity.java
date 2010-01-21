@@ -1,7 +1,7 @@
 package dr.math.distributions;
 
-import dr.math.MittagLefflerFunction;
 import dr.math.UnivariateFunction;
+import cern.jet.stat.Gamma;
 
 /**
  * @author Marc Suchard
@@ -9,13 +9,10 @@ import dr.math.UnivariateFunction;
 
 public class AsymptoticBifractionalDiffusionDensity implements Distribution {
 
-    public AsymptoticBifractionalDiffusionDensity() {
-
-
+    public AsymptoticBifractionalDiffusionDensity(double alpha, double beta) {
+        this.alpha = alpha;
+        this.beta = beta;
     }
-
-    
-
 
     /**
      * probability density function of the distribution
@@ -24,7 +21,7 @@ public class AsymptoticBifractionalDiffusionDensity implements Distribution {
      * @return pdf value
      */
     public double pdf(double x) {
-        throw new RuntimeException("Not yet implemented");
+        return Math.exp(logPdf(x));
     }
 
     /**
@@ -34,7 +31,7 @@ public class AsymptoticBifractionalDiffusionDensity implements Distribution {
      * @return log pdf value
      */
     public double logPdf(double x) {
-        throw new RuntimeException("Not yet implemented");
+        return logPdf(x, 1.0, alpha, beta);
     }
 
     /**
@@ -82,8 +79,42 @@ public class AsymptoticBifractionalDiffusionDensity implements Distribution {
         throw new RuntimeException("Not yet implemented");
     }
 
+   /**
+     * Taken from:  Saichev AI and Zaslavsky GM (1997) Fractional kinetic equations: solutions and applications.
+     *              Chaos, 7, 753-764
+     * @param x evaluation point
+     * @param t evaluation time
+     * @param alpha coefficient
+     * @param beta coefficient
+     * @return probability density
+     */
+
+    public static double logPdf(double x, double t, double alpha, double beta) {
+        final double mu = beta / alpha;
+        final double absX = Math.abs(x);
+        final double absY = absX / Math.pow(t,mu);
+        double density = 0;
+        double incr = Double.MAX_VALUE;
+        int m = 1; // 0th term = 0 \propto cos(pi/2)
+        int sign = -1;
+
+        while (incr > eps && m < max) {
+            incr =  sign / Math.pow(absY, m * alpha)
+                         * Gamma.gamma(m * alpha + 1)
+                         / Gamma.gamma(m * beta + 1)
+                         * Math.cos(halfPI * (m * alpha + 1));
+            density += incr;
+            sign *= -1;
+            m++;
+        }
+
+        return Math.log(density / (Math.PI * absX));
+    }
+
+    private static double eps = 1E-10;
+    private static int max = 1000;
+    private static double halfPI = Math.PI / 2.0;
 
     private double alpha;
     private double beta;
-    private MittagLefflerFunction mlFunc;
 }

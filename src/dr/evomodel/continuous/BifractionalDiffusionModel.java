@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.Parameter;
+import dr.math.distributions.AsymptoticBifractionalDiffusionDensity;
 
 /**
  * @author Marc Suchard
@@ -21,15 +22,18 @@ public class BifractionalDiffusionModel extends MultivariateDiffusionModel {
         addVariable(beta);
     }
 
-
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
         // Compute finite-time transition probability
 
         // Equation (2) from Brockman, Hufnagel and Geisel (2006)
-        final double ratio = alpha.getParameterValue(0) / beta.getParameterValue(0);
+//        final double ratio = alpha.getParameterValue(0) / beta.getParameterValue(0);
+//        final double r = distanceEuclidean(start, stop);
+//        final double scaledTime = Math.pow(time,ratio);
+//        return -ratio * Math.log(time) + logUniversalScalingFunction(r / scaledTime);
+        final double a = alpha.getParameterValue(0);
+        final double b = beta.getParameterValue(0);
         final double r = distanceEuclidean(start, stop);
-        final double scaledTime = Math.pow(time,ratio);        
-        return -ratio * Math.log(time) + logUniversalScalingFunction(r / scaledTime);
+        return AsymptoticBifractionalDiffusionDensity.logPdf(r, time, a, b);
     }
 
     private double distanceEuclidean(double[] start, double[] stop) {
@@ -42,9 +46,9 @@ public class BifractionalDiffusionModel extends MultivariateDiffusionModel {
         return Math.sqrt(total);
     }
 
-    private double logUniversalScalingFunction(double x) {
-        return x - x;
-    }
+//    private double logUniversalScalingFunction(double x) {
+//        return x - x;
+//    }
 
     protected void calculatePrecisionInfo() {
         // Precompute normalizing constants if necessary
@@ -52,5 +56,4 @@ public class BifractionalDiffusionModel extends MultivariateDiffusionModel {
 
     private Parameter alpha;
     private Parameter beta;
-
 }

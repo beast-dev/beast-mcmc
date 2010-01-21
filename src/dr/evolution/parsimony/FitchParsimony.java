@@ -27,25 +27,27 @@ package dr.evolution.parsimony;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.tree.*;
-import dr.evolution.util.Taxon;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.tree.FlexibleNode;
+import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 
 /**
  * Class for reconstructing characters using Fitch parsimony. This is intended to be much faster
  * than the static methods in the utility "Parsimony" class.
  *
- * @version $Id: FitchParsimony.java,v 1.4 2005/06/22 16:44:18 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: FitchParsimony.java,v 1.4 2005/06/22 16:44:18 rambaut Exp $
  */
 public class FitchParsimony implements ParsimonyCriterion {
 
     private final int stateCount;
     private final boolean gapsAreStates;
 
-	private boolean[][][] stateSets;
+    private boolean[][][] stateSets;
     private int[][] states;
 
     private Tree tree = null;
@@ -56,7 +58,7 @@ public class FitchParsimony implements ParsimonyCriterion {
 
     private final double[] siteScores;
 
-	public FitchParsimony(PatternList patterns, boolean gapsAreStates) {
+    public FitchParsimony(PatternList patterns, boolean gapsAreStates) {
         if (patterns == null) {
             throw new IllegalArgumentException("The patterns cannot be null");
         }
@@ -72,12 +74,13 @@ public class FitchParsimony implements ParsimonyCriterion {
 
         this.patterns = patterns;
         this.siteScores = new double[patterns.getPatternCount()];
-	}
+    }
 
-	/**
-	 * Calculates the minimum number of siteScores for the parsimony reconstruction of a
-	 * a set of character patterns on a tree. This only does the first pass of the
-	 * Fitch algorithm so it does not store ancestral state reconstructions.
+    /**
+     * Calculates the minimum number of siteScores for the parsimony reconstruction of a
+     * a set of character patterns on a tree. This only does the first pass of the
+     * Fitch algorithm so it does not store ancestral state reconstructions.
+     *
      * @param tree a tree object to reconstruct the characters on
      * @return number of parsimony siteScores
      */
@@ -88,10 +91,9 @@ public class FitchParsimony implements ParsimonyCriterion {
         }
 
         if (this.tree == null || this.tree != tree) {
-            this.tree = tree;
 
-            initialize();
-		}
+            initialize(tree);
+        }
 
         if (!hasCalculatedSteps) {
             for (int i = 0; i < siteScores.length; i++) {
@@ -102,8 +104,8 @@ public class FitchParsimony implements ParsimonyCriterion {
         }
 
 
-		return siteScores;
-	}
+        return siteScores;
+    }
 
     public double getScore(Tree tree) {
 
@@ -121,6 +123,7 @@ public class FitchParsimony implements ParsimonyCriterion {
      * Returns the reconstructed character states for a given node in the tree. If this method is repeatedly
      * called with the same tree and patterns then only the first call will reconstruct the states and each
      * subsequent call will return the stored states.
+     *
      * @param tree a tree object to reconstruct the characters on
      * @param node the node of the tree
      * @return an array containing the reconstructed states for this node
@@ -141,7 +144,10 @@ public class FitchParsimony implements ParsimonyCriterion {
         return states[node.getNumber()];
     }
 
-    private void initialize() {
+    public void initialize(Tree tree) {
+
+        this.tree = tree;
+
         hasCalculatedSteps = false;
         hasRecontructedStates = false;
 
@@ -174,13 +180,14 @@ public class FitchParsimony implements ParsimonyCriterion {
      * This is the first pass of the Fitch algorithm. This calculates the set of states
      * at each node and counts the total number of siteScores (the score). If that is all that
      * is required then the second pass is not necessary.
+     *
      * @param tree
      * @param node
      * @param patterns
      */
     private void calculateSteps(Tree tree, NodeRef node, PatternList patterns) {
 
-		if (!tree.isExternal(node)) {
+        if (!tree.isExternal(node)) {
 
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 calculateSteps(tree, tree.getChild(node, i), patterns);
@@ -199,20 +206,21 @@ public class FitchParsimony implements ParsimonyCriterion {
                     stateSets[node.getNumber()][i] = iState;
                 } else {
                     stateSets[node.getNumber()][i] = uState;
-                    siteScores[i] ++;
+                    siteScores[i]++;
                 }
             }
-		}
-	}
+        }
+    }
 
     /**
      * The second pass of the Fitch algorithm. This reconstructs the ancestral states at
      * each node.
+     *
      * @param tree
      * @param node
      * @param parentStates
      */
-	private void reconstructStates(Tree tree, NodeRef node, int[] parentStates) {
+    private void reconstructStates(Tree tree, NodeRef node, int[] parentStates) {
 
         for (int i = 0; i < patterns.getPatternCount(); i++) {
 
@@ -226,44 +234,44 @@ public class FitchParsimony implements ParsimonyCriterion {
         for (int i = 0; i < tree.getChildCount(node); i++) {
             reconstructStates(tree, tree.getChild(node, i), states[node.getNumber()]);
         }
-	}
+    }
 
-	private static boolean[] union(boolean[] s1, boolean[] s2) {
+    private static boolean[] union(boolean[] s1, boolean[] s2) {
 
-		boolean[] union = new boolean[s1.length];
-		for (int i = 0; i < union.length; i++) {
-			union[i] = s1[i] || s2[i];
-		}
-		return union;
-	}
+        boolean[] union = new boolean[s1.length];
+        for (int i = 0; i < union.length; i++) {
+            union[i] = s1[i] || s2[i];
+        }
+        return union;
+    }
 
-	private static boolean[] intersection(boolean[] s1, boolean[] s2) {
+    private static boolean[] intersection(boolean[] s1, boolean[] s2) {
 
-		boolean[] intersection = new boolean[s1.length];
-		for (int i = 0; i < intersection.length; i++) {
-			intersection[i] = s1[i] && s2[i];
-		}
-		return intersection;
-	}
+        boolean[] intersection = new boolean[s1.length];
+        for (int i = 0; i < intersection.length; i++) {
+            intersection[i] = s1[i] && s2[i];
+        }
+        return intersection;
+    }
 
-	private static int firstIndex(boolean[] s1) {
+    private static int firstIndex(boolean[] s1) {
 
-		for (int i = 0; i < s1.length; i++) {
-			if (s1[i]) {
-				return i;
-			}
-		}
-		return -1;
-	}
+        for (int i = 0; i < s1.length; i++) {
+            if (s1[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
-	private static int size(boolean[] s1) {
+    private static int size(boolean[] s1) {
 
-		int count = 0;
-		for (int i = 0; i < s1.length; i++) {
-			if (s1[i]) count += 1;
-		}
-		return count;
-	}
+        int count = 0;
+        for (int i = 0; i < s1.length; i++) {
+            if (s1[i]) count += 1;
+        }
+        return count;
+    }
 
     public static void main(String[] argv) {
         FlexibleNode tip1 = new FlexibleNode(new Taxon("tip1"));
@@ -291,7 +299,7 @@ public class FitchParsimony implements ParsimonyCriterion {
         FlexibleTree tree = new FlexibleTree(root);
 
         Patterns patterns = new Patterns(Nucleotides.INSTANCE, tree);
-        patterns.addPattern(new int[] {1, 0, 1, 2, 2});
+        patterns.addPattern(new int[]{1, 0, 1, 2, 2});
 
         FitchParsimony fitch = new FitchParsimony(patterns, false);
 

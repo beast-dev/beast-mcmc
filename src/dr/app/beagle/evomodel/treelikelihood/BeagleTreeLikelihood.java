@@ -155,11 +155,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
                 if ( stateCount == 4 && patternList.getPatternCount() < 1000) // TODO determine good cut-off
-                    preferenceFlags |= BeagleFlag.CPU.getMask();
+                    preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
 
             if (branchSiteModel.canReturnComplexDiagonalization())
-                requirementFlags |= BeagleFlag.COMPLEX.getMask();
+                requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
 
             instanceCount ++;
 
@@ -223,39 +223,41 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            this.rescalingScheme = rescalingScheme;
-            if (rescalingScheme == PartialsRescalingScheme.DEFAULT) {
-                if( (resourceDetails != null && (resourceDetails.getFlags() & BeagleFlag.GPU.getMask()) != 0)) {
-                    // Default to old system
-                    this.rescalingScheme = PartialsRescalingScheme.STATIC_RESCALING;
-                } else {
-                    // Default to dynamicRescaling
-                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
-                }
-            }
+            beagle.setPatternWeights(patternWeights);
 
-            switch(this.rescalingScheme) {
-                case NONE:
-                    alwaysRescale = false;
-                    allowRescale = false;
-                    break;
-                case ALWAYS_RESCALE:
-                    alwaysRescale = true;
-                    allowRescale = true;
-                    break;
-                case STATIC_RESCALING:
-                    alwaysRescale = false;
-//                    staticRescale = true;
-                    allowRescale = true;
-                    break;
-                case DYNAMIC_RESCALING:
-                    alwaysRescale = false;
-                    allowRescale = true;
-                    break;
-                default:
-                    throw new RuntimeException("Unknown PartialsRescalingScheme in BeagleTreeLikelihood.");
-            }
-            logger.info("  Partials scaling scheme used: " + rescalingScheme.getText());
+//            this.rescalingScheme = rescalingScheme;
+//            if (rescalingScheme == PartialsRescalingScheme.DEFAULT) {
+//                if( (resourceDetails != null && (resourceDetails.getFlags() & BeagleFlag.PROCESSOR_GPU.getMask()) != 0)) {
+//                    // Default to old system
+//                    this.rescalingScheme = PartialsRescalingScheme.STATIC_RESCALING;
+//                } else {
+//                    // Default to dynamicRescaling
+//                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC_RESCALING;
+//                }
+//            }
+//
+//            switch(this.rescalingScheme) {
+//                case NONE:
+//                    alwaysRescale = false;
+//                    allowRescale = false;
+//                    break;
+//                case ALWAYS_RESCALE:
+//                    alwaysRescale = true;
+//                    allowRescale = true;
+//                    break;
+//                case STATIC_RESCALING:
+//                    alwaysRescale = false;
+////                    staticRescale = true;
+//                    allowRescale = true;
+//                    break;
+//                case DYNAMIC_RESCALING:
+//                    alwaysRescale = false;
+//                    allowRescale = true;
+//                    break;
+//                default:
+//                    throw new RuntimeException("Unknown PartialsRescalingScheme in BeagleTreeLikelihood.");
+//            }
+//            logger.info("  Partials scaling scheme used: " + rescalingScheme.getText());
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
@@ -408,11 +410,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
 
-        if (useScaleFactors) { // Only store when actually used
-            storedUseScaleFactors = useScaleFactors;
-            scaleBufferHelper.storeState();
-            System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
-        }
+//        if (useScaleFactors) { // Only store when actually used
+//            storedUseScaleFactors = useScaleFactors;
+//            scaleBufferHelper.storeState();
+//            System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
+//        }
 
         super.storeState();
 
@@ -428,13 +430,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
 
-        useScaleFactors = storedUseScaleFactors;
-        if (useScaleFactors ) {
-            scaleBufferHelper.restoreState();
-            int[] tmp = storedScaleBufferIndices;
-            storedScaleBufferIndices = scaleBufferIndices;
-            scaleBufferIndices = tmp;
-        }
+//        useScaleFactors = storedUseScaleFactors;
+//        if (useScaleFactors ) {
+//            scaleBufferHelper.restoreState();
+//            int[] tmp = storedScaleBufferIndices;
+//            storedScaleBufferIndices = scaleBufferIndices;
+//            scaleBufferIndices = tmp;
+//        }
 
         super.restoreState();
 
@@ -458,18 +460,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (matrixUpdateIndices == null) {
             matrixUpdateIndices = new int[nodeCount];
             branchLengths = new double[nodeCount];
-            scaleBufferIndices = new int[internalNodeCount];
-            storedScaleBufferIndices = new int[internalNodeCount];
+//            scaleBufferIndices = new int[internalNodeCount];
+//            storedScaleBufferIndices = new int[internalNodeCount];
         }
 
         if (operations == null) {
             operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
         }
 
-        if (alwaysRescale) {
-            useScaleFactors = true;
-            recomputeScaleFactors = true;
-        }
+//        if (alwaysRescale) {
+//            useScaleFactors = true;
+//            recomputeScaleFactors = true;
+//        }
 
         branchUpdateCount = 0;
         operationCount = 0;
@@ -518,82 +520,89 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         double[] frequencies = branchSiteModel.getStateFrequencies(0);
 
         int cumulateScaleBufferIndex = Beagle.NONE;
-        if (useScaleFactors) {
+//        if (useScaleFactors) {
+//
+//            if (alwaysRescale)
+//                scaleBufferHelper.flipOffset(internalNodeCount);
+//
+//            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+//
+//            if (alwaysRescale) { // Only needs to be done if the scalings change
+//                beagle.resetScaleFactors(cumulateScaleBufferIndex);
+//                beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
+//            }
+//        }
 
-            if (alwaysRescale)
-                scaleBufferHelper.flipOffset(internalNodeCount);
+        // these could be set only when they change but store/restore would need to be considered
+        beagle.setCategoryWeights(0, categoryWeights);
+        beagle.setStateFrequencies(0, frequencies);
 
-            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+        double[] sumLogLikelihoods = new double[1];
 
-            if (alwaysRescale) { // Only needs to be done if the scalings change
-                beagle.resetScaleFactors(cumulateScaleBufferIndex);
-                beagle.accumulateScaleFactors(scaleBufferIndices,internalNodeCount,cumulateScaleBufferIndex);
-            }
-        }
+        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, new int[] { 0 }, new int[] { 0 },
+                new int[] { cumulateScaleBufferIndex }, 1, sumLogLikelihoods);
 
-        beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
-                new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
+        double logL = sumLogLikelihoods[0];
 
-        double logL = 0.0;
-        for (int i = 0; i < patternCount; i++) {
-            logL += patternLogLikelihoods[i] * patternWeights[i];
-        }
+        // If these are needed...
+        //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
-        if  (alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL))) {
-            logL = Double.NEGATIVE_INFINITY;
-        }
+//        if  (alwaysRescale && (Double.isNaN(logL) || Double.isInfinite(logL))) {
+//            logL = Double.NEGATIVE_INFINITY;
+//        }
 
-        // Attempt dynamic rescaling if over/under-flow
-        if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
-
-            if (rescalingScheme == PartialsRescalingScheme.STATIC_RESCALING) {
-                System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
-                alwaysRescale = true; // Turn on rescaling permanently
-            }
-
-            useScaleFactors = true;
-            recomputeScaleFactors = true;
-
-            updateAllNodes();
-            branchUpdateCount = 0;
-            operationCount = 0;
-            traverse(treeModel, root, null, false);
-
-            if (COUNT_TOTAL_OPERATIONS) {
-                totalOperationCount += operationCount;
-            }
-
-//            beagle.updateTransitionMatrices(    // Should not be necessary, will remove after debugging
-//                     eigenBufferHelper.getOffsetIndex(0),
-//                     matrixUpdateIndices,
-//                     null,
-//                     null,
-//                     branchLengths,
-//                     branchUpdateCount);
-
-            beagle.updatePartials(operations, operationCount, -1);
-
-            // flip cumulateScaleBuffer to hold new total
-            scaleBufferHelper.flipOffset(internalNodeCount);
-            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-
-            // accumulate all the scaling factors and store them in the additional 'root' buffer
-            beagle.resetScaleFactors(cumulateScaleBufferIndex);
-            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
-
-            beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
-                    new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
-
-            logL = 0.0;
-            for (int i = 0; i < patternCount; i++) {
-                logL += patternLogLikelihoods[i] * patternWeights[i];
-            }
-            recomputeScaleFactors = false; // Only recompute after under/over-flow
-
-            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
-                logL = Double.NEGATIVE_INFINITY;
-            }
-        }
+        // Have turned scaling off as it is now implemented in BEAGLE
+//         Attempt dynamic rescaling if over/under-flow
+//        if ( !alwaysRescale && allowRescale && (Double.isNaN(logL) || Double.isInfinite(logL) ) ) {
+//
+//            if (rescalingScheme == PartialsRescalingScheme.STATIC_RESCALING) {
+//                System.err.println("Potential under/over-flow; going to attempt a partials rescaling.");
+//                alwaysRescale = true; // Turn on rescaling permanently
+//            }
+//
+//            useScaleFactors = true;
+//            recomputeScaleFactors = true;
+//
+//            updateAllNodes();
+//            branchUpdateCount = 0;
+//            operationCount = 0;
+//            traverse(treeModel, root, null, false);
+//
+//            if (COUNT_TOTAL_OPERATIONS) {
+//                totalOperationCount += operationCount;
+//            }
+//
+////            beagle.updateTransitionMatrices(    // Should not be necessary, will remove after debugging
+////                     eigenBufferHelper.getOffsetIndex(0),
+////                     matrixUpdateIndices,
+////                     null,
+////                     null,
+////                     branchLengths,
+////                     branchUpdateCount);
+//
+//            beagle.updatePartials(operations, operationCount, -1);
+//
+//            // flip cumulateScaleBuffer to hold new total
+//            scaleBufferHelper.flipOffset(internalNodeCount);
+//            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+//
+//            // accumulate all the scaling factors and store them in the additional 'root' buffer
+//            beagle.resetScaleFactors(cumulateScaleBufferIndex);
+//            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
+//
+//            beagle.calculateRootLogLikelihoods(new int[] { rootIndex }, categoryWeights, frequencies,
+//                    new int[] { cumulateScaleBufferIndex }, 1, patternLogLikelihoods);
+//
+//            logL = 0.0;
+//            for (int i = 0; i < patternCount; i++) {
+//                logL += patternLogLikelihoods[i] * patternWeights[i];
+//            }
+//            recomputeScaleFactors = false; // Only recompute after under/over-flow
+//
+//            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+//                logL = Double.NEGATIVE_INFINITY;
+//            }
+//        }
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -677,27 +686,27 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                 operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-                if (useScaleFactors) {
-                    // get the index of this scaling buffer
-                    int n = nodeNum - tipCount;
-
-                    if (recomputeScaleFactors) {
-                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
-                        scaleBufferHelper.flipOffset(n);
-                        // store the index
-                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-
-                        operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-                        operations[x + 2] = Beagle.NONE;
-                    } else {
-                        operations[x + 1] = Beagle.NONE;
-                        operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
-                    }
-
-                } else {
+//                if (useScaleFactors) {
+//                    // get the index of this scaling buffer
+//                    int n = nodeNum - tipCount;
+//
+//                    if (recomputeScaleFactors) {
+//                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
+//                        scaleBufferHelper.flipOffset(n);
+//                        // store the index
+//                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+//
+//                        operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+//                        operations[x + 2] = Beagle.NONE;
+//                    } else {
+//                        operations[x + 1] = Beagle.NONE;
+//                        operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
+//                    }
+//
+//                } else {
                     operations[x + 1] = Beagle.NONE; // Not using scaleFactors
                     operations[x + 2] = Beagle.NONE;
-                }
+//                }
                 operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
                 operations[x + 4] = matrixBufferHelper.getOffsetIndex(child1.getNumber()); // source matrix 1
                 operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
@@ -720,8 +729,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int[] matrixUpdateIndices;
     private double[] branchLengths;
     private int branchUpdateCount;
-    private int[] scaleBufferIndices;
-    private int[] storedScaleBufferIndices;
+//    private int[] scaleBufferIndices;
+//    private int[] storedScaleBufferIndices;
 
     private int[] operations;
     private int operationCount;
@@ -734,13 +743,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected final int tipCount;
     protected final int internalNodeCount;
 
-    protected boolean useScaleFactors = false;
-    private boolean recomputeScaleFactors = false;
-    private boolean alwaysRescale = false;
-    private boolean allowRescale = true;
-//    private boolean firstIteration = true;
-//    private boolean staticRescale = false;
-    private PartialsRescalingScheme rescalingScheme;
+//    protected boolean useScaleFactors = false;
+//    private boolean recomputeScaleFactors = false;
+//    private boolean alwaysRescale = false;
+//    private boolean allowRescale = true;
+////    private boolean firstIteration = true;
+////    private boolean staticRescale = false;
+//    private PartialsRescalingScheme rescalingScheme;
 
     private boolean storedUseScaleFactors = false;
 

@@ -273,6 +273,10 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         return this;
     }
 
+    public final PatternList getPatternList() {
+        return patternList;
+    }
+
     public final double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();

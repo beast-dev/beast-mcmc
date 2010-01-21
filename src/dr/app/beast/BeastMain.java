@@ -300,20 +300,20 @@ public class BeastMain {
         boolean useBeagle = arguments.hasOption("beagle");
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
         if (arguments.hasOption("beagle_CPU")) {
-            beagleFlags |= BeagleFlag.CPU.getMask();
+            beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
         }
         if (arguments.hasOption("beagle_GPU")) {
-            beagleFlags |= BeagleFlag.GPU.getMask();
+            beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
         }
         if (arguments.hasOption("beagle_SSE")) {
-            beagleFlags |= BeagleFlag.CPU.getMask();
-            beagleFlags |= BeagleFlag.SSE.getMask();
+            beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
+            beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
         if (arguments.hasOption("beagle_double")) {
-            beagleFlags |= BeagleFlag.DOUBLE.getMask();
+            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
         }
         if (arguments.hasOption("beagle_single")) {
-            beagleFlags |= BeagleFlag.SINGLE.getMask();
+            beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
         }
 
         if (arguments.hasOption("beagle_order")) {
@@ -393,19 +393,19 @@ public class BeastMain {
             if (useBeagle) {
                 beagleShowInfo = dialog.showBeagleInfo();
                 if (dialog.preferBeagleCPU()) {
-                    beagleFlags |= BeagleFlag.CPU.getMask();
+                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
                 }
                 if (dialog.preferBeagleSSE()) {
-                    beagleFlags |= BeagleFlag.SSE.getMask();
+                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
                 }
                 if (dialog.preferBeagleGPU()) {
-                    beagleFlags |= BeagleFlag.GPU.getMask();
+                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
                 }
                 if (dialog.preferBeagleDouble()) {
-                    beagleFlags |= BeagleFlag.DOUBLE.getMask();
+                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
                 }
                 if (dialog.preferBeagleSingle()) {
-                    beagleFlags |= BeagleFlag.SINGLE.getMask();
+                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
                 }
             }
 

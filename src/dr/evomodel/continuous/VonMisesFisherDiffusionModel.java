@@ -46,7 +46,7 @@ public class VonMisesFisherDiffusionModel extends MultivariateDiffusionModel {
     private boolean isInBounds(double[] x) {
         final double latitude = x[0];
         final double longitude = x[1];
-        return (latitude >= 0 && latitude < 180 && longitude > -180 && longitude < 180);
+        return (latitude >= -90 && latitude < 90 && longitude > -180 && longitude < 180);
     }
 
     protected double calculateLogDensity(double[] start, double[] stop, double time) {

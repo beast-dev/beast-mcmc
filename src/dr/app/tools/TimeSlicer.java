@@ -1125,7 +1125,7 @@ public class TimeSlicer {
         double[] parentValue = parentTrait.getValue();
 
         final double scaledTimeChild = (time - nodeHeight) * rate;
-        final double scaledTimeParent = (parentHeight - time) * rate;;
+        final double scaledTimeParent = (parentHeight - time) * rate;
         final double scaledWeightTotal = 1.0 / scaledTimeChild + 1.0 / scaledTimeParent;
 
         if (scaledTimeChild == 0)

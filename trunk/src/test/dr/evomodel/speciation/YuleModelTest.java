@@ -25,6 +25,7 @@ import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -52,6 +53,8 @@ public class YuleModelTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
+        MathUtils.setSeed(666);
+        
         NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,(3:1.0,4:1.0):1.0);");
         tree = (FlexibleTree) importer.importTree(null);
     }
@@ -69,13 +72,13 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     }
 
-    public void testYuleWithWideExchange() {
-
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+//    public void testYuleWithWideExchange() {
+//
+//        TreeModel treeModel = new TreeModel("treeModel", tree);
 
         // Doesn't compile...
   //      yuleTester(treeModel, ExchangeOperatorTest.getWideExchangeSchedule(treeModel));
-    }
+//    }
 
     private void yuleTester(TreeModel treeModel, OperatorSchedule schedule) {
 

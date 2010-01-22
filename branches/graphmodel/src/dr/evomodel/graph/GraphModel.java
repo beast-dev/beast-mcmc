@@ -357,6 +357,10 @@ public class GraphModel extends TreeModel {
            } else {
                node1.parent2 = null;
            }
+           node1.objects0.clear();
+           node1.objects0.addAll(node0.objects0);
+           node1.objects1.clear();
+           node1.objects1.addAll(node0.objects1);
        }
    }
 

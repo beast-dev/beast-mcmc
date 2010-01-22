@@ -8,10 +8,13 @@ import dr.evolution.alignment.SiteList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.graph.GraphModel;
+import dr.evomodel.graph.Partition;
 import dr.evomodel.graph.PartitionModel;
 import dr.evomodel.graph.PartitionModel.PartitionChangedEvent;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
@@ -31,7 +34,10 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     public static final String FORCE_JAVA_CORE = "forceJavaCore";
     public static final String FORCE_RESCALING = "forceRescaling";
 	SiteList concatSiteList;
-	
+
+	/*
+     * TODO: refactor this to derive TreeLikelihood!
+	 */
     public GraphLikelihood(
             GraphModel graphModel,
             PartitionModel partitionModel,
@@ -45,6 +51,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         try{
 
         this.concatSiteList = (SiteList)this.patternList;
+        this.partitionModel = partitionModel;
 
         // BEGIN TreeLikelihood LIKELIHOODCORE INIT CODE
         this.likelihoodCore = new GeneralLikelihoodCore(concatSiteList.getSiteCount());
@@ -199,6 +206,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     /**
      * Calculate the log likelihood of the current state.
      * Ripped nearly verbatim from treeLikelihood
+     * TODO: refactor this to derive TreeLikelihood!
      * @return the log likelihood.
      */
     protected double calculateLogLikelihood() {
@@ -210,7 +218,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root);
+        for(int i=0; i<partitionModel.getPartitionCount(); i++){
+            traverse(treeModel, root, partitionModel, partitionModel.getPartition(i));
+        }
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -226,7 +236,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             // and try again...
             updateAllNodes();
             updateAllPatterns();
-            traverse(treeModel, root);
+            for(int i=0; i<partitionModel.getPartitionCount(); i++){
+                traverse(treeModel, root, partitionModel, partitionModel.getPartition(i));
+            }
 
             logL = 0.0;
             for (int i = 0; i < patternCount; i++) {
@@ -248,13 +260,129 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     
     /**
      * partition-aware traversal
+     * updateNode[i]==true indicates all partitions at the node should be updated
+     * updatePartition[j]==true indicates all nodes containing partition j to update
+     * updateNodePartition[i][j]==true indicates node i, partition j for update.
      */
-    protected boolean traverse(Tree tree, NodeRef node) 
+    protected boolean traverse(Tree tree, NodeRef node, PartitionModel partitionModel, Partition p) 
     {
-    	return true;
+    	GraphModel gm = (GraphModel)tree;
+        boolean update = false;
+
+        int nodeNum = node.getNumber();
+
+        // which parent has this partition?
+        NodeRef parent = null;
+        GraphModel.Node gnode = (GraphModel.Node)node;
+        if(gnode.hasObject(0, p))
+        	parent = gm.getParent(node, 0);
+    	else
+    		parent = gm.getParent(node, 1);
+
+        if(parent==null&&gm.getParent(node)!=null){
+        	// partition does not pass through this node.
+        	System.err.println("Partition not at node");
+        }
+
+        SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(p).get(0);
+        BranchRateModel branchRateModel = (BranchRateModel)partitionModel.getModelsOnPartition(p).get(1);
+        FrequencyModel frequencyModel = (FrequencyModel)partitionModel.getModelsOnPartition(p).get(2);
+        // First update the transition probability matrix(ices) for this branch
+        if (parent != null && updateNode[nodeNum]) {
+
+            final double branchRate = branchRateModel.getBranchRate(tree, node);
+
+            // Get the operational time of the branch
+            final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+
+            if (branchTime < 0.0) {
+                throw new RuntimeException("Negative branch length: " + branchTime);
+            }
+
+            likelihoodCore.setNodeMatrixForUpdate(nodeNum);
+
+            for (int i = 0; i < categoryCount; i++) {
+                double branchLength = siteModel.getRateForCategory(i) * branchTime;
+                siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
+                likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+            }
+
+            update = true;
+        }
+
+        // If the node is internal, update the partial likelihoods.
+        if (!tree.isExternal(node)) {
+
+            // Traverse down the two child nodes
+            NodeRef child1 = tree.getChild(node, 0);
+            final boolean update1 = traverse(tree, child1, partitionModel, p);
+
+            NodeRef child2 = tree.getChild(node, 1);
+            final boolean update2 = false;
+            if(child2!=null)	traverse(tree, child2, partitionModel, p);
+
+            // If either child node was updated then update this node too
+            if (update1 || update2) {
+
+                final int childNum1 = child1.getNumber();
+                final int childNum2 = child2.getNumber();
+
+                likelihoodCore.setNodePartialsForUpdate(nodeNum);
+
+                if (integrateAcrossCategories) {
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+                } else {
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
+                }
+
+                if (COUNT_TOTAL_OPERATIONS) {
+                    totalOperationCount ++;
+                }
+
+                if (parent == null) {
+                    // No parent this is the root of the tree -
+                    // calculate the pattern likelihoods
+                    double[] frequencies = frequencyModel.getFrequencies();
+
+                    double[] partials = getRootPartials(p);
+
+                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods);
+                }
+
+                update = true;
+            }
+        }
+
+        return update;
     }
 
+    public final double[] getRootPartials(Partition p) {
+        if (rootPartials == null) {
+            rootPartials = new double[patternCount * stateCount];
+        }
 
+        int nodeNum = treeModel.getRoot().getNumber();
+        if (integrateAcrossCategories) {
+            // moved this call to here, because non-integrating siteModels don't need to support it - AD
+            SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(p).get(0);
+            double[] proportions = siteModel.getCategoryProportions();
+            likelihoodCore.integratePartials(nodeNum, proportions, rootPartials);
+        } else {
+            likelihoodCore.getPartials(nodeNum, rootPartials);
+        }
+
+        return rootPartials;
+    }
+
+    /**
+     * the root partial likelihoods (a temporary array that is used
+     * to fetch the partials - it should not be examined directly -
+     * use getRootPartials() instead).
+     */
+    private double[] rootPartials = null;
+    
+
+    protected PartitionModel partitionModel;
     protected GeneralLikelihoodCore likelihoodCore;
     protected int categoryCount;
     protected final boolean integrateAcrossCategories;
@@ -262,4 +390,6 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     protected double[] tipPartials;
     protected double[] patternLogLikelihoods = null;
     protected int[] siteCategories = null;
+    protected boolean[] updatePartition = null;
+    protected boolean[][] updateNodePartition = null;
 }

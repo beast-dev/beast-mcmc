@@ -131,23 +131,24 @@ public class EBSPAnalysis extends TabularData {
                 if (match) {
                     for (int nt = 0; nt < tt.length; ++nt) {
                         tt[nt] = treeImporters[nt].importNextTree();
+                        if( tt[nt] == null ) {
+                           throw new TraceException("All NEXUS tree files should contain the same number of states");
+                        }
                     }
                 }
                 //Get tree state number
-                String name1 = tt[0].getId();
-                int state1 = Integer.parseInt(name1.substring(name1.indexOf('_') + 1, name1.length()));
-                int state2 = state1;
+                final String name1 = tt[0].getId();
+                final int state1 = Integer.parseInt(name1.substring(name1.indexOf('_') + 1, name1.length()));
 
-                if (tt.length > 1) {
-                    String name2 = tt[1].getId();
-                    state2 = Integer.parseInt(name1.substring(name2.indexOf('_') + 1, name2.length()));
+                for (int j = 1; j < tt.length; ++j) {
+                    final String name2 = tt[j].getId();
+                    int state2 = Integer.parseInt(name1.substring(name2.indexOf('_') + 1, name2.length()));
+                    if (state1 != state2) {
+                        throw new TraceException("NEXUS tree files have different rates or corrupted!!!!");
+                    }
                 }
 
-                if (state1 != state2) {     //... can this happen at all?
-                    throw new TraceException("NEXUS tree files have different rates or corrupted!!!!"); //Not too sure what kind of message is appropriate here.
-
-
-                } else if ((ns + intBurnIn) * ltraces.getStepSize() == state1) {                   //Check if log state matches tree state
+                if ((ns + intBurnIn) * ltraces.getStepSize() == state1) {                   //Check if log state matches tree state
                     match = true;
                     final VDdemographicFunction demoFunction =
                             new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);

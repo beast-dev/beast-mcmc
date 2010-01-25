@@ -1,31 +1,25 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
-import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
-import dr.xml.*;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
  */
 public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateTraitLikelihood {
-
-    public static final String TRAIT_LIKELIHOOD = "integratedMultivariateTraitLikelihood";
 
     public static final double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
@@ -70,19 +64,11 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
         sb.append("\tNumber of observations: ").append(dimData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
-
-
-//        System.err.println("starting mean cache: "+new Vector(meanCache));
-//        System.err.println("hello?");
-//        System.exit(-1);
     }
 
     private void setRootPrior(MultivariateNormalDistribution rootPrior) {
         rootPriorMean = rootPrior.getMean();
         rootPriorPrecision = rootPrior.getScaleMatrix();
-
-//        System.err.println("root prior mean: " + new Vector(rootPriorMean));
-//        System.err.println("root prior prec: \n" + new Matrix(rootPriorPrecision));
 
         try {
             rootPriorPrecisionDeterminant = new Matrix(rootPriorPrecision).determinant();
@@ -113,9 +99,11 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         // Integrate root trait out against rootPrior
         final int rootIndex = treeModel.getRoot().getNumber();
 
-        System.err.println("mean: " + new Vector(meanCache));
-        System.err.println("upre: " + new Vector(upperPrecisionCache));
-        System.err.println("lpre: " + new Vector(lowerPrecisionCache));
+        if (DEBUG) {
+            System.err.println("mean: " + new Vector(meanCache));
+            System.err.println("upre: " + new Vector(upperPrecisionCache));
+            System.err.println("lpre: " + new Vector(lowerPrecisionCache));
+        }
 
         double logLikelihood = 0;
 
@@ -125,14 +113,16 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             System.arraycopy(meanCache, rootIndex + datum*dimTrait, rootMean, 0, dimTrait);
             double rootPrecision = lowerPrecisionCache[rootIndex];
 
-            System.err.println("root mean: " + new Vector(rootMean));
-            System.err.println("root prec: " + rootPrecision);
-
             double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
-            System.err.println("diffusion prec: " + new Matrix(diffusionPrecision));
 
-            // B = root precision
-            // z = root mean
+            if (DEBUG) {
+                System.err.println("root mean: " + new Vector(rootMean));
+                System.err.println("root prec: " + rootPrecision);
+                System.err.println("diffusion prec: " + new Matrix(diffusionPrecision));
+            }
+                        
+            // B = root prior precision
+            // z = root prior mean
             // A = likelihood precision
             // y = likelihood mean
 
@@ -140,17 +130,14 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             double[] Ay = new double[dimTrait]; // TODO Allocate once
             double[][] AplusB = new double[dimTrait][dimTrait]; // TODO Allocate once
 
-            // z'Bz -- TODO only need to calculate once
             double zBz = 0;
-            for (int i = 0; i < dimTrait; i++) {
-                Bz[i] = 0;
-                for (int j = 0; j < dimTrait; j++)
-                    Bz[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
-                zBz += rootPriorMean[i] * Bz[i];
-            }
+            double yAy = 0;
+            double detAplusB = 0;
+            double square = 0;
+
+            double detDiffusion = diffusionModel.getDeterminantPrecisionMatrix();
 
             // y'Ay
-            double yAy = 0;
             for (int i = 0; i < dimTrait; i++) {
                 Ay[i] = 0;
                 for (int j = 0; j < dimTrait; j++)
@@ -158,48 +145,136 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                 yAy += rootMean[i] * Ay[i];
             }
 
-            // (Ay + Bz)' (A+B)^{-1} (Ay + Bz)
-            for (int i = 0; i < dimTrait; i++) {
-                Ay[i] += Bz[i];   // Ay is filled with sum
-                for (int j = 0; j < dimTrait; j++) {
-                    AplusB[i][j] = diffusionPrecision[i][j] * rootPrecision + rootPriorPrecision[i][j];
-                }
-            }
-
-            Matrix mat = new Matrix(AplusB);
-            double detAplusB = 0;
-            double detDiffusion = diffusionModel.getDeterminantPrecisionMatrix();
-
-            try {
-                detAplusB = mat.determinant();
-
-            } catch (IllegalDimension illegalDimension) {
-                illegalDimension.printStackTrace();
-            }
-
-            double square = 0;
-            double[][] invAplusB = mat.inverse().toComponents();
-            for (int i = 0; i < dimTrait; i++) {
-                for (int j = 0; j < dimTrait; j++)
-                    square += Ay[i] * invAplusB[i][j] * Ay[j];
-            }
-
-//            System.err.println("zBz = " + zBz);
-//            System.err.println("yAy = " + yAy);
-//            System.err.println("-(Ay+Bz)(A+B)^{1}(Ay+Bz) = " + square);
-
             logLikelihood += -LOG_SQRT_2_PI * dimTrait
-                    + 0.5 * (Math.log(detDiffusion) + dimTrait * Math.log(rootPrecision) +
-                    Math.log(rootPriorPrecisionDeterminant) - Math.log(detAplusB))
-                    - 0.5 * (yAy + zBz - square);
+                    + 0.5 * (Math.log(detDiffusion) + dimTrait * Math.log(rootPrecision))
+                    - 0.5 * (yAy);
 
+            if (DEBUG) {
+                double[][] T = new double[dimTrait][dimTrait];
+                for (int i = 0; i < dimTrait; i++) {
+                    for (int j = 0; j < dimTrait; j++) {
+                        T[i][j] = diffusionPrecision[i][j] * rootPrecision;
+                    }
+                }
+
+                System.err.println("Conditional root MVN precision = \n" + new Matrix(T));
+
+                System.err.println("Conditional root MVN density = " + MultivariateNormalDistribution.logPdf(rootMean, new double[dimTrait], T,
+                        Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(T)), 1.0));
+            }
+
+            if (integrateRoot) {
+
+                // z'Bz -- TODO only need to calculate when root prior chances (just at initialization once)
+                for (int i = 0; i < dimTrait; i++) {
+                    Bz[i] = 0;
+                    for (int j = 0; j < dimTrait; j++)
+                        Bz[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
+                    zBz += rootPriorMean[i] * Bz[i];
+                }
+
+                // (Ay + Bz)' (A+B)^{-1} (Ay + Bz)
+                for (int i = 0; i < dimTrait; i++) {
+                    Ay[i] += Bz[i];   // Ay is filled with sum
+                    for (int j = 0; j < dimTrait; j++) {
+                        AplusB[i][j] = diffusionPrecision[i][j] * rootPrecision + rootPriorPrecision[i][j];
+                    }
+                }
+
+                Matrix mat = new Matrix(AplusB);
+
+                try {
+                    detAplusB = mat.determinant();
+
+                } catch (IllegalDimension illegalDimension) {
+                    illegalDimension.printStackTrace();
+                }
+
+                double[][] invAplusB = mat.inverse().toComponents();
+                for (int i = 0; i < dimTrait; i++) {
+                    for (int j = 0; j < dimTrait; j++)
+                        square += Ay[i] * invAplusB[i][j] * Ay[j];
+                }
+                logLikelihood +=
+                    + 0.5 * (Math.log(rootPriorPrecisionDeterminant) - Math.log(detAplusB))
+                    - 0.5 * (zBz - square);
+            }
+
+            if (DEBUG) {
+                System.err.println("zBz = " + zBz);
+                System.err.println("yAy = " + yAy);
+                System.err.println("(Ay+Bz)(A+B)^{-1}(Ay+Bz) = " + square);
+            }
+            
+        }
+
+        if (DEBUG) {
+            System.err.println("logLikelihood (before remainders) = "+logLikelihood+ " (should match root MVN density when root not integrated out)");
         }
 
         double sumLogRemainders = 0;
-        for(int i=0; i<logRemainderDensityCache.length; i++) // TODO Skip remainders for tips and root
-            sumLogRemainders += logRemainderDensityCache[i];
+        for(double r : logRemainderDensityCache) // TODO Skip remainders for tips and root
+            sumLogRemainders += r;
 
         logLikelihood += sumLogRemainders;
+
+        if (DEBUG && dimTrait == 1) { // Root trait is univariate!!!
+            System.err.println("logLikelihood (final) = " + logLikelihood);
+
+            // Perform a check based on filling in the tipCount * tipCount variance matrix
+            // And then integrating out the root trait value
+
+            // Form \Sigma (variance) and \Sigma^{-1} (precision)
+            double[][] treeVarianceMatrix = computeTreeMVNormalVariance();
+            double[][] treePrecisionMatrix = new SymmetricMatrix(treeVarianceMatrix).inverse().toComponents();
+            double[] tipTraits = fillLeafTraits();
+
+            System.err.println("tipTraits = " + new Vector(tipTraits));
+            System.err.println("tipPrecision = \n" + new Matrix(treePrecisionMatrix));
+
+            double checkLogLikelihood = MultivariateNormalDistribution.logPdf(tipTraits, new double[tipTraits.length], treePrecisionMatrix,
+                            Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(treePrecisionMatrix)), 1.0);
+
+            System.err.println("tipDensity = " + checkLogLikelihood + " (should match final likelihood when root not integrated out)");
+
+            // Convolve root prior
+            if (integrateRoot) {
+
+                final int tipCount = treePrecisionMatrix.length;
+
+                // 1^t\Sigma^{-1} y + Pz
+                double mean = rootPriorPrecision[0][0] * rootPriorMean[0];
+                for(int i = 0; i < tipCount; i++) {
+                    for(int j = 0; j < tipCount; j++) {
+                        mean += treePrecisionMatrix[i][j] * tipTraits[j];
+                    }
+                }
+
+                // 1^t \Sigma^{-1} 1 + P
+                double precision = rootPriorPrecision[0][0];
+                for(int i = 0; i < tipCount; i++) {
+                    for(int j = 0; j < tipCount; j++) {
+                        precision += treePrecisionMatrix[i][j];
+                    }
+                }
+                mean /= precision;
+
+
+                // We know:  y ~ MVN(x, A) and x ~ N(m, B)
+                // Therefore p(x | y) = N( (A+B)^{-1}(Ay + Bm), A + B)
+                // We want: p( y ) = p( y | x ) p( x ) / p( x | y ) for any value x, say x = 0
+
+                double logMarginalDensity = checkLogLikelihood;
+                logMarginalDensity += MultivariateNormalDistribution.logPdf(
+                        rootPriorMean, new double[rootPriorMean.length], rootPriorPrecision,
+                        Math.log(rootPriorPrecisionDeterminant),1.0
+                );
+                logMarginalDensity -= NormalDistribution.logPdf(mean, 0.0, 1.0 / Math.sqrt(precision));
+                System.err.println("Mean = "+mean);
+                System.err.println("Prec = "+precision);
+                System.err.println("log density = "+ logMarginalDensity);
+            }
+        }
 
         return logLikelihood;
     }
@@ -278,9 +353,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                         + 0.5 * dimTrait * (Math.log(remainderPrecision)+logDetPrecisionMatrix)
                         - 0.5 * (childSS0 + childSS1 - crossSS);
             }
-
         }
-
     }
 
     class MeanPrecision {
@@ -289,8 +362,14 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             this.precisionScalar = precisionScalar;
         }
 
+        MeanPrecision(double[] mean, double[][] precision) {
+            this.mean = mean;
+            this.precision = precision;
+        }
+
         double[] mean;
         double precisionScalar;
+        double[][] precision;
     }
 
     protected double[] traitForNode(TreeModel tree, NodeRef node, String traitName) {
@@ -305,6 +384,52 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         int index = node.getNumber();
 
         return new double[dimTrait];
+    }
+
+    protected double[][] computeTreeMVNormalVariance() {
+
+        if (dimTrait != 1) {
+            throw new RuntimeException("Currently only computed for 1D traits");
+        }
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[dimTrait * tipCount][dim * tipCount];
+        double[][] treePrecision = diffusionModel.getPrecisionmatrix();
+        double precision = treePrecision[0][0];
+
+        for (int i = 0; i < tipCount; i++ ) {
+            variance[i][i] = getRescaledLengthToRoot(treeModel.getExternalNode(i)) / precision;
+            for (int j = i+1; j < tipCount; j++) {
+                Set<String> leafNames = new HashSet<String>();
+                leafNames.add(treeModel.getTaxonId(i));
+                leafNames.add(treeModel.getTaxonId(j));
+                NodeRef mrca = Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+                variance[j][i] = variance[i][j] = getRescaledLengthToRoot(mrca) / precision;
+            }
+        }
+        System.err.println("");
+        System.err.println("Conditional variance:\n"+new Matrix(variance));
+        return variance;
+    }
+
+    protected double[] fillLeafTraits() {
+        if (dimTrait != 1) {
+            throw new RuntimeException("Currently only computed for 1D traits");
+        }
+
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[] traits = new double[dimTrait * tipCount];
+        System.arraycopy(meanCache, 0, traits, 0, dimTrait * tipCount);
+        return traits;
+    }
+
+    private double getRescaledLengthToRoot(NodeRef node) {
+        double length = 0;
+        final NodeRef root = treeModel.getRoot();
+        while( node != root ) {
+            length += getRescaledBranchLength(node);
+            node = treeModel.getParent(node);
+        }
+        return length;
     }
 
      private boolean areStatesRedrawn = false;
@@ -338,207 +463,6 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         }
     }
 
-
-    // **************************************************************
-    // XMLObjectParser
-    // **************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TRAIT_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
-//            CompoundParameter traitParameter = null;
-
-
-            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
-//            boolean integrate = xo.getAttribute(INTEGRATE,false);
-//            boolean integrate = true;
-
-            BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
-            List<Integer> missingIndices = null;
-            String traitName = DEFAULT_TRAIT_NAME;
-
-            if (xo.hasAttribute(TRAIT_NAME)) {
-
-                traitName = xo.getStringAttribute(TRAIT_NAME);
-
-
-                // Fill in attributeValues
-                int taxonCount = treeModel.getTaxonCount();
-                for (int i = 0; i < taxonCount; i++) {
-                    String taxonName = treeModel.getTaxonId(i);
-                    String paramName = taxonName + "." + traitName;
-                    Parameter traitParam = getTraitParameterByName(traitParameter, paramName);
-                    if (traitParam == null)
-                        throw new RuntimeException("Missing trait parameters at tree tips");
-                    String object = (String) treeModel.getTaxonAttribute(i, traitName);
-                    if (object == null)
-                        throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
-                    else {
-                        StringTokenizer st = new StringTokenizer(object);
-                        int count = st.countTokens();
-                        if (count != traitParam.getDimension())
-                            throw new RuntimeException("Trait length must match trait parameter dimension");
-                        for (int j = 0; j < count; j++) {
-                            String oneValue = st.nextToken();
-                            double value = Double.NaN;
-                            if (oneValue.compareTo("NA") == 0) {
-                                // Missing values not yet handled.
-                            } else {
-                                try {
-                                    value = new Double(oneValue);
-                                } catch (NumberFormatException e) {
-                                    throw new RuntimeException(e.getMessage());
-                                }
-                            }
-                            traitParam.setParameterValue(j, value);
-                        }
-                    }
-                }
-
-                // Find missing values
-                double[] allValues = traitParameter.getParameterValues();
-                missingIndices = new ArrayList<Integer>();
-                for (int i = 0; i < allValues.length; i++) {
-                    if ((new Double(allValues[i])).isNaN()) {
-                        traitParameter.setParameterValue(i, 0);
-                        missingIndices.add(i);
-                    }
-                }
-
-                if (xo.hasChildNamed(MISSING)) {
-                    XMLObject cxo = (XMLObject) xo.getChild(MISSING);
-                    Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
-                    for (int i : missingIndices) {
-                        missingParameter.setParameterValue(i, 1.0);
-                    }
-                    missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
-/*					CompoundParameter missingParameter = new CompoundParameter(MISSING);
-					System.err.println("TRAIT: "+traitParameter.toString());
-					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
-					for(int i : missingIndices) {
-						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
-						missingParameter.addVariable(thisParameter);
-					}*/
-                    ParameterParser.replaceParameter(cxo, missingParameter);
-                }
-
-            }
-
-//            Parameter traits = null;
-//            Parameter check = null;
-            Model samplingDensity = null;
-
-//            if (xo.hasChildNamed(SAMPLING_DENSITY)) {
-//                XMLObject cxo = (XMLObject) xo.getChild(SAMPLING_DENSITY);
-//                samplingDensity = (Model) cxo.getChild(Model.class);
-//            }
-//            if (xo.hasChildNamed(RANDOMIZE)) {
-//                XMLObject cxo = (XMLObject) xo.getChild(RANDOMIZE);
-//                traits = (Parameter) cxo.getChild(Parameter.class);
-//            }
-
-//            if (xo.hasChildNamed(CHECK)) {
-//                XMLObject cxo = (XMLObject) xo.getChild(CHECK);
-//                check = (Parameter) cxo.getChild(Parameter.class);
-//            }
-
-            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
-
-            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
-
-            boolean reportAsMultivariate = false;
-            if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
-                reportAsMultivariate = true;
-
-            MultivariateDistributionLikelihood rootPrior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
-            if (!(rootPrior.getDistribution() instanceof MultivariateDistribution))
-                throw new XMLParseException("Only multivariate normal priors allowed for Gibbs sampling the root trait");
-
-            MultivariateNormalDistribution rootDistribution =
-                    (MultivariateNormalDistribution) rootPrior.getDistribution();
-//            if (integrate)
-            return new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-                    traitParameter, missingIndices, cacheBranches,
-                    scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, rootDistribution);
-
-//            AbstractMultivariateTraitLikelihood like =
-//                    new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-//                            traitParameter, missingIndices, cacheBranches,
-//                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
-
-//            if (traits != null) {
-//                like.randomize(traits);
-//            }
-//
-//            if (check != null) {
-//                like.check(check);
-//            }
-//
-//            return like;
-        }
-
-
-        private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
-
-            for (int i = 0; i < traits.getNumberOfParameters(); i++) {
-                Parameter found = traits.getParameter(i);
-                if (found.getStatisticName().compareTo(name) == 0)
-                    return found;
-            }
-            return null;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "Provides the likelihood of a continuous trait evolving on a tree by a " +
-                    "given diffusion model.";
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
-//                new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }),
-//                AttributeRule.newBooleanRule(INTEGRATE,true),
-                new ElementRule(MultivariateDistributionLikelihood.class),
-                new ElementRule(MultivariateDiffusionModel.class),
-                new ElementRule(TreeModel.class),
-                new ElementRule(BranchRateModel.class, true),
-                AttributeRule.newDoubleArrayRule("cut", true),
-                AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
-                AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
-                AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
-//                new ElementRule(Parameter.class, true),
-//                new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }, true),
-//                new ElementRule(CHECK, new XMLSyntaxRule[]{
-//                        new ElementRule(Parameter.class)
-//                }, true)
-        };
-
-
-        public Class getReturnType() {
-            return AbstractMultivariateTraitLikelihood.class;
-        }
-    };
-
     private double[] meanCache;
     private double[] upperPrecisionCache;
     private double[] lowerPrecisionCache;
@@ -554,4 +478,6 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double[][] rootPriorPrecision;
     private double rootPriorPrecisionDeterminant;
 
+    private final boolean integrateRoot = true;
+    private static boolean DEBUG = false;
 }

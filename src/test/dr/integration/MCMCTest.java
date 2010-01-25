@@ -6,7 +6,6 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
@@ -38,6 +37,7 @@ import java.util.List;
 
 /**
  * @author Walter Xie
+ * convert testMCMC.xml in the folder /example 
  */
 
 public class MCMCTest extends TraceCorrelationAssert {
@@ -46,8 +46,6 @@ public class MCMCTest extends TraceCorrelationAssert {
 
     private TreeModel treeModel;
     private SitePatterns patterns;
-    private TreeHeightStatistic rootHeight;
-    private Parameter kappa;
 
     public MCMCTest(String name) {
         super(name);
@@ -88,7 +86,24 @@ public class MCMCTest extends TraceCorrelationAssert {
         treeModel = new TreeModel(tree);
     }
 
+
     public void testMCMC() {
+        //    TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
+
+        // Sub model
+        Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+        HKY hky = new HKY(kappa, f);
+
+        //siteModel
+        GammaSiteModel siteModel = new GammaSiteModel(hky);
+
+        //treeLikelihood
+        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
+                false, false, true, false, false);
+        treeLikelihood.setId("treeLikelihood");
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -103,6 +118,11 @@ public class MCMCTest extends TraceCorrelationAssert {
 
 //        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
 //        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+
+        Parameter rootHeight = treeModel.getRootHeightParameter();
+        operator = new ScaleOperator(rootHeight, 0.5);
+        operator.setWeight(1.0);
+        schedule.addOperator(operator);
 
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 1.0);
@@ -123,42 +143,11 @@ public class MCMCTest extends TraceCorrelationAssert {
 //        operator.doOperation();
         schedule.addOperator(operator);
 
-        mcmcTester(schedule);
-
-    }
-
-    private void mcmcTester(OperatorSchedule schedule) {
-
-        MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(10000000);
-        options.setUseCoercion(true);
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
-
-        rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
-
-        // Sub model
-        Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
-        kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-
-        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-        HKY hky = new HKY(kappa, f);
-
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-
-        //treeLikelihood
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihood");
-
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);
 
         MCLogger[] loggers = new MCLogger[2];
-        loggers[0] = new MCLogger(formatter, 100, false);
+        loggers[0] = new MCLogger(formatter, 1000, false);
         loggers[0].add(treeLikelihood);
         loggers[0].add(rootHeight);
         loggers[0].add(kappa);
@@ -168,12 +157,20 @@ public class MCMCTest extends TraceCorrelationAssert {
         loggers[1].add(rootHeight);
         loggers[1].add(kappa);
 
-
         // MCMC
+        MCMC mcmc = new MCMC("mcmc1");
+        MCMCOptions options = new MCMCOptions();
+        options.setChainLength(10000000);
+        options.setUseCoercion(true); // autoOptimize = true
+        options.setCoercionDelay(100);
+        options.setTemperature(1.0);
+        options.setFullEvaluationCount(2000);
+
         mcmc.setShowOperatorAnalysis(true);
         mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
         mcmc.run();
-
+        mcmc.getTimer();
+        
         // Tracer
         List<Trace> traces = formatter.getTraces();
         ArrayTraceList traceList = new ArrayTraceList("MCMCTest", traces, 0);

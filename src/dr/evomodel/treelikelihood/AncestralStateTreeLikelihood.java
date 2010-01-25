@@ -34,6 +34,10 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
     private boolean storedAreStatesRedrawn = false;
 
     private boolean useMAP = false;
+    private boolean returnMarginalLogLikelihood = true;
+
+    private double jointLogLikelihood;
+    private double storedJointLogLikelihood;
 
 //    private boolean useExtraReconstructedStates = false;
 
@@ -89,6 +93,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
         }
 
         storedAreStatesRedrawn = areStatesRedrawn;
+        storedJointLogLikelihood = jointLogLikelihood;
     }
 
     public void restoreState() {
@@ -100,6 +105,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
         storedReconstructedStates = temp;
 
         areStatesRedrawn = storedAreStatesRedrawn;
+        jointLogLikelihood = storedJointLogLikelihood;
     }
 
 
@@ -133,6 +139,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
 
     public void redrawAncestralStates() {
+        jointLogLikelihood = 0;
         traverseSample(treeModel, treeModel.getRoot(), null);
         areStatesRedrawn = true;
     }
@@ -141,8 +148,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        if (model == siteModel)
-//            checkConditioning = true;
         super.handleModelChangedEvent(model, object, index);
         fireModelChanged(model);
 
@@ -150,27 +155,14 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
     protected double calculateLogLikelihood() {
 
-//        if (checkConditioning) {
-//            final int len = stateCount * stateCount;
-//            double[] test = new double[len];
-//            try {
-//                siteModel.getSubstitutionModel().getTransitionProbabilities(1.0, test);
-//            } catch (ArithmeticException exception) { // AbstractSubstitutionModel throws numerical errors
-//                return Double.NEGATIVE_INFINITY;
-//            }
-//            for (double d : test) {
-//                if (d > 1.05) { // ill-conditioned
-//                    return Double.NEGATIVE_INFINITY;
-//                }
-//
-//            }
-//          THis should all be handled by the substitution (as likelihood) model            
-//            checkConditioning = false;
-//        }
-
         areStatesRedrawn = false;
-
-        return super.calculateLogLikelihood();
+        double marginalLogLikelihood = super.calculateLogLikelihood();
+        if (returnMarginalLogLikelihood) {
+            return marginalLogLikelihood;
+        }
+        // redraw states and return joint density of drawn states
+        redrawAncestralStates();
+        return jointLogLikelihood;
     }
 
     private static String formattedState(int[] state, DataType dataType) {
@@ -286,14 +278,13 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                     int parentIndex = parentState[j] * stateCount;
                     int childIndex = j * stateCount;
 
-                    for (int i = 0; i < stateCount; i++)
-                        // fixed bug here, index was i, now childIndex + i
-                        // is this correct?
+                    for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] = partialLikelihood[childIndex + i] * probabilities[parentIndex + i];
+                    }
 
                     state[j] = drawChoice(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
-
+                    jointLogLikelihood += Math.log(probabilities[parentIndex + state[j]]);
                 }
             }
 
@@ -324,6 +315,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
                 }
 
+                // TODO Add in log probabilities of events on external branches
             }
         }
     }

@@ -30,7 +30,6 @@ import dr.math.distributions.*;
 import dr.xml.*;
 import dr.util.Attribute;
 
-import java.util.ArrayList;
 
 /**
  * @author Marc Suchard
@@ -265,14 +264,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                     precision.getParameterAsMatrix())
                     );
             cxo = xo.getChild(DATA);
-            for (int j = 0; j < cxo.getChildCount(); j++) {
-                if (cxo.getChild(j) instanceof Parameter) {
-                    Parameter data = (Parameter) cxo.getChild(j);
-                    likelihood.addData(data);
-                    if (data.getDimension() != mean.getDimension())
-                        throw new XMLParseException("dim(" + data.getStatisticName() + ") != dim(" + mean.getStatisticName() + ") in " + xo.getName() + "element");
-                } else {
-                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+            if (cxo != null) {
+                for (int j = 0; j < cxo.getChildCount(); j++) {
+                    if (cxo.getChild(j) instanceof Parameter) {
+                        Parameter data = (Parameter) cxo.getChild(j);
+                        likelihood.addData(data);
+                        if (data.getDimension() != mean.getDimension())
+                            throw new XMLParseException("dim(" + data.getStatisticName() + ") != dim(" + mean.getStatisticName() + ") in " + xo.getName() + "element");
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
                 }
             }
 
@@ -289,7 +290,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 new ElementRule(MVN_PRECISION,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
                 new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
         };
 
         public String getParserDescription() {

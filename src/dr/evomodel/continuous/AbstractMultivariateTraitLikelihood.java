@@ -8,8 +8,11 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.xml.*;
 import dr.math.MathUtils;
+import dr.math.distributions.MultivariateDistribution;
+import dr.math.distributions.MultivariateNormalDistribution;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -594,10 +597,19 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
                 reportAsMultivariate = true;
 
-            if (integrate)
+            if (integrate) {
+
+                MultivariateDistributionLikelihood rootPrior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+                if (rootPrior == null || !(rootPrior.getDistribution() instanceof MultivariateDistribution))
+                    throw new XMLParseException("Only multivariate normal priors allowed for Gibbs sampling the root trait");
+
+                MultivariateNormalDistribution rootDistribution =
+                    (MultivariateNormalDistribution) rootPrior.getDistribution();
+
                 return new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
-                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, null);
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, rootDistribution);
+            }
 
             AbstractMultivariateTraitLikelihood like =
                     new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -669,6 +681,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         new ElementRule(Parameter.class)
                 }),
                 AttributeRule.newBooleanRule(INTEGRATE,true),
+                new ElementRule(MultivariateDistributionLikelihood.class,true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),

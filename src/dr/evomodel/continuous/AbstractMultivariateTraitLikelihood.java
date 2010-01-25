@@ -355,7 +355,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     public String[] getNodeAttributeLabel() {
         if (attributeLabel == null) {
-            double[] trait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
+            double[] trait = getRootNodeTrait();
             if (trait.length == 1 || reportAsMultivariate)
                 attributeLabel = new String[]{traitName};
             else {
@@ -367,10 +367,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return attributeLabel;
     }
 
+    protected double[] getRootNodeTrait() {
+        return treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
+    }
+
     protected abstract double[] traitForNode(TreeModel tree, NodeRef node, String traitName);
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-//        double trait[] = treeModel.getMultivariateNodeTrait(node, traitName);
         double trait[] = traitForNode(treeModel, node, traitName);
         String[] value;
         if (!reportAsMultivariate || trait.length == 1) {

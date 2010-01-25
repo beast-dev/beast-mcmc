@@ -8,7 +8,9 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
@@ -44,6 +46,8 @@ public class MCMCTest extends TraceCorrelationAssert {
 
     private TreeModel treeModel;
     private SitePatterns patterns;
+    private TreeHeightStatistic rootHeight;
+    private Parameter kappa;
 
     public MCMCTest(String name) {
         super(name);
@@ -60,14 +64,14 @@ public class MCMCTest extends TraceCorrelationAssert {
 		       "AGAAATATGTCTGACAAAAGAGTTACTTTGATAGAGTAAAAAATAGAGGTCTAAATCCCCTTATTTCTACTAGGACTATGGGAATTGAACCCACCCCTGAGAATCCAAAATTCTCCGTGCCACCCATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTA--CACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTCA-CAGCACTTAATTTCTGTAAGGACTGCAAAACCCCACTTTGCATCAACTGAGCGCAAATCAGCCACTTTAATTAAGCTAAGCCCTCCTAGACCGATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAGTCAAT-TGGCTTCAGTCCAAAGCCCCGGCAGGCCTTAAAGCTGCTCCTTCGAATTTGCAATTCAACATGACAA-TCACCTCAGGGCTTGGTAAAAAGAGGTCTGACCCCTGTTCTTAGATTTACAGCCTAATGCCTTAACTCGGCCATTTTACCGCAAAAAAGGAAGGAATCGAACCTCCTAAAGCTGGTTTCAAGCCAACCCCATAACCCCCATGACTTTTTCAAAAGGTACTAGAAAAACCATTTCGTAACTTTGTCAAAGTTAAATTACAGGTC-AGACCCTGTGTATCTTA-CATTGCAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGACTAAGAGAACCAGCCTCTCTTTGCAATGA",
 		       "AGAAATACGTCTGACGAAAGAGTTACTTTGATAGAGTAAATAACAGGGGTTTAAATCCCCTTATTTCTACTAGAACCATAGGAGTCGAACCCATCCTTGAGAATCCAAAACTCTCCGTGCCACCCGTCGCACCCTGTTCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCATACTAAGAAATTTAGGTTAAACACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTAACAAAACTTAATTTCTGCAAGGGCTGCAAAACCCTACTTTGCATCAACCGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATCGATGGGACTTAAACCCATAAAAATTTAGTTAACAGCTAAACACCCTAAACAACCTGGCTTCAATCTAAAGCCCCGGCAGA-GTTGAAGCTGCTTCTTTGAACTTGCAATTCAACGTGAAAAATCACTTCGGAGCTTGGCAAAAAGAGGTTTCACCTCTGTCCTTAGATTTACAGTCTAATGCTTTA-CTCAGCCACTTTACCACAAAAAAGGAAGGAATCGAACCCTCTAAAACCGGTTTCAAGCCAGCCCCATAACCTTTATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATCACAGGTCCAAACCCCGTATATCTTATCACTGTAGAGCTAGACCAGCATTAACCTTTTAAGTTAAAGACTAAGAGAACTACCGCCTCTTTACAGTGA"}};
 
-        final Taxa taxonList = new Taxa();
+        //final Taxa taxonList = new Taxa();
 
         final SimpleAlignment alignment = new SimpleAlignment();
         alignment.setDataType(Nucleotides.INSTANCE);
 
         for (int i=0; i < 6; i++) {
             Taxon taxon = new Taxon(TAXON_SEQUENCE_LIST[0][i]);
-            taxonList.addTaxon(taxon);
+            //taxonList.addTaxon(taxon);
             Sequence sequence = new Sequence(TAXON_SEQUENCE_LIST[1][i]);
             sequence.setTaxon(taxon);
 
@@ -88,7 +92,35 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
-        MCMCOperator operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+
+        MCMCOperator operator = new ScaleOperator(kappa, 0.5);
+        operator.setWeight(1.0);
+        schedule.addOperator(operator);
+
+//        operator = new ScaleOperator(rootHeight, 0.5);
+//        operator.setWeight(1.0);
+//        schedule.addOperator(operator);
+
+//        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
+//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+
+        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        operator = new UniformOperator(internalHeights, 1.0);
+        schedule.addOperator(operator);
+
+        operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+        schedule.addOperator(operator);
+
+        operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
+//        operator.doOperation();
+        schedule.addOperator(operator);
+
+        operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
+//        operator.doOperation();
+        schedule.addOperator(operator);
+
+        operator = new WilsonBalding(treeModel, 1.0);
+//        operator.doOperation();
         schedule.addOperator(operator);
 
         mcmcTester(schedule);
@@ -105,11 +137,11 @@ public class MCMCTest extends TraceCorrelationAssert {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
+        rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         // Sub model
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
 
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
@@ -120,6 +152,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         //treeLikelihood
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
+        treeLikelihood.setId("treeLikelihood");
 
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);

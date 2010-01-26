@@ -72,7 +72,6 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         return dim * logNormalize + 0.5 * (logDet - dim*Math.log(scale) - SSE / scale);   // There was an error here.
         // Variance = (scale * Precision^{-1})
-
     }
 
     /* Equal precision, independent dimensions */
@@ -98,20 +97,22 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
         return nextMultivariateNormalVariance(mean, variance);
-
     }
 
     public static double[] nextMultivariateNormalVariance(double[] mean, double[][] variance) {
 
-        int dim = mean.length;
-
         double[][] cholesky;
-
         try {
             cholesky = (new CholeskyDecomposition(variance)).getL();
         } catch (IllegalDimension illegalDimension) {
             throw new RuntimeException("Attempted Cholesky decomposition on non-square matrix");
         }
+        return nextMultivariateNormalCholesky(mean, cholesky);
+    }
+
+    public static double[] nextMultivariateNormalCholesky(double[] mean, double[][] cholesky) {
+    
+        final int dim = mean.length;
 
         double[] x = new double[dim];
         System.arraycopy(mean,0,x,0,dim);
@@ -170,9 +171,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         System.err.println("TRUE: [ 0.571 1.14 ]\n");
         System.err.println("Covv: "+ZZ);
         System.err.println("TRUE: -0.286");
-
     }
 
     public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
-
 }

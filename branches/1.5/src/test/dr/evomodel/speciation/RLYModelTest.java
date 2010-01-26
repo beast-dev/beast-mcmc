@@ -25,6 +25,7 @@ import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -54,6 +55,8 @@ public class RLYModelTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
+        MathUtils.setSeed(666);
+        
         NewickImporter importer = new NewickImporter(
                 "(((((A:1.0,B:1.0):1.0,C:2.0),D:3.0):1.0, E:4.0),F:5.0);");
         tree = (FlexibleTree) importer.importTree(null);

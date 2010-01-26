@@ -25,6 +25,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
+import dr.math.MathUtils;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -49,6 +50,8 @@ public abstract class OperatorAssert extends TestCase {
 
     public void setUp() throws Exception {
         super.setUp();
+
+        MathUtils.setSeed(666);
 
         NewickImporter importer = new NewickImporter(
                 "((((A:1.0,B:1.0):1.0,C:2.0):1.0,D:3.0):1.0,E:4.0);");

@@ -338,6 +338,7 @@
 					<include name="test/dr/evomodel/operators/**/NNITest.java" />
 					<include name="test/dr/evomodel/speciation/**/*Test.java" />
 					<include name="test/dr/distibutions/**/*Test.java"/>
+                    <include name="test/dr/integration/**/MCMCTest.java"/>
 				</fileset>
 			</batchtest>
 		</junit>

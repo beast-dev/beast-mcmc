@@ -38,10 +38,6 @@ import java.util.List;
  */
 public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
-    private static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
-
-    private TreeModel treeModel;
-    private SimpleAlignment alignment;
     private GeneralDataType dataType;
 
     public GeneralSubsitutionModelTest(String name) {
@@ -51,7 +47,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        alignment = createAlignment();
+        createAlignment(HOMINID_TAXON_SEQUENCE);
 
         List<String> states = new ArrayList<String>();
         states.addAll(Arrays.asList("A", "C", "G", "T"));
@@ -60,14 +56,16 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         alignment.setDataType(dataType);
 
-        treeModel = createTree("(((((chimp:0.010464222027296717,bonobo:0.010464222027296717):0.010716369046616688," +
-                "human:0.021180591073913405):0.010988083344422011,gorilla:0.032168674418335416):0.022421978632286572," +
-                "orangutan:0.05459065305062199):0.009576302472349953,siamang:0.06416695552297194);");
-        
+        createRandomInitialTree(0.0001); // popSize
+
+//        createSpecifiedTree("(((((chimp:0.010464222027296717,bonobo:0.010464222027296717):0.010716369046616688," +
+//                "human:0.021180591073913405):0.010988083344422011,gorilla:0.032168674418335416):0.022421978632286572," +
+//                "orangutan:0.05459065305062199):0.009576302472349953,siamang:0.06416695552297194);");
+
     }
 
 
-    public void testMCMC() {
+    public void testGeneralSubsitutionModel() {
 
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
@@ -79,7 +77,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-        
+
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
         treeLikelihood.setId("treeLikelihood");
@@ -148,7 +146,9 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         mcmc.setShowOperatorAnalysis(true);
         mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
         mcmc.run();
-        mcmc.getTimer();
+
+        // time
+        System.out.println(mcmc.getTimer().toString());
 
         // Tracer
         List<Trace> traces = formatter.getTraces();

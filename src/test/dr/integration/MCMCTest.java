@@ -2,7 +2,11 @@ package test.dr.integration;
 
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
+import dr.evolution.coalescent.CoalescentSimulator;
+import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Units;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
@@ -51,10 +55,17 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         alignment = createAlignment();
         alignment.setDataType(Nucleotides.INSTANCE);
-                
-        treeModel = createTree("((((human:0.02124198428146588,(bonobo:0.010505698073024256,chimp:0.010505698073024256)" +
-                ":0.010736286208441624):0.011019735965429791,gorilla:0.03226172024689567):0.022501552046463147," +
-                "orangutan:0.05476327229335882):0.009440823865408586,siamang:0.0642040961587674);");
+
+        ConstantPopulation constant = new ConstantPopulation(Units.Type.YEARS);
+        constant.setN0(0.0001);
+        CoalescentSimulator simulator = new CoalescentSimulator();
+        Tree tree = simulator.simulateTree(alignment, constant);
+        
+        treeModel = createTree(Tree.Utils.newick(tree));
+
+//        treeModel = createTree("((((human:0.02124198428146588,(bonobo:0.010505698073024256,chimp:0.010505698073024256)" +
+//                ":0.010736286208441624):0.011019735965429791,gorilla:0.03226172024689567):0.022501552046463147," +
+//                "orangutan:0.05476327229335882):0.009440823865408586,siamang:0.0642040961587674);");
     }
 
 
@@ -70,6 +81,8 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
+        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);

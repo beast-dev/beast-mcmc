@@ -28,6 +28,7 @@ import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -41,11 +42,6 @@ import java.util.List;
 
 public class MCMCTest extends TraceCorrelationAssert {
 
-    private static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
-
-    private TreeModel treeModel;
-    private SimpleAlignment alignment;
-
     public MCMCTest(String name) {
         super(name);
     }
@@ -53,25 +49,20 @@ public class MCMCTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        alignment = createAlignment();
+        MathUtils.setSeed(666);
+
+        createAlignment(HOMINID_TAXON_SEQUENCE);
         alignment.setDataType(Nucleotides.INSTANCE);
 
-        ConstantPopulation constant = new ConstantPopulation(Units.Type.YEARS);
-        constant.setN0(0.0001);
-        CoalescentSimulator simulator = new CoalescentSimulator();
-        Tree tree = simulator.simulateTree(alignment, constant);
+        createRandomInitialTree(0.0001); // popSize
         
-        treeModel = createTree(Tree.Utils.newick(tree));
-
-//        treeModel = createTree("((((human:0.02124198428146588,(bonobo:0.010505698073024256,chimp:0.010505698073024256)" +
+//        createSpecifiedTree("((((human:0.02124198428146588,(bonobo:0.010505698073024256,chimp:0.010505698073024256)" +
 //                ":0.010736286208441624):0.011019735965429791,gorilla:0.03226172024689567):0.022501552046463147," +
 //                "orangutan:0.05476327229335882):0.009440823865408586,siamang:0.0642040961587674);");
     }
 
 
     public void testMCMC() {
-        //    TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
-
         // Sub model
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());//new double[]{0.25, 0.25, 0.25, 0.25});
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
@@ -156,7 +147,9 @@ public class MCMCTest extends TraceCorrelationAssert {
         mcmc.setShowOperatorAnalysis(true);
         mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
         mcmc.run();
-        mcmc.getTimer();
+
+        // time
+        System.out.println(mcmc.getTimer().toString());
         
         // Tracer
         List<Trace> traces = formatter.getTraces();

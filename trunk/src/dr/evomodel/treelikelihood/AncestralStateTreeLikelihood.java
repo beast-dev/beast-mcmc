@@ -24,6 +24,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
     public static final String RECONSTRUCTION_TAG = "state";
     public static final String TAG_NAME = "tagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
+    public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
 
     private DataType dataType;
     private int[][] reconstructedStates;
@@ -56,6 +57,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
      * @param tag             - string label for reconstruction characters in tree log
      * @param forceRescaling  -
      * @param useMAP          - perform maximum aposteriori reconstruction
+     * @param returnML        - report integrate likelihood of tip data
      */
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                         SiteModel siteModel, BranchRateModel branchRateModel,
@@ -63,8 +65,10 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                                         DataType dataType,
                                         String tag,
                                         boolean forceRescaling,
-                                        boolean useMAP) {
-        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials, false, forceRescaling);
+                                        boolean useMAP,
+                                        boolean returnML) {
+        super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials,
+                false, forceRescaling);
         this.dataType = dataType;
         this.tag = tag;
 
@@ -72,6 +76,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
         storedReconstructedStates = new int[treeModel.getNodeCount()][patternCount];
 
         this.useMAP = useMAP;
+        this.returnMarginalLogLikelihood = returnML;
     }
 
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
@@ -81,7 +86,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                                         String tag,
                                         boolean forceRescaling) {
         this(patternList, treeModel, siteModel, branchRateModel, useAmbiguities,
-                storePartials, dataType, tag, forceRescaling, false);
+                storePartials, dataType, tag, forceRescaling, false, true);
     }
 
     public void storeState() {
@@ -246,6 +251,9 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                         state[j] = 0;
                     }
                     reconstructedStates[nodeNum][j] = state[j];
+
+                    //System.out.println("Pr(j) = " + frequencies[state[j]]);
+                    jointLogLikelihood += Math.log(frequencies[state[j]]);
                 }
 
             } else {
@@ -284,7 +292,10 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
                     state[j] = drawChoice(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
-                    jointLogLikelihood += Math.log(probabilities[parentIndex + state[j]]);
+
+                    double contrib = probabilities[parentIndex + state[j]];
+                    //System.out.println("Pr(" + parentState[j] + ", " + state[j] +  ") = " + contrib);
+                    jointLogLikelihood += Math.log(contrib);
                 }
             }
 
@@ -305,17 +316,17 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             for (int j = 0; j < patternCount; j++) {
 
                 final int thisState = reconstructedStates[nodeNum][j];
-
+                final int parentIndex = parentState[j] * stateCount;
+                ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
                 if (dataType.isAmbiguousState(thisState)) {
 
-                    int parentIndex = parentState[j] * stateCount;
-                    ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
                     System.arraycopy(probabilities, parentIndex, conditionalProbabilities, 0, stateCount);
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
-
                 }
 
-                // TODO Add in log probabilities of events on external branches
+                double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
+                //System.out.println("Pr(" + parentState[j] + ", " + reconstructedStates[nodeNum][j] +  ") = " + contrib);
+                jointLogLikelihood += Math.log(contrib);
             }
         }
     }
@@ -350,6 +361,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
 
             boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+            boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
 
             // default tag is RECONSTRUCTION_TAG
             String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
@@ -357,7 +369,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             boolean forceRescaling = xo.getAttribute(TreeLikelihood.FORCE_RESCALING, false);
 
             return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
-                    branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling, useMAP);
+                    branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling,
+                    useMAP, useMarginalLogLikelihood);
         }
 
         //************************************************************************
@@ -382,6 +395,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                 AttributeRule.newStringRule(TAG_NAME, true),
                 AttributeRule.newBooleanRule(TreeLikelihood.FORCE_RESCALING, true),
                 AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
+                AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),
@@ -389,5 +403,4 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
                 new ElementRule(SubstitutionModel.class)
         };
     };
-
 }

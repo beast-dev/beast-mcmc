@@ -1,6 +1,5 @@
 package test.dr.integration;
 
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.operators.ExchangeOperator;
@@ -9,10 +8,7 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodelxml.HKYParser;
-import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -29,7 +25,6 @@ import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,14 +42,18 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        createAlignment(HOMINID_TAXON_SEQUENCE);
-
         List<String> states = new ArrayList<String>();
-        states.addAll(Arrays.asList("A", "C", "G", "T"));
+        states.add("A");
+        states.add("C");
+        states.add("G");
+        states.add("T");
+        //states.addAll(Arrays.asList("A", "C", "G", "T"));
         dataType = new GeneralDataType(states);
-        dataType.addAmbiguity("-", new String[] {"ACGT"});
+        dataType.addAmbiguity("-", new String[] {"A", "C", "G", "T"});
+        dataType.addAmbiguity("?", new String[] {"A", "C", "G", "T"});
 
-        alignment.setDataType(dataType);
+        createAlignment(HOMINID_TAXON_SEQUENCE, dataType);
+
 
         createRandomInitialTree(0.0001); // popSize
 
@@ -74,6 +73,8 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(generalSubstitutionModel);
+        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
@@ -89,20 +90,14 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-//        operator = new ScaleOperator(rootHeight, 0.5);
-//        operator.setWeight(1.0);
-//        schedule.addOperator(operator);
-
-//        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
-//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
-
         Parameter rootHeight = treeModel.getRootHeightParameter();
+        rootHeight.setId(TREE_HEIGHT);         
         operator = new ScaleOperator(rootHeight, 0.5);
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
-        operator = new UniformOperator(internalHeights, 1.0);
+        operator = new UniformOperator(internalHeights, 10.0);
         schedule.addOperator(operator);
 
         operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
@@ -152,7 +147,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         // Tracer
         List<Trace> traces = formatter.getTraces();
-        ArrayTraceList traceList = new ArrayTraceList("MCMCTest", traces, 0);
+        ArrayTraceList traceList = new ArrayTraceList("GeneralSubsitutionModelTest", traces, 0);
 
         for (int i = 1; i < traces.size(); i++) {
             traceList.analyseTrace(i);
@@ -168,8 +163,8 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 6.42048E-2);
 
-        TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 32.8941);
+        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModel.RATES));
+        assertExpectation(GeneralSubstitutionModel.RATES, rateACStats, 32.8941);
     }
 
     public static Test suite() {

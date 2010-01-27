@@ -1,7 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.Parameter;
-import dr.math.distributions.AsymptoticBifractionalDiffusionDensity;
+import dr.math.distributions.BifractionalDiffusionDensity;
 
 /**
  * @author Marc Suchard
@@ -33,7 +33,7 @@ public class BifractionalDiffusionModel extends MultivariateDiffusionModel {
         final double a = alpha.getParameterValue(0);
         final double b = beta.getParameterValue(0);
         final double r = distanceEuclidean(start, stop);
-        return AsymptoticBifractionalDiffusionDensity.logPdf(r, time, a, b);
+        return BifractionalDiffusionDensity.logPdf(r, time, a, b);
     }
 
     private double distanceEuclidean(double[] start, double[] stop) {

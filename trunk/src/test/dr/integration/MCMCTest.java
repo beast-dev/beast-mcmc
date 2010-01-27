@@ -1,22 +1,15 @@
 package test.dr.integration;
 
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
-import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -37,7 +30,7 @@ import java.util.List;
 
 /**
  * @author Walter Xie
- * convert testMCMC.xml in the folder /example 
+ * convert testMCMC.xml in the folder /example
  */
 
 public class MCMCTest extends TraceCorrelationAssert {
@@ -51,11 +44,10 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         MathUtils.setSeed(666);
 
-        createAlignment(HOMINID_TAXON_SEQUENCE);
-        alignment.setDataType(Nucleotides.INSTANCE);
+        createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
         createRandomInitialTree(0.0001); // popSize
-        
+
 //        createSpecifiedTree("((((human:0.02124198428146588,(bonobo:0.010505698073024256,chimp:0.010505698073024256)" +
 //                ":0.010736286208441624):0.011019735965429791,gorilla:0.03226172024689567):0.022501552046463147," +
 //                "orangutan:0.05476327229335882):0.009440823865408586,siamang:0.0642040961587674);");
@@ -77,7 +69,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-        
+
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
         treeLikelihood.setId("treeLikelihood");
@@ -89,10 +81,6 @@ public class MCMCTest extends TraceCorrelationAssert {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-//        operator = new ScaleOperator(rootHeight, 0.5);
-//        operator.setWeight(1.0);
-//        schedule.addOperator(operator);
-
 //        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
 //        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
 
@@ -103,7 +91,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         schedule.addOperator(operator);
 
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
-        operator = new UniformOperator(internalHeights, 1.0);
+        operator = new UniformOperator(internalHeights, 10.0);
         schedule.addOperator(operator);
 
         operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
@@ -150,7 +138,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         // time
         System.out.println(mcmc.getTimer().toString());
-        
+
         // Tracer
         List<Trace> traces = formatter.getTraces();
         ArrayTraceList traceList = new ArrayTraceList("MCMCTest", traces, 0);

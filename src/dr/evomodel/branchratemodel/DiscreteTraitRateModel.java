@@ -90,6 +90,10 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         addVariable(ratesParameter);
     }
 
+    int getNodeTrait(Tree tree, NodeRef node) {
+        return ancestors.getStatesForNode(tree, node)[traitIndex];
+    }
+
     public DiscreteTraitRateModel(TreeModel treeModel, AncestralStateTreeLikelihood like, int traitIndex, Parameter ratesParameter) {
 
         this(treeModel, traitIndex, ratesParameter);
@@ -149,7 +153,7 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         return getRawBranchRate(tree, node) / norm;
     }
 
-    private double calculateNorm(Tree tree) {
+    double calculateNorm(Tree tree) {
 
         double time = 0.0;
         double rateTime = 0.0;
@@ -169,7 +173,7 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         return rateTime / time;
     }
 
-    private double getRawBranchRate(Tree tree, NodeRef node) {
+    double getRawBranchRate(Tree tree, NodeRef node) {
 
         double rate = 0.0;
         if (fitch) {

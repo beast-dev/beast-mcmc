@@ -1,22 +1,15 @@
 package test.dr.integration;
 
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
-import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -51,8 +44,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         MathUtils.setSeed(666);
 
-        createAlignment(HOMINID_TAXON_SEQUENCE);
-        alignment.setDataType(Nucleotides.INSTANCE);
+        createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
         createRandomInitialTree(0.0001); // popSize
 
@@ -89,10 +81,6 @@ public class MCMCTest extends TraceCorrelationAssert {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-//        operator = new ScaleOperator(rootHeight, 0.5);
-//        operator.setWeight(1.0);
-//        schedule.addOperator(operator);
-
 //        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
 //        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
 
@@ -103,7 +91,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         schedule.addOperator(operator);
 
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
-        operator = new UniformOperator(internalHeights, 1.0);
+        operator = new UniformOperator(internalHeights, 10.0);
         schedule.addOperator(operator);
 
         operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);

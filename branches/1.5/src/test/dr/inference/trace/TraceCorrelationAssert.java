@@ -3,6 +3,7 @@ package test.dr.inference.trace;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.datatype.DataType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
@@ -35,9 +36,11 @@ public class TraceCorrelationAssert extends TestCase {
         super(name);
     }
 
-    protected void createAlignment(String[][] taxa_sequence) {
+
+    protected void createAlignment(String[][] taxa_sequence, DataType dataType) {
 
         alignment = new SimpleAlignment();
+        alignment.setDataType(dataType);
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
         for (int i=0; i < 6; i++) {
@@ -45,6 +48,7 @@ public class TraceCorrelationAssert extends TestCase {
             //taxonList.addTaxon(taxon);
             Sequence sequence = new Sequence(taxa_sequence[1][i]);
             sequence.setTaxon(taxon);
+            sequence.setDataType(dataType);
 
             alignment.addSequence(sequence);
         }

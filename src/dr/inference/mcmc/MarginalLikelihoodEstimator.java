@@ -88,6 +88,100 @@ MCLogger logger) {
         }
     }
 
+    public void integrate(Integrator scheme) {
+        setDefaultBurnin();
+        mc.setCurrentLength(burnin);
+        scheme.init();
+        for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
+            pathLikelihood.setPathParameter(pathParameter);
+            reportIteration(pathParameter, chainLength, burnin);
+            int cl = mc.getCurrentLength();
+            mc.setCurrentLength(0);
+            mc.runChain(burnin, false/*, 0*/);
+            mc.setCurrentLength(cl);
+            mc.runChain(chainLength, false);
+            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            ((CombinedOperatorSchedule) schedule).reset();
+        }
+    }
+
+    public abstract class Integrator {
+        protected int step;
+        protected int pathSteps;
+
+        protected Integrator(int pathSteps) {
+            this.pathSteps = pathSteps;
+        }
+
+        public void init() {
+            step = 0;
+        }
+
+        abstract double nextPathParameter();
+    }
+
+    public class LinearIntegrator extends Integrator {
+        public LinearIntegrator(int pathSteps) {
+            super(pathSteps);
+        }
+
+        double nextPathParameter() {
+            if (step > pathSteps)
+                return -1;
+            double pathParameter = 1.0 - step / (pathSteps - 1);
+            step = step + 1;
+            return pathParameter;
+        }
+    }
+
+    public class BetaIntegrator extends Integrator {
+        private BetaDistributionImpl betaDistribution;
+
+        public BetaIntegrator(double alpha, double beta, int pathSteps) {
+            super(pathSteps);
+            this.betaDistribution = new BetaDistributionImpl(alpha, beta);
+        }
+
+        double nextPathParameter() {
+            if (step > pathSteps)
+                return -1;
+            if (step == 0) {
+                step += 1;
+                return 1.0;
+            } else if (step + 1 < pathSteps) {
+                double ratio = (double) step / (double) (pathSteps - 1);
+                try {
+                    step += 1;
+                    return 1.0 - betaDistribution.inverseCumulativeProbability(ratio);
+                } catch (MathException e) {
+                    e.printStackTrace();
+                }
+            }
+            step += 1;
+            return 0.0;
+        }
+    }
+
+    public class GeometricIntegrator extends Integrator {
+
+        public GeometricIntegrator(int pathSteps) {
+            super(pathSteps);
+        }
+
+        double nextPathParameter() {
+            if (step > pathSteps) {
+                return -1;
+            }
+            if (step == pathSteps - 1) {
+                step += 1;
+                return 0;
+            }
+
+            step += 1;
+            return Math.pow(2, -(step - 1));
+        }
+    }
+
     public void linearIntegration() {
         setDefaultBurnin();
         mc.setCurrentLength(0);
@@ -131,120 +225,15 @@ MCLogger logger) {
         }
     }
 
-    public void linearShoeLacing() {
-        setDefaultBurnin();
-        mc.setCurrentLength(0);
-        if (pathSteps % 2 == 0) //Works only for odd number of steps
-            pathSteps += 1;
-        for (int step = 0; step < pathSteps - 1; step++) {
-            pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter, chainLength, burnin);
-            mc.runChain(chainLength + burnin, false/*, 0*/);
-            if (step == 0)
-                pathParameter -= 2 * pathDelta;
-            else if (step % 2 == 0) {
-                pathParameter -= 3 * pathDelta;
-            } else {
-                pathParameter += pathDelta;
-            }
-
-        }
-
-        pathLikelihood.setPathParameter(0.0);
-        reportIteration(pathParameter, chainLength, burnin);
-        mc.runChain(chainLength + burnin, false/*, 0*/);
-
-    }
-
-    public void geometricShoeLacing() {
-        //int logCount = chainLength / logger.getLogEvery();
-        mc.setCurrentLength(0);
-        if (pathSteps % 2 == 0) //Works only for odd number of steps
-            pathSteps += 1;
-
-        for (int step = 0; step < pathSteps; step++) {
-            double p = 1.0 - (((double) step) / pathSteps);
-            int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
-//            logger.setLogEvery(cl / logCount);
-            if (burninLength == -1)
-                burnin = (int) (0.1 * cl);
-            else
-                burnin = burninLength;
-
-            pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter, cl, burnin);
-            mc.runChain(cl + burnin, false/*, 0*/);
-            if (step == 0) {
-                pathParameter /= 4;
-            } else if (step % 2 == 0) {
-                pathParameter /= 8;
-            } else {
-                pathParameter *= 2;
-            }
-        }
-
-        int cl = 20 * chainLength;
-//        logger.setLogEvery(cl / logCount);
-        if (burninLength == -1)
-            burnin = (int) (0.1 * cl);
-        else
-            burnin = burninLength;
-        pathLikelihood.setPathParameter(0.0);
-        reportIteration(pathParameter, cl, burnin);
-        mc.runChain(cl + burnin, false/*, 0*/);
-    }
-
     private void reportIteration(double pathParameter, int cl, int burn) {
         System.out.println("Attempting theta = " + pathParameter + " for " + cl + " iterations + " + burn + " burnin.");
-    }
-
-    public void geometricIntegration() {
-        //int logCount = chainLength / logger.getLogEvery();
-        mc.setCurrentLength(0);
-        for (int step = 0; step < pathSteps; step++) {
-            double p = 1.0 - (((double) step) / pathSteps);
-            int cl = (int) (20.0 * chainLength / ((19.0 * p) + 1));
-//            logger.setLogEvery(cl / logCount);
-            if (burninLength == -1)
-                burnin = (int) (0.1 * cl);
-            else burnin = burninLength;
-
-            pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter, cl, burnin);
-            mc.runChain(cl + burnin, false/*, 0*/);
-            pathParameter /= 2;
-
-        }
-
-        int cl = 20 * chainLength;
-//        logger.setLogEvery(cl / logCount);
-        if (burninLength == -1)
-            burnin = (int) (0.1 * cl);
-        else
-            burnin = burninLength;
-        pathLikelihood.setPathParameter(0.0);
-        reportIteration(pathParameter, cl, burnin);
-        mc.runChain(cl + burnin, false/*, 0*/);
     }
 
     public void run() {
 
         logger.startLogging();
         mc.addMarkovChainListener(chainListener);
-
-        // depricated
-//        if (linear) {
-//            if (lacing)
-//                linearShoeLacing();
-//            else
-//                linearIntegration();
-//        } else {
-//            if (lacing)
-//                geometricShoeLacing();
-//            else
-//                geometricIntegration();
-//        }
-
+/*
         switch (scheme) {
             case LINEAR:
                 linearIntegration();
@@ -257,6 +246,23 @@ MCLogger logger) {
                 break;
             case BETA:
                 betaIntegration(alphaFactor, betaFactor);
+                break;
+            default:
+                throw new RuntimeException("Illegal path scheme");
+        }    */
+
+        switch (scheme) {
+            case LINEAR:
+                integrate(new LinearIntegrator(pathSteps));
+                break;
+            case GEOMETRIC:
+                integrate(new GeometricIntegrator(pathSteps));
+                break;
+            case ONE_SIDED_BETA:
+                integrate(new BetaIntegrator(1.0, betaFactor, pathSteps));
+                break;
+            case BETA:
+                integrate(new BetaIntegrator(alphaFactor, betaFactor, pathSteps));
                 break;
             default:
                 throw new RuntimeException("Illegal path scheme");
@@ -353,6 +359,11 @@ MCLogger logger) {
                 burninLength = xo.getIntegerAttribute(BURNIN);
             }
 
+            int prerunLength = -1;
+            if (xo.hasAttribute(PRERUN)) {
+                prerunLength = xo.getIntegerAttribute(PRERUN);
+            }
+
             // deciprated
             boolean linear = xo.getAttribute(LINEAR, true);
 //            boolean lacing = xo.getAttribute(LACING,false);
@@ -360,7 +371,7 @@ MCLogger logger) {
             if (linear) {
                 scheme = PathScheme.LINEAR;
             } else {
-                scheme = PathScheme.OLD_GEOMETRIC;
+                scheme = PathScheme.GEOMETRIC;
             }
 
             // new approach
@@ -380,6 +391,13 @@ MCLogger logger) {
             for (int i = 0; i < mcmcXML.getChildCount(); ++i) {
                 if (mcmcXML.getChild(i) instanceof MCMC) {
                     MCMC mcmc = (MCMC) mcmcXML.getChild(i);
+                    if (prerunLength > 0) {
+                        java.util.logging.Logger.getLogger("dr.inference").info("Path Sampling Marginal Likelihood Estimator:\n\tEquilibrating chain " + mcmc.getId() + " for " + prerunLength + " iterations.");
+                        for (Logger log : mcmc.getLoggers()) { // Stop the loggers, so nothing gets written to normal output
+                            log.stopLogging();
+                        }
+                        mcmc.getMarkovChain().runChain(prerunLength, false);
+                    }
                     os.addOperatorSchedule(mcmc.getOperatorSchedule());
                 }
             }
@@ -408,14 +426,12 @@ MCLogger logger) {
             } else if (scheme == PathScheme.BETA) {
                 alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             }
-
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
                     "\n  pathSteps=" + pathSteps +
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
                     "\n    Alekseyenko, Rambaut, Lemey and Suchard (in preparation)");
-
             return mle;
         }
 
@@ -439,6 +455,7 @@ MCLogger logger) {
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
                 AttributeRule.newIntegerRule(PATH_STEPS),
                 AttributeRule.newIntegerRule(BURNIN, true),
+                AttributeRule.newIntegerRule(PRERUN, true),
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
@@ -464,7 +481,7 @@ MCLogger logger) {
 
     enum PathScheme {
         LINEAR("linear"),
-        OLD_GEOMETRIC("oldGeometric"),
+        GEOMETRIC("geometric"),
         BETA("beta"),
         ONE_SIDED_BETA("oneSidedBeta");
 
@@ -504,7 +521,7 @@ MCLogger logger) {
     private int burnin;
     private final int burninLength;
     private int pathSteps;
-//    private final boolean linear;
+    //    private final boolean linear;
     //    private final boolean lacing;
     private final PathScheme scheme;
     private double alphaFactor = 0.5;
@@ -527,4 +544,5 @@ MCLogger logger) {
     public static final String PATH_SCHEME = "pathScheme";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
+    public static final String PRERUN = "prerun";
 }

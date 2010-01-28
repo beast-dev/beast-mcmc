@@ -320,9 +320,15 @@
 
 			<batchtest fork="yes" todir="${report}">
 				<fileset dir="${src}">
+                    <include name="test/dr/distibutions/**/*Test.java"/>                                         
 					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
 					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
 					<include name="test/dr/evomodel/coalescent/**/*Test.java" />
+                    <!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
+                    <include name="test/dr/evomodel/operators/**/ExchangeOperatorTest.java" />
+					<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
+					<include name="test/dr/evomodel/operators/**/NNITest.java" />
+					<include name="test/dr/evomodel/speciation/**/*Test.java" />
 					<!-- <include name="test/dr/evomodel/substmodel/**/*Test.java" /> -->
                     <include name="test/dr/evomodel/substmodel/**/AsymQuadTest.java" />
 					<include name="test/dr/evomodel/substmodel/**/BinaryCovarionModelTest.java" />
@@ -332,13 +338,8 @@
                     <include name="test/dr/evomodel/substmodel/**/MsatFullLikelihoodTest.java" />
 					<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
                     <include name="test/dr/evomodel/substmodel/**/TwoPhaseModelTest.java" />
-					<!-- <include name="test/dr/evomodel/operators/**/*Test.java" /> -->
-                    <include name="test/dr/evomodel/operators/**/ExchangeOperatorTest.java" />
-					<include name="test/dr/evomodel/operators/**/FNPRTest.java" />
-					<include name="test/dr/evomodel/operators/**/NNITest.java" />
-					<include name="test/dr/evomodel/speciation/**/*Test.java" />
-					<include name="test/dr/distibutions/**/*Test.java"/>
-                    <include name="test/dr/integration/**/MCMCTest.java"/>
+                    <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
+					<include name="test/dr/integration/**/MCMCTest.java"/>
 				</fileset>
 			</batchtest>
 		</junit>

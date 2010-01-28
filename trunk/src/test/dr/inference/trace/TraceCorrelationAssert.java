@@ -30,6 +30,7 @@ public class TraceCorrelationAssert extends TestCase {
 
     protected TreeModel treeModel;
     protected SimpleAlignment alignment;
+    protected Taxon[] taxa;
 
 
     public TraceCorrelationAssert(String name) {
@@ -43,11 +44,12 @@ public class TraceCorrelationAssert extends TestCase {
         alignment.setDataType(dataType);
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
-        for (int i=0; i < 6; i++) {
-            Taxon taxon = new Taxon(taxa_sequence[0][i]);
+        taxa = new Taxon[taxa_sequence[0].length]; // 6
+        for (int i=0; i < taxa_sequence[0].length; i++) {
+            taxa[i] = new Taxon(taxa_sequence[0][i]);
             //taxonList.addTaxon(taxon);
             Sequence sequence = new Sequence(taxa_sequence[1][i]);
-            sequence.setTaxon(taxon);
+            sequence.setTaxon(taxa[i]);
             sequence.setDataType(dataType);
 
             alignment.addSequence(sequence);

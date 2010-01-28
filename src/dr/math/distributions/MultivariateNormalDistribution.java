@@ -12,17 +12,38 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     private final double[] mean;
     private final double[][] precision;
-    //	private int dim;
-    private final double logDet;
+    private double[][] variance = null;
+    private double[][] cholesky = null;
+    private double logDet = Double.NaN;
 
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
         this.precision = precision;
-        logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
     }
 
     public String getType() {
         return TYPE;
+    }
+
+    public double[][] getVariance() {
+        if (variance == null) {
+            variance = new SymmetricMatrix(precision).inverse().toComponents();
+        }
+        return variance;
+    }
+
+    public double[][] getCholeskyDecomposition() {
+        if (cholesky == null) {
+            cholesky = getCholeskyDecomposition(getVariance());
+        }
+        return cholesky;
+    }
+
+    public double getLogDet() {
+        if (logDet == Double.NaN) {
+            logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
+        }
+        return logDet;
     }
 
     public double[][] getScaleMatrix() {
@@ -31,6 +52,19 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     public double[] getMean() {
         return mean;
+    }
+
+    public double[] nextMultivariateNormal() {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
+    }
+
+    public double[] nextMultivariateNormal(double[] x) {
+        return nextMultivariateNormalCholesky(x, getCholeskyDecomposition(), 1.0);
+    }
+
+    // Scale lives in variance-space
+    public double[] nextScaledMultivariateNormal(double[] mean, double scale) {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale));
     }
 
     public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
@@ -42,7 +76,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public double logPdf(double[] x) {
-        return logPdf(x, mean, precision, logDet, 1.0);
+        return logPdf(x, mean, precision, getLogDet(), 1.0);
     }
 
     public static double logPdf(double[] x, double[] mean, double[][] precision,
@@ -88,29 +122,37 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return dim * logNormalize + 0.5 * (dim * (Math.log(precision) - Math.log(scale)) - SSE * precision / scale);
     }
 
-    public double[] nextMultivariateNormal() {
-        return nextMultivariateNormalPrecision(mean, precision);
+    private static double[][] getInverse(double[][] x) {
+        return new SymmetricMatrix(x).inverse().toComponents();
     }
 
-
-    public static double[] nextMultivariateNormalPrecision(double[] mean, double[][] precision) {
-
-        double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
-        return nextMultivariateNormalVariance(mean, variance);
-    }
-
-    public static double[] nextMultivariateNormalVariance(double[] mean, double[][] variance) {
-
+    private static double[][] getCholeskyDecomposition(double[][] variance) {
         double[][] cholesky;
         try {
             cholesky = (new CholeskyDecomposition(variance)).getL();
         } catch (IllegalDimension illegalDimension) {
             throw new RuntimeException("Attempted Cholesky decomposition on non-square matrix");
         }
-        return nextMultivariateNormalCholesky(mean, cholesky);
+        return cholesky;
+    }
+
+    public static double[] nextMultivariateNormalPrecision(double[] mean, double[][] precision) {
+        return nextMultivariateNormalVariance(mean, getInverse(precision));
+    }
+
+    public static double[] nextMultivariateNormalVariance(double[] mean, double[][] variance) {
+        return nextMultivariateNormalVariance(mean, variance, 1.0);
+    }
+
+    public static double[] nextMultivariateNormalVariance(double[] mean, double[][] variance, double scale) {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(variance), Math.sqrt(scale));
     }
 
     public static double[] nextMultivariateNormalCholesky(double[] mean, double[][] cholesky) {
+        return nextMultivariateNormalCholesky(mean, cholesky, 1.0);
+    }
+
+    public static double[] nextMultivariateNormalCholesky(double[] mean, double[][] cholesky, double sqrtScale) {
     
         final int dim = mean.length;
 
@@ -119,7 +161,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         double[] epsilon = new double[dim];
         for (int i = 0; i < dim; i++)
-            epsilon[i] = MathUtils.nextGaussian();
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j <= i; j++) {
@@ -130,8 +172,13 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return x;
     }
 
-    // todo should be a test, no?
+    // TODO should be a junit test
     public static void main(String[] args) {
+        testPdf();
+        testRandomDraws();
+    }
+
+    public static void testPdf() {
         double[] start = {1, 2};
         double[] stop  = {0, 0};
         double[][] precision = { {2,0.5},{0.5,1} };
@@ -141,9 +188,14 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         System.err.println("logPDF = "+logPdf(start,stop,2,0.2));
         System.err.println("Should = -24.53529\n");
+    }
 
+    public static void testRandomDraws() {
+        
+        double[] start = {1, 2};
+        double[][] precision = { {2, 0.5}, {0.5, 1} };
         System.err.println("Random draws: ");
-        int length = 10000;
+        int length = 100000;
         double[] mean = new double[2];
         double[] SS   = new double[2];
         double[] var  = new double[2];

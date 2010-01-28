@@ -17,7 +17,7 @@ public class PathSamplingAnalysis {
     public static final String PATH_SAMPLING_ANALYSIS = "pathSamplingAnalysis";
     public static final String LIKELIHOOD_COLUMN = "likelihoodColumn";
     public static final String THETA_COLUMN = "thetaColumn";
-    public static final String FORMAT = "%5.3f";
+    public static final String FORMAT = "%5.5g";
 
     PathSamplingAnalysis(double[] logLikelihoodSample, String logLikelihoodName, double[] thetaSample) {
         this.logLikelihoodSample = logLikelihoodSample;
@@ -71,10 +71,15 @@ public class PathSamplingAnalysis {
         }
 
         logBayesFactor = 0;
-        for (int i = 0; i < meanLogLikelihood.size() - 1; i++)
+        innerArea = 0;
+        for (int i = 0; i < meanLogLikelihood.size() - 1; i++) {
             logBayesFactor += (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
                     (orderedTheta.get(i + 1) - orderedTheta.get(i));
-
+            if (i > 0 && i < (meanLogLikelihood.size() - 1)) {
+                innerArea += (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
+                        (orderedTheta.get(i + 1) - orderedTheta.get(i));
+            }
+        }
         logBayesFactorCalculated = true;
     }
 
@@ -94,6 +99,10 @@ public class PathSamplingAnalysis {
         sb.append(logLikelihoodName);
         sb.append(" = ");
         sb.append(String.format(FORMAT, bf));
+        sb.append("\nInner area for path parameter in ("
+                + String.format(FORMAT, orderedTheta.get(1)) + ","
+                + String.format(FORMAT, orderedTheta.get(orderedTheta.size() - 2)) + ") = "
+                + String.format(FORMAT, innerArea));
         return sb.toString();
     }
 
@@ -131,14 +140,14 @@ public class PathSamplingAnalysis {
                 int maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(MarginalLikelihoodAnalysis.BURN_IN, maxState / 10);
+                int burnin = xo.getAttribute(MarginalLikelihoodAnalysis.BURN_IN, maxState / 5);
 
                 if (burnin < 0 || burnin >= maxState) {
-                    burnin = maxState / 10;
-                    System.out.println("WARNING: Burn-in larger than total number of states - using to 10%");
+                    burnin = maxState / 5;
+                    System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
                 }
 
-                burnin = 0;   // TODO Double-check with Alex that burnin is ignored.
+                //burnin = 0;   // TODO Double-check with Alex that burnin is ignored.
 
                 traces.setBurnIn(burnin);
 
@@ -212,6 +221,7 @@ public class PathSamplingAnalysis {
 
     private boolean logBayesFactorCalculated = false;
     private double logBayesFactor;
+    private double innerArea;
     private final double[] logLikelihoodSample;
     private final double[] thetaSample;
     private List<Double> meanLogLikelihood;

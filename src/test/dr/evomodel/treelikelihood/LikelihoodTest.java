@@ -1,4 +1,4 @@
-package test.dr.integration;
+package test.dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -13,10 +13,12 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
 import dr.inference.model.Parameter;
-import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
+
+import java.text.NumberFormat;
+import java.util.Locale;
 
 
 /**
@@ -27,6 +29,7 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 public class LikelihoodTest extends TraceCorrelationAssert {
 
     private TreeModel treeModel;
+    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 
     public LikelihoodTest(String name) {
         super(name);
@@ -35,13 +38,14 @@ public class LikelihoodTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        MathUtils.setSeed(666);
+        format.setMaximumFractionDigits(5);
 
         createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
+        createTreeModel ();
     }
 
-    public void testNewickTree() {
+    private void createTreeModel () {
 
         SimpleNode[] nodes = new SimpleNode[10];
         for (int n=0; n < 10; n++) {
@@ -86,7 +90,10 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         tree.setUnits(Units.Type.YEARS);
 
         treeModel = new TreeModel(tree); //treeModel
+    }
 
+    public void testNewickTree() {
+        System.out.println("\nTest Simple Node to convert Newick Tree:");
         String expectedNewickTree = "((((human:0.024003,(chimp:0.010772,bonobo:0.010772):0.013231):0.012035," +
                 "gorilla:0.036038):0.033087,orangutan:0.069125):0.030457,siamang:0.099582);";
         
@@ -95,7 +102,8 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
 
 
-    public void testLikelihoodJC69() { 
+    public void testLikelihoodJC69() {
+        System.out.println("\nTest Likelihood using JC69:");
         // Sub model
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, 100);
@@ -113,14 +121,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihoodJC69");
 
-//      <expectation name="likelihood" value="-1992.20564"/>
-//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1992.20564);
-
+        assertEquals("treeLikelihoodJC69", format.format(-1992.20564), format.format(treeLikelihood.getLogLikelihood()));
     }
 
     public void testLikelihoodK80() {
+        System.out.println("\nTest Likelihood using K80:");
         // Sub model
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 27.402591, 0, 100);
@@ -138,14 +144,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihoodK80");
 
-//      <expectation name="likelihood" value="-1856.30305"/>
-//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1856.30305);
-
+        assertEquals("treeLikelihoodK80", format.format(-1856.30305), format.format(treeLikelihood.getLogLikelihood()));
     }
 
     public void testLikelihoodHKY85() {
+        System.out.println("\nTest Likelihood using HKY85:");
         // Sub model
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 29.739445, 0, 100);
@@ -162,12 +166,9 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihoodHKY85");
+                false, false, true, false, false);          
 
-//      <expectation name="likelihood" value="-1825.21317"/>
-//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1825.21317);
-
+        assertEquals("treeLikelihoodHKY85", format.format(-1825.21317), format.format(treeLikelihood.getLogLikelihood()));
     }
 
     public static Test suite() {

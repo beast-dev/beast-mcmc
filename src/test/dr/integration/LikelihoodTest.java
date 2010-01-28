@@ -6,32 +6,18 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
-import dr.inference.loggers.ArrayLogFormatter;
-import dr.inference.loggers.MCLogger;
-import dr.inference.loggers.TabDelimitedFormatter;
-import dr.inference.mcmc.MCMC;
-import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Parameter;
-import dr.inference.operators.*;
-import dr.inference.prior.Prior;
-import dr.inference.trace.ArrayTraceList;
-import dr.inference.trace.Trace;
-import dr.inference.trace.TraceCorrelation;
 import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
-import java.util.List;
 
 /**
  * @author Walter Xie
@@ -103,15 +89,16 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         String expectedNewickTree = "((((human:0.024003,(chimp:0.010772,bonobo:0.010772):0.013231):0.012035," +
                 "gorilla:0.036038):0.033087,orangutan:0.069125):0.030457,siamang:0.099582);";
+        
         assertEquals("Fail to covert the correct tree !!!", expectedNewickTree, Tree.Utils.newick(treeModel, 6));
     }
 
 
 
-    public void testLikelihood() {
-/*        // Sub model
-        Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());//new double[]{0.25, 0.25, 0.25, 0.25});
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+    public void testLikelihoodJC69() { 
+        // Sub model
+        Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, 100);
 
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
@@ -126,93 +113,61 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihood");
+        treeLikelihood.setId("treeLikelihoodJC69");
 
-        // Operators
-        OperatorSchedule schedule = new SimpleOperatorSchedule();
+//      <expectation name="likelihood" value="-1992.20564"/>
+//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1992.20564);
 
-        MCMCOperator operator = new ScaleOperator(kappa, 0.5);
-        operator.setWeight(1.0);
-        schedule.addOperator(operator);
+    }
 
-//        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
-//        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+    public void testLikelihoodK80() {
+        // Sub model
+        Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 27.402591, 0, 100);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
-        rootHeight.setId(TREE_HEIGHT);
-        operator = new ScaleOperator(rootHeight, 0.5);
-        operator.setWeight(1.0);
-        schedule.addOperator(operator);
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+        HKY hky = new HKY(kappa, f);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
-        operator = new UniformOperator(internalHeights, 10.0);
-        schedule.addOperator(operator);
+        //siteModel
+        GammaSiteModel siteModel = new GammaSiteModel(hky);
+        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        siteModel.setMutationRateParameter(mu);
 
-        operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
-        schedule.addOperator(operator);
+        //treeLikelihood
+        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-        operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
+        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
+                false, false, true, false, false);
+        treeLikelihood.setId("treeLikelihoodK80");
 
-        operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
+//      <expectation name="likelihood" value="-1856.30305"/>
+//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1856.30305);
 
-        operator = new WilsonBalding(treeModel, 1.0);
-//        operator.doOperation();
-        schedule.addOperator(operator);
+    }
 
-        // Log
-        ArrayLogFormatter formatter = new ArrayLogFormatter(false);
+    public void testLikelihoodHKY85() {
+        // Sub model
+        Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 29.739445, 0, 100);
 
-        MCLogger[] loggers = new MCLogger[2];
-        loggers[0] = new MCLogger(formatter, 1000, false);
-        loggers[0].add(treeLikelihood);
-        loggers[0].add(rootHeight);
-        loggers[0].add(kappa);
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+        HKY hky = new HKY(kappa, f);
 
-        loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 100000, false);
-        loggers[1].add(treeLikelihood);
-        loggers[1].add(rootHeight);
-        loggers[1].add(kappa);
+        //siteModel
+        GammaSiteModel siteModel = new GammaSiteModel(hky);
+        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        siteModel.setMutationRateParameter(mu);
 
-        // MCMC
-        MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(10000000);
-        options.setUseCoercion(true); // autoOptimize = true
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        //treeLikelihood
+        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-        mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
-        mcmc.run();
+        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
+                false, false, true, false, false);
+        treeLikelihood.setId("treeLikelihoodHKY85");
 
-        // time
-        System.out.println(mcmc.getTimer().toString());
+//      <expectation name="likelihood" value="-1825.21317"/>
+//        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, treeLikelihood, -1825.21317);
 
-        // Tracer
-        List<Trace> traces = formatter.getTraces();
-        ArrayTraceList traceList = new ArrayTraceList("LikelihoodTest", traces, 0);
-
-        for (int i = 1; i < traces.size(); i++) {
-            traceList.analyseTrace(i);
-        }
-
-//      <expectation name="likelihood" value="-1815.75"/>
-//		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
-//		<expectation name="hky.kappa" value="32.8941"/>
-
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
-
-        TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
-        assertExpectation(TREE_HEIGHT, treeHeightStats, 6.42048E-2);
-
-        TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 32.8941);  */
     }
 
     public static Test suite() {

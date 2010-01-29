@@ -339,7 +339,7 @@
 					<include name="test/dr/evomodel/substmodel/**/TN93Test.java" />
                     <include name="test/dr/evomodel/substmodel/**/TwoPhaseModelTest.java" />
                     <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
-					<include name="test/dr/integration/**/MCMCTest.java"/>
+					<include name="test/dr/inference/**/*Test.java"/>
 				</fileset>
 			</batchtest>
 		</junit>

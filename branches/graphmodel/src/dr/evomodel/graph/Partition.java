@@ -1,6 +1,9 @@
 package dr.evomodel.graph;
 
 import dr.evolution.alignment.SiteList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.FrequencyModel;
 
 /*
  * Refers to a range of sites in a SiteList
@@ -11,6 +14,10 @@ public class Partition {
 	int leftSite = -1;
 	int rightSite = -1;
 	int number = -1;
+	
+	SiteModel siteModel = null;
+	BranchRateModel branchRateModel = null;
+	FrequencyModel frequencyModel = null;
 	
 	public Partition(){}
 	public Partition(SiteList siteList){
@@ -46,5 +53,32 @@ public class Partition {
 	
 	public void setNumber(int n) {
 	    number = n;
+	}
+
+	public SiteModel getSiteModel() {
+		return siteModel;
+	}
+	public void setSiteModel(SiteModel siteModel) {
+		this.siteModel = siteModel;
+	}
+	public BranchRateModel getBranchRateModel() {
+		return branchRateModel;
+	}
+	public void setBranchRateModel(BranchRateModel branchRateModel) {
+		this.branchRateModel = branchRateModel;
+	}
+	public FrequencyModel getFrequencyModel() {
+		return frequencyModel;
+	}
+	public void setFrequencyModel(FrequencyModel frequencyModel) {
+		this.frequencyModel = frequencyModel;
+	}
+	public void copyPartition(Partition p){
+	       setLeftSite(p.getLeftSite());
+	       setRightSite(p.getRightSite());
+	       setSiteList(p.getSiteList());
+	       setSiteModel(p.getSiteModel());
+	       setBranchRateModel(p.getBranchRateModel());
+	       setFrequencyModel(p.getFrequencyModel());
 	}
 }

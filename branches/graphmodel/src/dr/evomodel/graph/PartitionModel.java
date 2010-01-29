@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dr.evolution.alignment.SiteList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
@@ -54,8 +57,9 @@ public class PartitionModel extends AbstractModel {
 			partitions[i].setNumber(i);
 			storedPartitions[i] = new Partition(siteLists.get(i));
 			storedPartitions[i].setNumber(i);
-			modelsOnPartition.put(partitions[i], new ArrayList<Model>());
-			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>());
+			// 3 null entries because every partition has a SiteModel, a BranchRateModel, and a FrequencyModel
+			modelsOnPartition.put(partitions[i], new ArrayList<Model>(3));
+			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>(3));
 		}
 	}
 	
@@ -122,12 +126,10 @@ public class PartitionModel extends AbstractModel {
 
        // get a new Partition and copy the values of the provided one
        Partition newSR = freePartitions.pop();
-       newSR.setLeftSite(partition.getLeftSite());
-       newSR.setRightSite(partition.getRightSite());
-       newSR.setSiteList(partition.getSiteList());
+       newSR.copyPartition(partition);
 
        // add a model list for it
-       ArrayList<Model> al = new ArrayList<Model>();
+       ArrayList<Model> al = new ArrayList<Model>(3);
        modelsOnPartition.put(newSR, al);
 
        return newSR;
@@ -193,6 +195,12 @@ public class PartitionModel extends AbstractModel {
 	
 	public void addModelToPartition(Partition partition, Model model){
 		List<Model> l = modelsOnPartition.get(partition);
+		if(model instanceof SiteModel)
+			l.set(0, model);
+		if(model instanceof BranchRateModel)
+			l.set(1, model);
+		if(model instanceof FrequencyModel)
+			l.set(2, model);
 		l.add(model);
 	}
 	
@@ -210,9 +218,7 @@ public class PartitionModel extends AbstractModel {
 	@Override
 	protected void storeState() {
 		for(int i = 0; i<partitions.length; i++){
-			storedPartitions[i].setLeftSite(partitions[i].getLeftSite());
-			storedPartitions[i].setRightSite(partitions[i].getRightSite());
-			storedPartitions[i].setSiteList(partitions[i].getSiteList());
+			storedPartitions[i].copyPartition(partitions[i]);
 		}
 		storedModelsOnPartition = modelsOnPartition;
 	}

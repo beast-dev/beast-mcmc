@@ -1,5 +1,6 @@
 package dr.evomodel.graphlikelihood;
 
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import jebl.gui.trees.treeviewer.treelayouts.AbstractTreeLayout;
@@ -47,6 +48,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             boolean forceRescaling) 
     {
         super(GRAPH_LIKELIHOOD, createConcatenatedSiteList(partitionModel), graphModel);
+        createConcatenatedSiteMap(partitionModel, siteMap);
 
         try{
 
@@ -54,11 +56,11 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         this.partitionModel = partitionModel;
 
         // BEGIN TreeLikelihood LIKELIHOODCORE INIT CODE
-        this.likelihoodCore = new GeneralLikelihoodCore(concatSiteList.getSiteCount());
+        this.likelihoodCore = new GeneralGraphLikelihoodCore(concatSiteList.getSiteCount());
         String coreName = "Java general";
         // END TreeLikelihood LIKELIHOODCORE INIT CODE
 
-        SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(partitionModel.getPartition(0)).get(0);
+        SiteModel siteModel = partitionModel.getPartition(0).getSiteModel();
         this.integrateAcrossCategories = siteModel.integrateAcrossCategories();
         this.categoryCount = siteModel.getCategoryCount();
 
@@ -158,10 +160,21 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     	return ssl;
     }
 
+    protected void createConcatenatedSiteMap(PartitionModel pm, HashMap<SiteList, Integer> siteListMap){
+    	int sum = 0;
+    	for(int i=0; i<pm.getSiteListCount(); i++){
+    		SiteList sl = pm.getSiteList(i);
+    		siteListMap.put(sl, sum);
+    		sum += sl.getSiteCount();
+    	}
+    }
 
     
     
     protected void growNodeStorage(){
+    	likelihoodCore.growNodeStorage(updateNode.length);	// double the number
+
+    	// FIXME: need to update all the data structures here
     	boolean[] tmp = new boolean[updateNode.length*2];
     	System.arraycopy(updateNode, 0, tmp, 0, updateNode.length);
     	for(int i=updateNode.length; i<tmp.length; i++)
@@ -190,8 +203,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     		}
     	}else{
     		// otherwise the TreeLikelihood can handle it
-            super.handleModelChangedEvent(model, object, index);
     	}
+    	// this is not efficient, only temporary for testing
+    	calculateLogLikelihood();    
     }
 
     protected void storeState() {
@@ -284,9 +298,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         	System.err.println("Partition not at node");
         }
 
-        SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(p).get(0);
-        BranchRateModel branchRateModel = (BranchRateModel)partitionModel.getModelsOnPartition(p).get(1);
-        FrequencyModel frequencyModel = (FrequencyModel)partitionModel.getModelsOnPartition(p).get(2);
+        SiteModel siteModel = p.getSiteModel();
+        BranchRateModel branchRateModel = p.getBranchRateModel();
+        FrequencyModel frequencyModel = p.getFrequencyModel();
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
@@ -329,15 +343,18 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
+                int l = remapSite(p.getSiteList(), p.getLeftSite());
+                int r = remapSite(p.getSiteList(), p.getRightSite());
                 if (integrateAcrossCategories) {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, l, r);
                 } else {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
+                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories, l, r);
                 }
 
                 if (COUNT_TOTAL_OPERATIONS) {
                     totalOperationCount ++;
                 }
+
 
                 if (parent == null) {
                     // No parent this is the root of the tree -
@@ -346,7 +363,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
                     double[] partials = getRootPartials(p);
 
-                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods);
+                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
                 }
 
                 update = true;
@@ -354,6 +371,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         }
 
         return update;
+
     }
 
     public final double[] getRootPartials(Partition p) {
@@ -362,16 +380,26 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         }
 
         int nodeNum = treeModel.getRoot().getNumber();
+        int l = remapSite(p.getSiteList(), p.getLeftSite());
+        int r = remapSite(p.getSiteList(), p.getRightSite());
         if (integrateAcrossCategories) {
             // moved this call to here, because non-integrating siteModels don't need to support it - AD
-            SiteModel siteModel = (SiteModel)partitionModel.getModelsOnPartition(p).get(0);
+            SiteModel siteModel = p.getSiteModel();
             double[] proportions = siteModel.getCategoryProportions();
-            likelihoodCore.integratePartials(nodeNum, proportions, rootPartials);
+            likelihoodCore.integratePartials(nodeNum, proportions, rootPartials, l, r);
         } else {
-            likelihoodCore.getPartials(nodeNum, rootPartials);
+            likelihoodCore.getPartials(nodeNum, rootPartials, l, r);
         }
 
         return rootPartials;
+    }
+    
+    /*
+     * Converts a partition-local site index to a concatenated site index
+     */
+    protected int remapSite(SiteList sl, int site){
+    	Integer left = siteMap.get(sl);
+    	return left.intValue() + site;
     }
 
     /**
@@ -383,7 +411,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     
 
     protected PartitionModel partitionModel;
-    protected GeneralLikelihoodCore likelihoodCore;
+    protected GeneralGraphLikelihoodCore likelihoodCore;
     protected int categoryCount;
     protected final boolean integrateAcrossCategories;
     protected double[] probabilities;
@@ -392,4 +420,6 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     protected int[] siteCategories = null;
     protected boolean[] updatePartition = null;
     protected boolean[][] updateNodePartition = null;
+    
+    protected HashMap<SiteList, Integer> siteMap = new HashMap<SiteList, Integer>();
 }

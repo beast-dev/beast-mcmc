@@ -64,12 +64,12 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
         GeneralPath path = new GeneralPath();
 
         LinkedList<Point2D> points = poly.point2Ds;
-        path.moveTo(points.get(0).getX(), points.get(0).getY());
+        path.moveTo((float) points.get(0).getX(), (float) points.get(0).getY());
 
         System.out.println("x=" + points.get(0).getX() + ", y=" + points.get(0).getY());
 
         for (int i = 1; i < points.size(); i++) {
-            path.lineTo(points.get(i).getX(), points.get(i).getY());
+            path.lineTo((float) points.get(i).getX(), (float) points.get(i).getY());
         }
         path.closePath();
         return path;

@@ -99,10 +99,10 @@ public class VisualizeBrownianBridge2D extends JComponent {
             List<SpaceTime> points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, 6, rejector);
 
             GeneralPath path = new GeneralPath();
-            path.moveTo(points.get(0).getX(0), points.get(0).getX(1));
+            path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
             //System.out.println(points.get(0));
             for (int i = 1; i < points.size(); i++) {
-                path.lineTo(points.get(i).getX(0), points.get(i).getX(1));
+                path.lineTo((float) points.get(i).getX(0), (float) points.get(i).getX(1));
                 //System.out.println(points.get(i));
             }
 

@@ -14,10 +14,10 @@ public class MultivariateBrownianBridge {
     /**
      * Divide and conquer brownian bridge
      *
-     * @param normal multivariate normal distribution characterizing Brownian bridge
-     * @param start starting spacetime
-     * @param end   ending spacetime
-     * @param depth depth of divide and conquer recursion resulting in 2^(depth-1) new points
+     * @param normal   multivariate normal distribution characterizing Brownian bridge
+     * @param start    starting spacetime
+     * @param end      ending spacetime
+     * @param depth    depth of divide and conquer recursion resulting in 2^(depth-1) new points
      * @param rejector invalid space/time rejector
      * @return list of points, containing 2 + 2^(depth-1) points
      */
@@ -46,7 +46,7 @@ public class MultivariateBrownianBridge {
 
             double tm = (t1 + t0) / 2.0;
 
-            double t0m = tm - t1;
+            double t0m = tm - t0;
             double p0m = 1.0 / t0m;
 
             double tm1 = t1 - tm;
@@ -55,15 +55,22 @@ public class MultivariateBrownianBridge {
             // p0m + pm1 = precision of pt at tm,
             double v01 = 1.0 / (p0m + pm1);
 
+
+//            System.err.println("p0m = " + p0m);
+//            System.err.println("pm1 = " + pm1);
+//            System.err.println("v01 = " + v01);
+
             final int dim = x0.length;
             double[] xm = new double[dim];
             for (int i = 0; i < dim; i++) {
-                xm[i] = (p0m * x0[i] + pm1 * x1[i]) * v01; 
+                xm[i] = (p0m * x0[i] + pm1 * x1[i]) * v01;
             }
+
+//            System.err.println("Mean: " + new Vector(xm));
+
 
             SpaceTime s;
             do {
-//                getBridgedX(tm, xm, normal, pt0, pt1);
                 s = new SpaceTime(tm, normal.nextScaledMultivariateNormal(xm, v01));
             } while (rejector != null && rejector.reject(s));
 
@@ -74,10 +81,4 @@ public class MultivariateBrownianBridge {
 
         } else return point0 + 1;
     }
-
-    //  fill x by bridge between start and end
-//    private static void getBridgedX(double t, double[] x, MultivariateNormalDistribution normal, SpaceTime start, SpaceTime end) {
-//
-//    }
-
 }

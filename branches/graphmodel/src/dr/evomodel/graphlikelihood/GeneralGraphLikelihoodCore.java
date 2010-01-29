@@ -40,11 +40,15 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
         double [][][] partialsTmp = new double[partials.length][nodeCount][];
         int[][] statesTmp = new int[nodeCount][];
         double[][][] matricesTmp = new double[2][nodeCount][matrixCount * matrixSize];
+    	double[][][] scalingFactorsTmp = new double[2][nodeCount][patternCount];
         for (int i = 0; i < nodeCount-add; i++) {
         	for(int j=0; j<2; j++)
         	{
         		partialsTmp[j][i] = partials[j][i];
-                System.arraycopy(matrices[j][i], 0, matricesTmp, 0, matrixCount*matrixSize);
+                System.arraycopy(matrices[j][i], 0, matricesTmp[j][i], 0, matrixCount*matrixSize);
+                if (useScaling) {
+                    System.arraycopy(scalingFactors[j][i], 0, scalingFactorsTmp[j][i], 0, patternCount);
+                }
         	}
             statesTmp[i] = states[i];
         }
@@ -52,9 +56,15 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
         states = statesTmp;
         matrices = matricesTmp;
 
+        if (useScaling) {
+            scalingFactors = scalingFactorsTmp;
+        }
+        
         // assume the new nodes are internal nodes for now.
         for(int i=nodeCount-add; i<nodeCount; i++)
             createNodePartials(i);
+        
+
     }
 
     //

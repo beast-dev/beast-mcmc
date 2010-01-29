@@ -57,9 +57,8 @@ public class PartitionModel extends AbstractModel {
 			partitions[i].setNumber(i);
 			storedPartitions[i] = new Partition(siteLists.get(i));
 			storedPartitions[i].setNumber(i);
-			// 3 null entries because every partition has a SiteModel, a BranchRateModel, and a FrequencyModel
-			modelsOnPartition.put(partitions[i], new ArrayList<Model>(3));
-			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>(3));
+			modelsOnPartition.put(partitions[i], new ArrayList<Model>());
+			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>());
 		}
 	}
 	
@@ -129,7 +128,7 @@ public class PartitionModel extends AbstractModel {
        newSR.copyPartition(partition);
 
        // add a model list for it
-       ArrayList<Model> al = new ArrayList<Model>(3);
+       ArrayList<Model> al = new ArrayList<Model>();
        modelsOnPartition.put(newSR, al);
 
        return newSR;
@@ -196,11 +195,9 @@ public class PartitionModel extends AbstractModel {
 	public void addModelToPartition(Partition partition, Model model){
 		List<Model> l = modelsOnPartition.get(partition);
 		if(model instanceof SiteModel)
-			l.set(0, model);
+			partition.setSiteModel((SiteModel)model);
 		if(model instanceof BranchRateModel)
-			l.set(1, model);
-		if(model instanceof FrequencyModel)
-			l.set(2, model);
+			partition.setBranchRateModel((BranchRateModel)model);
 		l.add(model);
 	}
 	

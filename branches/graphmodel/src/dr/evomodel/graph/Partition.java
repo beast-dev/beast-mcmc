@@ -17,13 +17,13 @@ public class Partition {
 	
 	SiteModel siteModel = null;
 	BranchRateModel branchRateModel = null;
-	FrequencyModel frequencyModel = null;
 	
 	public Partition(){}
 	public Partition(SiteList siteList){
 		this(siteList, 0, siteList.getSiteCount());
 	}
 	public Partition(SiteList siteList, int leftSite, int rightSite){
+		this.siteList = siteList;
 		this.leftSite = leftSite;
 		this.rightSite = rightSite;
 	}
@@ -67,18 +67,11 @@ public class Partition {
 	public void setBranchRateModel(BranchRateModel branchRateModel) {
 		this.branchRateModel = branchRateModel;
 	}
-	public FrequencyModel getFrequencyModel() {
-		return frequencyModel;
-	}
-	public void setFrequencyModel(FrequencyModel frequencyModel) {
-		this.frequencyModel = frequencyModel;
-	}
 	public void copyPartition(Partition p){
 	       setLeftSite(p.getLeftSite());
 	       setRightSite(p.getRightSite());
 	       setSiteList(p.getSiteList());
 	       setSiteModel(p.getSiteModel());
 	       setBranchRateModel(p.getBranchRateModel());
-	       setFrequencyModel(p.getFrequencyModel());
 	}
 }

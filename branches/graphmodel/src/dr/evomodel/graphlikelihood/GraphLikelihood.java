@@ -56,7 +56,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         this.partitionModel = partitionModel;
 
         // BEGIN TreeLikelihood LIKELIHOODCORE INIT CODE
-        this.likelihoodCore = new GeneralGraphLikelihoodCore(concatSiteList.getSiteCount());
+        this.likelihoodCore = new GeneralGraphLikelihoodCore(stateCount);
         String coreName = "Java general";
         // END TreeLikelihood LIKELIHOODCORE INIT CODE
 
@@ -150,7 +150,8 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 	}
     
     protected static SiteList createConcatenatedSiteList(PartitionModel pm){
-    	SimpleSiteList ssl = new SimpleSiteList(pm.getSiteList(0).getDataType());
+    	// assume all SiteList instances have the same taxon list.
+    	SimpleSiteList ssl = new SimpleSiteList(pm.getSiteList(0).getDataType(),pm.getSiteList(0));
     	for(int i=0; i<pm.getSiteListCount(); i++){
     		SiteList sl = pm.getSiteList(i);
     		for(int j=0; j<sl.getSiteCount(); j++){
@@ -173,6 +174,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     
     protected void growNodeStorage(){
     	likelihoodCore.growNodeStorage(updateNode.length);	// double the number
+    	nodeCount *= 2;
 
     	// FIXME: need to update all the data structures here
     	boolean[] tmp = new boolean[updateNode.length*2];
@@ -183,9 +185,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-    	if(model instanceof GraphModel && 
-    			object instanceof TreeModel.TreeChangedEvent &&
-    			((TreeModel.TreeChangedEvent)object).getNode().getNumber() >= nodeCount)
+    	if(treeModel.getNodeCount() >= nodeCount)
     	{
     		growNodeStorage(); // need more node storage!
     	}
@@ -205,6 +205,8 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     		// otherwise the TreeLikelihood can handle it
     	}
     	// this is not efficient, only temporary for testing
+    	for(int i=0; i<updateNode.length; i++)
+    		updateNode[i]=true;
     	calculateLogLikelihood();    
     }
 
@@ -300,7 +302,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
         SiteModel siteModel = p.getSiteModel();
         BranchRateModel branchRateModel = p.getBranchRateModel();
-        FrequencyModel frequencyModel = p.getFrequencyModel();
+        FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
@@ -328,15 +330,23 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         if (!tree.isExternal(node)) {
 
             // Traverse down the two child nodes
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1, partitionModel, p);
+            GraphModel.Node child1 = (GraphModel.Node)gm.getChild(node, 0);
+            int p1 = gm.getParent(child1, 0) == node ? 0 : 1;
+            boolean update1 = false;
+            if(child1.hasObject(p1, p)) 
+            	update1 = traverse(tree, child1, partitionModel, p);
 
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = false;
-            if(child2!=null)	traverse(tree, child2, partitionModel, p);
+            GraphModel.Node child2 = (GraphModel.Node)gm.getChild(node, 1);
+            boolean update2 = false;
+            if(child2!=null){
+                int p2 = gm.getParent(child2, 0) == node ? 0 : 1;
+                if(child2.hasObject(p2, p)) 
+                	update2 = traverse(tree, child2, partitionModel, p);
+            }
 
             // If either child node was updated then update this node too
-            if (update1 || update2) {
+            // FIXME: need to handle the case of a single child!!
+            if ((update1 || update2) && child2!=null) {
 
                 final int childNum1 = child1.getNumber();
                 final int childNum2 = child2.getNumber();

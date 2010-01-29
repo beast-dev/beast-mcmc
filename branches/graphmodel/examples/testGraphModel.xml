@@ -82,10 +82,12 @@
 		<partition>
 			<alignment idref="YFG.A"/>
 			<siteModel idref="siteModel"/>
+			<defaultBranchRateModel idref="branchRates"/>
 		</partition>
 		<partition>
 			<alignment idref="YFG.B"/>
-			<siteModel idref="siteModel"/>		
+			<siteModel idref="siteModel"/>
+			<defaultBranchRateModel idref="branchRates"/>
 		</partition>
 	</partitionModel>
 	
@@ -108,10 +110,10 @@
 		</nodeHeights>	
 	</graphModel> 
 	
-	<!-- <graphLikelihood id="graphLikelihood">
+	<graphLikelihood id="graphLikelihood">
 		<graphModel idref="graphModel"/>
 		<partitionModel idref="partitionModel"/>
-	</graphLikelihood>  -->
+	</graphLikelihood>
 	
 	<operators id="operators">
 		<!--  <scaleOperator scaleFactor="0.5" weight="1">
@@ -142,9 +144,6 @@
 
 	<mcmc id="mcmc" chainLength="50000" autoOptimize="false">
 		<posterior>
-			<dummyLikelihood>
-				<graphModel idref="graphModel"/>
-			</dummyLikelihood>
 		 	<gammaPrior scale="0.1" shape="100">
 				<parameter idref="treeModel.rootHeight"/>
 			</gammaPrior>

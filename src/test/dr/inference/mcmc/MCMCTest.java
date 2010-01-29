@@ -1,4 +1,4 @@
-package test.dr.integration;
+package test.dr.inference.mcmc;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;

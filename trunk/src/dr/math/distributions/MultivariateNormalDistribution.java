@@ -194,8 +194,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         
         double[] start = {1, 2};
         double[][] precision = { {2, 0.5}, {0.5, 1} };
-        System.err.println("Random draws: ");
         int length = 100000;
+
+
+        System.err.println("Random draws (via precision) ...");        
         double[] mean = new double[2];
         double[] SS   = new double[2];
         double[] var  = new double[2];

@@ -96,7 +96,11 @@ public class VisualizeBrownianBridge2D extends JComponent {
         for (int r = 0; r < 1; r++) {
             g2d.setPaint(new Color((float) Math.random(), (float) Math.random(), (float) Math.random()));
 
-            List<SpaceTime> points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, 6, rejector);
+            List<SpaceTime> points = null;
+
+            while (points == null) {
+                points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, 10, 1000, rejector);
+            }
 
             GeneralPath path = new GeneralPath();
             path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));

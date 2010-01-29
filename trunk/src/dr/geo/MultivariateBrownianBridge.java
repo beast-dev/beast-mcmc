@@ -18,20 +18,27 @@ public class MultivariateBrownianBridge {
      * @param start    starting spacetime
      * @param end      ending spacetime
      * @param depth    depth of divide and conquer recursion resulting in 2^(depth-1) new points
+     * @param maxTries maximum number of rejections for each level
      * @param rejector invalid space/time rejector
      * @return list of points, containing 2 + 2^(depth-1) points
      */
-    public static List<SpaceTime> divideConquerBrownianBridge(MultivariateNormalDistribution normal, SpaceTime start, SpaceTime end, int depth, SpaceTimeRejector rejector) {
+    public static List<SpaceTime> divideConquerBrownianBridge(MultivariateNormalDistribution normal,
+                                                              SpaceTime start, SpaceTime end,
+                                                              int depth, int maxTries, SpaceTimeRejector rejector) {
 
         List<SpaceTime> points = new LinkedList<SpaceTime>();
         points.add(start);
         points.add(end);
 
-        divideConquerBrownianBridge(normal, 0, points, depth, rejector);
-        return points;
+        if (divideConquerBrownianBridge(normal, 0, points, depth, maxTries, rejector) == (2 << (depth-1)) ) {
+            return points;
+        }
+        return null;
     }
 
-    public static int divideConquerBrownianBridge(MultivariateNormalDistribution normal, int point0, List<SpaceTime> points, int depth, SpaceTimeRejector rejector) {
+    public static int divideConquerBrownianBridge(MultivariateNormalDistribution normal,
+                                                  int point0, List<SpaceTime> points,
+                                                  int depth, int maxTries, SpaceTimeRejector rejector) {
 
         if (depth > 0) {
 
@@ -69,16 +76,22 @@ public class MultivariateBrownianBridge {
 //            System.err.println("Mean: " + new Vector(xm));
 
 
+            int tries = 0;
+
             SpaceTime s;
             do {
                 s = new SpaceTime(tm, normal.nextScaledMultivariateNormal(xm, v01));
+                tries += 1;
+                if (tries > maxTries) {
+                    return 0;
+                }
             } while (rejector != null && rejector.reject(s));
 
             points.add(point0 + 1, s);
 
-            int endPoint = divideConquerBrownianBridge(normal, point0, points, depth - 1, rejector);
-            return divideConquerBrownianBridge(normal, endPoint, points, depth - 1, rejector);
+            int endPoint = divideConquerBrownianBridge(normal, point0, points, depth - 1, maxTries, rejector);
+            return divideConquerBrownianBridge(normal, endPoint, points, depth - 1, maxTries, rejector);
 
         } else return point0 + 1;
-    }
+    }       
 }

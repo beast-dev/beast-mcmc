@@ -266,6 +266,10 @@ public class FlexibleTree implements MutableTree {
         return ((FlexibleNode) node).getTaxon();
     }
 
+    public void setNodeTaxon(NodeRef node, Taxon taxon) {
+        ((FlexibleNode) node).setTaxon(taxon);
+    }
+
     public int getChildCount(NodeRef node) {
         return ((FlexibleNode) node).getChildCount();
     }

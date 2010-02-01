@@ -41,7 +41,7 @@ public class GraphModel extends TreeModel {
    {
 	   // use the superconstructor but then convert all nodes
 	   // from tree nodes to graph nodes
-       super(tree);
+       super(GRAPH_MODEL, tree, copyAttributes);
        Node[] tmp = new Node[nodes.length];
        Node[] tmp2 = new Node[nodes.length];
        for(int i=0; i<tmp.length; i++)
@@ -240,6 +240,17 @@ public class GraphModel extends TreeModel {
 		   n.removeObject(i, range);
 		   n = i == 0 ? (GraphModel.Node)n.parent : n.parent2;
 	   }
+   }
+   
+   public boolean hasObjectOnEdge(NodeRef parent, NodeRef child, Object o)
+   {
+	   if(((GraphModel.Node)child).parent==parent && 
+			   ((GraphModel.Node)child).hasObject(0, o))
+		   return true;
+	   if(((GraphModel.Node)child).parent2==parent && 
+			   ((GraphModel.Node)child).hasObject(1, o))
+		   return true;
+	   return false;
    }
    
    int storedINC = -1;

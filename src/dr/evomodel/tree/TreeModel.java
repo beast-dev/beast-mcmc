@@ -171,12 +171,12 @@ public class TreeModel extends AbstractModel implements MutableTree {
      * Called when a parameter changes.
      */
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        final Node node = getNodeOfParameter((Parameter)variable);
-        if(type == Parameter.ChangeType.ALL_VALUES_CHANGED){
+        final Node node = getNodeOfParameter((Parameter) variable);
+        if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
             //this signals events where values in all dimensions of a parameter is changed.
-            pushTreeChangedEvent(new TreeChangedEvent(node, (Parameter)variable, TreeChangedEvent.CHANGE_IN_ALL_INTERNAL_NODES));
-        }else{
-            pushTreeChangedEvent(node, (Parameter)variable, index);
+            pushTreeChangedEvent(new TreeChangedEvent(node, (Parameter) variable, TreeChangedEvent.CHANGE_IN_ALL_INTERNAL_NODES));
+        } else {
+            pushTreeChangedEvent(node, (Parameter) variable, index);
         }
     }
 
@@ -244,7 +244,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
             return parameter == node.traitParameters.get(name);
         }
 
-        public boolean areAllInternalHeightsChanged(){
+        public boolean areAllInternalHeightsChanged() {
             return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
         }
     }
@@ -363,6 +363,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
     public Taxon getNodeTaxon(NodeRef node) {
         return ((Node) node).taxon;
+    }
+
+    public void setNodeTaxon(NodeRef node, Taxon taxon) {
+        ((Node) node).taxon = taxon;
     }
 
     public boolean isExternal(NodeRef node) {

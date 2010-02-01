@@ -207,7 +207,8 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     	// this is not efficient, only temporary for testing
     	for(int i=0; i<updateNode.length; i++)
     		updateNode[i]=true;
-    	calculateLogLikelihood();    
+
+    	super.handleModelChangedEvent(model, object, index);
     }
 
     protected void storeState() {
@@ -230,8 +231,6 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         if (patternLogLikelihoods == null) {
             patternLogLikelihoods = new double[patternCount];
         }
-
-
 
         final NodeRef root = treeModel.getRoot();
         for(int i=0; i<partitionModel.getPartitionCount(); i++){
@@ -300,59 +299,38 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         	System.err.println("Partition not at node");
         }
 
-        SiteModel siteModel = p.getSiteModel();
-        BranchRateModel branchRateModel = p.getBranchRateModel();
-        FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
-        // First update the transition probability matrix(ices) for this branch
+        // does this one need to be updated?
         if (parent != null && updateNode[nodeNum]) {
-
-            final double branchRate = branchRateModel.getBranchRate(tree, node);
-
-            // Get the operational time of the branch
-            final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
-
-            if (branchTime < 0.0) {
-                throw new RuntimeException("Negative branch length: " + branchTime);
-            }
-
-            likelihoodCore.setNodeMatrixForUpdate(nodeNum);
-
-            for (int i = 0; i < categoryCount; i++) {
-                double branchLength = siteModel.getRateForCategory(i) * branchTime;
-                siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
-                likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
-            }
-
             update = true;
         }
-
-        // If the node is internal, update the partial likelihoods.
-        if (!tree.isExternal(node)) {
-
-            // Traverse down the two child nodes
+                
+        // If the node has children update the partial likelihoods.
+        if (tree.getChildCount(node)>0) 
+        {
             GraphModel.Node child1 = (GraphModel.Node)gm.getChild(node, 0);
-            int p1 = gm.getParent(child1, 0) == node ? 0 : 1;
-            boolean update1 = false;
-            if(child1.hasObject(p1, p)) 
-            	update1 = traverse(tree, child1, partitionModel, p);
-
             GraphModel.Node child2 = (GraphModel.Node)gm.getChild(node, 1);
-            boolean update2 = false;
-            if(child2!=null){
-                int p2 = gm.getParent(child2, 0) == node ? 0 : 1;
-                if(child2.hasObject(p2, p)) 
-                	update2 = traverse(tree, child2, partitionModel, p);
-            }
 
-            // If either child node was updated then update this node too
-            // FIXME: need to handle the case of a single child!!
-            if ((update1 || update2) && child2!=null) {
+            boolean has1 = gm.hasObjectOnEdge(node, child1, p);
+            boolean has2 = child2 != null ? gm.hasObjectOnEdge(node, child2, p) : false;
 
+            // traverse to child nodes if necessary
+            boolean update1 = has1 ? traverse(tree, child1, partitionModel, p) : false;
+            boolean update2 = has2 ? traverse(tree, child2, partitionModel, p) : false;
+
+            // If we have two children with the partition, and
+            // either child node was updated then update this node too
+            if (has1&&has2&&(update1 || update2)) 
+            {
                 final int childNum1 = child1.getNumber();
                 final int childNum2 = child2.getNumber();
+                
+                // First update the transition probability matrix(ices) for child branches
+                setNodeMatrix(gm, p, child1);
+                setNodeMatrix(gm, p, child2);
 
                 likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
+                // determine the left and right bounds of this partition
                 int l = remapSite(p.getSiteList(), p.getLeftSite());
                 int r = remapSite(p.getSiteList(), p.getRightSite());
                 if (integrateAcrossCategories) {
@@ -369,10 +347,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
                 if (parent == null) {
                     // No parent this is the root of the tree -
                     // calculate the pattern likelihoods
+                    FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
                     double[] frequencies = frequencyModel.getFrequencies();
-
                     double[] partials = getRootPartials(p);
-
                     likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
                 }
 
@@ -382,6 +359,65 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
         return update;
 
+    }
+
+    /**
+     * Set the child node's matrix immediately prior to integrating partials
+     * @param g
+     * @param p
+     * @param n
+     */
+    protected void setNodeMatrix(GraphModel g, Partition p, NodeRef n)
+    {
+        double branchTime = getRateTime(g, p, n);
+        int nodeNum = n.getNumber();
+
+        likelihoodCore.setNodeMatrixForUpdate(nodeNum);
+
+        SiteModel siteModel = p.getSiteModel();
+        for (int i = 0; i < categoryCount; i++) {
+            double branchLength = siteModel.getRateForCategory(i) * branchTime;
+            siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
+            likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+        }
+    }
+    
+    /*
+     * computes the total product of rate and time for
+     * on the branch at or below n which contains partition p
+     * Handles the situation where a partition may be defined at only one
+     * child node, so the total rate*time to integrate over includes the
+     * next descendant also
+     */
+    protected double getRateTime(GraphModel g, Partition p, NodeRef n)
+    {
+        BranchRateModel branchRateModel = p.getBranchRateModel();
+        NodeRef parent = g.getParent(n);
+    	// find nearest node at or below n where p is
+    	// assigned to both children
+    	double branchRate = branchRateModel.getBranchRate(g, n);
+        // Get the operational time of the branch
+        double branchRateTime = branchRate * (g.getNodeHeight(parent) - g.getNodeHeight(n));
+
+        if (branchRateTime < 0.0) {
+            throw new RuntimeException("Negative branch length: " + branchRateTime);
+        }
+        if(g.getChildCount(n)==1){
+        	if(g.hasObjectOnEdge(n, g.getChild(n, 0), p))
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 0));
+    		else
+    			System.err.println("Partition dead-end");
+        }else if(g.getChildCount(n)==2){
+        	boolean has1 = g.hasObjectOnEdge(n, g.getChild(n, 0), p);
+        	boolean has2 = g.hasObjectOnEdge(n, g.getChild(n, 1), p);
+        	if(has1&&!has2)
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 0));
+        	if(!has1&&has2)
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 1));
+        	if(!has1&&!has2)
+    			System.err.println("Partition dead-end");
+        }
+    	return branchRateTime;
     }
 
     public final double[] getRootPartials(Partition p) {

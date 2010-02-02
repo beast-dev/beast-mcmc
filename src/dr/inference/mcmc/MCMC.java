@@ -57,6 +57,24 @@ public class MCMC implements Identifiable, Spawnable {
      * Must be called before calling chain.
      *
      * @param options    the options for this MCMC analysis
+     * @param schedule   operator schedule to be used in chain.
+     * @param likelihood the likelihood for this MCMC
+     * @param loggers    an array of loggers to record output of this MCMC run
+     */
+    public void init(
+            MCMCOptions options,
+            Likelihood likelihood,
+            OperatorSchedule schedule,
+            Logger[] loggers) {
+
+        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+    }
+
+
+    /**
+     * Must be called before calling chain.
+     *
+     * @param options    the options for this MCMC analysis
      * @param prior      the prior disitrbution on the model parameters.
      * @param schedule   operator schedule to be used in chain.
      * @param likelihood the likelihood for this MCMC
@@ -92,6 +110,11 @@ public class MCMC implements Identifiable, Spawnable {
 
     /**
      * Must be called before calling chain.
+     *
+     * @param chainlength chain length
+     * @param likelihood the likelihood for this MCMC
+     * @param operators  an array of MCMC operators
+     * @param loggers    an array of loggers to record output of this MCMC run
      */
     public void init(int chainlength,
                      Likelihood likelihood,

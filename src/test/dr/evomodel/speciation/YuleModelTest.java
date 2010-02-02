@@ -115,7 +115,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, likelihood, schedule, loggers);
 
         mcmc.run();
 

@@ -599,7 +599,7 @@ public class BeautiFrame extends DocumentFrame {
 
             if (file.exists()) {
             	n = JOptionPane.showConfirmDialog(this, file.getName(),
-            		     "Overwrite the exsting file?", JOptionPane.YES_NO_OPTION);
+            		     "Overwrite the existing file?", JOptionPane.YES_NO_OPTION);
             }
 
             if (n == JOptionPane.YES_OPTION) {

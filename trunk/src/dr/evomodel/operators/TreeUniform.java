@@ -57,9 +57,13 @@ public class TreeUniform extends AbstractTreeOperator {
     }
 
     public double doOperation() throws OperatorFailedException {
+        if( tree.getInternalNodeCount() < 2 ) {
+            throw new OperatorFailedException("no node found");
+        }
+        
         tree.beginTreeEdit();
 
-        switch( nodesToMove) {
+        switch( nodesToMove ) {
             case 2: move2(); break;
             case 3: move3(); break;
         }
@@ -87,7 +91,7 @@ public class TreeUniform extends AbstractTreeOperator {
         h[j] = t;
     }
 
-    private void move3() throws OperatorFailedException {
+    private void move3() /*throws OperatorFailedException*/ {
         final int nInternalNodes = tree.getInternalNodeCount();
 
         final NodeRef root = tree.getRoot();
@@ -96,11 +100,19 @@ public class TreeUniform extends AbstractTreeOperator {
         NodeRef i = root;
         int nTries = 0;
 
-        while( root == i || tree.isExternal(tree.getChild(i, 0)) || tree.isExternal(tree.getChild(i, 1)) ) {
+        while( root == i ) {
             i = tree.getInternalNode(MathUtils.nextInt(nInternalNodes));
-            if( ++nTries > 100 ) {
-                throw new OperatorFailedException("no node found");
+        }
+        boolean ise0 = tree.isExternal(tree.getChild(i, 0));
+        boolean ise1 = tree.isExternal(tree.getChild(i, 1));
+
+        if( ise0 || ise1 ) {
+            if( ise0 != ise1 ) {
+                doMove2(tree.getChild(i, ise0 ? 1 : 0) );
+            } else {
+                doMove1(i);
             }
+            return;
         }
 
         final NodeRef iParent = tree.getParent(i);
@@ -153,17 +165,27 @@ public class TreeUniform extends AbstractTreeOperator {
 
     private void move2() {
         final int nInternalNodes = tree.getInternalNodeCount();
-        assert nInternalNodes > 3;
 
         final NodeRef root = tree.getRoot();
 
         NodeRef i = root;
 
-        while( root == i || tree.getParent(i) == root ) {
+        while( root == i ) {
             i = tree.getInternalNode(MathUtils.nextInt(nInternalNodes)) ;
         }
 
-        final NodeRef iParent = tree.getParent(i);
+        doMove2(i);
+     //   return true;
+    }
+
+   private void doMove2(NodeRef i) {
+       final NodeRef iParent = tree.getParent(i);
+
+       if( iParent == tree.getRoot() ) {
+           doMove1(i);
+           return;
+       }
+
         final NodeRef iGrandParent = tree.getParent(iParent);
 
         // lower limit for node (max height of children)
@@ -198,8 +220,20 @@ public class TreeUniform extends AbstractTreeOperator {
 
         tree.setNodeHeight(iParent, h[1]);
         tree.setNodeHeight(i, h[0]);
-
+       
         tree.pushTreeChangedEvent(iParent);
+        tree.pushTreeChangedEvent(i);
+    }
+
+    private void doMove1(NodeRef i) {
+        final NodeRef iParent = tree.getParent(i);
+        final double hMax = tree.getNodeHeight(iParent);
+
+        // lower limit for node (max height of children)
+        final double hMin = getMaxChildHeight(i);
+        double h = MathUtils.uniform(hMin, hMax);
+        tree.setNodeHeight(i, h);
+
         tree.pushTreeChangedEvent(i);
     }
 

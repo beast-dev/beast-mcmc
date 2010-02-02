@@ -11,14 +11,16 @@ import java.util.List;
  */
 public class MultivariateBrownianBridge {
 
+    private static boolean stop;
+
     /**
-     * Divide and conquer brownian bridge
+     * Divide and conquer brownian bridge; NOT THREAD-SAFE!!!!!
      *
      * @param normal   multivariate normal distribution characterizing Brownian bridge
      * @param start    starting spacetime
      * @param end      ending spacetime
      * @param depth    depth of divide and conquer recursion resulting in 2^(depth-1) new points
-     * @param maxTries maximum number of rejections for each level
+     * @param maxTries maximum number of rejections for each level - MUST BE 1 for correct sampling under absorptive boundaries (says AlexeiMarc)
      * @param rejector invalid space/time rejector
      * @return list of points, containing 2 + 2^(depth-1) points
      */
@@ -30,9 +32,11 @@ public class MultivariateBrownianBridge {
         points.add(start);
         points.add(end);
 
-        if (divideConquerBrownianBridge(normal, 0, points, depth, maxTries, rejector) == (2 << (depth-1)) ) {
+        stop = false;
+        if (divideConquerBrownianBridge(normal, 0, points, depth, maxTries, rejector) == (2 << (depth - 1))) {
             return points;
         }
+        stop = false;
         return null;
     }
 
@@ -40,7 +44,7 @@ public class MultivariateBrownianBridge {
                                                   int point0, List<SpaceTime> points,
                                                   int depth, int maxTries, SpaceTimeRejector rejector) {
 
-        if (depth > 0) {
+        if (depth > 0 && !stop) {
 
             SpaceTime pt0 = points.get(point0);
             SpaceTime pt1 = points.get(point0 + 1);
@@ -83,9 +87,10 @@ public class MultivariateBrownianBridge {
                 s = new SpaceTime(tm, normal.nextScaledMultivariateNormal(xm, v01));
                 tries += 1;
                 if (tries > maxTries) {
+                    stop = true;
                     return 0;
                 }
-            } while (rejector != null && rejector.reject(s));
+            } while (rejector != null && rejector.reject(s, depth));
 
             points.add(point0 + 1, s);
 
@@ -93,5 +98,5 @@ public class MultivariateBrownianBridge {
             return divideConquerBrownianBridge(normal, endPoint, points, depth - 1, maxTries, rejector);
 
         } else return point0 + 1;
-    }       
+    }
 }

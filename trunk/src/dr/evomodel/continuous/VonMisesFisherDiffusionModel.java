@@ -14,7 +14,7 @@ import dr.xml.*;
  *         R.A. Fisher (1953) Dispersion on a sphere. Proceedings of the Royal Society of London, Series A, 217, 295 - 305.
  *         <p/>
  *         Generalizations are discussed in:
- *         K. Shimizu and K. Iida, Pearson type VII distributions on spheres, Commun. Stat.ÐTheory Meth. 31 (2002), pp. 513Ð526
+ *         K. Shimizu and K. Iida, Pearson type VII distributions on spheres, Commun. Stat. Theory Meth. 31 (2002), pp. 513 - 526
  *         K. shimizu and H.Y. Slew, The generalized symmetric Laplace distribution on the sphere, Statistical Methology, 5, 2008
  */
 

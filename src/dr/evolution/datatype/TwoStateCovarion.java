@@ -91,7 +91,7 @@ public class TwoStateCovarion extends DataType {
      */
     public int[] getStates(int state) {
 
-        if (state >= 4 && state <= 5) {
+        if (state == 4 || state == 5) {
             int[] states = new int[2];
             states[0] = state % 2;
             states[1] = state % 2 + 2;
@@ -110,7 +110,7 @@ public class TwoStateCovarion extends DataType {
         }
         if (!isAmbiguousState(state)) {
             stateSet[state] = true;
-        } else if (state >= 4 && state <= 5) {
+        } else if (state == 4 || state == 5) {
             for (int i = 0; i < stateCount; i++) {
                 if ((i % 2) == (state % 2)) {
                     stateSet[i] = true;
@@ -124,7 +124,7 @@ public class TwoStateCovarion extends DataType {
         return stateSet;
     }
 
-    public int getUnkownState() {
+    public int getUnknownState() {
         return stateCount + 2;
     }
 

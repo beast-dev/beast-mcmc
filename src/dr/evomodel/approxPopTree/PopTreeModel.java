@@ -87,11 +87,11 @@ public class PopTreeModel extends FlexibleTree {
 
         }
 
-        sequenceNodes.push(parent);
+        sequenceNodes.addFirst(parent); //push(parent);
         while (true) {
             NodeRef currentNode = sequenceNodes.removeFirst();
             if (this.isExternal(currentNode)) {
-                sequenceNodes.push(currentNode);
+                sequenceNodes.addFirst(currentNode); //push(currentNode);
                 //this.setNodeAttribute(parent,"sequenceNodes",sequenceNodes);
                 populations.put(parent, sequenceNodes);
                 return;
@@ -99,7 +99,7 @@ public class PopTreeModel extends FlexibleTree {
             int numChildren = this.getChildCount(currentNode);
             for (int i = 0; getChildCount(currentNode) > 0;) {
                 NodeRef child = this.getChild(currentNode, i);
-                sequenceNodes.push(child);
+                sequenceNodes.addFirst(child); //push(child);
                 this.removeChild(currentNode, child);
             }
         }

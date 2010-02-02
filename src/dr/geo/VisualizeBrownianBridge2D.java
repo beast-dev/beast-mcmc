@@ -47,13 +47,34 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         rejector = new SpaceTimeRejector() {
 
-            public boolean reject(SpaceTime point) {
+            public boolean reject(SpaceTime point, int attribute) {
                 Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
                 for (Shape s : shapes) {
                     if (s.contains(p)) return true;
                 }
                 return false;
             }
+
+            // removes all rejects
+            public void reset() {
+                // do nothing
+            }
+
+            public List<Reject> getRejects() {
+                throw new RuntimeException("Not implemented!");
+            }
+
+//            private boolean stop = false;
+//
+//            public boolean getStop() {
+//                return stop;
+//            }
+//
+//            public void setStop(boolean stop) {
+//                this.stop = stop;
+//            }
+
+
         };
 
         mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{6, 0}, {0, 6}});
@@ -90,17 +111,26 @@ public class VisualizeBrownianBridge2D extends JComponent {
             g2d.fill(path);
         }
 
-
         AffineTransform transform = getFullTransform();
 
-        for (int r = 0; r < 1; r++) {
+        for (int r = 0; r < getTrials(); r++) {
             g2d.setPaint(new Color((float) Math.random(), (float) Math.random(), (float) Math.random()));
 
             List<SpaceTime> points = null;
 
+            int topLevelRejects = -1;
             while (points == null) {
-                points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, 10, 1000, rejector);
+                topLevelRejects += 1;
+                points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, getMaxDepth(), getMaxTries(), rejector);
             }
+
+            Paint old = g2d.getPaint();
+            g2d.setPaint(Color.yellow);
+
+            String rejectString = computeRejectString(rejector, topLevelRejects);
+            g2d.drawString(rejectString, 10, getHeight() - 20);
+            //rejector.reset();
+            g2d.setPaint(old);
 
             GeneralPath path = new GeneralPath();
             path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
@@ -117,22 +147,37 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         g2d.setPaint(Color.black);
 
-        Point2D startPointRaw = new Point2D.Double(start.getX(0), start.getX(1));
-        Point2D endPointRaw = new Point2D.Double(end.getX(0), end.getX(1));
-        Point2D startPointT = new Point2D.Double();
-        Point2D endPointT = new Point2D.Double();
-
-        transform.transform(startPointRaw, startPointT);
-        transform.transform(endPointRaw, endPointT);
-
-        Shape startShape = new Ellipse2D.Double(startPointT.getX() - 3, startPointT.getY() - 3, 6, 6);
-        Shape endShape = new Ellipse2D.Double(endPointT.getX() - 3, endPointT.getY() - 3, 6, 6);
-
-        g2d.fill(startShape);
-        g2d.fill(endShape);
-
+        paintDot(start, 3, transform, g2d);
+        paintDot(end, 3, transform, g2d);
 
         System.out.println("leaving paintComponent()");
+
+    }
+
+    private String computeRejectString(SpaceTimeRejector rejector, int topLevelRejects) {
+
+        int[] rejectCounts = new int[9];
+        for (Reject r : rejector.getRejects()) {
+            rejectCounts[Math.min(r.getDepth() - 1, rejectCounts.length - 1)] += 1;
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("Rejects top-level=" + topLevelRejects);
+        for (int i = 0; i < rejectCounts.length; i++) {
+            builder.append("  " + (i + 1) + ":" + rejectCounts[i]);
+        }
+        return builder.toString();
+    }
+
+    void paintDot(SpaceTime s, double radius, AffineTransform transform, Graphics2D g2d) {
+
+        Point2D pointRaw = new Point2D.Double(s.getX(0), s.getX(1));
+        Point2D pointT = new Point2D.Double();
+
+        transform.transform(pointRaw, pointT);
+
+        Shape pointShape = new Ellipse2D.Double(pointT.getX() - radius, pointT.getY() - radius, 2.0 * radius, 2.0 * radius);
+
+        g2d.fill(pointShape);
 
     }
 
@@ -156,5 +201,18 @@ public class VisualizeBrownianBridge2D extends JComponent {
         frame.getContentPane().add(BorderLayout.CENTER, new VisualizeBrownianBridge2D());
         frame.setSize(600, 600);
         frame.setVisible(true);
+    }
+
+    public int getMaxDepth() {
+        return 10;
+    }
+
+    public int getTrials() {
+
+        return 10;
+    }
+
+    public int getMaxTries() {
+        return 1;
     }
 }

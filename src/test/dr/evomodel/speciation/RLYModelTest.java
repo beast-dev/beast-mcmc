@@ -20,7 +20,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.BitFlipOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -120,7 +119,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, likelihood, schedule, loggers);
 
         mcmc.run();
 

@@ -29,7 +29,7 @@ import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.*;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.prior.Prior;
+
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 "\n  autoOptimize=" + options.useCoercion() +
                 (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : ""));
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, opsched, loggerArray);
+        mcmc.init(options, likelihood, opsched, loggerArray);
 
         MarkovChain mc = mcmc.getMarkovChain();
         double initialScore = mc.getCurrentScore();

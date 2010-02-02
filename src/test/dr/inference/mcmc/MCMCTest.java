@@ -133,7 +133,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         options.setFullEvaluationCount(2000);
 
         mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, treeLikelihood, schedule, loggers);
         mcmc.run();
 
         // time

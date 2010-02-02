@@ -16,7 +16,6 @@ import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
-import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -139,7 +138,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         options.setFullEvaluationCount(2000);
 
         mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, treeLikelihood, schedule, loggers);
         mcmc.run();
         
         // time

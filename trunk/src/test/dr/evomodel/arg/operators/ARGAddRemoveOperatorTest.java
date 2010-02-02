@@ -18,7 +18,6 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -124,7 +123,7 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, compoundLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, compoundLikelihood, schedule, loggers);
 
         mcmc.run();
         out.flush();

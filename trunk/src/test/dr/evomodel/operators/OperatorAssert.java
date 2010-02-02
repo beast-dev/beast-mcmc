@@ -22,7 +22,6 @@ import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
 
@@ -131,7 +130,7 @@ public abstract class OperatorAssert extends TestCase {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, likelihood, schedule, loggers);
 
         mcmc.run();
         out.flush();

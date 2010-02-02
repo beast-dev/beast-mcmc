@@ -17,6 +17,12 @@ import java.util.List;
 public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
     List<Polygon2D> polygons;
+    List<Reject> rejects = new ArrayList<Reject>();
+    int MAX_DEPTH = 10;
+    int MAX_TRIES = 10;
+    int TRIALS = 10;
+
+    Color[] depthColor = new Color[]{Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta};
 
     public VisualizeKMLBrownianBridge(String kmlFileName) {
 
@@ -27,9 +33,8 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
         start = new SpaceTime(0, new double[]{0, 45});
         end = new SpaceTime(1, new double[]{21, 40});
 
-        topLeft = new Point2D.Double(-5, 8);
-        bottomRight = new Point2D.Double(50, 70);
-
+        topLeft = new Point2D.Double(-5, 28);
+        bottomRight = new Point2D.Double(25, 57);
 
         System.out.println("Converting polygons to shapes");
         shapes = new ArrayList<Shape>();
@@ -42,22 +47,73 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         rejector = new SpaceTimeRejector() {
 
-            public boolean reject(SpaceTime point) {
+//            private boolean stop = false;
+
+            public boolean reject(SpaceTime point, int attribute) {
                 Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
                 for (Shape s : shapes) {
-                    if (s.contains(p)) return true;
+                    if (s.contains(p)) {
+                        rejects.add(new Reject(attribute, point));
+                        return true;
+                    }
                 }
                 return false;
             }
+
+            // removes all rejects
+            public void reset() {
+                rejects.clear();
+            }
+
+            public List<Reject> getRejects() {
+                return rejects;
+            }
+
+//            public boolean getStop() {
+//                return stop;
+//            }
+//
+//            public void setStop(boolean stop) {
+//                this.stop = stop;
+//            }
+
         };
 
         mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{0.1, 0}, {0, 0.1}});
 
-        shapeColor = Color.BLUE;
+        shapeColor = Color.BLACK;
 
-        if (rejector.reject(start) || rejector.reject(end)) {
+        if (rejector.reject(start, 0) || rejector.reject(end, 0)) {
             throw new RuntimeException("Start or end in water");
         }
+
+        for (int i = 0; i < depthColor.length; i++) {
+            depthColor[i] = new Color(depthColor[i].getRed(), depthColor[i].getGreen(), depthColor[i].getBlue(), 128);
+        }
+    }
+
+    public int getMaxDepth() {
+        return MAX_DEPTH;
+    }
+
+    public int getMaxTries() {
+        return MAX_TRIES;
+    }
+
+
+    public int getTrials() {
+        return TRIALS;
+    }
+
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        AffineTransform transform = getFullTransform();
+        for (Reject r : rejects) {
+            g.setColor(depthColor[(r.getDepth() - 1) % depthColor.length]);
+            paintDot(r.getSpaceTime(), 2, transform, (Graphics2D) g);
+        }
+        rejector.reset();
     }
 
     Shape getShape(Polygon2D poly) {
@@ -88,7 +144,7 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         JFrame frame = new JFrame("Europe");
         frame.getContentPane().add(BorderLayout.CENTER, new VisualizeKMLBrownianBridge(args[0]));
-        frame.setSize(600, 600);
+        frame.setSize(900, 900);
         frame.setVisible(true);
     }
 

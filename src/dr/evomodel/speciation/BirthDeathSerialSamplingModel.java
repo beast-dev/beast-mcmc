@@ -40,8 +40,6 @@ import java.util.Set;
  */
 public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
-    public static final String BIRTH_DEATH__SERIAL_MODEL = "birthDeathSerialSampling";
-
     // birth rate
     Variable<Double> lambda;
 
@@ -61,10 +59,10 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> p,
             Type units) {
 
-        this(BIRTH_DEATH__SERIAL_MODEL, lambda, mu, psi, p, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, units);
     }
 
-    BirthDeathSerialSamplingModel(
+    public BirthDeathSerialSamplingModel(
             String modelName,
             Variable<Double> lambda,
             Variable<Double> mu,

@@ -42,7 +42,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
         double[] pi = model.getFrequencyModel().getFrequencies();
 
-        for (double distance = 0.01; distance <= 1.005; distance += 0.01) {
+        for (double distance = 0.01; distance <= 1; distance += 0.01) {
             model.getTransitionProbabilities(distance, matrix);
 
             double pChange =
@@ -54,19 +54,35 @@ public class TwoStateCovarionModelTest extends TestCase {
             // analytical result for the probability of a mismatch in binary jukes cantor model
             double jc = 0.5 * (1 - Math.exp(-2.0 * distance));
 
+            System.err.println("Testing d=" + distance);
             assertEquals(pChange, jc, 1e-14);
         }
+    }
 
-        // test againt Matlab results for alpha = 0.0 and switching rate = 1.0
+    public void testCompareToScilabCode() {
 
-        alpha.setParameterValue(0, 0.0);
+        // test against Scilab results for alpha = 0.0 and switching rate = 1.0, visible state freq = {0.25, 0.75}
+
+        frequencies = new Parameter.Default(new double[]{0.125, 0.125, 0.375, 0.375});
+
+        FrequencyModel freqModel = new FrequencyModel(TwoStateCovarion.INSTANCE, frequencies);
+        model = new TwoStateCovarionModel(TwoStateCovarion.INSTANCE, freqModel, alpha, switchingRate);
+        dataType = model.getDataType();
+
+        alpha.setParameterValue(0, 0.5);
+        switchingRate.setParameterValue(0, 1.0);
+
+        model.setupMatrix();
+
+        double[] matrix = new double[16];
+
+        double[] pi = model.getFrequencyModel().getFrequencies();
 
         model.setupMatrix();
 
         int index = 0;
         for (double distance = 0.01; distance <= 1.005; distance += 0.01) {
             model.getTransitionProbabilities(distance, matrix);
-
 
             double pChange =
                     (matrix[1] + matrix[3]) * pi[0] +
@@ -78,6 +94,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
             double pChangeIndependent = matLabPChange[index];
 
+            System.err.println("Testing against scilab d=" + distance);
             assertEquals(pChange, pChangeIndependent, 1e-14);
 
             index += 1;

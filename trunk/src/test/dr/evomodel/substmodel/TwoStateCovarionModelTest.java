@@ -54,11 +54,11 @@ public class TwoStateCovarionModelTest extends TestCase {
             // analytical result for the probability of a mismatch in binary jukes cantor model
             double jc = 0.5 * (1 - Math.exp(-2.0 * distance));
 
-            System.err.println("Testing d=" + distance);
+//            System.err.println("Testing d=" + distance);
             assertEquals(pChange, jc, 1e-14);
         }
     }
-
+    /*
     public void testCompareToScilabCode() {
 
         // test against Scilab results for alpha = 0.0 and switching rate = 1.0, visible state freq = {0.25, 0.75}
@@ -99,7 +99,7 @@ public class TwoStateCovarionModelTest extends TestCase {
 
             index += 1;
         }
-    }
+    } */
 
     public void testSetupRelativeRates() throws Exception {
 

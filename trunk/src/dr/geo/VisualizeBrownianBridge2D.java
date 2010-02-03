@@ -47,21 +47,26 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         rejector = new SpaceTimeRejector() {
 
+            ArrayList<Reject> rejects = new ArrayList<Reject>();
+
             public boolean reject(SpaceTime point, int attribute) {
                 Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
                 for (Shape s : shapes) {
-                    if (s.contains(p)) return true;
+                    if (s.contains(p)) {
+                        rejects.add(new Reject(attribute, point));
+                        return true;
+                    }
                 }
                 return false;
             }
 
             // removes all rejects
             public void reset() {
-                // do nothing
+                rejects.clear();
             }
 
             public List<Reject> getRejects() {
-                throw new RuntimeException("Not implemented!");
+                return rejects;
             }
 
 //            private boolean stop = false;
@@ -77,7 +82,7 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         };
 
-        mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{6, 0}, {0, 6}});
+        mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{10, 0}, {0, 10}});
     }
 
     public void setShapeColor(Color c) {
@@ -213,6 +218,6 @@ public class VisualizeBrownianBridge2D extends JComponent {
     }
 
     public int getMaxTries() {
-        return 1;
+        return 10;
     }
 }

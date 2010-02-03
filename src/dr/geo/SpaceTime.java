@@ -1,12 +1,20 @@
 package dr.geo;
 
+import java.awt.geom.Point2D;
+
 /**
- * @author AlexeiMarc
+ * @author Alexei Drummond
+ * @author Marc Suchard
  */
 public class SpaceTime {
 
     double[] space;
     double time;
+
+    public SpaceTime(double time, Point2D space) {
+        this.time = time;
+        this.space = new double[]{space.getX(), space.getY()};
+    }
 
     public SpaceTime(double time, double[] space) {
         this.time = time;

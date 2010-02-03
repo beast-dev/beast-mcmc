@@ -19,8 +19,15 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
     List<Polygon2D> polygons;
     List<Reject> rejects = new ArrayList<Reject>();
     int MAX_DEPTH = 10;
-    int MAX_TRIES = 10;
-    int TRIALS = 10;
+    int MAX_TRIES = 20;
+    int TRIALS = 3;
+
+    Point2D brussels = new Point2D.Double(4.35, 50.85);
+    Point2D berlin = new Point2D.Double(13.41, 52.52);
+    Point2D rome = new Point2D.Double(12.48, 41.9);
+    Point2D athens = new Point2D.Double(23.72, 37.98);
+    Point2D paris = new Point2D.Double(2.35, 48.86);
+
 
     Color[] depthColor = new Color[]{Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta};
 
@@ -30,8 +37,8 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         System.out.println("Read " + polygons.size() + " polygons");
 
-        start = new SpaceTime(0, new double[]{0, 45});
-        end = new SpaceTime(1, new double[]{21, 40});
+        start = new SpaceTime(0, rome);
+        end = new SpaceTime(2.5, athens);
 
         topLeft = new Point2D.Double(-5, 28);
         bottomRight = new Point2D.Double(25, 57);

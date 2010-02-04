@@ -23,10 +23,13 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
     int TRIALS = 3;
 
     Point2D brussels = new Point2D.Double(4.35, 50.85);
+    Point2D amsterdam = new Point2D.Double(4.89, 52.37);
     Point2D berlin = new Point2D.Double(13.41, 52.52);
     Point2D rome = new Point2D.Double(12.48, 41.9);
     Point2D athens = new Point2D.Double(23.72, 37.98);
     Point2D paris = new Point2D.Double(2.35, 48.86);
+    Point2D montepelier = new Point2D.Double(3.88, 43.61);
+    Point2D munich = new Point2D.Double(11.58, 48.14);
 
 
     Color[] depthColor = new Color[]{Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta};
@@ -37,8 +40,19 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         System.out.println("Read " + polygons.size() + " polygons");
 
-        start = new SpaceTime(0, rome);
-        end = new SpaceTime(2.5, athens);
+        start = new SpaceTime[]{
+                new SpaceTime(0, amsterdam),
+                new SpaceTime(0, amsterdam),
+                new SpaceTime(1, munich),
+                new SpaceTime(1, munich),
+
+        };
+        end = new SpaceTime[]{
+                new SpaceTime(2, montepelier),
+                new SpaceTime(1, munich),
+                new SpaceTime(2, rome),
+                new SpaceTime(2, athens)
+        };
 
         topLeft = new Point2D.Double(-5, 28);
         bottomRight = new Point2D.Double(25, 57);
@@ -86,12 +100,14 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         };
 
-        mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{0.1, 0}, {0, 0.1}});
+        mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{0.15, 0}, {0, 0.15}});
 
         shapeColor = Color.BLACK;
 
-        if (rejector.reject(start, 0) || rejector.reject(end, 0)) {
-            throw new RuntimeException("Start or end in water");
+        for (int i = 0; i < start.length; i++) {
+            if (rejector.reject(start[i], 0) || rejector.reject(end[i], 0)) {
+                throw new RuntimeException("Start or end in water");
+            }
         }
 
         for (int i = 0; i < depthColor.length; i++) {

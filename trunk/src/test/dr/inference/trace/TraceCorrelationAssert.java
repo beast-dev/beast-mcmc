@@ -9,8 +9,10 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
+import dr.inference.model.Parameter;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.TestCase;
 
@@ -59,10 +61,22 @@ public class TraceCorrelationAssert extends TestCase {
     protected void createRandomInitialTree(double popSize) throws Exception {
         ConstantPopulation constant = new ConstantPopulation(Units.Type.YEARS);
         constant.setN0(popSize); // popSize
-        CoalescentSimulator simulator = new CoalescentSimulator();
-        
-        Tree tree = simulator.simulateTree(alignment, constant);
 
+        createTreeModel(constant);
+    }
+
+    protected ConstantPopulationModel createRandomInitialTree(Parameter popSize) {        
+        ConstantPopulationModel startingTree = new ConstantPopulationModel(popSize, Units.Type.YEARS);
+        ConstantPopulation constant = (ConstantPopulation) startingTree.getDemographicFunction();
+
+        createTreeModel(constant);
+
+        return startingTree;
+    }
+
+    private void createTreeModel (ConstantPopulation constant) {
+        CoalescentSimulator simulator = new CoalescentSimulator();
+        Tree tree = simulator.simulateTree(alignment, constant);
         treeModel = new TreeModel(tree);//treeModel
     }
 

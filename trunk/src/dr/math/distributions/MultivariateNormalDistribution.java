@@ -14,7 +14,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     private final double[][] precision;
     private double[][] variance = null;
     private double[][] cholesky = null;
-    private double logDet = Double.NaN;
+    private Double logDet = null;
 
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
@@ -40,7 +40,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public double getLogDet() {
-        if (logDet == Double.NaN) {
+        if (logDet == null) {
             logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
         }
         return logDet;

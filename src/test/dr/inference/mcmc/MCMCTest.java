@@ -72,7 +72,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihood");
+        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();

@@ -113,7 +113,7 @@ public class SnAPhylApp extends MultiDocApplication {
                         websiteURLString, helpURLString);
                 app.setDocumentFrameFactory(new DocumentFrameFactory() {
                     public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                        return new BeautiFrame(nameString);
+                        return new SnAPhylFrame(nameString);
                     }
                 });
                 app.initialize();

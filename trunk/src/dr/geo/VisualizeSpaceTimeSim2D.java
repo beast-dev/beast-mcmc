@@ -1,5 +1,5 @@
 /*
- * VisualizeBrownianBridge2D.java
+ * VisualizeSpaceTimeSim2D.java
  *
  * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
@@ -29,23 +29,20 @@ import dr.math.distributions.MultivariateNormalDistribution;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
+import java.awt.geom.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author Alexei Drummond
- * @author Marc Suchard
  */
-public class VisualizeBrownianBridge2D extends JComponent {
+public class VisualizeSpaceTimeSim2D extends JComponent {
 
     MultivariateNormalDistribution mnd;
 
-    // some line segments in space-time
-    SpaceTime[] start, end;
+    // Starting point
+    SpaceTime start;
 
     SpaceTimeRejector rejector;
 
@@ -59,19 +56,35 @@ public class VisualizeBrownianBridge2D extends JComponent {
     double scaleX;
     double scaleY;
 
+    SpaceTimeSimulator sim;
+    Random random = new Random();
 
-    public VisualizeBrownianBridge2D() {
+    boolean drawPath = false;
+    boolean drawPoints = false;
+    boolean drawFinalPoint = true;
 
-        start = new SpaceTime[]{new SpaceTime(0, new double[]{0, 0})};
-        end = new SpaceTime[]{new SpaceTime(1, new double[]{1, 1})};
+    boolean paintDensity = true;
 
-        topLeft = new Point2D.Double(-0.2, -0.2);
-        bottomRight = new Point2D.Double(1.2, 1.2);
+    int latticeWidth = 100;
+    int latticeHeight = 100;
 
-        shapes = new ArrayList<Shape>();
-        shapes.add(new Ellipse2D.Double(0.25, 0.25, 0.4, 0.4));
-        shapes.add(new Ellipse2D.Double(0.5, 0.7, 0.2, 0.2));
-        shapes.add(new Ellipse2D.Double(0.8, 0.2, 0.15, 0.15));
+    public static final int POINT_SIZE = 3;
+    public static final int steps = 100;
+    public static final double dt = 0.01;
+
+    public VisualizeSpaceTimeSim2D(final Rectangle2D bounds, final List<Shape> obstructions) {
+
+        start = new SpaceTime(0, new double[]{0, 0});
+
+        double x1 = bounds.getMinX();
+        double y1 = bounds.getMinY();
+        double x2 = bounds.getMaxX();
+        double y2 = bounds.getMaxY();
+
+        topLeft = new Point2D.Double(x1, y1);
+        bottomRight = new Point2D.Double(x2, y2);
+
+        this.shapes = obstructions;
 
         rejector = new SpaceTimeRejector() {
 
@@ -79,8 +92,12 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
             public boolean reject(SpaceTime point, int attribute) {
                 Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
+
+                if (!bounds.contains(p)) return true;
+
                 for (Shape s : shapes) {
                     if (s.contains(p)) {
+
                         rejects.add(new Reject(attribute, point));
                         return true;
                     }
@@ -99,6 +116,7 @@ public class VisualizeBrownianBridge2D extends JComponent {
         };
 
         mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{10, 0}, {0, 10}});
+        sim = new SpaceTimeSimulator(mnd);
     }
 
     public void setShapeColor(Color c) {
@@ -118,7 +136,7 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         Graphics2D g2d = (Graphics2D) g;
 
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        //g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         g2d.setStroke(new BasicStroke(1.5f));
 
@@ -134,26 +152,26 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         AffineTransform transform = getFullTransform();
 
+        List<SpaceTime> points;
         for (int r = 0; r < getTrials(); r++) {
-            Color c = new Color((float) Math.random(), (float) Math.random(), (float) Math.random());
+            Color c = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256), 128);
+            g.setColor(c);
 
-            for (int s = 0; s < start.length; s++) {
-                List<SpaceTime> points = null;
-                g2d.setPaint(c);
-                int topLevelRejects = -1;
-                while (points == null) {
-                    topLevelRejects += 1;
-                    points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start[s], end[s], getMaxDepth(), getMaxTries(), rejector);
+            if (drawPoints || drawPath) {
+                points = sim.simulatePath(start, rejector, dt, steps);
+            } else {
+                points = new ArrayList<SpaceTime>();
+                points.add(sim.simulate(start, rejector, dt, steps));
+
+            }
+
+            if (drawPoints) {
+                for (SpaceTime s : points) {
+                    SpaceTime.paintDot(s, POINT_SIZE, transform, g2d);
                 }
+            }
 
-                Paint old = g2d.getPaint();
-                g2d.setPaint(Color.yellow);
-
-                String rejectString = computeRejectString(rejector, topLevelRejects);
-                g2d.drawString(rejectString, 10, getHeight() - 20);
-                rejector.reset();
-                g2d.setPaint(old);
-
+            if (drawPath) {
                 GeneralPath path = new GeneralPath();
                 path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
                 //System.out.println(points.get(0));
@@ -161,37 +179,20 @@ public class VisualizeBrownianBridge2D extends JComponent {
                     path.lineTo((float) points.get(i).getX(0), (float) points.get(i).getX(1));
                     //System.out.println(points.get(i));
                 }
-
                 path.transform(getFullTransform());
-
                 g2d.draw(path);
+            }
 
-                g2d.setPaint(Color.black);
-
-                SpaceTime.paintDot(start[s], 3, transform, g2d);
-                SpaceTime.paintDot(end[s], 3, transform, g2d);
-
+            if (drawFinalPoint) {
+                SpaceTime.paintDot(points.get(points.size() - 1), POINT_SIZE, transform, g2d);
             }
 
         }
-
+        g2d.setPaint(Color.black);
+        SpaceTime.paintDot(start, POINT_SIZE, transform, g2d);
 
         System.out.println("leaving paintComponent()");
 
-    }
-
-    private String computeRejectString(SpaceTimeRejector rejector, int topLevelRejects) {
-
-        int[] rejectCounts = new int[9];
-        for (Reject r : rejector.getRejects()) {
-            rejectCounts[Math.min(r.getDepth() - 1, rejectCounts.length - 1)] += 1;
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("Rejects top-level=" + topLevelRejects);
-        for (int i = 0; i < rejectCounts.length; i++) {
-            builder.append("  " + (i + 1) + ":" + rejectCounts[i]);
-        }
-        return builder.toString();
     }
 
     AffineTransform getScale() {
@@ -210,22 +211,21 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
     public static void main(String[] args) {
 
-        JFrame frame = new JFrame("Boulders");
-        frame.getContentPane().add(BorderLayout.CENTER, new VisualizeBrownianBridge2D());
-        frame.setSize(600, 600);
-        frame.setVisible(true);
-    }
+        ArrayList<Shape> shapes = new ArrayList<Shape>();
+        shapes.add(new Ellipse2D.Double(0.15, 0.15, 0.3, 0.3));
+        shapes.add(new Ellipse2D.Double(0.5, 0.7, 0.2, 0.2));
+        shapes.add(new Ellipse2D.Double(0.8, 0.2, 0.15, 0.15));
 
-    public int getMaxDepth() {
-        return 10;
+        Rectangle2D bounds = new Rectangle2D.Double(-0.2, -0.2, 1.4, 1.4);
+
+        JFrame frame = new JFrame("Boulders");
+        frame.getContentPane().add(BorderLayout.CENTER, new VisualizeSpaceTimeSim2D(bounds, shapes));
+        frame.setSize(700, 700);
+        frame.setVisible(true);
     }
 
     public int getTrials() {
 
-        return 10;
-    }
-
-    public int getMaxTries() {
-        return 10;
+        return 20000;
     }
 }

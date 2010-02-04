@@ -9,12 +9,14 @@
 package dr.app.SnAPhyl;
 
 import dr.app.SnAPhyl.datapanel.DataPanel;
+import dr.app.SnAPhyl.initializationpanel.InitializationPanel;
 import dr.app.SnAPhyl.mcmcpanel.MCMCPanel;
 import dr.app.SnAPhyl.operatorspanel.OperatorsPanel;
 import dr.app.SnAPhyl.priorsPanel.DefaultPriorDialog;
 import dr.app.SnAPhyl.priorsPanel.PriorsPanel;
 
 import dr.app.SnAPhyl.util.BEAUTiImporter;
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
@@ -26,8 +28,6 @@ import dr.app.util.Utils;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.Importer.ImportException;
 import dr.app.java16compat.FileNameExtensionFilter;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
@@ -35,7 +35,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.*;
 
 
@@ -44,7 +43,7 @@ import java.io.*;
  * @author Alexei Drummond
  * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
-public class BeautiFrame extends DocumentFrame {
+public class SnAPhylFrame extends BeautiFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
 
@@ -56,6 +55,7 @@ public class BeautiFrame extends DocumentFrame {
 
     private DataPanel dataPanel;
     private PriorsPanel priorsPanel;
+    private InitializationPanel initializationPanel;
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
 
@@ -66,21 +66,8 @@ public class BeautiFrame extends DocumentFrame {
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
-    public BeautiFrame(String title) {
-        super();
-
-        setTitle(title);
-
-        // Prevent the application to close in requestClose()
-        // after a user cancel or a failure in beast file generation
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
-        getOpenAction().setEnabled(false);
-        getSaveAction().setEnabled(false);
-
-        getFindAction().setEnabled(false);
-
-        getZoomWindowAction().setEnabled(false);
+    public SnAPhylFrame(String title) {
+        super(title);
 
         ComponentFactory[] components = {
                 SequenceErrorModelComponentFactory.INSTANCE,
@@ -93,13 +80,15 @@ public class BeautiFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
+        dataPanel = new DataPanel(this);
         priorsPanel = new PriorsPanel(this, false);
+        initializationPanel = new InitializationPanel(this);
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
 
         tabbedPane.addTab("Data Partitions", dataPanel);        
         tabbedPane.addTab("Priors", priorsPanel);
+        tabbedPane.addTab("Initialization", initializationPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
         currentPanel = (BeautiPanel) tabbedPane.getSelectedComponent();
@@ -163,6 +152,7 @@ public class BeautiFrame extends DocumentFrame {
     public void setAllOptions() {
         dataPanel.setOptions(beautiOptions);
         priorsPanel.setOptions(beautiOptions);
+        initializationPanel.setOptions(beautiOptions);
         operatorsPanel.setOptions(beautiOptions);
         mcmcPanel.setOptions(beautiOptions);
 
@@ -175,37 +165,10 @@ public class BeautiFrame extends DocumentFrame {
     private void getAllOptions() {
         dataPanel.getOptions(beautiOptions);          
         priorsPanel.getOptions(beautiOptions);
+        initializationPanel.getOptions(beautiOptions);
         operatorsPanel.getOptions(beautiOptions);
         mcmcPanel.getOptions(beautiOptions);
-    }
-
-    public void doSelectAll() {
-        if (currentPanel == dataPanel) {
-            dataPanel.selectAll();
-        }
-    }
-
-    public final void dataSelectionChanged(boolean isSelected) {
-        getDeleteAction().setEnabled(isSelected);
-    }
-
-    public final void modelSelectionChanged(boolean isSelected) {
-        getDeleteAction().setEnabled(isSelected);
-    }
-
-    public void doDelete() {
-        if (tabbedPane.getSelectedComponent() == dataPanel) {
-            dataPanel.removeSelection();
-//        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-//            modelsPanel.removeSelection();
-//        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
-//        	treesPanel.removeSelection();
-        } else {
-            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
-        }
-
-        setStatusMessage();
-    }
+    }   
 
     public boolean requestClose() {
         if (isDirty() && beautiOptions.hasData()) {
@@ -218,7 +181,7 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.WARNING_MESSAGE);
 
             if (option == JOptionPane.YES_OPTION) {
-                return !doGenerate();
+                return !doGenerateSnAPhyl();
             } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
                 return false;
             }
@@ -227,40 +190,11 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void doApplyTemplate() {
-        FileDialog dialog = new FileDialog(this,
-                "Apply Template",
-                FileDialog.LOAD);
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-            try {
-                readFromFile(file);
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open template file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    protected boolean readFromFile(File file) throws IOException {
-        return false;
-    }
-
     public String getDefaultFileName() {
         return beautiOptions.fileNameStem + ".beauti";
     }
 
-    protected boolean writeToFile(File file) throws IOException {
-        return false;
-    }
-
-    public final void doImport() {
+    public final void doImportSnAPhyl() {
         int returnVal = importChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = importChooser.getSelectedFiles();
@@ -306,12 +240,6 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
 
-//            if (beautiOptions.allowDifferentTaxa) {
-//                setAllOptions();
-//                dataPanel.selectAll();
-//                dataPanel.unlinkTrees();
-//            }
-
             setStatusMessage();
             setAllOptions();
 
@@ -339,7 +267,7 @@ public class BeautiFrame extends DocumentFrame {
          }
     }
 
-    public final boolean doGenerate() {
+    public final boolean doGenerateSnAPhyl() {
 
         try {
             generator.checkOptions();
@@ -378,7 +306,7 @@ public class BeautiFrame extends DocumentFrame {
 	                return false;
 	            }
             } else {
-            	doGenerate();
+            	doGenerateSnAPhyl();
             }
         }
 
@@ -394,79 +322,6 @@ public class BeautiFrame extends DocumentFrame {
         fw.close();
     }
 
-    public JComponent getExportableComponent() {
-
-        JComponent exportable = null;
-        Component comp = tabbedPane.getSelectedComponent();
-
-        if (comp instanceof Exportable) {
-            exportable = ((Exportable) comp).getExportableComponent();
-        } else if (comp instanceof JComponent) {
-            exportable = (JComponent) comp;
-        }
-
-        return exportable;
-    }
-
-    public boolean doSave() {
-        return doSaveAs();
-    }
-
-    public boolean doSaveAs() {
-        FileDialog dialog = new FileDialog(this,
-                "Save Template As...",
-                FileDialog.SAVE);
-
-        dialog.setVisible(true);
-        if (dialog.getFile() == null) {
-            // the dialog was cancelled...
-            return false;
-        }
-
-        File file = new File(dialog.getDirectory(), dialog.getFile());
-
-        try {
-            if (writeToFile(file)) {
-
-                clearDirty();
-            }
-        } catch (IOException ioe) {
-            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
-                    "Unable to save file",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-
-        return true;
-    }
-
-    public Action getOpenAction() {
-        return openTemplateAction;
-    }
-
-    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
-        private static final long serialVersionUID = 2450459627280385426L;
-
-        public void actionPerformed(ActionEvent ae) {
-            doApplyTemplate();
-        }
-    };
-
-    public Action getSaveAction() {
-        return saveAsAction;
-    }
-
-    public Action getSaveAsAction() {
-        return saveAsAction;
-    }
-
-    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
-        private static final long serialVersionUID = 2424923366448459342L;
-
-        public void actionPerformed(ActionEvent ae) {
-            doSaveAs();
-        }
-    };
-
     public Action getImportAction() {
         return importAlignmentAction;
     }
@@ -475,7 +330,7 @@ public class BeautiFrame extends DocumentFrame {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
-            doImport();
+            doImportSnAPhyl();
         }
     };
 
@@ -487,7 +342,7 @@ public class BeautiFrame extends DocumentFrame {
         private static final long serialVersionUID = -5329102618630268783L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
-            doGenerate();
+            doGenerateSnAPhyl();
         }
     };
 

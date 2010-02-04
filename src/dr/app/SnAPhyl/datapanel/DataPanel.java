@@ -23,29 +23,43 @@
 
 package dr.app.SnAPhyl.datapanel;
 
-import dr.app.SnAPhyl.BeautiFrame;
+import dr.app.SnAPhyl.SnAPhylFrame;
 
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.alignmentviewer.*;
 import dr.app.beauti.datapanel.BeautiAlignmentBuffer;
 import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.PanelUtils;
+import dr.evolution.alignment.ConvertAlignment;
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.datatype.GeneticCode;
+import dr.evolution.datatype.Nucleotides;
+import dr.evolution.util.*;
+import dr.gui.table.DateCellEditor;
+import dr.gui.table.TableSorter;
+import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
+import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
+import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.Date;
 
 
 /**
@@ -55,43 +69,58 @@ import java.util.*;
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
-    JScrollPane scrollPane = new JScrollPane();
+        JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
 
-    ShowAction showAction = new ShowAction();
+    JComboBox unitsCombo = new JComboBox(new String[] {"Years", "Months", "Days"});
+    JComboBox directionCombo = new JComboBox(new String[] {"Since some time in the past", "Before the present"});
+    //RealNumberField originField = new RealNumberField(0.0, Double.POSITIVE_INFINITY);
 
-    BeautiFrame frame = null;
 
-    BeautiOptions options = null;
+    TableRenderer sequenceRenderer = null;
 
-    public DataPanel(BeautiFrame parent, Action importDataAction, Action removeDataAction) {
+    SnAPhylFrame frame = null;
+
+    dr.app.oldbeauti.BeautiOptions options = null;
+
+    double[] heights = null;
+
+    public DataPanel(SnAPhylFrame parent) {
 
         this.frame = parent;
 
         dataTableModel = new DataTableModel();
-        dataTable = new JTable(dataTableModel);
+        TableSorter sorter = new TableSorter(dataTableModel);
+        dataTable = new JTable(sorter);
+
+        sorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
         dataTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-       
+        dataTable.getColumnModel().getColumn(0).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+
+        dataTable.getColumnModel().getColumn(1).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(1).setCellEditor(
+                new DateCellEditor());
+
+        dataTable.getColumnModel().getColumn(2).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
-        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                selectionChanged();
-            }
-        });
+        sequenceRenderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
+        sequenceRenderer.setFont(new Font("Courier", Font.PLAIN, 12));
 
-        dataTable.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    showAlignment();
-                }
-            }
+        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent evt) { selectionChanged(); }
         });
 
         scrollPane = new JScrollPane(dataTable,
@@ -99,101 +128,131 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
 
-        JToolBar toolBar1 = new JToolBar();
-        toolBar1.setFloatable(false);
-        toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+
+	    setupComponent(unitsCombo);
+        unitsCombo.setEnabled(false);
+	    setupComponent(directionCombo);
+        directionCombo.setEnabled(false);
+        //originField.setEnabled(false);
+        //originField.setValue(0.0);
+        //originField.setColumns(12);
 
 
-            toolBar1.addSeparator();
-
-            JButton button = new JButton(showAction);
-            showAction.setEnabled(false);
-            PanelUtils.setupComponent(button);
-            toolBar1.add(button);
 
 
-        ActionPanel actionPanel1 = new ActionPanel(false);
-        actionPanel1.setAddAction(importDataAction);
-        actionPanel1.setRemoveAction(removeDataAction);
-
-        removeDataAction.setEnabled(false);
-
-        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        controlPanel1.setOpaque(false);
-        controlPanel1.add(actionPanel1);
 
         setOpaque(false);
-        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        setLayout(new BorderLayout(0, 0));
-        add(toolBar1, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        add(controlPanel1, BorderLayout.SOUTH);
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+        setLayout(new BorderLayout(0,0));
+
+        add(scrollPane, "Center");
+
+        ItemListener listener =	new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) { timeScaleChanged(); }
+        };
+        unitsCombo.addItemListener(listener);
+        directionCombo.addItemListener(listener);
+        //originField.addKeyListener(new java.awt.event.KeyAdapter() {
+        //	public void keyTyped(java.awt.event.KeyEvent ev) {
+        //		timeScaleChanged();
+        //	}});
+
     }
 
-    private void showAlignment() {
+	private void setupComponent(JComponent comp) {
+		comp.setOpaque(false);
 
-        int[] selRows = dataTable.getSelectedRows();
-        for (int row : selRows) {
-            JFrame frame = new JFrame();
-            frame.setSize(800, 600);
+		//comp.setFont(UIManager.getFont("SmallSystemFont"));
+		//comp.putClientProperty("JComponent.sizeVariant", "small");
+		if (comp instanceof JButton) {
+			comp.putClientProperty("JButton.buttonType", "roundRect");
+		}
+		if (comp instanceof JComboBox) {
+			comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+		}
 
-            PartitionData partition = options.dataPartitions.get(row);
-            Alignment alignment = partition.getAlignment();
-            AlignmentViewer viewer = new AlignmentViewer();
-            if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
-                viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));
-            } else if (alignment.getDataType().getType() == DataType.AMINO_ACIDS) {
-                viewer.setCellDecorator(new StateCellDecorator(new AminoAcidDecorator(), false));
-            } else {
-                // no colouring
-            }
-            viewer.setAlignmentBuffer(new BeautiAlignmentBuffer(alignment));
+	}
 
-            JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(false);
-            panel.add(viewer, BorderLayout.CENTER);
 
-            JPanel infoPanel = new JPanel(new BorderLayout());
-            infoPanel.setOpaque(false);
-            panel.add(infoPanel, BorderLayout.SOUTH);
 
-            frame.setContentPane(panel);
-            frame.setVisible(true);
+    public final void timeScaleChanged() {
+        Units.Type units = Units.Type.YEARS;
+        switch (unitsCombo.getSelectedIndex()) {
+            case 0: units = Units.Type.YEARS; break;
+            case 1: units = Units.Type.MONTHS; break;
+            case 2: units = Units.Type.DAYS; break;
         }
 
+        boolean backwards = directionCombo.getSelectedIndex() == 1;
+
+        //double origin = originField.getValue().doubleValue();
+
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            dr.evolution.util.Date date = options.taxonList.getTaxon(i).getDate();
+            double d = date.getTimeValue();
+
+            dr.evolution.util.Date newDate = createDate(d, units, backwards, 0.0);
+
+            options.taxonList.getTaxon(i).setDate(newDate);
+        }
+
+
+
+        dataTableModel.fireTableDataChanged();
+
     }
 
-    private void fireDataChanged() {
-        options.updateLinksBetweenPDPCMPSMPTMPTPP();
-        options.updatePartitionClockTreeLinks();
-        
-        options.clockModelOptions.fixRateOfFirstClockPartition(); //TODO correct?
-
-        frame.setDirty();
+    private dr.evolution.util.Date createDate(double timeValue, Units.Type units, boolean backwards, double origin) {
+        if (backwards) {
+            return dr.evolution.util.Date.createTimeAgoFromOrigin(timeValue, units, origin);
+        } else {
+            return dr.evolution.util.Date.createTimeSinceOrigin(timeValue, units, origin);
+        }
     }
 
 
-    public void selectionChanged() {
-        int[] selRows = dataTable.getSelectedRows();
-        boolean hasSelection = (selRows != null && selRows.length != 0);
-        frame.dataSelectionChanged(hasSelection);
 
-        showAction.setEnabled(hasSelection);
-//        unlinkAllAction.setEnabled(hasSelection);
-//        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
-    }
-
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(dr.app.oldbeauti.BeautiOptions options) {
 
         this.options = options;
+
+        if (options.taxonList != null) {
+
+            unitsCombo.setEnabled(true);
+            directionCombo.setEnabled(true);
+
+            //originField.setEnabled(true);
+
+
+        }
+
+        setupTable();
+
+        unitsCombo.setSelectedIndex(options.datesUnits);
+        directionCombo.setSelectedIndex(options.datesDirection);
 
 
 
         dataTableModel.fireTableDataChanged();
     }
 
-    public void getOptions(BeautiOptions options) {
+    private void setupTable() {
+
+        dataTableModel.fireTableStructureChanged();
+        if (options.alignment != null) {
+
+            dataTable.getColumnModel().getColumn(3).setCellRenderer(sequenceRenderer);
+            dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+
+            sequenceRenderer.setText(options.alignment.getSequence(0).getSequenceString());
+            int w = sequenceRenderer.getPreferredSize().width + 8;
+            dataTable.getColumnModel().getColumn(3).setPreferredWidth(w);
+        }
+    }
+
+    public void getOptions(dr.app.oldbeauti.BeautiOptions options) {
+        options.datesUnits = unitsCombo.getSelectedIndex();
+        options.datesDirection = directionCombo.getSelectedIndex();
 
     }
 
@@ -201,112 +260,151 @@ public class DataPanel extends BeautiPanel implements Exportable {
         return dataTable;
     }
 
-    public void removeSelection() {
+    public void selectionChanged() {
+
         int[] selRows = dataTable.getSelectedRows();
-        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
-        for (int row : selRows) {
-            partitionsToRemove.add(options.dataPartitions.get(row));
+        if (selRows == null || selRows.length == 0) {
+            frame.dataSelectionChanged(false);
+        } else {
+            frame.dataSelectionChanged(true);
         }
-
-        // TODO: would probably be a good idea to check if the user wants to remove the last partition
-        options.dataPartitions.removeAll(partitionsToRemove);
-
-        
-
-        if (options.dataPartitions.size() == 0) {
-            // all data partitions removed so reset the taxa
-            options.reset();
-            frame.statusLabel.setText("");
-            frame.setAllOptions();
-            frame.getExportAction().setEnabled(false);
-        }
-
-        dataTableModel.fireTableDataChanged();
-
-        fireDataChanged();
     }
 
-    public void selectAll() {
-        dataTable.selectAll();
+    public void deleteSelection() {
+        int option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\n"+
+                "the selected taxa?\n"+
+                "This operation cannot be undone.",
+                "Warning",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (option == JOptionPane.YES_OPTION) {
+            int[] selRows = dataTable.getSelectedRows();
+            String[] names = new String[selRows.length];
+
+            TableModel model = dataTable.getModel();
+
+            for (int i = 0; i < names.length; i++) {
+                names[i] = (String)model.getValueAt(selRows[i], 0);
+            }
+
+            for (int i = 0; i < names.length; i++) {
+                if (options.originalAlignment != null) {
+                    int index = options.originalAlignment.getTaxonIndex(names[i]);
+                    options.originalAlignment.removeSequence(index);
+                } else {
+                    // there is no alignment so options.taxonList must be a Taxa object:
+                    int index = options.taxonList.getTaxonIndex(names[i]);
+                    ((Taxa)options.taxonList).removeTaxon(options.taxonList.getTaxon(index));
+                }
+            }
+
+            if (options.taxonList.getTaxonCount() == 0) {
+                // if all the sequences are deleted we may as well throw
+                // away the alignment...
+
+                options.originalAlignment = null;
+                options.alignment = null;
+                options.taxonList = null;
+            }
+
+            dataTableModel.fireTableDataChanged();
+
+        }
+
     }
-    
+
+   
+
+
+    @Override
+    public void setOptions(BeautiOptions options) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void getOptions(BeautiOptions options) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
 
     class DataTableModel extends AbstractTableModel {
 
-        private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type"};
+        /**
+         *
+         */
+
+        String[] columnNames1 = { "Name", "Date", "Height", "Sequence" };
+        String[] columnNames2 = { "Name", "Date", "Height" };
 
         public DataTableModel() {
         }
 
         public int getColumnCount() {
-            return columnNames.length;
+            if (options != null && options.alignment != null) {
+                return columnNames1.length;
+            } else {
+                return columnNames2.length;
+            }
         }
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.dataPartitions.size();
+            if (options.taxonList == null) return 0;
+
+            return options.taxonList.getTaxonCount();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
-                case 0:
-                    return partition.getName();
+                case 0: return options.taxonList.getTaxonId(row);
                 case 1:
-                    return partition.getFileName();
+                    dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
+                    if (date != null) {
+                        return new Double(date.getTimeValue());
+                    } else {
+                        return "-";
+                    }
                 case 2:
-                    return "" + partition.getTaxaCount();
-                case 3:
-                    return "" + partition.getSiteCount(); // sequence length
-                case 4:
-                    return partition.getAlignment().getDataType().getDescription();
-
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
+                    if (heights != null) {
+                        return new Double(heights[row]);
+                    } else {
+                        return "0.0";
+                    }
+                case 3: return options.alignment.getAlignedSequenceString(row);
             }
+            return null;
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
-            switch (col) {
-                case 0:
-                    String name = ((String) aValue).trim();
-                    if (name.length() > 0) {
-                        partition.setName(name);
-                    }
-                    break;
-
+            if (col == 0) {
+                options.taxonList.getTaxon(row).setId(aValue.toString());
+            } else if (col == 1) {
+                dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
+                if (date != null) {
+                    double d = ((Double)aValue).doubleValue();
+                    dr.evolution.util.Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
+                    options.taxonList.getTaxon(row).setDate(newDate);
+                }
             }
-            fireDataChanged();
+
+
         }
 
         public boolean isCellEditable(int row, int col) {
-            boolean editable;
-
-            switch (col) {
-                case 0:// name
-                    editable = true;
-                    break;
-
-                default:
-                    editable = false;
+            if (col == 0) return true;
+            if (col == 1) {
+                dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
+                return (date != null);
             }
-
-            return editable;
+            return false;
         }
-
 
         public String getColumnName(int column) {
-            return columnNames[column];
+            return columnNames1[column];
         }
 
-        public Class getColumnClass(int c) {
-            if (getRowCount() == 0) {
-                return Object.class;
-            }
-            return getValueAt(0, c).getClass();
-        }
+        public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
 
         public String toString() {
             StringBuffer buffer = new StringBuffer();
@@ -329,17 +427,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             return buffer.toString();
         }
-    }
-
-    public class ShowAction extends AbstractAction {
-        public ShowAction() {
-            super("Show");
-            setToolTipText("Display the selected alignments");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            showAlignment();
-        }
-    }
+    };
 
 }

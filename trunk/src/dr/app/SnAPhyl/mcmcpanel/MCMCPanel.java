@@ -25,7 +25,7 @@
 
 package dr.app.SnAPhyl.mcmcpanel;
 
-import dr.app.SnAPhyl.BeautiFrame;
+import dr.app.SnAPhyl.SnAPhylFrame;
 
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
@@ -71,11 +71,11 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
     JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
 
-    BeautiFrame frame = null;
+    SnAPhylFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
 
-    public MCMCPanel(BeautiFrame parent) {
+    public MCMCPanel(SnAPhylFrame parent) {
         setLayout(new BorderLayout());
 
         int verticalSpacing = 24;

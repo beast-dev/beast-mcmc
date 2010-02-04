@@ -26,7 +26,7 @@
 package dr.app.SnAPhyl.operatorspanel;
 
 
-import dr.app.SnAPhyl.BeautiFrame;
+import dr.app.SnAPhyl.SnAPhylFrame;
 
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
@@ -61,9 +61,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     public List<Operator> operators = new ArrayList<Operator>();
 
 //    private BeautiOptions options;
-    BeautiFrame frame = null;
+    SnAPhylFrame frame = null;
 
-    public OperatorsPanel(BeautiFrame parent) {
+    public OperatorsPanel(SnAPhylFrame parent) {
 
         this.frame = parent;
 

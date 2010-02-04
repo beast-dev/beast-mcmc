@@ -1,6 +1,6 @@
 package dr.app.SnAPhyl.priorsPanel;
 
-import dr.app.SnAPhyl.BeautiFrame;
+import dr.app.SnAPhyl.SnAPhylFrame;
 import dr.app.beauti.options.BeautiOptions;
 
 import javax.swing.*;
@@ -15,10 +15,10 @@ import javax.swing.border.EmptyBorder;
  */
 public class DefaultPriorDialog {
 
-   private BeautiFrame frame;
+   private SnAPhylFrame frame;
    private PriorsPanel priorsPanel;
     
-	public DefaultPriorDialog(BeautiFrame frame) {
+	public DefaultPriorDialog(SnAPhylFrame frame) {
 		this.frame = frame;
         priorsPanel = new PriorsPanel(frame, true);
 	}

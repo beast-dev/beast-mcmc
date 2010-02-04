@@ -25,7 +25,7 @@
 
 package dr.app.SnAPhyl.priorsPanel;
 
-import dr.app.SnAPhyl.BeautiFrame;
+import dr.app.SnAPhyl.SnAPhylFrame;
 
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
@@ -62,14 +62,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
-    BeautiFrame frame = null;
+    SnAPhylFrame frame = null;
     BeautiOptions options = null;
 
     private final boolean isDefaultOnly;
 
     private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH).toArray());
 
-    public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
+    public PriorsPanel(SnAPhylFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
         this.isDefaultOnly = isDefaultOnly;
 

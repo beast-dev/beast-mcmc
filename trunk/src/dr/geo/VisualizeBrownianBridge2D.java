@@ -18,7 +18,10 @@ import java.util.List;
 public class VisualizeBrownianBridge2D extends JComponent {
 
     MultivariateNormalDistribution mnd;
-    SpaceTime start, end;
+
+    // some line segments in space-time
+    SpaceTime[] start, end;
+
     SpaceTimeRejector rejector;
 
     List<Shape> shapes;
@@ -34,8 +37,8 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
     public VisualizeBrownianBridge2D() {
 
-        start = new SpaceTime(0, new double[]{0, 0});
-        end = new SpaceTime(1, new double[]{1, 1});
+        start = new SpaceTime[]{new SpaceTime(0, new double[]{0, 0})};
+        end = new SpaceTime[]{new SpaceTime(1, new double[]{1, 1})};
 
         topLeft = new Point2D.Double(-0.2, -0.2);
         bottomRight = new Point2D.Double(1.2, 1.2);
@@ -68,18 +71,6 @@ public class VisualizeBrownianBridge2D extends JComponent {
             public List<Reject> getRejects() {
                 return rejects;
             }
-
-//            private boolean stop = false;
-//
-//            public boolean getStop() {
-//                return stop;
-//            }
-//
-//            public void setStop(boolean stop) {
-//                this.stop = stop;
-//            }
-
-
         };
 
         mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{10, 0}, {0, 10}});
@@ -119,41 +110,46 @@ public class VisualizeBrownianBridge2D extends JComponent {
         AffineTransform transform = getFullTransform();
 
         for (int r = 0; r < getTrials(); r++) {
-            g2d.setPaint(new Color((float) Math.random(), (float) Math.random(), (float) Math.random()));
+            Color c = new Color((float) Math.random(), (float) Math.random(), (float) Math.random());
 
-            List<SpaceTime> points = null;
+            for (int s = 0; s < start.length; s++) {
+                List<SpaceTime> points = null;
+                g2d.setPaint(c);
+                int topLevelRejects = -1;
+                while (points == null) {
+                    topLevelRejects += 1;
+                    points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start[s], end[s], getMaxDepth(), getMaxTries(), rejector);
+                }
 
-            int topLevelRejects = -1;
-            while (points == null) {
-                topLevelRejects += 1;
-                points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start, end, getMaxDepth(), getMaxTries(), rejector);
+                Paint old = g2d.getPaint();
+                g2d.setPaint(Color.yellow);
+
+                String rejectString = computeRejectString(rejector, topLevelRejects);
+                g2d.drawString(rejectString, 10, getHeight() - 20);
+                rejector.reset();
+                g2d.setPaint(old);
+
+                GeneralPath path = new GeneralPath();
+                path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
+                //System.out.println(points.get(0));
+                for (int i = 1; i < points.size(); i++) {
+                    path.lineTo((float) points.get(i).getX(0), (float) points.get(i).getX(1));
+                    //System.out.println(points.get(i));
+                }
+
+                path.transform(getFullTransform());
+
+                g2d.draw(path);
+
+                g2d.setPaint(Color.black);
+
+                paintDot(start[s], 3, transform, g2d);
+                paintDot(end[s], 3, transform, g2d);
+
             }
 
-            Paint old = g2d.getPaint();
-            g2d.setPaint(Color.yellow);
-
-            String rejectString = computeRejectString(rejector, topLevelRejects);
-            g2d.drawString(rejectString, 10, getHeight() - 20);
-            //rejector.reset();
-            g2d.setPaint(old);
-
-            GeneralPath path = new GeneralPath();
-            path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
-            //System.out.println(points.get(0));
-            for (int i = 1; i < points.size(); i++) {
-                path.lineTo((float) points.get(i).getX(0), (float) points.get(i).getX(1));
-                //System.out.println(points.get(i));
-            }
-
-            path.transform(getFullTransform());
-
-            g2d.draw(path);
         }
 
-        g2d.setPaint(Color.black);
-
-        paintDot(start, 3, transform, g2d);
-        paintDot(end, 3, transform, g2d);
 
         System.out.println("leaving paintComponent()");
 

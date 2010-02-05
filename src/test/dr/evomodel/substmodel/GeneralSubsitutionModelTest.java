@@ -1,4 +1,4 @@
-package test.dr.integration;
+package test.dr.evomodel.substmodel;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.GeneralDataType;
@@ -19,6 +19,7 @@ import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -40,6 +41,8 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
     public void setUp() throws Exception {
         super.setUp();
+
+        MathUtils.setSeed(666);
 
         List<String> states = new ArrayList<String>();
         states.add("A");
@@ -68,7 +71,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
         Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModel.RATES, 5, 1.0); // dimension="5" value="1.0"
-        GeneralSubstitutionModel generalSubstitutionModel = new GeneralSubstitutionModel(dataType, freqModel, ratesPara, 5); // relativeTo="5"
+        GeneralSubstitutionModel generalSubstitutionModel = new GeneralSubstitutionModel(dataType, freqModel, ratesPara, 4); // relativeTo="5"
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(generalSubstitutionModel);
@@ -154,16 +157,16 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
 //      <expectation name="likelihood" value="-1815.75"/>
 //		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
-//		<expectation name="hky.kappa" value="32.8941"/>
+//		<expectation name="rateAC" value="6.08986E-2"/>
 
         TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
         assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
-        assertExpectation(TREE_HEIGHT, treeHeightStats, 6.42048E-2);
+        assertExpectation(TREE_HEIGHT, treeHeightStats, 0.0640787258170083);
 
-        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModel.RATES));
-        assertExpectation(GeneralSubstitutionModel.RATES, rateACStats, 32.8941);
+        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModel.RATES + "1"));
+        assertExpectation(GeneralSubstitutionModel.RATES + "1", rateACStats, 0.061071756742081366);
     }
 
     public static Test suite() {

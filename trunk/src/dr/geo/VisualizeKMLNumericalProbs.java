@@ -25,6 +25,7 @@
 
 package dr.geo;
 
+import dr.gui.ColorFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
 
 import javax.swing.*;
@@ -62,6 +63,8 @@ public class VisualizeKMLNumericalProbs extends JComponent {
     SpaceTimeRejector rejector;
     MultivariateNormalDistribution D;
     NumericalSpaceTimeProbs2D probs;
+
+    ColorFunction cf;
 
     double scaleX;
     double scaleY;
@@ -119,17 +122,22 @@ public class VisualizeKMLNumericalProbs extends JComponent {
             }
         };
 
+        cf = new ColorFunction(
+                new Color[]{Color.white, Color.blue, Color.magenta, Color.red},
+                new float[]{0.0f, 0.10f, 0.20f, 1.0f}
+        );
+
         D = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{1, 0}, {0, 1}});
 
         if (rejector.reject(0.0, new double[]{start.getX(), start.getY()})) {
             throw new RuntimeException("The start position was rejected!");
         }
 
-        probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, SpaceTimeRejector.Utils.createSimpleBounds2D(bounds));
-        //probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, rejector);
+        //probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, SpaceTimeRejector.Utils.createSimpleBounds2D(bounds));
+        probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, rejector);
 
         System.out.println("Populating...");
-        probs.populate(start, 50000, false);
+        probs.populate(start, 5000, false);
         System.out.println("Finished populating...");
     }
 
@@ -169,7 +177,7 @@ public class VisualizeKMLNumericalProbs extends JComponent {
 
                 Rectangle2D rect = new Rectangle2D.Double(i * probs.dx + probs.minx, j * probs.dy + probs.miny, probs.dx, probs.dy);
 
-                g.setColor(new Color(1.0f, 1.0f - I1, 1.0f - I1));
+                g.setColor(cf.getColor(I1));
                 g2d.fill(transform.createTransformedShape(rect));
                 g.setColor(Color.black);
                 g2d.draw(transform.createTransformedShape(rect));

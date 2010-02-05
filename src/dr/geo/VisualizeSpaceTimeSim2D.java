@@ -90,15 +90,15 @@ public class VisualizeSpaceTimeSim2D extends JComponent {
 
             ArrayList<Reject> rejects = new ArrayList<Reject>();
 
-            public boolean reject(SpaceTime point, int attribute) {
-                Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
+            public boolean reject(double time, double[] space) {
+                Point2D p = new Point2D.Double(space[0], space[1]);
 
                 if (!bounds.contains(p)) return true;
 
                 for (Shape s : shapes) {
                     if (s.contains(p)) {
 
-                        rejects.add(new Reject(attribute, point));
+                        rejects.add(new Reject(0, time, space));
                         return true;
                     }
                 }
@@ -117,6 +117,7 @@ public class VisualizeSpaceTimeSim2D extends JComponent {
 
         mnd = new MultivariateNormalDistribution(new double[]{0.0}, new double[][]{{10, 0}, {0, 10}});
         sim = new SpaceTimeSimulator(mnd);
+
     }
 
     public void setShapeColor(Color c) {

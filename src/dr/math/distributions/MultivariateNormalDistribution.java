@@ -67,6 +67,12 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale));
     }
 
+    // Scale lives in variance-space
+    public void nextScaledMultivariateNormal(double[] mean, double scale, double[] result) {
+        nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale), result);
+    }
+
+
     public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
         try {
             return new Matrix(precision).determinant();
@@ -80,7 +86,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public static double logPdf(double[] x, double[] mean, double[][] precision,
-                                      double logDet, double scale) {
+                                double logDet, double scale) {
 
         if (logDet == Double.NEGATIVE_INFINITY)
             return logDet;
@@ -104,7 +110,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         for (int i = 0; i < dim; i++)
             SSE += tmp[i] * delta[i];
 
-        return dim * logNormalize + 0.5 * (logDet - dim*Math.log(scale) - SSE / scale);   // There was an error here.
+        return dim * logNormalize + 0.5 * (logDet - dim * Math.log(scale) - SSE / scale);   // There was an error here.
         // Variance = (scale * Precision^{-1})
     }
 
@@ -153,11 +159,18 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public static double[] nextMultivariateNormalCholesky(double[] mean, double[][] cholesky, double sqrtScale) {
-    
+
+        double[] result = new double[mean.length];
+        nextMultivariateNormalCholesky(mean, cholesky, sqrtScale, result);
+        return result;
+    }
+
+
+    public static void nextMultivariateNormalCholesky(double[] mean, double[][] cholesky, double sqrtScale, double[] result) {
+
         final int dim = mean.length;
 
-        double[] x = new double[dim];
-        System.arraycopy(mean,0,x,0,dim);
+        System.arraycopy(mean, 0, result, 0, dim);
 
         double[] epsilon = new double[dim];
         for (int i = 0; i < dim; i++)
@@ -165,11 +178,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j <= i; j++) {
-                x[i] += cholesky[i][j] * epsilon[j];
+                result[i] += cholesky[i][j] * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
         }
-        return x;
     }
 
     // TODO should be a junit test
@@ -180,50 +192,50 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     public static void testPdf() {
         double[] start = {1, 2};
-        double[] stop  = {0, 0};
-        double[][] precision = { {2,0.5},{0.5,1} };
+        double[] stop = {0, 0};
+        double[][] precision = {{2, 0.5}, {0.5, 1}};
         double scale = 0.2;
-        System.err.println("logPDF = "+ logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+        System.err.println("logPDF = " + logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
         System.err.println("Should = -19.94863\n");
 
-        System.err.println("logPDF = "+logPdf(start,stop,2,0.2));
+        System.err.println("logPDF = " + logPdf(start, stop, 2, 0.2));
         System.err.println("Should = -24.53529\n");
     }
 
     public static void testRandomDraws() {
-        
+
         double[] start = {1, 2};
-        double[][] precision = { {2, 0.5}, {0.5, 1} };
+        double[][] precision = {{2, 0.5}, {0.5, 1}};
         int length = 100000;
 
 
-        System.err.println("Random draws (via precision) ...");        
+        System.err.println("Random draws (via precision) ...");
         double[] mean = new double[2];
-        double[] SS   = new double[2];
-        double[] var  = new double[2];
+        double[] SS = new double[2];
+        double[] var = new double[2];
         double ZZ = 0;
-        for(int i=0; i<length; i++) {
-            double[] draw = nextMultivariateNormalPrecision(start,precision);
-            for(int j=0; j<2; j++) {
+        for (int i = 0; i < length; i++) {
+            double[] draw = nextMultivariateNormalPrecision(start, precision);
+            for (int j = 0; j < 2; j++) {
                 mean[j] += draw[j];
-                SS[j] += draw[j]*draw[j];
+                SS[j] += draw[j] * draw[j];
             }
-            ZZ += draw[0]*draw[1];
+            ZZ += draw[0] * draw[1];
         }
 
-        for(int j=0; j<2; j++) {
+        for (int j = 0; j < 2; j++) {
             mean[j] /= length;
             SS[j] /= length;
-            var[j] = SS[j] - mean[j]*mean[j];
+            var[j] = SS[j] - mean[j] * mean[j];
         }
         ZZ /= length;
-        ZZ -= mean[0]*mean[1];
+        ZZ -= mean[0] * mean[1];
 
-        System.err.println("Mean: "+new Vector(mean));
+        System.err.println("Mean: " + new Vector(mean));
         System.err.println("TRUE: [ 1 2 ]\n");
-        System.err.println("MVar: "+new Vector(var));
+        System.err.println("MVar: " + new Vector(var));
         System.err.println("TRUE: [ 0.571 1.14 ]\n");
-        System.err.println("Covv: "+ZZ);
+        System.err.println("Covv: " + ZZ);
         System.err.println("TRUE: -0.286");
     }
 

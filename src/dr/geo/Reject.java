@@ -1,27 +1,30 @@
 package dr.geo;
 
 /**
- * Created by IntelliJ IDEA.
- * User: adru001
- * Date: Feb 2, 2010
- * Time: 11:27:54 AM
- * To change this template use File | Settings | File Templates.
+ * @author Alexei Drummond
  */
 public class Reject {
 
     private int depth;
-    private SpaceTime spaceTime;
+    private double[] space;
+    private double time;
 
-    public Reject(int depth, SpaceTime s) {
+    public Reject(int depth, double time, double[] space) {
         this.depth = depth;
-        this.spaceTime = s;
+        this.time = time;
+        this.space = space;
     }
 
     public int getDepth() {
         return depth;
     }
 
-    public SpaceTime getSpaceTime() {
-        return spaceTime;
+    public double getTime() {
+        return time;
     }
+
+    public double[] getSpace() {
+        return space;
+    }
+
 }

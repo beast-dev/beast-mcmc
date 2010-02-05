@@ -58,9 +58,10 @@ public class SpaceTimeSimulator {
             SpaceTime lastSpaceTime = list.get(list.size() - 1);
             SpaceTime newST;
             do {
-                double[] newPoint = D.nextScaledMultivariateNormal(lastSpaceTime.getX(), dt);
+                double[] newPoint = new double[start.getX().length];
+                D.nextScaledMultivariateNormal(lastSpaceTime.getX(), dt, newPoint);
                 newST = new SpaceTime(lastSpaceTime.getTime() + dt, newPoint);
-            } while (rejector.reject(newST, 0));
+            } while (rejector.reject(newST.time, newST.space));
             list.add(newST);
         }
         return list;
@@ -80,10 +81,9 @@ public class SpaceTimeSimulator {
         for (int i = 0; i < steps; i++) {
 
             do {
-                double[] newPoint = D.nextScaledMultivariateNormal(nextST.getX(), dt);
+                D.nextScaledMultivariateNormal(nextST.getX(), dt, newST.space);
                 newST.time = nextST.getTime() + dt;
-                newST.space = newPoint;
-            } while (rejector.reject(newST, 0));
+            } while (rejector.reject(newST.time, newST.space));
             nextST.time = newST.time;
             nextST.space = newST.space;
         }

@@ -175,7 +175,7 @@
 	<traceAnalysis fileName="testGeneralSubstitutionModel.log">
 		<expectation name="likelihood" value="-1815.75"/>
 		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
-		<expectation name="rateAC" value="32.8941"/>
+		<expectation name="rateAC" value="6.08986E-2"/>
 	</traceAnalysis>
 
 	<treeTraceAnalysis fileName="testGeneralSubstitutionModel.trees"/>

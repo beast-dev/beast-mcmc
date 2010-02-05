@@ -115,7 +115,7 @@ public class MultivariateBrownianBridge {
                     stop = true;
                     return 0;
                 }
-            } while (rejector != null && rejector.reject(s, depth));
+            } while (rejector != null && rejector.reject(s.time, s.space));
 
             points.add(point0 + 1, s);
 

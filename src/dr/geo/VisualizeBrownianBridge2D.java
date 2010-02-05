@@ -77,11 +77,12 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
             ArrayList<Reject> rejects = new ArrayList<Reject>();
 
-            public boolean reject(SpaceTime point, int attribute) {
-                Point2D p = new Point2D.Double(point.getX(0), point.getX(1));
+            public boolean reject(double time, double[] space) {
+                double x = space[0];
+                double y = space[1];
                 for (Shape s : shapes) {
-                    if (s.contains(p)) {
-                        rejects.add(new Reject(attribute, point));
+                    if (s.contains(x, y)) {
+                        rejects.add(new Reject(0, time, space));
                         return true;
                     }
                 }

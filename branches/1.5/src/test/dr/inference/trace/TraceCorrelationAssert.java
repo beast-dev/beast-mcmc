@@ -9,8 +9,10 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
+import dr.inference.model.Parameter;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.TestCase;
 
@@ -30,12 +32,13 @@ public class TraceCorrelationAssert extends TestCase {
 
     protected TreeModel treeModel;
     protected SimpleAlignment alignment;
+    protected Taxon[] taxa;
 
 
     public TraceCorrelationAssert(String name) {
         super(name);
     }
-
+       
 
     protected void createAlignment(String[][] taxa_sequence, DataType dataType) {
 
@@ -43,11 +46,12 @@ public class TraceCorrelationAssert extends TestCase {
         alignment.setDataType(dataType);
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
-        for (int i=0; i < 6; i++) {
-            Taxon taxon = new Taxon(taxa_sequence[0][i]);
+        taxa = new Taxon[taxa_sequence[0].length]; // 6
+        for (int i=0; i < taxa_sequence[0].length; i++) {
+            taxa[i] = new Taxon(taxa_sequence[0][i]);
             //taxonList.addTaxon(taxon);
             Sequence sequence = new Sequence(taxa_sequence[1][i]);
-            sequence.setTaxon(taxon);
+            sequence.setTaxon(taxa[i]);
             sequence.setDataType(dataType);
 
             alignment.addSequence(sequence);
@@ -57,10 +61,22 @@ public class TraceCorrelationAssert extends TestCase {
     protected void createRandomInitialTree(double popSize) throws Exception {
         ConstantPopulation constant = new ConstantPopulation(Units.Type.YEARS);
         constant.setN0(popSize); // popSize
+
+        createTreeModel(constant);
+    }
+
+    protected ConstantPopulationModel createRandomInitialTree(Parameter popSize) {        
+        ConstantPopulationModel startingTree = new ConstantPopulationModel(popSize, Units.Type.YEARS);
+        ConstantPopulation constant = (ConstantPopulation) startingTree.getDemographicFunction();
+
+        createTreeModel(constant);
+
+        return startingTree;
+    }
+
+    private void createTreeModel (ConstantPopulation constant) {
         CoalescentSimulator simulator = new CoalescentSimulator();
-
         Tree tree = simulator.simulateTree(alignment, constant);
-
         treeModel = new TreeModel(tree);//treeModel
     }
 
@@ -68,7 +84,7 @@ public class TraceCorrelationAssert extends TestCase {
 //        Tree.Utils.newick(tree)
         //create tree
         NewickImporter importer = new NewickImporter(t);
-        Tree tree = importer.importTree(null);
+        Tree tree = importer.importTree(null);          
 
         treeModel = new TreeModel(tree);//treeModel
     }

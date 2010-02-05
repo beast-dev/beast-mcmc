@@ -1,4 +1,4 @@
-package test.dr.integration;
+package test.dr.inference.mcmc;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -72,7 +72,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId("treeLikelihood");
+        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -133,7 +133,7 @@ public class MCMCTest extends TraceCorrelationAssert {
         options.setFullEvaluationCount(2000);
 
         mcmc.setShowOperatorAnalysis(true);
-        mcmc.init(options, treeLikelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, treeLikelihood, schedule, loggers);
         mcmc.run();
 
         // time

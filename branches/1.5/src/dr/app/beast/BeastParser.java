@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.evomodel.tree.TreeLengthStatistic;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -282,7 +283,7 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(new dr.evomodelxml.MicrosatelliteSamplerTreeModelParser());
         addXMLObjectParser(dr.evomodel.tree.TipHeightLikelihood.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeMetricStatistic.PARSER);
-        addXMLObjectParser(dr.evomodel.tree.TreelengthStatistic.PARSER);
+        addXMLObjectParser(TreeLengthStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TreeShapeStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.TMRCAStatistic.PARSER);
         addXMLObjectParser(dr.evomodel.tree.MRCATraitStatistic.PARSER);

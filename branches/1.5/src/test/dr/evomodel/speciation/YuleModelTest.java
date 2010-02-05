@@ -7,9 +7,8 @@ import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 import dr.evomodelxml.TreeModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -55,7 +54,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         super.setUp();
 
         MathUtils.setSeed(666);
-
+        
         NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,(3:1.0,4:1.0):1.0);");
         tree = (FlexibleTree) importer.importTree(null);
     }
@@ -73,13 +72,13 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     }
 
-    public void testYuleWithWideExchange() {
-
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+//    public void testYuleWithWideExchange() {
+//
+//        TreeModel treeModel = new TreeModel("treeModel", tree);
 
         // Doesn't compile...
   //      yuleTester(treeModel, ExchangeOperatorTest.getWideExchangeSchedule(treeModel));
-    }
+//    }
 
     private void yuleTester(TreeModel treeModel, OperatorSchedule schedule) {
 
@@ -91,7 +90,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
+        TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
@@ -116,7 +115,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, likelihood, schedule, loggers);
 
         mcmc.run();
 

@@ -7,9 +7,8 @@ import dr.evomodel.operators.TreeBitRandomWalkOperator;
 import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreelengthStatistic;
+import dr.evomodel.tree.TreeLengthStatistic;
+import dr.evomodel.tree.*;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -21,7 +20,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.BitFlipOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.SimpleOperatorSchedule;
-import dr.inference.prior.Prior;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -56,7 +54,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
         super.setUp();
 
         MathUtils.setSeed(666);
-        
+
         NewickImporter importer = new NewickImporter(
                 "(((((A:1.0,B:1.0):1.0,C:2.0),D:3.0):1.0, E:4.0),F:5.0);");
         tree = (FlexibleTree) importer.importTree(null);
@@ -95,7 +93,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
-        TreelengthStatistic tls = new TreelengthStatistic(TL, treeModel);
+        TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
         Parameter m = new Parameter.Default("m", 1.0, 0.0, Double.MAX_VALUE);
@@ -121,7 +119,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
 
         mcmc.setShowOperatorAnalysis(true);
 
-        mcmc.init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
+        mcmc.init(options, likelihood, schedule, loggers);
 
         mcmc.run();
 

@@ -69,8 +69,6 @@ public class VisualizeKMLNumericalProbs extends JComponent {
     double scaleX;
     double scaleY;
 
-    Color[] depthColor = new Color[]{Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta};
-
     public VisualizeKMLNumericalProbs(String kmlFileName) {
 
         polygons = Polygon2D.readKMLFile(kmlFileName);

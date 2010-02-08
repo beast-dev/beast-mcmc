@@ -55,6 +55,7 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
     Point2D paris = new Point2D.Double(2.35, 48.86);
     Point2D montepelier = new Point2D.Double(3.88, 43.61);
     Point2D munich = new Point2D.Double(11.58, 48.14);
+    Point2D bern = new Point2D.Double(7.45, 46.95);
 
 
     Color[] depthColor = new Color[]{Color.red, Color.orange, Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta};
@@ -68,13 +69,13 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
         start = new SpaceTime[]{
                 new SpaceTime(0, amsterdam),
                 new SpaceTime(0, amsterdam),
-                new SpaceTime(1, munich),
-                new SpaceTime(1, munich),
+                new SpaceTime(1, bern),
+                new SpaceTime(1, bern),
 
         };
         end = new SpaceTime[]{
                 new SpaceTime(2, montepelier),
-                new SpaceTime(1, munich),
+                new SpaceTime(1, bern),
                 new SpaceTime(2, rome),
                 new SpaceTime(2, athens)
         };
@@ -159,7 +160,7 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
 
         AffineTransform transform = getFullTransform();
         for (Reject r : rejects) {
-            g.setColor(depthColor[(r.getDepth() - 1) % depthColor.length]);
+            g.setColor(depthColor[0]);
             SpaceTime.paintDot(new SpaceTime(r.getTime(), r.getSpace()), 2, transform, (Graphics2D) g);
         }
         rejector.reset();

@@ -1,5 +1,5 @@
 /*
- * VisualizeKMLBrownianBridge.java
+ * VisualizeKMLNumericalProbs.java
  *
  * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
@@ -55,8 +55,9 @@ public class VisualizeKMLNumericalProbs extends JComponent {
     Point2D paris = new Point2D.Double(2.35, 48.86);
     Point2D montepelier = new Point2D.Double(3.88, 43.61);
     Point2D munich = new Point2D.Double(11.58, 48.14);
+    Point2D bern = new Point2D.Double(7.45, 46.95);
 
-    Point2D start;
+    Point2D start, end;
     Point2D topLeft;
     Point2D bottomRight;
     List<Shape> shapes;
@@ -69,13 +70,16 @@ public class VisualizeKMLNumericalProbs extends JComponent {
     double scaleX;
     double scaleY;
 
+    boolean ABSORBING = true;
+
     public VisualizeKMLNumericalProbs(String kmlFileName) {
 
         polygons = Polygon2D.readKMLFile(kmlFileName);
 
         System.out.println("Read " + polygons.size() + " polygons");
 
-        start = rome;
+        start = bern;
+        end = rome;
 
         topLeft = new Point2D.Double(-5, 28);
         bottomRight = new Point2D.Double(25, 57);
@@ -131,11 +135,16 @@ public class VisualizeKMLNumericalProbs extends JComponent {
             throw new RuntimeException("The start position was rejected!");
         }
 
-        //probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, SpaceTimeRejector.Utils.createSimpleBounds2D(bounds));
+        //probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, boundsRejector);
         probs = new NumericalSpaceTimeProbs2D(50, 50, 50, 50, 1, bounds, D, rejector);
 
         System.out.println("Populating...");
-        probs.populate(start, 5000, false);
+        if (ABSORBING) {
+            int successes = probs.populateAbsorbing(start, 2000000);
+            System.out.println(successes + " paths simulated successfully simulated");
+        } else {
+            probs.populate(start, 25000, false);
+        }
         System.out.println("Finished populating...");
     }
 
@@ -196,6 +205,16 @@ public class VisualizeKMLNumericalProbs extends JComponent {
         g2d.setColor(Color.yellow);
         SpaceTime.paintDot(new SpaceTime(0, start), 4, transform, g2d);
 
+        g2d.setColor(Color.green);
+        SpaceTime.paintDot(new SpaceTime(0, end), 4, transform, g2d);
+
+        int ex = probs.x(end.getX());
+        int ey = probs.y(end.getY());
+
+        String message = "p=" + probs.p(sx, sy, ex, ey, t) + " r=" + probs.r(sx, sy, ex, ey, t) + " c=" + probs.counts[sx][sy][ex][ey][t];
+
+        g2d.setColor(Color.yellow);
+        g2d.drawString(message, 20, getHeight() - 20);
     }
 
     AffineTransform getFullTransform() {

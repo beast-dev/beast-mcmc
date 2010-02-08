@@ -405,11 +405,11 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag("uniformIntegerOperator",
+        writer.writeOpenTag(UniformIntegerOperator.UNIFORM_INT_OP,
                 getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag("uniformIntegerOperator");
+        writer.writeCloseTag(UniformIntegerOperator.UNIFORM_INT_OP);
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {

@@ -163,7 +163,6 @@ public class VisualizeSpaceTimeSim2D extends JComponent {
             } else {
                 points = new ArrayList<SpaceTime>();
                 points.add(sim.simulate(start, rejector, dt, steps));
-
             }
 
             if (drawPoints) {

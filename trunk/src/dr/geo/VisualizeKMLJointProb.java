@@ -1,5 +1,5 @@
 /*
- * VisualizeKMLBrownianBridge.java
+ * VisualizeKMLJointProb.java
  *
  * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *

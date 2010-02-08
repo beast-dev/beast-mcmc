@@ -147,14 +147,6 @@ public class VisualizeBrownianBridge2D extends JComponent {
                     points = MultivariateBrownianBridge.divideConquerBrownianBridge(mnd, start[s], end[s], getMaxDepth(), getMaxTries(), rejector);
                 }
 
-                Paint old = g2d.getPaint();
-                g2d.setPaint(Color.yellow);
-
-                String rejectString = computeRejectString(rejector, topLevelRejects);
-                g2d.drawString(rejectString, 10, getHeight() - 20);
-                rejector.reset();
-                g2d.setPaint(old);
-
                 GeneralPath path = new GeneralPath();
                 path.moveTo((float) points.get(0).getX(0), (float) points.get(0).getX(1));
                 //System.out.println(points.get(0));
@@ -179,20 +171,6 @@ public class VisualizeBrownianBridge2D extends JComponent {
 
         System.out.println("leaving paintComponent()");
 
-    }
-
-    private String computeRejectString(SpaceTimeRejector rejector, int topLevelRejects) {
-
-        int[] rejectCounts = new int[9];
-        for (Reject r : rejector.getRejects()) {
-            rejectCounts[Math.min(r.getDepth() - 1, rejectCounts.length - 1)] += 1;
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("Rejects top-level=" + topLevelRejects);
-        for (int i = 0; i < rejectCounts.length; i++) {
-            builder.append("  " + (i + 1) + ":" + rejectCounts[i]);
-        }
-        return builder.toString();
     }
 
     AffineTransform getScale() {

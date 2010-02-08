@@ -55,7 +55,7 @@ public interface Scalable {
     public class Default implements Scalable {
         private final Parameter parameter;
 
-        Default(Parameter p) {
+        public Default(Parameter p) {
             this.parameter = p;
         }
 

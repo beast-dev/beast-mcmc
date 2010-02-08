@@ -1,3 +1,28 @@
+/*
+ * NumericalSpaceTimeProbs2D.java
+ *
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.geo;
 
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -57,6 +82,70 @@ public class NumericalSpaceTimeProbs2D {
 
         populate(x(start.getX()), y(start.getY()), paths, includeSubpaths);
     }
+
+    public int populateAbsorbing(Point2D start, int paths) {
+        return populateAbsorbing(x(start.getX()), y(start.getY()), paths);
+    }
+
+    /**
+     * @param i
+     * @param j
+     * @param paths
+     * @return the number of successfully simulated paths
+     */
+    public int populateAbsorbing(int i, int j, int paths) {
+
+        double subdt = dt / (double) subtsteps;
+
+        double[] next = new double[2];
+        double[] start = new double[2];
+        int[] pathx = new int[tsteps];
+        int[] pathy = new int[tsteps];
+        int successes = 0;
+
+        for (int reps = 0; reps < paths; reps += 1) {
+
+            double time = 0.0;
+            start[0] = (i + Math.random()) * dx + minx;
+            start[1] = (j + Math.random()) * dy + miny;
+            while (rejector.reject(0, start)) {
+                start[0] = (i + Math.random()) * dx + minx;
+                start[1] = (j + Math.random()) * dy + miny;
+            }
+
+            boolean reject = false;
+            for (int t = 0; t < tsteps && !reject; t++) {
+
+                for (int s = 0; s < subtsteps && !reject; s++) {
+
+                    D.nextScaledMultivariateNormal(start, subdt, next);
+                    time += subdt;
+                    reject = rejector.reject(time, next);
+
+                    if (!reject) {
+                        start[0] = next[0];
+                        start[1] = next[1];
+                    }
+                }
+
+                if (!reject) {
+                    pathx[t] = x(next[0]);
+                    pathy[t] = y(next[1]);
+
+                    increment(i, j, pathx[t], pathy[t], t);
+                }
+            }
+            if (!reject) successes += 1;
+
+            if (reps % 10000 == 0) {
+                System.out.print(".");
+                System.out.flush();
+            }
+        }
+        System.out.println();
+        return successes;
+    }
+
 
     public void populate(int i, int j, int paths, boolean includeSubpaths) {
 

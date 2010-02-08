@@ -89,4 +89,34 @@ public class SpaceTimeSimulator {
         }
         return nextST;
     }
+
+    /**
+     * @param spaceTime the start time and location
+     * @param rejector
+     * @param dt        the time steps
+     * @param steps     the number of steps
+     * @return a path in space starting at start and continuing to time t = start.time + dt*steps,
+     *         conditional on never encountering a rejection area
+     */
+    public SpaceTime simulateAbsorbing(SpaceTime spaceTime, SpaceTimeRejector rejector, double dt, int steps) {
+
+        int i = 0;
+        boolean found = false;
+        boolean reject = false;
+        SpaceTime nextST = null;
+        while (!found) {
+            SpaceTime newST = new SpaceTime(spaceTime);
+            nextST = new SpaceTime(spaceTime);
+            while (i < steps && !reject) {
+                D.nextScaledMultivariateNormal(nextST.getX(), dt, newST.space);
+                newST.time = nextST.getTime() + dt;
+                reject = rejector.reject(newST.time, newST.space);
+                nextST.time = newST.time;
+                nextST.space = newST.space;
+                i += 1;
+            }
+            if (!reject) found = true;
+        }
+        return nextST;
+    }
 }

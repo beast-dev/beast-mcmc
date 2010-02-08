@@ -73,7 +73,7 @@ public class TraceCorrelationAssert extends TestCase {
         for (int i=0; i < taxa_sequence[0].length; i++) {
             taxa[i] = new Taxon(taxa_sequence[0][i].toString());
 
-            if (taxa.length > 2) {
+            if (taxa_sequence.length > 2) {
                 Date date = new Date((Double) taxa_sequence[2][i], Units.Type.YEARS, false);
                 taxa[i].setDate(date);
             }

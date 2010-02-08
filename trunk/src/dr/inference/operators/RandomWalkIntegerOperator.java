@@ -15,6 +15,8 @@ import java.util.List;
  */
 public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
+    public static final String RANDOM_WALK_INT_OP = "randomWalkIntegerOperator";
+
     public static final String WINDOW_SIZE = "windowSize";
     public static final String UPDATE_INDEX = "updateIndex";
 
@@ -123,7 +125,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return "randomWalkIntegerOperator";
+            return RANDOM_WALK_INT_OP;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -132,7 +134,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
             double d = xo.getDoubleAttribute(WINDOW_SIZE);
             if (d != Math.floor(d)) {
-                throw new XMLParseException("The window size of a randomWalkIntegerOperator should be an integer");
+                throw new XMLParseException("The window size of a " + RANDOM_WALK_INT_OP + " should be an integer");
             }
 
             int windowSize = (int)d;
@@ -172,7 +174,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     };
 
     public String toString() {
-        return "randomWalkIntegerOperator(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+        return RANDOM_WALK_INT_OP + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
     }
 
     //PRIVATE STUFF

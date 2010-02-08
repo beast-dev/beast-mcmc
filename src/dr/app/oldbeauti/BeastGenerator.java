@@ -1789,13 +1789,13 @@ public class BeastGenerator extends BeautiOptions {
 
     private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                "randomWalkIntegerOperator",
+                RandomWalkIntegerOperator.RANDOM_WALK_INT_OP,
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight)
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag("randomWalkIntegerOperator");
+        writer.writeCloseTag(RandomWalkIntegerOperator.RANDOM_WALK_INT_OP);
     }
 
     private void writeScaleAllOperator(Operator operator, XMLWriter writer) {

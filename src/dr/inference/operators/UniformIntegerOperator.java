@@ -13,7 +13,7 @@ import dr.xml.*;
  */
 public class UniformIntegerOperator extends SimpleMCMCOperator {
 
-    public final static String UNIFORM_INT_OP = "uniformIntegerOperator";
+    public final static String UNIFORM_INTEGER_OPERATOR = "uniformIntegerOperator";
 
     public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
         this.parameter = parameter;
@@ -89,7 +89,7 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return UNIFORM_INT_OP;
+            return UNIFORM_INTEGER_OPERATOR;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -137,7 +137,7 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     };
 
     public String toString() {
-        return UNIFORM_INT_OP + "(" + parameter.getParameterName() + ")";
+        return UNIFORM_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 
     //PRIVATE STUFF

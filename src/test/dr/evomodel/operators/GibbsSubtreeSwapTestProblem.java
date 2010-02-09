@@ -28,11 +28,11 @@ import dr.inference.operators.UniformOperator;
  * @author Sebastian Hoehna
  *
  */
-public class GibbsSubtreeSwapTest  extends OperatorAssert{
+public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
 
 
 	public static Test suite() {
-        return new TestSuite(GibbsSubtreeSwapTest.class);
+        return new TestSuite(GibbsSubtreeSwapTestProblem.class);
     }
 	
 	/**

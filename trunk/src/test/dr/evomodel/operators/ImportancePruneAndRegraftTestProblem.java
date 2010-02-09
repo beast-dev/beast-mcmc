@@ -27,10 +27,10 @@ import dr.inference.operators.UniformOperator;
  * @author Sebastian Hoehna
  *
  */
-public class ImportancePruneAndRegraftTest extends OperatorAssert{
+public class ImportancePruneAndRegraftTestProblem extends OperatorAssert{
 
 	public static Test suite() {
-        return new TestSuite(ImportancePruneAndRegraftTest.class);
+        return new TestSuite(ImportancePruneAndRegraftTestProblem.class);
     }
 	
 	/**

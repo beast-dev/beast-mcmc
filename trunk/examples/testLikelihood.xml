@@ -131,14 +131,6 @@
         <siteModel idref="siteModel1"/>
     </treeLikelihood>
 
-    <report>
-        JC69:
-        ln L =
-        <treeLikelihood idref="treeLikelihood1"/>
-        (PAUP = -1992.20564)
-
-    </report>
-
     <!-- K80 -->
 
     <hkyModel id="k80">
@@ -168,14 +160,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel2"/>
     </treeLikelihood>
-
-    <report>
-        K80:
-        ln L =
-        <treeLikelihood idref="treeLikelihood2"/>
-        (PAUP = -1856.30305)
-
-    </report>
 
     <!-- HKY -->
 
@@ -207,14 +191,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel3"/>
     </treeLikelihood>
-
-    <report>
-        HKY85:
-        ln L =
-        <treeLikelihood idref="treeLikelihood3"/>
-        (PAUP = -1825.21317)
-
-    </report>
 
     <!-- HKY+G -->
 
@@ -250,14 +226,6 @@
         <siteModel idref="siteModel4"/>
     </treeLikelihood>
 
-    <report>
-        HKY85+G:
-        ln L =
-        <treeLikelihood idref="treeLikelihood4"/>
-        (PAUP = -1789.75936, PAML = -1789.75936)
-
-    </report>
-
     <!-- HKY+I -->
 
     <hkyModel id="hky85I">
@@ -291,14 +259,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel5"/>
     </treeLikelihood>
-
-    <report>
-        HKY85+I:
-        ln L =
-        <treeLikelihood idref="treeLikelihood5"/>
-        (PAUP = -1789.91240)
-
-    </report>
 
     <!-- HKY+GI -->
 
@@ -336,14 +296,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel6"/>
     </treeLikelihood>
-
-    <report>
-        HKY85+GI:
-        ln L =
-        <treeLikelihood idref="treeLikelihood6"/>
-        (PAUP = -1789.63923)
-
-    </report>
 
     <!-- GTR -->
 
@@ -388,14 +340,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel7"/>
     </treeLikelihood>
-
-    <report>
-        GTR:
-        ln L =
-        <treeLikelihood idref="treeLikelihood7"/>
-        (PAUP = -1969.14584)
-
-    </report>
 
     <!-- GTR+I -->
 
@@ -443,14 +387,6 @@
         <siteModel idref="siteModel8"/>
     </treeLikelihood>
 
-    <report>
-        GTR+I:
-        ln L =
-        <treeLikelihood idref="treeLikelihood8"/>
-        (PAUP = -1948.84175)
-
-    </report>
-
     <!-- GTR+G -->
 
     <gtrModel id="gtrG">
@@ -496,14 +432,6 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel9"/>
     </treeLikelihood>
-
-    <report>
-        GTR+G:
-        ln L =
-        <treeLikelihood idref="treeLikelihood9"/>
-        (PAUP = -1949.03601)
-
-    </report>
 
     <!-- GTR+GI -->
 
@@ -553,6 +481,78 @@
         <treeModel idref="treeModel1"/>
         <siteModel idref="siteModel10"/>
     </treeLikelihood>
+
+    <report>
+        JC69:
+        ln L =
+        <treeLikelihood idref="treeLikelihood1"/>
+        (PAUP = -1992.20564)
+
+    </report>
+
+    <report>
+        K80:
+        ln L =
+        <treeLikelihood idref="treeLikelihood2"/>
+        (PAUP = -1856.30305)
+
+    </report>
+
+    <report>
+        HKY85:
+        ln L =
+        <treeLikelihood idref="treeLikelihood3"/>
+        (PAUP = -1825.21317)
+
+    </report>
+
+    <report>
+        HKY85+G:
+        ln L =
+        <treeLikelihood idref="treeLikelihood4"/>
+        (PAUP = -1789.75936, PAML = -1789.75936)
+
+    </report>
+
+    <report>
+        HKY85+I:
+        ln L =
+        <treeLikelihood idref="treeLikelihood5"/>
+        (PAUP = -1789.91240)
+
+    </report>
+
+    <report>
+        HKY85+GI:
+        ln L =
+        <treeLikelihood idref="treeLikelihood6"/>
+        (PAUP = -1789.63923)
+
+    </report>
+
+    <report>
+        GTR:
+        ln L =
+        <treeLikelihood idref="treeLikelihood7"/>
+        (PAUP = -1969.14584)
+
+    </report>
+
+    <report>
+        GTR+I:
+        ln L =
+        <treeLikelihood idref="treeLikelihood8"/>
+        (PAUP = -1948.84175)
+
+    </report>
+
+    <report>
+        GTR+G:
+        ln L =
+        <treeLikelihood idref="treeLikelihood9"/>
+        (PAUP = -1949.03601)
+
+    </report>
 
     <report>
         GTR+GI:

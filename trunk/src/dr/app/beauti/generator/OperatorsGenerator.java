@@ -37,11 +37,11 @@ public class OperatorsGenerator extends Generator {
     public OperatorsGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
-    
+
     /**
      * Write the operator schedule XML block.
      *
-     * @param operators the list of operators 
+     * @param operators the list of operators
      * @param writer    the writer
      */
     public void writeOperatorSchedule(List<Operator> operators, XMLWriter writer) {
@@ -59,7 +59,7 @@ public class OperatorsGenerator extends Generator {
             operatorAttributes = new Attribute[1];
         }
         operatorAttributes[0] = new Attribute.Default<String>(XMLParser.ID, "operators");
-        
+
         writer.writeComment("Define operators");
         writer.writeOpenTag(
                 SimpleOperatorSchedule.OPERATOR_SCHEDULE,
@@ -70,11 +70,11 @@ public class OperatorsGenerator extends Generator {
         for (Operator operator : operators) {
             if (operator.weight > 0. && operator.inUse) {
             	setModelPrefix(operator.getPrefix());
-            	
+
             	writeOperator(operator, writer);
             }
-        }  
-        
+        }
+
         writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
     }
 
@@ -160,7 +160,7 @@ public class OperatorsGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown operator type");
         }
     }
-      
+
     private void writeParameter1Ref(XMLWriter writer, Operator operator) {
         writer.writeIDref(ParameterParser.PARAMETER, operator.parameter1.getName());
     }
@@ -278,8 +278,8 @@ public class OperatorsGenerator extends Generator {
         	writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperator.UP);
-        
-        writer.writeOpenTag(UpDownOperator.DOWN);	        
+
+        writer.writeOpenTag(UpDownOperator.DOWN);
         if (operator.tag == null) {
 //	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
             writeParameter2Ref(writer, operator);
@@ -287,7 +287,7 @@ public class OperatorsGenerator extends Generator {
         	writer.writeIDref(operator.tag,  operator.idref);
         }
         writer.writeCloseTag(UpDownOperator.DOWN);
-        
+
         writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
     }
 
@@ -322,9 +322,9 @@ public class OperatorsGenerator extends Generator {
                         }
                 );
             }
-            
+
         } else if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
-        	
+
         	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
@@ -339,8 +339,8 @@ public class OperatorsGenerator extends Generator {
                                 getWeightAttribute(operator.weight)
                         }
                 );
-            } 
-            
+            }
+
         } else {
             writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
                     new Attribute[]{
@@ -405,11 +405,11 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UniformIntegerOperator.UNIFORM_INT_OP,
+        writer.writeOpenTag(UniformIntegerOperator.UNIFORM_INTEGER_OPERATOR,
                 getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(UniformIntegerOperator.UNIFORM_INT_OP);
+        writer.writeCloseTag(UniformIntegerOperator.UNIFORM_INTEGER_OPERATOR);
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
@@ -493,7 +493,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
     }
-    
+
     private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeNodeSlide.TREE_NODE_REHEIGHT,
                 new Attribute[]{ getWeightAttribute(operator.weight) }
@@ -502,8 +502,8 @@ public class OperatorsGenerator extends Generator {
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  Generator.SP_TREE);
         writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
     }
-    
-    
+
+
     private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
     	writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
                 new Attribute[]{
@@ -513,25 +513,25 @@ public class OperatorsGenerator extends Generator {
         );
 
         writer.writeOpenTag(UpDownOperator.UP);
-        
+
         for (PartitionClockModel model : options.getPartitionClockModels()) {
 			if (model.isEstimatedRate()) {
 				switch (model.getClockType()) {
-	            case STRICT_CLOCK:	
+	            case STRICT_CLOCK:
 	            case RANDOM_LOCAL_CLOCK:
-	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");	
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
 	                break;
 
-	            case UNCORRELATED_EXPONENTIAL:	            	
-	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);		 
+	            case UNCORRELATED_EXPONENTIAL:
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
 	            	break;
-	            	
-	            case UNCORRELATED_LOGNORMAL:	                
+
+	            case UNCORRELATED_LOGNORMAL:
 	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
 	                break;
 
 	            case AUTOCORRELATED_LOGNORMAL:
-	                //TODO	                
+	                //TODO
 	                break;
 
 	            default:
@@ -544,28 +544,28 @@ public class OperatorsGenerator extends Generator {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
 	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-	        } 
+	        }
         }// nothing for EBSP
 
         writer.writeCloseTag(UpDownOperator.UP);
-        
-        writer.writeOpenTag(UpDownOperator.DOWN);	        
-        
+
+        writer.writeOpenTag(UpDownOperator.DOWN);
+
         if (options.starBEASTOptions.isSpeciesAnalysis()) {
 	        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
 	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);   
+	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
         } else if (options.isEBSPSharingSamePrior()) {
         	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".populationMean");
-	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".popSize");   
+	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".popSize");
         }
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
         	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
         }
-        
+
         writer.writeCloseTag(UpDownOperator.DOWN);
-        
+
         writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
     }
 

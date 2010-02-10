@@ -54,7 +54,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 
         MathUtils.setSeed(666);
 
-        createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
+        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
     }
 
 

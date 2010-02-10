@@ -42,7 +42,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         format.setMaximumFractionDigits(5);
 
-        createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
+        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
         createTreeModel ();
     }

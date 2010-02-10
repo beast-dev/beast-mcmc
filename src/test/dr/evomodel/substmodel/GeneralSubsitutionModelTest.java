@@ -54,7 +54,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         dataType.addAmbiguity("-", new String[] {"A", "C", "G", "T"});
         dataType.addAmbiguity("?", new String[] {"A", "C", "G", "T"});
 
-        createAlignment(HOMINID_TAXON_SEQUENCE, dataType);
+        createAlignment(PRIMATES_TAXON_SEQUENCE, dataType);
 
 
         createRandomInitialTree(0.0001); // popSize

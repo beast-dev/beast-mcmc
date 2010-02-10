@@ -44,7 +44,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         MathUtils.setSeed(666);
 
-        createAlignment(HOMINID_TAXON_SEQUENCE, Nucleotides.INSTANCE);
+        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
         createRandomInitialTree(0.0001); // popSize
 

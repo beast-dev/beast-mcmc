@@ -229,3 +229,92 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         return new TestSuite(PMDTestProblem.class);
     }
 }
+
+/*
+****************** BEAST result:
+
+Operator analysis
+Operator                                          Tuning  Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(clock.rate)                                 0.573   358210     685526   1.91     0.2564      good
+up:clock.rate down:nodeHeights(treeModel)         0.996   357898     429449   1.2      0.1839      good
+scale(errorModel.ageRate)                         0.615   357844     684979   1.91     0.2616      good
+scale(constant.popSize)                           0.631   357294     7663     0.02     0.2435      good
+scale(treeModel.rootHeight)                       0.644   358109     45734    0.13     0.2387      good
+uniform(nodeHeights(treeModel))                           3579577    932944   0.26     0.7178      high
+subtreeSlide(treeModel)                           12118.431787556    280311   0.16     0.1591      good
+Narrow Exchange(treeModel)                                1789693    248656   0.14     0.3825      good
+Wide Exchange(treeModel)                                  357376     13339    0.04     0.0063      low
+wilsonBalding(treeModel)                                  357423     104544   0.29     0.018       slightly low
+scale(kappa)                                      0.339   119624     228792   1.91     0.2783      good
+frequencies                                       0.081   119396     228543   1.91     0.2664      good
+
+
+
+2.227766388888889 hours
+
+burnIn   = -1
+maxState = 10000000
+
+statistic                mean          hpdLower      hpdUpper      ESS
+posterior                -5642.41      -5676.88      -5579.19      156.182
+prior                    -2369.96      -2411.87      -2316.7       86.1602       *
+likelihood               -3272.46      -3281.91      -3247.88      249.224
+clock.rate               1.42656E-7    1.06654E-7    1.82082E-7    227.675
+errorModel.ageRate       7.12553E-8    5.91987E-8    8.39501E-8    1273.19
+treeModel.rootHeight     1.35663E5     97420.0       1.75097E5     138.118
+constant.popSize         94500.1       63793.2       1.15728E5     126.347
+kappa                    11.0776       6.40144       16.5056       6722.02
+treeLikelihood           -3272.46      -3281.91      -3247.88      249.224
+coalescent               -2356.18      -2397.88      -2303.19      86.1716       *
+
+ * WARNING: The results of this MCMC analysis may be invalid as
+            one or more statistics had very low effective sample sizes (ESS)
+E[clock.rate]=1.5E-7
+WARNING: 1.42656E-7     +- 1.3489E-9
+E[errorModel.ageRate]=7E-8
+WARNING: 7.12553E-8     +- 2.16332E-10
+
+
+****************************** Java Result:
+
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(kappa)                                      0.384   12009      59970    4.99     0.3266      good
+scale(rate)                                       0.599   36245      181150   5.0      0.2856      good
+up:rate down:nodeHeights(null)                    0.993   36147      101812   2.82     0.0962      slightly low	Try setting scaleFactor to about 0.9965
+scale(populationSize)                             0.627   36263      1572     0.04     0.2424      good
+scale(ageRelatedErrorRate)                        0.635   36062      180121   4.99     0.2823      good
+scale(treeModel.rootHeight)                       0.679   36251      8469     0.23     0.2907      good
+uniform(nodeHeights(null))                                361046     212919   0.59     0.7182      high
+subtreeSlide(null)                                24252.175181239     58974    0.33     0.0902      slightly low	Try decreasing size to about 12126.087614484664
+Narrow Exchange(null)                                     180508     56685    0.31     0.3857      good
+Wide Exchange(null)                                       35991      3409     0.09     0.0086      low
+wilsonBalding(null)                                       36104      24678    0.68     0.0222      slightly low
+
+java.lang.NullPointerException
+	at dr.util.NumberFormatter.formatToFieldWidth(NumberFormatter.java:92)
+	at dr.inference.mcmc.MCMC.formattedOperatorName(MCMC.java:313)
+	at dr.inference.mcmc.MCMC.showOperatorAnalysis(MCMC.java:299)
+	at dr.inference.mcmc.MCMC.access$300(MCMC.java:50)
+	at dr.inference.mcmc.MCMC$1.finished(MCMC.java:241)
+	at dr.inference.markovchain.MarkovChain.fireFinished(MarkovChain.java:533)
+	at dr.inference.markovchain.MarkovChain.terminateChain(MarkovChain.java:350)
+	at dr.inference.mcmc.MCMC.chain(MCMC.java:194)
+	at dr.inference.mcmc.MCMC.run(MCMC.java:152)
+	at test.dr.evomodel.treelikelihood.PMDTest.testPMD(PMDTest.java:201)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at com.intellij.junit3.JUnit3IdeaTestRunner.doRun(JUnit3IdeaTestRunner.java:108)
+	at com.intellij.junit3.JUnit3IdeaTestRunner.startRunnerWithArgs(JUnit3IdeaTestRunner.java:42)
+	at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:165)
+	at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:60)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at com.intellij.rt.execution.application.AppMain.main(AppMain.java:110)
+
+
+Process finished with exit code -1
+
+
+*/

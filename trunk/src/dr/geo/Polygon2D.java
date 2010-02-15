@@ -52,7 +52,7 @@ public class Polygon2D {
 
     }
 
-    public Polygon2D(LinkedList<Point2D> points, boolean closed) {
+    public Polygon2D(List<Point2D> points, boolean closed) {
         this.point2Ds = points;
         if (!closed) {
             Point2D start = points.get(0);
@@ -64,7 +64,7 @@ public class Polygon2D {
 
     public Polygon2D() {
         length = 0;
-        point2Ds = new LinkedList<Point2D>();
+        point2Ds = new ArrayList<Point2D>();
     }
 
     public String getID() {
@@ -73,33 +73,44 @@ public class Polygon2D {
 
     public Polygon2D(Element e) {
 
+        System.err.println("parsing polygon");
+
         List<Element> children = e.getChildren();
         id = e.getAttributeValue(XMLParser.ID);
-        for (Element childElement : children) {
-            if (childElement.getName().equals(KMLCoordinates.COORDINATES)) {
 
-                String value = childElement.getTextTrim();
-                StringTokenizer st1 = new StringTokenizer(value, KMLCoordinates.NEWLINE);
-                int count = st1.countTokens();  //System.out.println(count);
+        parseCoordinates(e);
+    }
 
-                point2Ds = new LinkedList<Point2D>();
-                for (int i = 0; i < count; i++) {
-                    String line = st1.nextToken();
-                    StringTokenizer st2 = new StringTokenizer(line, KMLCoordinates.SEPERATOR);
-                    if (st2.countTokens() != 3)
-                        throw new IllegalArgumentException("All KML coordinates must contain (X,Y,Z) values.  Three dimensions not found in element '" + line + "'");
-                    final double x = Double.valueOf(st2.nextToken());
-                    final double y = Double.valueOf(st2.nextToken());
+    private void parseCoordinates(Element element) {
 
-                    point2Ds.add(new Point2D.Double(x, y));
+        if (element.getName().equalsIgnoreCase(KMLCoordinates.COORDINATES)) {
+            String value = element.getTextTrim();
+            StringTokenizer st1 = new StringTokenizer(value, KMLCoordinates.POINT_SEPARATORS);
+            int count = st1.countTokens();
+            System.out.println(count + " tokens");
+
+            point2Ds = new ArrayList<Point2D>(count);
+            for (int i = 0; i < count; i++) {
+                String line = st1.nextToken();
+                StringTokenizer st2 = new StringTokenizer(line, KMLCoordinates.SEPARATOR);
+                if (st2.countTokens() < 2 || st2.countTokens() > 3)
+                    throw new IllegalArgumentException("All KML coordinates must contain (X,Y) or (X,Y,Z) values.  Error in element '" + line + "'");
+                final double x = Double.valueOf(st2.nextToken());
+                final double y = Double.valueOf(st2.nextToken());
+                point2Ds.add(new Point2D.Double(x, y));
+            }
+            convertPointsToArrays();
+            length = point2Ds.size() - 1;
+        } else {
+            for (Object child : element.getChildren()) {
+
+                if (child instanceof Element) {
+                    parseCoordinates((Element) child);
                 }
-                convertPointsToArrays();
-                length = point2Ds.size() - 1;
-                break;
-
             }
         }
     }
+
 
     private void convertPointsToArrays() {
         final int length = point2Ds.size();
@@ -115,16 +126,16 @@ public class Polygon2D {
         }
     }
 
-    public void addPoint2D(Point2D Point2D) {
+    public void addPoint2D(Point2D point2D) {
         if (point2Ds.size() == 0)
-            point2Ds.add(Point2D);
+            point2Ds.add(point2D);
         else if (point2Ds.size() == 1) {
-            point2Ds.add(Point2D);
+            point2Ds.add(point2D);
             point2Ds.add(point2Ds.get(0));
         } else {
-            Point2D last = point2Ds.removeLast();
-            point2Ds.add(Point2D);
-            if (!last.equals(Point2D))
+            Point2D last = point2Ds.remove(point2Ds.size() - 1);
+            point2Ds.add(point2D);
+            if (!last.equals(point2D))
                 point2Ds.add(last);
         }
         convertPointsToArrays();
@@ -348,6 +359,22 @@ public class Polygon2D {
         return sb.toString();
     }
 
+    public static void readKMLElement(Element element, List<Polygon2D> polygons) {
+
+        if (element.getName().equalsIgnoreCase(POLYGON)) {
+            Polygon2D polygon = new Polygon2D(element);
+            polygons.add(polygon);
+        } else {
+            for (Object child : element.getChildren()) {
+
+                if (child instanceof Element) {
+                    readKMLElement((Element) child, polygons);
+                }
+            }
+
+        }
+    }
+
     public static List<Polygon2D> readKMLFile(String fileName) {
 
         List<Polygon2D> polygons = new ArrayList<Polygon2D>();
@@ -361,13 +388,7 @@ public class Polygon2D {
             if (!root.getName().equalsIgnoreCase("KML"))
                 throw new RuntimeException("Not a KML file");
 
-            List<Element> children = root.getChildren();
-            for (Element e : children) {
-                if (e.getName().equalsIgnoreCase(POLYGON)) {
-                    Polygon2D polygon = new Polygon2D(e);
-                    polygons.add(polygon);
-                }
-            }
+            readKMLElement(root, polygons);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -438,7 +459,7 @@ public class Polygon2D {
                 new XORRule(
                         new ElementRule(KMLCoordinates.class),
                         new ElementRule(Polygon2D.class)
-                    ),
+                ),
                 AttributeRule.newBooleanRule(CLOSED, true),
                 AttributeRule.newDoubleRule(FILL_VALUE, true),
         };
@@ -511,7 +532,7 @@ public class Polygon2D {
 
     }
 
-    protected LinkedList<Point2D> point2Ds;
+    protected List<Point2D> point2Ds;
 
     protected int length;
     private double fillValue;

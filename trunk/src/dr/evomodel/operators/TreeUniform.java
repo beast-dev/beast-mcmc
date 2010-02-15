@@ -266,7 +266,7 @@ public class TreeUniform extends AbstractTreeOperator {
     }
 
 
-    public static XMLObjectParser PARSSR = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
             return TREE_UNIFORM;

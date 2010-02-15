@@ -5,14 +5,16 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.util.ArrayList;
 
 /**
  * @author Alexei Drummond
  */
-public class KMLRenderer {
+public class KMLRenderer implements Lattice {
 
     BufferedImage image;
+    int[][] lattice;
     Rectangle2D bounds;
 
     java.util.List<Polygon2D> polygons;
@@ -64,6 +66,57 @@ public class KMLRenderer {
         return bounds;
     }
 
+    public BufferedImage render(int size) {
+        int width;
+        int height;
+        if (bounds.getHeight() > bounds.getWidth()) {
+            height = size;
+            width = (int) (height * bounds.getWidth() / bounds.getHeight());
+        } else {
+            width = size;
+            height = (int) (width * bounds.getHeight() / bounds.getWidth());
+        }
+        return render(width, height);
+    }
+
+    public BufferedImage render(int width, int height) {
+        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        render(image);
+
+        Raster raster = image.getData();
+
+        lattice = new int[width][height];
+        int[] pixel = new int[4];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                raster.getPixel(i, j, pixel);
+                if (colorDistanceSquared(pixel, shapeColor) < colorDistanceSquared(pixel, background)) {
+                    lattice[i][j] = 1;
+                } else {
+                    lattice[i][j] = 0;
+                }
+            }
+        }
+
+        return image;
+    }
+
+    private double colorDistanceSquared(int[] pixel, Color color) {
+
+        double[] argb = new double[4];
+
+        argb[0] = Math.abs(pixel[0] - color.getAlpha());
+        argb[1] = Math.abs(pixel[1] - color.getRed());
+        argb[2] = Math.abs(pixel[2] - color.getGreen());
+        argb[3] = Math.abs(pixel[3] - color.getBlue());
+
+        double dist = 0;
+        for (double a : argb) {
+            dist += a * a;
+        }
+        return dist;
+    }
+
     public void render(BufferedImage image) {
         Graphics2D g2d = image.createGraphics();
 
@@ -81,5 +134,25 @@ public class KMLRenderer {
             path.transform(transform);
             g2d.fill(path);
         }
+    }
+
+    public int latticeWidth() {
+        return lattice.length;
+    }
+
+    public int latticeHeight() {
+        return lattice[0].length;
+    }
+
+    public void setState(int i, int j, int state) {
+        lattice[i][j] = state;
+    }
+
+    public int getState(int i, int j) {
+        return lattice[i][j];
+    }
+
+    public void paintLattice(Graphics g) {
+        g.drawImage(image, 0, 0, null);
     }
 }

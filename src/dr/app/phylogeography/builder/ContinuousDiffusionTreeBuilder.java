@@ -1,14 +1,14 @@
 package dr.app.phylogeography.builder;
 
+import dr.app.phylogeography.spread.InputFile;
 import dr.app.phylogeography.structure.Coordinates;
 import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.structure.Line;
 import dr.app.phylogeography.structure.Style;
-import dr.app.phylogeography.spread.InputFile;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import jam.panels.OptionsPanel;
+import dr.evolution.tree.Tree;
 import org.virion.jam.components.RealNumberField;
+import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +17,8 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
+public class
+        ContinuousDiffusionTreeBuilder extends AbstractBuilder {
 
     private static final String BUILDER_NAME = "Continuous Diffusion Tree";
 
@@ -100,12 +101,13 @@ public class ContinuousDiffusionTreeBuilder extends AbstractBuilder {
     }
 
     private double getDoubleAttribute(Tree tree, NodeRef node, String attributeName) throws BuildException {
-        Double value = (Double)tree.getNodeAttribute(node, attributeName);
+        Double value = (Double) tree.getNodeAttribute(node, attributeName);
         if (value == null) {
             throw new BuildException("Tree doesn't have attribute, " + attributeName + ", for one or more nodes");
         }
         return value;
     }
+
     public String getBuilderName() {
         return FACTORY.getBuilderName();
     }

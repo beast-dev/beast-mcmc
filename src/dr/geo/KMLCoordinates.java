@@ -1,12 +1,10 @@
 package dr.geo;
 
 import dr.xml.*;
-
-import java.util.StringTokenizer;
-import java.util.Arrays;
-import java.lang.reflect.Array;
-
 import org.jdom.Element;
+
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
  * @author Marc A. Suchard
@@ -16,11 +14,12 @@ public class KMLCoordinates {
 
     public static final String COORDINATES = "coordinates";
     public static final String FORMAT = "%7.5f";
-    public static final String SEPERATOR = ",";
+    public static final String SEPARATOR = ",";
     public static final String NEWLINE = "\n";
+    public static final String POINT_SEPARATORS = NEWLINE + " ";
 
     public KMLCoordinates(double[] x, double[] y) {
-        this(x,y,0.0);
+        this(x, y, 0.0);
     }
 
     public KMLCoordinates(double[] x, double[] y, double z) {
@@ -43,10 +42,10 @@ public class KMLCoordinates {
         if (x.length != y.length && x.length != z.length)
             throw new RuntimeException("Cannot create coordinate system with unbalanced entries");
 
-        length = x.length;       
+        length = x.length;
     }
 
-    public void switchXY(){
+    public void switchXY() {
         double[] tempX = x;
         x = y;
         y = tempX;
@@ -56,11 +55,11 @@ public class KMLCoordinates {
     public Element toXML() {
         Element thisElement = new Element(COORDINATES);
         StringBuffer bf = new StringBuffer();
-        bf.append(NEWLINE);
-        for(int i=0; i<x.length; i++) {
-            bf.append(String.format(FORMAT,x[i])).append(SEPERATOR);
-            bf.append(String.format(FORMAT,y[i])).append(SEPERATOR);
-            bf.append(String.format(FORMAT,z[i])).append(NEWLINE);
+        bf.append(POINT_SEPARATORS);
+        for (int i = 0; i < x.length; i++) {
+            bf.append(String.format(FORMAT, x[i])).append(SEPARATOR);
+            bf.append(String.format(FORMAT, y[i])).append(SEPARATOR);
+            bf.append(String.format(FORMAT, z[i])).append(POINT_SEPARATORS);
         }
         thisElement.addContent(bf.toString());
         return thisElement;
@@ -76,7 +75,7 @@ public class KMLCoordinates {
 
             String value = (String) xo.getChild(0);
 
-            StringTokenizer st1 = new StringTokenizer(value, NEWLINE);
+            StringTokenizer st1 = new StringTokenizer(value, POINT_SEPARATORS);
             int count = st1.countTokens();
 
             double[] x = new double[count];
@@ -85,7 +84,7 @@ public class KMLCoordinates {
 
             for (int i = 0; i < count; i++) {
                 String line = st1.nextToken();
-                StringTokenizer st2 = new StringTokenizer(line, SEPERATOR);
+                StringTokenizer st2 = new StringTokenizer(line, SEPARATOR);
                 if (st2.countTokens() != 3)
                     throw new XMLParseException("All KML coordinates must contain (X,Y,Z) values.  Three dimensions not found in element '" + line + "'");
                 x[i] = Double.valueOf(st2.nextToken());
@@ -93,7 +92,7 @@ public class KMLCoordinates {
                 z[i] = Double.valueOf(st2.nextToken());
             }
 
-            return new KMLCoordinates(x,y,z);
+            return new KMLCoordinates(x, y, z);
         }
 
         //************************************************************************

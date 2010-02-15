@@ -174,7 +174,7 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
     }
 
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
             return SCALE_OPERATOR;

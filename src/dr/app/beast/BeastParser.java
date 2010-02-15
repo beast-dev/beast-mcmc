@@ -120,11 +120,9 @@ public class BeastParser extends XMLParser {
 
         if (verbose) {
             if (parsersFile.equalsIgnoreCase(RELEASE + PARSER_PROPERTIES_SUFFIX)) {
-                System.out.println();
-                System.out.println("Always loading " + parsersFile + ":");
+                System.out.println("\nAlways loading " + parsersFile + ":");
             } else {
-                System.out.println();
-                System.out.println("Loading additional parsers (" + parsersFile + "):");
+                System.out.println("\n\nLoading additional parsers (" + parsersFile + "):");
             }
         }
         final InputStream stream = c.getResourceAsStream(parsersFile);
@@ -200,37 +198,43 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(UserInput.DOUBLE_PARSER);
         addXMLObjectParser(UserInput.INTEGER_PARSER);
 
-
-        //addXMLObjectParser(ColouringTest.PARSER);
-
-        addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
-        addXMLObjectParser(new dr.evoxml.AlignmentParser());
-        addXMLObjectParser(new dr.evoxml.SitePatternsParser());
-        addXMLObjectParser(new dr.evoxml.PatternSubSetParser());
-        addXMLObjectParser(new dr.evoxml.AscertainedSitePatternsParser());
-        addXMLObjectParser(new dr.evoxml.ConvertAlignmentParser());
-        addXMLObjectParser(new dr.evoxml.MergePatternsParser());
-        addXMLObjectParser(new dr.evoxml.AttributePatternsParser());
-        addXMLObjectParser(new dr.evoxml.SequenceParser());
-        addXMLObjectParser(new dr.evoxml.SimpleNodeParser());
-        addXMLObjectParser(new dr.evoxml.SimpleTreeParser());
-        addXMLObjectParser(new dr.evoxml.UPGMATreeParser());
-        addXMLObjectParser(new dr.evoxml.NeighborJoiningParser());
-        addXMLObjectParser(new dr.evoxml.NewickParser());
-        addXMLObjectParser(new dr.evoxml.TaxonParser());
-        addXMLObjectParser(new dr.evoxml.TaxaParser());
-        addXMLObjectParser(new dr.evoxml.DateParser());
-        addXMLObjectParser(new dr.evoxml.LocationParser());
-        addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
-        addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
-        addXMLObjectParser(new dr.evoxml.MicrosatelliteParser());
-        addXMLObjectParser(new dr.evoxml.MicrosatellitePatternParser());
-        addXMLObjectParser(new dr.evoxml.MicrosatelliteSimulatorParser());
-        addXMLObjectParser(new dr.evoxml.MultiLociDistanceParser());
-        addXMLObjectParser(dr.evolution.util.RandomTaxaSample.PARSER);
-
         addXMLObjectParser(new dr.xml.AttributeParser());
         addXMLObjectParser(new dr.xml.AttributesParser());
+
+        addXMLObjectParser(new dr.inference.model.StatisticParser());
+        addXMLObjectParser(new dr.inference.model.ParameterParser());
+        
+        //addXMLObjectParser(ColouringTest.PARSER);
+
+
+//**************** move all parsers below into release_parsers.properties *********************
+        
+//        addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
+//        addXMLObjectParser(new dr.evoxml.AlignmentParser());
+//        addXMLObjectParser(new dr.evoxml.SitePatternsParser());
+//        addXMLObjectParser(new dr.evoxml.PatternSubSetParser());
+//        addXMLObjectParser(new dr.evoxml.AscertainedSitePatternsParser());
+//        addXMLObjectParser(new dr.evoxml.ConvertAlignmentParser());
+//        addXMLObjectParser(new dr.evoxml.MergePatternsParser());
+//        addXMLObjectParser(new dr.evoxml.AttributePatternsParser());
+//        addXMLObjectParser(new dr.evoxml.SequenceParser());
+//        addXMLObjectParser(new dr.evoxml.SimpleNodeParser());
+//        addXMLObjectParser(new dr.evoxml.SimpleTreeParser());
+//        addXMLObjectParser(new dr.evoxml.UPGMATreeParser());
+//        addXMLObjectParser(new dr.evoxml.NeighborJoiningParser());
+//        addXMLObjectParser(new dr.evoxml.NewickParser());
+//        addXMLObjectParser(new dr.evoxml.TaxonParser());
+//        addXMLObjectParser(new dr.evoxml.TaxaParser());
+//        addXMLObjectParser(new dr.evoxml.DateParser());
+//        addXMLObjectParser(new dr.evoxml.LocationParser());
+//        addXMLObjectParser(new dr.evoxml.DistanceMatrixParser());
+//        addXMLObjectParser(new dr.evoxml.HiddenNucleotideParser());
+//        addXMLObjectParser(new dr.evoxml.MicrosatelliteParser());
+//        addXMLObjectParser(new dr.evoxml.MicrosatellitePatternParser());
+//        addXMLObjectParser(new dr.evoxml.MicrosatelliteSimulatorParser());
+//        addXMLObjectParser(new dr.evoxml.MultiLociDistanceParser());
+//        addXMLObjectParser(dr.evolution.util.RandomTaxaSample.PARSER);
+
 
         // speciation
 //        addXMLObjectParser(new dr.evomodelxml.YuleModelParser());
@@ -303,8 +307,8 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.evomodel.operators.SubtreeSlideOperator.PARSER);
         addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.NARROW_EXCHANGE_PARSER);
         addXMLObjectParser(dr.evomodel.operators.ExchangeOperator.WIDE_EXCHANGE_PARSER);
-        addXMLObjectParser(dr.evomodel.operators.NNI.NNI_PARSER);
-        addXMLObjectParser(dr.evomodel.operators.FNPR.FNPR_PARSER);
+//        addXMLObjectParser(dr.evomodel.operators.NNI.NNI_PARSER);
+//        addXMLObjectParser(dr.evomodel.operators.FNPR.FNPR_PARSER);
 //        addXMLObjectParser(dr.evomodel.operators.WilsonBalding.PARSER);
 //        addXMLObjectParser(dr.evomodel.operators.ImportancePruneAndRegraft.IMPORTANCE_PRUNE_AND_REGRAFT_PARSER);
 //        addXMLObjectParser(dr.evomodel.operators.ImportanceSubtreeSwap.IMPORTANCE_SUBTREE_SWAP_PARSER);
@@ -322,100 +326,97 @@ public class BeastParser extends XMLParser {
         addXMLObjectParser(dr.evomodel.operators.RateSampleOperator.PARSER);
 
         // likelihoods, models and distributions
-        addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
-        addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.model.OneOnXPrior.PARSER);
-
-        addXMLObjectParser(dr.evomodel.coalescent.OrnsteinUhlenbeckPriorLikelihood.PARSER);
-        addXMLObjectParser(dr.evomodel.coalescent.BMPriorLikelihood.PARSER);
-
-        addXMLObjectParser(new dr.inferencexml.DistributionLikelihoodParser());
-        addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);
-        addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
-        addXMLObjectParser(dr.inferencexml.DistributionModelParser.EXPONENTIAL_DISTRIBUTION_PARSER);
-        addXMLObjectParser(dr.inferencexml.DistributionModelParser.GAMMA_DISTRIBUTION_PARSER);
-        addXMLObjectParser(dr.inferencexml.DistributionModelParser.ONE_P_GAMMA_DISTRIBUTION_MODEL);
-        addXMLObjectParser(dr.inference.distribution.NormalDistributionModel.PARSER);
-        addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
-        addXMLObjectParser(dr.inference.distribution.InverseGaussianDistributionModel.PARSER);
-        addXMLObjectParser(new dr.inferencexml.ExponentialMarkovModelParser());
-
-        addXMLObjectParser(dr.inferencexml.PriorParsers.UNIFORM_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.EXPONENTIAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.NORMAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.POISSON_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.LOG_NORMAL_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.GAMMA_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.INVGAMMA_PRIOR_PARSER);
-        addXMLObjectParser(dr.inferencexml.PriorParsers.LAPLACE_PRIOR_PARSER);
-
-        addXMLObjectParser(new dr.inferencexml.BinomialLikelihoodParser());
-
-        addXMLObjectParser(new dr.inference.model.StatisticParser());
-        addXMLObjectParser(new dr.inference.model.ParameterParser());
-
-        addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.DifferenceStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.RatioStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.NegativeStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExponentialStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.LogarithmStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
-
-        addXMLObjectParser(dr.inference.model.RPNcalculatorStatistic.PARSER);
-
-        addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
-        addXMLObjectParser(dr.inference.model.SubStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);
+//        addXMLObjectParser(dr.inference.model.CompoundLikelihood.PARSER);
+//        addXMLObjectParser(dr.inference.model.BooleanLikelihood.PARSER);
+//        addXMLObjectParser(dr.inference.model.DummyLikelihood.PARSER);
+//        addXMLObjectParser(dr.inference.model.OneOnXPrior.PARSER);
+//
+//        addXMLObjectParser(dr.evomodel.coalescent.OrnsteinUhlenbeckPriorLikelihood.PARSER);
+//        addXMLObjectParser(dr.evomodel.coalescent.BMPriorLikelihood.PARSER);
+//
+//        addXMLObjectParser(new dr.inferencexml.DistributionLikelihoodParser());
+//        addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);
+//        addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
+//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.EXPONENTIAL_DISTRIBUTION_PARSER);
+//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.GAMMA_DISTRIBUTION_PARSER);
+//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.ONE_P_GAMMA_DISTRIBUTION_MODEL);
+//        addXMLObjectParser(dr.inference.distribution.NormalDistributionModel.PARSER);
+//        addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
+//        addXMLObjectParser(dr.inference.distribution.InverseGaussianDistributionModel.PARSER);
+//        addXMLObjectParser(new dr.inferencexml.ExponentialMarkovModelParser());
+//
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.UNIFORM_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.EXPONENTIAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.NORMAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.POISSON_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.LOG_NORMAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.GAMMA_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.INVGAMMA_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.PriorParsers.LAPLACE_PRIOR_PARSER);
+//
+//        addXMLObjectParser(new dr.inferencexml.BinomialLikelihoodParser());
+//
+//        addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.ProductStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.SumStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.DifferenceStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.RatioStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.ReciprocalStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.NegativeStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.ExponentialStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.LogarithmStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.ExpressionStatistic.PARSER);
+//
+//        addXMLObjectParser(dr.inference.model.RPNcalculatorStatistic.PARSER);
+//
+//        addXMLObjectParser(dr.inference.model.TestStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.NotStatistic.PARSER);
+//        addXMLObjectParser(dr.inference.model.SubStatistic.PARSER);
 
         // Markov chains and loggers
-        addXMLObjectParser(new dr.inference.mcmc.MCMCParser());
-        addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
-
-        addXMLObjectParser(new dr.inference.xml.LoggerParser());
-        addXMLObjectParser(dr.inference.loggers.MLLogger.ML_LOGGER_PARSER);
-        addXMLObjectParser(new dr.evomodelxml.TreeLoggerParser());
-        addXMLObjectParser(dr.inference.loggers.Columns.PARSER);
-        addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
-//		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
+//        addXMLObjectParser(new dr.inference.mcmc.MCMCParser());
+//        addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
+//
+//        addXMLObjectParser(new dr.inference.xml.LoggerParser());
+//        addXMLObjectParser(dr.inference.loggers.MLLogger.ML_LOGGER_PARSER);
+//        addXMLObjectParser(new dr.evomodelxml.TreeLoggerParser());
+//        addXMLObjectParser(dr.inference.loggers.Columns.PARSER);
+//        addXMLObjectParser(dr.inference.operators.SimpleOperatorSchedule.PARSER);
+////		addXMLObjectParser(new dr.inference.markovchain.ConvergenceListenerParser());
 
         // operators
-        addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.LogRandomWalkOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.UniformIntegerOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.MicrosatUpDownOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.SetOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.BitMoveOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.JointOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.TeamOperator.PARSER);
-
-        addXMLObjectParser(dr.inference.operators.SelectorOperator.PARSER);
-        addXMLObjectParser(dr.inference.operators.ValuesPoolSwapOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.RandomWalkIntegerOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.RandomWalkOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.ScaleOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.LogRandomWalkOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.UniformOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.UniformIntegerOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.UpDownOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.MicrosatUpDownOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.SetOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.SwapOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.DeltaExchangeOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.CenteredScaleOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.BitFlipOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.BitMoveOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.BitSwapOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.JointOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.TeamOperator.PARSER);
+//
+//        addXMLObjectParser(dr.inference.operators.SelectorOperator.PARSER);
+//        addXMLObjectParser(dr.inference.operators.ValuesPoolSwapOperator.PARSER);
 
         // trace analysis
-        addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
-        addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
-        addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
-        addXMLObjectParser(new dr.evomodelxml.CSVExporterParser());
-
-        addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
-
-        addXMLObjectParser(dr.inference.model.ThreadedCompoundLikelihood.PARSER);
+//        addXMLObjectParser(new dr.evomodel.tree.TreeTraceAnalysisParser());
+//        addXMLObjectParser(new dr.inference.trace.TraceAnalysisParser());
+//        addXMLObjectParser(dr.inference.trace.LogFileTraceExporter.PARSER);
+//        addXMLObjectParser(new dr.evomodelxml.CSVExporterParser());
+//
+//        addXMLObjectParser(dr.inference.trace.MarginalLikelihoodAnalysis.PARSER);
+//
+//        addXMLObjectParser(dr.inference.model.ThreadedCompoundLikelihood.PARSER);
     }
 }
 

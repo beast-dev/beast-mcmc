@@ -33,7 +33,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -169,7 +168,7 @@ public class VisualizeKMLBrownianBridge extends VisualizeBrownianBridge2D {
     Shape getShape(Polygon2D poly) {
         GeneralPath path = new GeneralPath();
 
-        LinkedList<Point2D> points = poly.point2Ds;
+        List<Point2D> points = poly.point2Ds;
         path.moveTo((float) points.get(0).getX(), (float) points.get(0).getY());
 
         System.out.println("x=" + points.get(0).getX() + ", y=" + points.get(0).getY());

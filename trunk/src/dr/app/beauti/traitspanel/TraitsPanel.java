@@ -147,7 +147,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         JButton button = new JButton(new AddTraitAction());
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
-        button = new JButton(new GuessLocationsAction());
+        button = new JButton(new GuessTraitsAction());
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
         button = new JButton(new ClearTraitAction());
@@ -383,13 +383,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class GuessLocationsAction extends AbstractAction {
+    public class GuessTraitsAction extends AbstractAction {
         /**
          *
          */
         private static final long serialVersionUID = 8514706149822252033L;
 
-        public GuessLocationsAction() {
+        public GuessTraitsAction() {
             super("Guess trait values");
             setToolTipText("Use this tool to guess the trait values from the taxon labels");
         }

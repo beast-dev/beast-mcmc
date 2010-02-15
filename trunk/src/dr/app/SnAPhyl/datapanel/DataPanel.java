@@ -26,8 +26,10 @@ package dr.app.SnAPhyl.datapanel;
 import dr.app.SnAPhyl.SnAPhylFrame;
 
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.tipdatepanel.TipDatesPanel;
+import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.traitspanel.GuessTraitDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
@@ -58,7 +60,6 @@ import java.util.*;
  */
 public class DataPanel extends BeautiPanel implements Exportable {
 
-    JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
 
@@ -74,7 +75,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     BeautiOptions options = null;
 
-    double[] heights = null;
+    private GuessTraitDialog guessTraitDialog = null; // current trait
+
+//    double[] heights = null;
 
     public DataPanel(SnAPhylFrame parent, Action importDataAction) {
 
@@ -93,13 +96,21 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+                
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        dataTable.getColumnModel().getColumn(1).setCellRenderer(comboBoxRenderer);
+        dataTable.getColumnModel().getColumn(1).setPreferredWidth(160);
 
-        dataTable.getColumnModel().getColumn(1).setCellRenderer(
+        dataTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-        dataTable.getColumnModel().getColumn(1).setCellEditor(
-                new DateCellEditor());
+        dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
 
+        dataTable.getColumnModel().getColumn(3).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(3).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(3).setCellEditor(new DateCellEditor());
+          
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
         sequenceRenderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
@@ -109,7 +120,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             public void valueChanged(ListSelectionEvent evt) { selectionChanged(); }
         });
 
-        scrollPane = new JScrollPane(dataTable,
+        JScrollPane scrollPane = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setOpaque(false);
@@ -136,6 +147,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         toolBar1.add(unitsLabel);
         toolBar1.add(unitsCombo);
         toolBar1.add(directionCombo);
+        button = new JButton(new GuessTraitsAction());
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
 
         unitsCombo.setEnabled(false);
         directionCombo.setEnabled(false);
@@ -156,6 +170,20 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     }
 
+    private void setupTable() {
+
+        dataTableModel.fireTableStructureChanged();
+        if (options.dataPartitions.size() > 0 && options.dataPartitions.get(0).getAlignment() != null) {
+
+            dataTable.getColumnModel().getColumn(4).setCellRenderer(sequenceRenderer);
+            dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+
+            sequenceRenderer.setText(options.dataPartitions.get(0).getAlignment().getSequence(0).getSequenceString());
+            int w = sequenceRenderer.getPreferredSize().width + 8;
+            dataTable.getColumnModel().getColumn(4).setPreferredWidth(w);
+        }
+    }
+    
     public final void timeScaleChanged() {
         Units.Type units = Units.Type.YEARS;
         switch ((DateUnitsType) unitsCombo.getSelectedItem()) {
@@ -200,7 +228,39 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
     }
 
+    public void guessTrait() {
+        if (options.taxonList != null) { // validation of check empty taxonList
+//            TraitGuesser guesser = options.traitOptions.cureentTraitGuesser;
+            TraitGuesser guesser = new TraitGuesser();
 
+            if (guessTraitDialog == null) {
+                guessTraitDialog = new GuessTraitDialog(frame, guesser);
+            }
+//            GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTrait);
+            int result = guessTraitDialog.showDialog();
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            guessTraitDialog.setupGuesser();
+
+            try {
+                guesser.guessTrait(options);
+
+//                if (guesser.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+//                    frame.setupSpeciesAnalysis();
+//                }
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
+            }
+
+            dataTableModel.fireTableDataChanged();
+        } else {
+            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+                    "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public void setOptions(BeautiOptions options) {
 
@@ -217,20 +277,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         directionCombo.setSelectedItem(options.datesDirection);
 
         dataTableModel.fireTableDataChanged();
-    }
-
-    private void setupTable() {
-
-        dataTableModel.fireTableStructureChanged();
-        if (options.dataPartitions.size() > 0 && options.dataPartitions.get(0).getAlignment() != null) {
-
-            dataTable.getColumnModel().getColumn(2).setCellRenderer(sequenceRenderer);
-            dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-
-            sequenceRenderer.setText(options.dataPartitions.get(0).getAlignment().getSequence(0).getSequenceString());
-            int w = sequenceRenderer.getPreferredSize().width + 8;
-            dataTable.getColumnModel().getColumn(2).setPreferredWidth(w);
-        }
     }
 
     public void getOptions(BeautiOptions options) {
@@ -255,8 +301,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     class DataTableModel extends AbstractTableModel {
 
-        String[] columnNames1 = { "Name", "Date", "Sequence" };
-        String[] columnNames2 = { "Name", "Date" };
+        String[] columnNames1 = { "Name", "Species", "Pop Size", "Date", "Sequence" };
+        String[] columnNames2 = { "Name", "Species", "Pop Size", "Date" };
 
         public DataTableModel() {
         }
@@ -282,19 +328,22 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 0:
                     return options.taxonList.getTaxonId(row);
                 case 1:
+                    Object value = options.taxonList.getTaxon(row).getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+                    if (value != null) {
+                        return value;
+                    } else {
+                        return "-";
+                    }
+                case 2:
+                    return 0;
+                case 3:
                     dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         return date.getTimeValue();
                     } else {
                         return "-";
                     }
-                case 2:
-//                    if (heights != null) {
-//                        return heights[row];
-//                    } else {
-//                        return "0.0";
-//                    }
-//                case 3:
+                case 4:
                     return options.dataPartitions.get(0).getAlignment().getAlignedSequenceString(row);
             }
             return null;
@@ -306,6 +355,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     options.taxonList.getTaxon(row).setId(aValue.toString());
                     break;
                 case 1:
+                    options.taxonList.getTaxon(row).setAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString(), aValue);
+                    break;
+                case 2:
+                    break;
+                case 3:                    
                     dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         double d = (Double) aValue;
@@ -318,9 +372,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             if (col == 0) return true;
-            if (col == 1) {
+            if (col == 3) {
                 dr.evolution.util.Date date = options.taxonList.getTaxon(row).getDate();
                 return (date != null);
+            }
+            if (col == 1) {
+                Object t = options.taxonList.getTaxon(row).getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+                return (t != null);
             }
             return false;
         }
@@ -355,10 +413,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public class ClearDatesAction extends AbstractAction {
-        /**
-         *
-         */
-        private static final long serialVersionUID = -7281309694753868635L;
 
         public ClearDatesAction() {
             super("Clear Dates");
@@ -371,10 +425,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public class GuessDatesAction extends AbstractAction {
-        /**
-         *
-         */
-        private static final long serialVersionUID = 8514706149822252033L;
 
         public GuessDatesAction() {
             super("Guess Dates");
@@ -385,7 +435,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //            guessDates();
         }
     }
-    
+
+    public class GuessTraitsAction extends AbstractAction {
+
+        public GuessTraitsAction() {
+            super("Guess trait values");
+            setToolTipText("Use this tool to guess the trait values from the taxon labels");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            guessTrait();
+        }
+    }
 
 }
 

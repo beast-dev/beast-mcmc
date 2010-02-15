@@ -15,7 +15,6 @@ public class InhomogeneousRandomWalk extends JComponent {
     Random random;
     double time;
     int[][] sample;
-    double timeInIsland;
 
     public InhomogeneousRandomWalk(
             Lattice lattice, Location loc, Random random, double[][] rates) {
@@ -36,15 +35,13 @@ public class InhomogeneousRandomWalk extends JComponent {
 
     public void paintComponent(Graphics g) {
 
-        lattice.paintComponent(g);
-
-        g.setColor(Color.black);
+        lattice.paintLattice(g);
 
         for (int i = 0; i < lattice.latticeWidth(); i++) {
             for (int j = 0; j < lattice.latticeHeight(); j++) {
                 if (sample[i][j] > 0) {
                     if (lattice.getState(i, j) == 0) {
-                        g.setColor(Color.black);
+                        g.setColor(Color.green);
                     } else {
                         g.setColor(Color.red);
                     }
@@ -65,7 +62,7 @@ public class InhomogeneousRandomWalk extends JComponent {
                 count += 1;
             }
         }
-        return (double)count/(double)n;
+        return (double) count / (double) n;
     }
 
 
@@ -73,7 +70,6 @@ public class InhomogeneousRandomWalk extends JComponent {
         this.i = from.i;
         this.j = from.j;
         time = 0;
-        timeInIsland = 0;
         while (time < t) {
             step(t);
         }
@@ -142,7 +138,6 @@ public class InhomogeneousRandomWalk extends JComponent {
                 }
             }
         }
-        if (fromState == 1) timeInIsland += dt;
 
         time += dt;
         sample[i][j] += 1;
@@ -151,61 +146,46 @@ public class InhomogeneousRandomWalk extends JComponent {
     public static void main(String[] args) {
 
         Random random = new Random();
-
-        final int width = 100;
-        final int height = 100;
-
-        Lattice lattice = new Lattice(width, height);
-        java.util.List<Location> islands = lattice.addIslands(20, random);
-        System.out.println("Created " + islands.size() + " islands");
-
-        int growth = 380;
-
-        int attempts = lattice.growIslands(growth, random);
-        System.out.println("Took " + attempts + " attempts to grow islands by " + growth);
-
-
-        lattice.smooth(2);
-        System.out.println("Homogeneous P_island=" + (double)lattice.sum() / (double)(width*height));
+//
+//        final int width = 100;
+//        final int height = 100;
+//
+//        IslandLattice lattice = new IslandLattice(width, height);
+//        java.util.List<Location> islands = lattice.addIslands(20, random);
+//        System.out.println("Created " + islands.size() + " islands");
+//
+//        int growth = 380;
+//
+//        int attempts = lattice.growIslands(growth, random);
+//        System.out.println("Took " + attempts + " attempts to grow islands by " + growth);
+//
+//
+//        lattice.smooth(2);
+//        System.out.println("Homogeneous P_island=" + (double)lattice.sum() / (double)(width*height));
+//
 
         double[][] rates = new double[2][2];
-        rates[0][0] = 0.25;
-        rates[0][1] = 0.25;
-        rates[1][0] = 0.25;
-        rates[1][1] = 0.25;
+        rates[0][0] = 0.0;
+        rates[0][1] = 0.0;
+        rates[1][0] = 0.0;
+        rates[1][1] = 1.0;
 
-        InhomogeneousRandomWalk walk = new InhomogeneousRandomWalk(lattice, new Location(0,0), random, rates);
+        KMLRenderer renderer = new KMLRenderer(args[0], Color.white, Color.blue);
+        renderer.render(900);
 
-        for (double t = 5; t < 1000; t *= 2) {
 
-            double p = walk.computeP(new Location(50,50), new Location(40,40), t, 500000);
+        InhomogeneousRandomWalk walk = new InhomogeneousRandomWalk(renderer, new Location(0, 0), random, rates);
 
-            System.out.println(t + "\t" + p);
-
+        for (int i = 0; i < 10; i++) {
+            Location start = Lattice.Utils.getRandomLocation(renderer, 1, random);
+            walk.simulate(start, 1000);
         }
 
+        JFrame frame = new JFrame();
 
-//        for (double a = 1.0; a >= 0.01; a /= 2.0) {
-//
-//            for (int rep = 0; rep < 3; rep += 1) {
-//                Location loc = new Location(random.nextInt(width), random.nextInt(height));
-//
-//                rates[0][1] = 1/a;
-//
-//                walk.simulate(100000000);
-//
-//                //JFrame frame = new JFrame();
-//                //frame.getContentPane().add(walk, BorderLayout.CENTER);
-//                //frame.pack();
-//                //frame.setVisible(true);
-//
-//                double P_island = walk.timeInIsland / walk.time;
-//
-//                System.out.println("P_island(" + a + ", " + rep + ")= " + P_island);
-//            }
-//        }
-
-
+        frame.getContentPane().add(BorderLayout.CENTER, walk);
+        frame.pack();
+        frame.setVisible(true);
     }
 
 

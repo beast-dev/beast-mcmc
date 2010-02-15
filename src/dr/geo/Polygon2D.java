@@ -7,11 +7,14 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
+import java.awt.*;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -111,6 +114,18 @@ public class Polygon2D {
         }
     }
 
+    Shape getShape() {
+        GeneralPath path = new GeneralPath();
+
+        List<Point2D> points = point2Ds;
+        path.moveTo((float) points.get(0).getX(), (float) points.get(0).getY());
+
+        for (int i = 1; i < points.size(); i++) {
+            path.lineTo((float) points.get(i).getX(), (float) points.get(i).getY());
+        }
+        path.closePath();
+        return path;
+    }
 
     private void convertPointsToArrays() {
         final int length = point2Ds.size();

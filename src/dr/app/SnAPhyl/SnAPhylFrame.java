@@ -80,7 +80,7 @@ public class SnAPhylFrame extends BeautiFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this);
+        dataPanel = new DataPanel(this, getImportAction());
         priorsPanel = new PriorsPanel(this, false);
         initializationPanel = new InitializationPanel(this);
         operatorsPanel = new OperatorsPanel(this);

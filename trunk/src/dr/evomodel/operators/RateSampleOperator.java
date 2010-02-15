@@ -6,7 +6,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.GibbsOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 

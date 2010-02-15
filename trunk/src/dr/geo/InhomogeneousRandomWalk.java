@@ -15,6 +15,7 @@ public class InhomogeneousRandomWalk extends JComponent {
     Random random;
     double time;
     int[][] sample;
+    int maxSample = 0;
 
     public InhomogeneousRandomWalk(
             Lattice lattice, Location loc, Random random, double[][] rates) {
@@ -43,7 +44,7 @@ public class InhomogeneousRandomWalk extends JComponent {
                     if (lattice.getState(i, j) == 0) {
                         g.setColor(Color.green);
                     } else {
-                        g.setColor(Color.red);
+                        g.setColor(new Color(sample[i][j] * 255 / maxSample, 0, 0));
                     }
                     g.drawRect(i, j, 1, 1);
                 }
@@ -141,6 +142,7 @@ public class InhomogeneousRandomWalk extends JComponent {
 
         time += dt;
         sample[i][j] += 1;
+        if (sample[i][j] > maxSample) maxSample = sample[i][j];
     }
 
     public static void main(String[] args) {
@@ -168,7 +170,7 @@ public class InhomogeneousRandomWalk extends JComponent {
         rates[0][0] = 0.0;
         rates[0][1] = 0.0;
         rates[1][0] = 0.0;
-        rates[1][1] = 1.0;
+        rates[1][1] = 2.0;
 
         KMLRenderer renderer = new KMLRenderer(args[0], Color.white, Color.blue);
         renderer.render(900);
@@ -176,11 +178,13 @@ public class InhomogeneousRandomWalk extends JComponent {
 
         InhomogeneousRandomWalk walk = new InhomogeneousRandomWalk(renderer, new Location(0, 0), random, rates);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             Location start = Lattice.Utils.getRandomLocation(renderer, 1, random);
-            walk.simulate(start, 1000);
-        }
+            for (int j = 0; j < 1000; j++) {
+                walk.simulate(start, 4000);
+            }
 
+        }
         JFrame frame = new JFrame();
 
         frame.getContentPane().add(BorderLayout.CENTER, walk);

@@ -150,15 +150,11 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         throw new RuntimeException("Not implemented!");
     }
 
-    // **************************************************************
-    // Private methods
-    // **************************************************************
-
-    private double getShape() {
+    public double getShape() {
         return shape.getValue(0);
     }
 
-    private double getScale() {
+    public double getScale() {
         if (scale == null) return (1.0 / getShape());
         return scale.getValue(0);
     }

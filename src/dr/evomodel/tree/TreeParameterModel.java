@@ -126,6 +126,18 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
         return parameter.getParameterValue(index);
     }
 
+    public void setNodeValue(Tree tree, NodeRef node, double value) {
+
+        assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
+
+        assert tree.getRoot().getNumber() == rootNodeNumber :
+                "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
+
+        int nodeNumber = node.getNumber();
+        int index = getParameterIndexFromNodeNumber(nodeNumber);
+        parameter.setParameterValue(index, value);
+    }
+
     public String getBranchAttributeLabel() {
         return parameter.getId();
     }

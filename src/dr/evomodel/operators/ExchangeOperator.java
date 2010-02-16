@@ -403,6 +403,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
         }
     };
 
+/* The INTERMEDIATE_EXCHANGE is deprecated for unknown reason, therefore comment out its parser to make other 2 parsers registered properly
     public static XMLObjectParser INTERMEDIATE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -437,5 +438,5 @@ public class ExchangeOperator extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
                 new ElementRule(TreeModel.class)};
-    };
+    }; */
 }

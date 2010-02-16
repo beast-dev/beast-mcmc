@@ -10,6 +10,7 @@ import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
+import dr.evomodelxml.BinaryCovarionModelParser;
 import dr.evomodelxml.BinarySubstitutionModelParser;
 import dr.evomodelxml.HKYParser;
 import dr.evoxml.AlignmentParser;
@@ -328,7 +329,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeComment("The Binary covarion model");
         writer.writeOpenTag(
-                BinaryCovarionModel.COVARION_MODEL,
+                BinaryCovarionModelParser.COVARION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bcov")}
         );
 
@@ -352,13 +353,13 @@ public class SubstitutionModelGenerator extends Generator {
            writeFrequencyModelBinary(writer, model, prefix);
         }
 
-        writeParameter(BinaryCovarionModel.HIDDEN_FREQUENCIES,
+        writeParameter(BinaryCovarionModelParser.HIDDEN_FREQUENCIES,
                 prefix + "hfrequencies", 2, 0.5, 0.0, 1.0, writer); // hfrequencies also 0.5 0.5
 
-        writeParameter(BinaryCovarionModel.ALPHA, "bcov.alpha", model, writer);
-        writeParameter(BinaryCovarionModel.SWITCHING_RATE, "bcov.s", model, writer);
+        writeParameter(BinaryCovarionModelParser.ALPHA, "bcov.alpha", model, writer);
+        writeParameter(BinaryCovarionModelParser.SWITCHING_RATE, "bcov.s", model, writer);
 
-        writer.writeCloseTag(BinaryCovarionModel.COVARION_MODEL);
+        writer.writeCloseTag(BinaryCovarionModelParser.COVARION_MODEL);
     }
     
     // write frequencies for binary data
@@ -682,7 +683,7 @@ public class SubstitutionModelGenerator extends Generator {
                 writer.writeIDref(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, prefix + "bsimple");
                 break;
             case BIN_COVARION:
-                writer.writeIDref(BinaryCovarionModel.COVARION_MODEL, prefix + "bcov");
+                writer.writeIDref(BinaryCovarionModelParser.COVARION_MODEL, prefix + "bcov");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");

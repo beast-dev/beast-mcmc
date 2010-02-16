@@ -86,22 +86,21 @@ public class BeastParser extends XMLParser {
             }
 
             // always load release_parsers.properties !!!
-            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
+            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, false);
 
             // suppose to load developement_parsers.properties
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase(DEV)) {
-                    System.out.println("Loading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
-                            + ", which is additional set of parsers only available for development version ...");
-                    System.out.println();
+                    System.out.println("\nLoading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
+                            + ", which is additional set of parsers only available for development version ...");                    
                 }
-                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
+                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
             }
             // load additional parsers
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings);
+                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
                 }
             }
         } catch (IOException e) {
@@ -116,7 +115,16 @@ public class BeastParser extends XMLParser {
 //        }
     }
 
-    private void loadProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning) throws IOException {
+    /**
+     * Load the parser for *.properties file
+     * @param c               BeastParser
+     * @param parsersFile     parser file name, (*.properties)
+     * @param verbose         verbose
+     * @param parserWarning   parserWarning
+     * @param canReplace      can this new loaded parser to replace old one with the same name 
+     * @throws IOException    IOException
+     */
+    private void loadProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning, boolean canReplace) throws IOException {
 
         if (verbose) {
             if (parsersFile.equalsIgnoreCase(RELEASE + PARSER_PROPERTIES_SUFFIX)) {
@@ -131,8 +139,8 @@ public class BeastParser extends XMLParser {
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         String line = reader.readLine();
-        while (line != null) {
 
+        while (line != null) {
             if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
                 try {
                     if (line.contains("Vector")) {
@@ -141,7 +149,7 @@ public class BeastParser extends XMLParser {
                     Class parser = Class.forName(line);
                     if (XMLObjectParser.class.isAssignableFrom(parser)) {
                         // if this class is an XMLObjectParser then create an instance
-                        boolean replaced = addXMLObjectParser((XMLObjectParser) parser.newInstance(), true);
+                        boolean replaced = addXMLObjectParser((XMLObjectParser) parser.newInstance(), canReplace);
                         if (verbose) {
                             System.out.println((replaced ? "Replaced" : "Loaded") + " parser: " + parser.getName());
                         } else if (parserWarning && replaced) {
@@ -155,7 +163,7 @@ public class BeastParser extends XMLParser {
                         for (Field field : fields) {
                             if (XMLObjectParser.class.isAssignableFrom(field.getType())) {
                                 try {
-                                    boolean replaced = addXMLObjectParser((XMLObjectParser) field.get(null), true);
+                                    boolean replaced = addXMLObjectParser((XMLObjectParser) field.get(null), canReplace);
                                     if (verbose) {
                                         System.out.println((replaced ? "Replaced" : "Loaded") + " parser: "
                                                 + parser.getName() + "." + field.getName());
@@ -177,11 +185,15 @@ public class BeastParser extends XMLParser {
                     }
 
                 } catch (Exception e) {
-                    System.err.println("Failed to load parser: " + e.getMessage());
+                    System.err.println("\nFailed to load parser: " + e.getMessage());
+                    System.err.println("line = " + line + "\n");
                 }
             }
             line = reader.readLine();
+        }
 
+        if (verbose) {
+            System.out.println("load " + parsersFile + " successfully.\n");             
         }
     }
 
@@ -191,7 +203,7 @@ public class BeastParser extends XMLParser {
             storeObject(Integer.toString(i), args[i]);
         }
 
-        // add all the XMLObject parsers you need
+        // built-in parsers
 
         addXMLObjectParser(new PropertyParser());
         addXMLObjectParser(UserInput.STRING_PARSER);
@@ -321,9 +333,9 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.evomodel.operators.ImportanceNarrowExchange.INS_PARSER);
 
         // rate operators
-        addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.RateVarianceScaleOperator.PARSER);
-        addXMLObjectParser(dr.evomodel.operators.RateSampleOperator.PARSER);
+//        addXMLObjectParser(dr.evomodel.operators.RateScaleOperator.PARSER);
+//        addXMLObjectParser(dr.evomodel.operators.RateVarianceScaleOperator.PARSER);
+//        addXMLObjectParser(dr.evomodel.operators.RateSampleOperator.PARSER);
 
         // likelihoods, models and distributions
 //        addXMLObjectParser(dr.inference.model.CompoundParameter.PARSER);

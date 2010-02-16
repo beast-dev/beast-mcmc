@@ -23,7 +23,7 @@ public class BinarySubstitutionModelParser extends AbstractXMLObjectParser {
 
         Parameter ratesParameter;
 
-        XMLObject cxo = (XMLObject) xo.getChild(GeneralSubstitutionModel.FREQUENCIES);
+        XMLObject cxo = xo.getChild(GeneralSubstitutionModel.FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         DataType dataType = freqModel.getDataType();

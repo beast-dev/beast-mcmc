@@ -45,9 +45,8 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
  */
-@SuppressWarnings({"SuspiciousNameCombination", "UnusedAssignment"})
-public abstract class AbstractSubstitutionModel extends AbstractModel
-        implements SubstitutionModel {
+
+public abstract class AbstractSubstitutionModel extends AbstractModel implements SubstitutionModel {
 
     public static final String MODEL = "model";
 

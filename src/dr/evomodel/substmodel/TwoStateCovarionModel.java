@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.TwoStateCovarion;
+import dr.evomodelxml.TwoStateCovarionModelParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -35,11 +36,6 @@ import dr.xml.*;
  * @version $Id$
  */
 public class TwoStateCovarionModel extends AbstractSubstitutionModel {
-
-    public static final String COVARION_MODEL = "covarionModel";
-    public static final String ALPHA = "alpha";
-    public static final String SWITCHING_RATE = "switchingRate";
-    public static final String FREQUENCIES = "frequencies";
 
     /**
      * constructor
@@ -52,7 +48,7 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
     public TwoStateCovarionModel(TwoStateCovarion dataType, FrequencyModel freqModel,
                                  Parameter alphaParameter,
                                  Parameter switchingParameter) {
-        super(COVARION_MODEL, dataType, freqModel);
+        super(TwoStateCovarionModelParser.COVARION_MODEL, dataType, freqModel);
 
         alpha = alphaParameter;
         this.switchingParameter = switchingParameter;
@@ -125,76 +121,6 @@ public class TwoStateCovarionModel extends AbstractSubstitutionModel {
             }
         }
     }
-
-    /**
-     * Parses an element from an DOM document into a TwoStateCovarionModel
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return COVARION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter alphaParameter;
-            Parameter switchingRateParameter;
-
-            XMLObject cxo = (XMLObject) xo.getChild(FREQUENCIES);
-            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-            TwoStateCovarion dataType = TwoStateCovarion.INSTANCE;  // fancy new datatype courtesy of Helen
-
-            cxo = (XMLObject) xo.getChild(ALPHA);
-            alphaParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            // alpha must be positive and less than 1.0 because the fast rate is normalized to 1.0
-            alphaParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
-
-            cxo = (XMLObject) xo.getChild(SWITCHING_RATE);
-            switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            if (dataType != freqModel.getDataType()) {
-                throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
-            }
-
-            TwoStateCovarionModel model = new TwoStateCovarionModel(dataType, freqModel, alphaParameter, switchingRateParameter);
-
-            System.out.println(model);
-
-            return model;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A covarion substitution model on binary data and a hidden rate state with two rates.";
-        }
-
-        public Class getReturnType() {
-            return TwoStateCovarionModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(FREQUENCIES, FrequencyModel.class),
-                new ElementRule(ALPHA,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class, true)}
-                ),
-                new ElementRule(SWITCHING_RATE,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class, true)}
-                ),
-        };
-
-    };
-
 
     private Parameter alpha;
     private Parameter switchingParameter;

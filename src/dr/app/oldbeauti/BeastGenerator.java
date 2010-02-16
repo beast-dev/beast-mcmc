@@ -964,27 +964,27 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeComment("The Binary covarion model");
         writer.writeOpenTag(
-                dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL,
+                BinaryCovarionModelParser.COVARION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)}
         );
 
-        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
+        writer.writeOpenTag(BinaryCovarionModelParser.FREQUENCIES);
         writeParameter(id + ".frequencies", 2, 0.5, 0.0, 1.0, writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.FREQUENCIES);
+        writer.writeCloseTag(BinaryCovarionModelParser.FREQUENCIES);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
+        writer.writeOpenTag(BinaryCovarionModelParser.HIDDEN_FREQUENCIES);
         writeParameter(id + ".hfrequencies", 2, 0.5, 0.0, 1.0, writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.HIDDEN_FREQUENCIES);
+        writer.writeCloseTag(BinaryCovarionModelParser.HIDDEN_FREQUENCIES);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA);
+        writer.writeOpenTag(BinaryCovarionModelParser.ALPHA);
         writeParameter(id + ".alpha", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.ALPHA);
+        writer.writeCloseTag(BinaryCovarionModelParser.ALPHA);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE);
+        writer.writeOpenTag(BinaryCovarionModelParser.SWITCHING_RATE);
         writeParameter(id + ".s", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.SWITCHING_RATE);
+        writer.writeCloseTag(BinaryCovarionModelParser.SWITCHING_RATE);
 
-        writer.writeCloseTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL);
+        writer.writeCloseTag(BinaryCovarionModelParser.COVARION_MODEL);
     }
 
     /**
@@ -1139,7 +1139,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "bsimple"), true);
                 break;
             case BIN_COVARION:
-                writer.writeTag(dr.evomodel.substmodel.BinaryCovarionModel.COVARION_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "bcov"), true);
+                writer.writeTag(BinaryCovarionModelParser.COVARION_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "bcov"), true);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");

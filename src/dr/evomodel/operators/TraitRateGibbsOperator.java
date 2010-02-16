@@ -28,22 +28,32 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
     private final TreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final AbstractMultivariateTraitLikelihood traitModel;
-    private final GammaDistributionModel ratePrior;
+    private final GammaDistributionModel ratePriorModel;
+    private final GammaDistribution ratePrior;
     private final ArbitraryBranchRates branchRateModel;
     private final int dim;
     private final String traitName;
 
     public TraitRateGibbsOperator(AbstractMultivariateTraitLikelihood traitModel,
                                   ArbitraryBranchRates branchRateModel,
-                                  GammaDistributionModel ratePrior) {
+                                  GammaDistributionModel ratePriorModel,
+                                  GammaDistribution ratePrior) {
         super();
         this.traitModel = traitModel;
         this.treeModel = traitModel.getTreeModel();
         this.precisionMatrixParameter = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
         this.traitName = traitModel.getTraitName();
         this.branchRateModel = branchRateModel;
+        this.ratePriorModel = ratePriorModel;
         this.ratePrior = ratePrior;
         this.dim = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName).length;
+
+        boolean hasDistributionModel = ratePriorModel == null;
+        boolean hasDistribution = ratePrior == null;
+
+        if ((hasDistribution && hasDistributionModel) || (!hasDistribution && !hasDistributionModel)) {
+            throw new RuntimeException("Can only provide one prior density in TraitRateGibbsOperation");
+        }
 
         if (!branchRateModel.usingReciprocal()) {
             throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperatior must use reciprocal rates");
@@ -83,15 +93,24 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
 
         final double newValue = GammaDistribution.nextGamma(gammaShape, 1.0 / gammaRate);
 
-        branchRateModel.setBranchRate(treeModel, child, newValue);
+        // Store the reciprocal value as the rate (\propto variance)
+        branchRateModel.setBranchRate(treeModel, child, 1.0 / newValue);
     }
 
     public double doOperation() throws OperatorFailedException {
 
         double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
 
-        double priorShape = ratePrior.getShape();
-        double priorRate  = 1.0 / ratePrior.getScale();
+        double priorShape;
+        double priorRate;
+
+        if (ratePriorModel != null) {
+            priorShape = ratePriorModel.getShape();
+            priorRate  = 1.0 / ratePriorModel.getScale();
+        } else {
+            priorShape = ratePrior.getShape();
+            priorRate = 1.0 / ratePrior.getScale();
+        }
 
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
@@ -124,18 +143,24 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
             ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
             DistributionLikelihood priorLikelihood = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-            if (!(priorLikelihood.getDistribution() instanceof GammaDistributionModel)) {
-                throw new XMLParseException("Currently only works with GammaDistributionModels");
-            }
 
-            GammaDistributionModel gammaPrior = (GammaDistributionModel) priorLikelihood.getDistribution();
+            GammaDistributionModel gammaPriorModel = null;
+            GammaDistribution gammaPrior = null;
+
+            if (priorLikelihood.getDistribution() instanceof GammaDistributionModel) {
+                gammaPriorModel = (GammaDistributionModel) priorLikelihood.getDistribution();
+            } else if (priorLikelihood.getDistribution() instanceof GammaDistribution) {
+                gammaPrior = (GammaDistribution) priorLikelihood.getDistribution();
+            } else {
+                throw new XMLParseException("Currently only works with a GammaDistributionModel or GammaDistribution");
+            }
 
             if (!branchRates.usingReciprocal()) {
                 throw new XMLParseException(
                         "Gibbs sampling of rates only works with reciprocal rates under an ArbitraryBranchRates model");
             }
 
-            TraitRateGibbsOperator operator = new TraitRateGibbsOperator(traitLikelihood, branchRates, gammaPrior);
+            TraitRateGibbsOperator operator = new TraitRateGibbsOperator(traitLikelihood, branchRates, gammaPriorModel, gammaPrior);
             operator.setWeight(weight);
 
             return operator;

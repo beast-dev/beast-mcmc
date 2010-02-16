@@ -73,6 +73,10 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
 
         this.reciprocal = reciprocal;
     }
+
+    public void setBranchRate(Tree tree, NodeRef node, double value) {
+        rates.setNodeValue(tree, node, value);
+    }
    
     public double getBranchRate(Tree tree, NodeRef node) {
         // Branch rates are proportional to time.
@@ -83,6 +87,10 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
             return 1.0 / rate;
         }
         return rate;
+    }
+
+    public boolean usingReciprocal() {
+        return reciprocal;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {

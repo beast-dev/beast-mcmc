@@ -1,9 +1,8 @@
 package dr.evomodelxml;
 
-import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
-import dr.inference.model.Parameter;
+import dr.evomodel.substmodel.NucModelType;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
@@ -25,7 +24,7 @@ public class HKYParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Variable kappaParam = (Variable) xo.getElementFirstChild(KAPPA);
-        FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FrequencyModel.FREQUENCIES);
+        FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
 
         Logger.getLogger("dr.evomodel").info("Creating HKY substitution model. Initial kappa = " +
                 kappaParam.getValue(0));
@@ -51,7 +50,7 @@ public class HKYParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(FrequencyModel.FREQUENCIES,
+            new ElementRule(FrequencyModelParser.FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}),
             new ElementRule(KAPPA,
                     new XMLSyntaxRule[]{new ElementRule(Variable.class)})

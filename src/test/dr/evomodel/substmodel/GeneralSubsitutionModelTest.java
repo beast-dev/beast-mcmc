@@ -9,6 +9,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.GeneralSubstitutionModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -70,7 +71,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
-        Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModel.RATES, 5, 1.0); // dimension="5" value="1.0"
+        Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModelParser.RATES, 5, 1.0); // dimension="5" value="1.0"
         GeneralSubstitutionModel generalSubstitutionModel = new GeneralSubstitutionModel(dataType, freqModel, ratesPara, 4); // relativeTo="5"
 
         //siteModel
@@ -165,8 +166,8 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 0.0640787258170083);
 
-        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModel.RATES + "1"));
-        assertExpectation(GeneralSubstitutionModel.RATES + "1", rateACStats, 0.061071756742081366);
+        TraceCorrelation rateACStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(GeneralSubstitutionModelParser.RATES + "1"));
+        assertExpectation(GeneralSubstitutionModelParser.RATES + "1", rateACStats, 0.061071756742081366);
     }
 
     public static Test suite() {

@@ -40,8 +40,8 @@ public class LinearBiasModelParser extends AbstractXMLObjectParser {
 
         //get FrequencyModel
         FrequencyModel freqModel = null;
-        if(xo.hasChildNamed(FrequencyModel.FREQUENCIES)){
-            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModel.FREQUENCIES);
+        if(xo.hasChildNamed(FrequencyModelParser.FREQUENCIES)){
+            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
         }
 
         boolean estimateSubmodelParams = false;
@@ -83,7 +83,7 @@ public class LinearBiasModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(FrequencyModel.FREQUENCIES, new XMLSyntaxRule[]{
+            new ElementRule(FrequencyModelParser.FREQUENCIES, new XMLSyntaxRule[]{
                     new ElementRule(FrequencyModel.class)},true),
             new ElementRule(SUBMODEL,new XMLSyntaxRule[]{new ElementRule(OnePhaseModel.class)}),
             new ElementRule(Microsatellite.class),

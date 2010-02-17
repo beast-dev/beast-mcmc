@@ -49,7 +49,7 @@ public class MkModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(GeneralSubstitutionModel.FREQUENCIES);
+        XMLObject cxo = xo.getChild(GeneralSubstitutionModelParser.FREQUENCIES);
         FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
         DataType dataType = freqModel.getDataType();
@@ -80,7 +80,7 @@ public class MkModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(GeneralSubstitutionModel.FREQUENCIES, FrequencyModel.class),
+            new ElementRule(GeneralSubstitutionModelParser.FREQUENCIES, FrequencyModel.class),
     };
 
 }

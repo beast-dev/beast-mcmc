@@ -1,6 +1,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
+import dr.evomodelxml.GeneralSubstitutionModelParser;
 import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -151,7 +152,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             Parameter ratesParameter;
             Parameter indicatorParameter;
 
-            XMLObject cxo = xo.getChild(FREQUENCIES);
+            XMLObject cxo = xo.getChild(GeneralSubstitutionModelParser.FREQUENCIES);
             FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
 
             DataType dataType = null;
@@ -171,7 +172,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
             if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
 
-            cxo = xo.getChild(RATES);
+            cxo = xo.getChild(GeneralSubstitutionModelParser.RATES);
 
             ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
@@ -236,8 +237,8 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
                         new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
                         new ElementRule(DataType.class)
                 ),
-                new ElementRule(FREQUENCIES, FrequencyModel.class),
-                new ElementRule(RATES,
+                new ElementRule(GeneralSubstitutionModelParser.FREQUENCIES, FrequencyModel.class),
+                new ElementRule(GeneralSubstitutionModelParser.RATES,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)}
                 ),

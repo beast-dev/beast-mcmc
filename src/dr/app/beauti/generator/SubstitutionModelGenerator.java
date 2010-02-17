@@ -10,9 +10,7 @@ import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
-import dr.evomodelxml.BinaryCovarionModelParser;
-import dr.evomodelxml.BinarySubstitutionModelParser;
-import dr.evomodelxml.HKYParser;
+import dr.evomodelxml.*;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
@@ -55,12 +53,12 @@ public class SubstitutionModelGenerator extends Generator {
                     );
                     writer.writeOpenTag(HKYParser.FREQUENCIES);
                     writer.writeOpenTag(
-                            FrequencyModel.FREQUENCY_MODEL,
+                            FrequencyModelParser.FREQUENCY_MODEL,
                             new Attribute[]{
                                     new Attribute.Default<String>("dataType", dataTypeDescription)
                             }
                     );
-                    writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+                    writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
                     writer.writeTag(
                             ParameterParser.PARAMETER,
                             new Attribute[]{
@@ -69,9 +67,9 @@ public class SubstitutionModelGenerator extends Generator {
                             },
                             true
                     );
-                    writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+                    writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-                    writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+                    writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
                     writer.writeCloseTag(HKYParser.FREQUENCIES);
 
                     writer.writeOpenTag(HKYParser.KAPPA);
@@ -189,8 +187,8 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
-        writeParameter(num, TN93.KAPPA1, "kappa1", model, writer);
-        writeParameter(num, TN93.KAPPA2, "kappa2", model, writer);
+        writeParameter(num, TN93Parser.KAPPA1, "kappa1", model, writer);
+        writeParameter(num, TN93Parser.KAPPA2, "kappa2", model, writer);
         writer.writeCloseTag(NucModelType.TN93.getXMLName());
     }
     /**
@@ -225,7 +223,7 @@ public class SubstitutionModelGenerator extends Generator {
         String dataTypeDescription = model.getDataType().getDescription();
         String prefix = model.getPrefix(num);
         writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
+                FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
@@ -233,7 +231,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writeAlignmentRefInFrequencies(writer, model, prefix);
 
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
             case ALLEQUAL:
             case ESTIMATED:
@@ -264,8 +262,8 @@ public class SubstitutionModelGenerator extends Generator {
                 }                
                 break;
         }
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);        
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
     }
     
     // adding mergePatterns or alignment ref for EMPIRICAL
@@ -299,9 +297,9 @@ public class SubstitutionModelGenerator extends Generator {
                 BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "bsimple")}
         );
-        writer.writeOpenTag(GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
         writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
+                FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
@@ -311,8 +309,8 @@ public class SubstitutionModelGenerator extends Generator {
         
         writeFrequencyModelBinary(writer, model, prefix);
         
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+        writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
         writer.writeCloseTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
     }
@@ -343,11 +341,11 @@ public class SubstitutionModelGenerator extends Generator {
                 patterns.addPatterns(partitions.get(i).getAlignment());
             }
             double[] frequencies = patterns.getStateFrequencies();
-            writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+            writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
                             new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
                             new Attribute.Default<String>(ParameterParser.VALUE, frequencies[0] + " " + frequencies[1]) }, true);
-            writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+            writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         } else {
            writeFrequencyModelBinary(writer, model, prefix);
@@ -364,7 +362,7 @@ public class SubstitutionModelGenerator extends Generator {
     
     // write frequencies for binary data
     private void writeFrequencyModelBinary(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
             case ALLEQUAL:
             case ESTIMATED:                
@@ -378,7 +376,7 @@ public class SubstitutionModelGenerator extends Generator {
                 break;
         }
 //        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
     }
 
     /**

@@ -1,9 +1,10 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
-import dr.xml.*;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.AsymmetricQuadraticModel;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Chieh-Hsi Wu

@@ -26,7 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.GeneralSubstitutionModelParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Parameter;
 

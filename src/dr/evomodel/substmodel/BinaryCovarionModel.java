@@ -1,7 +1,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.evomodelxml.BinaryCovarionModelParser;
+import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
 import dr.inference.model.Parameter;
 
 /**

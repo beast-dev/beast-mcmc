@@ -1,10 +1,10 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
-import dr.evomodelxml.GeneralSubstitutionModelParser;
-import dr.inference.model.*;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.*;
 import dr.xml.*;
 
 /**

@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.HiddenNucleotides;
 import dr.evomodel.substmodel.AbstractCovarionDNAModel;

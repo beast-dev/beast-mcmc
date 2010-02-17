@@ -1,7 +1,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.HiddenNucleotides;
-import dr.evomodelxml.CovarionGTRParser;
+import dr.evomodelxml.substmodel.CovarionGTRParser;
 import dr.inference.model.Parameter;
 
 /**

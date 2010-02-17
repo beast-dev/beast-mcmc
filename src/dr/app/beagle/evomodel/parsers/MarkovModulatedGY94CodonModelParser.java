@@ -1,10 +1,10 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.HiddenCodons;
-import dr.evolution.datatype.GeneticCode;
 import dr.app.beagle.evomodel.substmodel.*;
-import dr.evoxml.DataTypeUtils;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneticCode;
+import dr.evolution.datatype.HiddenCodons;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

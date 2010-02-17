@@ -24,16 +24,15 @@
 package dr.app.SnAPhyl.datapanel;
 
 import dr.app.SnAPhyl.SnAPhylFrame;
-
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.traitspanel.GuessTraitDialog;
 import dr.app.beauti.util.PanelUtils;
-import dr.evolution.util.*;
 import dr.evolution.util.Date;
-import dr.evoxml.DateUnitsType;
+import dr.evolution.util.Units;
+import dr.evoxml.util.DateUnitsType;
 import dr.gui.table.DateCellEditor;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
@@ -47,10 +46,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
-
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.EnumSet;
 
 
 /**

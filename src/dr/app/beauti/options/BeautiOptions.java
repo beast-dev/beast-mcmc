@@ -24,16 +24,16 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.util.BeautiTemplate;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
-import dr.evolution.alignment.Alignment;
-import dr.evoxml.DateUnitsType;
+import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
 import java.util.ArrayList;

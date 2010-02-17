@@ -25,7 +25,7 @@
 
 package dr.evomodel.indel;
 
-import dr.evoxml.XMLUnits;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;

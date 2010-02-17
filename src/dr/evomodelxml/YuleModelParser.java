@@ -27,7 +27,7 @@ package dr.evomodelxml;
 
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evoxml.XMLUnits;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

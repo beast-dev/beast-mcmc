@@ -3,7 +3,7 @@ package dr.evomodelxml.substmodel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evoxml.DataTypeUtils;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

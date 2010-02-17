@@ -27,6 +27,8 @@ package dr.evoxml;
 
 import dr.evolution.util.Date;
 import dr.evolution.util.Units;
+import dr.evoxml.util.DateUnitsType;
+import dr.evoxml.util.XMLUnits;
 import dr.xml.*;
 
 /**

@@ -1,13 +1,13 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.xml.*;
-import dr.evolution.datatype.DataType;
-import dr.evoxml.DataTypeUtils;
-import dr.inference.distribution.LogLinearModel;
-import dr.inference.distribution.GeneralizedLinearModel;
-import dr.app.beagle.evomodel.substmodel.GLMSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GLMSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evolution.datatype.DataType;
+import dr.evoxml.util.DataTypeUtils;
+import dr.inference.distribution.GeneralizedLinearModel;
+import dr.inference.distribution.LogLinearModel;
+import dr.xml.*;
 
 /**
  * @author Marc A. Suchard

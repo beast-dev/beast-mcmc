@@ -4,7 +4,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evoxml.GraphMLUtils;
+import dr.evoxml.util.GraphMLUtils;
 import dr.util.FrequencySet;
 import dr.util.NumberFormatter;
 

@@ -53,7 +53,6 @@ import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
@@ -726,12 +725,12 @@ public class BeastGenerator extends BeautiOptions {
                     );
                     writer.writeOpenTag(HKYParser.FREQUENCIES);
                     writer.writeOpenTag(
-                            FrequencyModel.FREQUENCY_MODEL,
+                            FrequencyModelParser.FREQUENCY_MODEL,
                             new Attribute[]{
                                     new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
                             }
                     );
-                    writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+                    writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
                     writer.writeTag(
                             ParameterParser.PARAMETER,
                             new Attribute[]{
@@ -740,9 +739,9 @@ public class BeastGenerator extends BeautiOptions {
                             },
                             true
                     );
-                    writer.writeCloseTag(FrequencyModel.FREQUENCIES);
+                    writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-                    writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+                    writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
                     writer.writeCloseTag(HKYParser.FREQUENCIES);
 
                     writer.writeOpenTag(HKYParser.KAPPA);
@@ -844,19 +843,19 @@ public class BeastGenerator extends BeautiOptions {
         );
         writer.writeOpenTag(HKYParser.FREQUENCIES);
         writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
+                FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
                 }
         );
         writer.writeTag(AlignmentParser.ALIGNMENT, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         if (frequencyPolicy == ALLEQUAL)
             writeParameter(id + ".frequencies", 4, writer);
         else
             writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
         writer.writeCloseTag(HKYParser.FREQUENCIES);
 
         writer.writeOpenTag(HKYParser.KAPPA);
@@ -884,19 +883,19 @@ public class BeastGenerator extends BeautiOptions {
         );
         writer.writeOpenTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
         writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
+                FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
                 }
         );
         writer.writeTag(AlignmentParser.ALIGNMENT, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         if (frequencyPolicy == ALLEQUAL)
             writeParameter(id + ".frequencies", 4, writer);
         else
             writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
         writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
 
         writer.writeOpenTag(dr.evomodel.substmodel.GTR.A_TO_C);
@@ -935,19 +934,19 @@ public class BeastGenerator extends BeautiOptions {
                 BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
         writer.writeOpenTag(
-                FrequencyModel.FREQUENCY_MODEL,
+                FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>("dataType", alignment.getDataType().getDescription())
                 }
         );
         writer.writeTag(AlignmentParser.ALIGNMENT, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, AlignmentParser.ALIGNMENT)}, true);
-        writer.writeOpenTag(FrequencyModel.FREQUENCIES);
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         writeParameter(id + ".frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModel.FREQUENCIES);
-        writer.writeCloseTag(FrequencyModel.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.GeneralSubstitutionModel.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+        writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
         writer.writeCloseTag(BinarySubstitutionModelParser.BINARY_SUBSTITUTION_MODEL);
     }

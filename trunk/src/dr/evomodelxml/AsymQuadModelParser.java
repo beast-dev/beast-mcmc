@@ -5,8 +5,6 @@ import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
 
-import java.util.logging.Logger;
-
 /**
  * @author Chieh-Hsi Wu
  *
@@ -46,8 +44,8 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
 
         //get FrequencyModel
         FrequencyModel freqModel = null;
-        if(xo.hasChildNamed(FrequencyModel.FREQUENCIES)){
-            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModel.FREQUENCIES);
+        if(xo.hasChildNamed(FrequencyModelParser.FREQUENCIES)){
+            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
         }
 
         boolean isSubmodel = xo.getAttribute(IS_SUBMODEL, false);

@@ -42,8 +42,8 @@ public class TwoPhaseModelParser extends AbstractXMLObjectParser{
         boolean estimateSubmodelParams =  xo.getAttribute(ESTIMATE_SUBMODEL_PARAMS,false);
 
         FrequencyModel freqModel = null;
-        if(xo.hasChildNamed(FrequencyModel.FREQUENCIES)){
-            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModel.FREQUENCIES);
+        if(xo.hasChildNamed(FrequencyModelParser.FREQUENCIES)){
+            freqModel = (FrequencyModel)xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
         }
 
         return new TwoPhaseModel(dataType, freqModel, subModel, paramP, geoParam, limitE, estimateSubmodelParams);
@@ -59,7 +59,7 @@ public class TwoPhaseModelParser extends AbstractXMLObjectParser{
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
         new ElementRule(Microsatellite.class),
-        new ElementRule(FrequencyModel.FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)},true),
+        new ElementRule(FrequencyModelParser.FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)},true),
         new ElementRule(SUBMODEL,new XMLSyntaxRule[]{new ElementRule(OnePhaseModel.class)}),
         new ElementRule(ONEPHASEPR_PARAM,new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
         new ElementRule(GEO_PARAM,new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

@@ -56,6 +56,7 @@ import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.*;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evoxml.*;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
@@ -1041,7 +1042,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (unlinkedSubstitutionModel) {
             switch (nucSubstitutionModel) {
@@ -1073,18 +1074,18 @@ public class BeastGenerator extends BeautiOptions {
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
         }
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (num != -1) {
-            writer.writeOpenTag(GammaSiteModel.RELATIVE_RATE);
+            writer.writeOpenTag(GammaSiteModelParser.RELATIVE_RATE);
             writeParameter(id + ".mu", writer);
-            writer.writeCloseTag(GammaSiteModel.RELATIVE_RATE);
+            writer.writeCloseTag(GammaSiteModelParser.RELATIVE_RATE);
         } else {
 //            The actual mutation rate is now in the BranchRateModel so relativeRate can be missing
         }
 
         if (gammaHetero) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + gammaCategories));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + gammaCategories));
             if (num == -1 || unlinkedHeterogeneityModel) {
                 writeParameter(id + ".alpha", writer);
             } else {
@@ -1095,11 +1096,11 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SiteModel.SITE_MODEL + "." + "alpha"), true);
                 }
             }
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (invarHetero) {
-            writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
             if (num == -1 || unlinkedHeterogeneityModel) {
                 writeParameter(id + ".pInv", writer);
             } else {
@@ -1110,7 +1111,7 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, SiteModel.SITE_MODEL + "." + "pInv"), true);
                 }
             }
-            writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
@@ -1129,7 +1130,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         switch (binarySubstitutionModel) {
             case BIN_SIMPLE:
@@ -1143,18 +1144,18 @@ public class BeastGenerator extends BeautiOptions {
                 throw new IllegalArgumentException("Unknown substitution model.");
         }
 
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (gammaHetero) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + gammaCategories));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + gammaCategories));
             writeParameter(id + ".alpha", writer);
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (invarHetero) {
-            writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
             writeParameter(id + ".pInv", writer);
-            writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
@@ -1173,23 +1174,23 @@ public class BeastGenerator extends BeautiOptions {
                 new Attribute.Default<String>(XMLParser.ID, SiteModel.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         writer.writeTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
                 new Attribute.Default<String>(XMLParser.IDREF, "aa"), true);
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
 //            The actual mutation rate is now in the BranchRateModel so relativeRate can be missing
 
         if (gammaHetero) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + gammaCategories));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + gammaCategories));
             writeParameter(SiteModel.SITE_MODEL + "." + "alpha", writer);
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (invarHetero) {
-            writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
             writeParameter(SiteModel.SITE_MODEL + "." + "pInv", writer);
-            writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);

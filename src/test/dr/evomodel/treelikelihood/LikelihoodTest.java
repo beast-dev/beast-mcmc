@@ -14,6 +14,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.GTRParser;
 import dr.evomodelxml.HKYParser;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import junit.framework.Test;
@@ -116,7 +117,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood
@@ -139,7 +140,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood
@@ -162,7 +163,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood
@@ -184,8 +185,8 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModel.GAMMA_SHAPE, 0.137064, 0, 1000.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.137064, 0, 1000.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(hky, mu, shape, 4, null);
 
@@ -208,8 +209,8 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter invar = new Parameter.Default(GammaSiteModel.PROPORTION_INVARIANT, 0.701211, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.701211, 0, 1.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(hky, mu, null, 4, invar);
 
@@ -232,9 +233,9 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModel.GAMMA_SHAPE, 0.587649, 0, 1000.0);
-        Parameter invar = new Parameter.Default(GammaSiteModel.PROPORTION_INVARIANT, 0.486548, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.587649, 0, 1000.0);
+        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.486548, 0, 1.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(hky, mu, shape, 4, invar);
 
@@ -262,7 +263,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
 
         GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, null, 4, null);
 
@@ -290,8 +291,8 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter invar = new Parameter.Default(GammaSiteModel.PROPORTION_INVARIANT, 0.5, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.5, 0, 1.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, null, 4, invar);
 
@@ -319,8 +320,8 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModel.GAMMA_SHAPE, 0.5, 0, 100.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.5, 0, 100.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, shape, 4, null);
 
@@ -348,9 +349,9 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModel.GAMMA_SHAPE, 0.5, 0, 100.0);
-        Parameter invar = new Parameter.Default(GammaSiteModel.PROPORTION_INVARIANT, 0.5, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.5, 0, 100.0);
+        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.5, 0, 1.0);
 
         GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, shape, 4, invar);
 

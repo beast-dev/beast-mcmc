@@ -28,8 +28,8 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
+import dr.evomodelxml.sitemodel.SampleStateModelParser;
 import dr.inference.model.*;
-import dr.xml.*;
 
 import java.util.Vector;
 
@@ -42,13 +42,8 @@ import java.util.Vector;
  */
 
 public class SampleStateModel extends AbstractModel implements SiteModel {
-
-    public static final String SAMPLE_STATE_MODEL = "sampleStateModel";
-    public static final String MUTATION_RATE = "mutationRate";
-    public static final String PROPORTIONS = "proportions";
     public static final double OMEGA_MAX_VALUE = 100.0;
     public static final double OMEGA_MIN_VALUE = 0.0;
-
 
     /**
      * Constructor
@@ -57,7 +52,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
                             Parameter proportionParameter,
                             Vector substitutionModels) {
 
-        super(SAMPLE_STATE_MODEL);
+        super(SampleStateModelParser.SAMPLE_STATE_MODEL);
 
 
         this.substitutionModels = substitutionModels;
@@ -222,58 +217,7 @@ public class SampleStateModel extends AbstractModel implements SiteModel {
          classSizes[classToAlter].setParameterValue(0,(current+sum));
      }*/
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SAMPLE_STATE_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(MUTATION_RATE);
-            Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(PROPORTIONS);
-            Parameter proportionParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            Vector<Object> subModels = new Vector<Object>();
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                if (xo.getChild(i) instanceof SubstitutionModel) {
-                    subModels.addElement(xo.getChild(i));
-                }
-            }
-
-            return new SampleStateModel(muParam, proportionParameter, subModels);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A SiteModel that has a discrete distribution of substitution models over sites, " +
-                    "designed for sampling of internal states.";
-        }
-
-        public Class getReturnType() {
-            return SampleStateModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MUTATION_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(PROPORTIONS,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE)
-        };
-    };
-
-    private class omegaBounds implements Bounds<Double>  {
+    private class omegaBounds implements Bounds<Double> {
 
         private final Parameter lowerOmega, upperOmega;
 

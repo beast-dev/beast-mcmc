@@ -453,7 +453,6 @@ public class RateIndicatorBF {
         try {
             PrintWriter outFile = new PrintWriter(new FileWriter(outFileName), true);
             //sort expected rateIndicator
-
             if (bayesFactor) {
                 outFile.println("Indicator cutoff (for BF = "+cutoff+") = "+getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible));
             } else {
@@ -464,20 +463,21 @@ public class RateIndicatorBF {
 
             for (int o = 0; o < supportedRateIndicators.length; o++){
 
-
-                outFile.println(
+                outFile.print(
                     "I="+supportedRateIndicators[o]+"\tBF");
 
-                double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible);
+                double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, 0);
                 if (BF == Double.POSITIVE_INFINITY) {
-                     outFile.print(">"+(1-(1/generationCount)));
+                     outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount));
                 }  else {
                      outFile.print("="+BF);
                 }                            
                 outFile.print(": between "+supportedLocations[o][0]+" (long: "+supportedLongitudes[o][0]+"; lat: "+ supportedLatitudes[o][0]+")" +
                             " and "+ supportedLocations[o][1]+" (long: "+supportedLongitudes[o][1]+"; lat: "+ supportedLatitudes[o][1]+")"
                 );
+                outFile.print("\r");
             }
+            outFile.close();
         } catch(IOException io) {
            System.err.print("Error writing to file: " + outFileName);
         }
@@ -504,7 +504,7 @@ public class RateIndicatorBF {
     private String geoSiteModelString;
     private int generationCount;
 
-    private static double getBayesFactor(double meanIndicator, double meanPoissonPrior, int numberOfLocations, int offset, boolean nonreversible) {
+    private static double getBayesFactor(double meanIndicator, double meanPoissonPrior, int numberOfLocations, int offset, boolean nonreversible, double generations) {
 
         double bayesFactor = 0;
         double priorProbabilityDenominator = 0;
@@ -516,7 +516,12 @@ public class RateIndicatorBF {
 
         double priorOdds = priorProbability/(1.0 - priorProbability);
         double posteriorProbability = meanIndicator;
-        double posteriorOdds =  posteriorProbability/(1 - posteriorProbability);
+        double posteriorOdds;
+        if (generations > 0) {
+            posteriorOdds =  (posteriorProbability - (1/generations))/(1 - (posteriorProbability - (1/generations)));
+        }  else {
+            posteriorOdds =  posteriorProbability/(1 - posteriorProbability);
+        }
         bayesFactor = posteriorOdds/priorOdds;
 
         return bayesFactor;

@@ -7,9 +7,6 @@ import dr.xml.*;
  */
 public class DuplicatedParameter extends Parameter.Abstract implements VariableListener {
 
-    public static final String DUPLICATED_PARAMETER = "duplicatedParameter";
-    public static final String COPIES = "copies";
-
     public DuplicatedParameter(Parameter parameter) {
         this.parameter = parameter;
         parameter.addVariableListener(this);
@@ -106,45 +103,6 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
         // Values have changed, so notify listeners
         fireParameterChangedEvent();
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            XMLObject cxo = xo.getChild(COPIES);
-            Parameter dup = (Parameter) cxo.getChild(Parameter.class);
-
-            DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter);
-            duplicatedParameter.addDuplicationParameter(dup);
-
-            return duplicatedParameter;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(Parameter.class),
-                new ElementRule(COPIES,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-        };
-
-        public String getParserDescription() {
-            return "A duplicated parameter.";
-        }
-
-        public Class getReturnType() {
-            return Parameter.class;
-        }
-
-        public String getParserName() {
-            return DUPLICATED_PARAMETER;
-        }
-    };
 
     private final Parameter parameter;
     private Parameter dupParameter;

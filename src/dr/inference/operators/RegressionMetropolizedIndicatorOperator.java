@@ -3,11 +3,10 @@ package dr.inference.operators;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
-import dr.math.distributions.MultivariateNormalDistribution;
+import dr.inferencexml.MaskedParameterParser;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
 
 /**
@@ -107,7 +106,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
             XMLObject cxo = (XMLObject) xo.getChild(GeneralizedLinearModel.INDICATOR);
             Parameter indicators = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = (XMLObject) xo.getChild(MaskedParameter.MASKING);
+            cxo = (XMLObject) xo.getChild(MaskedParameterParser.MASKING);
             Parameter mask = null;
             if (cxo != null) {
                 mask = (Parameter) cxo.getChild(Parameter.class);
@@ -146,7 +145,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }),
-                new ElementRule(MaskedParameter.MASKING,
+                new ElementRule(MaskedParameterParser.MASKING,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }, true)

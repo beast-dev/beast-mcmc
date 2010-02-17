@@ -16,6 +16,7 @@ import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodel.treelikelihood.TipPartialsModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -76,7 +77,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteModel.setMutationRateParameter(mu);
 
         // SequenceErrorModel

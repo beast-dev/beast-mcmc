@@ -28,8 +28,8 @@ package dr.evomodel.sitemodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.YangCodonModel;
+import dr.evomodelxml.sitemodel.SampleStateAndCategoryModelParser;
 import dr.inference.model.*;
-import dr.xml.*;
 
 import java.util.Vector;
 
@@ -41,12 +41,8 @@ import java.util.Vector;
  * @author Roald Forsberg
  */
 
-public class SampleStateAndCategoryModel extends AbstractModel
-        implements SiteModel, CategorySampleModel {
+public class SampleStateAndCategoryModel extends AbstractModel implements SiteModel, CategorySampleModel {
 
-    public static final String SAMPLE_STATE_AND_CATEGORY_MODEL = "sampleStateAndCategoryModel";
-    public static final String MUTATION_RATE = "mutationRate";
-    public static final String CATEGORY_PARAMETER = "categoriesParameter";
     public static final double OMEGA_MAX_VALUE = 100.0;
     public static final double OMEGA_MIN_VALUE = 0.0;
 
@@ -58,7 +54,7 @@ public class SampleStateAndCategoryModel extends AbstractModel
                                        Parameter categoriesParameter,
                                        Vector substitutionModels) {
 
-        super(SAMPLE_STATE_AND_CATEGORY_MODEL);
+        super(SampleStateAndCategoryModelParser.SAMPLE_STATE_AND_CATEGORY_MODEL);
 
 
         this.substitutionModels = substitutionModels;
@@ -246,58 +242,6 @@ public class SampleStateAndCategoryModel extends AbstractModel
 
         return s.toString();
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        public String getParserName() {
-            return SAMPLE_STATE_AND_CATEGORY_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(MUTATION_RATE);
-            Parameter muParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(CATEGORY_PARAMETER);
-            Parameter catParam = (Parameter) cxo.getChild(Parameter.class);
-
-            Vector subModels = new Vector();
-            for (int i = 0; i < xo.getChildCount(); i++) {
-
-                if (xo.getChild(i) instanceof SubstitutionModel) {
-                    subModels.addElement(xo.getChild(i));
-                }
-
-            }
-
-            return new SampleStateAndCategoryModel(muParam, catParam, subModels);
-
-        }
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A SiteModel that has a discrete distribution of substitution models over sites, " +
-                    "designed for sampling of rate categories and internal states.";
-        }
-
-        public Class getReturnType() {
-            return SampleStateAndCategoryModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MUTATION_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(CATEGORY_PARAMETER,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE)
-        };
-
-    };
 
     private class omegaBounds implements Bounds<Double> {
 

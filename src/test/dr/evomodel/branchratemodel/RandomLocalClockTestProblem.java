@@ -16,6 +16,7 @@ import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -90,7 +91,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 
         //siteModel
         GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModel.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteModel.setMutationRateParameter(mu);
 
         //treeLikelihood

@@ -25,7 +25,7 @@ public class CovarionHKYParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return CovarionHKY.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

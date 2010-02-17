@@ -47,7 +47,7 @@ public class BinarySubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return GeneralSubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

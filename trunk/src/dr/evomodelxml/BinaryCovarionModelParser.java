@@ -59,7 +59,7 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TwoStateCovarionModel.class;
+        return BinaryCovarionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

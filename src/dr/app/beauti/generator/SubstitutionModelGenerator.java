@@ -120,7 +120,7 @@ public class SubstitutionModelGenerator extends Generator {
 
                 writer.writeComment("The " + aaModel + " substitution model");
                 writer.writeTag(
-                        EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
+                        EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
                         new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "aa"),
                                 new Attribute.Default<String>("type", aaModel)}, true
                 );
@@ -203,19 +203,19 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix(num);
 
         writer.writeComment("The general time reversible (GTR) substitution model");
-        writer.writeOpenTag(GTR.GTR_MODEL,
+        writer.writeOpenTag(GTRParser.GTR_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + "gtr")}
         );
-        writer.writeOpenTag(GTR.FREQUENCIES);
+        writer.writeOpenTag(GTRParser.FREQUENCIES);
         writeFrequencyModelDNA(writer, model, num);
-        writer.writeCloseTag(GTR.FREQUENCIES);
+        writer.writeCloseTag(GTRParser.FREQUENCIES);
 
-        writeParameter(num, GTR.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
-        writeParameter(num, GTR.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
-        writeParameter(num, GTR.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
-        writeParameter(num, GTR.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
-        writeParameter(num, GTR.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
-        writer.writeCloseTag(GTR.GTR_MODEL);
+        writeParameter(num, GTRParser.A_TO_C, PartitionSubstitutionModel.GTR_RATE_NAMES[0], model, writer);
+        writeParameter(num, GTRParser.A_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[1], model, writer);
+        writeParameter(num, GTRParser.A_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[2], model, writer);
+        writeParameter(num, GTRParser.C_TO_G, PartitionSubstitutionModel.GTR_RATE_NAMES[3], model, writer);
+        writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
+        writer.writeCloseTag(GTRParser.GTR_MODEL);
     }
     
     // write frequencies for DNA data
@@ -585,7 +585,7 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "hky");
                     break;
                 case GTR:
-                    writer.writeIDref(GTR.GTR_MODEL, prefix + "gtr");
+                    writer.writeIDref(GTRParser.GTR_MODEL, prefix + "gtr");
                     break;
                 case TN93:
                     writer.writeIDref(NucModelType.TN93.getXMLName(), prefix + "tn93");
@@ -604,7 +604,7 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(NucModelType.HKY.getXMLName(), prefix2 + "hky");
                     break;
                 case GTR:
-                    writer.writeIDref(GTR.GTR_MODEL, prefix2 + "gtr");
+                    writer.writeIDref(GTRParser.GTR_MODEL, prefix2 + "gtr");
                     break;
                 case TN93:
                     writer.writeIDref(NucModelType.TN93.getXMLName(), prefix2 + "tn93");
@@ -723,7 +723,7 @@ public class SubstitutionModelGenerator extends Generator {
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
-        writer.writeIDref(EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
+        writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 
         if (model.hasCodon()) {

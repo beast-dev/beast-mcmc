@@ -12,6 +12,7 @@ import dr.evomodel.substmodel.GTR;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.GTRParser;
 import dr.evomodelxml.HKYParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -252,12 +253,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
-        Variable<Double> rateACValue = new Parameter.Default(GTR.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateAGValue = new Parameter.Default(GTR.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateATValue = new Parameter.Default(GTR.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCGValue = new Parameter.Default(GTR.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCTValue = new Parameter.Default(GTR.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateGTValue = new Parameter.Default(GTR.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateACValue = new Parameter.Default(GTRParser.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateAGValue = new Parameter.Default(GTRParser.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateATValue = new Parameter.Default(GTRParser.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCGValue = new Parameter.Default(GTRParser.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCTValue = new Parameter.Default(GTRParser.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateGTValue = new Parameter.Default(GTRParser.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
@@ -280,12 +281,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
-        Variable<Double> rateACValue = new Parameter.Default(GTR.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateAGValue = new Parameter.Default(GTR.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateATValue = new Parameter.Default(GTR.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCGValue = new Parameter.Default(GTR.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCTValue = new Parameter.Default(GTR.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateGTValue = new Parameter.Default(GTR.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateACValue = new Parameter.Default(GTRParser.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateAGValue = new Parameter.Default(GTRParser.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateATValue = new Parameter.Default(GTRParser.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCGValue = new Parameter.Default(GTRParser.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCTValue = new Parameter.Default(GTRParser.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateGTValue = new Parameter.Default(GTRParser.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
@@ -309,12 +310,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
-        Variable<Double> rateACValue = new Parameter.Default(GTR.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateAGValue = new Parameter.Default(GTR.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateATValue = new Parameter.Default(GTR.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCGValue = new Parameter.Default(GTR.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCTValue = new Parameter.Default(GTR.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateGTValue = new Parameter.Default(GTR.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateACValue = new Parameter.Default(GTRParser.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateAGValue = new Parameter.Default(GTRParser.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateATValue = new Parameter.Default(GTRParser.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCGValue = new Parameter.Default(GTRParser.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCTValue = new Parameter.Default(GTRParser.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateGTValue = new Parameter.Default(GTRParser.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
@@ -338,12 +339,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
-        Variable<Double> rateACValue = new Parameter.Default(GTR.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateAGValue = new Parameter.Default(GTR.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateATValue = new Parameter.Default(GTR.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCGValue = new Parameter.Default(GTR.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateCTValue = new Parameter.Default(GTR.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
-        Variable<Double> rateGTValue = new Parameter.Default(GTR.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateACValue = new Parameter.Default(GTRParser.A_TO_C, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateAGValue = new Parameter.Default(GTRParser.A_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateATValue = new Parameter.Default(GTRParser.A_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCGValue = new Parameter.Default(GTRParser.C_TO_G, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateCTValue = new Parameter.Default(GTRParser.C_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
+        Variable<Double> rateGTValue = new Parameter.Default(GTRParser.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel

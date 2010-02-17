@@ -29,7 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.evomodelxml.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
 

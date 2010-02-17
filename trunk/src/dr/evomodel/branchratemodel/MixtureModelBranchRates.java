@@ -1,14 +1,12 @@
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.evomodelxml.MixtureModelBranchRatesParser;
+import dr.evomodelxml.branchratemodel.MixtureModelBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inference.distribution.InverseGaussianDistributionModel;
 import dr.inference.model.*;
 
 /**

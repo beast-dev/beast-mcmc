@@ -30,13 +30,13 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.DiscretizedBranchRatesParser;
 import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.CompoundParameter;
@@ -236,7 +236,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        new Attribute.Default<String>("logspace", "true"),
 	                };
 	
-	                writer.writeOpenTag(ACLikelihood.AC_LIKELIHOOD, attributes);
+	                writer.writeOpenTag(ACLikelihoodParser.AC_LIKELIHOOD, attributes);
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 	
 	                if (!model.isEstimatedRate()) { //TODO move to options or panel select method
@@ -270,7 +270,7 @@ public class BranchRatesModelGenerator extends Generator {
 	//                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
 	                writeParameter("variance", "branchRates.var", clockTree, writer);
 	
-	                writer.writeCloseTag(ACLikelihood.AC_LIKELIHOOD);
+	                writer.writeCloseTag(ACLikelihoodParser.AC_LIKELIHOOD);
 	                
 	                if (model.isEstimatedRate()) {//TODO
 		              	writer.writeText("");
@@ -296,7 +296,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
@@ -311,7 +311,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
@@ -323,7 +323,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
                 }
                 

@@ -31,6 +31,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
+import dr.evoxml.util.XMLUnits;
 import dr.xml.*;
 
 import java.io.IOException;

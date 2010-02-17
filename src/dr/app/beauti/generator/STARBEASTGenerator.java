@@ -47,7 +47,7 @@ import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
-import dr.evoxml.XMLUnits;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;

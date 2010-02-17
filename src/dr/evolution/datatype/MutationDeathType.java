@@ -1,6 +1,6 @@
 package dr.evolution.datatype;
 
-import dr.evoxml.DataTypeUtils;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
 import java.util.logging.Logger;

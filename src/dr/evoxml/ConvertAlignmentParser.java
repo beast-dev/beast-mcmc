@@ -28,6 +28,7 @@ package dr.evoxml;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.*;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
 import java.util.logging.Logger;

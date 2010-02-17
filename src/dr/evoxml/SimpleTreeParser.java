@@ -31,6 +31,7 @@ import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
+import dr.evoxml.util.XMLUnits;
 import dr.xml.*;
 
 /**

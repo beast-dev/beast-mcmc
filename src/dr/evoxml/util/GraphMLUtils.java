@@ -1,4 +1,4 @@
-package dr.evoxml;
+package dr.evoxml.util;
 
 import dr.evomodel.arg.ARGModel;
 import org.jdom.Attribute;

@@ -29,7 +29,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.PiecewiseConstantPopulation;
 import dr.evolution.coalescent.PiecewiseExponentialPopulation;
 import dr.evolution.coalescent.PiecewiseLinearPopulation;
-import dr.evoxml.XMLUnits;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;

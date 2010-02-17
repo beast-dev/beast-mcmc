@@ -1,14 +1,14 @@
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.evolution.datatype.DataType;
-import dr.evolution.alignment.PatternList;
-import dr.evoxml.DataTypeUtils;
 
-import java.util.logging.Logger;
 import java.text.NumberFormat;
+import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond

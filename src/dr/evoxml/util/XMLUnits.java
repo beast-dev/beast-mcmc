@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evoxml;
+package dr.evoxml.util;
 
 import dr.evolution.util.Units;
 import dr.xml.StringAttributeRule;

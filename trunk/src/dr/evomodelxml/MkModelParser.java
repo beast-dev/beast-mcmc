@@ -72,7 +72,7 @@ public class MkModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return GeneralSubstitutionModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

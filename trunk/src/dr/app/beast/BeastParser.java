@@ -141,6 +141,8 @@ public class BeastParser extends XMLParser {
         String line = reader.readLine();
 
         while (line != null) {
+            if (verbose && line.trim().startsWith("#")) System.out.println(line);
+
             if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
                 try {
                     if (line.contains("Vector")) {

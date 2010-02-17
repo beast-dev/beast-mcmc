@@ -52,7 +52,6 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
@@ -801,7 +800,7 @@ public class BeastGenerator extends BeautiOptions {
 
                 writer.writeComment("The " + aaModel + " substitution model");
                 writer.writeTag(
-                        EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
+                        EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
                         new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "aa"),
                                 new Attribute.Default<String>("type", aaModel)}, true
                 );
@@ -878,10 +877,10 @@ public class BeastGenerator extends BeautiOptions {
 
         writer.writeComment("The general time reversible (GTR) substitution model");
         writer.writeOpenTag(
-                dr.evomodel.substmodel.GTR.GTR_MODEL,
+                GTRParser.GTR_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)}
         );
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+        writer.writeOpenTag(GTRParser.FREQUENCIES);
         writer.writeOpenTag(
                 FrequencyModelParser.FREQUENCY_MODEL,
                 new Attribute[]{
@@ -896,28 +895,28 @@ public class BeastGenerator extends BeautiOptions {
             writeParameter(id + ".frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.FREQUENCIES);
+        writer.writeCloseTag(GTRParser.FREQUENCIES);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.A_TO_C);
+        writer.writeOpenTag(GTRParser.A_TO_C);
         writeParameter(id + ".ac", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.A_TO_C);
+        writer.writeCloseTag(GTRParser.A_TO_C);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.A_TO_G);
+        writer.writeOpenTag(GTRParser.A_TO_G);
         writeParameter(id + ".ag", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.A_TO_G);
+        writer.writeCloseTag(GTRParser.A_TO_G);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.A_TO_T);
+        writer.writeOpenTag(GTRParser.A_TO_T);
         writeParameter(id + ".at", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.A_TO_T);
+        writer.writeCloseTag(GTRParser.A_TO_T);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.C_TO_G);
+        writer.writeOpenTag(GTRParser.C_TO_G);
         writeParameter(id + ".cg", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.C_TO_G);
+        writer.writeCloseTag(GTRParser.C_TO_G);
 
-        writer.writeOpenTag(dr.evomodel.substmodel.GTR.G_TO_T);
+        writer.writeOpenTag(GTRParser.G_TO_T);
         writeParameter(id + ".gt", writer);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.G_TO_T);
-        writer.writeCloseTag(dr.evomodel.substmodel.GTR.GTR_MODEL);
+        writer.writeCloseTag(GTRParser.G_TO_T);
+        writer.writeCloseTag(GTRParser.GTR_MODEL);
     }
 
 
@@ -1054,7 +1053,7 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default<String>(XMLParser.IDREF, "hky" + num), true);
                     break;
                 case GTR:
-                    writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "gtr" + num), true);
+                    writer.writeTag(GTRParser.GTR_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "gtr" + num), true);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
@@ -1068,7 +1067,7 @@ public class BeastGenerator extends BeautiOptions {
                     writer.writeTag(NucModelType.HKY.getXMLName(), new Attribute.Default<String>(XMLParser.IDREF, "hky"), true);
                     break;
                 case GTR:
-                    writer.writeTag(dr.evomodel.substmodel.GTR.GTR_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "gtr"), true);
+                    writer.writeTag(GTRParser.GTR_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "gtr"), true);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
@@ -1175,7 +1174,7 @@ public class BeastGenerator extends BeautiOptions {
 
 
         writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
-        writer.writeTag(EmpiricalAminoAcidModel.EMPIRICAL_AMINO_ACID_MODEL,
+        writer.writeTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
                 new Attribute.Default<String>(XMLParser.IDREF, "aa"), true);
         writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
 

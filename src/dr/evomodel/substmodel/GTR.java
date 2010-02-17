@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodelxml.GTRParser;
+import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 

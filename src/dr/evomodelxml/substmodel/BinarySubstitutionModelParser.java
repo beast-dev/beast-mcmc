@@ -1,10 +1,9 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStates;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

@@ -26,7 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.HiddenNucleotides;
-import dr.evomodelxml.CovarionHKYParser;
+import dr.evomodelxml.substmodel.CovarionHKYParser;
 import dr.inference.model.Parameter;
 
 /**

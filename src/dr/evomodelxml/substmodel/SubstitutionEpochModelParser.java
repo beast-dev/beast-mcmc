@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;

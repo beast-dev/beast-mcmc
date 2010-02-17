@@ -26,9 +26,8 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.evomodelxml.TwoStateCovarionModelParser;
+import dr.evomodelxml.substmodel.TwoStateCovarionModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * @author Helen Shearman

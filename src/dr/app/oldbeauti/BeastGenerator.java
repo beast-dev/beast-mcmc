@@ -57,6 +57,7 @@ import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.*;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
+import dr.evomodelxml.substmodel.*;
 import dr.evoxml.*;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;

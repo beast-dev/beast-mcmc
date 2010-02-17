@@ -1,10 +1,9 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.HiddenNucleotides;
 import dr.evomodel.substmodel.AbstractCovarionDNAModel;
 import dr.evomodel.substmodel.CovarionHKY;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

@@ -25,8 +25,10 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.*;
-import dr.evomodelxml.YangCodonModelParser;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.Nucleotides;
+import dr.evomodelxml.substmodel.YangCodonModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 

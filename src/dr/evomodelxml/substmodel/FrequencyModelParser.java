@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;

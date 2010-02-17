@@ -27,15 +27,13 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.branchratemodel.TraitBranchRateModelParser;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * Takes the log rates at each node provided by a specified rate and give the branch rate as the average.
@@ -45,13 +43,6 @@ import java.util.logging.Logger;
  */
 public class TraitBranchRateModel extends AbstractModel implements BranchRateModel {
 
-
-    public static final String TRAIT_BRANCH_RATES = "traitBranchRates";
-    public static final String TRAIT = "trait";
-    public static final String DIMENSION = "dimension";
-    public static final String RATE = "rate";
-    public static final String RATIO = "ratio";
-
     private final String trait;
     private final int dimension;
     private final Parameter rateParameter;
@@ -59,7 +50,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     private SampledMultivariateTraitLikelihood traitLikelihood;
 
     public TraitBranchRateModel(SampledMultivariateTraitLikelihood traitLikelihood, int dimension) {
-        super(TRAIT_BRANCH_RATES);
+        super(TraitBranchRateModelParser.TRAIT_BRANCH_RATES);
 
         this.traitLikelihood = traitLikelihood;
         this.trait = traitLikelihood.getTraitName();
@@ -71,7 +62,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     }
 
     public TraitBranchRateModel(String trait, Parameter rateParameter, Parameter ratioParameter) {
-        super(TRAIT_BRANCH_RATES);
+        super(TraitBranchRateModelParser.TRAIT_BRANCH_RATES);
 
         this.trait = trait;
         dimension = 0;
@@ -151,71 +142,11 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     }
 
     public String getBranchAttributeLabel() {
-        return "rate";
+        return RATE;
     }
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
         return Double.toString(getBranchRate(tree, node));
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TRAIT_BRANCH_RATES;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String trait = xo.getAttribute(TRAIT, "");
-            int dimension = 0;
-            if (xo.hasAttribute(DIMENSION)) {
-                dimension = xo.getIntegerAttribute(DIMENSION) - 1;
-            }
-
-            SampledMultivariateTraitLikelihood traitLikelihood = (SampledMultivariateTraitLikelihood)
-                        xo.getChild(SampledMultivariateTraitLikelihood.class);
-            if (traitLikelihood != null)
-                trait = traitLikelihood.getTraitName();
-
-            Logger.getLogger("dr.evomodel").info("Using trait '" + trait + "' as log rate estimates.");
-
-            if (xo.hasChildNamed(RATE)) {
-                Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
-                Parameter ratioParameter = (Parameter) xo.getElementFirstChild(RATIO);
-
-                return new TraitBranchRateModel(trait, rateParameter, ratioParameter);
-            } else {
-
-                return new TraitBranchRateModel(traitLikelihood, dimension);
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                    "This element returns an trait rate model." +
-                            "The branch rates are an average of the rates provided by a node trait.";
-        }
-
-        public Class getReturnType() {
-            return TraitBranchRateModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-//                AttributeRule.newStringRule(TRAIT, false, "The name of the trait that provides the log rates at nodes"),
-                AttributeRule.newIntegerRule(DIMENSION, true, "The dimension that supplies the rate"),
-                new ElementRule(RATE, Parameter.class, "The rate parameter", true),
-                new ElementRule(RATIO, Parameter.class, "The ratio parameter", true),
-                new ElementRule(SampledMultivariateTraitLikelihood.class,true),
-        };
-    };
-
 
 }

@@ -32,12 +32,12 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodelxml.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
@@ -137,7 +137,7 @@ public class TreeLikelihoodGenerator extends Generator {
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-            	writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
 
@@ -170,7 +170,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
             PartitionClockModel clockModel = partition.getPartitionClockModel();
             if (clockModel.getClockType() == ClockType.AUTOCORRELATED_LOGNORMAL) {
-                writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
+                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
             }
         }
     }

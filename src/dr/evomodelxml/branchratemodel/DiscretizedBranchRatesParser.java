@@ -1,6 +1,6 @@
-package dr.evomodelxml;
+package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.RandomDiscretizedBranchRates;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
@@ -9,43 +9,45 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * @author Wai Lok Sibon Li
+ * @author Alexei Drummond
  */
-public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser {
+public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
 
-    public static final String RANDOM_DISCRETIZED_BRANCH_RATES = "randomDiscretizedBranchRates";
+    public static final String DISCRETIZED_BRANCH_RATES = "discretizedBranchRates";
     public static final String DISTRIBUTION = "distribution";
-    //public static final String RATE_CATEGORIES = "rateCategories";
-    public static final String RATE_CATEGORY_QUANTILES = "rateCategoryQuantiles";
+    public static final String RATE_CATEGORIES = "rateCategories";
     public static final String SINGLE_ROOT_RATE = "singleRootRate";
-    //public static final String OVERSAMPLING = "overSampling";
+    public static final String OVERSAMPLING = "overSampling";
     public static final String NORMALIZE = "normalize";
     public static final String NORMALIZE_BRANCH_RATE_TO = "normalizeBranchRateTo";
     //public static final String NORMALIZED_MEAN = "normalizedMean";
 
 
     public String getParserName() {
-        return RANDOM_DISCRETIZED_BRANCH_RATES;
+        return DISCRETIZED_BRANCH_RATES;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        //final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
+        final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
+
+        //final boolean normalize = xo.getBooleanAttribute(NORMALIZE, false);
         final boolean normalize = xo.getAttribute(NORMALIZE, false);
+        /*if(xo.hasAttribute(NORMALIZE))
+            normalize = xo.getBooleanAttribute(NORMALIZE);
+        }*/
+        //final double normalizeBranchRateTo = xo.getDoubleAttribute(NORMALIZE_BRANCH_RATE_TO);
         final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
 
-        //Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
+        Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
 
-        Parameter rateCategoryQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORY_QUANTILES);
-
-        Logger.getLogger("dr.evomodel").info("Using random discretized relaxed clock model.");
-        //Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
+        Logger.getLogger("dr.evomodel").info("Using discretized relaxed clock model.");
+        Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
         Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
-        //Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryQuantilesParameter.getDimension());
+        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
         if(normalize) {
             Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
         }
@@ -59,7 +61,7 @@ public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser 
             dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
         }*/
 
-        return new RandomDiscretizedBranchRates(tree, /*rateCategoryParameter, */rateCategoryQuantilesParameter, distributionModel, /*overSampling,*/ normalize, normalizeBranchRateTo);
+        return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling, normalize, normalizeBranchRateTo);
     }
 
     //************************************************************************
@@ -68,12 +70,12 @@ public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser 
 
     public String getParserDescription() {
         return
-                "This element returns a random discretized relaxed clock model." +
-                        "The branch rates are drawn from a continuous parametric distribution.";
+                "This element returns an discretized relaxed clock model." +
+                        "The branch rates are drawn from a discretized parametric distribution.";
     }
 
     public Class getReturnType() {
-        return RandomDiscretizedBranchRates.class;
+        return DiscretizedBranchRates.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -83,12 +85,12 @@ public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(SINGLE_ROOT_RATE, true, "Whether only a single rate should be used for the two children branches of the root"),
             //AttributeRule.newDoubleRule(NORMALIZED_MEAN, true, "The mean rate to constrain branch rates to once branch lengths are taken into account"),
-            //AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
+            AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
             AttributeRule.newBooleanRule(NORMALIZE, true, "Whether the mean rate has to be normalized to a particular value"),
             AttributeRule.newDoubleRule(NORMALIZE_BRANCH_RATE_TO, true, "The mean rate to normalize to, if normalizing"),
+            AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
             new ElementRule(TreeModel.class),
             new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
-            /*new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),      */
-            new ElementRule(RATE_CATEGORY_QUANTILES, Parameter.class, "The quantiles for", false),
+            new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),
     };
 }

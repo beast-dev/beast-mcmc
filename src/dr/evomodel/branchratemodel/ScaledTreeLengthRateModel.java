@@ -28,13 +28,11 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.branchratemodel.ScaledTreeLengthRateModelParser;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * Package: ScaledTreeLengthRateModel
@@ -47,14 +45,15 @@ import java.util.logging.Logger;
  * Time: 3:58:43 PM
  */
 public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRateModel {
+
     private Parameter totalLength;
     protected Tree treeModel;
     private double storedRateFactor;
     private boolean currentFactorKnown;
     private double rateFactor;
 
-    ScaledTreeLengthRateModel(TreeModel treeModel, Parameter totalLength) {
-        super("ScaledTreeLengthRateModel");
+    public ScaledTreeLengthRateModel(TreeModel treeModel, Parameter totalLength) {
+        super(ScaledTreeLengthRateModelParser.MODEL_NAME);
         this.totalLength = totalLength;
         this.treeModel = treeModel;
         currentFactorKnown = false;
@@ -132,55 +131,11 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
     }
 
     public String getBranchAttributeLabel() {
-        return "rate";
+        return RATE;
     }
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
         return Double.toString(getBranchRate(tree, node));
     }
 
-    public static final String MODEL_NAME = "scaledTreeLengthModel";
-    public static final String SCALING_FACTOR = "scalingFactor";
-    //************************************************************************
-    // AbstractXMLObjectParser implementation
-    //************************************************************************
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return MODEL_NAME;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            Parameter totalLength = (Parameter) xo.getElementFirstChild(SCALING_FACTOR);
-            if (totalLength == null) {
-                totalLength = new Parameter.Default(1, 1.0);
-            }
-            Logger.getLogger("dr.evomodel.branchratemodel").info("\n ---------------------------------\nCreating ScaledTreeLengthRateModel model.");
-            Logger.getLogger("dr.evomodel.branchratemodel").info("\tTotal tree length will be scaled to " + totalLength.getParameterValue(0) + ".");
-            Logger.getLogger("dr.evomodel.branchratemodel").info("\tIf you publish results using this rate model, please reference Alekseyenko, Lee and Suchard (in submision).\n---------------------------------\n");
-
-            return new ScaledTreeLengthRateModel(tree, totalLength);
-        }
-
-        public String getParserDescription() {
-            return
-                    "This element returns a branch rate model that scales the total length of the tree to specified valued (default=1.0).";
-        }
-
-        public Class getReturnType() {
-            return ScaledTreeLengthRateModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(SCALING_FACTOR,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-                new ElementRule(TreeModel.class)
-        };
-    };
 }

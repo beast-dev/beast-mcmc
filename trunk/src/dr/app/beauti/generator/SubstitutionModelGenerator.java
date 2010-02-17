@@ -1,21 +1,24 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.XMLWriter;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.alignment.Patterns;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.NucModelType;
 import dr.evomodelxml.*;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
-import dr.inference.model.ParameterParser;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -572,7 +575,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (model.isUnlinkedSubstitutionModel()) {
             switch (model.getNucSubstitutionModel()) {
@@ -614,15 +617,15 @@ public class SubstitutionModelGenerator extends Generator {
             }  
         }
                   
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         
         if (model.hasCodon()) {
-            writeParameter(num, GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(num, GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }              
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE, new Attribute.Default<String>(
-                    GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(
+                    GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "alpha", model, writer);
             	writeParameter(num, "alpha", model, writer);
@@ -635,11 +638,11 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "alpha");                	
                 }
             }
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writer.writeOpenTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "pInv", model, writer);
             	writeParameter(num, "pInv", model, writer);
@@ -652,7 +655,7 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "pInv");
                 }
             }
-            writer.writeCloseTag(GammaSiteModel.PROPORTION_INVARIANT);
+            writer.writeCloseTag(GammaSiteModelParser.PROPORTION_INVARIANT);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
@@ -673,7 +676,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         switch (model.getBinarySubstitutionModel()) {
             case BIN_SIMPLE:
@@ -687,21 +690,21 @@ public class SubstitutionModelGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown substitution model.");
         }
 
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (model.hasCodon()) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             writeParameter(prefix + "alpha", model, writer);
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, "pInv", model, writer);
+            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
@@ -722,25 +725,25 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
 
-        writer.writeOpenTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
-        writer.writeCloseTag(GammaSiteModel.SUBSTITUTION_MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         if (model.hasCodon()) {
-            writeParameter(GammaSiteModel.RELATIVE_RATE, "mu", model, writer);
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
 
         if (model.isGammaHetero()) {
-            writer.writeOpenTag(GammaSiteModel.GAMMA_SHAPE,
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
                     new Attribute.Default<String>(
-                            GammaSiteModel.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+                            GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             writeParameter("alpha", model, writer);
-            writer.writeCloseTag(GammaSiteModel.GAMMA_SHAPE);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }
 
         if (model.isInvarHetero()) {
-            writeParameter(GammaSiteModel.PROPORTION_INVARIANT, "pInv", model, writer);
+            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);

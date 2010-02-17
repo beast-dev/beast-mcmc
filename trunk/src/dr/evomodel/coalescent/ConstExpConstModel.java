@@ -27,7 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.ConstExpConst;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evoxml.XMLUnits;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

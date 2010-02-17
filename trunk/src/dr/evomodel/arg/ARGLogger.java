@@ -1,6 +1,6 @@
 package dr.evomodel.arg;
 
-import dr.evoxml.GraphMLUtils;
+import dr.evoxml.util.GraphMLUtils;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.MLLogger;

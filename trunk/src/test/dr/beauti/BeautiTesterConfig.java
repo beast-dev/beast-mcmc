@@ -25,12 +25,11 @@
 
 package test.dr.beauti;
 
-import dr.app.beauti.util.NexusApplicationImporter;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
-import dr.evoxml.DateUnitsType;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.NexusApplicationImporter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.AminoAcids;
@@ -39,6 +38,9 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
+import dr.evomodel.substmodel.AminoAcidModelType;
+import dr.evomodel.substmodel.NucModelType;
+import dr.evoxml.util.DateUnitsType;
 
 import java.io.*;
 import java.util.ArrayList;

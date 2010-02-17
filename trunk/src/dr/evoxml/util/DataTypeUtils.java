@@ -1,4 +1,4 @@
-package dr.evoxml;
+package dr.evoxml.util;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneticCode;

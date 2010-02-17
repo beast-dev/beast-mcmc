@@ -4,7 +4,7 @@ import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GLMSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evoxml.DataTypeUtils;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogLinearModel;
 import dr.xml.*;

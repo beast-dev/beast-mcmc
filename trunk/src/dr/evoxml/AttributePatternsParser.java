@@ -25,10 +25,12 @@
 
 package dr.evoxml;
 
-import dr.evolution.alignment.*;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Taxon;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
 import java.util.logging.Logger;

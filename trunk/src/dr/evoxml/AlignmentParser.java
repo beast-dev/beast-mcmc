@@ -30,6 +30,7 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
 import java.util.logging.Logger;

@@ -1,13 +1,10 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evoxml.DataTypeUtils;
-import dr.inference.model.Model;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
-import dr.xml.*;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Model;
 
 /**
  * <b>A irreversible class for any data type where

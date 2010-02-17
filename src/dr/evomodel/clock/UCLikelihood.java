@@ -2,9 +2,8 @@ package dr.evomodel.clock;
 
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.math.distributions.NormalDistribution;
 import dr.math.MathUtils;
-import dr.xml.*;
+import dr.math.distributions.NormalDistribution;
 
 /**
  * Calculates the likelihood of a set of rate changes in a tree, assuming that rates are lognormally distributed
@@ -13,10 +12,6 @@ import dr.xml.*;
  * @author Michael Defoin Platel
  */
 public class UCLikelihood extends RateEvolutionLikelihood {
-
-    public static final String UC_LIKELIHOOD = "UCLikelihood";
-
-    public static final String VARIANCE = "variance";
 
     public UCLikelihood(TreeModel tree, Parameter ratesParameter, Parameter variance, Parameter rootRate, boolean isLogSpace) {
 
@@ -60,57 +55,6 @@ public class UCLikelihood extends RateEvolutionLikelihood {
             return MathUtils.nextGaussian() * Math.sqrt(var) + meanRate;
         }
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return UC_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-
-            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
-
-            Parameter rootRate = (Parameter) xo.getElementFirstChild(ROOTRATE);
-
-            Parameter variance = (Parameter) xo.getElementFirstChild(VARIANCE);
-
-
-            boolean isLogSpace = xo.getAttribute(LOGSPACE, false);
-
-            return new UCLikelihood(tree, ratesParameter, variance, rootRate, isLogSpace);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                    "This element returns an object that can calculate the likelihood " +
-                            "of rates in a tree under the assumption of " +
-                            "(log)normally distributed rates. ";
-        }
-
-        public Class getReturnType() {
-            return UCLikelihood.class;
-        }
-
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class),
-                new ElementRule(RATES, Parameter.class, "The branch rates parameter", false),
-                AttributeRule.newBooleanRule(LOGSPACE, true, "true if model considers the log of the rates."),
-                new ElementRule(ROOTRATE, Parameter.class, "The root rate parameter"),
-                new ElementRule(VARIANCE, Parameter.class, "The standard deviation of the (log)normal distribution"),
-        };
-    };
 
     private final Parameter variance;
 

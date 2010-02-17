@@ -34,15 +34,18 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.clock.ACLikelihood;
 import dr.evomodel.coalescent.CoalescentLikelihood;
-
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.*;
+import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.TreeLoggerParser;
+import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.YuleModelParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
 import dr.inference.model.CompoundLikelihood;
@@ -382,7 +385,7 @@ public class LogGenerator extends Generator {
                         break;
 
                     case AUTOCORRELATED_LOGNORMAL:
-                        writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                         break;
 
                     default:
@@ -434,7 +437,7 @@ public class LogGenerator extends Generator {
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
-                            writer.writeIDref(ACLikelihood.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         default:

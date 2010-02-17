@@ -26,11 +26,11 @@
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.evomodelxml.RandomDiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomDiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
 

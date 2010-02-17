@@ -37,7 +37,8 @@ import dr.inference.model.Model;
  * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface BranchRateModel extends Model, BranchRateController, BranchAttributeProvider {
-    public static String BRANCH_RATES = "branchRates";
+    public static final String BRANCH_RATES = "branchRates";
+    public static final String RATE = "rate";
 
     // There is no need to override an interface in a derived interface, is there?
     //double getBranchRate(Tree tree, NodeRef node);

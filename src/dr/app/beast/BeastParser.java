@@ -290,9 +290,9 @@ public class BeastParser extends XMLParser {
         // molecular clocks
 //        addXMLObjectParser(dr.evomodel.clock.ACLikelihood.PARSER);
 //        addXMLObjectParser(dr.evomodel.clock.UCLikelihood.PARSER);
-//        addXMLObjectParser(new dr.evomodelxml.DiscretizedBranchRatesParser());
-//        addXMLObjectParser(new dr.evomodelxml.RandomDiscretizedBranchRatesParser());
-//        addXMLObjectParser(new dr.evomodelxml.MixtureModelBranchRatesParser());
+//        addXMLObjectParser(new dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser());
+//        addXMLObjectParser(new dr.evomodelxml.branchratemodel.RandomDiscretizedBranchRatesParser());
+//        addXMLObjectParser(new dr.evomodelxml.branchratemodel.MixtureModelBranchRatesParser());
 //        addXMLObjectParser(dr.evomodel.branchratemodel.StrictClockBranchRates.PARSER);
 //        addXMLObjectParser(dr.evomodel.branchratemodel.RateEpochBranchRateModel.PARSER);
 //        addXMLObjectParser(dr.evomodel.branchratemodel.RandomLocalClockModel.PARSER);

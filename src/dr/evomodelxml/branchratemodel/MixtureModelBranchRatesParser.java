@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.MixtureModelBranchRates;
 import dr.evomodel.tree.TreeModel;
@@ -6,8 +6,8 @@ import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.logging.Logger;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * @author Wai Lok Sibon Li

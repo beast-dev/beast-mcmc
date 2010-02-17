@@ -55,7 +55,7 @@ public class RateIndicatorBF {
     public RateIndicatorBF (String inputFileName, int burnin, String rateIndicatorString, int numberOfStates, String[][] locations, boolean bayesFactor, double cutoff, double meanPoissonPrior, int offsetPoissonPrior, String actualRateString, String relativeRateString, String geoSiteModelString) {
 
         //count the number of states in the RateIndicatorLog file
-        int generationCount = getGenerationCount(inputFileName);
+        generationCount = getGenerationCount(inputFileName);
 
         //find the first rateIndicator in the RateIndicatorLog file
         int firstRateIndicator = getFirstEntryOf(inputFileName, rateIndicatorString);
@@ -464,8 +464,17 @@ public class RateIndicatorBF {
 
             for (int o = 0; o < supportedRateIndicators.length; o++){
 
+
                 outFile.println(
-                    "I="+supportedRateIndicators[o]+"\tBF="+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible)+": between "+supportedLocations[o][0]+" (long: "+supportedLongitudes[o][0]+"; lat: "+ supportedLatitudes[o][0]+")" +
+                    "I="+supportedRateIndicators[o]+"\tBF");
+
+                double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible);
+                if (BF == Double.POSITIVE_INFINITY) {
+                     outFile.print(">"+(1-(1/generationCount)));
+                }  else {
+                     outFile.print("="+BF);
+                }                            
+                outFile.print(": between "+supportedLocations[o][0]+" (long: "+supportedLongitudes[o][0]+"; lat: "+ supportedLatitudes[o][0]+")" +
                             " and "+ supportedLocations[o][1]+" (long: "+supportedLongitudes[o][1]+"; lat: "+ supportedLatitudes[o][1]+")"
                 );
             }
@@ -493,6 +502,7 @@ public class RateIndicatorBF {
     private String actualRateString;
     private String relativeRateString;
     private String geoSiteModelString;
+    private int generationCount;
 
     private static double getBayesFactor(double meanIndicator, double meanPoissonPrior, int numberOfLocations, int offset, boolean nonreversible) {
 
@@ -835,7 +845,7 @@ public class RateIndicatorBF {
                         new Arguments.StringOption(UPCOLOR, "upper link strength color", "specifies an upper link color for the links [default=FFFF00]"),
                         new Arguments.RealOption(BWC,"specifies the connection (rate) width constant [default=2.5]"),
                         new Arguments.RealOption(BWM,"specifies the connection (rate)  width multiplier [default=7.0]"),
-                        new Arguments.IntegerOption(ALTITUDE,"specifies the altitudefactor for the connections (rate) [default=500]"),
+                        new Arguments.RealOption(ALTITUDE,"specifies the altitudefactor for the connections (rate) [default=500]"),
                         //new Arguments.RealOption(WIDTH,"width for KML rates [default=3.0]"),
                  });
 

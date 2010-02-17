@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.NucModelType;

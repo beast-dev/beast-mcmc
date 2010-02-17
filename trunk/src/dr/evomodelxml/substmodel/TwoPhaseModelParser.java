@@ -1,9 +1,11 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
-import dr.xml.*;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.OnePhaseModel;
+import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Chieh-Hsi Wu

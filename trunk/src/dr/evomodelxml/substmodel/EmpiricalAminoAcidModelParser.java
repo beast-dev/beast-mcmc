@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.*;
 import dr.xml.*;

@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodelxml.TN93Parser;
+import dr.evomodelxml.substmodel.TN93Parser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 

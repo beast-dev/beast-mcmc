@@ -26,7 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.FrequencyModelParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

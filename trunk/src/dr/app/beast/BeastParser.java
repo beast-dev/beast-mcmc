@@ -271,13 +271,13 @@ public class BeastParser extends XMLParser {
         // substitution models
 //        addXMLObjectParser(dr.evomodel.substmodel.FrequencyModel.PARSER);
 //        addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);
-//        addXMLObjectParser(new dr.evomodelxml.HKYParser());
+//        addXMLObjectParser(new dr.evomodelxml.substmodel.HKYParser());
 //        addXMLObjectParser(dr.evomodel.substmodel.GTR.PARSER);
 //        addXMLObjectParser(dr.evomodel.substmodel.EmpiricalAminoAcidModel.PARSER);
 //        addXMLObjectParser(dr.evomodel.substmodel.YangCodonModel.PARSER);
-//        addXMLObjectParser(new dr.evomodelxml.AsymQuadModelParser());
-//        addXMLObjectParser(new dr.evomodelxml.LinearBiasModelParser());
-//        addXMLObjectParser(new dr.evomodelxml.TwoPhaseModelParser());
+//        addXMLObjectParser(new dr.evomodelxml.substmodel.AsymQuadModelParser());
+//        addXMLObjectParser(new dr.evomodelxml.substmodel.LinearBiasModelParser());
+//        addXMLObjectParser(new dr.evomodelxml.substmodel.TwoPhaseModelParser());
 
         // tree likelihood
 //        addXMLObjectParser(dr.evomodel.treelikelihood.TreeLikelihood.PARSER);

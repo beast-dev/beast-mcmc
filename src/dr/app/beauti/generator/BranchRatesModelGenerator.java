@@ -28,14 +28,14 @@ import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.RandomLocalClockModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -79,7 +79,7 @@ public class BranchRatesModelGenerator extends Generator {
                 	treePrefix = tree.getPrefix();
                 	
                 	writer.writeOpenTag(
-		                        StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
+		                        StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
 		                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES)}
 		                );
                 	
@@ -90,7 +90,7 @@ public class BranchRatesModelGenerator extends Generator {
                 		writeParameterRef("rate", modelPrefix + "clock.rate", writer);		                
                 	}
                 	
-                	writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
+                	writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
                 }
                 
                 break;
@@ -343,7 +343,7 @@ public class BranchRatesModelGenerator extends Generator {
                     }        
                 
 	                writer.writeOpenTag(
-	                        RandomLocalClockModel.LOCAL_BRANCH_RATES,
+	                        RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES),
 	                                new Attribute.Default<String>("ratesAreMultipliers", "false")
@@ -360,7 +360,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                	writeParameterRef("clockRate", modelPrefix + "clock.rate", writer);
 	                }
 	                
-	                writer.writeCloseTag(RandomLocalClockModel.LOCAL_BRANCH_RATES);
+	                writer.writeCloseTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
 	
 	                writer.writeText("");
 	                writer.writeOpenTag(
@@ -387,7 +387,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
@@ -402,7 +402,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 	
 	                writer.writeText("");
@@ -414,7 +414,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	                writer.writeIDref(RandomLocalClockModel.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
+	                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
 	                writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
                 }
                 break;

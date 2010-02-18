@@ -15,6 +15,7 @@ import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.distribution.DistributionLikelihood;
@@ -67,9 +68,9 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         coalescent.setId("coalescent");
 
         // clock model
-        Parameter ratesParameter = new Parameter.Default(RandomLocalClockModel.RATES, 10, 1);
-        Parameter rateIndicatorParameter = new Parameter.Default(RandomLocalClockModel.RATE_INDICATORS, 10, 1);
-        Parameter meanRateParameter = new Parameter.Default(RandomLocalClockModel.CLOCK_RATE, 1, 1.0);
+        Parameter ratesParameter = new Parameter.Default(RandomLocalClockModelParser.RATES, 10, 1);
+        Parameter rateIndicatorParameter = new Parameter.Default(RandomLocalClockModelParser.RATE_INDICATORS, 10, 1);
+        Parameter meanRateParameter = new Parameter.Default(RandomLocalClockModelParser.CLOCK_RATE, 1, 1.0);
 
         RandomLocalClockModel branchRateModel = new RandomLocalClockModel(treeModel, meanRateParameter,
                 rateIndicatorParameter, ratesParameter, false);

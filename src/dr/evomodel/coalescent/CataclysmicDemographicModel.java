@@ -27,9 +27,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.CataclysmicDemographic;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.CataclysmicDemographicModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * This class models an exponentially growing model that suffers a
@@ -42,24 +41,12 @@ import dr.xml.*;
  */
 public class CataclysmicDemographicModel extends DemographicModel {
 
-    //
-    // Public stuff
-    //
-
-    public static String POPULATION_SIZE = "populationSize";
-    public static String GROWTH_RATE = "growthRate";
-    public static String SPIKE_SIZE = "spikeFactor";
-    public static String TIME_OF_CATACLYSM = "timeOfCataclysm";
-
-    public static String CATACLYSM_MODEL = "cataclysm";
-
-
     /**
      * Construct demographic model with default settings
      */
     public CataclysmicDemographicModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Type units) {
 
-        this(CATACLYSM_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, units);
+        this(CataclysmicDemographicModelParser.CATACLYSM_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, units);
     }
 
     /**
@@ -115,65 +102,6 @@ public class CataclysmicDemographicModel extends DemographicModel {
         return cataclysm;
     }
 
-    /**
-     * Parses an element from an DOM document into a ExponentialGrowth.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return CATACLYSM_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(POPULATION_SIZE);
-            Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(GROWTH_RATE);
-            Parameter rParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(SPIKE_SIZE);
-            Parameter N1Param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(TIME_OF_CATACLYSM);
-            Parameter tParam = (Parameter) cxo.getChild(Parameter.class);
-
-            return new CataclysmicDemographicModel(N0Param, N1Param, rParam, tParam, units);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model of exponential growth.";
-        }
-
-        public Class getReturnType() {
-            return CataclysmicDemographicModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(POPULATION_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(GROWTH_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The rate of exponential growth before the cataclysmic event."),
-                new ElementRule(SPIKE_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The factor larger the population size was at its height."),
-                new ElementRule(TIME_OF_CATACLYSM,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The time of the cataclysmic event that lead to exponential decline."),
-                XMLUnits.SYNTAX_RULES[0]
-        };
-    };
     //
     // protected stuff
     //

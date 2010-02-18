@@ -29,10 +29,9 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.PiecewiseConstantPopulation;
 import dr.evolution.coalescent.PiecewiseLinearPopulation;
 import dr.evomodel.tree.TreeModel;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.ScaledPiecewiseModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * @author Alexei Drummond
@@ -43,17 +42,12 @@ public class ScaledPiecewiseModel extends DemographicModel {
     //
     // Public stuff
     //
-
-    public static String PIECEWISE_POPULATION = "scaledPiecewisePopulation";
-    public static String EPOCH_SIZES = "populationSizes";
-    public static String TREE_MODEL = "populationTree";
-
     /**
      * Construct demographic model with default settings
      */
     public ScaledPiecewiseModel(Parameter N0Parameter, TreeModel treeModel, boolean linear, Type units) {
 
-        this(PIECEWISE_POPULATION, N0Parameter, treeModel, linear, units);
+        this(ScaledPiecewiseModelParser.PIECEWISE_POPULATION, N0Parameter, treeModel, linear, units);
 
     }
 
@@ -125,56 +119,6 @@ public class ScaledPiecewiseModel extends DemographicModel {
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    /**
-     * Parses an element from an DOM document into a PiecewisePopulation.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return PIECEWISE_POPULATION;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(EPOCH_SIZES);
-            Parameter epochSizes = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(TREE_MODEL);
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
-            boolean isLinear = xo.getBooleanAttribute("linear");
-
-            return new ScaledPiecewiseModel(epochSizes, treeModel, isLinear, units);
-        }
-
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a piecewise population model";
-        }
-
-        public Class getReturnType() {
-            return PiecewisePopulationModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(EPOCH_SIZES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(TREE_MODEL, new XMLSyntaxRule[]{new ElementRule(TreeModel.class)}),
-                XMLUnits.SYNTAX_RULES[0],
-                AttributeRule.newBooleanRule("linear")
-        };
-    };
-
 
     //
     // protected stuff

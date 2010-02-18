@@ -57,6 +57,8 @@ import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.*;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.coalescent.EBSPAnalysisParser;
+import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.*;
@@ -1448,60 +1450,60 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
-            final String tagName = VariableDemographicModel.PARSER.getParserName();
+            final String tagName = VariableDemographicModelParser.MODEL_NAME;
 
             writer.writeOpenTag(
                     tagName,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName),
-                            new Attribute.Default<String>(VariableDemographicModel.TYPE, extendedSkylineModel)
+                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName),
+                            new Attribute.Default<String>(VariableDemographicModelParser.TYPE, extendedSkylineModel)
                     }
             );
 
-            writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
+            writer.writeOpenTag(VariableDemographicModelParser.POPULATION_SIZES);
             final int nTax = taxonList.getTaxonCount();
             final int nPops = nTax - (extendedSkylineModel.equals(VariableDemographicModel.Type.STEPWISE.toString()) ? 1 : 0);
-            writeParameter(VariableDemographicModel.demoElementName + ".popSize", nPops, writer);
-            writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
+            writeParameter(VariableDemographicModelParser.demoElementName + ".popSize", nPops, writer);
+            writer.writeCloseTag(VariableDemographicModelParser.POPULATION_SIZES);
 
-            writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-            writeParameter(VariableDemographicModel.demoElementName + ".indicators", nPops - 1, writer);
-            writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
+            writer.writeOpenTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
+            writeParameter(VariableDemographicModelParser.demoElementName + ".indicators", nPops - 1, writer);
+            writer.writeCloseTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
 
-            writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
+            writer.writeOpenTag(VariableDemographicModelParser.POPULATION_TREES);
 
-            writer.writeOpenTag(VariableDemographicModel.POP_TREE);
+            writer.writeOpenTag(VariableDemographicModelParser.POP_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
+            writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
 
-            writer.writeCloseTag(VariableDemographicModel.POPULATION_TREES);
+            writer.writeCloseTag(VariableDemographicModelParser.POPULATION_TREES);
 
             writer.writeCloseTag(tagName);
 
             writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "coalescent"));
             writer.writeOpenTag(CoalescentLikelihood.MODEL);
-            writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModel.demoElementName), true);
+            writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModelParser.demoElementName), true);
             writer.writeCloseTag(CoalescentLikelihood.MODEL);
             writer.writeComment("Take population Tree from demographic");
             writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 
             writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationSizeChanges"),
+                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName + ".populationSizeChanges"),
                             new Attribute.Default<String>("elementwise", "true")
                     });
             writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModel.demoElementName + ".indicators"), true);
+                    new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModelParser.demoElementName + ".indicators"), true);
             writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
             writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMeanDist")
+                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName + ".populationMeanDist")
                             //,new Attribute.Default<String>("elementwise", "true")
                     });
             writer.writeOpenTag(DistributionModelParser.MEAN);
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModel.demoElementName + ".populationMean"),
+                            new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName + ".populationMean"),
                             new Attribute.Default<String>("value", "1")}, true);
             writer.writeCloseTag(DistributionModelParser.MEAN);
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -2026,34 +2028,34 @@ public class BeastGenerator extends BeautiOptions {
 
     public void writeAnalysisToCSVfile(XMLWriter writer) {
         if (nodeHeightPrior == EXTENDED_SKYLINE) {
-            writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
+            writer.writeOpenTag(EBSPAnalysisParser.VD_ANALYSIS, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, "demographic.analysis"),
-                    new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1)}
+                    new Attribute.Default<Double>(EBSPAnalysisParser.BURN_IN, 0.1)}
             );
 
-            writer.writeOpenTag(EBSPAnalysis.LOG_FILE_NAME);
+            writer.writeOpenTag(EBSPAnalysisParser.LOG_FILE_NAME);
             writer.writeText(logFileName);
-            writer.writeCloseTag(EBSPAnalysis.LOG_FILE_NAME);
+            writer.writeCloseTag(EBSPAnalysisParser.LOG_FILE_NAME);
 
-            writer.writeOpenTag(EBSPAnalysis.TREE_FILE_NAMES);
-            writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
+            writer.writeOpenTag(EBSPAnalysisParser.TREE_FILE_NAMES);
+            writer.writeOpenTag(EBSPAnalysisParser.TREE_LOG);
             writer.writeText(treeFileName);
-            writer.writeCloseTag(EBSPAnalysis.TREE_LOG);
-            writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
+            writer.writeCloseTag(EBSPAnalysisParser.TREE_LOG);
+            writer.writeCloseTag(EBSPAnalysisParser.TREE_FILE_NAMES);
 
-            writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
+            writer.writeOpenTag(EBSPAnalysisParser.MODEL_TYPE);
             writer.writeText(extendedSkylineModel);
-            writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
+            writer.writeCloseTag(EBSPAnalysisParser.MODEL_TYPE);
 
-            writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".popSize" + 1);
-            writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
+            writer.writeOpenTag(EBSPAnalysisParser.POPULATION_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModelParser.demoElementName + ".popSize" + 1);
+            writer.writeCloseTag(EBSPAnalysisParser.POPULATION_FIRST_COLUMN);
 
-            writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".indicators" + 1);
-            writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
+            writer.writeOpenTag(EBSPAnalysisParser.INDICATORS_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModelParser.demoElementName + ".indicators" + 1);
+            writer.writeCloseTag(EBSPAnalysisParser.INDICATORS_FIRST_COLUMN);
 
-            writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
+            writer.writeCloseTag(EBSPAnalysisParser.VD_ANALYSIS);
 
             writer.writeOpenTag(CSVExporterParser.CSV_EXPORT,
                     new Attribute[]{
@@ -2062,7 +2064,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(CSVExporterParser.SEPARATOR, ",")
                     });
             writer.writeOpenTag(CSVExporterParser.COLUMNS);
-            writer.writeTag(EBSPAnalysis.VD_ANALYSIS,
+            writer.writeTag(EBSPAnalysisParser.VD_ANALYSIS,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "demographic.analysis")}, true);
             writer.writeCloseTag(CSVExporterParser.COLUMNS);
             writer.writeCloseTag(CSVExporterParser.CSV_EXPORT);

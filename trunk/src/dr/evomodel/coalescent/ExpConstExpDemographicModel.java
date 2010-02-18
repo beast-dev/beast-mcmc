@@ -27,9 +27,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExpConstExpDemographic;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.ExpConstExpDemographicModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * This class models a two growth-phase demographic with a plateau in the middle
@@ -44,15 +43,6 @@ public class ExpConstExpDemographicModel extends DemographicModel {
     // Public stuff
     //
 
-    public static String POPULATION_SIZE = "populationSize";
-    public static String RELATIVE_PLATEAU_SIZE = "relativePlateauSize";
-    public static String RELATIVE_TIME_OF_MODERN_GROWTH = "relTimeModGrowth";
-    public static String TIME_PLATEAU = "plateauStartTime";
-    public static String ANCIENT_GROWTH_RATE = "ancientGrowthRate";
-
-    public static String EXP_CONST_EXP_MODEL = "expConstExp";
-
-
     /**
      * Construct demographic model with default settings
      */
@@ -64,7 +54,7 @@ public class ExpConstExpDemographicModel extends DemographicModel {
             Parameter relTimeParameter,
             Type units) {
 
-        this(EXP_CONST_EXP_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, relTimeParameter, units);
+        this(ExpConstExpDemographicModelParser.EXP_CONST_EXP_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, relTimeParameter, units);
     }
 
     /**
@@ -132,71 +122,6 @@ public class ExpConstExpDemographicModel extends DemographicModel {
         return expConstExp;
     }
 
-    /**
-     * Parses an element from an DOM document into a ExponentialGrowth.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return EXP_CONST_EXP_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(POPULATION_SIZE);
-            Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(RELATIVE_PLATEAU_SIZE);
-            Parameter N1Param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(RELATIVE_TIME_OF_MODERN_GROWTH);
-            Parameter rtParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(TIME_PLATEAU);
-            Parameter tParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(ANCIENT_GROWTH_RATE);
-            Parameter rParam = (Parameter) cxo.getChild(Parameter.class);
-
-            return new ExpConstExpDemographicModel(N0Param, N1Param, rParam, tParam, rtParam, units);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model of exponential growth.";
-        }
-
-        public Class getReturnType() {
-            return ExpConstExpDemographicModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(POPULATION_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(RELATIVE_PLATEAU_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The size of plateau relative to modern population size."),
-                new ElementRule(RELATIVE_TIME_OF_MODERN_GROWTH,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The time spanned by modern growth phase relative to time back to start of plateau phase."),
-                new ElementRule(TIME_PLATEAU,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The time of the start of plateauPhase."),
-                new ElementRule(ANCIENT_GROWTH_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The growth rate of early growth phase"),
-                XMLUnits.SYNTAX_RULES[0]
-        };
-    };
     //
     // protected stuff
     //

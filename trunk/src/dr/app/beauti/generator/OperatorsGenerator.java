@@ -1,25 +1,21 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.RelativeRatesType;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.*;
+import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.operators.TreeBitMoveOperator;
-import dr.evomodel.operators.TreeNodeSlide;
-import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.operators.*;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.YuleModelParser;
+import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.*;
@@ -556,8 +552,8 @@ public class OperatorsGenerator extends Generator {
 	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
         } else if (options.isEBSPSharingSamePrior()) {
-        	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".populationMean");
-	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModel.demoElementName + ".popSize");
+        	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
+	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");
         }
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {

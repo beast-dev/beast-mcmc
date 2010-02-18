@@ -27,9 +27,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialSawtooth;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.ExponentialSawtoothModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * @author Alexei Drummond
@@ -40,21 +39,12 @@ public class ExponentialSawtoothModel extends DemographicModel {
     //
     // Public stuff
     //
-
-    public static String POPULATION_SIZE = "populationSize";
-    public static String GROWTH_RATE = "growthRate";
-    public static String WAVELENGTH = "wavelength";
-    public static String OFFSET = "offset";
-
-    public static String EXPONENTIAL_SAWTOOTH = "exponentialSawtooth";
-
-
     /**
      * Construct demographic model with default settings
      */
     public ExponentialSawtoothModel(Parameter N0Parameter, Parameter growthRateParameter, Parameter wavelengthParameter, Parameter offsetParameter, Type units) {
 
-        this(EXPONENTIAL_SAWTOOTH, N0Parameter, growthRateParameter, wavelengthParameter, offsetParameter, units);
+        this(ExponentialSawtoothModelParser.EXPONENTIAL_SAWTOOTH, N0Parameter, growthRateParameter, wavelengthParameter, offsetParameter, units);
     }
 
     /**
@@ -101,66 +91,6 @@ public class ExponentialSawtoothModel extends DemographicModel {
 
         return expSaw;
     }
-
-    /**
-     * Parses an element from an DOM document into a ExponentialGrowth.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return EXPONENTIAL_SAWTOOTH;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(POPULATION_SIZE);
-            Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(GROWTH_RATE);
-            Parameter rParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(WAVELENGTH);
-            Parameter wavelengthParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(OFFSET);
-            Parameter tParam = (Parameter) cxo.getChild(Parameter.class);
-
-            return new ExponentialSawtoothModel(N0Param, rParam, wavelengthParam, tParam, units);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model of succesive exponential growth and periodic population crashes.";
-        }
-
-        public Class getReturnType() {
-            return TwoEpochDemographicModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(POPULATION_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(GROWTH_RATE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The rate of exponential growth during the growth phase."),
-                new ElementRule(WAVELENGTH,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The wavelength between successive population crashes."),
-                new ElementRule(OFFSET,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The proportion of the last growth phase that is not achieved at the final sample time."),
-                XMLUnits.SYNTAX_RULES[0]
-        };
-    };
     //
     // protected stuff
     //

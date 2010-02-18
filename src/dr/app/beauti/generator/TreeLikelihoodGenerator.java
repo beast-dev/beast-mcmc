@@ -31,12 +31,12 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
@@ -126,7 +126,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
-            	writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+            	writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
             case UNCORRELATED_EXPONENTIAL:

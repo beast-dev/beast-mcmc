@@ -33,7 +33,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
@@ -45,6 +44,7 @@ import dr.evomodelxml.TreeLoggerParser;
 import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
@@ -375,7 +375,7 @@ public class LogGenerator extends Generator {
             for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
-                        writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                        writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
@@ -427,7 +427,7 @@ public class LogGenerator extends Generator {
                 for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:
-                            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case UNCORRELATED_EXPONENTIAL:

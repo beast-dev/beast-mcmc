@@ -27,36 +27,17 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * @author Joseph Heled
  * @version $Id$
  */
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet {
-    static final String MODEL_NAME = "variableDemographic";
-    public static final String POPULATION_SIZES = "populationSizes";
-    public static final String INDICATOR_PARAMETER = "indicators";
-    public static final String POPULATION_TREES = "trees";
-    private static final String PLOIDY = SpeciesBindings.PLOIDY;
-    public static String POP_TREE = "ptree";
-
-    public static final String LOG_SPACE = "logUnits";
-    public static final String USE_MIDPOINTS = "useMidpoints";
-
-    public static final String TYPE = "type";
-    //public static final String STEPWISE = "stepwise";
-    //public static final String LINEAR = "linear";
-    //public static final String EXPONENTIAL = "exponential";
-
-    public static final String demoElementName = "demographic";
 
     private final Parameter popSizeParameter;
     private final Parameter indicatorParameter;
@@ -96,7 +77,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     public VariableDemographicModel(TreeModel[] trees, double[] popFactors,
                                     Parameter popSizeParameter, Parameter indicatorParameter,
                                     Type type, boolean logSpace, boolean mid) {
-        super(MODEL_NAME);
+        super(VariableDemographicModelParser.MODEL_NAME);
 
         this.popSizeParameter = popSizeParameter;
         this.indicatorParameter = indicatorParameter;
@@ -223,93 +204,4 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         demoFunction = savedDemoFunction;
         savedDemoFunction = null;
     }
-
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return VariableDemographicModel.MODEL_NAME;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
-            Parameter popParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
-            Parameter indicatorParam = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(POPULATION_TREES);
-
-            final int nc = cxo.getChildCount();
-            TreeModel[] treeModels = new TreeModel[nc];
-            double[] populationFactor = new double[nc];
-
-            for (int k = 0; k < treeModels.length; ++k) {
-                final XMLObject child = (XMLObject) cxo.getChild(k);
-                populationFactor[k] = child.hasAttribute(PLOIDY) ? child.getDoubleAttribute(PLOIDY) : 1.0;
-
-                treeModels[k] = (TreeModel) child.getChild(TreeModel.class);
-            }
-
-            Type type = Type.STEPWISE;
-
-            if (xo.hasAttribute(TYPE)) {
-                final String s = xo.getStringAttribute(TYPE);
-                if (s.equalsIgnoreCase(Type.STEPWISE.toString())) {
-                    type = Type.STEPWISE;
-                } else if (s.equalsIgnoreCase(Type.LINEAR.toString())) {
-                    type = Type.LINEAR;
-                } else if (s.equalsIgnoreCase(Type.EXPONENTIAL.toString())) {
-                    type = Type.EXPONENTIAL;
-                } else {
-                    throw new XMLParseException("Unknown Bayesian Skyline type: " + s);
-                }
-            }
-
-            final boolean logSpace = xo.getAttribute(LOG_SPACE, false) || type == Type.EXPONENTIAL;
-            final boolean useMid = xo.getAttribute(USE_MIDPOINTS, false);
-
-            Logger.getLogger("dr.evomodel").info("Variable demographic: " + type.toString() + " control points");
-
-            return new VariableDemographicModel(treeModels, populationFactor, popParam, indicatorParam, type,
-                    logSpace, useMid);
-
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the population size vector.";
-        }
-
-        public Class getReturnType() {
-            return DemographicModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(VariableSkylineLikelihood.TYPE, true),
-                AttributeRule.newBooleanRule(LOG_SPACE, true),
-                AttributeRule.newBooleanRule(USE_MIDPOINTS, true),
-
-                new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(POPULATION_TREES, new XMLSyntaxRule[]{
-                        new ElementRule(POP_TREE, new XMLSyntaxRule[]{
-                                AttributeRule.newDoubleRule(PLOIDY, true),
-                                new ElementRule(TreeModel.class),
-                        }, 1, Integer.MAX_VALUE)
-                })
-        };
-    };
 }

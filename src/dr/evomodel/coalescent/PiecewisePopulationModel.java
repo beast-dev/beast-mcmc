@@ -29,11 +29,9 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.PiecewiseConstantPopulation;
 import dr.evolution.coalescent.PiecewiseExponentialPopulation;
 import dr.evolution.coalescent.PiecewiseLinearPopulation;
-import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 /**
  * @author Alexei Drummond
@@ -45,12 +43,6 @@ public class PiecewisePopulationModel extends DemographicModel {
     //
     // Public stuff
     //
-
-    public static String PIECEWISE_POPULATION = "piecewisePopulation";
-    public static String EPOCH_SIZES = "epochSizes";
-    public static String POPULATION_SIZE = "populationSize";
-    public static String GROWTH_RATES = "growthRates";
-    public static String EPOCH_WIDTHS = "epochWidths";
 
     /**
      * Construct demographic model with default settings
@@ -188,73 +180,6 @@ public class PiecewisePopulationModel extends DemographicModel {
         }
 
     }
-
-    /**
-     * Parses an element from an DOM document into a PiecewisePopulation.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return PIECEWISE_POPULATION;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject obj = xo.getChild(EPOCH_WIDTHS);
-            double[] epochWidths = obj.getDoubleArrayAttribute("widths");
-
-            if (xo.hasChildNamed(EPOCH_SIZES)) {
-                Parameter epochSizes = (Parameter) xo.getElementFirstChild(EPOCH_SIZES);
-
-                boolean isLinear = false;
-                if (xo.hasAttribute("linear")) {
-                    isLinear = xo.getBooleanAttribute("linear");
-                }
-
-                return new PiecewisePopulationModel(PIECEWISE_POPULATION, epochSizes, epochWidths, isLinear, units);
-            } else {
-                Parameter populationSize = (Parameter) xo.getElementFirstChild(POPULATION_SIZE);
-                Parameter growthRates = (Parameter) xo.getElementFirstChild(GROWTH_RATES);
-                return new PiecewisePopulationModel(PIECEWISE_POPULATION, populationSize, growthRates, epochWidths, units);
-            }
-        }
-
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a piecewise population model";
-        }
-
-        public Class getReturnType() {
-            return PiecewisePopulationModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new XORRule(
-                        new ElementRule(EPOCH_SIZES,
-                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                        new AndRule(
-                                new ElementRule(POPULATION_SIZE,
-                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                                new ElementRule(GROWTH_RATES,
-                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
-                        )
-                ),
-                new ElementRule(EPOCH_WIDTHS,
-                        new XMLSyntaxRule[]{AttributeRule.newDoubleArrayRule("widths")}),
-                AttributeRule.newBooleanRule("linear", true)
-        };
-    };
-
 
     //
     // private stuff

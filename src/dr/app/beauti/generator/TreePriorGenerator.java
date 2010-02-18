@@ -40,6 +40,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.YuleModelParser;
+import dr.evomodelxml.coalescent.EBSPAnalysisParser;
+import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
@@ -533,81 +535,81 @@ public class TreePriorGenerator extends Generator {
     		
 	    	setModelPrefix(prior.getPrefix());
 	    	    	
-	    	final String tagName = VariableDemographicModel.PARSER.getParserName();
+	    	final String tagName = VariableDemographicModelParser.MODEL_NAME;
 	        writer.writeComment("Generate a variableDemographic for extended Bayesian skyline process");
 	        writer.writeOpenTag(tagName, new Attribute[]{
-	                new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName),
-	                new Attribute.Default<String>(VariableDemographicModel.TYPE, prior.getExtendedSkylineModel().toString()),
+	                new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName),
+	                new Attribute.Default<String>(VariableDemographicModelParser.TYPE, prior.getExtendedSkylineModel().toString()),
 	                // use midpoint by default (todo) would be nice to have a user 'tickable' option
-	                new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
+	                new Attribute.Default<String>(VariableDemographicModelParser.USE_MIDPOINTS, "true")
 	            }
 	        );
 	        
-//	        Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
-//	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+//	        Parameter popSize = prior.getParameter(VariableDemographicModelParser.demoElementName + ".popSize");
+//	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
 //	        popSize.initial = populationMean.initial;
 	        
-	        writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
+	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_SIZES);
 //	        writer.writeComment("popSize value = populationMean value");
 	        writer.writeTag(ParameterParser.PARAMETER,
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"), true);
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"), true);
 //	        writeParameter(popSize, -1, writer); 
-	        writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
+	        writer.writeCloseTag(VariableDemographicModelParser.POPULATION_SIZES);
 	
-	        writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-	        writeParameter(prior.getParameter(VariableDemographicModel.demoElementName + ".indicators"), -1, writer); // not need dimension
-	        writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
+	        writer.writeOpenTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
+	        writeParameter(prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators"), -1, writer); // not need dimension
+	        writer.writeCloseTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
 	
-	        writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
+	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_TREES);
 	        
 	        if (options.isShareSameTreePrior()) {
 	            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-		            writer.writeOpenTag(VariableDemographicModel.POP_TREE, new Attribute[]{
+		            writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
 			                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
 			            }
 			        );
 		            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
-		            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
+		            writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
 	            }
 	        } else {//TODO correct for not sharing same prior?
-	        	writer.writeOpenTag(VariableDemographicModel.POP_TREE, new Attribute[]{
+	        	writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
 		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
 	            	}
 	        	);
 	        	writer.writeIDref(TreeModel.TREE_MODEL, prior.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
-	            writer.writeCloseTag(VariableDemographicModel.POP_TREE);
+	            writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
 	        }
 	        
-	        writer.writeCloseTag(VariableDemographicModel.POPULATION_TREES);
+	        writer.writeCloseTag(VariableDemographicModelParser.POPULATION_TREES);
 	
 	        writer.writeCloseTag(tagName);
 	
 	        writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT));
 	        writer.writeOpenTag(CoalescentLikelihood.MODEL);
-	        writer.writeIDref(tagName, modelPrefix + VariableDemographicModel.demoElementName);
+	        writer.writeIDref(tagName, modelPrefix + VariableDemographicModelParser.demoElementName);
 	        writer.writeCloseTag(CoalescentLikelihood.MODEL);
 	        writer.writeComment("Take population Tree from demographic");
 	        writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
 	
 	        writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationSizeChanges"),
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationSizeChanges"),
 	                        new Attribute.Default<String>("elementwise", "true")
 	                });
-	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + VariableDemographicModel.demoElementName + ".indicators");
+	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + VariableDemographicModelParser.demoElementName + ".indicators");
 	        writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
 	        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMeanDist")
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMeanDist")
 	                        //,new Attribute.Default<String>("elementwise", "true")
 	                });
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
 	        
 	        writer.writeComment("prefer populationMean value = 1");	        
-	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMean"),
+	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMean"),
 	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.initial))}, true);
 	        
 	        writer.writeCloseTag(DistributionModelParser.MEAN);
@@ -688,37 +690,37 @@ public class TreePriorGenerator extends Generator {
         String logFileName = options.logFileName;
 
         if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-            writer.writeOpenTag(EBSPAnalysis.VD_ANALYSIS, new Attribute[]{
+            writer.writeOpenTag(EBSPAnalysisParser.VD_ANALYSIS, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + "demographic.analysis"),
-                    new Attribute.Default<Double>(EBSPAnalysis.BURN_IN, 0.1),
-                    new Attribute.Default<Boolean>(VariableDemographicModel.USE_MIDPOINTS, true)}
+                    new Attribute.Default<Double>(EBSPAnalysisParser.BURN_IN, 0.1),
+                    new Attribute.Default<Boolean>(VariableDemographicModelParser.USE_MIDPOINTS, true)}
             );
 
-            writer.writeOpenTag(EBSPAnalysis.LOG_FILE_NAME);
+            writer.writeOpenTag(EBSPAnalysisParser.LOG_FILE_NAME);
             writer.writeText(logFileName);
-            writer.writeCloseTag(EBSPAnalysis.LOG_FILE_NAME);
+            writer.writeCloseTag(EBSPAnalysisParser.LOG_FILE_NAME);
 
-            writer.writeOpenTag(EBSPAnalysis.TREE_FILE_NAMES);
+            writer.writeOpenTag(EBSPAnalysisParser.TREE_FILE_NAMES);
 	            for (String treeFN : options.treeFileName) {
-		            writer.writeOpenTag(EBSPAnalysis.TREE_LOG);
+		            writer.writeOpenTag(EBSPAnalysisParser.TREE_LOG);
 		            writer.writeText(treeFN);
-		            writer.writeCloseTag(EBSPAnalysis.TREE_LOG);
+		            writer.writeCloseTag(EBSPAnalysisParser.TREE_LOG);
 	            }
-            writer.writeCloseTag(EBSPAnalysis.TREE_FILE_NAMES);
+            writer.writeCloseTag(EBSPAnalysisParser.TREE_FILE_NAMES);
 
-            writer.writeOpenTag(EBSPAnalysis.MODEL_TYPE);
+            writer.writeOpenTag(EBSPAnalysisParser.MODEL_TYPE);
             writer.writeText(prior.getExtendedSkylineModel().toString());
-            writer.writeCloseTag(EBSPAnalysis.MODEL_TYPE);
+            writer.writeCloseTag(EBSPAnalysisParser.MODEL_TYPE);
 
-            writer.writeOpenTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".popSize1");
-            writer.writeCloseTag(EBSPAnalysis.POPULATION_FIRST_COLUMN);
+            writer.writeOpenTag(EBSPAnalysisParser.POPULATION_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModelParser.demoElementName + ".popSize1");
+            writer.writeCloseTag(EBSPAnalysisParser.POPULATION_FIRST_COLUMN);
 
-            writer.writeOpenTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
-            writer.writeText(VariableDemographicModel.demoElementName + ".indicators1");
-            writer.writeCloseTag(EBSPAnalysis.INDICATORS_FIRST_COLUMN);
+            writer.writeOpenTag(EBSPAnalysisParser.INDICATORS_FIRST_COLUMN);
+            writer.writeText(VariableDemographicModelParser.demoElementName + ".indicators1");
+            writer.writeCloseTag(EBSPAnalysisParser.INDICATORS_FIRST_COLUMN);
 
-            writer.writeCloseTag(EBSPAnalysis.VD_ANALYSIS);
+            writer.writeCloseTag(EBSPAnalysisParser.VD_ANALYSIS);
 
             writer.writeOpenTag(CSVExporterParser.CSV_EXPORT,
                     new Attribute[]{
@@ -727,7 +729,7 @@ public class TreePriorGenerator extends Generator {
                             new Attribute.Default<String>(CSVExporterParser.SEPARATOR, ",")
                     });
             writer.writeOpenTag(CSVExporterParser.COLUMNS);
-            writer.writeIDref(EBSPAnalysis.VD_ANALYSIS, modelPrefix + "demographic.analysis");
+            writer.writeIDref(EBSPAnalysisParser.VD_ANALYSIS, modelPrefix + "demographic.analysis");
             writer.writeCloseTag(CSVExporterParser.COLUMNS);
             writer.writeCloseTag(CSVExporterParser.CSV_EXPORT);
         }

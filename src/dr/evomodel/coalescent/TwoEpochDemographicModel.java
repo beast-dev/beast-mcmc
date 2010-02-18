@@ -27,9 +27,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.TwoEpochDemographic;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.TwoEpochDemographicModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * This class models an exponentially growing model that suffers a
@@ -44,19 +43,12 @@ public class TwoEpochDemographicModel extends DemographicModel {
     //
     // Public stuff
     //
-
-    public static String EPOCH_1 = "modernEpoch";
-    public static String EPOCH_2 = "ancientEpoch";
-    public static String TRANSITION_TIME = "transitionTime";
-
-    public static String TWO_EPOCH_MODEL = "twoEpoch";
-
     /**
      * Construct demographic model with default settings.
      */
     public TwoEpochDemographicModel(DemographicModel demo1, DemographicModel demo2, Parameter transitionTimeParameter, Type units) {
 
-        this(TWO_EPOCH_MODEL, demo1, demo2, transitionTimeParameter, units);
+        this(TwoEpochDemographicModelParser.TWO_EPOCH_MODEL, demo1, demo2, transitionTimeParameter, units);
     }
 
     /**
@@ -93,61 +85,6 @@ public class TwoEpochDemographicModel extends DemographicModel {
 
         return twoEpoch;
     }
-
-    /**
-     * Parses an element from an DOM document into a ExponentialGrowth.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TWO_EPOCH_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(EPOCH_1);
-            DemographicModel demo1 = (DemographicModel) cxo.getChild(DemographicModel.class);
-
-            cxo = xo.getChild(EPOCH_2);
-            DemographicModel demo2 = (DemographicModel) cxo.getChild(DemographicModel.class);
-
-            cxo = xo.getChild(TRANSITION_TIME);
-            Parameter timeParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            return new TwoEpochDemographicModel(demo1, demo2, timeParameter, units);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model of two epochs.";
-        }
-
-        public Class getReturnType() {
-            return TwoEpochDemographicModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(EPOCH_1,
-                        new XMLSyntaxRule[]{new ElementRule(DemographicModel.class)},
-                        "The demographic model for the recent epoch."),
-                new ElementRule(EPOCH_2,
-                        new XMLSyntaxRule[]{new ElementRule(DemographicModel.class)},
-                        "The demographic model for the ancient epoch."),
-                new ElementRule(TRANSITION_TIME,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                        "The time that splits the two epochs."),
-                XMLUnits.SYNTAX_RULES[0]
-        };
-    };
 
     private Parameter transitionTimeParameter = null;
     private DemographicModel demo1 = null;

@@ -29,14 +29,12 @@ import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
+import dr.evomodelxml.coalescent.VariableSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A likelihood function for the variable skyline plot coalescent.
@@ -48,17 +46,6 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
     // PUBLIC STUFF
 
-    public static final String SKYLINE_LIKELIHOOD = "ovariableSkyLineLikelihood";
-    public static final String POPULATION_SIZES = "populationSizes";
-    public static final String INDICATOR_PARAMETER = "indicators";
-    public static final String LOG_SPACE = "logUnits";
-
-    public static final String TYPE = "type";
-    public static final String STEPWISE = "stepwise";
-    public static final String LINEAR = "linear";
-    public static final String EXPONENTIAL = "exponential";
-
-
     public enum Type {
         STEPWISE,
         LINEAR,
@@ -67,7 +54,7 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
     public VariableSkylineLikelihood(Tree tree, Parameter popSizeParameter, Parameter indicatorParameter,
                                      Type type, boolean logSpace) {
-        super(SKYLINE_LIKELIHOOD);
+        super(VariableSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         this.popSizeParameter = popSizeParameter;
         this.indicatorParameter = indicatorParameter;
@@ -352,80 +339,6 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return VariableSkylineLikelihood.SKYLINE_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(VariableSkylineLikelihood.POPULATION_SIZES);
-            Parameter param = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(VariableSkylineLikelihood.INDICATOR_PARAMETER);
-            Parameter param2 = (Parameter) cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(CoalescentLikelihood.POPULATION_TREE);
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
-            Type type = VariableSkylineLikelihood.Type.STEPWISE;
-            /* if (xo.hasAttribute(VariableSkylineLikelihood.LINEAR) && !xo.getBooleanAttribute(VariableSkylineLikelihood.LINEAR))
-            {
-                type = VariableSkylineLikelihood.Type.STEPWISE;
-            }*/
-
-            if (xo.hasAttribute(VariableSkylineLikelihood.TYPE)) {
-                final String s = xo.getStringAttribute(VariableSkylineLikelihood.TYPE);
-                if (s.equalsIgnoreCase(VariableSkylineLikelihood.STEPWISE)) {
-                    type = VariableSkylineLikelihood.Type.STEPWISE;
-                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.LINEAR)) {
-                    type = VariableSkylineLikelihood.Type.LINEAR;
-                } else if (s.equalsIgnoreCase(VariableSkylineLikelihood.EXPONENTIAL)) {
-                    type = VariableSkylineLikelihood.Type.EXPONENTIAL;
-                } else {
-                    throw new XMLParseException("Unknown Bayesian Skyline type: " + s);
-                }
-            }
-
-            boolean logSpace = xo.getBooleanAttribute(LOG_SPACE);
-
-            Logger.getLogger("dr.evomodel").info("Variable skyline plot: " + type.toString() + " control points");
-
-            return new VariableSkylineLikelihood(treeModel, param, param2, type, logSpace);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the population size vector.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(VariableSkylineLikelihood.TYPE, true),
-                new ElementRule(VariableSkylineLikelihood.POPULATION_SIZES, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(VariableSkylineLikelihood.INDICATOR_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
-                new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[]{
-                        new ElementRule(TreeModel.class)
-                }),
-                AttributeRule.newBooleanRule(LOG_SPACE)
-        };
-    };
 
     /**
      * The demographic model.

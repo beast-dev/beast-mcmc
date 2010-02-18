@@ -40,7 +40,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.*;
-import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
@@ -59,6 +58,7 @@ import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.EBSPAnalysisParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
+import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.*;
@@ -1954,22 +1954,22 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeSampleNonActiveOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
                 new Attribute.Default<Double>("weight", operator.weight));
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.DISTRIBUTION);
         writeParameterRefByName(writer, operator.name);
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.DISTRIBUTION);
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.DATA_PARAMETER);
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.DATA_PARAMETER);
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.INDICATOR_PARAMETER);
         writeParameterRefByName(writer, operator.parameter2.getName());
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.INDICATOR_PARAMETER);
 
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
     private void writeScaleWithIndicatorsOperator(Operator operator, XMLWriter writer) {

@@ -9,13 +9,13 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
-import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.*;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.BirthDeathModelParser;
 import dr.evomodelxml.YuleModelParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
+import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.*;
@@ -434,22 +434,22 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeSampleNonActiveOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR,
                 getWeightAttribute(operator.weight));
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.DISTRIBUTION);
         writeOperatorRef(writer, operator);
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.DISTRIBUTION);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.DISTRIBUTION);
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.DATA_PARAMETER);
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.DATA_PARAMETER);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.DATA_PARAMETER);
 
-        writer.writeOpenTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writer.writeOpenTag(SampleNonActiveGibbsOperatorParser.INDICATOR_PARAMETER);
         writeParameter2Ref(writer, operator);
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.INDICATOR_PARAMETER);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.INDICATOR_PARAMETER);
 
-        writer.writeCloseTag(SampleNonActiveGibbsOperator.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
+        writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
     private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {

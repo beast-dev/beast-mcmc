@@ -39,8 +39,6 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.RandomLocalClockModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.operators.SampleNonActiveGibbsOperator;
 import dr.evomodel.operators.ExchangeOperator;
@@ -57,6 +55,8 @@ import dr.evomodel.tree.*;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.*;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.EBSPAnalysisParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
@@ -1214,14 +1214,14 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeComment("The strict clock (Uniform rates across branches)");
             writer.writeOpenTag(
-                    StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES,
+                    StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.ID, BranchRateModel.BRANCH_RATES)}
             );
             writer.writeOpenTag("rate");
 
             writeParameter("clock.rate", writer);
             writer.writeCloseTag("rate");
-            writer.writeCloseTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES);
+            writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
         } else if (clockModel == RANDOM_LOCAL_CLOCK) {
             if (fixedSubstitutionRate) {
                 fixParameter("clock.rate", meanSubstitutionRate);
@@ -1229,7 +1229,7 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeComment("The random local clock model (Drummond & Suchard, 2007)");
             writer.writeOpenTag(
-                    RandomLocalClockModel.LOCAL_BRANCH_RATES,
+                    RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, BranchRateModel.BRANCH_RATES),
                             new Attribute.Default<String>("ratesAreMultipliers", "false")
@@ -1249,7 +1249,7 @@ public class BeastGenerator extends BeautiOptions {
             writeParameter("clock.rate", writer);
             writer.writeCloseTag("clockRate");
 
-            writer.writeCloseTag(RandomLocalClockModel.LOCAL_BRANCH_RATES);
+            writer.writeCloseTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
 
             writer.writeText("");
             writer.writeOpenTag(
@@ -1276,7 +1276,7 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
+            writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
             writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
             writer.writeText("");
@@ -1291,7 +1291,7 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
+            writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
             writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
 
             writer.writeText("");
@@ -1303,7 +1303,7 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeTag(RandomLocalClockModel.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
+            writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
             writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
 
         } else {
@@ -1650,7 +1650,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, SiteModel.SITE_MODEL)}, true);
         }
         if (clockModel == STRICT_CLOCK) {
-            writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+            writer.writeTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
         } else {
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
         }
@@ -2243,7 +2243,7 @@ public class BeastGenerator extends BeautiOptions {
                     });
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             if (clockModel == STRICT_CLOCK) {
-                writer.writeTag(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
+                writer.writeTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
             } else {
                 writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
             }

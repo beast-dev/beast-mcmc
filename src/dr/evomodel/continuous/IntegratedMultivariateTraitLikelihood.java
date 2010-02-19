@@ -11,6 +11,8 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.util.Citation;
+import dr.util.Author;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -98,9 +100,22 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     }
 
     protected String extraInfo() {
-        return "\tSample internal node traits: false\n" +
-               "\tPlease cite the integrated Brownian diffusion process of\n" +
-               "\t\tPybus, Lemey and Suchard (in preparation\n";
+        return "\tSample internal node traits: false\n";
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> citations = super.getCitations();
+        citations.add(
+                new Citation(
+                        new Author[] {
+                                new Author("O", "Pybus"),
+                                new Author("P", "Lemey"),
+                                new Author("MA", "Suchard")
+                        },
+                        Citation.Status.IN_PREPARATION
+                )
+        );
+        return citations;
     }
 
     public double getLogDataLikelihood() {

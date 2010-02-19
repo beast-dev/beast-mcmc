@@ -26,16 +26,15 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.inference.model.*;
-import dr.xml.*;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
-import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * A likelihood function for speciation processes. Takes a tree and a speciation model.
@@ -49,13 +48,6 @@ import java.util.logging.Logger;
 public class SpeciationLikelihood extends AbstractModelLikelihood implements Units {
 
     // PUBLIC STUFF
-
-    public static final String SPECIATION_LIKELIHOOD = "speciationLikelihood";
-    public static final String MODEL = "model";
-    public static final String TREE = "speciesTree";
-    public static final String INCLUDE = "include";
-    public static final String EXCLUDE = "exclude";
-
     /**
      * @param tree            the tree
      * @param speciationModel the model of speciation
@@ -63,7 +55,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      * @param exclude         taxa to exclude from this model
      */
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
-        this(SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
+        this(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
         setId(id);
     }
 
@@ -206,93 +198,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     public final Type getUnits() {
         return speciationModel.getUnits();
     }
-
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SPECIATION_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) {
-
-            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
-            SpeciationModel specModel = (SpeciationModel) cxo.getChild(UltrametricSpeciationModel.class);
-
-            cxo = (XMLObject) xo.getChild(TREE);
-            Tree tree = (Tree) cxo.getChild(Tree.class);
-
-            Set<Taxon> excludeTaxa = null;
-
-            if (xo.hasChildNamed(INCLUDE)) {
-                excludeTaxa = new HashSet<Taxon>();
-                for (int i = 0; i < tree.getTaxonCount(); i++) {
-                    excludeTaxa.add(tree.getTaxon(i));
-                }
-
-                cxo = (XMLObject) xo.getChild(INCLUDE);
-                for (int i = 0; i < cxo.getChildCount(); i++) {
-                    TaxonList taxonList = (TaxonList) cxo.getChild(i);
-                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
-                        excludeTaxa.remove(taxonList.getTaxon(j));
-                    }
-                }
-            }
-
-            if (xo.hasChildNamed(EXCLUDE)) {
-                excludeTaxa = new HashSet<Taxon>();
-                cxo = (XMLObject) xo.getChild(EXCLUDE);
-                for (int i = 0; i < cxo.getChildCount(); i++) {
-                    TaxonList taxonList = (TaxonList) cxo.getChild(i);
-                    for (int j = 0; j < taxonList.getTaxonCount(); j++) {
-                        excludeTaxa.add(taxonList.getTaxon(j));
-                    }
-                }
-            }
-            if (excludeTaxa != null) {
-                Logger.getLogger("dr.evomodel").info("Speciation model excluding " + excludeTaxa.size() + " taxa from prior - " +
-                        (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining.");
-            }
-
-            return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the speciation.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MODEL, new XMLSyntaxRule[]{
-                        new ElementRule(UltrametricSpeciationModel.class)
-                }),
-                new ElementRule(TREE, new XMLSyntaxRule[]{
-                        new ElementRule(Tree.class)
-                }),
-
-                new ElementRule(INCLUDE, new XMLSyntaxRule[]{
-                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-                }, "One or more subsets of taxa which should be included from calculate the likelihood (the remaining taxa are excluded)", true),
-
-                new ElementRule(EXCLUDE, new XMLSyntaxRule[]{
-                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-                }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true)
-        };
-    };
 
     // ****************************************************************
     // Private and protected stuff

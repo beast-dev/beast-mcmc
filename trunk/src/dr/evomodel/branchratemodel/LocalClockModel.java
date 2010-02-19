@@ -73,9 +73,9 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         addVariable(rateParameter);
     }
 
-    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean relative, boolean includeStem) throws Tree.MissingTaxonException {
+    public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean relative, boolean includeStem, boolean excludeClade) throws Tree.MissingTaxonException {
         BitSet tips = getTipsForTaxa(treeModel, taxonList);
-        LocalClock clock = new LocalClock(rateParameter, relative, tips, includeStem);
+        LocalClock clock = new LocalClock(rateParameter, relative, tips, includeStem, excludeClade);
         localCladeClocks.put(tips, clock);
         addVariable(rateParameter);
     }
@@ -187,16 +187,16 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         }
 
         if (clock != null) {
-            setNodeClock(tree, node, clock, clock.includeStem());
+            setNodeClock(tree, node, clock, clock.includeStem(), clock.excludeClade());
         }
     }
 
-    private void setNodeClock(Tree tree, NodeRef node, LocalClock localClock, boolean includeStem) {
+    private void setNodeClock(Tree tree, NodeRef node, LocalClock localClock, boolean includeStem, boolean excludeClade) {
 
-        if (!tree.isExternal(node)) {
+        if (!tree.isExternal(node) && !excludeClade) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);
-                setNodeClock(tree, child, localClock, true);
+                setNodeClock(tree, child, localClock, true, true);
             }
         }
 
@@ -212,25 +212,31 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
             this.tips = tips;
             this.isClade = false;
             this.includeStem = true;
+            this.excludeClade = true;
         }
 
-        LocalClock(Parameter rateParameter, boolean relativeRate, BitSet tips, boolean includeStem) {
+        LocalClock(Parameter rateParameter, boolean relativeRate, BitSet tips, boolean includeStem, boolean excludeClade) {
             this.rateParameter = rateParameter;
             this.relativeRate = relativeRate;
             this.tips = tips;
             this.isClade = true;
             this.includeStem = includeStem;
+            this.excludeClade = excludeClade;
         }
 
         boolean includeStem() {
             return this.includeStem;
         }
 
+        boolean excludeClade() {
+            return excludeClade;
+        }
+
         boolean isClade() {
             return this.isClade;
         }
 
-        public boolean isRelativeRate() {
+        boolean isRelativeRate() {
             return relativeRate;
         }
 
@@ -243,6 +249,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         private final BitSet tips;
         private final boolean isClade;
         private final boolean includeStem;
+        private final boolean excludeClade;
     }
 
 }

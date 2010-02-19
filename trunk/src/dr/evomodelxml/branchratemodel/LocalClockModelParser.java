@@ -18,6 +18,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE = "relative";
     public static final String CLADE = "clade";
     public static final String INCLUDE_STEM = "includeStem";
+    public static final String EXCLUDE_CLADE = "excludeClade";
     public static final String EXTERNAL_BRANCHES = "externalBranches";
 
     public String getParserName() {
@@ -47,13 +48,18 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     }
 
                     boolean includeStem = false;
+                    boolean excludeClade = false;
 
                     if (xoc.hasAttribute(INCLUDE_STEM)) {
                         includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
                     }
 
+                    if (xoc.hasAttribute(EXCLUDE_CLADE)) {
+                        excludeClade = xoc.getBooleanAttribute(EXCLUDE_CLADE);
+                    }
+
                     try {
-                        localClockModel.addCladeClock(taxonList, rateParameter, relative, includeStem);
+                        localClockModel.addCladeClock(taxonList, rateParameter, relative, includeStem, excludeClade);
 
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
@@ -111,10 +117,10 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
             new ElementRule(CLADE,
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(RELATIVE, true),
-                            AttributeRule.newBooleanRule(INCLUDE_STEM, true,
-                                    "determines whether or not the stem branch above this clade is included in the siteModel."),
+                            AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
+                            AttributeRule.newBooleanRule(EXCLUDE_CLADE, true, "determines whether to exclude actual branches of the clade from the siteModel (default false)."),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
-                            new ElementRule(Parameter.class, "The rate parameter"),
+                            new ElementRule(Parameter.class, "The rate parameter")
                     }, 0, Integer.MAX_VALUE)
     };
 }

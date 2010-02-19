@@ -13,7 +13,9 @@ import dr.xml.*;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
-//import dr.util.Citation;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.Author;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -24,8 +26,8 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  */
 
-
-public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
+public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelLikelihood
+        implements NodeAttributeProvider, Citable {
 
     public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -113,27 +115,31 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
         }
         sb.append(extraInfo());
-        sb.append("\tPlease cite Suchard, Lemey and Rambaut (in preparation) if you publish results using this model.");
+        sb.append("\tPlease cite:\n");
+        sb.append(Citable.Utils.getCitationString(this));
 
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
         recalculateTreeLength();
-
     }
 
-//    public String getCitationString() {
-//        return getCitationString("");
-//    }
-//
-//    public String getCitationString(String delim) {
-//        StringBuilder builder = new StringBuilder();
-//        builder.append(delim);
-//        return builder.toString();
-//    }
-//
-//    public List<Citation> getCitations() {
-//        return null;
-//    }
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(
+                new Citation(
+                        new Author[] {
+                                new Author("P", "Lemey"),
+                                new Author("A", "Rambaut"),
+                                new Author("JJ", "Welch"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Phylogeography takes a relaxed random walk in continous space and time",
+                        "Molecular Biology and Evolution",
+                        Citation.Status.ACCEPTED
+                )
+        );
+        return citations;
+    }
 
     protected abstract String extraInfo();
 

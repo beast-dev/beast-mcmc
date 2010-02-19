@@ -29,6 +29,7 @@ import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -126,7 +127,7 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
 			XMLObject cxo = (XMLObject)xo.getChild(POPULATION_SIZES);
 			Parameter param = (Parameter)cxo.getChild(Parameter.class);
 
-			cxo = (XMLObject)xo.getChild(CoalescentLikelihood.POPULATION_TREE);
+			cxo = (XMLObject)xo.getChild(CoalescentLikelihoodParser.POPULATION_TREE);
 			TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
 
 			return new SkylineLikelihood(treeModel, param);
@@ -148,7 +149,7 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood {
 			new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[] {
 				new ElementRule(Parameter.class)
 			}),
-			new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[] {
+			new ElementRule(CoalescentLikelihoodParser.POPULATION_TREE, new XMLSyntaxRule[] {
 				new ElementRule(TreeModel.class)
 			}),
 		};

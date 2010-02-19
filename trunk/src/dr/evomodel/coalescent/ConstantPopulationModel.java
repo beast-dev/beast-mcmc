@@ -27,9 +27,8 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evoxml.util.XMLUnits;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 
 /**
  * A wrapper for ConstantPopulation.
@@ -42,16 +41,12 @@ public class ConstantPopulationModel extends DemographicModel {
     //
     // Public stuff
     //
-
-    public static String CONSTANT_POPULATION_MODEL = "constantSize";
-    public static String POPULATION_SIZE = "populationSize";
-
     /**
      * Construct demographic model with default settings
      */
     public ConstantPopulationModel(Parameter N0Parameter, Type units) {
 
-        this(CONSTANT_POPULATION_MODEL, N0Parameter, units);
+        this(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, N0Parameter, units);
     }
 
     /**
@@ -75,51 +70,6 @@ public class ConstantPopulationModel extends DemographicModel {
         constantPopulation.setN0(N0Parameter.getParameterValue(0));
         return constantPopulation;
     }
-
-    /**
-     * Parses an element from an DOM document into a ConstantPopulation.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return CONSTANT_POPULATION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-            XMLObject cxo = xo.getChild(POPULATION_SIZE);
-            Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
-
-
-            return new ConstantPopulationModel(N0Param, units);
-        }
-
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model representing a constant population size through time.";
-        }
-
-        public Class getReturnType() {
-            return ConstantPopulationModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                XMLUnits.UNITS_RULE,
-                new ElementRule(POPULATION_SIZE,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
-        };
-    };
-
 
     //
     // protected stuff

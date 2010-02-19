@@ -13,6 +13,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.loggers.ArrayLogFormatter;
@@ -55,7 +56,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
 
 
     public void testStrictClock() throws Exception {
-        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 380.0, 0, 38000.0);
+        Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 380.0, 0, 38000.0);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
@@ -213,8 +214,8 @@ public class StrictClockTest extends TraceCorrelationAssert {
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(StrictClockBranchRates.RATE));
         assertExpectation(StrictClockBranchRates.RATE, rateStats, 8.04835E-4);        
 
-        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 37.3762);
+        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
+        assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 37.3762);
 
         TraceCorrelation coalescentStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("coalescent"));
         assertExpectation("coalescent", coalescentStats, -72.1285);

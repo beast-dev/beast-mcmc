@@ -15,6 +15,7 @@ import dr.evomodel.substmodel.HKY;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodel.treelikelihood.TipPartialsModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.loggers.ArrayLogFormatter;
@@ -58,7 +59,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
 
 
     public void testPMD() throws Exception {
-        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 496432.69917113904, 0, Double.POSITIVE_INFINITY);
+        Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 496432.69917113904, 0, Double.POSITIVE_INFINITY);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);

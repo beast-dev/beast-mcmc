@@ -7,9 +7,10 @@ import dr.evomodel.operators.TreeBitRandomWalkOperator;
 import dr.evomodel.speciation.RandomLocalYuleModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.*;
-import dr.evomodel.coalescent.CoalescentSimulator;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -40,7 +41,7 @@ import java.util.List;
 public class RLYModelTest extends TraceCorrelationAssert {
 
     static final String TL = "TL";
-    static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
+    static final String TREE_HEIGHT = CoalescentSimulatorParser.ROOT_HEIGHT;
     static final String birthRateIndicator = "birthRateIndicator";
     static final String birthRate = "birthRate";
 

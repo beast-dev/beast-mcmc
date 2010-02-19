@@ -34,12 +34,12 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
@@ -342,21 +342,21 @@ public class TreePriorGenerator extends Generator {
 	            // generate a speciational process
 	            writer.writeComment("Generate a speciation likelihood for Yule or Birth Death");
 	            writer.writeOpenTag(
-	                    SpeciationLikelihood.SPECIATION_LIKELIHOOD,
+	                    SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD,
 	                    new Attribute[]{
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "speciation")
 	                    }
 	            );
 	
 	            // write pop size socket
-	            writer.writeOpenTag(SpeciationLikelihood.MODEL);
+	            writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
 	            writeNodeHeightPriorModelRef(prior, writer);
-	            writer.writeCloseTag(SpeciationLikelihood.MODEL);
-	            writer.writeOpenTag(SpeciationLikelihood.TREE);
+	            writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
+	            writer.writeOpenTag(SpeciationLikelihoodParser.TREE);
 	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
-	            writer.writeCloseTag(SpeciationLikelihood.TREE);
+	            writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
 	
-	            writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
+	            writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
 	            
 	            break;
 	            
@@ -754,7 +754,7 @@ public class TreePriorGenerator extends Generator {
 
             case YULE:
             case BIRTH_DEATH:
-                writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
+                writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
                 break;
             case SKYLINE:
                 writer.writeIDref(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyline");
@@ -787,7 +787,7 @@ public class TreePriorGenerator extends Generator {
 
             case YULE:
             case BIRTH_DEATH:
-                writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
+                writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
                 break;
             case SKYLINE:
                 writer.writeIDref(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyline");

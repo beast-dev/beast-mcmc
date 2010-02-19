@@ -98,7 +98,9 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     }
 
     protected String extraInfo() {
-        return "\tSample internal node traits: false\n";
+        return "\tSample internal node traits: false\n" +
+               "\tPlease cite the integrated Brownian diffusion process of\n" +
+               "\t\tPybus, Lemey and Suchard (in preparation\n";
     }
 
     public double getLogDataLikelihood() {
@@ -298,9 +300,6 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             for (int j = 0; j < tipCount; j++) {
                 final int rowOffset = j * dimTrait + i;
                 for (int k = 0; k < tipCount * dimTrait; k++) {
-//                            System.err.println("rowOffset = "+rowOffset);
-//                            System.err.println("k = "+k);
-//                            System.err.println("tipC = "+tipCount);
                     mean[i] += treeTraitPrecisionMatrix[rowOffset][k] * tipTraits[k];
                 }
             }
@@ -429,7 +428,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     }
 
     protected double[] getRootNodeTrait() {
-        return new double[dim];
+        return traitForNode(treeModel, treeModel.getRoot(), traitName);
     }
 
     protected double[] traitForNode(TreeModel tree, NodeRef node, String traitName) {
@@ -450,6 +449,8 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         return trait;
     }
 
+    // This function is used for debugging; return the multivariate normal variance of
+    // all tree tips and internal nodes *conditional* on the root
     protected double[][] computeTreeMVNormalVariance() {
 
         final int tipCount = treeModel.getExternalNodeCount();
@@ -608,6 +609,11 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                 }
 
                 double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(rootMean, invAplusB);
+
+                if (DEBUG_PREORDER) {
+                    Arrays.fill(draw, 1.0);
+                }
+
                 System.arraycopy(draw, 0, drawnStates, rootIndex * dim + datum * dimTrait, dimTrait);
 
                 if (DEBUG) {
@@ -636,9 +642,18 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                     int parentOffset = parentIndex * dim + datum * dimTrait;
                     int thisOffset = thisIndex * dim + datum * dimTrait;
 
+                    if (DEBUG) {
+                        double[] parentValue = new double[dimTrait];
+                        System.arraycopy(drawnStates, parentOffset, parentValue, 0, dimTrait);
+                        System.err.println("Parent draw: " + new Vector(parentValue));
+                        if (parentValue[0] != drawnStates[parentOffset]) {
+                            throw new RuntimeException("Error in setting indices");
+                        }
+                    }
+
                     for (int i = 0; i < dimTrait; i++) {
-                        mean[i] = (meanCache[parentOffset + i] * precisionToParent
-                                + meanCache[thisIndex + i]) / totalPrecision;
+                        mean[i] = (drawnStates[parentOffset + i] * precisionToParent
+                                 + meanCache[thisOffset + i] * precisionOfNode) / totalPrecision;
                         for (int j = 0; j < dimTrait; j++) {
                             var[i][j] = treeVariance[i][j] / totalPrecision;
                         }
@@ -647,9 +662,11 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                     System.arraycopy(draw, 0, drawnStates, thisOffset, dimTrait);
 
                     if (DEBUG) {
+                        System.err.println("Int prec: " + totalPrecision);
                         System.err.println("Int mean: " + new Vector(mean));
                         System.err.println("Int var : " + new Matrix(var));
                         System.err.println("Int draw: " + new Vector(draw));
+                        System.err.println("");
                     }
                 }
             }
@@ -681,8 +698,9 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double[][] rootPriorPrecision;
     private double logRootPriorPrecisionDeterminant;
 
-    private final boolean integrateRoot = true;
+    private final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     private static boolean DEBUG = false;
+    private static boolean DEBUG_PREORDER = false;
 
     private double zBz; // Prior sum-of-squares contribution
 

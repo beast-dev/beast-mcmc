@@ -24,19 +24,18 @@
 package dr.app.beauti.options;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.Generator;
 import dr.evolution.util.Taxon;
-
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evomodelxml.BirthDeathModelParser;
-import dr.evomodelxml.YuleModelParser;
+import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.YuleModelParser;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**

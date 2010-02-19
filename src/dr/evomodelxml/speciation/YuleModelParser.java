@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml;
+package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;

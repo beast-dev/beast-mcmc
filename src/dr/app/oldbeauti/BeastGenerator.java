@@ -47,7 +47,6 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.*;
@@ -62,6 +61,7 @@ import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.*;
@@ -1406,21 +1406,21 @@ public class BeastGenerator extends BeautiOptions {
             // generate a speciational process
 
             writer.writeOpenTag(
-                    SpeciationLikelihood.SPECIATION_LIKELIHOOD,
+                    SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "speciation")
                     }
             );
 
             // write pop size socket
-            writer.writeOpenTag(SpeciationLikelihood.MODEL);
+            writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
             writeNodeHeightPriorModelRef(writer);
-            writer.writeCloseTag(SpeciationLikelihood.MODEL);
-            writer.writeOpenTag(SpeciationLikelihood.TREE);
+            writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
+            writer.writeOpenTag(SpeciationLikelihoodParser.TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeCloseTag(SpeciationLikelihood.TREE);
+            writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
 
-            writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
+            writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
 
         } else if (nodeHeightPrior == SKYLINE) {
             // generate a Bayesian skyline plot
@@ -2101,7 +2101,7 @@ public class BeastGenerator extends BeautiOptions {
 
 
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
+            writer.writeTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
         } else {
@@ -2527,7 +2527,7 @@ public class BeastGenerator extends BeautiOptions {
 //							new Attribute.Default<String>(Columns.WIDTH, "12")
 //					}
 //			);
-//			writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
+//			writer.writeTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
 //		} else {
 //			writer.writeOpenTag(Columns.COLUMN,
 //					new Attribute[] {
@@ -2725,7 +2725,7 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihood.TREE_LIKELIHOOD), true);
         }
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
-            writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
+            writer.writeTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
             writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
         } else {

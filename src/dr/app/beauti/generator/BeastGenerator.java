@@ -39,7 +39,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
-import dr.evomodel.speciation.SpeciationLikelihood;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
@@ -653,7 +653,7 @@ public class BeastGenerator extends Generator {
 //                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
 //            }
             // prior on species tree
-            writer.writeIDref(SpeciationLikelihood.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
+            writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         }
 
         parameterPriorGenerator.writeParameterPriors(writer);

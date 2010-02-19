@@ -37,13 +37,13 @@ import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
-import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
@@ -249,22 +249,22 @@ public class STARBEASTGenerator extends Generator {
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree: Birth Death Model");
 
-            writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
+            writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});
 
-            writer.writeOpenTag(SpeciationLikelihood.MODEL);
+            writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
             writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);
-            writer.writeCloseTag(SpeciationLikelihood.MODEL);
+            writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
 
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
             writer.writeComment("Species Tree: Yule Model");
 
-            writer.writeOpenTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute[]{
+            writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});
 
-            writer.writeOpenTag(SpeciationLikelihood.MODEL);
+            writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
             writer.writeIDref(YuleModelParser.YULE_MODEL, YuleModelParser.YULE);
-            writer.writeCloseTag(SpeciationLikelihood.MODEL);
+            writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
         } else {
         	throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : "
                     + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
@@ -275,7 +275,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
         writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE);
 
-        writer.writeCloseTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD);
+        writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
     }
 
     private void writeSpeciesTreeRootHeight(XMLWriter writer) {

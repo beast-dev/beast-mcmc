@@ -23,9 +23,10 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
                                               List<Integer> missingIndices,
                                               boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
                                               BranchRateModel rateModel, Model samplingDensity,
-                                              boolean reportAsMultivariate) {
+                                              boolean reportAsMultivariate,
+                                              boolean reciprocalRates) {
         super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
+                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
     }
 
     protected String extraInfo() {

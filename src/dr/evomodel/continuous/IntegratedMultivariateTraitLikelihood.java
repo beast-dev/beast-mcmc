@@ -32,9 +32,10 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                                                  boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
                                                  BranchRateModel rateModel, Model samplingDensity,
                                                  boolean reportAsMultivariate,
-                                                 MultivariateNormalDistribution rootPrior) {
+                                                 MultivariateNormalDistribution rootPrior,
+                                                 boolean reciprocalRates) {
         super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
+                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         dimTrait = diffusionModel.getPrecisionmatrix().length;
         dim = treeModel.getMultivariateNodeTrait(treeModel.getExternalNode(0), traitName).length;

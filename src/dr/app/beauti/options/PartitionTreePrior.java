@@ -23,10 +23,9 @@
 
 package dr.app.beauti.options;
 
-import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodelxml.BirthDeathModelParser;
-import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.*;
+import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodelxml.speciation.BirthDeathModelParser;
 
 import java.util.List;
 

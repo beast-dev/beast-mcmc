@@ -91,6 +91,9 @@ public class RateIndicatorBF {
         }
 
         // so now we know the dimension of the rateIndicator array
+        if ((generationCount - burnin)< 10) {
+            System.err.println("With burn-in = "+burnin+", there are only "+(generationCount - burnin)+" state(s) in indicator log file??");
+        }
         double[][] rateIndicators = new double[((generationCount - 1)-burnin)][numberOfRateIndicators];
         fillRateIndicatorArray(inputFileName,rateIndicators,burnin,firstRateIndicator,numberOfRateIndicators);
         //print2DArray(rateIndicators, "test.txt");

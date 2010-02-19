@@ -38,7 +38,7 @@ import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.RateStatistic;
-import dr.evomodelxml.BirthDeathModelParser;
+import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;

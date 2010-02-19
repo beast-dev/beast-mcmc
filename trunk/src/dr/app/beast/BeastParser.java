@@ -251,8 +251,8 @@ public class BeastParser extends XMLParser {
 
 
         // speciation
-//        addXMLObjectParser(new dr.evomodelxml.YuleModelParser());
-//        addXMLObjectParser(new dr.evomodelxml.BirthDeathModelParser());
+//        addXMLObjectParser(new dr.evomodelxml.speciation.YuleModelParser());
+//        addXMLObjectParser(new dr.evomodelxml.speciation.BirthDeathModelParser());
 //        addXMLObjectParser(dr.evomodel.speciation.SpeciationLikelihood.PARSER);
 
         // coalescent

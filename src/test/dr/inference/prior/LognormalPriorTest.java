@@ -2,6 +2,7 @@ package test.dr.inference.prior;
 
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -12,7 +13,10 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.DummyLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.*;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.ScaleOperator;
+import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -47,7 +51,7 @@ public class LognormalPriorTest extends TraceCorrelationAssert {
 //        ConstantPopulation constant = new ConstantPopulation(Units.Type.YEARS);
 //        constant.setN0(popSize); // popSize
         Parameter popSize = new Parameter.Default(6.0);
-        popSize.setId(ConstantPopulationModel.POPULATION_SIZE);
+        popSize.setId(ConstantPopulationModelParser.POPULATION_SIZE);
         ConstantPopulationModel demo = new ConstantPopulationModel(popSize, Units.Type.YEARS);
 
         //Likelihood
@@ -114,10 +118,10 @@ public class LognormalPriorTest extends TraceCorrelationAssert {
 
 //      <expectation name="param" value="4.48168907"/>
 
-        TraceCorrelation popSizeStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
+        TraceCorrelation popSizeStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
 
         System.out.println("Expectation of Log-Normal(1,1) is e^(M+S^2/2) = e^(1.5) = " + Math.exp(1.5));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popSizeStats, Math.exp(1.5));
+        assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popSizeStats, Math.exp(1.5));
     }
 
     public static Test suite() {

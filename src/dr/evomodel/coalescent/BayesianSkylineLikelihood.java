@@ -25,17 +25,16 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.*;
+import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.ExponentialBSPGrowth;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
+import dr.evomodelxml.coalescent.BayesianSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 import dr.math.MathUtils;
 
-import java.util.logging.Logger;
 import java.util.Date;
 
 /**
@@ -49,15 +48,6 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
 
     // PUBLIC STUFF
 
-    public static final String SKYLINE_LIKELIHOOD = "generalizedSkyLineLikelihood";
-    public static final String POPULATION_SIZES = "populationSizes";
-    public static final String GROUP_SIZES = "groupSizes";
-
-    public static final String TYPE = "type";
-    public static final String STEPWISE = "stepwise";
-    public static final String LINEAR = "linear";
-    public static final String EXPONENTIAL = "exponential";
-
     public static final int STEPWISE_TYPE = 0;
     public static final int LINEAR_TYPE = 1;
     public static final int EXPONENTIAL_TYPE = 2;
@@ -66,7 +56,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                                      Parameter popSizeParameter,
                                      Parameter groupSizeParameter,
                                      int type) {
-        super(SKYLINE_LIKELIHOOD);
+        super(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         this.groupSizeParameter = groupSizeParameter;
         this.popSizeParameter = popSizeParameter;
@@ -387,78 +377,6 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() { return SKYLINE_LIKELIHOOD; }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(POPULATION_SIZES);
-            Parameter param = (Parameter)cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(GROUP_SIZES);
-            Parameter param2 = (Parameter)cxo.getChild(Parameter.class);
-
-            cxo = xo.getChild(CoalescentLikelihood.POPULATION_TREE);
-            TreeModel treeModel = (TreeModel)cxo.getChild(TreeModel.class);
-
-            int type = LINEAR_TYPE;
-            String typeName = LINEAR;
-            if (xo.hasAttribute(LINEAR) &&!xo.getBooleanAttribute(LINEAR)) {
-                type = STEPWISE_TYPE;
-                typeName = STEPWISE;
-            }
-
-            if (xo.hasAttribute(TYPE)) {
-                if (xo.getStringAttribute(TYPE).equalsIgnoreCase(STEPWISE)) {
-                    type = STEPWISE_TYPE;
-                    typeName = STEPWISE;
-                } else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(LINEAR)) {
-                    type = LINEAR_TYPE;
-                    typeName = LINEAR;
-                } else if (xo.getStringAttribute(TYPE).equalsIgnoreCase(EXPONENTIAL)) {
-                    type = EXPONENTIAL_TYPE;
-                    typeName = EXPONENTIAL;
-                }
-                else throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(TYPE));
-            }
-
-            Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
-
-            return new BayesianSkylineLikelihood(treeModel, param, param2, type);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the population size vector.";
-        }
-
-        public Class getReturnType() { return Likelihood.class; }
-
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-        private final XMLSyntaxRule[] rules;{
-            rules = new XMLSyntaxRule[]{
-                    new XORRule(
-                            AttributeRule.newBooleanRule(LINEAR),
-                            AttributeRule.newStringRule(TYPE)
-                    ),
-                    new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    }),
-                    new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    }),
-                    new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[]{
-                            new ElementRule(TreeModel.class)
-                    }),
-            };
-        }
-    };
 
     /** The demographic model. */
     private final Parameter popSizeParameter;

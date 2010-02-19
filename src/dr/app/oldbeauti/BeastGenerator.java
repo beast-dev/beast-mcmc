@@ -39,7 +39,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.*;
+import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.TreeBitMoveOperator;
@@ -56,8 +56,7 @@ import dr.evomodelxml.*;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.evomodelxml.coalescent.EBSPAnalysisParser;
-import dr.evomodelxml.coalescent.VariableDemographicModelParser;
+import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
@@ -375,17 +374,17 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("A prior assumption that the population size has remained constant");
             writer.writeComment("throughout the time spanned by the genealogy.");
             writer.writeOpenTag(
-                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
+                    ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "constant"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
-            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
+            writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
             writeParameter("constant.popSize", writer);
-            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
+            writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
+            writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
 
         } else if (nodeHeightPrior == EXPONENTIAL) {
             // generate an exponential prior tree
@@ -393,7 +392,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("A prior assumption that the population size has grown exponentially");
             writer.writeComment("throughout the time spanned by the genealogy.");
             writer.writeOpenTag(
-                    ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL,
+                    ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "exponential"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -401,30 +400,30 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             // write pop size socket
-            writer.writeOpenTag(ExponentialGrowthModel.POPULATION_SIZE);
+            writer.writeOpenTag(ExponentialGrowthModelParser.POPULATION_SIZE);
             writeParameter("exponential.popSize", writer);
-            writer.writeCloseTag(ExponentialGrowthModel.POPULATION_SIZE);
+            writer.writeCloseTag(ExponentialGrowthModelParser.POPULATION_SIZE);
 
             if (parameterization == GROWTH_RATE) {
                 // write growth rate socket
-                writer.writeOpenTag(ExponentialGrowthModel.GROWTH_RATE);
+                writer.writeOpenTag(ExponentialGrowthModelParser.GROWTH_RATE);
                 writeParameter("exponential.growthRate", writer);
-                writer.writeCloseTag(ExponentialGrowthModel.GROWTH_RATE);
+                writer.writeCloseTag(ExponentialGrowthModelParser.GROWTH_RATE);
             } else {
                 // write doubling time socket
-                writer.writeOpenTag(ExponentialGrowthModel.DOUBLING_TIME);
+                writer.writeOpenTag(ExponentialGrowthModelParser.DOUBLING_TIME);
                 writeParameter("exponential.doublingTime", writer);
-                writer.writeCloseTag(ExponentialGrowthModel.DOUBLING_TIME);
+                writer.writeCloseTag(ExponentialGrowthModelParser.DOUBLING_TIME);
             }
 
-            writer.writeCloseTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL);
+            writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
         } else if (nodeHeightPrior == LOGISTIC) {
             // generate an exponential prior tree
 
             writer.writeComment("A prior assumption that the population size has grown logistically");
             writer.writeComment("throughout the time spanned by the genealogy.");
             writer.writeOpenTag(
-                    LogisticGrowthModel.LOGISTIC_GROWTH_MODEL,
+                    LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "logistic"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -432,28 +431,28 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             // write pop size socket
-            writer.writeOpenTag(LogisticGrowthModel.POPULATION_SIZE);
+            writer.writeOpenTag(LogisticGrowthModelParser.POPULATION_SIZE);
             writeParameter("logistic.popSize", writer);
-            writer.writeCloseTag(LogisticGrowthModel.POPULATION_SIZE);
+            writer.writeCloseTag(LogisticGrowthModelParser.POPULATION_SIZE);
 
             if (parameterization == GROWTH_RATE) {
                 // write growth rate socket
-                writer.writeOpenTag(LogisticGrowthModel.GROWTH_RATE);
+                writer.writeOpenTag(LogisticGrowthModelParser.GROWTH_RATE);
                 writeParameter("logistic.growthRate", writer);
-                writer.writeCloseTag(LogisticGrowthModel.GROWTH_RATE);
+                writer.writeCloseTag(LogisticGrowthModelParser.GROWTH_RATE);
             } else {
                 // write doubling time socket
-                writer.writeOpenTag(LogisticGrowthModel.DOUBLING_TIME);
+                writer.writeOpenTag(LogisticGrowthModelParser.DOUBLING_TIME);
                 writeParameter("logistic.doublingTime", writer);
-                writer.writeCloseTag(LogisticGrowthModel.DOUBLING_TIME);
+                writer.writeCloseTag(LogisticGrowthModelParser.DOUBLING_TIME);
             }
 
             // write logistic t50 socket
-            writer.writeOpenTag(LogisticGrowthModel.TIME_50);
+            writer.writeOpenTag(LogisticGrowthModelParser.TIME_50);
             writeParameter("logistic.t50", writer);
-            writer.writeCloseTag(LogisticGrowthModel.TIME_50);
+            writer.writeCloseTag(LogisticGrowthModelParser.TIME_50);
 
-            writer.writeCloseTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL);
+            writer.writeCloseTag(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL);
 
             initialPopSize = "logistic.popSize";
 
@@ -463,7 +462,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("A prior assumption that the population size has grown exponentially");
             writer.writeComment("from some ancestral population size in the past.");
             writer.writeOpenTag(
-                    ExpansionModel.EXPANSION_MODEL,
+                    ExpansionModelParser.EXPANSION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "expansion"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
@@ -471,28 +470,28 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             // write pop size socket
-            writer.writeOpenTag(ExpansionModel.POPULATION_SIZE);
+            writer.writeOpenTag(ExpansionModelParser.POPULATION_SIZE);
             writeParameter("expansion.popSize", writer);
-            writer.writeCloseTag(ExpansionModel.POPULATION_SIZE);
+            writer.writeCloseTag(ExpansionModelParser.POPULATION_SIZE);
 
             if (parameterization == GROWTH_RATE) {
                 // write growth rate socket
-                writer.writeOpenTag(ExpansionModel.GROWTH_RATE);
+                writer.writeOpenTag(ExpansionModelParser.GROWTH_RATE);
                 writeParameter("expansion.growthRate", writer);
-                writer.writeCloseTag(ExpansionModel.GROWTH_RATE);
+                writer.writeCloseTag(ExpansionModelParser.GROWTH_RATE);
             } else {
                 // write doubling time socket
-                writer.writeOpenTag(ExpansionModel.DOUBLING_TIME);
+                writer.writeOpenTag(ExpansionModelParser.DOUBLING_TIME);
                 writeParameter("expansion.doublingTime", writer);
-                writer.writeCloseTag(ExpansionModel.DOUBLING_TIME);
+                writer.writeCloseTag(ExpansionModelParser.DOUBLING_TIME);
             }
 
             // write ancestral proportion socket
-            writer.writeOpenTag(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION);
+            writer.writeOpenTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
             writeParameter("expansion.ancestralProportion", writer);
-            writer.writeCloseTag(ExpansionModel.ANCESTRAL_POPULATION_PROPORTION);
+            writer.writeCloseTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
 
-            writer.writeCloseTag(ExpansionModel.EXPANSION_MODEL);
+            writer.writeCloseTag(ExpansionModelParser.EXPANSION_MODEL);
 
             initialPopSize = "expansion.popSize";
 
@@ -539,14 +538,14 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("This is a simple constant population size coalescent model");
             writer.writeComment("that is used to generate an initial tree for the chain.");
             writer.writeOpenTag(
-                    ConstantPopulationModel.CONSTANT_POPULATION_MODEL,
+                    ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "initialDemo"),
                             new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
                     }
             );
 
-            writer.writeOpenTag(ConstantPopulationModel.POPULATION_SIZE);
+            writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
             if (initialPopSize != null) {
                 writer.writeTag(ParameterParser.PARAMETER,
                         new Attribute[]{
@@ -555,8 +554,8 @@ public class BeastGenerator extends BeautiOptions {
             } else {
                 writeParameter("initialDemo.popSize", 1, 100.0, Double.NaN, Double.NaN, writer);
             }
-            writer.writeCloseTag(ConstantPopulationModel.POPULATION_SIZE);
-            writer.writeCloseTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL);
+            writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
+            writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
         }
 
     }
@@ -667,7 +666,7 @@ public class BeastGenerator extends BeautiOptions {
         if (userTree) {
             writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
         } else {
-            writer.writeTag(CoalescentSimulator.COALESCENT_TREE, new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
+            writer.writeTag(CoalescentSimulatorParser.COALESCENT_TREE, new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
         }
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
@@ -1423,7 +1422,7 @@ public class BeastGenerator extends BeautiOptions {
             // generate a Bayesian skyline plot
 
             writer.writeOpenTag(
-                    BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD,
+                    BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "skyline"),
                             new Attribute.Default<String>("linear", skylineModel == LINEAR_SKYLINE ? "true" : "false")
@@ -1431,24 +1430,24 @@ public class BeastGenerator extends BeautiOptions {
             );
 
             // write pop size socket
-            writer.writeOpenTag(BayesianSkylineLikelihood.POPULATION_SIZES);
+            writer.writeOpenTag(BayesianSkylineLikelihoodParser.POPULATION_SIZES);
             if (skylineModel == LINEAR_SKYLINE) {
                 writeParameter("skyline.popSize", skylineGroupCount + 1, writer);
             } else {
                 writeParameter("skyline.popSize", skylineGroupCount, writer);
             }
-            writer.writeCloseTag(BayesianSkylineLikelihood.POPULATION_SIZES);
+            writer.writeCloseTag(BayesianSkylineLikelihoodParser.POPULATION_SIZES);
 
             // write group size socket
-            writer.writeOpenTag(BayesianSkylineLikelihood.GROUP_SIZES);
+            writer.writeOpenTag(BayesianSkylineLikelihoodParser.GROUP_SIZES);
             writeParameter("skyline.groupSize", skylineGroupCount, writer);
-            writer.writeCloseTag(BayesianSkylineLikelihood.GROUP_SIZES);
+            writer.writeCloseTag(BayesianSkylineLikelihoodParser.GROUP_SIZES);
 
-            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
 
-            writer.writeCloseTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD);
+            writer.writeCloseTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
         } else if (nodeHeightPrior == EXTENDED_SKYLINE) {
             final String tagName = VariableDemographicModelParser.MODEL_NAME;
 
@@ -1480,12 +1479,12 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(tagName);
 
-            writer.writeOpenTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "coalescent"));
-            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+            writer.writeOpenTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "coalescent"));
+            writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
             writer.writeTag(tagName, new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModelParser.demoElementName), true);
-            writer.writeCloseTag(CoalescentLikelihood.MODEL);
+            writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
             writer.writeComment("Take population Tree from demographic");
-            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
             writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
                     new Attribute[]{
@@ -1512,16 +1511,16 @@ public class BeastGenerator extends BeautiOptions {
             // generate a coalescent process
 
             writer.writeOpenTag(
-                    CoalescentLikelihood.COALESCENT_LIKELIHOOD,
+                    CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "coalescent")}
             );
-            writer.writeOpenTag(CoalescentLikelihood.MODEL);
+            writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
             writeNodeHeightPriorModelRef(writer);
-            writer.writeCloseTag(CoalescentLikelihood.MODEL);
-            writer.writeOpenTag(CoalescentLikelihood.POPULATION_TREE);
+            writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
+            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
-            writer.writeCloseTag(CoalescentLikelihood.POPULATION_TREE);
-            writer.writeCloseTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         }
     }
 
@@ -2100,9 +2099,9 @@ public class BeastGenerator extends BeautiOptions {
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
-            writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
+            writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
         } else {
-            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "coalescent"), true);
+            writer.writeTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "coalescent"), true);
         }
 
         if (nodeHeightPrior == LOGISTIC) {
@@ -2534,9 +2533,9 @@ public class BeastGenerator extends BeautiOptions {
 //					}
 //			);
 //			if (nodeHeightPrior == SKYLINE) {
-//				writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
+//				writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
 //			} else {
-//				writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"coalescent"), true);
+//				writer.writeTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"coalescent"), true);
 //			}
 //		}
 //		writer.writeCloseTag(Columns.COLUMN);
@@ -2724,9 +2723,9 @@ public class BeastGenerator extends BeautiOptions {
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(SpeciationLikelihood.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
         } else if (nodeHeightPrior == SKYLINE) {
-            writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
+            writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "skyline"), true);
         } else {
-            writer.writeTag(CoalescentLikelihood.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "coalescent"), true);
+            writer.writeTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "coalescent"), true);
         }
 
 
@@ -2880,7 +2879,7 @@ public class BeastGenerator extends BeautiOptions {
             Parameter rootHeight = getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
-                        CoalescentSimulator.COALESCENT_TREE,
+                        CoalescentSimulatorParser.COALESCENT_TREE,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, InitialTreeGenerator.STARTING_TREE),
                                 new Attribute.Default<String>(TreeModelParser.ROOT_HEIGHT, "" + rootHeight.initial)
@@ -2888,7 +2887,7 @@ public class BeastGenerator extends BeautiOptions {
                 );
             } else {
                 writer.writeOpenTag(
-                        CoalescentSimulator.COALESCENT_TREE,
+                        CoalescentSimulatorParser.COALESCENT_TREE,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, InitialTreeGenerator.STARTING_TREE)
                         }
@@ -2897,14 +2896,14 @@ public class BeastGenerator extends BeautiOptions {
 
             Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, TaxaParser.TAXA)};
             if (taxonSets.size() > 0) {
-                writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
+                writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 for (Taxa taxonSet : taxonSets) {
                     Parameter statistic = statistics.get(taxonSet);
 
-                    Attribute mono = new Attribute.Default<Boolean>(CoalescentSimulator.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
+                    Attribute mono = new Attribute.Default<Boolean>(CoalescentSimulatorParser.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
 
-                    writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
+                    writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
@@ -2917,39 +2916,39 @@ public class BeastGenerator extends BeautiOptions {
                         }
                     }
 
-                    writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                    writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
                 }
-                writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+                writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             } else {
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             }
 
             writeInitialDemoModelRef(writer);
-            writer.writeCloseTag(CoalescentSimulator.COALESCENT_TREE);
+            writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
         }
     }
 
     public void writeInitialDemoModelRef(XMLWriter writer) {
         if (nodeHeightPrior == CONSTANT) {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
+            writer.writeTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
         } else if (nodeHeightPrior == EXPONENTIAL) {
-            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
+            writer.writeTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
         } else {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "initialDemo")}, true);
+            writer.writeTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "initialDemo")}, true);
         }
     }
 
     public void writeNodeHeightPriorModelRef(XMLWriter writer) {
         if (nodeHeightPrior == CONSTANT) {
-            writer.writeTag(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
+            writer.writeTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "constant")}, true);
         } else if (nodeHeightPrior == EXPONENTIAL) {
-            writer.writeTag(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
+            writer.writeTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "exponential")}, true);
         } else if (nodeHeightPrior == LOGISTIC) {
-            writer.writeTag(LogisticGrowthModel.LOGISTIC_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "logistic")}, true);
+            writer.writeTag(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "logistic")}, true);
         } else if (nodeHeightPrior == EXPANSION) {
-            writer.writeTag(ExpansionModel.EXPANSION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "expansion")}, true);
+            writer.writeTag(ExpansionModelParser.EXPANSION_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "expansion")}, true);
         } else if (nodeHeightPrior == SKYLINE) {
-            writer.writeTag(BayesianSkylineLikelihood.SKYLINE_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "skyline")}, true);
+            writer.writeTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "skyline")}, true);
         } else if (nodeHeightPrior == YULE) {
             writer.writeTag(YuleModelParser.YULE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "yule")}, true);
         } else if (nodeHeightPrior == BIRTH_DEATH) {

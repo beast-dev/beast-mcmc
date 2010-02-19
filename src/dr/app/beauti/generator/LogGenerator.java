@@ -33,7 +33,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.speciation.MultiSpeciesCoalescent;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciesTreeModel;
@@ -46,6 +45,7 @@ import dr.evomodelxml.YuleModelParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
+import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
 import dr.inference.model.CompoundLikelihood;
@@ -298,7 +298,7 @@ public class LogGenerator extends Generator {
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE)
-                writer.writeIDref(CoalescentLikelihood.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
         }
 
         writer.writeCloseTag(LoggerParser.LOG);

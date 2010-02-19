@@ -1,6 +1,5 @@
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.VariableSkylineLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -35,7 +34,7 @@ public class VariableSkylineLikelihoodParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(INDICATOR_PARAMETER);
         Parameter param2 = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(CoalescentLikelihood.POPULATION_TREE);
+        cxo = xo.getChild(CoalescentLikelihoodParser.POPULATION_TREE);
         TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
         VariableSkylineLikelihood.Type type = VariableSkylineLikelihood.Type.STEPWISE;
@@ -88,7 +87,7 @@ public class VariableSkylineLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(INDICATOR_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(CoalescentLikelihood.POPULATION_TREE, new XMLSyntaxRule[]{
+            new ElementRule(CoalescentLikelihoodParser.POPULATION_TREE, new XMLSyntaxRule[]{
                     new ElementRule(TreeModel.class)
             }),
             AttributeRule.newBooleanRule(LOG_SPACE)

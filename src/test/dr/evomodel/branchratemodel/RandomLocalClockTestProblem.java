@@ -16,6 +16,7 @@ import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.distribution.DistributionLikelihood;
@@ -61,7 +62,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 
 
     public void testRandomLocalClock() throws Exception {
-        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 0.077, 0, Double.POSITIVE_INFINITY);
+        Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 0.077, 0, Double.POSITIVE_INFINITY);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
@@ -257,8 +258,8 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
         assertExpectation("covariance", covarianceStats, 0.47952);
 
-        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 9.67405E-2);
+        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
+        assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 9.67405E-2);
 
         TraceCorrelation coalescentStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("coalescent"));
         assertExpectation("coalescent", coalescentStats, 7.29521);

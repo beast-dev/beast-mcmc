@@ -13,6 +13,7 @@ import dr.xml.*;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
+//import dr.util.Citation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -119,6 +120,20 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         recalculateTreeLength();
 
     }
+
+//    public String getCitationString() {
+//        return getCitationString("");
+//    }
+//
+//    public String getCitationString(String delim) {
+//        StringBuilder builder = new StringBuilder();
+//        builder.append(delim);
+//        return builder.toString();
+//    }
+//
+//    public List<Citation> getCitations() {
+//        return null;
+//    }
 
     protected abstract String extraInfo();
 

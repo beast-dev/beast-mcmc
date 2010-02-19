@@ -1,8 +1,6 @@
 package dr.util;
 
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Interface for associating a list of citations with an object

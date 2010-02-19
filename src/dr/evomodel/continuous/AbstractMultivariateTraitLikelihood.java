@@ -52,6 +52,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String JITTER = "jitter";
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
+    public static final String RECIPROCAL_RATES = "reciprocalRates";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                        TreeModel treeModel,
@@ -63,7 +64,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                        boolean useTreeLength,
                                        BranchRateModel rateModel,
                                        Model samplingDensity,
-                                       boolean reportAsMultivariate) {
+                                       boolean reportAsMultivariate,
+                                       boolean reciprocalRates) {
 
         super(TRAIT_LIKELIHOOD);
 
@@ -100,12 +102,14 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 		
         this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;
+        this.reciprocalRates = reciprocalRates;
 
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
         sb.append("\tHeterogenity model: ").append(rateModel != null ? rateModel.getId() : "homogeneous").append("\n");
         sb.append("\tTree normalization: ").append(scaleByTime ? (useTreeLength ? "length" : "height") : "off").append("\n");
+        sb.append("\tUsing reciprocal (precision) rates: ").append(reciprocalRates).append("\n");
         if (scaleByTime) {
             recalculateTreeLength();
             if (useTreeLength) {
@@ -151,8 +155,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         double length = treeModel.getBranchLength(node);
 
-        if (hasRateModel)
-            length *= rateModel.getBranchRate(treeModel, node);
+        if (hasRateModel) {
+            if (reciprocalRates) {
+                length /= rateModel.getBranchRate(treeModel, node); // branch rate scales as precision (inv-time)
+            } else {
+                length *= rateModel.getBranchRate(treeModel, node); // branch rate scales as variance (time)
+            }
+        }
 
         if (scaleByTime)
             return length / treeLength;
@@ -617,6 +626,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
 
+            boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
+
             boolean reportAsMultivariate = false;
             if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
                 reportAsMultivariate = true;
@@ -632,13 +643,15 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
                 return new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
-                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, rootDistribution);
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                            rootDistribution, reciprocalRates);
             }
 
             AbstractMultivariateTraitLikelihood like =
                     new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
-                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate);
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                            reciprocalRates);
 
             if (xo.hasChildNamed(RANDOMIZE)) {
                 XMLObject cxo = xo.getChild(RANDOMIZE);
@@ -713,6 +726,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
                 AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
+                AttributeRule.newBooleanRule(RECIPROCAL_RATES,true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         AttributeRule.newDoubleRule(RANDOMIZE_LOWER,true),
@@ -759,6 +773,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     private final boolean scaleByTime;
     private final boolean useTreeLength;
+    private final boolean reciprocalRates;
 
     protected boolean cacheBranches;
     protected double[] cachedLogLikelihoods;

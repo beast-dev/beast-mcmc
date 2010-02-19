@@ -32,6 +32,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.*;
 import dr.math.Binomial;
 import dr.util.ComparableDouble;
@@ -85,11 +86,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     }
 
     public OldAbstractCoalescentLikelihood(Tree tree, DemographicModel demoModel) {
-        this(CoalescentLikelihood.COALESCENT_LIKELIHOOD, tree, demoModel, true);
+        this(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, demoModel, true);
     }
 
     public OldAbstractCoalescentLikelihood(MultiLociTreeSet treesSet, DemographicModel demoModel) {
-        super(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+        super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         this.demoModel = demoModel;
         this.tree = null;
         this.treesSet = treesSet;

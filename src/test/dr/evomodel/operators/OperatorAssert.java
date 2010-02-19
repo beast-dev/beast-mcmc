@@ -9,12 +9,14 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.*;
+import dr.evomodel.tree.TreeLogger;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
@@ -40,7 +42,7 @@ import java.util.Set;
 public abstract class OperatorAssert extends TestCase {
 
 	static final String TL = "TL";
-    static final String TREE_HEIGHT = CoalescentSimulator.ROOT_HEIGHT;
+    static final String TREE_HEIGHT = CoalescentSimulatorParser.ROOT_HEIGHT;
 
     protected FlexibleTree tree5;
     protected FlexibleTree tree6;

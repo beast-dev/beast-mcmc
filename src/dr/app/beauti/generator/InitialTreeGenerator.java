@@ -2,16 +2,19 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.ConstantPopulationModel;
-import dr.evomodel.coalescent.ExponentialGrowthModel;
+import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evoxml.*;
 import dr.inference.distribution.UniformDistributionModel;
 import dr.util.Attribute;
@@ -89,17 +92,17 @@ public class InitialTreeGenerator extends Generator {
                 	
             		writer.writeComment("No calibration");
 	            	writer.writeOpenTag(
-	                        CoalescentSimulator.COALESCENT_TREE,
+	                        CoalescentSimulatorParser.COALESCENT_TREE,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-	                                new Attribute.Default<String>(CoalescentSimulator.ROOT_HEIGHT, "" + rootHeight.initial)
+	                                new Attribute.Default<String>(CoalescentSimulatorParser.ROOT_HEIGHT, "" + rootHeight.initial)
 	                        }
 	                );
 
                 } else {
             		writer.writeComment("Has calibration");
             		writer.writeOpenTag(
-	                        CoalescentSimulator.COALESCENT_TREE,
+	                        CoalescentSimulatorParser.COALESCENT_TREE,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
 	                        }
@@ -128,7 +131,7 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 writeInitialDemoModelRef(model, writer);
-                writer.writeCloseTag(CoalescentSimulator.COALESCENT_TREE);
+                writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -141,16 +144,16 @@ public class InitialTreeGenerator extends Generator {
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
         
         if (options.taxonSets != null && options.taxonSets.size() > 0) { 
-            writer.writeOpenTag(CoalescentSimulator.CONSTRAINED_TAXA);
+            writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {
                 if (taxa.getTreeModel().equals(model)) {
                 Parameter statistic = options.getStatistic(taxa);
 
                 Attribute mono = new Attribute.Default<Boolean>(
-                        CoalescentSimulator.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
+                        CoalescentSimulatorParser.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
 
-                writer.writeOpenTag(CoalescentSimulator.TMRCA_CONSTRAINT, mono);
+                writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
                 writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 if (statistic.isNodeHeight) {
@@ -162,10 +165,10 @@ public class InitialTreeGenerator extends Generator {
                     }
                 }
 
-                writer.writeCloseTag(CoalescentSimulator.TMRCA_CONSTRAINT);
+                writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
                 }
             }
-            writer.writeCloseTag(CoalescentSimulator.CONSTRAINED_TAXA);
+            writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
         } else {
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
         }
@@ -175,11 +178,11 @@ public class InitialTreeGenerator extends Generator {
     	PartitionTreePrior prior = model.getPartitionTreePrior();
     		
 		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.starBEASTOptions.isSpeciesAnalysis()) {
-        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
+        	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
-        	writer.writeIDref(ExponentialGrowthModel.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
+        	writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
         } else {
-        	writer.writeIDref(ConstantPopulationModel.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
+        	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
         }     		    		
     	
     }

@@ -27,11 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.Logger;
-import dr.inference.loggers.TabDelimitedFormatter;
-import dr.inference.xml.LoggerParser;
-import dr.xml.*;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,11 +39,6 @@ import java.util.List;
  * @version $Id: TreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DemographicLogger implements Logger {
-    public static final String DEMOGRAPHIC_LOG = "demographicLog";
-    public static final String TITLE = "title";
-    public static final String FILE_NAME = "fileName";
-    public static final String LOG_EVERY = "logEvery";
-
     private DemographicReconstructor reconstructor;
 
     public DemographicLogger(DemographicReconstructor reconstructor,
@@ -110,53 +101,6 @@ public class DemographicLogger implements Logger {
     protected final void addFormatter(LogFormatter formatter) {
         formatters.add(formatter);
     }
-
-    /**
-     * Parses an element from an DOM document into a ExponentialGrowth.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return DEMOGRAPHIC_LOG;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
-
-            final PrintWriter pw = LoggerParser.getLogFile(xo, getParserName());
-
-            final LogFormatter formatter = new TabDelimitedFormatter(pw);
-
-            DemographicReconstructor reconstructor = (DemographicReconstructor) xo.getChild(DemographicReconstructor.class);
-
-            return new DemographicLogger(reconstructor, formatter, logEvery);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A demographic model of constant population size followed by logistic growth.";
-        }
-
-        public Class getReturnType() {
-            return ConstantLogisticModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newIntegerRule(LOG_EVERY),
-                new StringAttributeRule(FILE_NAME,
-                        "The name of the file to send log output to. " +
-                                "If no file name is specified then log is sent to standard output", true),
-                new ElementRule(DemographicReconstructor.class)
-        };
-    };
 
     protected int logEvery = 0;
     protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();

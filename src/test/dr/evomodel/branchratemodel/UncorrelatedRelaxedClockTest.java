@@ -15,6 +15,7 @@ import dr.evomodel.substmodel.HKY;
 import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -108,8 +109,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
         assertExpectation("covariance", covarianceStats, -3.81803E-2);
 
-        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 37.3524);
+        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
+        assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 37.3524);
 
         TraceCorrelation coalescentStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("coalescent"));
         assertExpectation("coalescent", coalescentStats, -72.0313);
@@ -153,8 +154,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation("covariance", covarianceStats, -0.07042030641301375);
 //        System.out.println("covarianceStats = " + covarianceStats.getMean());
 
-        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 43.4478);
+        TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
+        assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 43.4478);
 //        System.out.println("popStats = " + popStats.getMean());
 
         TraceCorrelation coalescentStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("coalescent"));
@@ -163,7 +164,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
     }
 
     private ArrayTraceList UncorrelatedRelaxedClock(ParametricDistributionModel distributionModel) throws Exception {
-        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 380.0, 0, 38000.0);
+        Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 380.0, 0, 38000.0);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);

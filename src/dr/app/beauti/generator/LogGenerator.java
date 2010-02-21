@@ -33,8 +33,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.speciation.MultiSpeciesCoalescent;
-import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeLoggerParser;
@@ -43,9 +41,7 @@ import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
-import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.speciation.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
 import dr.inference.model.CompoundLikelihood;
@@ -213,7 +209,7 @@ public class LogGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescent.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
@@ -224,7 +220,7 @@ public class LogGenerator extends Generator {
             writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
 
             writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
+            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
 
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
                 writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
@@ -236,7 +232,7 @@ public class LogGenerator extends Generator {
             }
 
             //Species Tree: tmrcaStatistic
-            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
+            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -326,7 +322,7 @@ public class LogGenerator extends Generator {
                             new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true")
                     });
 
-            writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
             if (options.hasData()) {
                 // we have data...

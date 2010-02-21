@@ -7,7 +7,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.xml.*;
 import jebl.util.FixedBitSet;
 
 import java.util.Arrays;
@@ -19,7 +18,6 @@ import java.util.Arrays;
  *         Date: 26/05/2008
  */
 public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units {
-    public static final String SPECIES_COALESCENT = "speciesCoalescent";
     private final SpeciesTreeModel spTree;
     private final SpeciesBindings species;
     private boolean checkCompatibility;
@@ -270,31 +268,4 @@ public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units
         assert false;
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final SpeciesBindings sb = (SpeciesBindings) xo.getChild(SpeciesBindings.class);
-            final SpeciesTreeModel tree = (SpeciesTreeModel) xo.getChild(SpeciesTreeModel.class);
-            return new MultiSpeciesCoalescent(sb, tree);
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    new ElementRule(SpeciesBindings.class),
-                    new ElementRule(SpeciesTreeModel.class),
-            };
-        }
-
-        public String getParserDescription() {
-            return "Compute coalecent log-liklihood of a set of gene trees embedded inside one species tree.";
-        }
-
-        public Class getReturnType() {
-            return MultiSpeciesCoalescent.class;
-        }
-
-        public String getParserName() {
-            return SPECIES_COALESCENT;
-        }
-    };
 }

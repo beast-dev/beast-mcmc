@@ -1,8 +1,8 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.speciation.SpeciesBindingsParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -15,7 +15,7 @@ public class VariableDemographicModelParser extends AbstractXMLObjectParser {
     public static final String POPULATION_SIZES = "populationSizes";
     public static final String INDICATOR_PARAMETER = "indicators";
     public static final String POPULATION_TREES = "trees";
-    private static final String PLOIDY = SpeciesBindings.PLOIDY;
+    private static final String PLOIDY = SpeciesBindingsParser.PLOIDY;
     public static final String POP_TREE = "ptree";
 
     public static final String LOG_SPACE = "logUnits";

@@ -32,10 +32,11 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.util.HeapSort;
-import dr.xml.*;
 import jebl.util.FixedBitSet;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Binds taxa in gene trees with species information.
@@ -44,11 +45,6 @@ import java.util.*;
  *         Date: 25/05/2008
  */
 public class SpeciesBindings extends AbstractModel {
-    public static final String SPECIES = "species";
-    public static final String SP = "sp";
-    public static final String GENE_TREES = "geneTrees";
-    public static final String GTREE = "gtree";
-
     // all gene trees
     private final GeneTreeInfo[] geneTrees;
 
@@ -65,7 +61,7 @@ public class SpeciesBindings extends AbstractModel {
     private boolean dirty_sg;
     private final boolean verbose = false;
 
-    private SpeciesBindings(SPinfo[] species, TreeModel[] geneTrees, double[] popFactors) {
+    public SpeciesBindings(SPinfo[] species, TreeModel[] geneTrees, double[] popFactors) {
         super(null);
 
         this.species = species;
@@ -249,14 +245,14 @@ public class SpeciesBindings extends AbstractModel {
     /**
      * Information on one species (sp)
      */
-    static class SPinfo extends Taxon {
+    public static class SPinfo extends Taxon {
         // sp name
         final public String name;
 
         // all taxa belonging to sp
         private final Taxon[] taxa;
 
-        SPinfo(String name, Taxon[] taxa) {
+        public SPinfo(String name, Taxon[] taxa) {
             super(name);
 
             this.name = name;
@@ -543,104 +539,4 @@ public class SpeciesBindings extends AbstractModel {
             return speciationUpperBound(in, out);
         }
     }
-
-    public static final String PLOIDY = "ploidy";
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SPECIES;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            List<SPinfo> sp = new ArrayList<SPinfo>();
-            for (int k = 0; k < xo.getChildCount(); ++k) {
-                final Object child = xo.getChild(k);
-                if (child instanceof SPinfo) {
-                    sp.add((SPinfo) child);
-                }
-            }
-
-            final XMLObject xogt = xo.getChild(GENE_TREES);
-            final int nTrees = xogt.getChildCount();
-            final TreeModel[] trees = new TreeModel[nTrees];
-            double[] popFactors = new double[nTrees];
-
-            for (int nt = 0; nt < trees.length; ++nt) {
-                Object child = xogt.getChild(nt);
-                if (!(child instanceof TreeModel)) {
-                    assert    child instanceof XMLObject;
-                    popFactors[nt] = ((XMLObject)child).getDoubleAttribute(PLOIDY);
-                    child = ((XMLObject)child).getChild(TreeModel.class);
-
-                } else {
-                    popFactors[nt] = -1;
-                }
-                trees[nt] = (TreeModel) child;
-            }
-
-            try {
-                return new SpeciesBindings(sp.toArray(new SPinfo[sp.size()]), trees, popFactors);
-            } catch (Error e) {
-                throw new XMLParseException(e.getMessage());
-            }
-        }
-
-        /* Can't be tree because XML parser supports usage of global tags only as main tags */
-        ElementRule treeWithPloidy = new ElementRule(GTREE,
-                                new XMLSyntaxRule[]{AttributeRule.newDoubleRule(PLOIDY),
-                                new ElementRule(TreeModel.class)}, 0, Integer.MAX_VALUE);
-        //XMLSyntaxRule[] someTree = {new OrRule(new ElementRule(TreeModel.class), treeWithPloidy)};
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    new ElementRule(SPinfo.class, 2, Integer.MAX_VALUE),
-                    // new ElementRule(GENE_TREES, someTree,  1, Integer.MAX_VALUE )
-                    new ElementRule(GENE_TREES,
-                            new  XMLSyntaxRule[]{
-                                    // start at 0 for only ploidy tree cases
-                                    new ElementRule(TreeModel.class, 0, Integer.MAX_VALUE),
-                                    treeWithPloidy
-                            } ) ,
-            };
-        }
-
-        public String getParserDescription() {
-            return "Binds taxa in gene trees with species information.";
-        }
-
-        public Class getReturnType() {
-            return SpeciesBindings.class;
-        }
-    };
-
-    public static XMLObjectParser PPARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SP;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            Taxon[] taxa = new Taxon[xo.getChildCount()];
-            for (int nt = 0; nt < taxa.length; ++nt) {
-                taxa[nt] = (Taxon) xo.getChild(nt);
-            }
-            return new SPinfo(xo.getId(), taxa);
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    new ElementRule(Taxon.class, 1, Integer.MAX_VALUE)
-            };
-        }
-
-        public String getParserDescription() {
-            return "Taxon in a species tree";
-        }
-
-        public Class getReturnType() {
-            return SPinfo.class;
-        }
-    };
 }

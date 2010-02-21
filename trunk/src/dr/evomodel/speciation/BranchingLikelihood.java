@@ -27,8 +27,11 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
-import dr.xml.*;
+import dr.evomodelxml.speciation.BranchingLikelihoodParser;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 
 /**
@@ -42,12 +45,8 @@ public class BranchingLikelihood extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
 
-    public static final String BRANCHING_LIKELIHOOD = "branchingLikelihood";
-    public static final String MODEL = "model";
-    public static final String TREE = "branchingTree";
-
     public BranchingLikelihood(Tree tree, BranchingModel branchingModel) {
-        this(BRANCHING_LIKELIHOOD, tree, branchingModel);
+        this(BranchingLikelihoodParser.BRANCHING_LIKELIHOOD, tree, branchingModel);
     }
 
     public BranchingLikelihood(String name, Tree tree, BranchingModel branchingModel) {
@@ -121,53 +120,6 @@ public class BranchingLikelihood extends AbstractModelLikelihood {
     public org.w3c.dom.Element createElement(org.w3c.dom.Document d) {
         throw new RuntimeException("createElement not implemented");
     }
-
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BRANCHING_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) {
-
-            XMLObject cxo = (XMLObject) xo.getChild(MODEL);
-            BranchingModel branchingModel = (BranchingModel) cxo.getChild(BranchingModel.class);
-
-            cxo = (XMLObject) xo.getChild(TREE);
-            TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
-            return new BranchingLikelihood(treeModel, branchingModel);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the demographic function.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MODEL, new XMLSyntaxRule[]{
-                        new ElementRule(BranchingModel.class)
-                }),
-                new ElementRule(TREE, new XMLSyntaxRule[]{
-                        new ElementRule(TreeModel.class)
-                }),
-        };
-    };
 
     // ****************************************************************
     // Private and protected stuff

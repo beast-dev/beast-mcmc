@@ -23,14 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml;
+package dr.evomodelxml.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
-import dr.evomodel.tree.TreeModel;
 
 import java.util.logging.Logger;
 

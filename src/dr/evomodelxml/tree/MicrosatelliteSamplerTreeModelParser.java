@@ -1,10 +1,11 @@
-package dr.evomodelxml;
+package dr.evomodelxml.tree;
 
-import dr.xml.*;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
-import dr.inference.model.Parameter;
 import dr.evolution.alignment.Patterns;
+import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
+import dr.xml.*;
+
 import java.util.HashMap;
 
 /**

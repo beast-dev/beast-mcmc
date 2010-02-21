@@ -38,7 +38,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.likelihood.ARGLikelihood;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;

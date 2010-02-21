@@ -13,7 +13,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;

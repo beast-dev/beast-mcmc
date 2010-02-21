@@ -12,7 +12,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.trace.TraceCorrelation;
 import junit.framework.TestCase;

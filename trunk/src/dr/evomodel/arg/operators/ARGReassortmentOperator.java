@@ -1,7 +1,7 @@
 package dr.evomodel.arg.operators;
 
 import dr.evomodel.arg.ARGModel;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;

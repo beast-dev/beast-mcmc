@@ -1,7 +1,6 @@
 package dr.app.tracer.traces;
 
 import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.TableRenderer;
@@ -18,6 +17,8 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     static final String NAME_ROW = "name";
     static final String MEAN_ROW = "mean";
     static final String STDEV_ROW = "stderr of mean";
+    static final String VARIANCE_ROW = "variance";
+//    static final String STDEV_VAR_ROW = "stderr of variance";
     static final String GEOMETRIC_MEAN_ROW = "geometric mean";
     static final String MEDIAN_ROW = "median";
     static final String LOWER_ROW = "95% HPD lower";
@@ -158,7 +159,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNames = {MEAN_ROW, STDEV_ROW, MEDIAN_ROW, GEOMETRIC_MEAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW};
+        String[] rowNames = {MEAN_ROW, STDEV_ROW, VARIANCE_ROW, MEDIAN_ROW, GEOMETRIC_MEAN_ROW, LOWER_ROW, UPPER_ROW, ACT_ROW, ESS_ROW};
 
         private DecimalFormat formatter = new DecimalFormat("0.####E0");
         private DecimalFormat formatter2 = new DecimalFormat("####0.####");
@@ -210,22 +211,25 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         value = tc.getStdErrorOfMean();
                         break;
                     case 2:
-                        value = tc.getMedian();
+                        value = tc.getVariance();
                         break;
                     case 3:
+                        value = tc.getMedian();
+                        break;
+                    case 4:
                         if (!tc.hasGeometricMean()) return "n/a";
                         value = tc.getGeometricMean();
                         break;
-                    case 4:
+                    case 5:
                         value = tc.getLowerHPD();
                         break;
-                    case 5:
+                    case 6:
                         value = tc.getUpperHPD();
                         break;
-                    case 6:
+                    case 7:
                         value = tc.getACT();
                         break;
-                    case 7:
+                    case 8:
                         value = tc.getESS();
                         break;
                 }

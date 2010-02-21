@@ -36,15 +36,10 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.speciation.MultiSpeciesCoalescent;
-import dr.evomodel.speciation.SpeciesBindings;
-import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeModelParser;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
-import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.speciation.*;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evoxml.util.XMLUnits;
@@ -84,7 +79,7 @@ public class STARBEASTGenerator extends Generator {
         numOfSpecies = species.size(); // used in private String getIndicatorsParaValue()
 
         for (String eachSp : species) {
-            writer.writeOpenTag(SpeciesBindings.SP, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, eachSp)});
+            writer.writeOpenTag(SpeciesBindingsSPinfoParser.SP, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, eachSp)});
 
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {
                 Taxon taxon = taxonList.getTaxon(i);
@@ -95,7 +90,7 @@ public class STARBEASTGenerator extends Generator {
                 }
 
             }
-            writer.writeCloseTag(SpeciesBindings.SP);
+            writer.writeCloseTag(SpeciesBindingsSPinfoParser.SP);
         }
 
         writeGeneTrees(writer);
@@ -118,7 +113,7 @@ public class STARBEASTGenerator extends Generator {
     private void writeGeneTrees(XMLWriter writer) {
         writer.writeComment("Collection of Gene Trees");
 
-        writer.writeOpenTag(SpeciesBindings.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindings.GENE_TREES)});
+        writer.writeOpenTag(SpeciesBindingsParser.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindingsParser.GENE_TREES)});
         
         boolean isSameAllPloidyType = true;
         PloidyType checkSamePloidyType = options.getPartitionTreeModels().get(0).getPloidyType();
@@ -137,16 +132,16 @@ public class STARBEASTGenerator extends Generator {
         } else {
         	// give ploidy
 	        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-	            writer.writeOpenTag(SpeciesBindings.GTREE, new Attribute[]{
-		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
+	            writer.writeOpenTag(SpeciesBindingsParser.GTREE, new Attribute[]{
+		                new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(model.getPloidyType().getValue()))
 		            }
 		        );
 	            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
-	            writer.writeCloseTag(SpeciesBindings.GTREE);
+	            writer.writeCloseTag(SpeciesBindingsParser.GTREE);
 	        }
         }
         
-        writer.writeCloseTag(SpeciesBindings.GENE_TREES);
+        writer.writeCloseTag(SpeciesBindingsParser.GENE_TREES);
     }
 
 
@@ -158,27 +153,27 @@ public class STARBEASTGenerator extends Generator {
         attributes.add(new Attribute.Default<String>(XMLParser.ID, SP_TREE));
         // *BEAST always share same tree prior
         if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT) {
-              attributes.add(new Attribute.Default<String>(SpeciesTreeModel.CONST_ROOT_POPULATION, "true"));
+              attributes.add(new Attribute.Default<String>(SpeciesTreeModelParser.CONST_ROOT_POPULATION, "true"));
         } else if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONSTANT) {
-              attributes.add(new Attribute.Default<String>(SpeciesTreeModel.CONSTANT_POPULATION, "true"));
+              attributes.add(new Attribute.Default<String>(SpeciesTreeModelParser.CONSTANT_POPULATION, "true"));
         }
 
-        writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE, attributes);
+        writer.writeOpenTag(SpeciesTreeModelParser.SPECIES_TREE, attributes);
         
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
                 
         // take sppSplitPopulations value from partionModel(?).constant.popSize
         // *BEAST always share same tree prior
         double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
-        writer.writeOpenTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS, new Attribute[]{
+        writer.writeOpenTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS)}, true);
+                new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS)}, true);
 
-        writer.writeCloseTag(SpeciesTreeModel.SPP_SPLIT_POPULATIONS);
+        writer.writeCloseTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS);
 
-        writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE);
+        writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
 
     }
 
@@ -271,9 +266,9 @@ public class STARBEASTGenerator extends Generator {
         }
 
         // <sp> tree
-        writer.writeOpenTag(SpeciesTreeModel.SPECIES_TREE);
-        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
-        writer.writeCloseTag(SpeciesTreeModel.SPECIES_TREE);
+        writer.writeOpenTag(SpeciesTreeModelParser.SPECIES_TREE);
+        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
+        writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
 
         writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
     }
@@ -282,16 +277,16 @@ public class STARBEASTGenerator extends Generator {
     	writer.writeComment("Species Tree: tmrcaStatistic");
     	
     	writer.writeOpenTag(TMRCAStatistic.TMRCA_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT),
-                new Attribute.Default<String>(AttributeParser.NAME, SpeciesTreeModel.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT)});
+                new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT),
+                new Attribute.Default<String>(AttributeParser.NAME, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT)});
     	
-    	writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+    	writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
         writer.writeOpenTag(TMRCAStatistic.MRCA);
         writer.writeOpenTag(TaxaParser.TAXA);
 
         for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
-        	writer.writeIDref(SpeciesBindings.SP, eachSp);
+        	writer.writeIDref(SpeciesBindingsSPinfoParser.SP, eachSp);
         }
         
         writer.writeCloseTag(TaxaParser.TAXA);
@@ -305,13 +300,13 @@ public class STARBEASTGenerator extends Generator {
         writer.writeComment("Species Tree: Coalescent likelihood for gene trees under species tree");
 
         // speciesCoalescent id="coalescent"
-        writer.writeOpenTag(MultiSpeciesCoalescent.SPECIES_COALESCENT, new Attribute[]{
+        writer.writeOpenTag(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT)});
 
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(), TraitGuesser.Traits.TRAIT_SPECIES.toString());
-        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
-        writer.writeCloseTag(MultiSpeciesCoalescent.SPECIES_COALESCENT);
+        writer.writeCloseTag(MultiSpeciesCoalescentParser.SPECIES_COALESCENT);
 
         // exponentialDistributionModel id="pdist"
 //        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, new Attribute[]{
@@ -374,7 +369,7 @@ public class STARBEASTGenerator extends Generator {
         // <data>
         writer.writeOpenTag(MixedDistributionLikelihood.DATA);
 
-        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
+        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
 
         writer.writeCloseTag(MixedDistributionLikelihood.DATA);
 
@@ -393,7 +388,7 @@ public class STARBEASTGenerator extends Generator {
 //            writer.writeOpenTag(SpeciesTreeBMPrior.STPRIOR, new Attribute[]{
 //                    new Attribute.Default<String>(XMLParser.ID, STP),
 //                    new Attribute.Default<String>(SpeciesTreeBMPrior.LOG_ROOT, "true")});
-//            writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE);
+//            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 //
 //            writer.writeOpenTag(SpeciesTreeBMPrior.TIPS);
 //

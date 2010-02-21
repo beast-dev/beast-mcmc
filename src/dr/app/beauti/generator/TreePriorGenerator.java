@@ -34,12 +34,12 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.speciation.SpeciesBindingsParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
@@ -564,7 +564,7 @@ public class TreePriorGenerator extends Generator {
 	        if (options.isShareSameTreePrior()) {
 	            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
 		            writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
-			                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(model.getPloidyType().getValue()))
+			                new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(model.getPloidyType().getValue()))
 			            }
 			        );
 		            writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
@@ -572,7 +572,7 @@ public class TreePriorGenerator extends Generator {
 	            }
 	        } else {//TODO correct for not sharing same prior?
 	        	writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
-		                new Attribute.Default<String>(SpeciesBindings.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
+		                new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
 	            	}
 	        	);
 	        	writer.writeIDref(TreeModel.TREE_MODEL, prior.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);

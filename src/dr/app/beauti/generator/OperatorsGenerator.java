@@ -10,11 +10,11 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.operators.*;
-import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
@@ -495,7 +495,7 @@ public class OperatorsGenerator extends Generator {
                 new Attribute[]{ getWeightAttribute(operator.weight) }
         );
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(),  TraitGuesser.Traits.TRAIT_SPECIES.toString());
-        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE,  Generator.SP_TREE);
+        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE,  Generator.SP_TREE);
         writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
     }
 
@@ -548,9 +548,9 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperator.DOWN);
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) {
-	        writer.writeIDref(SpeciesTreeModel.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
+	        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
 	        writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModel.SPECIES_TREE + "." + SPLIT_POPS);
+	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
         } else if (options.isEBSPSharingSamePrior()) {
         	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
 	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");

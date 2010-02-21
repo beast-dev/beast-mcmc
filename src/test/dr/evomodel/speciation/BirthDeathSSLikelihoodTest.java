@@ -32,7 +32,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Variable;
 import junit.framework.Test;

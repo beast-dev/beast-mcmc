@@ -16,7 +16,7 @@ import dr.evomodel.arg.ARGModel;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.arg.ARGPartitionLikelihood;
 import dr.evomodel.arg.ARGRatePrior;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;

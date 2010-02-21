@@ -7,7 +7,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.xml.*;
 

@@ -30,7 +30,7 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.UPGMATree;
 import dr.evolution.util.TimeScale;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.xml.*;
 
 /**

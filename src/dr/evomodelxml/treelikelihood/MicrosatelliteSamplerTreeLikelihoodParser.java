@@ -1,10 +1,10 @@
-package dr.evomodelxml;
+package dr.evomodelxml.treelikelihood;
 
-import dr.xml.*;
-import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.substmodel.MicrosatelliteModel;
+import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.treelikelihood.MicrosatelliteSamplerTreeLikelihood;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Chieh-Hsi Wu

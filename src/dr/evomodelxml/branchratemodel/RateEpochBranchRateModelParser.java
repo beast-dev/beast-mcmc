@@ -2,7 +2,7 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ContinuousEpochBranchRateModel;
 import dr.evomodel.branchratemodel.RateEpochBranchRateModel;
-import dr.evomodelxml.TreeModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

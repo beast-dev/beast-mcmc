@@ -1,4 +1,4 @@
-package dr.evomodelxml;
+package dr.evomodelxml.tree;
 
 import dr.evolution.colouring.BranchColouring;
 import dr.evolution.colouring.TreeColouring;

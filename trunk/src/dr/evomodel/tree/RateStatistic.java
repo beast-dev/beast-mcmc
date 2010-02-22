@@ -28,9 +28,9 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodelxml.tree.RateStatisticParser;
 import dr.inference.model.Statistic;
 import dr.stats.DiscreteStatistics;
-import dr.xml.*;
 
 /**
  * A statistic that tracks the mean, variance and coefficent of variation of the rates.
@@ -39,13 +39,6 @@ import dr.xml.*;
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String RATE_STATISTIC = "rateStatistic";
-    public static final String MODE = "mode";
-    public static final String MEAN = "mean";
-    public static final String VARIANCE = "variance";
-    public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation";
-
 
     public RateStatistic(String name, Tree tree, BranchRateModel branchRateModel, boolean external, boolean internal, String mode) {
         super(name);
@@ -107,7 +100,7 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
             }
         }
 
-        if (mode.equals(MEAN)) {
+        if (mode.equals(RateStatisticParser.MEAN)) {
             double totalWeightedRate = 0.0;
             double totalTreeLength = 0.0;
             for (int i = 0; i < rates.length; i++) {
@@ -115,9 +108,9 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
                 totalTreeLength += branchLengths[i];
             }
             return totalWeightedRate / totalTreeLength;
-        } else if (mode.equals(VARIANCE)) {
+        } else if (mode.equals(RateStatisticParser.VARIANCE)) {
             return DiscreteStatistics.variance(rates);
-        } else if (mode.equals(COEFFICIENT_OF_VARIATION)) {
+        } else if (mode.equals(RateStatisticParser.COEFFICIENT_OF_VARIATION)) {
             // don't compute mean twice
             final double mean = DiscreteStatistics.mean(rates);
             return Math.sqrt(DiscreteStatistics.variance(rates, mean)) / mean;
@@ -126,59 +119,9 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
         throw new IllegalArgumentException();
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return RATE_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final String name = xo.getAttribute(NAME, xo.getId());
-            final Tree tree = (Tree) xo.getChild(Tree.class);
-            final BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
-            final boolean internal = xo.getBooleanAttribute("internal");
-            final boolean external = xo.getBooleanAttribute("external");
-
-            if (!(internal || external)) {
-                throw new XMLParseException("At least one of internal and external must be true!");
-            }
-
-            final String mode = xo.getStringAttribute(MODE);
-
-            return new RateStatistic(name, tree, branchRateModel, external, internal, mode);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that returns the average of the branch rates";
-        }
-
-        public Class getReturnType() {
-            return RateStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class),
-                new ElementRule(BranchRateModel.class),
-                AttributeRule.newBooleanRule("internal"),
-                AttributeRule.newBooleanRule("external"),
-                new StringAttributeRule("mode", "This attribute determines how the rates are summarized, can be one of (mean, variance, coefficientOfVariance)", new String[]{MEAN, VARIANCE, COEFFICIENT_OF_VARIATION}, false),
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-        };
-    };
-
     private Tree tree = null;
     private BranchRateModel branchRateModel = null;
     private boolean internal = true;
     private boolean external = true;
-    private String mode = MEAN;
+    private String mode = RateStatisticParser.MEAN;
 }

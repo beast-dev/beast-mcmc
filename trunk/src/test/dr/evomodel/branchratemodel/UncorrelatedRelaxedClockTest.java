@@ -18,6 +18,7 @@ import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.tree.RateStatisticParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
@@ -103,8 +104,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("meanRate"));
         assertExpectation("meanRate", rateStats, 8.010906E-4);
 
-        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatistic.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatistic.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.15982);
+        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatisticParser.COEFFICIENT_OF_VARIATION));
+        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.15982);
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
         assertExpectation("covariance", covarianceStats, -3.81803E-2);
@@ -146,8 +147,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation("meanRate", rateStats, 0.0020538802366337084);
 //        System.out.println("rateStats = " + rateStats.getMean());
 
-        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatistic.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatistic.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.7462766945263386);
+        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatisticParser.COEFFICIENT_OF_VARIATION));
+        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.7462766945263386);
 //        System.out.println("coefficientOfVariationStats = " + coefficientOfVariationStats.getMean());
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
@@ -177,9 +178,9 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         DiscretizedBranchRates branchRateModel = new DiscretizedBranchRates(treeModel, rateCategoryParameter, 
                 distributionModel, 1, false, Double.NaN);
 
-        RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatistic.MEAN);
-        RateStatistic coefficientOfVariation = new RateStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,
-                true, true, RateStatistic.COEFFICIENT_OF_VARIATION);
+        RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatisticParser.MEAN);
+        RateStatistic coefficientOfVariation = new RateStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,
+                true, true, RateStatisticParser.COEFFICIENT_OF_VARIATION);
         RateCovarianceStatistic covariance = new RateCovarianceStatistic("covariance", treeModel, branchRateModel);
 
         // Sub model

@@ -27,11 +27,14 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.*;
-import dr.math.Polynomial;
-import dr.math.MathUtils;
+import dr.evomodelxml.tree.UniformNodeHeightPriorParser;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.LogTricks;
-import dr.xml.*;
+import dr.math.MathUtils;
+import dr.math.Polynomial;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -53,18 +56,8 @@ import java.util.logging.Logger;
 public class UniformNodeHeightPrior extends AbstractModelLikelihood {
 
     // PUBLIC STUFF
-
-    public static final String UNIFORM_ROOT_PRIOR = "uniformRootPrior";
-    public static final String UNIFORM_NODE_HEIGHT_PRIOR = "uniformNodeHeightPrior";
-    public static final String MAX_ROOT_HEIGHT = "maxRootHeight";
-    public static final String ANALYTIC = "analytic";
-    public static final String MC_SAMPLE = "mcSampleSize";
-    public static final String MARGINAL = "marginal";
-    public static final String LEADING_TERM = "approximate";
-
     public static final int MAX_ANALYTIC_TIPS = 60; // TODO Determine this value!
     public static final int DEFAULT_MC_SAMPLE = 100000;
-
 
     private static final double tolerance = 1E-6;
 
@@ -84,11 +77,11 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
     Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
 
     public UniformNodeHeightPrior(Tree tree, boolean useAnalytic, boolean marginal, boolean leadingTerm) {
-        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, useAnalytic, DEFAULT_MC_SAMPLE, marginal, leadingTerm);
+        this(UniformNodeHeightPriorParser.UNIFORM_NODE_HEIGHT_PRIOR, tree, useAnalytic, DEFAULT_MC_SAMPLE, marginal, leadingTerm);
     }
 
-    private UniformNodeHeightPrior(Tree tree, boolean useAnalytic, int mcSampleSize) {
-        this(UNIFORM_NODE_HEIGHT_PRIOR,tree,useAnalytic,mcSampleSize, false, false);
+    public UniformNodeHeightPrior(Tree tree, boolean useAnalytic, int mcSampleSize) {
+        this(UniformNodeHeightPriorParser.UNIFORM_NODE_HEIGHT_PRIOR,tree,useAnalytic,mcSampleSize, false, false);
     }
 
     private UniformNodeHeightPrior(String name, Tree tree, boolean useAnalytic, int mcSampleSize,
@@ -158,7 +151,7 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
     }
 
     public UniformNodeHeightPrior(Tree tree, double maxRootHeight) {
-        this(UNIFORM_NODE_HEIGHT_PRIOR, tree, maxRootHeight);
+        this(UniformNodeHeightPriorParser.UNIFORM_NODE_HEIGHT_PRIOR, tree, maxRootHeight);
     }
 
     private UniformNodeHeightPrior(String name, Tree tree, double maxRootHeight) {
@@ -676,76 +669,6 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return UNIFORM_NODE_HEIGHT_PRIOR;
-        }
-
-        public String[] getParserNames() {
-            return new String[] {UNIFORM_ROOT_PRIOR, UNIFORM_NODE_HEIGHT_PRIOR};
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Logger.getLogger("dr.evomodel").info("\nConstructing a uniform node height prior:");
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            if (xo.hasAttribute(MAX_ROOT_HEIGHT)) {
-                // the Nicholls & Gray variant
-                double maxRootHeight = xo.getDoubleAttribute(MAX_ROOT_HEIGHT);
-                Logger.getLogger("dr.evomodel").info("\tUsing joint variant with a max root height = "+maxRootHeight+"\n");
-                return new UniformNodeHeightPrior(treeModel, maxRootHeight);
-            } else {
-                 // the Bloomquist & Suchard variant or Welch, Rambaut & Suchard variant
-                boolean useAnalytic = xo.getAttribute(ANALYTIC,true);
-                boolean marginal = xo.getAttribute(MARGINAL,true);
-                boolean leadingTerm = xo.getAttribute(LEADING_TERM,false);
-                Logger.getLogger("dr.evomodel").info("\tUsing conditional variant with "+(useAnalytic ? "analytic" : "Monte Carlo integrated")+" expressions");
-                if (useAnalytic) {
-                    Logger.getLogger("dr.evomodel").info("\t\tSubvariant: "+(marginal ? "marginal" : "conditional"));
-                    Logger.getLogger("dr.evomodel").info("\t\tApproximation: "+leadingTerm);
-                }
-                Logger.getLogger("dr.evomodel").info("\tPlease reference:");
-                Logger.getLogger("dr.evomodel").info("\t\t (1) Welch, Rambaut and Suchard (in preparation) and");
-                Logger.getLogger("dr.evomodel").info("\t\t (2) Bloomquist and Suchard (in press) Systematic Biology\n");
-                if (!useAnalytic) {
-//                    if( treeModel.getExternalNodeCount() > MAX_ANALYTIC_TIPS)
-//                        throw new XMLParseException("Analytic evaluation of UniformNodeHeight is unreliable for > "+MAX_ANALYTIC_TIPS+" taxa");
-                    int mcSampleSize = xo.getAttribute(MC_SAMPLE,DEFAULT_MC_SAMPLE);
-                    return new UniformNodeHeightPrior(treeModel,useAnalytic,mcSampleSize);
-                }
-
-                return new UniformNodeHeightPrior(treeModel, useAnalytic, marginal,leadingTerm);
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents the likelihood of the tree given the demographic function.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(ANALYTIC, true),
-                AttributeRule.newDoubleRule(MAX_ROOT_HEIGHT, true),
-                AttributeRule.newIntegerRule(MC_SAMPLE,true),
-                AttributeRule.newBooleanRule(MARGINAL,true),
-                AttributeRule.newBooleanRule(LEADING_TERM,true),
-                new ElementRule(TreeModel.class)
-        };
-    };
 
     /**
      * The tree.

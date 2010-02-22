@@ -37,8 +37,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.RateStatistic;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
@@ -177,7 +177,7 @@ public class BeautiOptions {
 
         // These are statistics which could have priors on...
         createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
-        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
         createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages", Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
         createOperator("constant.popSize", SCALE, 0.75, demoWeights);
@@ -688,7 +688,7 @@ public class BeautiOptions {
 
         if (clockModel != STRICT_CLOCK) {
             params.add(getParameter("meanRate"));
-            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
             params.add(getParameter("covariance"));
         }
     }

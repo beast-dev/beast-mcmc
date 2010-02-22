@@ -26,20 +26,20 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
-import dr.evomodel.tree.MonophylyStatistic;
-import dr.inference.model.ParameterParser;
+import dr.evolution.util.Taxa;
+import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.OneOnXPrior;
-import dr.util.Attribute;
-import dr.evolution.util.Taxa;
+import dr.inference.model.ParameterParser;
 import dr.inferencexml.PriorParsers;
+import dr.util.Attribute;
 
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author Alexei Drummond
@@ -65,7 +65,7 @@ public class ParameterPriorGenerator extends Generator {
                     first = false;
                 }
                 final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
-                writer.writeIDref(MonophylyStatistic.MONOPHYLY_STATISTIC, taxaRef);
+                writer.writeIDref(MonophylyStatisticParser.MONOPHYLY_STATISTIC, taxaRef);
             }
         }
         if (!first) {

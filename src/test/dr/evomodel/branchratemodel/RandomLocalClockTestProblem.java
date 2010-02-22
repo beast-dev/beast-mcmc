@@ -19,6 +19,7 @@ import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.tree.RateStatisticParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -79,9 +80,9 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         SumStatistic rateChanges = new SumStatistic("rateChangeCount", true);
         rateChanges.addStatistic(rateIndicatorParameter);
 
-        RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatistic.MEAN);
-        RateStatistic coefficientOfVariation = new RateStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,
-                true, true, RateStatistic.COEFFICIENT_OF_VARIATION);
+        RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatisticParser.MEAN);
+        RateStatistic coefficientOfVariation = new RateStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,
+                true, true, RateStatisticParser.COEFFICIENT_OF_VARIATION);
         RateCovarianceStatistic covariance = new RateCovarianceStatistic("covariance", treeModel, branchRateModel);
 
         // Sub model
@@ -252,8 +253,8 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         TraceCorrelation rateChangeStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("rateChangeCount"));
         assertExpectation("rateChangeCount", rateChangeStats, 0.40786);
 
-        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatistic.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatistic.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 7.02408E-2);
+        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatisticParser.COEFFICIENT_OF_VARIATION));
+        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 7.02408E-2);
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
         assertExpectation("covariance", covarianceStats, 0.47952);

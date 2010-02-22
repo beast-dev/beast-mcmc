@@ -49,9 +49,6 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
-import dr.evomodel.tree.MonophylyStatistic;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.CSVExporterParser;
@@ -65,9 +62,7 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.*;
-import dr.evomodelxml.tree.TMRCAStatisticParser;
-import dr.evomodelxml.tree.TreeLoggerParser;
-import dr.evomodelxml.tree.TreeModelParser;
+import dr.evomodelxml.tree.*;
 import dr.evoxml.*;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
@@ -1273,7 +1268,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeText("");
 
             writer.writeOpenTag(
-                    RateStatistic.RATE_STATISTIC,
+                    RateStatisticParser.RATE_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "meanRate"),
                             new Attribute.Default<String>("name", "meanRate"),
@@ -1284,26 +1279,26 @@ public class BeastGenerator extends BeautiOptions {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
+            writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
             writer.writeText("");
             writer.writeOpenTag(
-                    RateStatistic.RATE_STATISTIC,
+                    RateStatisticParser.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
-                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
-                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
+            writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
             writer.writeText("");
             writer.writeOpenTag(
-                    RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
+                    RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "covariance"),
                             new Attribute.Default<String>("name", "covariance")
@@ -1311,7 +1306,7 @@ public class BeastGenerator extends BeautiOptions {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
+            writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
 
         } else {
             writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
@@ -1358,7 +1353,7 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeText("");
             writer.writeOpenTag(
-                    RateStatistic.RATE_STATISTIC,
+                    RateStatisticParser.RATE_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "meanRate"),
                             new Attribute.Default<String>("name", "meanRate"),
@@ -1369,26 +1364,26 @@ public class BeastGenerator extends BeautiOptions {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
+            writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
             writer.writeText("");
             writer.writeOpenTag(
-                    RateStatistic.RATE_STATISTIC,
+                    RateStatisticParser.RATE_STATISTIC,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, RateStatistic.COEFFICIENT_OF_VARIATION),
-                            new Attribute.Default<String>("name", RateStatistic.COEFFICIENT_OF_VARIATION),
-                            new Attribute.Default<String>("mode", RateStatistic.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>(XMLParser.ID, RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("name", RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                            new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
                             new Attribute.Default<String>("internal", "true"),
                             new Attribute.Default<String>("external", "true")
                     }
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateStatistic.RATE_STATISTIC);
+            writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
             writer.writeText("");
             writer.writeOpenTag(
-                    RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC,
+                    RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "covariance"),
                             new Attribute.Default<String>("name", "covariance")
@@ -1396,7 +1391,7 @@ public class BeastGenerator extends BeautiOptions {
             );
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES), true);
-            writer.writeCloseTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC);
+            writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
         }
     }
 
@@ -1688,15 +1683,15 @@ public class BeastGenerator extends BeautiOptions {
 
             if (taxonSetsMono.get(taxa)) {
                 writer.writeOpenTag(
-                        MonophylyStatistic.MONOPHYLY_STATISTIC,
+                        MonophylyStatisticParser.MONOPHYLY_STATISTIC,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
                         });
-                writer.writeOpenTag(MonophylyStatistic.MRCA);
+                writer.writeOpenTag(MonophylyStatisticParser.MRCA);
                 writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxa.getId())}, true);
-                writer.writeCloseTag(MonophylyStatistic.MRCA);
+                writer.writeCloseTag(MonophylyStatisticParser.MRCA);
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
-                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
+                writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
             }
         }
     }
@@ -2276,7 +2271,7 @@ public class BeastGenerator extends BeautiOptions {
                 }
                 final String taxaRef = "monophyly(" + taxa.getKey().getId() + ")";
                 final Attribute.Default attr = new Attribute.Default<String>(XMLParser.IDREF, taxaRef);
-                writer.writeTag(MonophylyStatistic.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
+                writer.writeTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC, new Attribute[]{attr}, true);
             }
         }
         if (!first) {
@@ -2467,7 +2462,7 @@ public class BeastGenerator extends BeautiOptions {
         if (clockModel == STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "clock.rate"), true);
         } else {
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
+            writer.writeTag(RateStatisticParser.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
         }
         writer.writeCloseTag(Columns.COLUMN);
 
@@ -2569,7 +2564,7 @@ public class BeastGenerator extends BeautiOptions {
         if (clockModel == STRICT_CLOCK) {
             writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "clock.rate"), true);
         } else {
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
+            writer.writeTag(RateStatisticParser.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
         }
         //}
 
@@ -2711,8 +2706,8 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_STDEV), true);
             }
 //			}
-            writer.writeTag(RateStatistic.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, RateStatistic.COEFFICIENT_OF_VARIATION), true);
-            writer.writeTag(RateCovarianceStatistic.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
+            writer.writeTag(RateStatisticParser.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, RateStatisticParser.COEFFICIENT_OF_VARIATION), true);
+            writer.writeTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
 
             if (clockModel == RANDOM_LOCAL_CLOCK) {
                 writer.writeTag(SumStatistic.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);

@@ -27,10 +27,8 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 import java.util.Set;
 
@@ -43,10 +41,6 @@ import java.util.Set;
  * @version $Id: ParsimonyStateStatistic.java,v 1.11 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String PARSIMONY_STATE_STATISTIC = "parsimonyStateStatistic";
-    public static final String STATE = "state";
-    public static final String MRCA = "mrca";
 
     public ParsimonyStateStatistic(String name, Tree tree, TaxonList stateTaxa, TaxonList mrcaTaxa) throws Tree.MissingTaxonException {
 
@@ -84,57 +78,6 @@ public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeS
         }
         return Tree.Utils.getParsimonyState(tree, node, stateLeafSet);
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return PARSIMONY_STATE_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-
-            Tree tree = (Tree) xo.getChild(Tree.class);
-            XMLObject cxo = (XMLObject) xo.getChild(STATE);
-            TaxonList stateTaxa = (TaxonList) cxo.getChild(TaxonList.class);
-
-            cxo = (XMLObject) xo.getChild(MRCA);
-            TaxonList mrcaTaxa = (TaxonList) cxo.getChild(TaxonList.class);
-
-            try {
-                return new ParsimonyStateStatistic(name, tree, stateTaxa, mrcaTaxa);
-            } catch (Tree.MissingTaxonException mte) {
-                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that has as its value the parsimony state reconstruction of a " +
-                    "binary state defined by a set of taxa at a given MRCA of a tree";
-        }
-
-        public Class getReturnType() {
-            return ParsimonyStateStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule(NAME, "A name for this statistic for the purposes of logging", true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(STATE,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)}),
-                new ElementRule(MRCA,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
-        };
-    };
 
     private Tree tree = null;
     private Set stateLeafSet = null;

@@ -36,9 +36,9 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.speciation.*;
+import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
@@ -276,13 +276,13 @@ public class STARBEASTGenerator extends Generator {
     private void writeSpeciesTreeRootHeight(XMLWriter writer) {
     	writer.writeComment("Species Tree: tmrcaStatistic");
     	
-    	writer.writeOpenTag(TMRCAStatistic.TMRCA_STATISTIC, new Attribute[]{
+    	writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT),
                 new Attribute.Default<String>(AttributeParser.NAME, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT)});
     	
     	writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
-        writer.writeOpenTag(TMRCAStatistic.MRCA);
+        writer.writeOpenTag(TMRCAStatisticParser.MRCA);
         writer.writeOpenTag(TaxaParser.TAXA);
 
         for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
@@ -290,8 +290,8 @@ public class STARBEASTGenerator extends Generator {
         }
         
         writer.writeCloseTag(TaxaParser.TAXA);
-        writer.writeCloseTag(TMRCAStatistic.MRCA);
-        writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+        writer.writeCloseTag(TMRCAStatisticParser.MRCA);
+        writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
     	
     }
     

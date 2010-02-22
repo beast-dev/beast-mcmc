@@ -27,10 +27,8 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 import java.util.Set;
 
@@ -42,11 +40,6 @@ import java.util.Set;
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String MRCA_TRAIT_STATISTIC = "mrcaTraitStatistic";
-    public static final String MRCA = "mrca";
-    public static final String NAME = "name";
-    public static final String TRAIT = "trait";
 
     public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws Tree.MissingTaxonException {
         super(name);
@@ -78,55 +71,8 @@ public class MRCATraitStatistic extends Statistic.Abstract implements TreeStatis
         if (isRate) {
             return tree.getNodeRate(node);
         }
-        return (Double) tree.getNodeTrait(node, trait);
+        return tree.getNodeTrait(node, trait);
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return MRCA_TRAIT_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            String trait = xo.getStringAttribute(TRAIT);
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
-
-            try {
-                return new MRCATraitStatistic(name, trait, tree, taxa);
-            } catch (Tree.MissingTaxonException mte) {
-                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
-        }
-
-        public Class getReturnType() {
-            return TMRCAStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(TreeModel.class),
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-                new StringAttributeRule("trait", "The name of the trait (can be rate)"),
-                AttributeRule.newBooleanRule("rate", true),
-                new ElementRule(MRCA,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
-        };
-    };
 
     private TreeModel tree = null;
     private Set<String> leafSet = null;

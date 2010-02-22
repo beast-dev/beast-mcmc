@@ -19,6 +19,7 @@ import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.tree.RateStatisticParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
@@ -86,8 +87,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
         assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3927.81);
 
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -3855.78);
+        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -3855.78);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 69.2953);
@@ -129,8 +130,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3958.7409);
 //        System.out.println("likelihoodStats = " + likelihoodStats.getMean());
 
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -3885.26939);
+        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -3885.26939);
 //        System.out.println("treelikelihoodStats = " + likelihoodStats.getMean());
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
@@ -200,7 +201,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, branchRateModel, null,
                 false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
+        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();

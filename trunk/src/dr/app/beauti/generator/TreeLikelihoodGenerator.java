@@ -34,10 +34,10 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
@@ -67,10 +67,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                writeTreeLikelihood(TreeLikelihood.TREE_LIKELIHOOD, i, partition, writer);
+                writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, i, partition, writer);
             }
         } else {
-            writeTreeLikelihood(TreeLikelihood.TREE_LIKELIHOOD, -1, partition, writer);
+            writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
         }
     }
 
@@ -89,17 +89,17 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (num > 0) {
             writer.writeOpenTag(
-                    TreeLikelihood.TREE_LIKELIHOOD,
+                    TreeLikelihoodParser.TREE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix(num) + partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
+                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
             );
         } else {
             writer.writeOpenTag(
-                    TreeLikelihood.TREE_LIKELIHOOD,
+                    TreeLikelihoodParser.TREE_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
+                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
             );
         }
 
@@ -153,7 +153,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
 
-        writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);
+        writer.writeCloseTag(TreeLikelihoodParser.TREE_LIKELIHOOD);
     }
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
@@ -162,10 +162,10 @@ public class TreeLikelihoodGenerator extends Generator {
             PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
             if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
                 for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                    writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
+                    writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
             } else {
-                writer.writeIDref(TreeLikelihood.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihood.TREE_LIKELIHOOD);
+                writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
             }
 
             PartitionClockModel clockModel = partition.getPartitionClockModel();

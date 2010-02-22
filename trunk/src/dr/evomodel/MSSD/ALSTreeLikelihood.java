@@ -7,6 +7,7 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.MutationDeathModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -93,11 +94,11 @@ public class ALSTreeLikelihood extends TreeLikelihood {
 
             boolean useAmbiguities = false;
             boolean storePartials = true;
-            if (xo.hasAttribute(USE_AMBIGUITIES)) {
-                useAmbiguities = xo.getBooleanAttribute(USE_AMBIGUITIES);
+            if (xo.hasAttribute(TreeLikelihoodParser.USE_AMBIGUITIES)) {
+                useAmbiguities = xo.getBooleanAttribute(TreeLikelihoodParser.USE_AMBIGUITIES);
             }
-            if (xo.hasAttribute(STORE_PARTIALS)) {
-                storePartials = xo.getBooleanAttribute(STORE_PARTIALS);
+            if (xo.hasAttribute(TreeLikelihoodParser.STORE_PARTIALS)) {
+                storePartials = xo.getBooleanAttribute(TreeLikelihoodParser.STORE_PARTIALS);
             }
 
             boolean integrateGainRate = xo.getBooleanAttribute(INTEGRATE_GAIN_RATE);
@@ -159,8 +160,8 @@ public class ALSTreeLikelihood extends TreeLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newBooleanRule(STORE_PARTIALS, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
                 AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),
                 new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
                 new ElementRule(PatternList.class),

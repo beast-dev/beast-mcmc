@@ -1,10 +1,10 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
+import dr.app.beauti.util.XMLWriter;
+import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -44,7 +44,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 writeErrorModel(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
-            	writer.writeIDref(SequenceErrorModel.SEQUENCE_ERROR_MODEL, "errorModel");
+            	writer.writeIDref(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, "errorModel");
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 if (component.hasAgeDependentRate()) {
@@ -71,7 +71,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
 
 
         writer.writeOpenTag(
-                SequenceErrorModel.SEQUENCE_ERROR_MODEL,
+                SequenceErrorModelParser.SEQUENCE_ERROR_MODEL,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, SequenceErrorModelComponentOptions.ERROR_MODEL),
                         new Attribute.Default<String>("type", errorType)
@@ -85,6 +85,6 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
             writeParameter(SequenceErrorModelComponentOptions.BASE_RATE, SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER, 1, writer);
         }
 
-        writer.writeCloseTag(SequenceErrorModel.SEQUENCE_ERROR_MODEL);
+        writer.writeCloseTag(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL);
     }
 }

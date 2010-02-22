@@ -1,17 +1,14 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodel.MSSD.AbstractObservationProcess;
-import dr.evomodel.MSSD.ALSTreeLikelihood;
 import dr.evomodel.substmodel.SubstitutionEpochModel;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -129,10 +126,10 @@ public class EpochTreeLikelihood extends TreeLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-            boolean allowMissingTaxa = xo.getAttribute(ALLOW_MISSING_TAXA, false);
-            boolean storePartials = xo.getAttribute(STORE_PARTIALS, true);
-            boolean forceJavaCore = xo.getAttribute(FORCE_JAVA_CORE, false);
+            boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
+            boolean allowMissingTaxa = xo.getAttribute(TreeLikelihoodParser.ALLOW_MISSING_TAXA, false);
+            boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);
+            boolean forceJavaCore = xo.getAttribute(TreeLikelihoodParser.FORCE_JAVA_CORE, false);
 
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -177,10 +174,10 @@ public class EpochTreeLikelihood extends TreeLikelihood {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
-                AttributeRule.newBooleanRule(STORE_PARTIALS, true),
-                AttributeRule.newBooleanRule(FORCE_JAVA_CORE, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.ALLOW_MISSING_TAXA, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.FORCE_JAVA_CORE, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

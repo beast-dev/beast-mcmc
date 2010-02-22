@@ -23,14 +23,13 @@
 
 package dr.app.beauti.options;
 
-import java.util.List;
-
 import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.evomodel.tree.RateStatistic;
+import dr.evomodelxml.tree.RateStatisticParser;
+
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -118,7 +117,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages",
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
+        createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
                 0.0, Double.POSITIVE_INFINITY);
     }
 
@@ -243,7 +242,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         if (model.getClockType() != ClockType.STRICT_CLOCK) {
             params.add(getParameter("meanRate"));
             params.add(getParameter("covariance"));
-            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
+            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
         }
                 
     	//TODO ?        

@@ -4,8 +4,8 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
-import dr.evomodel.tree.MonophylyStatistic;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
@@ -71,15 +71,15 @@ public class TMRCAStatisticsGenerator extends Generator {
 
             if (options.taxonSetsMono.get(taxa)) {
                 writer.writeOpenTag(
-                        MonophylyStatistic.MONOPHYLY_STATISTIC,
+                        MonophylyStatisticParser.MONOPHYLY_STATISTIC,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, "monophyly(" + taxa.getId() + ")"),
                         });
-                writer.writeOpenTag(MonophylyStatistic.MRCA);
+                writer.writeOpenTag(MonophylyStatisticParser.MRCA);
                 writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                writer.writeCloseTag(MonophylyStatistic.MRCA);
+                writer.writeCloseTag(MonophylyStatisticParser.MRCA);
                 writer.writeIDref(TreeModel.TREE_MODEL, taxa.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
-                writer.writeCloseTag(MonophylyStatistic.MONOPHYLY_STATISTIC);
+                writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
             }
         }
     }

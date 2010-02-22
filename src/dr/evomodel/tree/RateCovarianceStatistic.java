@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Statistic;
 import dr.stats.DiscreteStatistics;
-import dr.xml.*;
 
 /**
  * A statistic that tracks the covariance of rates on branches
@@ -39,8 +38,6 @@ import dr.xml.*;
  * @version $Id: RateCovarianceStatistic.java,v 1.5 2005/07/11 14:06:25 rambaut Exp $
  */
 public class RateCovarianceStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String RATE_COVARIANCE_STATISTIC = "rateCovarianceStatistic";
 
     public RateCovarianceStatistic(String name, Tree tree, BranchRateModel branchRateModel) {
         super(name);
@@ -82,44 +79,6 @@ public class RateCovarianceStatistic extends Statistic.Abstract implements TreeS
         }
         return DiscreteStatistics.covariance(childRate, parentRate);
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return RATE_COVARIANCE_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree tree = (Tree) xo.getChild(Tree.class);
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
-            return new RateCovarianceStatistic(name, tree, branchRateModel);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that has as its value the covariance of parent and child branch rates";
-        }
-
-        public Class getReturnType() {
-            return RateCovarianceStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class),
-                new ElementRule(BranchRateModel.class),
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-        };
-    };
 
     private Tree tree = null;
     private BranchRateModel branchRateModel = null;

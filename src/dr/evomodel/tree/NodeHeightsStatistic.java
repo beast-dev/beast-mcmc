@@ -25,11 +25,9 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.Statistic;
 import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.inference.model.Statistic;
 
 import java.util.Arrays;
 
@@ -41,8 +39,6 @@ import java.util.Arrays;
  * @version $Id:$
  */
 public class NodeHeightsStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String NODE_HEIGHTS_STATISTIC = "nodeHeightsStatistic";
 
     public NodeHeightsStatistic(String name, Tree tree) {
         this(name, tree, null);
@@ -100,45 +96,6 @@ public class NodeHeightsStatistic extends Statistic.Abstract implements TreeStat
             }
         }
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return NODE_HEIGHTS_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree tree = (Tree) xo.getChild(Tree.class);
-
-            Parameter groupSizes = (Parameter) xo.getChild(Parameter.class);
-
-            return new NodeHeightsStatistic(name, tree, groupSizes);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that returns the heights of each internal node in increasing order (or groups them by a group size parameter)";
-        }
-
-        public Class getReturnType() {
-            return RateStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(NAME, true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(Parameter.class, true),
-        };
-    };
 
     private Tree tree = null;
     private Parameter groupSizes = null;

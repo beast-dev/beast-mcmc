@@ -33,13 +33,13 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TMRCAStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.speciation.*;
+import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.MixedDistributionLikelihood;
@@ -232,7 +232,7 @@ public class LogGenerator extends Generator {
             }
 
             //Species Tree: tmrcaStatistic
-            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -241,7 +241,7 @@ public class LogGenerator extends Generator {
 
         for (Taxa taxa : options.taxonSets) {
             // make tmrca(tree.name) eay to read in log for Tracer
-            writer.writeIDref(TMRCAStatistic.TMRCA_STATISTIC, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")");
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")");
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior

@@ -28,7 +28,6 @@ package dr.evomodel.tree;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,11 +39,6 @@ import org.w3c.dom.Element;
  */
 
 public class TipHeightLikelihood extends Likelihood.Abstract {
-
-	public static final String TIP_HEIGHT_LIKELIHOOD = "tipHeightLikelihood";
-
-	public static final String DISTRIBUTION = "distribution";
-	public static final String TIP_HEIGHTS = "tipHeights";
 
 	public TipHeightLikelihood(ParametricDistributionModel distribution, Parameter tipHeights) {
         super(distribution);
@@ -90,42 +84,6 @@ public class TipHeightLikelihood extends Likelihood.Abstract {
 	public Element createElement(Document d) {
 		throw new RuntimeException("Not implemented yet!");
 	}
-
-
-	/**
-	 * Reads a distribution likelihood from a DOM Document element.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() { return TIP_HEIGHT_LIKELIHOOD; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			ParametricDistributionModel model = (ParametricDistributionModel)xo.getElementFirstChild(DISTRIBUTION);
-			Parameter tipHeights = (Parameter)xo.getElementFirstChild(TIP_HEIGHTS);
-
-			return new TipHeightLikelihood(model, tipHeights);
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(DISTRIBUTION,
-				new XMLSyntaxRule[] { new ElementRule(ParametricDistributionModel.class) }),
-			new ElementRule(TIP_HEIGHTS,
-				new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
-		};
-
-		public String getParserDescription() {
-			return "Calculates the likelihood of the tipHeights given some parametric or empirical distribution.";
-		}
-
-		public Class getReturnType() { return Likelihood.class; }
-	};
 
 	ParametricDistributionModel distribution;
 	private final Parameter tipHeights;

@@ -28,7 +28,6 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 /**
  * A statistic that reports the total length of all the branches in the tree
@@ -37,8 +36,6 @@ import dr.xml.*;
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TreeLengthStatistic extends Statistic.Abstract implements TreeStatistic {
-
-    public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
 
     public TreeLengthStatistic(String name, Tree tree) {
         super(name);
@@ -73,42 +70,6 @@ public class TreeLengthStatistic extends Statistic.Abstract implements TreeStati
         }
         return treeLength;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TREE_LENGTH_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree tree = (Tree) xo.getChild(Tree.class);
-
-            return new TreeLengthStatistic(name, tree);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that returns the average of the branch rates";
-        }
-
-        public Class getReturnType() {
-            return TreeLengthStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(NAME, true),
-                new ElementRule(TreeModel.class),
-        };
-    };
 
     private Tree tree = null;
 }

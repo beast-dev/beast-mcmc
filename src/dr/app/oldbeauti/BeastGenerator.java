@@ -49,7 +49,10 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
-import dr.evomodel.tree.*;
+import dr.evomodel.tree.MonophylyStatistic;
+import dr.evomodel.tree.RateCovarianceStatistic;
+import dr.evomodel.tree.RateStatistic;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -62,6 +65,7 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.*;
+import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.*;
@@ -1671,16 +1675,16 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeText("");
         for (Taxa taxa : taxonSets) {
             writer.writeOpenTag(
-                    TMRCAStatistic.TMRCA_STATISTIC,
+                    TMRCAStatisticParser.TMRCA_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getId() + ")"),
                     }
             );
-            writer.writeOpenTag(TMRCAStatistic.MRCA);
+            writer.writeOpenTag(TMRCAStatisticParser.MRCA);
             writer.writeTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxa.getId())}, true);
-            writer.writeCloseTag(TMRCAStatistic.MRCA);
+            writer.writeCloseTag(TMRCAStatisticParser.MRCA);
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
-            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+            writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
 
             if (taxonSetsMono.get(taxa)) {
                 writer.writeOpenTag(

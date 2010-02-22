@@ -1,15 +1,16 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeModel;
+import dr.evolution.util.Taxa;
 import dr.evomodel.tree.MonophylyStatistic;
-import dr.evoxml.*;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TMRCAStatisticParser;
+import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-import dr.evolution.util.Taxa;
 
 import java.util.List;
 
@@ -58,15 +59,15 @@ public class TMRCAStatisticsGenerator extends Generator {
 
         writer.writeText("");
         for (Taxa taxa : options.taxonSets) {
-            writer.writeOpenTag(TMRCAStatistic.TMRCA_STATISTIC,
+            writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "tmrca("
                         + taxa.getTreeModel().getPrefix() + taxa.getId() + ")"),}
             ); // make tmrca(tree.name) eay to read in log for Tracer
-            writer.writeOpenTag(TMRCAStatistic.MRCA);
+            writer.writeOpenTag(TMRCAStatisticParser.MRCA);
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-            writer.writeCloseTag(TMRCAStatistic.MRCA);
+            writer.writeCloseTag(TMRCAStatisticParser.MRCA);
             writer.writeIDref(TreeModel.TREE_MODEL, taxa.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
-            writer.writeCloseTag(TMRCAStatistic.TMRCA_STATISTIC);
+            writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
 
             if (options.taxonSetsMono.get(taxa)) {
                 writer.writeOpenTag(

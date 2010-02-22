@@ -28,7 +28,6 @@ package dr.evomodel.tree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeShape;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 
 
 /**
@@ -39,11 +38,7 @@ import dr.xml.*;
  */
 public class TreeShapeStatistic extends Statistic.Abstract implements TreeStatistic {
 
-    public static final String TREE_SHAPE_STATISTIC = "treeShapeStatistics";
-    public static final String TARGET = "target";
-
     public TreeShapeStatistic(String name, TreeModel target) {
-
         super(name);
         this.target = target;
         ultrametric = Tree.Utils.isUltrametric(target);
@@ -97,44 +92,6 @@ public class TreeShapeStatistic extends Statistic.Abstract implements TreeStatis
         }
         throw new IllegalArgumentException("Dimension doesn't exist!");
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TREE_SHAPE_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            TreeModel target = (TreeModel) xo.getElementFirstChild(TARGET);
-
-            return new TreeShapeStatistic(name, target);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that reports a handful of tree shape statistics on the given target tree.";
-        }
-
-        public Class getReturnType() {
-            return TreeMetricStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule(NAME, "A name for this statistic primarily for the purposes of logging", true),
-                new ElementRule(TARGET,
-                        new XMLSyntaxRule[]{new ElementRule(TreeModel.class)})
-        };
-
-    };
 
     private Tree target = null;
     private boolean ultrametric = false;

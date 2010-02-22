@@ -18,6 +18,8 @@ import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -82,7 +84,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         siteModel.setMutationRateParameter(mu);
 
         // SequenceErrorModel
-        Parameter ageRelatedRateParameter = new Parameter.Default(SequenceErrorModel.AGE_RELATED_RATE, 4.0E-7, 0, 100.0);
+        Parameter ageRelatedRateParameter = new Parameter.Default(SequenceErrorModelParser.AGE_RELATED_RATE, 4.0E-7, 0, 100.0);
         
         TipPartialsModel aDNADamageModel =  new SequenceErrorModel(null, null, SequenceErrorModel.ErrorType.TRANSITIONS_ONLY,
                 null, ageRelatedRateParameter);
@@ -92,7 +94,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, branchRateModel, aDNADamageModel,
                 false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
+        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -223,8 +225,8 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(StrictClockBranchRates.RATE));
         assertExpectation(StrictClockBranchRates.RATE, rateStats, 1.5E-7);
 
-        TraceCorrelation ageRateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(SequenceErrorModel.AGE_RELATED_RATE));
-        assertExpectation(SequenceErrorModel.AGE_RELATED_RATE, ageRateStats, 0.7E-7);
+        TraceCorrelation ageRateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(SequenceErrorModelParser.AGE_RELATED_RATE));
+        assertExpectation(SequenceErrorModelParser.AGE_RELATED_RATE, ageRateStats, 0.7E-7);
     }
 
     public static Test suite() {

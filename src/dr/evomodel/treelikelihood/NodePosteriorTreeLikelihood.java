@@ -8,6 +8,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
@@ -201,8 +202,8 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements NodeA
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-            boolean storePartials = xo.getAttribute(STORE_PARTIALS, true);
+            boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
+            boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);
 
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -231,8 +232,8 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements NodeA
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
-                AttributeRule.newBooleanRule(ALLOW_MISSING_TAXA, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.ALLOW_MISSING_TAXA, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),

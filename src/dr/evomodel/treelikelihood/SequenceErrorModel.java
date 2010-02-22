@@ -1,10 +1,8 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.util.TaxonList;
+import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
-import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -29,18 +27,9 @@ public class SequenceErrorModel extends TipPartialsModel {
         final String label;
     }
 
-    public static final String SEQUENCE_ERROR_MODEL = "sequenceErrorModel";
-    public static final String BASE_ERROR_RATE = "baseErrorRate";
-    public static final String AGE_RELATED_RATE = "ageRelatedErrorRate";
-
-    public static final String EXCLUDE = "exclude";
-    public static final String INCLUDE = "include";
-
-    public static final String TYPE = "type";
-
     public SequenceErrorModel(TaxonList includeTaxa, TaxonList excludeTaxa,
                               ErrorType errorType, Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
-        super(SEQUENCE_ERROR_MODEL, includeTaxa, excludeTaxa);
+        super(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, includeTaxa, excludeTaxa);
 
         this.errorType = errorType;
 
@@ -127,80 +116,6 @@ public class SequenceErrorModel extends TipPartialsModel {
             k += stateCount;
         }
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() { return SEQUENCE_ERROR_MODEL; }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            ErrorType errorType = ErrorType.ALL_SUBSTITUTIONS;
-
-            if (xo.hasAttribute(TYPE)) {
-                if (xo.getStringAttribute(TYPE).equalsIgnoreCase("transitions")) {
-                    errorType = ErrorType.TRANSITIONS_ONLY;
-                } else if (!xo.getStringAttribute(TYPE).equalsIgnoreCase("all")) {
-                    throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute(TYPE));
-                }
-            }
-
-            Parameter baseDamageRateParameter = null;
-            if (xo.hasChildNamed(BASE_ERROR_RATE)) {
-                baseDamageRateParameter = (Parameter)xo.getElementFirstChild(BASE_ERROR_RATE);
-            }
-
-            Parameter ageRelatedRateParameter = null;
-            if (xo.hasChildNamed(AGE_RELATED_RATE)) {
-                ageRelatedRateParameter = (Parameter)xo.getElementFirstChild(AGE_RELATED_RATE);
-            }
-
-            if (baseDamageRateParameter == null && ageRelatedRateParameter == null) {
-                throw new XMLParseException("You must specify one or other or both of " +
-                        BASE_ERROR_RATE + " and " + AGE_RELATED_RATE + " parameters");
-            }
-
-            TaxonList includeTaxa = null;
-            TaxonList excludeTaxa = null;
-
-            if (xo.hasChildNamed(INCLUDE)) {
-                includeTaxa = (TaxonList)xo.getElementFirstChild(INCLUDE);
-            }
-
-            if (xo.hasChildNamed(EXCLUDE)) {
-                excludeTaxa = (TaxonList)xo.getElementFirstChild(EXCLUDE);
-            }
-
-            SequenceErrorModel aDNADamageModel =  new SequenceErrorModel(includeTaxa, excludeTaxa,
-                    errorType, baseDamageRateParameter, ageRelatedRateParameter);
-
-            Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " +
-                    (errorType == ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
-
-            return aDNADamageModel;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a model that allows for post-mortem DNA damage.";
-        }
-
-        public Class getReturnType() { return SequenceErrorModel.class; }
-
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(TYPE, true),
-                new ElementRule(BASE_ERROR_RATE, Parameter.class, "The base error rate per site per sequence", true),
-                new ElementRule(AGE_RELATED_RATE, Parameter.class, "The error rate per site per unit time", true),
-                new XORRule(
-                        new ElementRule(INCLUDE, TaxonList.class, "A set of taxa to which to apply the damage model to"),
-                        new ElementRule(EXCLUDE, TaxonList.class, "A set of taxa to which to not apply the damage model to")
-                        , true)
-        };
-    };
 
     private final ErrorType errorType;
     private final Parameter baseErrorRateParameter;

@@ -11,6 +11,7 @@ import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -85,7 +86,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
         
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
                 false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
+        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -161,8 +162,8 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 //		<expectation name="treeModel.rootHeight" value="6.42048E-2"/>
 //		<expectation name="rateAC" value="6.08986E-2"/>
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.75);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 0.0640787258170083);

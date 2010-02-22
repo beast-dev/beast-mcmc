@@ -50,7 +50,6 @@ import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
@@ -63,6 +62,7 @@ import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evomodelxml.tree.*;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.*;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
@@ -1623,10 +1623,10 @@ public class BeastGenerator extends BeautiOptions {
 
         if (num > 0) {
             writer.writeOpenTag(
-                    TreeLikelihood.TREE_LIKELIHOOD,
+                    TreeLikelihoodParser.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, TreeLikelihood.TREE_LIKELIHOOD + num),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities())}
+                            new Attribute.Default<String>(XMLParser.ID, TreeLikelihoodParser.TREE_LIKELIHOOD + num),
+                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, useAmbiguities())}
             );
             if (codonHeteroPattern.equals("112")) {
                 if (num == 1) {
@@ -1641,10 +1641,10 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(GammaSiteModel.SITE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, SiteModel.SITE_MODEL + num)}, true);
         } else {
             writer.writeOpenTag(
-                    TreeLikelihood.TREE_LIKELIHOOD,
+                    TreeLikelihoodParser.TREE_LIKELIHOOD,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, TreeLikelihood.TREE_LIKELIHOOD),
-                            new Attribute.Default<Boolean>(TreeLikelihood.USE_AMBIGUITIES, useAmbiguities())
+                            new Attribute.Default<String>(XMLParser.ID, TreeLikelihoodParser.TREE_LIKELIHOOD),
+                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, useAmbiguities())
                     }
             );
             writer.writeTag(SitePatternsParser.PATTERNS, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, SitePatternsParser.PATTERNS)}, true);
@@ -1657,7 +1657,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, BranchRateModel.BRANCH_RATES)}, true);
         }
 
-        writer.writeCloseTag(TreeLikelihood.TREE_LIKELIHOOD);
+        writer.writeCloseTag(TreeLikelihoodParser.TREE_LIKELIHOOD);
     }
 
     /**
@@ -2148,10 +2148,10 @@ public class BeastGenerator extends BeautiOptions {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
             if (nucs && codonHeteroPattern != null) {
                 for (int i = 1; i <= partitionCount; i++) {
-                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihood.TREE_LIKELIHOOD + i), true);
+                    writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
                 }
             } else {
-                writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihood.TREE_LIKELIHOOD), true);
+                writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihoodParser.TREE_LIKELIHOOD), true);
             }
 
             writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
@@ -2482,7 +2482,7 @@ public class BeastGenerator extends BeautiOptions {
 //									new Attribute.Default<String>(Columns.WIDTH, "12")
 //							}
 //					);
-//					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood1"), true);
+//					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood1"), true);
 //					writer.writeCloseTag(Columns.COLUMN);
 //					writer.writeOpenTag(Columns.COLUMN,
 //							new Attribute[] {
@@ -2491,7 +2491,7 @@ public class BeastGenerator extends BeautiOptions {
 //									new Attribute.Default<String>(Columns.WIDTH, "12")
 //							}
 //					);
-//					writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood2"), true);
+//					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood2"), true);
 //					writer.writeCloseTag(Columns.COLUMN);
 //				} else if (codonHeteroPattern.equals("123")) {
 //					for (int i =1; i <= 3; i++) {
@@ -2502,7 +2502,7 @@ public class BeastGenerator extends BeautiOptions {
 //										new Attribute.Default<String>(Columns.WIDTH, "12")
 //								}
 //						);
-//						writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihood.TREE_LIKELIHOOD + i), true);
+//						writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
 //						writer.writeCloseTag(Columns.COLUMN);
 //					}
 //				}
@@ -2514,7 +2514,7 @@ public class BeastGenerator extends BeautiOptions {
 //								new Attribute.Default<String>(Columns.WIDTH, "12")
 //						}
 //				);
-//				writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihood.TREE_LIKELIHOOD), true);
+//				writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD), true);
 //				writer.writeCloseTag(Columns.COLUMN);
 //			}
 //		}
@@ -2718,10 +2718,10 @@ public class BeastGenerator extends BeautiOptions {
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
             if (nucs && partitionCount > 1) {
                 for (int i = 1; i <= partitionCount; i++) {
-                    writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihood.TREE_LIKELIHOOD + i), true);
+                    writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
                 }
             } else
-                writer.writeTag(TreeLikelihood.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihood.TREE_LIKELIHOOD), true);
+                writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihoodParser.TREE_LIKELIHOOD), true);
         }
         if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
             writer.writeTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);

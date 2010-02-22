@@ -27,13 +27,9 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.xml.*;
 
 import java.util.Set;
 
@@ -45,10 +41,6 @@ import java.util.Set;
  * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class AncestralState implements Loggable {
-
-    public static final String ANCESTRAL_STATE = "ancestralState";
-    public static final String NAME = "name";
-    public static final String MRCA = "mrca";
 
     public AncestralState(String name, AncestralStateTreeLikelihood ancestralTreeLikelihood, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
         this.name = name;
@@ -91,50 +83,6 @@ public class AncestralState implements Loggable {
         };
         return columns;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return ANCESTRAL_STATE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.getId());
-            Tree tree = (Tree) xo.getChild(Tree.class);
-            TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
-            AncestralStateTreeLikelihood ancestralTreeLikelihood = (AncestralStateTreeLikelihood) xo.getChild(AncestralStateTreeLikelihood.class);
-            try {
-                return new AncestralState(name, ancestralTreeLikelihood, tree, taxa);
-            } catch (Tree.MissingTaxonException mte) {
-                throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A statistic that has as its value the height of the most recent common ancestor of a set of taxa in a given tree";
-        }
-
-        public Class getReturnType() {
-            return TMRCAStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(AncestralStateTreeLikelihood.class),
-                new ElementRule(MRCA,
-                        new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
-        };
-    };
 
     private final Tree tree;
     private final AncestralStateTreeLikelihood ancestralTreeLikelihood;

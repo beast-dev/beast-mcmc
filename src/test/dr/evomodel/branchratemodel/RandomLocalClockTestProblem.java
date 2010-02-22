@@ -20,6 +20,7 @@ import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.tree.RateStatisticParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -102,7 +103,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 
         TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, branchRateModel, null,
                 false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihood.TREE_LIKELIHOOD);
+        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -241,8 +242,8 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.PRIOR));
         assertExpectation(CompoundLikelihood.PRIOR, likelihoodStats, -2.70143);
 
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -1815.56);
+        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
+        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.56);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 6.363E-2);

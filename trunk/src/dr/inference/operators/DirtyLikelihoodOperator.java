@@ -53,7 +53,7 @@ public class DirtyLikelihoodOperator extends SimpleMCMCOperator implements Gibbs
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element returns a operator on the precision parameter of a normal model with gamma prior.";
+            return "This element returns a operator that forces the entire model likelihood recomputation";
         }
 
         public Class getReturnType() {

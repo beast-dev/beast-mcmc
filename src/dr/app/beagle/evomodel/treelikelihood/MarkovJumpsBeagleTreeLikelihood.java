@@ -163,7 +163,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
         for(int r = 0; r < markovjumps.size(); r++) {
             // Fill condJumps with conditional mean values for this branch
-            markovjumps.get(r).computeCondMeanMarkovJumps(substTime,probabilities,condJumps);
+            markovjumps.get(r).computeCondStatMarkovJumps(substTime,probabilities,condJumps);
 
             if (scaleByTime[r]) {         
                 for(int i=0; i<condJumps.length; i++) {

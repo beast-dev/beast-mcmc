@@ -6,8 +6,8 @@ import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.logging.Logger;
+import java.util.ArrayList;
 
 /**
  * @author Wai Lok Sibon Li
@@ -21,6 +21,8 @@ public class MixtureModelBranchRatesParser extends AbstractXMLObjectParser {
     public static final String NORMALIZE = "normalize";
     public static final String NORMALIZE_BRANCH_RATE_TO = "normalizeBranchRateTo";
     public static final String DISTRIBUTION_INDEX = "distributionIndex";
+
+    public static final String USE_QUANTILE = "useQuantilesForRates";
     //public static final String NORMALIZED_MEAN = "normalizedMean";
 
 
@@ -30,11 +32,12 @@ public class MixtureModelBranchRatesParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        //final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
         ArrayList<ParametricDistributionModel> modelsList = new ArrayList<ParametricDistributionModel>();
 
         final boolean normalize = xo.getAttribute(NORMALIZE, false);
         final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
+
+        final boolean useQuantilesForRates = xo.getAttribute(USE_QUANTILE, true);
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
@@ -73,11 +76,15 @@ public class MixtureModelBranchRatesParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
         }
 
+
+        if(!useQuantilesForRates) {
+            Logger.getLogger("dr.evomodel").info("Rates are set to not being drawn using quantiles. Thus they are not drawn from any particular distribution.");
+        }
         /* if (xo.hasAttribute(NORMALIZED_MEAN)) {
             dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
         }*/
 
-        return new MixtureModelBranchRates(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, normalize, normalizeBranchRateTo);
+        return new MixtureModelBranchRates(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, useQuantilesForRates, normalize, normalizeBranchRateTo);
     }
 
     //************************************************************************
@@ -104,6 +111,8 @@ public class MixtureModelBranchRatesParser extends AbstractXMLObjectParser {
             //AttributeRule.newIntegerRule(OVERSAMPLING, true, "The integer factor for oversampling the distribution model (1 means no oversampling)"),
             AttributeRule.newBooleanRule(NORMALIZE, true, "Whether the mean rate has to be normalized to a particular value"),
             AttributeRule.newDoubleRule(NORMALIZE_BRANCH_RATE_TO, true, "The mean rate to normalize to, if normalizing"),
+            AttributeRule.newBooleanRule(USE_QUANTILE, true, "Whether or not to use quantiles to represent rates. If false then rates are not drawn " +
+                "specifically from any of the distributions"),
             new ElementRule(TreeModel.class),
             //new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
             /* Can have an infinite number of rate distribution models */

@@ -43,4 +43,43 @@ We recently create the Branch 1.5 for BEAST, and we will only release the code i
 To work on Branch 1.5, it is simply to create a new project (e.g. BEAST1.5) and check out code from /branches/1.5/ like what you did for trunk, and then work on this project as same as you are working on the trunk. 
 
 Branch 1.5 is for bug fixing and is the release version, but trunk is only for development which is not showing in the release. I will merge branch 1.5 into trunk after each release.
+
+= 'developer rules regarding adding a new parser' =
+
+1) Any parser has to be implemented by an individual java class
+extended from AbstractXMLObjectParser and named by model name +
+Parser.
+
+For example, dr.evomodel.operators.ExchangeOperator has 2 parsers
+dr.evomodelxml.operators.NarrowExchangeOperatorParser and
+WideExchangeOperatorParser, or dr.evomodel.tree.TreeModel has
+dr.evomodelxml.tree.TreeModelParser.
+
+2) getReturnType() has to return the exact class of the model referred
+by this parser, if you want it belongs some general types, you need to
+use inheritance.
+
+For example,
+dr.evomodelxml.treelikelihood.TreeLikelihoodParser.getReturnType()
+should return TreeLikelihood, if you want it belongs to Likelihood,
+you need to inherit TreeLikelihood from Likelihood.
+
+3) For any string used for xml elements or attributes, please declare
+them as public static final String variable in the ????Parser class,
+please do not write string as "???" anywhere in the code.
+
+For example, public static final String ROOT_HEIGHT = "rootHeight";
+
+4) The parser class has to be located as described in \release\common
+\doc\PackageStructure.pdf in repository, or \doc\PackageStructure.pdf
+in the released version.
+
+Model in dr.evolution=> Parser in dr.evoxml
+Model in dr.evomodel=> Parser in dr.evomodelxml
+Model in dr.inference => Parser in dr.inferencexml
+
+5) Any new parser for the release has to be added in \src\dr\app\beast
+\release_parsers.properties, if you do not want to release it, then it
+should be added in \src\dr\app\beast\development_parsers.properties.
+BeastParser.java is not allowed to add any new parser. 
  

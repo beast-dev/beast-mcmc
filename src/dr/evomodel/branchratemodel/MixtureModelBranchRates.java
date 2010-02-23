@@ -23,6 +23,7 @@ public class MixtureModelBranchRates extends AbstractModel implements BranchRate
     private Parameter distributionIndexParameter;  
 
     private final double[] rates;
+    private boolean useQuantilesForRates = true;
     private boolean normalize = false;
     private double normalizeBranchRateTo = Double.NaN;
     private double scaleFactor = 1.0;
@@ -34,7 +35,7 @@ public class MixtureModelBranchRates extends AbstractModel implements BranchRate
             Parameter rateCategoryQuantilesParameter,
             ParametricDistributionModel[] models,
             Parameter distributionIndexParameter) {
-        this(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, false, Double.NaN);
+        this(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, true, false, Double.NaN);
     }
 
     public MixtureModelBranchRates(
@@ -44,7 +45,29 @@ public class MixtureModelBranchRates extends AbstractModel implements BranchRate
             Parameter distributionIndexParameter,
             boolean normalize,
             double normalizeBranchRateTo) {
+        this(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, true, normalize, normalizeBranchRateTo);
+    }
+
+    public MixtureModelBranchRates(
+            TreeModel tree,
+            Parameter rateCategoryQuantilesParameter,
+            ParametricDistributionModel[] models,
+            Parameter distributionIndexParameter,
+            boolean useQuantilesForRates) {
+        this(tree, rateCategoryQuantilesParameter, models, distributionIndexParameter, useQuantilesForRates, false, Double.NaN);
+    }
+
+    public MixtureModelBranchRates(
+            TreeModel tree,
+            Parameter rateCategoryQuantilesParameter,
+            ParametricDistributionModel[] models,
+            Parameter distributionIndexParameter,
+            boolean useQuantilesForRates,
+            boolean normalize,
+            double normalizeBranchRateTo) {
         super(MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES);
+
+        this.useQuantilesForRates = useQuantilesForRates;
 
         this.rateCategoryQuantiles = new TreeParameterModel(tree, rateCategoryQuantilesParameter, false);
 
@@ -205,8 +228,14 @@ public class MixtureModelBranchRates extends AbstractModel implements BranchRate
             //rates[i] = distributionModel.quantile(rateCategoryQuantiles.getNodeValue(
             // rateCategoryQuantiles.getTreeModel(), rateCategoryQuantiles.getTreeModel().getNode(i) ));
             if (!tree.isRoot(tree.getNode(i))) {
-                rates[tree.getNode(i).getNumber()] = distributionModels[(int) Math.round(distributionIndexParameter.getValue(0))]
-                        .quantile(rateCategoryQuantiles.getNodeValue(tree, tree.getNode(i)));
+
+                if(useQuantilesForRates) {  /* Using quantiles to represent rates */
+                    rates[tree.getNode(i).getNumber()] = distributionModels[(int) Math.round(distributionIndexParameter.getValue(0))]
+                            .quantile(rateCategoryQuantiles.getNodeValue(tree, tree.getNode(i)));
+                }
+                else { /* Not using quantiles to represent rates. This is practically useless for anything else other than simulation */
+                    rates[tree.getNode(i).getNumber()] = rateCategoryQuantiles.getNodeValue(tree, tree.getNode(i));
+                }
             }
         }
         /*System.out.print(distributionModels[(int) Math.round(distributionIndexParameter.getValue(0))].getClass().getName() + "\t" + (int) Math.round(distributionIndexParameter.getValue(0)) + "\t" + rates[1] + "\t" + rateCategoryQuantiles.getNodeValue(tree, tree.getNode(1)));// + "\t" + distributionModels[(int) Math.round(distributionIndexParameter.getValue(0))].);

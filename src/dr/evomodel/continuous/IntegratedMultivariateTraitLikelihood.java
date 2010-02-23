@@ -6,6 +6,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
+import dr.inference.model.Variable;
+import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -59,19 +61,26 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         tmp2 = new double[dimTrait];
 
         setRootPrior(rootPrior);
-
-        // Set tip data values
-        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
-            NodeRef node = treeModel.getExternalNode(i);
-            int index = node.getNumber();
-            double[] traitValue = treeModel.getMultivariateNodeTrait(node, traitName);
-            System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
-        }
+        setTipDataValuesForAllNodes();
 
         StringBuffer sb = new StringBuffer();
         sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
         sb.append("\tNumber of observations: ").append(dimData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
+    }
+
+    private void setTipDataValuesForAllNodes() {
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            NodeRef node = treeModel.getExternalNode(i);
+            setTipDataValuesForNode(node);
+        }
+    }
+
+    private void setTipDataValuesForNode(NodeRef node) {
+        // Set tip data values
+        int index = node.getNumber();
+        double[] traitValue = treeModel.getMultivariateNodeTrait(node, traitName);
+        System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
     }
 
     private void setRootPriorSumOfSquares() {
@@ -201,6 +210,17 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
         areStatesRedrawn = false;  // Should redraw internal node states when needed
         return logLikelihood;
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == traitParameter) { // A tip value got updated           
+            if (index > dimTrait * treeModel.getExternalNodeCount()) {
+                throw new RuntimeException("Attempting to update an invalid index");
+            }
+            meanCache[index] = traitParameter.getValue(index);
+            likelihoodKnown = false;
+        }
+        super.handleVariableChangedEvent(variable, index, type);
     }
 
     private double determineSumOfSquares(double[] y, double[] Ay, double[][] A, double scale) {

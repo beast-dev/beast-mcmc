@@ -264,19 +264,17 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         } else { // Normalizing by tree height.
             treeLength = treeModel.getNodeHeight(treeModel.getRoot());
         }
-
     }
 
     // **************************************************************
     // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         // All parameter changes are handled first by the treeModel
         if (!cacheBranches)
-            likelihoodKnown = false;
-        
+            likelihoodKnown = false;        
     }
 
     // **************************************************************
@@ -478,7 +476,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     );
                 }
             }
-        }        
+        }
     }
 
     class DoubleArray implements Comparable {
@@ -542,6 +540,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
             boolean integrate = xo.getAttribute(INTEGRATE,false);
+            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
+            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
+            boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
+            boolean reportAsMultivariate = xo.getAttribute(REPORT_MULTIVARIATE, false);
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -602,17 +604,27 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         missingParameter.setParameterValue(i, 1.0);
                     }
                     missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
-/*					CompoundParameter missingParameter = new CompoundParameter(MISSING);
-					System.err.println("TRAIT: "+traitParameter.toString());
-					System.err.println("CNT:   "+traitParameter.getNumberOfParameters());
-					for(int i : missingIndices) {
-						Parameter thisParameter = traitParameter.getIndicatorParameter(i);
-						missingParameter.addVariable(thisParameter);
-					}*/
                     ParameterParser.replaceParameter(cxo, missingParameter);
                 }
 
+                // Give warnings if trait exist for internal and root nodes when integrating them out
+                if (integrate) {
+                    int numTraits = traitParameter.getNumberOfParameters();
+                    if (numTraits != treeModel.getExternalNodeCount()) {
+                        throw new XMLParseException(
+                                "Dimensional of '" + traitParameter.getId() + "' is not equal to the number" +
+                                " of tree tips (" + treeModel.getExternalNodeCount() + ")");
+                    }                    
 
+                    for (int j = 0; j < numTraits; j++) {
+                        String parameterName = traitParameter.getParameter(j).getId();
+                        if (parameterName.startsWith("node") || parameterName.startsWith("root")) {                            
+                            throw new XMLParseException(
+                                    "Internal/root node trait parameters are not allowed when " +
+                                    "using the integrated observed data multivariateTraitLikelihoood");
+                        }
+                    }
+                }
             }
 
             Model samplingDensity = null;
@@ -622,15 +634,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 samplingDensity = (Model) cxo.getChild(Model.class);
             }
 
-            boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
-
-            boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
-
-            boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
-
-            boolean reportAsMultivariate = false;
-            if (xo.hasAttribute(REPORT_MULTIVARIATE) && xo.getBooleanAttribute(REPORT_MULTIVARIATE))
-                reportAsMultivariate = true;
+            AbstractMultivariateTraitLikelihood like;
 
             if (integrate) {
 
@@ -641,19 +645,21 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 MultivariateNormalDistribution rootDistribution =
                     (MultivariateNormalDistribution) rootPrior.getDistribution();
 
-                return new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                like =
+                     new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
                             rootDistribution, reciprocalRates);
-            }
+            } else {
 
-            AbstractMultivariateTraitLikelihood like =
+                like =
                     new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
                             reciprocalRates);
+            }
 
-            if (xo.hasChildNamed(RANDOMIZE)) {
+            if (!integrate && xo.hasChildNamed(RANDOMIZE)) {
                 XMLObject cxo = xo.getChild(RANDOMIZE);
                 Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                 double[] randomizeLower;
@@ -675,7 +681,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 XMLObject cxo = xo.getChild(JITTER);
                 Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                 double[] window = cxo.getDoubleArrayAttribute(WINDOW); // Must be included, no default value
-                boolean duplicates = cxo.getAttribute(DUPLICATES,true); // default = true
+                boolean duplicates = cxo.getAttribute(DUPLICATES, true); // default = true
                 like.jitter(traits, diffusionModel.getPrecisionmatrix().length, window, duplicates, true);
             }
 

@@ -5,9 +5,9 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.NNIParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * Implements the Nearest Neighbor Interchange (NNI) operation. This particular
@@ -20,8 +20,6 @@ import dr.xml.*;
 public class NNI extends AbstractTreeOperator {
 
     private TreeModel tree = null;
-
-    public static final String NNI = "NearestNeighborInterchange";
 
     /**
      *
@@ -102,7 +100,7 @@ public class NNI extends AbstractTreeOperator {
      */
     @Override
     public String getOperatorName() {
-        return NNI;
+        return NNIParser.NNI;
     }
 
     public double getMinimumAcceptanceLevel() {
@@ -123,40 +121,4 @@ public class NNI extends AbstractTreeOperator {
         return null;
     }
 
-    public static XMLObjectParser NNI_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return NNI;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
-
-            return new NNI(treeModel, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser
-        // implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a NNI operator. "
-                    + "This operator swaps a random subtree with its uncle.";
-        }
-
-        public Class getReturnType() {
-            return NNI.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                new ElementRule(TreeModel.class)};
-    };
 }

@@ -9,10 +9,15 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
-import dr.evomodel.operators.*;
+import dr.evomodel.operators.TreeBitMoveOperator;
+import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
+import dr.evomodelxml.operators.NarrowExchangeOperatorParser;
+import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
+import dr.evomodelxml.operators.WideExchangeOperatorParser;
+import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
@@ -409,28 +414,28 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(ExchangeOperator.NARROW_EXCHANGE,
+        writer.writeOpenTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(ExchangeOperator.NARROW_EXCHANGE);
+        writer.writeCloseTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(ExchangeOperator.WIDE_EXCHANGE,
+        writer.writeOpenTag(WideExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(ExchangeOperator.WIDE_EXCHANGE);
+        writer.writeCloseTag(WideExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(WilsonBalding.WILSON_BALDING,
+        writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
         // not supported anymore. probably never worked. (todo) get it out of GUI too
 //        if (options.nodeHeightPrior == TreePriorType.CONSTANT) {
 //            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
 //        }
-        writer.writeCloseTag(WilsonBalding.WILSON_BALDING);
+        writer.writeCloseTag(WilsonBaldingParser.WILSON_BALDING);
     }
 
     private void writeSampleNonActiveOperator(Operator operator, XMLWriter writer) {
@@ -479,7 +484,7 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(SubtreeSlideOperator.SUBTREE_SLIDE,
+        writer.writeOpenTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.tuning),
                         new Attribute.Default<String>("gaussian", "true"),
@@ -487,7 +492,7 @@ public class OperatorsGenerator extends Generator {
                 }
         );
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(SubtreeSlideOperator.SUBTREE_SLIDE);
+        writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
     }
 
     private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {

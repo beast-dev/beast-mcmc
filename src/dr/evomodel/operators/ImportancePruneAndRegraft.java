@@ -33,9 +33,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.ImportancePruneAndRegraftParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +44,6 @@ import java.util.List;
  * @author Sebastian Hoehna
  */
 public class ImportancePruneAndRegraft extends AbstractTreeOperator {
-
-    public static final String IMPORTANCE_PRUNE_AND_REGRAFT = "ImportancePruneAndRegraft";
 
     public final int SAMPLE_EVERY = 10;
 
@@ -262,7 +260,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
      */
     @Override
     public String getOperatorName() {
-        return IMPORTANCE_PRUNE_AND_REGRAFT;
+        return ImportancePruneAndRegraftParser.IMPORTANCE_PRUNE_AND_REGRAFT;
     }
 
     /*
@@ -274,43 +272,4 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         // TODO Auto-generated method stub
         return "";
     }
-
-    public static XMLObjectParser IMPORTANCE_PRUNE_AND_REGRAFT_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return IMPORTANCE_PRUNE_AND_REGRAFT;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
-            int samples = xo.getIntegerAttribute("samples");
-
-            return new ImportancePruneAndRegraft(treeModel, weight, samples);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a importance guided prune and regraft operator. "
-                    + "This operator prunes a random subtree and regrafts it below a node chosen by an importance distribution.";
-        }
-
-        public Class getReturnType() {
-            return ImportancePruneAndRegraft.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newIntegerRule("samples"),
-                new ElementRule(TreeModel.class)};
-
-    };
 }

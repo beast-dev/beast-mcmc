@@ -28,9 +28,9 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * Implements the unweighted wilson-balding brach swapping move.
@@ -39,9 +39,6 @@ import dr.xml.*;
  * @version $Id: WilsonBalding.java,v 1.38 2005/06/14 10:40:34 rambaut Exp $
  */
 public class WilsonBalding extends AbstractTreeOperator {
-
-    public static final String WILSON_BALDING = "wilsonBalding";
-    public static final String DEMOGRAPHIC_MODEL = "demographicModel";
 
     private double logq;
     private TreeModel tree = null;
@@ -223,43 +220,6 @@ public class WilsonBalding extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return WILSON_BALDING + "(" + tree.getId() + ")";
+        return WilsonBaldingParser.WILSON_BALDING + "(" + tree.getId() + ")";
     }
-
-    public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return WILSON_BALDING;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-
-            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            return new WilsonBalding(treeModel, weight);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(TreeModel.class)
-        };
-
-        public String getParserDescription() {
-            return "An operator which performs the Wilson-Balding move on a tree";
-        }
-
-        public Class getReturnType() {
-            return WilsonBalding.class;
-        }
-    };
 }

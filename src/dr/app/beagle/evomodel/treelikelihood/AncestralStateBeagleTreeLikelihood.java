@@ -62,6 +62,9 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         substitutionModel = substModel;
     }
 
+    public SubstitutionModel getSubstitutionModel() {
+        return substitutionModel;
+    }
 
     private int[] getStates(PatternList patternList,
                             int sequenceIndex) {

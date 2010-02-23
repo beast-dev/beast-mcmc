@@ -62,6 +62,14 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
     private final EigenSystem eigenSystem;
 
+    BaseSubstitutionModel(String name) {
+        super(name);
+
+        // For a wrapper model (KroneckerSumSM), most computation is handled in the wrapped classes
+        eigenSystem = null;
+        q = null;
+    }
+
     BaseSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel) {
         this(name, dataType, freqModel, null);
     }

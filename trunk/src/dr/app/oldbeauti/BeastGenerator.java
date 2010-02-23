@@ -53,9 +53,8 @@ import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
-import dr.evomodelxml.operators.NarrowExchangeOperatorParser;
+import dr.evomodelxml.operators.ExchangeOperatorParser;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
-import dr.evomodelxml.operators.WideExchangeOperatorParser;
 import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
@@ -1933,17 +1932,17 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE,
+        writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 new Attribute.Default<Double>("weight", operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
-        writer.writeCloseTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE);
+        writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(WideExchangeOperatorParser.WIDE_EXCHANGE,
+        writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 new Attribute.Default<Double>("weight", operator.weight));
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
-        writer.writeCloseTag(WideExchangeOperatorParser.WIDE_EXCHANGE);
+        writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {

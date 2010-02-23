@@ -33,9 +33,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.ImportanceSubtreeSwapParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +49,6 @@ import java.util.List;
  *         multiplied clade probabilities.
  */
 public class ImportanceSubtreeSwap extends AbstractTreeOperator {
-
-    public static final String IMPORTANCE_SUBTREE_SWAP = "ImportanceSubtreeSwap";
 
     public final int SAMPLE_EVERY = 10;
 
@@ -331,7 +329,7 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
      */
     @Override
     public String getOperatorName() {
-        return IMPORTANCE_SUBTREE_SWAP;
+        return ImportanceSubtreeSwapParser.IMPORTANCE_SUBTREE_SWAP;
     }
 
     /*
@@ -343,46 +341,5 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
         // TODO Auto-generated method stub
         return "";
     }
-
-    public static XMLObjectParser IMPORTANCE_SUBTREE_SWAP_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return IMPORTANCE_SUBTREE_SWAP;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-            final int samples = xo.getIntegerAttribute("samples");
-
-            return new ImportanceSubtreeSwap(treeModel, weight, samples);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a importance guided subtree swap operator. "
-                    + "This operator swaps a random subtree with a second subtree guided by an importance distribution.";
-        }
-
-        public Class getReturnType() {
-            return ImportanceSubtreeSwap.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules;{
-            rules = new XMLSyntaxRule[]{
-                    AttributeRule.newDoubleRule("weight"),
-                    AttributeRule.newIntegerRule("samples"),
-                    new ElementRule(TreeModel.class)};
-        }
-
-    };
 
 }

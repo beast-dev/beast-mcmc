@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * Implements branch exchange operations. There is a NARROW and WIDE variety.
@@ -39,10 +38,6 @@ import dr.xml.*;
  * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or less tips!
  */
 public class ExchangeOperator extends AbstractTreeOperator {
-
-    public static final String NARROW_EXCHANGE = "narrowExchange";
-    public static final String WIDE_EXCHANGE = "wideExchange";
-    public static final String INTERMEDIATE_EXCHANGE = "intermediateExchange";
 
     public static final int NARROW = 0;
     public static final int WIDE = 1;
@@ -329,80 +324,7 @@ public class ExchangeOperator extends AbstractTreeOperator {
 //        }
     }
 
-    public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return NARROW_EXCHANGE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-            return new ExchangeOperator(NARROW, treeModel, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a narrow exchange operator. "
-                    + "This operator swaps a random subtree with its uncle.";
-        }
-
-        public Class getReturnType() {
-            return ExchangeOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                new ElementRule(TreeModel.class)};
-
-    };
-
-    public static XMLObjectParser WIDE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return WIDE_EXCHANGE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-
-            return new ExchangeOperator(WIDE, treeModel, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a wide exchange operator. "
-                    + "This operator swaps two random subtrees.";
-        }
-
-        public Class getReturnType() {
-            return ExchangeOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules;{
-            rules = new XMLSyntaxRule[]{
-                    AttributeRule.newDoubleRule("weight"),
-                    new ElementRule(TreeModel.class)};
-        }
-    };
-
+//    public static final String INTERMEDIATE_EXCHANGE = "intermediateExchange";
 /* The INTERMEDIATE_EXCHANGE is deprecated for unknown reason, therefore comment out its parser to make other 2 parsers registered properly
     public static XMLObjectParser INTERMEDIATE_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 

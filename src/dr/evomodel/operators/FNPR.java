@@ -6,9 +6,9 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.FNPRParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * This is an implementation of the Subtree Prune and Regraft (SPR) operator for
@@ -20,9 +20,6 @@ import dr.xml.*;
 public class FNPR extends AbstractTreeOperator {
 
     private TreeModel tree = null;
-
-    public static final String FNPR = "FixedNodeheightSubtreePruneRegraft";
-
     /**
      *
      */
@@ -114,7 +111,7 @@ public class FNPR extends AbstractTreeOperator {
     */
     @Override
     public String getOperatorName() {
-        return FNPR;
+        return FNPRParser.FNPR;
     }
 
     public double getTargetAcceptanceProbability() {
@@ -151,40 +148,4 @@ public class FNPR extends AbstractTreeOperator {
         return "";
     }
 
-    public static XMLObjectParser FNPR_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return FNPR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
-
-            return new FNPR(treeModel, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a FNPR operator. "
-                    + "This operator swaps a random subtree with its uncle.";
-        }
-
-        public Class getReturnType() {
-            return FNPR.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                new ElementRule(TreeModel.class)};
-
-    };
 }

@@ -29,9 +29,9 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,14 +43,6 @@ import java.util.List;
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
-
-    public static final String SUBTREE_SLIDE = "subtreeSlide";
-    public static final String SWAP_RATES = "swapInRandomRate";
-    public static final String SWAP_TRAITS = "swapInRandomTrait";
-    public static final String DIRICHLET_BRANCHES = "branchesAreScaledDirichlet";
-    public static final String TARGET_ACCEPTANCE = "targetAcceptance";
-
-    public static final String TRAIT = "trait";
 
     private TreeModel tree = null;
     private double size = 1.0;
@@ -364,71 +356,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
     }
 
     public String getOperatorName() {
-        return SUBTREE_SLIDE + "(" + tree.getId() + ")";
+        return SubtreeSlideOperatorParser.SUBTREE_SLIDE + "(" + tree.getId() + ")";
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SUBTREE_SLIDE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            boolean swapRates = xo.getAttribute(SWAP_RATES, false);
-            boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
-            boolean scaledDirichletBranches = xo.getAttribute(DIRICHLET_BRANCHES, false);
-
-            CoercionMode mode = CoercionMode.DEFAULT;
-            if (xo.hasAttribute(AUTO_OPTIMIZE)) {
-                if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-                    mode = CoercionMode.COERCION_ON;
-                } else {
-                    mode = CoercionMode.COERCION_OFF;
-                }
-            }
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-
-            final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
-
-            final double size = xo.getAttribute("size", 1.0);
-
-            if (Double.isInfinite(size) || size <= 0.0) {
-                throw new XMLParseException("size attribute must be positive and not infinity.");
-            }
-
-            final boolean gaussian = xo.getBooleanAttribute("gaussian");
-            SubtreeSlideOperator operator = new SubtreeSlideOperator(treeModel, weight, size, gaussian,
-                    swapRates, swapTraits, scaledDirichletBranches, mode);
-            operator.setTargetAcceptanceProbability(targetAcceptance);
-
-            return operator;
-        }
-
-        public String getParserDescription() {
-            return "An operator that slides a subtree.";
-        }
-
-        public Class getReturnType() {
-            return SubtreeSlideOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                // Make size optional. If not given or equals zero, size is set to half of average tree branch length.
-                AttributeRule.newDoubleRule("size", true),
-                AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
-                AttributeRule.newBooleanRule("gaussian"),
-                AttributeRule.newBooleanRule(SWAP_RATES, true),
-                AttributeRule.newBooleanRule(SWAP_TRAITS, true),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new ElementRule(TreeModel.class)
-        };
-    };
 }

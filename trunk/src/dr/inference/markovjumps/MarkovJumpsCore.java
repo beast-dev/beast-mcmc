@@ -70,14 +70,14 @@ public class MarkovJumpsCore {
         }
     }
 
-    public void computeCondMeanMarkovJumps(double[] evec,
+    public void computeCondStatMarkovJumps(double[] evec,
                                            double[] ievc,
                                            double[] eval,
                                            double[] rateReg,
                                            double   time,
                                            double[] transitionProbs,
                                            double[] countMatrix) {
-        computeJointMeanMarkovJumps(evec, ievc, eval, rateReg, time, countMatrix);
+        computeJointStatMarkovJumps(evec, ievc, eval, rateReg, time, countMatrix);
         for(int i=0; i<stateCount2; i++) {
             countMatrix[i] /= transitionProbs[i];
         }
@@ -121,7 +121,7 @@ public class MarkovJumpsCore {
 //  return(factorial.moments)
 //}
 
-    public void computeJointMeanMarkovJumps(double[] evec,
+    public void computeJointStatMarkovJumps(double[] evec,
                                             double[] ievc,
                                             double[] eval,
                                             double[] rateReg,

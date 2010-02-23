@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Marc A. Suchard
  * @version $Id: SitePatternsParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class SitePatternsParser extends AbstractXMLObjectParser {
@@ -46,6 +47,8 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     public static final String EVERY = "every";
     public static final String TAXON_LIST = "taxonList";
     public static final String STRIP = "strip";
+    public static final String UNIQUE = "unique";
+
 
     public String getParserName() {
         return PATTERNS;
@@ -61,6 +64,8 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         int every = xo.getAttribute(EVERY, 1);
 
         boolean strip = xo.getAttribute(STRIP,true);
+
+        boolean unique = xo.getAttribute(UNIQUE, true);
 
         if (xo.hasAttribute(FROM)) {
             from = xo.getIntegerAttribute(FROM) - 1;
@@ -86,7 +91,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         if (to > alignment.getSiteCount())
             throw new XMLParseException("illegal 'to' attribute in patterns element");
 
-        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip);
+        SitePatterns patterns = new SitePatterns(alignment, taxa, from, to, every, strip, unique);
 
         int f = from + 1;
         int t = to + 1; // fixed a *display* error by adding + 1 for consistency with f = from + 1
@@ -121,7 +126,9 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(EVERY, true, "Determines how many sites are selected. A value of 3 will select every third site starting from <b>" + FROM + "</b>, default is 1 (every site)"),
             new ElementRule(TAXON_LIST,
                     new XMLSyntaxRule[]{new ElementRule(TaxonList.class)}, true),
-            new ElementRule(Alignment.class)
+            new ElementRule(Alignment.class),
+            AttributeRule.newBooleanRule(STRIP, true, "Strip out completely ambiguous sites"),
+            AttributeRule.newBooleanRule(UNIQUE, true, "Return a weight list of unique patterns"),
     };
 
     public String getParserDescription() {

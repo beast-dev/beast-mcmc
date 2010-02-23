@@ -87,7 +87,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     protected int from, to, every;
 
-    protected boolean strip = true;
+    protected boolean strip = true;  // Strip out completely ambiguous sites
+
+    protected boolean unique = true; // Compress into weighted list of unique patterns
 
     /**
      * Constructor
@@ -119,6 +121,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip) {
+        this(alignment, taxa, from, to, every, strip, true);
+    }
+
+    public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip, boolean unique) {
         if (taxa != null) {
             SimpleAlignment a = new SimpleAlignment();
 
@@ -131,6 +137,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             alignment = a;
         }
         this.strip = strip;
+        this.unique = unique;
         
         setPatterns(alignment, from, to, every);
     }
@@ -240,7 +247,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         for (int i = 0; i < patternCount; i++) {
 
-            if (comparePatterns(patterns[i], pattern)) {
+            if (unique && comparePatterns(patterns[i], pattern)) {
 
                 weights[i] += 1.0;
                 return i;

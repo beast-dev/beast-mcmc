@@ -13,7 +13,7 @@ public class OnePGammaDistributionModelParser extends DistributionModelParser {
     }
 
     ParametricDistributionModel parseDistributionModel(Parameter[] parameters, double offset) {
-        return new GammaDistributionModel(parameters[0], null);
+        return new GammaDistributionModel(parameters[0]);
     }
 
     public String[] getParameterNames() {

@@ -66,7 +66,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     /**
      * Construct a constant mutation rate model.
      */
-    public GammaDistributionModel(Variable.D shape) {
+    public GammaDistributionModel(Variable<Double> shape) {
 
         super(GAMMA_DISTRIBUTION_MODEL);
 

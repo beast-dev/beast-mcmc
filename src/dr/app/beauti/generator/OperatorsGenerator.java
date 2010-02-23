@@ -14,9 +14,8 @@ import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
-import dr.evomodelxml.operators.NarrowExchangeOperatorParser;
+import dr.evomodelxml.operators.ExchangeOperatorParser;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
-import dr.evomodelxml.operators.WideExchangeOperatorParser;
 import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
@@ -414,17 +413,17 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE,
+        writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(NarrowExchangeOperatorParser.NARROW_EXCHANGE);
+        writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(WideExchangeOperatorParser.WIDE_EXCHANGE,
+        writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(WideExchangeOperatorParser.WIDE_EXCHANGE);
+        writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {

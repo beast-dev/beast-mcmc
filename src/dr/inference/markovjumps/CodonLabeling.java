@@ -4,7 +4,7 @@ package dr.inference.markovjumps;
  * @author Marc A. Suchard
  * @author Vladimir Minin
  *         <p/>
- *         A class for implementing robust counting for synonymous and nonsynonymous changes in BEAST using BEAGLE
+ *         An enum for different types of codon labelings in BEAST using BEAGLE
  *         This work is supported by NSF grant 0856099
  *         <p/>
  *         O'Brien JD, Minin VN and Suchard MA (2009) Learning to count: robust estimates for labeled distances between
@@ -12,8 +12,8 @@ package dr.inference.markovjumps;
  */
 
 public enum CodonLabeling {
-    SYN("S"),
-    NON_SYN("N");
+    SYN("S"), // synonymous mutations
+    NON_SYN("N"); // non-synonymous mutations
 
     CodonLabeling(String text) {
         this.text = text;
@@ -21,6 +21,10 @@ public enum CodonLabeling {
 
     public String getText() {
         return text;
+    }
+
+    public double[][] getRegisterMatrix() {
+        return null;
     }
 
     private final String text;

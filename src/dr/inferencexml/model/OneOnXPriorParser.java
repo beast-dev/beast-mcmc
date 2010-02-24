@@ -10,7 +10,7 @@ import dr.xml.*;
 public class OneOnXPriorParser extends AbstractXMLObjectParser {
 
     public static final String ONE_ONE_X_PRIOR = "oneOnXPrior";
-    public static final String JEFFREYS_PRIOR= "jeffreysPrior";
+    public static final String JEFFREYS_PRIOR = "jeffreysPrior";
     public static final String DATA = "data";
 
     public String getParserName() {
@@ -18,7 +18,7 @@ public class OneOnXPriorParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), };
+        return new String[]{getParserName(), JEFFREYS_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * A class that always returns a log likelihood of 0 but contains models that would otherwise
  * be unregistered with the MCMC. This is an ugly solution to a rare problem.
@@ -36,8 +34,6 @@ import dr.xml.*;
  * @version $Id: DummyLikelihood.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class DummyLikelihood extends Likelihood.Abstract {
-
-	public static final String DUMMY_LIKELIHOOD = "dummyLikelihood";
 
 	public DummyLikelihood(Model model) {
 		super(model);
@@ -63,37 +59,5 @@ public class DummyLikelihood extends Likelihood.Abstract {
 		return 0.0;
 	}
 
-	/**
-	 * Reads a distribution likelihood from a DOM Document element.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() { return DUMMY_LIKELIHOOD; }
-
-		public Object parseXMLObject(XMLObject xo) {
-
-            Model model = (Model)xo.getChild(Model.class);
-			DummyLikelihood likelihood = new DummyLikelihood(model);
-
-			return likelihood;
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "A function wraps a component model that would otherwise not be registered with the MCMC. Always returns a log likelihood of zero.";
-		}
-
-		public Class getReturnType() { return DummyLikelihood.class; }
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Model.class, "A model element")
-		};
-
-	};
 }
 

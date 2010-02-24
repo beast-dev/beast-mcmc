@@ -44,10 +44,10 @@ import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.xml.LoggerParser;
+import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -90,7 +90,7 @@ public class LogGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeIDref(CompoundLikelihood.POSTERIOR, "posterior");
+            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -101,7 +101,7 @@ public class LogGenerator extends Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeIDref(CompoundLikelihood.PRIOR, "prior");
+        writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
         writer.writeCloseTag(Columns.COLUMN);
 
         if (options.hasData()) {
@@ -112,7 +112,7 @@ public class LogGenerator extends Generator {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeIDref(CompoundLikelihood.LIKELIHOOD, "likelihood");
+            writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -200,11 +200,11 @@ public class LogGenerator extends Generator {
                 });
 
         if (options.hasData()) {
-            writer.writeIDref(CompoundLikelihood.POSTERIOR, "posterior");
+            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
         }
-        writer.writeIDref(CompoundLikelihood.PRIOR, "prior");
+        writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
         if (options.hasData()) {
-            writer.writeIDref(CompoundLikelihood.LIKELIHOOD, "likelihood");
+            writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
         }
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
@@ -257,7 +257,7 @@ public class LogGenerator extends Generator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(writer, model);
             if (model.hasCodon()) {
-            writer.writeIDref(CompoundParameter.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+            writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
         }
         }
 

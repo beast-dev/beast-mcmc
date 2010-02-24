@@ -29,6 +29,7 @@ import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -136,7 +137,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();        
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
-        prior.setId(CompoundLikelihood.PRIOR);
+        prior.setId(CompoundLikelihoodParser.PRIOR);
 
         likelihoods.clear();
         likelihoods.add(treeLikelihood);
@@ -146,7 +147,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         likelihoods.add(prior);
         likelihoods.add(likelihood);
         Likelihood posterior = new CompoundLikelihood(0, likelihoods);
-        posterior.setId(CompoundLikelihood.POSTERIOR);
+        posterior.setId(CompoundLikelihoodParser.POSTERIOR);
 
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);
@@ -200,8 +201,8 @@ public class StrictClockTest extends TraceCorrelationAssert {
 //        <expectation name="treeLikelihood" value="-3856.59"/>
 //        <expectation name="coalescent" value="-72.1285"/>
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
-        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3928.71);
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.POSTERIOR));
+        assertExpectation(CompoundLikelihoodParser.POSTERIOR, likelihoodStats, -3928.71);
 
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
         assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -3856.59);

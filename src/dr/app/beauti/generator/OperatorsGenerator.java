@@ -16,9 +16,9 @@ import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.*;
+import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -250,11 +250,11 @@ public class OperatorsGenerator extends Generator {
         if (operator.parameter2 == null) {
             writeParameter1Ref(writer, operator);
         } else {
-            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER);
             writeParameter1Ref(writer, operator);
 //            writer.writeIDref(ParameterParser.PARAMETER, operator.parameter2.getName());
             writeParameter2Ref(writer, operator);
-            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
         }
 
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);

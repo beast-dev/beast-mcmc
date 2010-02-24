@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,8 +36,6 @@ import java.util.List;
  * @version $Id: CompoundParameter.java,v 1.13 2005/06/14 10:40:34 rambaut Exp $
  */
 public class CompoundParameter extends Parameter.Abstract implements VariableListener {
-
-    public static final String COMPOUND_PARAMETER = "compoundParameter";
 
     public CompoundParameter(Parameter[] params) {
 
@@ -236,46 +232,6 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
         return buffer.toString();
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return COMPOUND_PARAMETER;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            CompoundParameter compoundParameter = new CompoundParameter((String) null);
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                compoundParameter.addParameter((Parameter) xo.getChild(i));
-            }
-
-            return compoundParameter;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A multidimensional parameter constructed from its component parameters.";
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules;{
-            rules = new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-            };
-        }
-
-        public Class getReturnType() {
-            return CompoundParameter.class;
-        }
-    };
 
     // ****************************************************************
     // Parameter listener interface

@@ -36,6 +36,7 @@ import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inferencexml.DistributionModelParser;
+import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -84,8 +85,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 //        <expectation name="treeLikelihood" value="-3855.78"/>
 //        <expectation name="skyline" value="-72.0313"/>   ???
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
-        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3927.81);
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.POSTERIOR));
+        assertExpectation(CompoundLikelihoodParser.POSTERIOR, likelihoodStats, -3927.81);
 
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
         assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -3855.78);
@@ -126,8 +127,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 
         ArrayTraceList traceList = UncorrelatedRelaxedClock(distributionModel);
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
-        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3958.7409);
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.POSTERIOR));
+        assertExpectation(CompoundLikelihoodParser.POSTERIOR, likelihoodStats, -3958.7409);
 //        System.out.println("likelihoodStats = " + likelihoodStats.getMean());
 
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
@@ -269,7 +270,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
-        prior.setId(CompoundLikelihood.PRIOR);
+        prior.setId(CompoundLikelihoodParser.PRIOR);
 
         likelihoods.clear();
         likelihoods.add(treeLikelihood);
@@ -279,7 +280,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         likelihoods.add(prior);
         likelihoods.add(likelihood);
         Likelihood posterior = new CompoundLikelihood(0, likelihoods);
-        posterior.setId(CompoundLikelihood.POSTERIOR);
+        posterior.setId(CompoundLikelihoodParser.POSTERIOR);
 
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);

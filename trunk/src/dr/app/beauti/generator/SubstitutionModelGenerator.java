@@ -17,8 +17,8 @@ import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
+import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -425,12 +425,12 @@ public class SubstitutionModelGenerator extends Generator {
     public void writeAllMus(PartitionSubstitutionModel model, XMLWriter writer) {
         if (model.hasCodon()) { // write allMus for codon model
             // allMus is global for each gene
-            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
+            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
                     new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "allMus")});
 
             writeMuParameterRefs(model, writer);
 
-            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
         }
     }
 

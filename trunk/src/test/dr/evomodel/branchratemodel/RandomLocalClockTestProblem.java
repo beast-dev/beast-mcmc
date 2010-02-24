@@ -32,6 +32,7 @@ import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.PoissonDistribution;
@@ -165,7 +166,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         likelihoods.add(likelihood4);
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
-        prior.setId(CompoundLikelihood.PRIOR);
+        prior.setId(CompoundLikelihoodParser.PRIOR);
 
         likelihoods.clear();
         likelihoods.add(treeLikelihood);
@@ -175,7 +176,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         likelihoods.add(prior);
         likelihoods.add(likelihood);
         Likelihood posterior = new CompoundLikelihood(0, likelihoods);
-        posterior.setId(CompoundLikelihood.POSTERIOR);
+        posterior.setId(CompoundLikelihoodParser.POSTERIOR);
 
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);
@@ -236,11 +237,11 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 //        <expectation name="rateChangeCount" value="0.40786"/>
 //        <expectation name="coalescent" value="7.29521"/>
 
-        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
-        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -1818.26);
+        TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.POSTERIOR));
+        assertExpectation(CompoundLikelihoodParser.POSTERIOR, likelihoodStats, -1818.26);
 
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.PRIOR));
-        assertExpectation(CompoundLikelihood.PRIOR, likelihoodStats, -2.70143);
+        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.PRIOR));
+        assertExpectation(CompoundLikelihoodParser.PRIOR, likelihoodStats, -2.70143);
 
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
         assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -1815.56);

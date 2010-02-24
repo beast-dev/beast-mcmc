@@ -44,12 +44,12 @@ import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
-import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.inference.model.TestStatistic;
 import dr.inferencexml.DistributionModelParser;
 import dr.inferencexml.ExponentialMarkovModelParser;
+import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -363,7 +363,7 @@ public class TreePriorGenerator extends Generator {
     		case LOGISTIC:
     			writer.writeComment("Generate a boolean likelihood for Coalescent: Logistic Growth");
     			writer.writeOpenTag(
-    	                BooleanLikelihood.BOOLEAN_LIKELIHOOD,
+    	                BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD,
     	                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "booleanLikelihood1")}
     	        );
     	        writer.writeOpenTag(
@@ -378,7 +378,7 @@ public class TreePriorGenerator extends Generator {
     	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "treeModel.rootHeight");
     	        writer.writeCloseTag("lessThan");
     	        writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
-    	        writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+    	        writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
     	        
     	        writer.writeOpenTag(
 	                    CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD,
@@ -764,7 +764,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case LOGISTIC:
-//                writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
+//                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
                 break;
             case EXTENDED_SKYLINE:
@@ -797,7 +797,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case LOGISTIC:
-                writer.writeIDref(BooleanLikelihood.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
+                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
                 break;
             case EXTENDED_SKYLINE:

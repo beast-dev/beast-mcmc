@@ -66,12 +66,18 @@ import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.*;
 import dr.inference.distribution.*;
 import dr.inference.loggers.Columns;
-import dr.inference.model.*;
+import dr.inference.model.ParameterParser;
+import dr.inference.model.SumStatistic;
+import dr.inference.model.TestStatistic;
 import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
 import dr.inferencexml.DistributionModelParser;
 import dr.inferencexml.ExponentialMarkovModelParser;
 import dr.inferencexml.PriorParsers;
+import dr.inferencexml.model.BooleanLikelihoodParser;
+import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.inferencexml.model.CompoundParameterParser;
+import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -1006,12 +1012,12 @@ public class BeastGenerator extends BeautiOptions {
                         writeNucSiteModel(i, writer);
                     }
                     writer.println();
-                    writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allMus")});
+                    writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allMus")});
                     for (int i = 1; i <= partitionCount; i++) {
                         writer.writeTag(ParameterParser.PARAMETER,
                                 new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, SiteModel.SITE_MODEL + i + ".mu")}, true);
                     }
-                    writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+                    writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
                 } else {
                     writeNucSiteModel(-1, writer);
                 }
@@ -1534,7 +1540,7 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeBooleanLikelihood(XMLWriter writer) {
         writer.writeOpenTag(
-                BooleanLikelihood.BOOLEAN_LIKELIHOOD,
+                BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "booleanLikelihood1")}
         );
         writer.writeOpenTag(
@@ -1549,7 +1555,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
         writer.writeCloseTag("lessThan");
         writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
-        writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+        writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
     }
 
     public void writeExponentialMarkovLikelihood(XMLWriter writer) {
@@ -1811,10 +1817,10 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>(ScaleOperator.SCALE_ALL, "true"),
                         new Attribute.Default<Double>("weight", operator.weight),
                 });
-        writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER);
+        writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER);
         writeParameter1Ref(writer, operator);
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, operator.parameter2.getName())}, true);
-        writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+        writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
         writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
     }
 
@@ -2090,11 +2096,11 @@ public class BeastGenerator extends BeautiOptions {
 
         if (alignment != null) {
             // we have data...
-            writer.writeOpenTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
+            writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
         }
 
         // write prior block
-        writer.writeOpenTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
+        writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
         writeParameterPriors(writer);
 
@@ -2108,7 +2114,7 @@ public class BeastGenerator extends BeautiOptions {
         }
 
         if (nodeHeightPrior == LOGISTIC) {
-            writer.writeTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "booleanLikelihood1"), true);
+            writer.writeTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "booleanLikelihood1"), true);
         }
 
         if (nodeHeightPrior == SKYLINE) {
@@ -2139,11 +2145,11 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
         }
-        writer.writeCloseTag(CompoundLikelihood.PRIOR);
+        writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
 
         if (alignment != null) {
             // write likelihood block
-            writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
+            writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
             if (nucs && codonHeteroPattern != null) {
@@ -2154,10 +2160,10 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, TreeLikelihoodParser.TREE_LIKELIHOOD), true);
             }
 
-            writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
+            writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
 
-            writer.writeCloseTag(CompoundLikelihood.POSTERIOR);
+            writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
         }
 
         writer.writeTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE, new Attribute.Default<String>(XMLParser.IDREF, "operators"), true);
@@ -2266,7 +2272,7 @@ public class BeastGenerator extends BeautiOptions {
         for (Map.Entry<Taxa, Boolean> taxa : taxonSetsMono.entrySet()) {
             if ( taxa.getValue() ) {
                 if (first) {
-                    writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+                    writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
                     first = false;
                 }
                 final String taxaRef = "monophyly(" + taxa.getKey().getId() + ")";
@@ -2275,7 +2281,7 @@ public class BeastGenerator extends BeautiOptions {
             }
         }
         if (!first) {
-            writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+            writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
         }
 
         ArrayList<Parameter> parameters = selectParameters();
@@ -2348,9 +2354,9 @@ public class BeastGenerator extends BeautiOptions {
                 writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
-                writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);
+                writer.writeOpenTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(OneOnXPrior.ONE_ONE_X_PRIOR);
+                writer.writeCloseTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);
                 break;
             case POISSON_PRIOR:
                 writer.writeOpenTag(PriorParsers.POISSON_PRIOR,
@@ -2416,7 +2422,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+            writer.writeTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -2427,7 +2433,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
+        writer.writeTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
         writer.writeCloseTag(Columns.COLUMN);
 
         if (alignment != null) {
@@ -2438,7 +2444,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(Columns.WIDTH, "12")
                     }
             );
-            writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
+            writer.writeTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
             writer.writeCloseTag(Columns.COLUMN);
         }
 
@@ -2552,11 +2558,11 @@ public class BeastGenerator extends BeautiOptions {
      */
     private void writeLog(XMLWriter writer) {
         if (alignment != null) {
-            writer.writeTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
+            writer.writeTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
         }
-        writer.writeTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
+        writer.writeTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
         if (alignment != null) {
-            writer.writeTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
+            writer.writeTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
         }
 
         // As of v1.4.2, always write the rate parameter even if fixed...

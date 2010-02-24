@@ -2,11 +2,10 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.MCMCOperator;
+import dr.evomodelxml.operators.TreeBitRandomWalkOperatorParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +20,6 @@ import java.util.List;
  * @version $Id$
  */
 public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
-
-    public static final String BIT_RANDOM_WALK_OPERATOR = "treeBitRandomWalk";
-    public static final String INDICTATOR_TRAIT = "indicatorTrait";
-    public static final String TRAIT2 = "trait2";
-    public static final String SWAP_TRAIT2 = "swapTrait2";
-
 
     public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
         this.tree = tree;
@@ -110,7 +103,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
     // Interface MCMCOperator
     public final String getOperatorName() {
-        return BIT_RANDOM_WALK_OPERATOR + "(" + indicatorTrait + ")";
+        return TreeBitRandomWalkOperatorParser.BIT_RANDOM_WALK_OPERATOR + "(" + indicatorTrait + ")";
     }
 
     public final String getPerformanceSuggestion() {
@@ -121,57 +114,6 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
     public String toString() {
         return getOperatorName();
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BIT_RANDOM_WALK_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-
-            String trait1 = null;
-            String trait2 = null;
-            if (xo.hasAttribute(INDICTATOR_TRAIT)) trait1 = xo.getStringAttribute(INDICTATOR_TRAIT);
-            if (xo.hasAttribute(TRAIT2)) trait2 = xo.getStringAttribute(TRAIT2);
-            int k = xo.getAttribute("k", 1);
-            boolean swapTrait2 = xo.getAttribute(SWAP_TRAIT2, true);
-
-            return new TreeBitRandomWalkOperator(treeModel, trait1, trait2, weight, k, swapTrait2);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a bit-random walk operator on a random " +
-                    "indicator/variable pair in the tree.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(TreeModel.class),
-                AttributeRule.newStringRule(INDICTATOR_TRAIT, true),
-                AttributeRule.newStringRule(TRAIT2, true),
-                AttributeRule.newBooleanRule(SWAP_TRAIT2, true),
-                AttributeRule.newIntegerRule("k", true)
-        };
-
-    };
 
     // Private instance variables
 

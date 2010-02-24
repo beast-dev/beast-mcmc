@@ -40,7 +40,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
@@ -55,6 +54,7 @@ import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.operators.ExchangeOperatorParser;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
+import dr.evomodelxml.operators.TreeBitMoveOperatorParser;
 import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
@@ -1908,13 +1908,13 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
+        writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("weight", operator.weight),
                 }
         );
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, "treeModel")}, true);
-        writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
+        writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
     private void writeUniformOperator(Operator operator, XMLWriter writer) {

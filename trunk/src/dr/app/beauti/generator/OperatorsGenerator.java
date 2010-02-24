@@ -9,14 +9,10 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
-import dr.evomodel.operators.TreeBitMoveOperator;
-import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
-import dr.evomodelxml.operators.ExchangeOperatorParser;
-import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
-import dr.evomodelxml.operators.WilsonBaldingParser;
+import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
@@ -390,10 +386,10 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR,
+        writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                         getWeightAttribute(operator.weight));
         writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
-        writer.writeCloseTag(TreeBitMoveOperator.BIT_MOVE_OPERATOR);
+        writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
     private void writeUniformOperator(Operator operator, XMLWriter writer) {
@@ -495,12 +491,12 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeNodeSlide.TREE_NODE_REHEIGHT,
+        writer.writeOpenTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT,
                 new Attribute[]{ getWeightAttribute(operator.weight) }
         );
         writer.writeIDref(TraitGuesser.Traits.TRAIT_SPECIES.toString(),  TraitGuesser.Traits.TRAIT_SPECIES.toString());
         writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE,  Generator.SP_TREE);
-        writer.writeCloseTag(TreeNodeSlide.TREE_NODE_REHEIGHT);
+        writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
 

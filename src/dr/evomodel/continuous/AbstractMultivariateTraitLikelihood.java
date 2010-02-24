@@ -612,7 +612,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     int numTraits = traitParameter.getNumberOfParameters();
                     if (numTraits != treeModel.getExternalNodeCount()) {
                         throw new XMLParseException(
-                                "Dimensional of '" + traitParameter.getId() + "' is not equal to the number" +
+                                "Dimensionality of '" + traitParameter.getId() + "' (" + numTraits + ") is not equal to the number" +
                                 " of tree tips (" + treeModel.getExternalNodeCount() + ")");
                     }                    
 

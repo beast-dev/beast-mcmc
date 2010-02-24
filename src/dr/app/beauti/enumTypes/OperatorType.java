@@ -23,7 +23,7 @@
 
 package dr.app.beauti.enumTypes;
 
-import dr.evomodel.operators.TreeNodeSlide;
+import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.operators.ScaleOperator;
 
 /**
@@ -55,7 +55,7 @@ public enum OperatorType {
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     WILSON_BALDING("wilsonBalding"),
-    NODE_REHIGHT(TreeNodeSlide.TREE_NODE_REHEIGHT);
+    NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
 
     OperatorType(String displayName) {
         this.displayName = displayName;

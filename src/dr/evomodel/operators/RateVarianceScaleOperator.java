@@ -27,11 +27,14 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.RateVarianceScaleOperatorParser;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.*;
+import dr.inference.operators.AbstractCoercableOperator;
+import dr.inference.operators.CoercionMode;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +46,6 @@ import java.util.List;
  * @author Michael Defoin Platel
  */
 public class RateVarianceScaleOperator extends AbstractCoercableOperator {
-
-    public static final String SCALE_OPERATOR = "rateVarianceScaleOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
 
     private TreeModel tree;
     private Parameter variance;
@@ -173,64 +173,8 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SCALE_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            CoercionMode mode = CoercionMode.parseMode(xo);
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-
-            if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
-                throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
-            }
-
-            final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            final Parameter variance = (Parameter) xo.getChild(Parameter.class);
-            if (variance.getDimension() != 1) {
-                throw new XMLParseException("dimension of the variance parameter should be 1");
-            }
-
-            RateVarianceScaleOperator operator = new RateVarianceScaleOperator(treeModel, variance, scaleFactor, mode);
-            operator.setWeight(weight);
-            return operator;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a rateScale operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(Parameter.class),
-        };
-
-    };
-
     public String toString() {
-        return "rateVarianceScaleOperator(" + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
+        return RateVarianceScaleOperatorParser.SCALE_OPERATOR + "(" + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
     }
 
     //PRIVATE STUFF

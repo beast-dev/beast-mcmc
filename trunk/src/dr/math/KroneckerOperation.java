@@ -1,6 +1,6 @@
 package dr.math;
 
-import dr.math.matrixAlgebra.Vector;
+import java.util.Arrays;
 
 /**
  * A class that implements the Kronecker product and Kronecker sum matrix operations
@@ -10,6 +10,42 @@ import dr.math.matrixAlgebra.Vector;
 
 public class KroneckerOperation {
 
+    // Computes the Kronecker sum C of A (m-by-1) and B (1-by-n)
+    // C = A %x% I_n + I_m %x% B
+    public static double[] sum(double[] A, double[] B) {
+        final int dim = A.length * B.length;
+
+        double[] out = new double[dim];
+        double[] tmpA = new double[dim];
+        double[] tmpB = new double[dim];
+        double[] Im = makeIdentityVector(A.length);
+        double[] In = makeIdentityVector(B.length);
+
+        sum(A, B, Im, In, tmpA, tmpB, out);
+        return out;
+    }
+
+    public static void sum(double[] A, double[] B,
+                           double[] Im, double[] In,
+                           double[] tmpA, double[] tmpB,
+                           double[] C) {
+        final int m = A.length;
+        final int n = B.length;
+        final int dim = m * n;
+
+        if (C.length != dim
+                || Im.length != m || In.length != n
+                || tmpA.length != dim || tmpB.length != dim) {
+            throw new RuntimeException("Wrong dimensions in Kronecker sum");
+        }
+
+        product(A, m, 1, In, n, 1, tmpA);
+        product(Im, m, 1, B, n, 1, tmpB);
+
+        for (int i = 0; i < dim; i++) {
+            C[i] = tmpA[i] + tmpB[i];
+        }
+    }
 
     // Computes the Kronecker sum C of A (m-by-m) and B (n-by-n)
     // C = A %x% I_n + I_m %x% B
@@ -19,8 +55,8 @@ public class KroneckerOperation {
         double[] out = new double[dim * dim];
         double[] tmpA = new double[dim * dim];
         double[] tmpB = new double[dim * dim];
-        double[] Im = makeIdentity(m);
-        double[] In = makeIdentity(n);
+        double[] Im = makeIdentityMatrix(m);
+        double[] In = makeIdentityMatrix(n);
 
         sum(A, m, B, n, Im, In, tmpA, tmpB, out);
         return out;
@@ -47,11 +83,17 @@ public class KroneckerOperation {
         }
     }
 
-    private static double[] makeIdentity(int dim) {
+    private static double[] makeIdentityMatrix(int dim) {
         double[] out = new double[dim * dim];
         for (int i = 0; i < dim; i++) {
             out[i * dim + i] = 1.0;
         }
+        return out;
+    }
+
+    private static double[] makeIdentityVector(int dim) {
+        double[] out = new double[dim];
+        Arrays.fill(out, 1.0);
         return out;
     }
 

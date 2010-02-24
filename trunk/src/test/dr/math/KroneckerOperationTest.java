@@ -11,7 +11,12 @@ public class KroneckerOperationTest extends TestCase {
 
     private void testKroneckerSum(double[] A, int m, double[] B, int n, double[] trueC) {
 
-        double[] C = KroneckerOperation.sum(A, m, B, n);
+        double[] C;
+        if (m == -1 || n == -1) {
+            C = KroneckerOperation.sum(A,B);
+        } else {
+            C = KroneckerOperation.sum(A, m, B, n);
+        }
         printMatrix(A, m, m, "A = ");
         printMatrix(B, n, n, "B = ");
         printMatrix(C, m * n, m * n, "A %s% B = ");
@@ -75,6 +80,12 @@ public class KroneckerOperationTest extends TestCase {
                 0, 0, 5, 7, 8, 15
         };
         testKroneckerSum(D, 2, E, 3, trueF);
+
+        // test sum for column-vectors
+        double[] V1 = {1,2,3};
+        double[] V2 = {4,5};
+        double[] Vtrue = {5,6,6,7,7,8};
+        testKroneckerSum(V1, -1, V2, -1, Vtrue);
     }
 
     public void testKroneckerProduct() {
@@ -96,5 +107,11 @@ public class KroneckerOperationTest extends TestCase {
                 6, 3, 4, 2, 2, 1,
                 6, 9, 4, 6, 2, 3};
         testKroneckerProduct(D, 2, 3, E, 2, 2, trueF);
+
+        // test product for column-vectors
+        double[] V1 = {1,2,3};
+        double[] V2 = {4,5};
+        double[] Vtrue = {4,5,8,10,12,15};
+        testKroneckerProduct(V1, 3, 1, V2, 2, 1, Vtrue);
     }
 }

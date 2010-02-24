@@ -40,8 +40,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         dimTrait = diffusionModel.getPrecisionmatrix().length;
-        dim = treeModel.getMultivariateNodeTrait(treeModel.getExternalNode(0), traitName).length;
-
+        dim = traitParameter.getParameter(0).getDimension();
 
         if (dim % dimTrait != 0)
             throw new RuntimeException("dim is not divisible by dimTrait");

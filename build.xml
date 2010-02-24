@@ -345,7 +345,7 @@
 	</target>
 
 
-	<property name="version" value="1.5.3" />
+	<property name="version" value="1.6.0pre" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />
@@ -490,9 +490,9 @@
 		</tar>-->
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
         <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files." />
-		<!-- tar -cvzf BEASTv1.5.3.tgz BEASTv1.5.3/ -->
-        <!-- cksum BEASTv1.5.3.tgz -->
-        <!-- tar -xvzf BEASTv1.5.3.tgz -->
+		<!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
+        <!-- cksum BEASTv1.x.x.tgz -->
+        <!-- tar -xvzf BEASTv1.x.x.tgz -->
         <echo message="Linux/Unix version release is finished." />
 	</target>
 

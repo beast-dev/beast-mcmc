@@ -2,8 +2,10 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.math.KroneckerOperation;
+import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
@@ -75,14 +77,12 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
 
     private void computeKroneckerSumsAndProducts() {
 
-//        EigenDecomposition oneEigenDecomposition = baseModels.get(0).getEigenDecomposition();
-
         int currentStateSize = stateSizes[0];
         double[] currentRate = new double[currentStateSize * currentStateSize];
+        baseModels.get(0).getInfinitesimalMatrix(currentRate);
+        EigenDecomposition currentED = baseModels.get(0).getEigenDecomposition();
+        double[] currentEval = currentED.getEigenValues();
 
-//        System.err.println("Starting size = " + currentStateSize);
-//        System.err.println("currentRate.length = " + currentRate.length);
-//        double[] eval = oneEigenDecomposition.getEigenValues();
 //        double[] ievc = oneEigenDecomposition.getInverseEigenVectors();
 //        double[] evec = oneEigenDecomposition.getEigenVectors();
 
@@ -91,6 +91,16 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
             int nextStateSize = stateSizes[i];
             double[] nextRate = new double[nextStateSize * nextStateSize];
             nextModel.getInfinitesimalMatrix(nextRate);
+            currentRate = KroneckerOperation.sum(currentRate, currentStateSize, nextRate, nextStateSize);
+
+            EigenDecomposition nextED = nextModel.getEigenDecomposition();
+            double[] nextEval = nextED.getEigenValues();
+//            System.err.println("cEval = " + new Vector(currentEval));
+//            System.err.println("nEval = " + new Vector(nextEval));
+//            System.exit(-1);
+            currentEval = KroneckerOperation.sum(currentEval, nextEval);
+//            System.err.println("final = " + new Vector(currentEval));
+//            System.exit(-1);
 
 //            System.err.println("nextStateSize = " + nextStateSize);
 //
@@ -99,15 +109,15 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
 //            System.err.println("currentSize = " + currentStateSize);
 //            System.err.println("nextRate.length = "+ nextRate.length);
 //            System.err.println("nextSize = " + nextStateSize);
-            currentRate = KroneckerOperation.sum(currentRate, currentStateSize, nextRate, nextStateSize);
+
             currentStateSize *= nextStateSize;
 //            System.err.println("Current size = " + currentStateSize);
 //            System.exit(-1);
         }
 
         rateMatrix = currentRate;
-
-//        eigenDecomposition = new EigenDecomposition(evec, ievc, eval);
+        
+        eigenDecomposition = new EigenDecomposition(null, null, currentEval);
         updateMatrix = false;
     }
 

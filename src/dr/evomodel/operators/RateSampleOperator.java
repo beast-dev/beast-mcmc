@@ -3,11 +3,10 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.MCMCOperator;
+import dr.evomodelxml.operators.RateSampleOperatorParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A special operator for sampling rates in a subtree
@@ -16,9 +15,6 @@ import dr.xml.*;
  * @author Michael Defoin Platel
  */
 public class RateSampleOperator extends SimpleMCMCOperator {
-
-    public static final String SAMPLE_OPERATOR = "rateSampleOperator";
-    public static final String SAMPLE_ALL = "sampleAll";
 
     private TreeModel tree;
 
@@ -148,56 +144,8 @@ public class RateSampleOperator extends SimpleMCMCOperator {
         return "No suggestions";
     }
 
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SAMPLE_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-
-            final boolean sampleAll = xo.getBooleanAttribute(SAMPLE_ALL);
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            RateEvolutionLikelihood rateEvolution = (RateEvolutionLikelihood) xo.getChild(RateEvolutionLikelihood.class);
-
-            RateSampleOperator operator = new RateSampleOperator(treeModel, sampleAll, rateEvolution);
-            operator.setWeight(weight);
-            return operator;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a rateSample operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(SAMPLE_ALL, true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(RateEvolutionLikelihood.class, true),
-        };
-
-    };
-
     public String toString() {
-        return "rateSampleOperator(";
+        return RateSampleOperatorParser.SAMPLE_OPERATOR + "(";
     }
 
     //PRIVATE STUFF

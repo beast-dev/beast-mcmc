@@ -39,9 +39,9 @@ import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
+import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -274,14 +274,14 @@ public class BranchRatesModelGenerator extends Generator {
 	                
 	                if (model.isEstimatedRate()) {//TODO
 		              	writer.writeText("");
-			            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
+			            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
 			                      new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL
 			                    		  + "." + "allRates")});
 			            writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 			                    		  + TreeModelParser.NODE_RATES);
 			            writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
 			                    		  + RateEvolutionLikelihood.ROOTRATE);
-			            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+			            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 	                }
 	                
 	                writer.writeText("");

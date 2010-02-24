@@ -33,6 +33,7 @@ import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -159,7 +160,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         likelihoods.add(likelihood2);
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
-        prior.setId(CompoundLikelihood.PRIOR);
+        prior.setId(CompoundLikelihoodParser.PRIOR);
 
         likelihoods.clear();
         likelihoods.add(treeLikelihood);
@@ -169,7 +170,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         likelihoods.add(prior);
         likelihoods.add(likelihood);
         Likelihood posterior = new CompoundLikelihood(0, likelihoods);
-        posterior.setId(CompoundLikelihood.POSTERIOR);
+        posterior.setId(CompoundLikelihoodParser.POSTERIOR);
 
         // Log
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);

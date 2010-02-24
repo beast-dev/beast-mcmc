@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 import java.util.ArrayList;
 
 /**
@@ -34,9 +32,6 @@ import java.util.ArrayList;
  */
 
 public class OneOnXPrior extends Likelihood.Abstract {
-
-    public static final String ONE_ONE_X_PRIOR = "oneOnXPrior";
-    public static final String DATA = "data";
 
     public OneOnXPrior() {
 
@@ -87,61 +82,5 @@ public class OneOnXPrior extends Likelihood.Abstract {
         }
         return s.substring(0, s.length() - 1) + ")";
     }
-
-    /**
-     * Reads a distribution likelihood from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return ONE_ONE_X_PRIOR;
-        }
-
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "jeffreysPrior"};
-        }
-        
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            OneOnXPrior likelihood = new OneOnXPrior();
-
-            XMLObject cxo = xo;
-
-            if (xo.hasChildNamed(DATA)) {
-                cxo = xo.getChild(DATA);
-            }
-
-            for (int i = 0; i < cxo.getChildCount(); i++) {
-                if (cxo.getChild(i) instanceof Statistic) {
-                    likelihood.addData((Statistic) cxo.getChild(i));
-                }
-            }
-
-            return likelihood;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new XORRule(
-                        new ElementRule(Statistic.class, 1, Integer.MAX_VALUE),
-                        new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)})
-                )
-        };
-
-        public String getParserDescription() {
-            return "Calculates the (improper) prior proportional to Prod_i (1/x_i) for the given statistic x.";
-        }
-
-        public Class getReturnType() {
-            return OneOnXPrior.class;
-        }
-    };
 }
 

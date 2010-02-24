@@ -42,9 +42,9 @@ import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.*;
 import dr.inference.distribution.MixedDistributionLikelihood;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
 import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -271,11 +271,11 @@ public class BeastGenerator extends Generator {
 
         // write allClockRate for fix mean option in clock model panel
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
+            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
             for (PartitionClockModel model : options.getPartitionClockModels()) {
                 branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
             }
-            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
+            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
             writer.writeText("");
         }
 
@@ -637,11 +637,11 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("mcmc",attributes);
 
         if (options.hasData()) {
-            writer.writeOpenTag(CompoundLikelihood.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
+            writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
         }
 
         // write prior block
-        writer.writeOpenTag(CompoundLikelihood.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
+        writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
@@ -670,19 +670,19 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
-        writer.writeCloseTag(CompoundLikelihood.PRIOR);
+        writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
 
         if (options.hasData()) {
             // write likelihood block
-            writer.writeOpenTag(CompoundLikelihood.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
+            writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
-            writer.writeCloseTag(CompoundLikelihood.LIKELIHOOD);
+            writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
-            writer.writeCloseTag(CompoundLikelihood.POSTERIOR);
+            writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
         }
 
         writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE, "operators");

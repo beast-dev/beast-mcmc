@@ -32,10 +32,10 @@ import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
-import dr.inference.model.BooleanLikelihood;
-import dr.inference.model.OneOnXPrior;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.PriorParsers;
+import dr.inferencexml.model.BooleanLikelihoodParser;
+import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class ParameterPriorGenerator extends Generator {
         for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
-                    writer.writeOpenTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+                    writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
                     first = false;
                 }
                 final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
@@ -69,7 +69,7 @@ public class ParameterPriorGenerator extends Generator {
             }
         }
         if (!first) {
-            writer.writeCloseTag(BooleanLikelihood.BOOLEAN_LIKELIHOOD);
+            writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
         }
 
         ArrayList<Parameter> parameters = options.selectParameters();
@@ -158,9 +158,9 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeCloseTag(PriorParsers.INVGAMMA_PRIOR);
                 break;
             case JEFFREYS_PRIOR:
-                writer.writeOpenTag(OneOnXPrior.ONE_ONE_X_PRIOR);
+                writer.writeOpenTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(OneOnXPrior.ONE_ONE_X_PRIOR);
+                writer.writeCloseTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);
                 break;
             case POISSON_PRIOR:
                 writer.writeOpenTag(PriorParsers.POISSON_PRIOR,

@@ -1,14 +1,16 @@
 package dr.evomodel.operators;
 
-import dr.inference.model.Parameter;
-import dr.inference.operators.*;
-import dr.math.MathUtils;
-import dr.xml.*;
-import dr.evomodel.tree.TreeModel;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.RateScaleOperatorParser;
+import dr.inference.operators.AbstractCoercableOperator;
+import dr.inference.operators.CoercionMode;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.OperatorUtils;
+import dr.math.MathUtils;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A special operator for scaling rates in a subtree.
@@ -16,10 +18,6 @@ import java.util.ArrayList;
  * @author Michael Defoin Platel
  */
 public class RateScaleOperator extends AbstractCoercableOperator {
-
-    public static final String SCALE_OPERATOR = "rateScaleOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String NO_ROOT = "noRoot";
 
     private TreeModel tree;
 
@@ -144,61 +142,8 @@ public class RateScaleOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SCALE_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            CoercionMode mode = CoercionMode.parseMode(xo);
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-
-            final boolean noRoot = xo.getBooleanAttribute(NO_ROOT);
-
-            if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
-                throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
-            }
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            RateScaleOperator operator = new RateScaleOperator(treeModel, scaleFactor, noRoot, mode);
-            operator.setWeight(weight);
-            return operator;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a rateScale operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                AttributeRule.newBooleanRule(NO_ROOT, true),
-                new ElementRule(TreeModel.class),
-        };
-
-    };
-
     public String toString() {
-        return "rateScaleOperator(" + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
+        return RateScaleOperatorParser.SCALE_OPERATOR + "(" + " [" + scaleFactor + ", " + (1.0 / scaleFactor) + "]";
     }
 
     //PRIVATE STUFF

@@ -48,12 +48,11 @@ Branch 1.5 is for bug fixing and is the release version, but trunk is only for d
 
 1) Any parser has to be implemented by an individual java class
 extended from _AbstractXMLObjectParser_ and named by model name +
-Parser.
+Parser. If there are multi-parsers referring to one model class, they can be included in one parser class and each parser has its own inner class extended from AbstractXMLObjectParser.
 
-For example, _dr.evomodel.operators.ExchangeOperator_ has 2 parsers
-_dr.evomodelxml.operators.NarrowExchangeOperatorParser_ and
-WideExchangeOperatorParser, or _dr.evomodel.tree.TreeModel_ has
-_dr.evomodelxml.tree.TreeModelParser_.
+For example, _dr.evomodel.tree.TreeModel_ has
+_dr.evomodelxml.tree.TreeModelParser_. Or dr.evomodel.operators.ExchangeOperator has parser class dr.evomodelxml.operators.ExchangeOperatorParser, and the latter contains 2 parsers inner classes NARROW_EXCHANGE_OPERATOR_PARSER and WIDE_EXCHANGE_OPERATOR_PARSER.
+
 
 2) getReturnType() has to return the exact class of the model referred
 by this parser, if you want it belongs some general types, you need to

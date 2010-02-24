@@ -28,9 +28,9 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.TreeUniformParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  *  Uniform height change of several related tree nodes at once.
@@ -40,8 +40,6 @@ import dr.xml.*;
  *  @author  Joseph Heled
  */
 public class TreeUniform extends AbstractTreeOperator {
-
-    public static final String TREE_UNIFORM = "treeUniform";
 
     private final int nodesToMove;
 
@@ -262,47 +260,7 @@ public class TreeUniform extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return "treeUniform(" + nodesToMove + "," + tree.getId() + ")";
+        return TreeUniformParser.TREE_UNIFORM + "(" + nodesToMove + "," + tree.getId() + ")";
     }
 
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TREE_UNIFORM;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-            final int n = xo.getAttribute("count", 2);
-            if( ! ( n == 2 || n == 3) ) {
-              throw new XMLParseException("Sorry, only moves of 2 or 3 nodes implemented.");
-            }
-            return new TreeUniform(n, treeModel, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "Simultanouesly change height of two nodes.";
-        }
-
-        public Class getReturnType() {
-            return TreeUniform.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newIntegerRule("count", true),
-                new ElementRule(TreeModel.class)};
-
-    };
 }

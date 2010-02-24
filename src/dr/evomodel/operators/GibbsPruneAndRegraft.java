@@ -7,12 +7,12 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.GibbsPruneAndRegraftParser;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +22,6 @@ import java.util.List;
  * 
  */
 public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
-
-	public static final String GIBBS_PRUNE_AND_REGRAFT = "GibbsPruneAndRegraft";
 
 	private int MAX_DISTANCE = 10;
 
@@ -331,7 +329,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	 */
 	@Override
 	public String getOperatorName() {
-		return GIBBS_PRUNE_AND_REGRAFT;
+		return GibbsPruneAndRegraftParser.GIBBS_PRUNE_AND_REGRAFT;
 	}
 
 	/*
@@ -344,48 +342,4 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 		return 0;
 	}
 
-	public static XMLObjectParser GIBBS_PRUNE_AND_REGRAFT_PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() {
-			return GIBBS_PRUNE_AND_REGRAFT;
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-			double weight = xo.getDoubleAttribute("weight");
-			boolean pruned = true;
-			if (xo.hasAttribute("pruned")) {
-				pruned = xo.getBooleanAttribute("pruned");
-			}
-
-			return new GibbsPruneAndRegraft(treeModel, pruned, weight);
-		}
-
-		// ************************************************************************
-		// AbstractXMLObjectParser implementation
-		// ************************************************************************
-
-		public String getParserDescription() {
-			return "This element represents a Gibbs sampler implemented through a prune and regraft operator. "
-					+ "This operator prunes a random subtree and regrafts it below a node chosen by an importance distribution which is the proportion of the likelihoods of the proposals.";
-		}
-
-		public Class getReturnType() {
-			return GibbsPruneAndRegraft.class;
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private final XMLSyntaxRule[] rules;
-		{
-			rules = new XMLSyntaxRule[] {
-					AttributeRule.newDoubleRule("weight"),
-					AttributeRule.newBooleanRule("pruned"),
-					new ElementRule(TreeModel.class) };
-		}
-
-	};
 }

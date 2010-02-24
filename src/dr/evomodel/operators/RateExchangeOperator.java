@@ -27,11 +27,11 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.operators.RateExchangeOperatorParser;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -42,12 +42,6 @@ import org.w3c.dom.Element;
  * @version $Id: RateExchangeOperator.java,v 1.3 2005/01/06 14:46:36 rambaut Exp $
  */
 public class RateExchangeOperator extends SimpleMCMCOperator {
-
-    public static final String RATE_EXCHANGE = "rateExchange";
-    public static final String SWAP_TRAITS = "swapTraits";
-    public static final String SWAP_RATES = "swapRates";
-    public static final String SWAP_AT_ROOT = "swapAtRoot";
-    public static final String MOVE_HEIGHT = "moveHeight";
 
     private static final String TRAIT = "trait";
 
@@ -150,50 +144,11 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
     }
 
     public String getOperatorName() {
-        return RATE_EXCHANGE;
+        return RateExchangeOperatorParser.RATE_EXCHANGE;
     }
 
     public Element createOperatorElement(Document d) {
-        return d.createElement(RATE_EXCHANGE);
+        return d.createElement(RateExchangeOperatorParser.RATE_EXCHANGE);
     }
-
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return RATE_EXCHANGE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            double weight = xo.getDoubleAttribute("weight");
-            boolean swapRates = xo.getBooleanAttribute(SWAP_RATES);
-            boolean swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
-            boolean swapAtRoot = xo.getBooleanAttribute(SWAP_AT_ROOT);
-            boolean moveHeight = xo.getBooleanAttribute(MOVE_HEIGHT);
-            return new RateExchangeOperator(treeModel, weight, swapRates, swapTraits, swapAtRoot, moveHeight);
-        }
-
-        public String getParserDescription() {
-            return "An operator that exchanges rates and traits on a tree.";
-        }
-
-        public Class getReturnType() {
-            return SubtreeSlideOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newBooleanRule(SWAP_RATES),
-                AttributeRule.newBooleanRule(SWAP_TRAITS),
-                AttributeRule.newBooleanRule(SWAP_AT_ROOT),
-                AttributeRule.newBooleanRule(MOVE_HEIGHT),
-                new ElementRule(TreeModel.class)
-        };
-	};
 
 }

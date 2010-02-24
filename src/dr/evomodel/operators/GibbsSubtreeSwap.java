@@ -13,7 +13,6 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMetropolizedGibbsOperator;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +22,6 @@ import java.util.List;
  * 
  */
 public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
-
-    public static final String GIBBS_SUBTREE_SWAP = "GibbsSubtreeSwap";
 
     private int MAX_DISTANCE = 10;
 
@@ -456,42 +453,4 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         return "Gibbs Subtree Exchange";
     }
 
-    public static XMLObjectParser GIBBS_SUBTREE_SWAP_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return GIBBS_SUBTREE_SWAP;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            final double weight = xo.getDoubleAttribute("weight");
-            final boolean pruned = xo.getAttribute("pruned", true);
-
-            return new GibbsSubtreeSwap(treeModel, pruned, weight);
-        }
-
-        // ************************************************************************
-        // AbstractXMLObjectParser implementation
-        // ************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents a Gibbs wide exchange operator. "
-                    + "This operator swaps two subtrees chosen to their posterior probaility.";
-        }
-
-        public Class getReturnType() {
-            return GibbsSubtreeSwap.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newBooleanRule("pruned", true),
-                new ElementRule(TreeModel.class)};
-
-    };
 }

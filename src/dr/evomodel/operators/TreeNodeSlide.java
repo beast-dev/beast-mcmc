@@ -4,11 +4,11 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.speciation.SpeciesBindings;
 import dr.evomodel.speciation.SpeciesTreeModel;
+import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.*;
 import jebl.util.FixedBitSet;
 
 import java.util.Arrays;
@@ -23,7 +23,6 @@ import java.util.Arrays;
  *         Date: 29/05/2008
  */
 public class TreeNodeSlide extends SimpleMCMCOperator {
-    public static final String TREE_NODE_REHEIGHT = "nodeReHeight";
 
     private final SpeciesTreeModel tree;
     private final SpeciesBindings species;
@@ -57,7 +56,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
     }
 
     public String getOperatorName() {
-        return PARSER.getParserName() + "(" + tree.getId() + "," + species.getId() + ")";
+        return TreeNodeSlideParser.TREE_NODE_REHEIGHT + "(" + tree.getId() + "," + species.getId() + ")";
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -451,42 +450,4 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
         return root;
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TREE_NODE_REHEIGHT;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            SpeciesBindings species = (SpeciesBindings) xo.getChild(SpeciesBindings.class);
-            SpeciesTreeModel tree = (SpeciesTreeModel) xo.getChild(SpeciesTreeModel.class);
-
-            final double weight = xo.getDoubleAttribute("weight");
-//            final double range = xo.getAttribute("range", 1.0);
-//            if( range <= 0 || range > 1.0 ) {
-//                throw new XMLParseException("range out of range");
-//            }
-            //final boolean oo = xo.getAttribute("outgroup", false);
-            return new TreeNodeSlide(tree, species /*, range*//*, oo*/, weight);
-        }
-
-        public String getParserDescription() {
-            return "Specialized Species tree operator, transform tree without breaking embedding of gene trees.";
-        }
-
-        public Class getReturnType() {
-            return TreeNodeSlide.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-                    AttributeRule.newDoubleRule("weight"),
-                   // AttributeRule.newDoubleRule("range", true),
-                  //  AttributeRule.newBooleanRule("outgroup", true),
-                    
-                    new ElementRule(SpeciesBindings.class),
-                    new ElementRule(SpeciesTreeModel.class)
-            };
-        }
-    };
 }

@@ -44,20 +44,28 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      */
     protected int ratesRelativeTo;
 
+    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
+                                    Parameter parameter, int relativeTo) {
+        this(name, dataType, freqModel, parameter, relativeTo, null);
+
+    }
+
     /**
      * constructor
      *
      * @param dataType the data type
      */
-    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter, int relativeTo) {
+    public GeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
+                                    Parameter parameter, int relativeTo, EigenSystem eigenSystem) {
 
-        super(name, dataType, freqModel, null);
+        super(name, dataType, freqModel, eigenSystem);
 
         ratesParameter = parameter;
         if (ratesParameter != null) {
             addVariable(ratesParameter);
             if (!(ratesParameter instanceof DuplicatedParameter))
-                ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, ratesParameter.getDimension()));
+                ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                        ratesParameter.getDimension()));
         }
         setRatesRelativeTo(relativeTo);
     }

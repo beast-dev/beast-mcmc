@@ -5,7 +5,6 @@ import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
@@ -82,9 +81,17 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
         baseModels.get(0).getInfinitesimalMatrix(currentRate);
         EigenDecomposition currentED = baseModels.get(0).getEigenDecomposition();
         double[] currentEval = currentED.getEigenValues();
+        double[] currentEvec = currentED.getEigenVectors();
+//        currentEvec = new double[] {1, 2.0 / 3.0, 1, -1.0 / 3.0};
+//        currentIevc = new double[] {1.0 / 3.0, 2.0 / 3.0, 1, -1};
+        double[] currentIevcT = transpose(currentED.getInverseEigenVectors(), currentStateSize);
 
-//        double[] ievc = oneEigenDecomposition.getInverseEigenVectors();
-//        double[] evec = oneEigenDecomposition.getEigenVectors();
+//        System.err.println("In kS&P");
+//        double[] out = new double[currentStateSize * currentStateSize];
+//        baseModels.get(0).getTransitionProbabilities(0.0, out);
+//        printSquareMatrix(out, currentStateSize);
+//        System.exit(-1);
+
 
         for (int i = 1; i < numBaseModel; i++) {
             SubstitutionModel nextModel = baseModels.get(i);
@@ -95,30 +102,59 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
 
             EigenDecomposition nextED = nextModel.getEigenDecomposition();
             double[] nextEval = nextED.getEigenValues();
-//            System.err.println("cEval = " + new Vector(currentEval));
-//            System.err.println("nEval = " + new Vector(nextEval));
+            double[] nextEvec = nextED.getEigenVectors();
+//            nextEvec = new double[] {1, 3.0 / 4.0, 1, -1.0 / 4.0};
+            double[] nextIevcT = transpose(nextED.getInverseEigenVectors(), nextStateSize);
+//            nextIevc = new double[] {1.0 / 4.0, 3.0 / 4.0, 1, -1};
+
+//            System.err.println("evec0 = ");
+//            printSquareMatrix(currentEvec, currentStateSize);
+//            System.err.println("evec1 = ");
+//            printSquareMatrix(nextEvec, nextStateSize);
 //            System.exit(-1);
+
+
             currentEval = KroneckerOperation.sum(currentEval, nextEval);
-//            System.err.println("final = " + new Vector(currentEval));
-//            System.exit(-1);
 
-//            System.err.println("nextStateSize = " + nextStateSize);
-//
-//            System.err.println("\nCalling with:");
-//            System.err.println("currentRate.length = " + currentRate.length);
-//            System.err.println("currentSize = " + currentStateSize);
-//            System.err.println("nextRate.length = "+ nextRate.length);
-//            System.err.println("nextSize = " + nextStateSize);
+            currentEvec = KroneckerOperation.product(
+                    currentEvec, currentStateSize, currentStateSize,
+                    nextEvec, nextStateSize, nextStateSize);
 
+//            transpose(nextIevc, nextStateSize);
+            currentIevcT = KroneckerOperation.product(
+                    currentIevcT, currentStateSize, currentStateSize,
+                    nextIevcT, nextStateSize, nextStateSize);
             currentStateSize *= nextStateSize;
-//            System.err.println("Current size = " + currentStateSize);
-//            System.exit(-1);
+
         }
+//        transpose(currentIevc, currentStateSize);
 
         rateMatrix = currentRate;
         
-        eigenDecomposition = new EigenDecomposition(null, null, currentEval);
+        eigenDecomposition = new EigenDecomposition(
+                currentEvec,
+                transpose(currentIevcT, currentStateSize),
+                currentEval);
         updateMatrix = false;
+    }
+
+   private static void printSquareMatrix(double[] A, int dim) {
+        double[] row = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(A, i * dim, row, 0, dim);
+            System.err.println(new Vector(row));
+        }
+    }
+
+    // transposes a square matrix
+    private static double[] transpose(double[] mat, int dim) {
+        double[] out = new double[dim * dim];
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                out[j * dim + i] = mat[i * dim +j];
+            }
+        }
+        return out;
     }
 
     public FrequencyModel getFrequencyModel() {

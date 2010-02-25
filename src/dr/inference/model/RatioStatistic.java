@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
@@ -34,8 +32,6 @@ import dr.xml.*;
  * @author Alexei Drummond
  */
 public class RatioStatistic extends Statistic.Abstract {
-
-	public static String RATIO_STATISTIC = "ratioStatistic";
 
 	public RatioStatistic(String name, Statistic numerator, Statistic denominator) {
 		super(name);
@@ -69,44 +65,6 @@ public class RatioStatistic extends Statistic.Abstract {
             return numerator.getStatisticValue(dim) / denominator.getStatisticValue(dim);
         }
     }
-
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() { return new String[] { getParserName(), "ratio" }; }
-		public String getParserName() { return RATIO_STATISTIC; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Statistic numerator = (Statistic)xo.getChild(0);
-            Statistic denominator = (Statistic)xo.getChild(1);
-
-            RatioStatistic ratioStatistic;
-            try {
-                ratioStatistic = new RatioStatistic(RATIO_STATISTIC, numerator, denominator);
-            } catch (IllegalArgumentException iae) {
-                throw new XMLParseException("Error parsing " + getParserName() + " the numerator and denominator statistics " +
-                        "should be of the same dimension or of dimension 1");
-            }
-			return ratioStatistic;
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "This element returns a statistic that is the ratio of the 2 child statistics.";
-		}
-
-		public Class getReturnType() { return ProductStatistic.class; }
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private final XMLSyntaxRule[] rules = {
-				new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
-		};
-	};
-
 
 	// ****************************************************************
 	// Private and protected stuff

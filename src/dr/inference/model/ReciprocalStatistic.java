@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @version $Id: ReciprocalStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
@@ -34,9 +32,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 public class ReciprocalStatistic extends Statistic.Abstract {
-	
-	public static String RECIPROCAL_STATISTIC = "reciprocalStatistic";
-    
+
     private Statistic statistic = null;
 
 	public ReciprocalStatistic(String name, Statistic statistic) {
@@ -53,40 +49,4 @@ public class ReciprocalStatistic extends Statistic.Abstract {
         
         return 1.0/statistic.getStatisticValue(dim);
 	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-        public String[] getParserNames() { return new String[] { getParserName(), "reciprocal" }; }
-		public String getParserName() { return RECIPROCAL_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			ReciprocalStatistic recipStatistic = null;
-			
-            Object child = xo.getChild(0);
-            if (child instanceof Statistic) {
-                recipStatistic = new ReciprocalStatistic(RECIPROCAL_STATISTIC, (Statistic)child);
-            } else {
-                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-            }
-				
-			return recipStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise reciprocal of the child statistic.";
-		}
-		
-		public Class getReturnType() { return ReciprocalStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, 1 )
-		};		
-	};
 }

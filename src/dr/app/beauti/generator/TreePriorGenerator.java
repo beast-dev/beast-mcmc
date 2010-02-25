@@ -44,12 +44,12 @@ import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
-import dr.inference.model.TestStatistic;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.ExponentialMarkovModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.BooleanLikelihoodParser;
+import dr.inferencexml.model.SumStatisticParser;
+import dr.inferencexml.model.TestStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -367,7 +367,7 @@ public class TreePriorGenerator extends Generator {
     	                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "booleanLikelihood1")}
     	        );
     	        writer.writeOpenTag(
-    	                TestStatistic.TEST_STATISTIC,
+    	                TestStatisticParser.TEST_STATISTIC,
     	                new Attribute[]{
     	                        new Attribute.Default<String>(XMLParser.ID, "test1"),
     	                        new Attribute.Default<String>("name", "test1")
@@ -377,7 +377,7 @@ public class TreePriorGenerator extends Generator {
     	        writer.writeOpenTag("lessThan");
     	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "treeModel.rootHeight");
     	        writer.writeCloseTag("lessThan");
-    	        writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
+    	        writer.writeCloseTag(TestStatisticParser.TEST_STATISTIC);
     	        writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
     	        
     	        writer.writeOpenTag(
@@ -590,13 +590,13 @@ public class TreePriorGenerator extends Generator {
 	        writer.writeComment("Take population Tree from demographic");
 	        writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 	
-	        writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
+	        writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationSizeChanges"),
 	                        new Attribute.Default<String>("elementwise", "true")
 	                });
 	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + VariableDemographicModelParser.demoElementName + ".indicators");
-	        writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
+	        writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 	        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMeanDist")

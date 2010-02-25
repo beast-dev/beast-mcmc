@@ -25,7 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
 import dr.stats.DiscreteStatistics;
 
 import java.util.Vector;
@@ -36,8 +35,6 @@ import java.util.Vector;
  * @author Alexei Drummond
  */
 public class VarianceStatistic extends Statistic.Abstract {
-	
-	public static String VARIANCE_STATISTIC = "varianceStatistic";
 
 	public VarianceStatistic(String name) {
 		super(name);
@@ -72,44 +69,6 @@ public class VarianceStatistic extends Statistic.Abstract {
 		
 		return DiscreteStatistics.variance(values);
 	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-		public String getParserName() { return VARIANCE_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			VarianceStatistic varStatistic = new VarianceStatistic(VARIANCE_STATISTIC);
-			
-			for (int i =0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Statistic) {
-					varStatistic.addStatistic((Statistic)child);
-				} else {
-					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-				}
-			}
-				
-			return varStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the variance of the child statistics.";
-		}
-		
-		public Class getReturnType() { return VarianceStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};		
-	};
-	
 
 	// ****************************************************************
 	// Private and protected stuff

@@ -25,11 +25,8 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
-import java.util.Vector;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @version $Id: MeanStatistic.java,v 1.9 2005/05/24 20:26:00 rambaut Exp $
@@ -38,8 +35,6 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  */
 public class MeanStatistic extends Statistic.Abstract {
-
-	public static String MEAN_STATISTIC = "meanStatistic";
 
 	public MeanStatistic(String name) {
 		super(name);
@@ -68,44 +63,6 @@ public class MeanStatistic extends Statistic.Abstract {
 
 		return sum / dimensionCount;
 	}
-
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() { return MEAN_STATISTIC; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			MeanStatistic meanStatistic = new MeanStatistic(MEAN_STATISTIC);
-
-			for (int i =0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof Statistic) {
-					meanStatistic.addStatistic((Statistic)child);
-				} else {
-					throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-				}
-			}
-
-			return meanStatistic;
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "This element returns a statistic that is the mean of the child statistics.";
-		}
-
-		public Class getReturnType() { return MeanStatistic.class; }
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, Integer.MAX_VALUE )
-		};
-	};
-
 
 	// ****************************************************************
 	// Private and protected stuff

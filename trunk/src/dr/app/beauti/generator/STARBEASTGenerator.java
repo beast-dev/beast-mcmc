@@ -46,7 +46,7 @@ import dr.evoxml.util.XMLUnits;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.DistributionModelParser;
+import dr.inferencexml.distribution.DistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;

@@ -349,16 +349,16 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.evomodel.coalescent.OrnsteinUhlenbeckPriorLikelihood.PARSER);
 //        addXMLObjectParser(dr.evomodel.coalescent.BMPriorLikelihood.PARSER);
 //
-//        addXMLObjectParser(new dr.inferencexml.DistributionLikelihoodParser());
+//        addXMLObjectParser(new dr.inferencexml.distribution.DistributionLikelihoodParser());
 //        addXMLObjectParser(dr.inference.distribution.MixedDistributionLikelihood.PARSER);
 //        addXMLObjectParser(dr.inference.distribution.UniformDistributionModel.PARSER);
-//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.EXPONENTIAL_DISTRIBUTION_PARSER);
-//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.GAMMA_DISTRIBUTION_PARSER);
-//        addXMLObjectParser(dr.inferencexml.DistributionModelParser.ONE_P_GAMMA_DISTRIBUTION_MODEL);
+//        addXMLObjectParser(dr.inferencexml.distribution.DistributionModelParser.EXPONENTIAL_DISTRIBUTION_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.DistributionModelParser.GAMMA_DISTRIBUTION_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.DistributionModelParser.ONE_P_GAMMA_DISTRIBUTION_MODEL);
 //        addXMLObjectParser(dr.inference.distribution.NormalDistributionModel.PARSER);
 //        addXMLObjectParser(dr.inference.distribution.LogNormalDistributionModel.PARSER);
 //        addXMLObjectParser(dr.inference.distribution.InverseGaussianDistributionModel.PARSER);
-//        addXMLObjectParser(new dr.inferencexml.ExponentialMarkovModelParser());
+//        addXMLObjectParser(new dr.inferencexml.distribution.ExponentialMarkovModelParser());
 //
 //        addXMLObjectParser(dr.inferencexml.PriorParsers.UNIFORM_PRIOR_PARSER);
 //        addXMLObjectParser(dr.inferencexml.PriorParsers.EXPONENTIAL_PRIOR_PARSER);

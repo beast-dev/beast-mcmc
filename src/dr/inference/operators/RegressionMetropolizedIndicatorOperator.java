@@ -4,7 +4,7 @@ import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
-import dr.inferencexml.MaskedParameterParser;
+import dr.inferencexml.model.MaskedParameterParser;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;

@@ -72,7 +72,6 @@ import dr.inference.model.SumStatistic;
 import dr.inference.model.TestStatistic;
 import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
-import dr.inferencexml.PriorParsers;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;

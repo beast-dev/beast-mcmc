@@ -360,16 +360,16 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.inference.distribution.InverseGaussianDistributionModel.PARSER);
 //        addXMLObjectParser(new dr.inferencexml.distribution.ExponentialMarkovModelParser());
 //
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.UNIFORM_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.EXPONENTIAL_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.NORMAL_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.POISSON_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.LOG_NORMAL_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.GAMMA_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.INVGAMMA_PRIOR_PARSER);
-//        addXMLObjectParser(dr.inferencexml.PriorParsers.LAPLACE_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.UNIFORM_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.EXPONENTIAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.NORMAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.POISSON_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.LOG_NORMAL_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.GAMMA_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.INVGAMMA_PRIOR_PARSER);
+//        addXMLObjectParser(dr.inferencexml.distribution.PriorParsers.LAPLACE_PRIOR_PARSER);
 //
-//        addXMLObjectParser(new dr.inferencexml.BinomialLikelihoodParser());
+//        addXMLObjectParser(new dr.inferencexml.distribution.BinomialLikelihoodParser());
 //
 //        addXMLObjectParser(dr.inference.model.MeanStatistic.PARSER);
 //        addXMLObjectParser(dr.inference.model.VarianceStatistic.PARSER);

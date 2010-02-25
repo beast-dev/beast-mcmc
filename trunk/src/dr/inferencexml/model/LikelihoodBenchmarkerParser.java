@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml;
+package dr.inferencexml.model;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.LikelihoodBenchmarker;

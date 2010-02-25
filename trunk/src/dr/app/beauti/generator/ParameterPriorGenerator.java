@@ -33,7 +33,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.PriorParsers;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;

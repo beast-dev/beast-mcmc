@@ -1,4 +1,4 @@
-package dr.inferencexml;
+package dr.inferencexml.model;
 
 import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;

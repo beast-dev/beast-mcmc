@@ -1,4 +1,4 @@
-package dr.inferencexml;
+package dr.inferencexml.model;
 
 import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Parameter;

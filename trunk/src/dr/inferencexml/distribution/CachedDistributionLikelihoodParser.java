@@ -1,8 +1,8 @@
-package dr.inferencexml;
+package dr.inferencexml.distribution;
 
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.AbstractDistributionLikelihood;
 import dr.inference.distribution.CachedDistributionLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Variable;
 import dr.xml.*;
 

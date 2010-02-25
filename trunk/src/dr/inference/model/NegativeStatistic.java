@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @version $Id: NegativeStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  *
@@ -34,9 +32,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 public class NegativeStatistic extends Statistic.Abstract {
-	
-	public static String NEGATE_STATISTIC = "negativeStatistic";
-    
+
     private Statistic statistic = null;
 
 	public NegativeStatistic(String name, Statistic statistic) {
@@ -53,40 +49,4 @@ public class NegativeStatistic extends Statistic.Abstract {
         
         return -statistic.getStatisticValue(dim);
 	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-        public String[] getParserNames() { return new String[] { getParserName(), "negative", "negate" }; }
-		public String getParserName() { return NEGATE_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			NegativeStatistic negativeStatistic = null;
-			
-            Object child = xo.getChild(0);
-            if (child instanceof Statistic) {
-                negativeStatistic = new NegativeStatistic(NEGATE_STATISTIC, (Statistic)child);
-            } else {
-                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-            }
-
-			return negativeStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise negation of the child statistic.";
-		}
-		
-		public Class getReturnType() { return NegativeStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, 1 )
-		};		
-	};
 }

@@ -39,9 +39,9 @@ import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.inferencexml.model.CompoundParameterParser;
+import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -364,7 +364,7 @@ public class BranchRatesModelGenerator extends Generator {
 	
 	                writer.writeText("");
 	                writer.writeOpenTag(
-	                        SumStatistic.SUM_STATISTIC,
+	                        SumStatisticParser.SUM_STATISTIC,
 	                        new Attribute[]{
 	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + "rateChanges"),
 	                                new Attribute.Default<String>("name", modelPrefix + "rateChangeCount"),
@@ -372,7 +372,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes");
-	                writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
+	                writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 	
 	                writer.writeText("");
 	
@@ -514,7 +514,7 @@ public class BranchRatesModelGenerator extends Generator {
                 	writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
 
-                    writer.writeIDref(SumStatistic.SUM_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "rateChanges");                        
+                    writer.writeIDref(SumStatisticParser.SUM_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "rateChanges");                        
                 }
                 break;
                 

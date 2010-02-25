@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +34,6 @@ import java.util.List;
  * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class SumStatistic extends Statistic.Abstract {
-
-    public static String SUM_STATISTIC = "sumStatistic";
 
     private int dimension = 0;
     private final boolean elementwise;
@@ -87,62 +83,6 @@ public class SumStatistic extends Statistic.Abstract {
 
         return sum;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "sum"};
-        }
-
-        public String getParserName() {
-            return SUM_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            boolean elementwise = xo.getAttribute("elementwise", false);
-
-            String name = SUM_STATISTIC;
-            if (xo.hasAttribute(NAME) || xo.hasAttribute(dr.xml.XMLParser.ID)) {
-                name = xo.getAttribute(NAME, xo.getId());
-            }
-
-            final SumStatistic sumStatistic = new SumStatistic(name, elementwise);
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                final Statistic statistic = (Statistic) xo.getChild(i);
-
-                try {
-                    sumStatistic.addStatistic(statistic);
-                } catch (IllegalArgumentException iae) {
-                    throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
-                }
-            }
-
-            return sumStatistic;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a statistic that is the element-wise sum of the child statistics.";
-        }
-
-        public Class getReturnType() {
-            return SumStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("elementwise", true),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
-        };
-    };
 
     // ****************************************************************
     // Private and protected stuff

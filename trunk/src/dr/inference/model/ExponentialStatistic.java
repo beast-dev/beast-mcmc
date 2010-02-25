@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  *
@@ -34,9 +32,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 public class ExponentialStatistic extends Statistic.Abstract {
-	
-	public static String EXPONENTIAL_STATISTIC = "exponentialStatistic";
-    
+
     private Statistic statistic = null;
 
 	public ExponentialStatistic(String name, Statistic statistic) {
@@ -53,40 +49,4 @@ public class ExponentialStatistic extends Statistic.Abstract {
         
         return Math.exp(statistic.getStatisticValue(dim));
 	}
-		
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-		
-        public String[] getParserNames() { return new String[] { getParserName(), "exp" }; }
-		public String getParserName() { return EXPONENTIAL_STATISTIC; }
-		
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			ExponentialStatistic expStatistic = null;
-			
-            Object child = xo.getChild(0);
-            if (child instanceof Statistic) {
-                expStatistic = new ExponentialStatistic(EXPONENTIAL_STATISTIC, (Statistic)child);
-            } else {
-                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-            }
-				
-			return expStatistic;
-		}
-		
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-		
-		public String getParserDescription() {
-			return "This element returns a statistic that is the element-wise exponentiation of the child statistic.";
-		}
-		
-		public Class getReturnType() { return ExponentialStatistic.class; }
-		
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-		
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-			new ElementRule(Statistic.class, 1, 1 )
-		};		
-	};
 }

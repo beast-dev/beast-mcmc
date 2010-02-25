@@ -68,15 +68,10 @@ import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
-import dr.inference.model.TestStatistic;
 import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
 import dr.inferencexml.distribution.*;
-import dr.inferencexml.model.BooleanLikelihoodParser;
-import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.CompoundParameterParser;
-import dr.inferencexml.model.OneOnXPriorParser;
+import dr.inferencexml.model.*;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -1260,7 +1255,7 @@ public class BeastGenerator extends BeautiOptions {
 
             writer.writeText("");
             writer.writeOpenTag(
-                    SumStatistic.SUM_STATISTIC,
+                    SumStatisticParser.SUM_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, "rateChanges"),
                             new Attribute.Default<String>("name", "rateChangeCount"),
@@ -1268,7 +1263,7 @@ public class BeastGenerator extends BeautiOptions {
                     }
             );
             writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, ClockType.LOCAL_CLOCK + "." + "changes"), true);
-            writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
+            writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
             writer.writeText("");
 
@@ -1494,14 +1489,14 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeComment("Take population Tree from demographic");
             writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
-            writer.writeOpenTag(SumStatistic.SUM_STATISTIC,
+            writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName + ".populationSizeChanges"),
                             new Attribute.Default<String>("elementwise", "true")
                     });
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute.Default<String>(XMLParser.IDREF, VariableDemographicModelParser.demoElementName + ".indicators"), true);
-            writer.writeCloseTag(SumStatistic.SUM_STATISTIC);
+            writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
             writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, VariableDemographicModelParser.demoElementName + ".populationMeanDist")
@@ -1543,7 +1538,7 @@ public class BeastGenerator extends BeautiOptions {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "booleanLikelihood1")}
         );
         writer.writeOpenTag(
-                TestStatistic.TEST_STATISTIC,
+                TestStatisticParser.TEST_STATISTIC,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, "test1"),
                         new Attribute.Default<String>("name", "test1")
@@ -1553,7 +1548,7 @@ public class BeastGenerator extends BeautiOptions {
         writer.writeOpenTag("lessThan");
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
         writer.writeCloseTag("lessThan");
-        writer.writeCloseTag(TestStatistic.TEST_STATISTIC);
+        writer.writeCloseTag(TestStatisticParser.TEST_STATISTIC);
         writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
     }
 
@@ -2403,7 +2398,7 @@ public class BeastGenerator extends BeautiOptions {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeTag(SumStatistic.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, name), true);
+        writer.writeTag(SumStatisticParser.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, name), true);
         writer.writeCloseTag(Columns.COLUMN);
     }
 
@@ -2715,7 +2710,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "covariance"), true);
 
             if (clockModel == RANDOM_LOCAL_CLOCK) {
-                writer.writeTag(SumStatistic.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);
+                writer.writeTag(SumStatisticParser.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "rateChanges"), true);
             }
         }
 

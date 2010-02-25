@@ -25,17 +25,12 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class DifferenceStatistic extends Statistic.Abstract {
-
-    public static String DIFFERENCE_STATISTIC = "differenceStatistic";
-    public static String ABSOLUTE = "absolute";
 
     private final boolean absolute;
 
@@ -82,55 +77,6 @@ public class DifferenceStatistic extends Statistic.Abstract {
 
         return statistic;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "difference"};
-        }
-
-        public String getParserName() {
-            return DIFFERENCE_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            boolean absolute = xo.getAttribute(ABSOLUTE, false);
-
-            Statistic term1 = (Statistic) xo.getChild(0);
-            Statistic term2 = (Statistic) xo.getChild(1);
-
-            DifferenceStatistic differenceStatistic;
-            try {
-                differenceStatistic = new DifferenceStatistic(DIFFERENCE_STATISTIC, term1, term2, absolute);
-            } catch (IllegalArgumentException iae) {
-                throw new XMLParseException("Error parsing " + getParserName() + " the left and right statistics " +
-                        "should be of the same dimension or of dimension 1");
-            }
-            return differenceStatistic;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a statistic that is the difference of the 2 child statistics.";
-        }
-
-        public Class getReturnType() {
-            return ProductStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(ABSOLUTE, true),
-                new ElementRule(Statistic.class, "The two operand statistics", 2, 2)
-        };
-    };
 
     // ****************************************************************
     // Private and protected stuff

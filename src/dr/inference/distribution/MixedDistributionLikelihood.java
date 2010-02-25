@@ -4,7 +4,6 @@ import dr.inference.model.CompoundModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Statistic;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -19,13 +18,6 @@ import org.w3c.dom.Element;
  */
 
 public class MixedDistributionLikelihood extends Likelihood.Abstract {
-
-    public static final String DISTRIBUTION_LIKELIHOOD = "mixedDistributionLikelihood";
-
-    public static final String DISTRIBUTION0 = "distribution0";
-    public static final String DISTRIBUTION1 = "distribution1";
-    public static final String DATA = "data";
-    public static final String INDICATORS = "indicators";
 
     public MixedDistributionLikelihood(ParametricDistributionModel[] distributions, Statistic data, Statistic indicators) {
         // Mixed Distribution Likelihood contains two distribution models, not necessarily constant.
@@ -96,58 +88,6 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
     public Element createElement(Document d) {
         throw new RuntimeException("Not implemented yet!");
     }
-
-
-    /**
-     * Reads a distribution likelihood from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) {
-
-            XMLObject cxo0 = xo.getChild(DISTRIBUTION0);
-            ParametricDistributionModel model0 = (ParametricDistributionModel) cxo0.getChild(ParametricDistributionModel.class);
-
-            XMLObject cxo1 = xo.getChild(DISTRIBUTION1);
-            ParametricDistributionModel model1 = (ParametricDistributionModel) cxo1.getChild(ParametricDistributionModel.class);
-
-            Statistic data = (Statistic) ((XMLObject) xo.getChild(DATA)).getChild(Statistic.class);
-            Statistic indicators = (Statistic) ((XMLObject) xo.getChild(INDICATORS)).getChild(Statistic.class);
-
-            ParametricDistributionModel[] models = {model0, model1};
-
-            return new MixedDistributionLikelihood(models, data, indicators);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(DISTRIBUTION0,
-                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
-                new ElementRule(DISTRIBUTION1,
-                        new XMLSyntaxRule[]{new ElementRule(ParametricDistributionModel.class)}),
-                new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
-                new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
-        };
-
-        public String getParserDescription() {
-            return "Calculates the likelihood of some data given some mix of parametric distributions.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-    };
 
     private final ParametricDistributionModel[] distributions;
     private final Statistic data;

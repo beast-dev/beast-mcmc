@@ -29,9 +29,9 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NormalDistribution;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -43,19 +43,12 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
-
-
-    public static final String NORMAL_DISTRIBUTION_MODEL = "normalDistributionModel";
-    public static final String MEAN = "mean";
-    public static final String STDEV = "stdev";
-    public static final String PREC = "precision";
-
     /**
      * Constructor.
      */
     public NormalDistributionModel(Variable<Double> mean, Variable<Double> stdev) {
 
-        super(NORMAL_DISTRIBUTION_MODEL);
+        super(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
 
         this.mean = mean;
         this.stdev = stdev;
@@ -66,7 +59,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     public NormalDistributionModel(Parameter meanParameter, Parameter scale, boolean isPrecision) {
-        super(NORMAL_DISTRIBUTION_MODEL);
+        super(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.hasPrecision = isPrecision;
         this.mean = meanParameter;
         addVariable(meanParameter);
@@ -170,93 +163,6 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
-
-    /**
-     * Reads a normal distribution model from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return NORMAL_DISTRIBUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter meanParam;
-            Parameter stdevParam;
-            Parameter precParam;
-
-            XMLObject cxo = xo.getChild(MEAN);
-            if (cxo.getChild(0) instanceof Parameter) {
-                meanParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                meanParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-
-            if (xo.getChild(STDEV) != null) {
-
-                cxo = xo.getChild(STDEV);
-                if (cxo.getChild(0) instanceof Parameter) {
-                    stdevParam = (Parameter) cxo.getChild(Parameter.class);
-                } else {
-                    stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
-                }
-
-                return new NormalDistributionModel(meanParam, stdevParam);
-            }
-
-            cxo = xo.getChild(PREC);
-            if (cxo.getChild(0) instanceof Parameter) {
-                precParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                precParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-            return new NormalDistributionModel(meanParam, precParam, true);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MEAN,
-                        new XMLSyntaxRule[]{
-                                new XORRule(
-                                        new ElementRule(Parameter.class),
-                                        new ElementRule(Double.class)
-                                )}
-                ),
-                new XORRule(
-                        new ElementRule(STDEV,
-                                new XMLSyntaxRule[]{
-                                        new XORRule(
-                                                new ElementRule(Parameter.class),
-                                                new ElementRule(Double.class)
-                                        )}
-                        ),
-                        new ElementRule(PREC,
-                                new XMLSyntaxRule[]{
-                                        new XORRule(
-                                                new ElementRule(Parameter.class),
-                                                new ElementRule(Double.class)
-                                        )}
-                        )
-                )
-        };
-
-        public String getParserDescription() {
-            return "Describes a normal distribution with a given mean and standard deviation " +
-                    "that can be used in a distributionLikelihood element";
-        }
-
-        public Class getReturnType() {
-            return NormalDistributionModel.class;
-        }
-    };
 
     // **************************************************************
     // Private instance variables

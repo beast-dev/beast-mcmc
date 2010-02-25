@@ -16,7 +16,7 @@ import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evoxml.*;
-import dr.inference.distribution.UniformDistributionModel;
+import dr.inferencexml.distribution.UniformDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -158,10 +158,10 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 if (statistic.isNodeHeight) {
                     if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                        writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-                        writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.lower, true);
-                        writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.upper, true);
-                        writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                        writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                        writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.lower, true);
+                        writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.upper, true);
+                        writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                     }
                 }
 

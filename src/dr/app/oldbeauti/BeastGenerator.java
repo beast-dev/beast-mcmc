@@ -64,7 +64,8 @@ import dr.evomodelxml.substmodel.*;
 import dr.evomodelxml.tree.*;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.*;
-import dr.inference.distribution.*;
+import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
@@ -72,8 +73,7 @@ import dr.inference.model.TestStatistic;
 import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
 import dr.inferencexml.PriorParsers;
-import dr.inferencexml.distribution.DistributionModelParser;
-import dr.inferencexml.distribution.ExponentialMarkovModelParser;
+import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -1338,15 +1338,15 @@ public class BeastGenerator extends BeautiOptions {
                     fixParameter(ClockType.UCLD_MEAN, meanSubstitutionRate);
                 }
 
-                writer.writeOpenTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL,
-                        new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
+                writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                        new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
                 writer.writeOpenTag("mean");
                 writeParameter(ClockType.UCLD_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeOpenTag("stdev");
                 writeParameter(ClockType.UCLD_STDEV, writer);
                 writer.writeCloseTag("stdev");
-                writer.writeCloseTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL);
+                writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
             } else {
                 throw new RuntimeException("Unrecognised relaxed clock model");
             }
@@ -2121,29 +2121,29 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "eml1"), true);
         }
         if (nodeHeightPrior == EXTENDED_SKYLINE) {
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
             writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
                     new Attribute.Default<String>(XMLParser.IDREF, "demographic.populationMeanDist"), true);
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
             writer.writeTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
                     new Attribute.Default<String>(XMLParser.IDREF, "demographic.populationMeanDist"), true);
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DATA);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DATA);
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute.Default<String>(XMLParser.IDREF, "demographic.popSize"), true);
-            writer.writeCloseTag(MixedDistributionLikelihood.DATA);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DATA);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.INDICATORS);
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute.Default<String>(XMLParser.IDREF, "demographic.indicators"), true);
-            writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.INDICATORS);
 
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
         }
         writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
 
@@ -2918,10 +2918,10 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
                     if (statistic.isNodeHeight) {
                         if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                            writer.writeOpenTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
-                            writer.writeTag(UniformDistributionModel.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
-                            writer.writeTag(UniformDistributionModel.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
-                            writer.writeCloseTag(UniformDistributionModel.UNIFORM_DISTRIBUTION_MODEL);
+                            writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
+                            writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                         }
                     }
 

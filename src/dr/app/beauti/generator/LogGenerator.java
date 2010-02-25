@@ -42,10 +42,10 @@ import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
 import dr.inference.xml.LoggerParser;
+import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
@@ -212,7 +212,7 @@ public class LogGenerator extends Generator {
             writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-            writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
+            writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
 //            } else {
 //                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
 //            }

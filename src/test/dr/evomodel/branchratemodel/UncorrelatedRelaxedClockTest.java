@@ -35,7 +35,7 @@ import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
-import dr.inferencexml.DistributionModelParser;
+import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import junit.framework.Test;

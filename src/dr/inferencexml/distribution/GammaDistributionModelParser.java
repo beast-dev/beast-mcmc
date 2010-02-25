@@ -1,4 +1,4 @@
-package dr.inferencexml;
+package dr.inferencexml.distribution;
 
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;

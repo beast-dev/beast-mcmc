@@ -62,8 +62,10 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         tmpM = new double[dimTrait][dimTrait];
         tmp2 = new double[dimTrait];
 
+        zeroDimVector = new double[dim];
+
         setRootPrior(rootPrior);
-        setTipDataValuesForAllNodes();
+        setTipDataValuesForAllNodes(missingIndices);
 
         StringBuffer sb = new StringBuffer();
         sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
@@ -71,19 +73,22 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
-    private void setTipDataValuesForAllNodes() {
+    private void setTipDataValuesForAllNodes(List<Integer> missingIndices) {
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             setTipDataValuesForNode(node);
+        }
+        for (Integer i : missingIndices) {
+            int whichTip = i / dim;
+            Logger.getLogger("dr.evomodel").info(
+                    "\tMarking taxon " + treeModel.getTaxonId(whichTip) + " as completely missing");
+            missing[whichTip] = true;
         }
     }
 
     private void setTipDataValuesForNode(NodeRef node) {
         // Set tip data values
         int index = node.getNumber();
-
-        // Check if missing
-        
         double[] traitValue = treeModel.getMultivariateNodeTrait(node, traitName);
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
         missing[index] = false;
@@ -178,8 +183,10 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             // y'Ay
             double yAy = determineSumOfSquares(rootMean, Ay, traitPrecision, rootPrecision); // Fills in Ay
 
-            thisLogLikelihood += -LOG_SQRT_2_PI * dimTrait
-                    + 0.5 * (logDetTraitPrecision + dimTrait * Math.log(rootPrecision) - yAy);
+            if (rootPrecision != 0) {
+                thisLogLikelihood += -LOG_SQRT_2_PI * dimTrait
+                        + 0.5 * (logDetTraitPrecision + dimTrait * Math.log(rootPrecision) - yAy);
+            }
 
             if (DEBUG) {
                 double[][] T = new double[dimTrait][dimTrait];
@@ -219,7 +226,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == traitParameter) { // A tip value got updated           
+        if (variable == traitParameter) { // A tip value got updated
             if (index > dimTrait * treeModel.getExternalNodeCount()) {
                 throw new RuntimeException("Attempting to update an invalid index");
             }
@@ -287,11 +294,14 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             square = Ay[0] * Ay[0] / detAplusB;
         }
 
+        double retValue = 0.5 * (logRootPriorPrecisionDeterminant - Math.log(detAplusB) - zBz + square);
+
         if (DEBUG) {
             System.err.println("(Ay+Bz)(A+B)^{-1}(Ay+Bz) = " + square);
+            System.err.println("density = " + retValue);
         }
 
-        return 0.5 * (logRootPriorPrecisionDeterminant - Math.log(detAplusB) - zBz + square);
+        return retValue;
     }
 
     private void checkViaLargeMatrixInversion() {
@@ -300,7 +310,15 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         // And then integrating out the root trait value
 
         // Form \Sigma (variance) and \Sigma^{-1} (precision)
-        double[][] treeTraitVarianceMatrix = computeTreeMVNormalVariance();
+        double[][] treeTraitVarianceMatrix = makeMissingInTreeMVNormalVariance(
+                computeTreeMVNormalVariance());
+//        double[][] vm2 = makeMissingInTreeMVNormalVariance(treeTraitVarianceMatrix);
+//
+//        System.err.println("Original:\n" + new Matrix(treeTraitVarianceMatrix));
+//        System.err.println("New:\n" + new Matrix(vm2));
+//        System.exit(-1);
+
+
         double[][] treeTraitPrecisionMatrix = new SymmetricMatrix(treeTraitVarianceMatrix).inverse().toComponents();
         double totalLogDensity = 0;
 
@@ -315,7 +333,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             double checkLogLikelihood = MultivariateNormalDistribution.logPdf(tipTraits, new double[tipTraits.length], treeTraitPrecisionMatrix,
                     Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(treeTraitPrecisionMatrix)), 1.0);
 
-            System.err.println("tipDensity = " + checkLogLikelihood + " (should match final likelihood when root not integrated out)");
+            System.err.println("tipDensity = " + checkLogLikelihood + " (should match final likelihood when root not integrated out and no missing data)");
 
             // Convolve root prior
             if (integrateRoot) {
@@ -329,7 +347,8 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix, double[] tipTraits) {
 
         double logLikelihood = 0;
-        final int tipCount = treeModel.getExternalNodeCount();
+        //final int tipCount = treeModel.getExternalNodeCount();
+        final int tipCount = countNonMissingTips();
 
         // 1^t\Sigma^{-1} y + Pz
         double[] mean = Ay;
@@ -401,7 +420,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         if (treeModel.isExternal(node)) {
 
             // Fill in precision scalar, traitValues already filled in
-                        
+
             if (missing[thisNumber]) {
                 upperPrecisionCache[thisNumber] = 0; // This is a guess, needs testing
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
@@ -431,23 +450,32 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // Multiple child0 and child1 densities
-        for (int i = 0; i < dim; i++)
-            meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
-                    meanCache[meanOffset1 + i] * precision1)
-                    / totalPrecision;  // TODO This will cause troubles if *both* children are missing
+//        if (missing[childNumber0] && missing[childNumber1]) {
+        if (totalPrecision == 0) {
+            System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
+        } else {
+            for (int i = 0; i < dim; i++) {
+                meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
+                        meanCache[meanOffset1 + i] * precision1)
+                        / totalPrecision;
+            }
+        }
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
             double thisPrecision = 1.0 / getRescaledBranchLength(node);
             upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
-            // TODO This may cause trouble if *both* children are missing; should = 0 in that case
         }
 
         // Compute logRemainderDensity
 
         logRemainderDensityCache[thisNumber] = 0;
+
+        if (precision0 != 0 && precision1 != 0) {
+
         final double remainderPrecision = precision0 * precision1 / (precision0 + precision1); // TODO This will cause trouble if *both* children are missing
 
+//        if (!missing[childNumber0] && !missing[childNumber1]) {
         for (int k = 0; k < dimData; k++) {
 
             double childSS0 = 0;
@@ -476,6 +504,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                             + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
                             - 0.5 * (childSS0 + childSS1 - crossSS);
         }
+        }
     }
 
     protected double[] getRootNodeTrait() {
@@ -499,6 +528,37 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         System.arraycopy(drawnStates, index * dim, trait, 0, dim);
         return trait;
     }
+
+    protected double[][] makeMissingInTreeMVNormalVariance(double[][] variance) {
+
+        final int tipCount = treeModel.getExternalNodeCount();
+        int nonMissing = countNonMissingTips();
+
+        double[][] outVariance = new double[nonMissing * dimTrait][nonMissing * dimTrait];
+
+        int iReal = 0;
+        for (int i = 0; i < tipCount; i++) {
+            if (!missing[i]) {
+
+                int jReal = 0;
+                for (int j = 0; j < tipCount; j++) {
+                    if (!missing[j]) {
+
+                        for (int k = 0; k < dimTrait; k++) {
+                            for (int l = 0; l < dimTrait; l++) {
+                                outVariance[iReal * dimTrait + k][jReal * dimTrait + l] =
+                                        variance[i * dimTrait + k][j * dimTrait + l];
+                            }
+                        }
+                        jReal++;
+                    }
+                }
+                iReal++;
+            }
+        }
+        return outVariance;
+    }
+
 
     // This function is used for debugging; return the multivariate normal variance of
     // all tree tips and internal nodes *conditional* on the root
@@ -552,14 +612,30 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     }
 
 
+    private int countNonMissingTips() {
+        int tipCount = treeModel.getExternalNodeCount();
+        for (int i = 0; i < tipCount; i++) {
+            if (missing[i]) {
+                tipCount--;
+            }
+        }
+        return tipCount;
+    }
+
     protected double[] fillLeafTraits(int datum) {
 
         final int tipCount = treeModel.getExternalNodeCount();
-        double[] traits = new double[dimTrait * tipCount];
+
+        final int nonMissingTipCount = countNonMissingTips();
+
+        double[] traits = new double[dimTrait * nonMissingTipCount];
         int index = 0;
         for (int i = 0; i < tipCount; i++) {
-            for (int k = 0; k < dimTrait; k++) {
-                traits[index++] = meanCache[dim * i + datum * dimTrait + k];
+
+            if (!missing[i]) {
+                for (int k = 0; k < dimTrait; k++) {
+                    traits[index++] = meanCache[dim * i + datum * dimTrait + k];
+                }
             }
         }
         return traits;
@@ -604,7 +680,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
     public void restoreState() {
         super.restoreState();
-        
+
         if (cacheBranches) {
             double[] tmp;
 
@@ -756,10 +832,12 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double logRootPriorPrecisionDeterminant;
 
     private final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static boolean DEBUG_PREORDER = false;
 
     private double zBz; // Prior sum-of-squares contribution
+
+    private double[] zeroDimVector;
 
     // Reusable temporary storage
     private double[] Bz;

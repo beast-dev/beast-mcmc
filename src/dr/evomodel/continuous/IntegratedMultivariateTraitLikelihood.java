@@ -53,6 +53,9 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         lowerPrecisionCache = new double[treeModel.getNodeCount()];
         logRemainderDensityCache = new double[treeModel.getNodeCount()];
 
+        missing = new boolean[treeModel.getNodeCount()]; // A placeholder for Andrew to work with
+        Arrays.fill(missing, true); // All internal and root nodes are missing
+
         // Set up reusable temporary storage
         Bz = new double[dimTrait];
         Ay = new double[dimTrait];
@@ -78,8 +81,12 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private void setTipDataValuesForNode(NodeRef node) {
         // Set tip data values
         int index = node.getNumber();
+
+        // Check if missing
+        
         double[] traitValue = treeModel.getMultivariateNodeTrait(node, traitName);
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+        missing[index] = false;
     }
 
     private void setRootPriorSumOfSquares() {
@@ -389,10 +396,19 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
     void postOrderTraverse(TreeModel treeModel, NodeRef node, double[][] precisionMatrix, double logDetPrecisionMatrix) {
 
+        final int thisNumber = node.getNumber();
+
         if (treeModel.isExternal(node)) {
+
             // Fill in precision scalar, traitValues already filled in
-            upperPrecisionCache[node.getNumber()] = 1.0 / getRescaledBranchLength(node);
-            lowerPrecisionCache[node.getNumber()] = Double.POSITIVE_INFINITY;
+                        
+            if (missing[thisNumber]) {
+                upperPrecisionCache[thisNumber] = 0; // This is a guess, needs testing
+                lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
+            } else { // not missing tip trait
+                upperPrecisionCache[thisNumber] = 1.0 / getRescaledBranchLength(node);
+                lowerPrecisionCache[thisNumber] = Double.POSITIVE_INFINITY;
+            }
             return;
         }
 
@@ -404,7 +420,6 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
         final int childNumber0 = childNode0.getNumber();
         final int childNumber1 = childNode1.getNumber();
-        final int thisNumber = node.getNumber();
         final int meanOffset0 = dim * childNumber0;
         final int meanOffset1 = dim * childNumber1;
         final int meanThisOffset = dim * thisNumber;
@@ -419,18 +434,19 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         for (int i = 0; i < dim; i++)
             meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
                     meanCache[meanOffset1 + i] * precision1)
-                    / totalPrecision;
+                    / totalPrecision;  // TODO This will cause troubles if *both* children are missing
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
             double thisPrecision = 1.0 / getRescaledBranchLength(node);
             upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
+            // TODO This may cause trouble if *both* children are missing; should = 0 in that case
         }
 
         // Compute logRemainderDensity
 
         logRemainderDensityCache[thisNumber] = 0;
-        final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
+        final double remainderPrecision = precision0 * precision1 / (precision0 + precision1); // TODO This will cause trouble if *both* children are missing
 
         for (int k = 0; k < dimData; k++) {
 
@@ -659,11 +675,15 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             }
         } else { // draw conditional on parentState
 
-            if (Double.isInfinite(lowerPrecisionCache[thisIndex])) {
+//            if (Double.isInfinite(lowerPrecisionCache[thisIndex])) {
+            if (!missing[thisIndex]) {
 
                 System.arraycopy(meanCache, thisIndex * dim, drawnStates, thisIndex * dim, dim);
 
             } else {
+
+                // This code should work for sampling a missing tip trait as well, but needs testing
+
                 // parent trait at drawnStates[parentOffset]
                 double precisionToParent = 1.0 / getRescaledBranchLength(node);
                 double precisionOfNode = lowerPrecisionCache[thisIndex];
@@ -717,6 +737,8 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double[] upperPrecisionCache;
     private double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
+
+    private boolean[] missing;
 
     private double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;

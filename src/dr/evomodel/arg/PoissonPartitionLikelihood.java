@@ -29,7 +29,7 @@ package dr.evomodel.arg;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
-import dr.inferencexml.PriorParsers;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.math.MathUtils;
 import dr.math.Poisson;
 import dr.math.distributions.PoissonDistribution;

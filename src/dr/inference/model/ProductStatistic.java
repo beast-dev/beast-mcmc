@@ -25,8 +25,6 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +34,6 @@ import java.util.List;
  * @version $Id: ProductStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ProductStatistic extends Statistic.Abstract {
-
-    public static String PRODUCT_STATISTIC = "productStatistic";
 
     private int dimension = 0;
     private final boolean elementwise;
@@ -83,61 +79,6 @@ public class ProductStatistic extends Statistic.Abstract {
 
         return product;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "product"};
-        }
-
-        public String getParserName() {
-            return PRODUCT_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-
-            boolean elementwise = xo.getAttribute("elementwise", false);
-
-            ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC, elementwise);
-
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
-                if (child instanceof Statistic) {
-                    try {
-                        productStatistic.addStatistic((Statistic) child);
-                    } catch (IllegalArgumentException iae) {
-                        throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
-                    }
-                } else {
-                    throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-                }
-            }
-
-            return productStatistic;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a statistic that is the product of the child statistics.";
-        }
-
-        public Class getReturnType() {
-            return ProductStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("elementwise", true),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
-        };
-    };
 
     // ****************************************************************
     // Private and protected stuff

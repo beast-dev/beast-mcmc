@@ -1,19 +1,12 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.options.*;
+import dr.app.beauti.util.XMLWriter;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
+import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -250,7 +243,7 @@ public abstract class Generator {
                         new Attribute.Default<String>(Columns.WIDTH, "12")
                 }
         );
-        writer.writeIDref(SumStatistic.SUM_STATISTIC, name);
+        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, name);
         writer.writeCloseTag(Columns.COLUMN);
     }
 

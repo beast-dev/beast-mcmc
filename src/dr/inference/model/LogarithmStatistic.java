@@ -25,17 +25,12 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: ExponentialStatistic.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public class LogarithmStatistic extends Statistic.Abstract {
-
-    public static String LOGARITHM_STATISTIC = "logarithmStatistic";
-    public static String BASE = "base";
 
     private final Statistic statistic;
     private final double base;
@@ -61,56 +56,4 @@ public class LogarithmStatistic extends Statistic.Abstract {
         }
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "logarithm"};
-        }
-
-        public String getParserName() {
-            return LOGARITHM_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            LogarithmStatistic logStatistic;
-
-            // base 0.0 means natural logarithm, the default base
-            double base = xo.getAttribute(BASE, 0.0);
-
-            if (base <= 1.0 && base != 0.0) {
-                throw new XMLParseException("Error parsing " + getParserName() + " element: base attribute should be > 1");
-            }
-
-            Object child = xo.getChild(0);
-            if (child instanceof Statistic) {
-                logStatistic = new LogarithmStatistic(LOGARITHM_STATISTIC, (Statistic) child, base);
-            } else {
-                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
-            }
-
-            return logStatistic;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a statistic that is the element-wise natural logarithm of the child statistic.";
-        }
-
-        public Class getReturnType() {
-            return ExponentialStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(BASE, true, "An optional base for the logarithm (default is the natural logarithm, base e)"),
-                new ElementRule(Statistic.class, 1, 1)
-        };
-    };
 }

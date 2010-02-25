@@ -26,7 +26,6 @@
 package dr.inference.model;
 
 import dr.util.Attribute;
-import dr.xml.*;
 
 /**
  * @author Alexei Drummond
@@ -35,25 +34,16 @@ import dr.xml.*;
  */
 public class TestStatistic extends BooleanStatistic {
 
-    public static String TEST_STATISTIC = "test";
-    public static String NAME = "name";
-
     private Attribute attribute = null;
     private Attribute attribute2 = null;
     private double testValue1, testValue2;
     private final int mode;
 
-    private static final int EQUALS = 0;
-    private static final int GREATER_THAN = 1;
-    private static final int LESS_THAN = 2;
-    private static final int INSIDE = 3;
-    private static final int OUTSIDE = 4;
-
-    private static final String SEQUALS = "equals";
-    private static final String SGREATER_THAN = "greaterThan";
-    private static final String SLESS_THAN = "lessThan";
-    private static final String SINSIDE = "inside";
-    private static final String SOUTSIDE = "outside";
+    public static final int EQUALS = 0;
+    public static final int GREATER_THAN = 1;
+    public static final int LESS_THAN = 2;
+    public static final int INSIDE = 3;
+    public static final int OUTSIDE = 4;
 
     public TestStatistic(String name, Attribute attr, double value, int mode) {
         super(name);
@@ -130,87 +120,4 @@ public class TestStatistic extends BooleanStatistic {
         return false;
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return TEST_STATISTIC;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            String name = xo.getAttribute(NAME, xo.hasId() ? xo.getId() : "");
-            Attribute attr = (Attribute) xo.getChild(Attribute.class);
-            double testValue1;
-
-            TestStatistic statistic;
-
-            if (xo.hasChildNamed(SEQUALS)) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild(SEQUALS);
-                statistic = new TestStatistic(name, attr, attr2, EQUALS);
-            } else if (xo.hasChildNamed(SGREATER_THAN)) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild(SGREATER_THAN);
-                statistic = new TestStatistic(name, attr, attr2, GREATER_THAN);
-            } else if (xo.hasChildNamed(SLESS_THAN)) {
-                Attribute attr2 = (Attribute) xo.getElementFirstChild(SLESS_THAN);
-                statistic = new TestStatistic(name, attr, attr2, LESS_THAN);
-            } else if (xo.hasAttribute(SEQUALS)) {
-                testValue1 = xo.getDoubleAttribute(SEQUALS);
-                statistic = new TestStatistic(name, attr, testValue1, EQUALS);
-            } else if (xo.hasAttribute(SGREATER_THAN)) {
-                testValue1 = xo.getDoubleAttribute(SGREATER_THAN);
-                statistic = new TestStatistic(name, attr, testValue1, GREATER_THAN);
-            } else if (xo.hasAttribute(SLESS_THAN)) {
-                testValue1 = xo.getDoubleAttribute(SLESS_THAN);
-                statistic = new TestStatistic(name, attr, testValue1, LESS_THAN);
-            } else if (xo.hasAttribute(SINSIDE)) {
-                double[] values = xo.getDoubleArrayAttribute(SINSIDE);
-                if (values.length != 2)
-                    throw new XMLParseException("inside attribute of test element requires two values");
-                statistic = new TestStatistic(name, attr, values[0], values[1], INSIDE);
-            } else if (xo.hasAttribute(SOUTSIDE)) {
-                double[] values = xo.getDoubleArrayAttribute(SOUTSIDE);
-                if (values.length != 2)
-                    throw new XMLParseException("outside attribute of test element requires two values");
-                statistic = new TestStatistic(name, attr, values[0], values[1], OUTSIDE);
-            } else throw new XMLParseException();
-
-            return statistic;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                    "This element represents a boolean statistic that returns 1 " +
-                            "if the conditions are met and 0 otherwise.";
-        }
-
-        public Class getReturnType() {
-            return BooleanStatistic.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule("name", "A name for this statistic, for logging purposes", true),
-                new ElementRule(Attribute.class),
-                new XORRule(
-                        new XMLSyntaxRule[]{
-                                new ElementRule(SEQUALS, Attribute.class),
-                                new ElementRule(SGREATER_THAN, Attribute.class),
-                                new ElementRule(SLESS_THAN, Attribute.class),
-                                AttributeRule.newDoubleRule(SEQUALS),
-                                AttributeRule.newDoubleRule(SGREATER_THAN),
-                                AttributeRule.newDoubleRule(SLESS_THAN),
-                                AttributeRule.newDoubleArrayRule(SINSIDE),
-                                AttributeRule.newDoubleArrayRule(SOUTSIDE)
-                        }
-                )
-		};
-	
-	};
 }

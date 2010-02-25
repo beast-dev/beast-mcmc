@@ -832,7 +832,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double logRootPriorPrecisionDeterminant;
 
     private final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private static boolean DEBUG_PREORDER = false;
 
     private double zBz; // Prior sum-of-squares contribution

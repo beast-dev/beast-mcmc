@@ -44,9 +44,9 @@ import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
+import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -327,12 +327,12 @@ public class STARBEASTGenerator extends Generator {
 //        if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
         
         writer.writeComment("Species tree prior: gama2 + gamma4");
-        writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
+        writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SPOPS)});
         
         // change exponential + gamma2 into gama2 + gamma4
         // <distribution0>
-        writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
+        writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
 //        writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST); 
         writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
         writer.writeOpenTag(DistributionModelParser.SHAPE);
@@ -349,10 +349,10 @@ public class STARBEASTGenerator extends Generator {
         writer.writeCloseTag(DistributionModelParser.SCALE);
 
         writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);   
-        writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
+        writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
 
         // <distribution1>
-        writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
+        writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
         writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
 
         writer.writeOpenTag(DistributionModelParser.SHAPE);
@@ -364,24 +364,24 @@ public class STARBEASTGenerator extends Generator {
         writer.writeCloseTag(DistributionModelParser.SCALE);
 
         writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-        writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
+        writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
 
         // <data>
-        writer.writeOpenTag(MixedDistributionLikelihood.DATA);
+        writer.writeOpenTag(MixedDistributionLikelihoodParser.DATA);
 
         writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
 
-        writer.writeCloseTag(MixedDistributionLikelihood.DATA);
+        writer.writeCloseTag(MixedDistributionLikelihoodParser.DATA);
 
         // <indicators>
-        writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
+        writer.writeOpenTag(MixedDistributionLikelihoodParser.INDICATORS);
         // Needs special treatment - you have to generate "NS" ones and 2(N-1) zeros, where N is the number of species.
         // N "1", 2(N-1) "0"
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{new Attribute.Default<String>(ParameterParser.VALUE, getIndicatorsParaValue())}, true);
 
-        writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
+        writer.writeCloseTag(MixedDistributionLikelihoodParser.INDICATORS);
 
-        writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+        writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
 
 //        } else {
 //            // STPopulationPrior id="stp" log_root="true"

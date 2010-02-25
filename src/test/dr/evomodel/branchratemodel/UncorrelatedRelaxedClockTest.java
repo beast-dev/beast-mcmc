@@ -36,6 +36,7 @@ import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inferencexml.distribution.DistributionModelParser;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.math.MathUtils;
 import junit.framework.Test;
@@ -67,8 +68,8 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
     }
 
     public void testLogNormal() throws Exception {
-        meanParam = new Parameter.Default(LogNormalDistributionModel.MEAN, 2.3E-5, 0, 100.0);
-        stdevParam = new Parameter.Default(LogNormalDistributionModel.STDEV, 0.1, 0, 10.0);
+        meanParam = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 2.3E-5, 0, 100.0);
+        stdevParam = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 0.1, 0, 10.0);
         ParametricDistributionModel distributionModel = new LogNormalDistributionModel(meanParam, stdevParam, 0.0, true); // meanInRealSpace="true"
 
         ArrayTraceList traceList = UncorrelatedRelaxedClock(distributionModel);
@@ -97,11 +98,11 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
         assertExpectation(HKYParser.KAPPA, kappaStats, 18.3053);
 
-        TraceCorrelation ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModel.MEAN));
-        assertExpectation(LogNormalDistributionModel.MEAN, ucldStats, 8.28472E-4);
+        TraceCorrelation ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.MEAN));
+        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.28472E-4);
 
-        ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModel.STDEV));
-        assertExpectation(LogNormalDistributionModel.STDEV, ucldStats, 0.18861552057676576);
+        ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.STDEV));
+        assertExpectation(LogNormalDistributionModelParser.STDEV, ucldStats, 0.18861552057676576);
 
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("meanRate"));
         assertExpectation("meanRate", rateStats, 8.010906E-4);

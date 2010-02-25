@@ -29,9 +29,9 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inferencexml.distribution.UniformDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.UniformDistribution;
-import dr.xml.*;
 
 /**
  * A class that acts as a model for uniformly distributed data.
@@ -41,18 +41,12 @@ import dr.xml.*;
  */
 
 public class UniformDistributionModel extends AbstractModel implements ParametricDistributionModel {
-
-
-    public static final String UNIFORM_DISTRIBUTION_MODEL = "uniformDistributionModel";
-    public static final String LOWER = "lower";
-    public static final String UPPER = "upper";
-
     /*
       * Constructor.
       */
     public UniformDistributionModel(Parameter lowerParameter, Parameter upperParameter) {
 
-        super(UNIFORM_DISTRIBUTION_MODEL);
+        super(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
 
         this.lowerParameter = lowerParameter;
         addVariable(lowerParameter);
@@ -136,71 +130,6 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    /**
-     * Reads a normal distribution model from a DOM Document element.
-     */
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return UNIFORM_DISTRIBUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter upperParam;
-            Parameter lowerParam;
-
-            XMLObject cxo = (XMLObject) xo.getChild(LOWER);
-            if (cxo.getChild(0) instanceof Parameter) {
-                lowerParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                lowerParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-
-            cxo = (XMLObject) xo.getChild(UPPER);
-            if (cxo.getChild(0) instanceof Parameter) {
-                upperParam = (Parameter) cxo.getChild(Parameter.class);
-            } else {
-                upperParam = new Parameter.Default(cxo.getDoubleChild(0));
-            }
-
-            return new UniformDistributionModel(lowerParam, upperParam);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(LOWER,
-                        new XMLSyntaxRule[]{
-                                new XORRule(
-                                        new ElementRule(Parameter.class),
-                                        new ElementRule(Double.class)
-                                )}
-                ),
-                new ElementRule(UPPER,
-                        new XMLSyntaxRule[]{
-                                new XORRule(
-                                        new ElementRule(Parameter.class),
-                                        new ElementRule(Double.class)
-                                )}
-                )
-        };
-
-        public String getParserDescription() {
-            return "Describes a uniform distribution with a given lower and upper bounds ";
-        }
-
-        public Class getReturnType() {
-            return UniformDistributionModel.class;
-        }
-    };
 
     // **************************************************************
     // Private instance variables

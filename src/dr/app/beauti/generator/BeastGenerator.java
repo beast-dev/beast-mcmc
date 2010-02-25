@@ -41,8 +41,8 @@ import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.*;
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
@@ -648,7 +648,7 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-            writer.writeIDref(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD, SPOPS);
+            writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
 //            } else {
 //                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
 //            }

@@ -38,9 +38,9 @@ import dr.evomodelxml.tree.RateCovarianceStatisticParser;
 import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -136,8 +136,8 @@ public class BranchRatesModelGenerator extends Generator {
 	
 					} else if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
 	
-						writer.writeOpenTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL,
-										new Attribute.Default<String>(LogNormalDistributionModel.MEAN_IN_REAL_SPACE, "true"));
+						writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+										new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
 	
 						if (activeTrees.indexOf(tree) < 1) {
 							writeParameter("mean", ClockType.UCLD_MEAN, model, writer);
@@ -147,7 +147,7 @@ public class BranchRatesModelGenerator extends Generator {
 							writeParameterRef("stdev", modelPrefix + ClockType.UCLD_STDEV, writer);
 						}
 	
-						writer.writeCloseTag(LogNormalDistributionModel.LOGNORMAL_DISTRIBUTION_MODEL);
+						writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 	
 					} else {
 						throw new RuntimeException(

@@ -6,7 +6,7 @@
 			<attr name="X">NA</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA</attr>
+			<attr name="X">3</attr>
 		</taxon>
 		<taxon id="C">
 			<attr name="X">3</attr>
@@ -91,19 +91,19 @@
 		logL = <multivariateTraitLikelihood idref="traitLikelihood"/>
 	</report>
 
-	<!--<mcmc id="mcmc" chainLength="1">-->
-		<!--<posterior id="posterior">-->
-			<!--<multivariateTraitLikelihood idref="traitLikelihood"/>-->
-		<!--</posterior>-->
-		<!--<operators idref="operators"/>-->
-		<!--<log logEvery="1000">-->
-			<!--<posterior idref="posterior"/>-->
-		<!--</log>-->
-		<!--<logTree logEvery="1" nexusFormat="true" fileName="testIntegratedTraitLikelihood.trees">-->
-			<!--<multivariateTraitLikelihood idref="traitLikelihood"/>-->
-			<!--<treeModel idref="treeModel"/>-->
-		<!--</logTree>				-->
-	<!--</mcmc>-->
+	<mcmc id="mcmc" chainLength="1">
+		<posterior id="posterior">
+			<multivariateTraitLikelihood idref="traitLikelihood"/>
+		</posterior>
+		<operators idref="operators"/>
+		<log logEvery="1000">
+			<posterior idref="posterior"/>
+		</log>
+		<logTree logEvery="1" nexusFormat="true" fileName="testMissingIntegratedTraitLikelihood.trees">
+			<multivariateTraitLikelihood idref="traitLikelihood"/>
+			<treeModel idref="treeModel"/>
+		</logTree>
+	</mcmc>
 
 </beast>
 

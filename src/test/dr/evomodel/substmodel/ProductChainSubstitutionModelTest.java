@@ -51,6 +51,7 @@ public class ProductChainSubstitutionModelTest extends TestCase {
             model1 = as.eigen.two.state(2.0, 2.0 / 3.0)
             pc = ind.two.eigen(model0, model1)
             pc$rate.matrix
+            matexp(pc, 0.5)
         */
 
         markovJumpsInfinitesimalResult = new double[]{
@@ -61,6 +62,13 @@ public class ProductChainSubstitutionModelTest extends TestCase {
         };
         markovJumpsEigenValues = new double[]{
                 -4.916667, -2.666667,  -2.250000, 0.000000
+        };
+
+        markovJumpsProbs = new double[]{
+                0.24613009, 0.3036382, 0.20156776, 0.2486639,
+                0.10121274, 0.4485556, 0.08288798, 0.3673437,
+                0.10078388, 0.1243320, 0.34691397, 0.4279702,
+                0.04144399, 0.1836719, 0.14265673, 0.6322274
         };
     }
 
@@ -100,26 +108,51 @@ public class ProductChainSubstitutionModelTest extends TestCase {
 
     public void testInfinitesimalRateMatrices() {
         System.out.println("Running testInfinitesimalRateMatrices...");
-        int i = 0;
+        int m = 0;
         for (SubstitutionModel substModel : baseModels) {
             double[] out = new double[
                     substModel.getDataType().getStateCount() *
                             substModel.getDataType().getStateCount()];
             substModel.getInfinitesimalMatrix(out);
-            System.out.println("R" + i + " = " + new Vector(out));
-            i++;
+            System.out.println("R" + m + " = " + new Vector(out));
+            m++;
         }
 
-        double[] out = new double[stateCount * stateCount];
-        productChainModel.getInfinitesimalMatrix(out);
-        System.out.println("Product Chain Rate Matrix = " + new Vector(out));
-        assertEquals(out, markovJumpsInfinitesimalResult, accuracy);
+        double[] rates = new double[stateCount * stateCount];
+        productChainModel.getInfinitesimalMatrix(rates);
+        System.out.println("Product Chain Rate Matrix = " + new Vector(rates));
+        assertEquals(rates, markovJumpsInfinitesimalResult, accuracy);
 
         EigenDecomposition eigen = productChainModel.getEigenDecomposition();
         double[] eval = eigen.getEigenValues();
-        Arrays.sort(eval);
+        double[] sortedEval = new double[eval.length];
+        System.arraycopy(eval, 0, sortedEval, 0, stateCount);
+        Arrays.sort(sortedEval);
         System.out.println("Eigenvalues = " + new Vector(eigen.getEigenValues()));        
-        assertEquals(eigen.getEigenValues(), markovJumpsEigenValues, accuracy);
+        assertEquals(sortedEval, markovJumpsEigenValues, accuracy);
+  
+        double[] testProbs = new double[stateCount * stateCount];
+        productChainModel.getTransitionProbabilities(0.0, testProbs);
+        System.out.println("Finite time (0) probabilities = ");
+        printSquareMatrix(testProbs, stateCount);
+        double[] trueProbs = new double[stateCount * stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            trueProbs[i * stateCount + i] = 1.0;
+        }
+        assertEquals(testProbs, trueProbs, accuracy);
+
+        productChainModel.getTransitionProbabilities(0.5, testProbs);
+        System.out.println("Finite time (0.5) probabilities = ");
+        printSquareMatrix(testProbs, stateCount);
+        assertEquals(testProbs, markovJumpsProbs, accuracy);
+    }
+
+    private void printSquareMatrix(double[] A, int dim) {
+        double[] row = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(A, i * dim, row, 0, dim);
+            System.out.println(new Vector(row));
+        }
     }
 
     List<SubstitutionModel> baseModels;
@@ -128,6 +161,7 @@ public class ProductChainSubstitutionModelTest extends TestCase {
     ProductChainSubstitutionModel productChainModel;
     double[] markovJumpsInfinitesimalResult;
     double[] markovJumpsEigenValues;
+    double[] markovJumpsProbs;
 
     private static final double accuracy = 1E-5;
 }

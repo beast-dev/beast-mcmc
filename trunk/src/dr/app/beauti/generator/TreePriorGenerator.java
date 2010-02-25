@@ -43,12 +43,12 @@ import dr.evomodelxml.speciation.SpeciesBindingsParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.SumStatistic;
 import dr.inference.model.TestStatistic;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.ExponentialMarkovModelParser;
+import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -820,29 +820,29 @@ public class TreePriorGenerator extends Generator {
         	
         	writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT); // only 1 coalescent
         	
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION0);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
             writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, modelPrefix + "demographic.populationMeanDist");
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION0);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DISTRIBUTION1);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
             writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, modelPrefix + "demographic.populationMeanDist");
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION1);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION1);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.DATA);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.DATA);
 
             writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.popSize");
 
-            writer.writeCloseTag(MixedDistributionLikelihood.DATA);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DATA);
 
-            writer.writeOpenTag(MixedDistributionLikelihood.INDICATORS);
+            writer.writeOpenTag(MixedDistributionLikelihoodParser.INDICATORS);
 
             writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.indicators");
 
-            writer.writeCloseTag(MixedDistributionLikelihood.INDICATORS);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.INDICATORS);
 
-            writer.writeCloseTag(MixedDistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+            writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
         }
 
     }

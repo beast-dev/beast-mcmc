@@ -25,9 +25,9 @@
 
 package dr.inference.operators;
 
-import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -186,8 +186,8 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         return hastingsRatio;
     }
 
-    private static final String DATA = MixedDistributionLikelihood.DATA;
-    private static final String INDICATORS = MixedDistributionLikelihood.INDICATORS;
+    private static final String DATA = MixedDistributionLikelihoodParser.DATA;
+    private static final String INDICATORS = MixedDistributionLikelihoodParser.INDICATORS;
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {

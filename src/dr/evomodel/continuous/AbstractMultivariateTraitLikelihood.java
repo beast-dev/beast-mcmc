@@ -574,7 +574,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             String oneValue = st.nextToken();
                             double value = Double.NaN;
                             if (oneValue.compareTo("NA") == 0) {
-                                // Missing values not yet handled.
+                                Logger.getLogger("dr.evomodel.continuous").info(
+                                        "Warning: Missing value in tip for taxon " + taxonName +
+                                        " (filling with 0)"   // See comment below
+                                );                                
                             } else {
                                 try {
                                     value = new Double(oneValue);
@@ -592,7 +595,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 missingIndices = new ArrayList<Integer>();
                 for (int i = 0; i < allValues.length; i++) {
                     if ((new Double(allValues[i])).isNaN()) {
-                        traitParameter.setParameterValue(i, 0);
+                        traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
                         missingIndices.add(i);
                     }
                 }

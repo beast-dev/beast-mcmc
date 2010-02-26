@@ -267,6 +267,102 @@ public class Codons extends DataType {
         return geneticCode.isStopCodon(stateMap[state]);
     }
 
+    public static byte[] constructRateMap(Codons codonDataType) {
+        final int stateCount = codonDataType.getStateCount();
+        final int rateCount = (stateCount * (stateCount - 1)) / 2;
+        return constructRateMap(rateCount, stateCount, codonDataType, codonDataType.getGeneticCode());
+    }
+
+
+    /**
+	 * Construct a map of the rate classes in the rate matrix using the current
+	 * genetic code. Classes:
+	 *		0: codon changes in more than one codon position (or stop codons)
+	 *		1: synonymous transition
+	 *		2: synonymous transversion
+	 *		3: non-synonymous transition
+	 *		4: non-synonymous transversion
+	 */
+	public static byte[] constructRateMap(int rateCount,
+                                          int stateCount,
+                                          Codons codonDataType,
+                                          GeneticCode geneticCode)
+	{
+		int u, v, i1, j1, k1, i2, j2, k2;
+		byte rateClass;
+		int[] codon;
+		int cs1, cs2, aa1, aa2;
+
+		int i = 0;
+
+		byte[] rateMap = new byte[rateCount];
+
+		for (u = 0; u < stateCount; u++) {
+
+			codon = codonDataType.getTripletStates(u);
+			i1 = codon[0];
+			j1 = codon[1];
+			k1 = codon[2];
+
+			cs1 = codonDataType.getState(i1, j1, k1);
+			aa1 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs1));
+
+			for (v = u + 1; v < stateCount; v++) {
+
+				codon = codonDataType.getTripletStates(v);
+				i2 = codon[0];
+				j2 = codon[1];
+				k2 = codon[2];
+
+				cs2 = codonDataType.getState(i2, j2, k2);
+				aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
+
+				rateClass = -1;
+				if (i1 != i2) {
+					if ( (i1 == 0 && i2 == 2) || (i1 == 2 && i2 == 0) || // A <-> G
+						 (i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1) ) { // C <-> T
+						rateClass = 1; // Transition at position 1
+					} else {
+						rateClass = 2; // Transversion at position 1
+					}
+				}
+				if (j1 != j2) {
+					if (rateClass == -1) {
+						if ( (j1 == 0 && j2 == 2) || (j1 == 2 && j2 == 0) || // A <-> G
+							 (j1 == 1 && j2 == 3) || (j1 == 3 && j2 == 1) ) { // C <-> T
+							rateClass = 1; // Transition
+						} else {
+							rateClass = 2; // Transversion
+						}
+					} else
+						rateClass = 0; // Codon changes at more than one position
+				}
+				if (k1 != k2) {
+					if (rateClass == -1) {
+						if ( (k1 == 0 && k2 == 2) || (k1 == 2 && k2 == 0) || // A <-> G
+							 (k1 == 1 && k2 == 3) || (k1 == 3 && k2 == 1) ) { // C <-> T
+							rateClass = 1; // Transition
+						} else {
+							rateClass = 2; // Transversion
+						}
+					} else
+						rateClass = 0; // Codon changes at more than one position
+				}
+
+	 			if (rateClass != 0) {
+					if (aa1 != aa2) {
+						rateClass += 2; // Is a non-synonymous change
+					}
+				}
+
+				rateMap[i] = rateClass;
+				i++;
+			}
+
+		}
+        return rateMap;
+	}
+
     // Private members
 
     protected GeneticCode geneticCode;

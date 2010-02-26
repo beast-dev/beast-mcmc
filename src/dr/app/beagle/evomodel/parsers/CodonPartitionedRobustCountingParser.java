@@ -2,9 +2,9 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.CodonPartitionedRobustCounting;
+import dr.app.beagle.evomodel.substmodel.CodonLabeling;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.markovjumps.CodonLabeling;
 
 /**
  * @author Marc A. Suchard 

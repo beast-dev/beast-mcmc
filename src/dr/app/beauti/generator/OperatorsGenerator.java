@@ -19,6 +19,7 @@ import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.*;
 import dr.inferencexml.model.CompoundParameterParser;
+import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -195,7 +196,7 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeRandomWalkOperator(Operator operator, XMLWriter writer) {
-        final String name = RandomWalkOperator.PARSER.getParserName();
+        final String name = RandomWalkOperatorParser.RANDOM_WALK_OPERATOR;
         writer.writeOpenTag(
                 name,
                 new Attribute[]{
@@ -208,7 +209,7 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeRandomWalkOperator(Operator operator, boolean reflecting, XMLWriter writer) {
-        final String name = RandomWalkOperator.PARSER.getParserName();
+        final String name = RandomWalkOperatorParser.RANDOM_WALK_OPERATOR;
         writer.writeOpenTag(
                 name,
                 new Attribute[]{
@@ -226,7 +227,7 @@ public class OperatorsGenerator extends Generator {
 
         int windowSize = (int) Math.round(operator.tuning);
         if (windowSize < 1) windowSize = 1;
-        final String name = RandomWalkIntegerOperator.PARSER.getParserName();
+        final String name = RandomWalkOperatorParser.RANDOM_WALK_OPERATOR;
         writer.writeOpenTag(
                 name,
                 new Attribute[]{

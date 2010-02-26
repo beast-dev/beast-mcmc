@@ -128,7 +128,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         List<Citation> citations = super.getCitations();
         citations.add(
                 new Citation(
-                        new Author[] {
+                        new Author[]{
                                 new Author("O", "Pybus"),
                                 new Author("P", "Lemey"),
                                 new Author("MA", "Suchard")
@@ -310,15 +310,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         // And then integrating out the root trait value
 
         // Form \Sigma (variance) and \Sigma^{-1} (precision)
-        double[][] treeTraitVarianceMatrix = makeMissingInTreeMVNormalVariance(
-                computeTreeMVNormalVariance());
-//        double[][] vm2 = makeMissingInTreeMVNormalVariance(treeTraitVarianceMatrix);
-//
-//        System.err.println("Original:\n" + new Matrix(treeTraitVarianceMatrix));
-//        System.err.println("New:\n" + new Matrix(vm2));
-//        System.exit(-1);
-
-
+        double[][] treeTraitVarianceMatrix = makeMissingInTreeMVNormalVariance(computeTreeMVNormalVariance());
         double[][] treeTraitPrecisionMatrix = new SymmetricMatrix(treeTraitVarianceMatrix).inverse().toComponents();
         double totalLogDensity = 0;
 
@@ -450,7 +442,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // Multiple child0 and child1 densities
-//        if (missing[childNumber0] && missing[childNumber1]) {
+        
         if (totalPrecision == 0) {
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
@@ -473,37 +465,36 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
         if (precision0 != 0 && precision1 != 0) {
 
-        final double remainderPrecision = precision0 * precision1 / (precision0 + precision1); // TODO This will cause trouble if *both* children are missing
+            final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
 
-//        if (!missing[childNumber0] && !missing[childNumber1]) {
-        for (int k = 0; k < dimData; k++) {
+            for (int k = 0; k < dimData; k++) {
 
-            double childSS0 = 0;
-            double childSS1 = 0;
-            double crossSS = 0;
+                double childSS0 = 0;
+                double childSS1 = 0;
+                double crossSS = 0;
 
-            for (int i = 0; i < dimTrait; i++) {
+                for (int i = 0; i < dimTrait; i++) {
 
-                final double wChild0i = meanCache[meanOffset0 + k * dimTrait + i] * precision0;
-                final double wChild1i = meanCache[meanOffset1 + k * dimTrait + i] * precision1;
+                    final double wChild0i = meanCache[meanOffset0 + k * dimTrait + i] * precision0;
+                    final double wChild1i = meanCache[meanOffset1 + k * dimTrait + i] * precision1;
 
-                for (int j = 0; j < dimTrait; j++) {
+                    for (int j = 0; j < dimTrait; j++) {
 
-                    final double child0j = meanCache[meanOffset0 + k * dimTrait + j];
-                    final double child1j = meanCache[meanOffset1 + k * dimTrait + j];
+                        final double child0j = meanCache[meanOffset0 + k * dimTrait + j];
+                        final double child1j = meanCache[meanOffset1 + k * dimTrait + j];
 
-                    childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
-                    childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
+                        childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
+                        childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
 
-                    crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[meanThisOffset + k * dimTrait + j];
+                        crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[meanThisOffset + k * dimTrait + j];
+                    }
                 }
-            }
 
-            logRemainderDensityCache[thisNumber] +=
-                    -dimTrait * LOG_SQRT_2_PI
-                            + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
-                            - 0.5 * (childSS0 + childSS1 - crossSS);
-        }
+                logRemainderDensityCache[thisNumber] +=
+                        -dimTrait * LOG_SQRT_2_PI
+                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
+                                - 0.5 * (childSS0 + childSS1 - crossSS);
+            }
         }
     }
 
@@ -546,8 +537,9 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
                         for (int k = 0; k < dimTrait; k++) {
                             for (int l = 0; l < dimTrait; l++) {
-                                outVariance[iReal * dimTrait + k][jReal * dimTrait + l] =
-                                        variance[i * dimTrait + k][j * dimTrait + l];
+                                System.arraycopy(
+                                        variance[i * dimTrait + k], j * dimTrait,
+                                        outVariance[iReal * dimTrait], jReal * dimTrait, dimTrait);
                             }
                         }
                         jReal++;
@@ -784,7 +776,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
                     for (int i = 0; i < dimTrait; i++) {
                         mean[i] = (drawnStates[parentOffset + i] * precisionToParent
-                                 + meanCache[thisOffset + i] * precisionOfNode) / totalPrecision;
+                                + meanCache[thisOffset + i] * precisionOfNode) / totalPrecision;
                         for (int j = 0; j < dimTrait; j++) {
                             var[i][j] = treeVariance[i][j] / totalPrecision;
                         }
@@ -832,7 +824,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double logRootPriorPrecisionDeterminant;
 
     private final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static boolean DEBUG_PREORDER = false;
 
     private double zBz; // Prior sum-of-squares contribution

@@ -15,7 +15,7 @@ import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.Author;
+import dr.util.CommonCitations;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -130,17 +130,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
         citations.add(
-                new Citation(
-                        new Author[] {
-                                new Author("P", "Lemey"),
-                                new Author("A", "Rambaut"),
-                                new Author("JJ", "Welch"),
-                                new Author("MA", "Suchard")
-                        },
-                        "Phylogeography takes a relaxed random walk in continous space and time",
-                        "Molecular Biology and Evolution",
-                        Citation.Status.ACCEPTED
-                )
+                CommonCitations.LEMEY_2010
         );
         return citations;
     }

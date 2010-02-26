@@ -72,6 +72,7 @@ import dr.inference.operators.*;
 import dr.inference.xml.LoggerParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.*;
+import dr.inferencexml.operators.RandomWalkIntegerOperatorParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -1794,13 +1795,13 @@ public class BeastGenerator extends BeautiOptions {
 
     private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                RandomWalkIntegerOperator.RANDOM_WALK_INT_OP,
+                RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP,
                 new Attribute[]{
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         new Attribute.Default<Double>("weight", operator.weight)
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(RandomWalkIntegerOperator.RANDOM_WALK_INT_OP);
+        writer.writeCloseTag(RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP);
     }
 
     private void writeScaleAllOperator(Operator operator, XMLWriter writer) {

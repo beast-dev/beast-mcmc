@@ -26,8 +26,8 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,14 +41,7 @@ import java.util.List;
  */
 public class RandomWalkOperator extends AbstractCoercableOperator {
 
-    public static final String WINDOW_SIZE = "windowSize";
-    public static final String UPDATE_INDEX = "updateIndex";
-    public static final String UPPER = "upper";
-    public static final String LOWER = "lower";
-
-    public static final String BOUNDARY_CONDITION = "boundaryCondition";
-
-    enum BoundaryCondition {
+    public enum BoundaryCondition {
         reflecting,
         absorbing
     }
@@ -181,63 +174,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return "randomWalkOperator";
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            CoercionMode mode = CoercionMode.parseMode(xo);
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-            double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            BoundaryCondition condition = BoundaryCondition.valueOf(
-                    xo.getAttribute(BOUNDARY_CONDITION, BoundaryCondition.reflecting.name()));
-
-            if (xo.hasChildNamed(UPDATE_INDEX)) {
-                XMLObject cxo = (XMLObject) xo.getChild(UPDATE_INDEX);
-                Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
-                if (updateIndex.getDimension() != parameter.getDimension())
-                    throw new RuntimeException("Parameter to update and missing indices must have the same dimension");
-                return new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
-                        weight, mode);
-            }
-
-            return new RandomWalkOperator(parameter, windowSize, condition, weight, mode);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a random walk operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WINDOW_SIZE),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new StringAttributeRule(BOUNDARY_CONDITION, null, BoundaryCondition.values(), true),
-                new ElementRule(Parameter.class)
-        };
-
-    };
-
     public String toString() {
-        return "randomWalkOperator(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+        return RandomWalkOperatorParser.RANDOM_WALK_OPERATOR + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
     }
 
     //PRIVATE STUFF

@@ -1,8 +1,8 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.RandomWalkIntegerOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +14,6 @@ import java.util.List;
  * @version $Id: RandomWalkIntegerOperator.java$
  */
 public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
-
-    public static final String RANDOM_WALK_INT_OP = "randomWalkIntegerOperator";
-
-    public static final String WINDOW_SIZE = "windowSize";
-    public static final String UPDATE_INDEX = "updateIndex";
 
     public RandomWalkIntegerOperator(Parameter parameter, int windowSize, double weight) {
         this.parameter = parameter;
@@ -122,59 +117,8 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         } else return "";
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return RANDOM_WALK_INT_OP;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-
-            double d = xo.getDoubleAttribute(WINDOW_SIZE);
-            if (d != Math.floor(d)) {
-                throw new XMLParseException("The window size of a " + RANDOM_WALK_INT_OP + " should be an integer");
-            }
-
-            int windowSize = (int)d;
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            if (xo.hasChildNamed(UPDATE_INDEX)) {
-                XMLObject cxo = xo.getChild(UPDATE_INDEX);
-                Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
-                return new RandomWalkIntegerOperator(parameter, updateIndex, windowSize, weight);
-            }
-
-            return new RandomWalkIntegerOperator(parameter, windowSize, weight);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a random walk operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(WINDOW_SIZE),
-                AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(Parameter.class)
-        };
-
-    };
-
     public String toString() {
-        return RANDOM_WALK_INT_OP + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+        return RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
     }
 
     //PRIVATE STUFF

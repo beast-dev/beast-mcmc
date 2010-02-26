@@ -4,7 +4,9 @@ import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.BranchAttributeProvider;
-import dr.inference.markovjumps.CodonLabeling;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
+import dr.app.beagle.evomodel.substmodel.CodonLabeling;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -12,6 +14,9 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Marc A. Suchard
@@ -43,6 +48,18 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         substModel0 = partition0.getSubstitutionModel();
         substModel1 = partition1.getSubstitutionModel();
         substModel2 = partition2.getSubstitutionModel();
+
+        List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>(3);
+        List<DataType> dataTypes = new ArrayList<DataType>(3);
+
+        substModels.add(substModel0);
+        dataTypes.add(Nucleotides.INSTANCE);
+        substModels.add(substModel1);
+        dataTypes.add(Nucleotides.INSTANCE);
+        substModels.add(substModel2);
+        dataTypes.add(Nucleotides.INSTANCE);
+
+        productChain = new ProductChainSubstitutionModel("codonLabeling", dataTypes, substModels);
 
         addModel(substModel0);
         addModel(substModel1);
@@ -149,6 +166,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
     private final SubstitutionModel substModel0;
     private final SubstitutionModel substModel1;
     private final SubstitutionModel substModel2;
+
+    private final ProductChainSubstitutionModel productChain;
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;

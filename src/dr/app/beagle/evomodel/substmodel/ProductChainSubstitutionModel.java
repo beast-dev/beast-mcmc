@@ -1,10 +1,16 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.math.KroneckerOperation;
-import dr.math.matrixAlgebra.Vector;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+//import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -16,10 +22,9 @@ import java.util.List;
  *         O'Brien JD, Minin VN and Suchard MA (2009) Learning to count: robust estimates for labeled distances between
  *         molecular sequences. Molecular Biology and Evolution, 26, 801-814
  */
-public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
+public class ProductChainSubstitutionModel extends BaseSubstitutionModel implements Citable {
 
-    public ProductChainSubstitutionModel(String name, List<DataType> dataTypes,
-                                         List<SubstitutionModel> baseModels) {
+    public ProductChainSubstitutionModel(String name, List<SubstitutionModel> baseModels) {
 
         super(name);
 
@@ -30,19 +35,30 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
             throw new RuntimeException("May not construct ProductChainSubstitutionModel with 0 base models");
         }
 
-        if (numBaseModel != dataTypes.size()) {
-            throw new RuntimeException("Each SubstitutionModel must have a DataType in ProductChainSubstitutionModel");
-        }
-
         stateSizes = new int[numBaseModel];
         stateCount = 1;
         for (int i = 0; i < numBaseModel; i++) {
-            DataType dataType = dataTypes.get(i);
+            DataType dataType = baseModels.get(i).getDataType();
             stateSizes[i] = dataType.getStateCount();
             stateCount *= dataType.getStateCount();
         }
 
+        String[] codeStrings = getCharacterStrings();
+
+        dataType = new GeneralDataType(codeStrings);
+
         updateMatrix = true;
+
+        Logger.getLogger("dr.app.beagle").info("\tConstructing a product chain substition model,  please cite:\n"
+                + Citable.Utils.getCitationString(this));
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(
+                CommonCitations.OBRIEN_2009
+        );
+        return citations;
     }
 
     public EigenDecomposition getEigenDecomposition() {
@@ -52,6 +68,35 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
             }
         }
         return eigenDecomposition;
+    }
+
+    private String[] getCharacterStrings() {
+        String[] strings = null;
+        for (int i = numBaseModel - 1; i >= 0; i--) {
+            strings = recursivelyAppendCharacterStates(baseModels.get(i).getDataType(), strings);
+        }
+
+        return strings;
+    }
+
+    private String[] recursivelyAppendCharacterStates(DataType dataType, String[] inSubStates) {
+
+        String[] subStates = inSubStates;
+        if (subStates == null) {
+            subStates = new String[]{""};
+        }
+
+        final int previousStateCount = subStates.length;
+        final int inStateCount = dataType.getStateCount();
+        String[] states = new String[previousStateCount * inStateCount];
+
+        for (int i = 0; i < inStateCount; i++) {
+            String code = dataType.getCode(i);
+            for (int j = 0; j < previousStateCount; j++) {
+                states[i * previousStateCount + j] = code + subStates[j];
+            }
+        }
+        return states;
     }
 
 // Function 'ind.codon.eigen' from MarkovJumps-R
@@ -130,7 +175,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
 //        transpose(currentIevc, currentStateSize);
 
         rateMatrix = currentRate;
-        
+
         eigenDecomposition = new EigenDecomposition(
                 currentEvec,
                 transpose(currentIevcT, currentStateSize),
@@ -138,20 +183,21 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel {
         updateMatrix = false;
     }
 
-   private static void printSquareMatrix(double[] A, int dim) {
-        double[] row = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            System.arraycopy(A, i * dim, row, 0, dim);
-            System.err.println(new Vector(row));
-        }
-    }
+//   private static void printSquareMatrix(double[] A, int dim) {
+//        double[] row = new double[dim];
+//        for (int i = 0; i < dim; i++) {
+//            System.arraycopy(A, i * dim, row, 0, dim);
+//            System.err.println(new Vector(row));
+//        }
+//    }
 
     // transposes a square matrix
+
     private static double[] transpose(double[] mat, int dim) {
         double[] out = new double[dim * dim];
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                out[j * dim + i] = mat[i * dim +j];
+                out[j * dim + i] = mat[i * dim + j];
             }
         }
         return out;

@@ -25,31 +25,48 @@ public enum CodonLabeling {
         return text;
     }
 
-    public static double[][] getRegisterMatrix(CodonLabeling labeling, Codons codonDataType) {
+    public static double[] getRegisterMatrix(CodonLabeling labeling, Codons codonDataType) {
+        return getRegisterMatrix(labeling, codonDataType, false);
+    }
+
+    public static double[] getRegisterMatrix(CodonLabeling labeling, Codons codonDataType, boolean base64) {
         final int stateCount = codonDataType.getStateCount();
         final int rateCount = ((stateCount - 1) * stateCount) / 2;
-        
+
         byte[] rateMap = Codons.constructRateMap(
                 rateCount,
                 stateCount,
                 codonDataType,
                 codonDataType.getGeneticCode());
 
-        double[][] registerMatrix = new double[stateCount][stateCount];
+        double[] registerMatrix = new double[stateCount * stateCount];
 
         int index = 0;
         for (int i = 0; i < stateCount; i++) {
             for (int j = i + 1; j < stateCount; j++) {
                 byte b = rateMap[index];
                 if (
-                       (labeling == SYN && (b == 1 || b == 2)) ||
-                       (labeling == NON_SYN && (b == 3 || b ==4))
-                   ){
-                    registerMatrix[j][i] = registerMatrix[i][j] = 1.0;
+                        (labeling == SYN && (b == 1 || b == 2)) ||
+                                (labeling == NON_SYN && (b == 3 || b == 4))
+                        ) {
+                    registerMatrix[j * stateCount + i] = registerMatrix[i * stateCount + j] = 1.0;
                 }
                 index++;
             }
-        }        
+        }
+
+        if (base64) { // Expand matrix back out to the 4 x 4 x 4 stateSpace for a product chain
+            double[] oldRegisterMatrix = registerMatrix;
+            registerMatrix = new double[64 * 64];
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    if (oldRegisterMatrix[i * stateCount + j] == 1) {
+                        registerMatrix[codonDataType.getCanonicalState(i) * 64
+                                + codonDataType.getCanonicalState(j)] = 1;
+                    }
+                }
+            }
+        }
         return registerMatrix;
     }
 

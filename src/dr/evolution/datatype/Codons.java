@@ -275,6 +275,45 @@ public class Codons extends DataType {
 
 
     /**
+     * Parse a text string to return a genetic code
+     */
+    public static Codons findByName(String codeStr) {
+        Codons codons = null;
+        if (codeStr.equals(GeneticCode.UNIVERSAL.getName())) {
+            codons = Codons.UNIVERSAL;
+        } else if (codeStr.equals(GeneticCode.VERTEBRATE_MT.getName())) {
+            codons = Codons.VERTEBRATE_MT;
+        } else if (codeStr.equals(GeneticCode.YEAST.getName())) {
+            codons = Codons.YEAST;
+        } else if (codeStr.equals(GeneticCode.MOLD_PROTOZOAN_MT.getName())) {
+            codons = Codons.MOLD_PROTOZOAN_MT;
+        } else if (codeStr.equals(GeneticCode.INVERTEBRATE_MT.getName())) {
+            codons = Codons.INVERTEBRATE_MT;
+        } else if (codeStr.equals(GeneticCode.CILIATE.getName())) {
+            codons = Codons.CILIATE;
+        } else if (codeStr.equals(GeneticCode.ECHINODERM_MT.getName())) {
+            codons = Codons.ECHINODERM_MT;
+        } else if (codeStr.equals(GeneticCode.EUPLOTID_NUC.getName())) {
+            codons = Codons.EUPLOTID_NUC;
+        } else if (codeStr.equals(GeneticCode.BACTERIAL.getName())) {
+            codons = Codons.BACTERIAL;
+        } else if (codeStr.equals(GeneticCode.ALT_YEAST.getName())) {
+            codons = Codons.ALT_YEAST;
+        } else if (codeStr.equals(GeneticCode.ASCIDIAN_MT.getName())) {
+            codons = Codons.ASCIDIAN_MT;
+        } else if (codeStr.equals(GeneticCode.FLATWORM_MT.getName())) {
+            codons = Codons.FLATWORM_MT;
+        } else if (codeStr.equals(GeneticCode.BLEPHARISMA_NUC.getName())) {
+            codons = Codons.BLEPHARISMA_NUC;
+        } else if (codeStr.equals(GeneticCode.NO_STOPS.getName())) {
+            codons = Codons.NO_STOPS;
+        } else {
+            throw new RuntimeException("Unknown genetics code");
+        }
+        return codons;
+    }
+
+    /**
 	 * Construct a map of the rate classes in the rate matrix using the current
 	 * genetic code. Classes:
 	 *		0: codon changes in more than one codon position (or stop codons)

@@ -26,7 +26,6 @@
 package dr.inference.trace;
 
 import dr.util.NumberFormatter;
-import dr.xml.XMLParseException;
 
 import java.io.File;
 
@@ -65,7 +64,7 @@ public class TraceAnalysis {
     }
 
 
-    public static TraceList report(String fileName, int burnin, String likelihoodName, boolean withStdError)
+    public static TraceList report(String fileName, int inBurnin, String likelihoodName, boolean withStdError)
             throws java.io.IOException, TraceException {
 
         int fieldWidth = 14;
@@ -77,10 +76,16 @@ public class TraceAnalysis {
         File file = new File(fileName);
 
         LogFileTraces traces = new LogFileTraces(fileName, file);
-        if (traces == null) {
-            throw new TraceException("Trace file is empty.");
-        }
+//        if (traces == null) {
+//            throw new TraceException("Trace file is empty.");
+//        }
         traces.loadTraces();
+                
+        int burnin = inBurnin;
+        if (burnin == -1) {
+            burnin = traces.getStateCount() / 10;
+        }
+
         traces.setBurnIn(burnin);
 
         System.out.println();
@@ -170,6 +175,8 @@ public class TraceAnalysis {
      * @param drawHeader if true then draw header
      * @param stdErr     if true then report the standard deviation of the mean
      * @param hpds       if true then report 95% hpd upper and lower
+     * @param individualESSs minimum number of ESS with which to throw warning
+     * @param likelihoodName column name
      * @return the traces loaded from given file to create this short report
      * @throws java.io.IOException if general error reading file
      * @throws TraceException      if trace file in wrong format or corrupted

@@ -6,6 +6,7 @@ import dr.math.KroneckerOperation;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 //import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
@@ -25,14 +26,28 @@ import java.util.logging.Logger;
 public class ProductChainSubstitutionModel extends BaseSubstitutionModel implements Citable {
 
     public ProductChainSubstitutionModel(String name, List<SubstitutionModel> baseModels) {
+        this(name, baseModels, null);
+    }
 
+    public ProductChainSubstitutionModel(String name,
+                                         List<SubstitutionModel> baseModels,
+                                         List<SiteRateModel> rateModels) {
         super(name);
 
         this.baseModels = baseModels;
+        this.rateModels = rateModels;
         numBaseModel = baseModels.size();
 
         if (numBaseModel == 0) {
             throw new RuntimeException("May not construct ProductChainSubstitutionModel with 0 base models");
+        }
+
+        if (rateModels != null) {
+            for(SiteRateModel rateModel : rateModels) {
+                if (rateModel.getCategoryCount() > 1) {
+                    throw new RuntimeException("ProductChainSubstitutionModels with multiple categories not yet implemented");
+                }
+            }
         }
 
         stateSizes = new int[numBaseModel];
@@ -99,65 +114,51 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         return states;
     }
 
-// Function 'ind.codon.eigen' from MarkovJumps-R
-//  rate.mat = kronecker.sum(kronecker.sum(codon1.eigen$rate.matrix, codon2.eigen$rate.matrix),codon3.eigen$rate.matrix)
-//
-//  stat = codon1.eigen$stationary%x%codon2.eigen$stationary%x%codon3.eigen$stationary
-//
-//  ident.vec = rep(1,length(codon1.eigen$stationary))
-//
-//  eigen.val = (codon1.eigen$values%x%ident.vec + ident.vec%x%codon2.eigen$values)%x%
-//    ident.vec + ident.vec%x%ident.vec%x%codon3.eigen$values
-//
-//  right.eigen.vec = (codon1.eigen$vectors%x%codon2.eigen$vectors)%x%codon3.eigen$vectors
-//
-//  left.eigen.vec = t((t(codon1.eigen$invvectors)%x%t(codon2.eigen$invvectors))%x%
-//    t(codon3.eigen$invvectors))
-
     public void getInfinitesimalMatrix(double[] out) {
         getEigenDecomposition(); // Updates rate matrix if necessary
         System.arraycopy(rateMatrix, 0, out, 0, stateCount * stateCount);
     }
+
+    private double[] scaleForProductChain(double[] in, int model) {
+        if (rateModels == null) {
+            return in;
+        }
+        final double scalar = rateModels.get(model).getRateForCategory(0);
+        if (scalar == 1.0) {
+            return in;
+        }
+        final int len = in.length;
+        double[] out = new double[len];
+        for (int i = 0; i < len; i++) {
+            out[i] = scalar * in[i];
+        }
+        return out;
+    }    
 
     private void computeKroneckerSumsAndProducts() {
 
         int currentStateSize = stateSizes[0];
         double[] currentRate = new double[currentStateSize * currentStateSize];
         baseModels.get(0).getInfinitesimalMatrix(currentRate);
+        currentRate = scaleForProductChain(currentRate, 0);
+        
         EigenDecomposition currentED = baseModels.get(0).getEigenDecomposition();
-        double[] currentEval = currentED.getEigenValues();
+        double[] currentEval = scaleForProductChain(currentED.getEigenValues(), 0);
         double[] currentEvec = currentED.getEigenVectors();
-//        currentEvec = new double[] {1, 2.0 / 3.0, 1, -1.0 / 3.0};
-//        currentIevc = new double[] {1.0 / 3.0, 2.0 / 3.0, 1, -1};
         double[] currentIevcT = transpose(currentED.getInverseEigenVectors(), currentStateSize);
-
-//        System.err.println("In kS&P");
-//        double[] out = new double[currentStateSize * currentStateSize];
-//        baseModels.get(0).getTransitionProbabilities(0.0, out);
-//        printSquareMatrix(out, currentStateSize);
-//        System.exit(-1);
-
 
         for (int i = 1; i < numBaseModel; i++) {
             SubstitutionModel nextModel = baseModels.get(i);
             int nextStateSize = stateSizes[i];
             double[] nextRate = new double[nextStateSize * nextStateSize];
             nextModel.getInfinitesimalMatrix(nextRate);
+            nextRate = scaleForProductChain(nextRate, i);
             currentRate = KroneckerOperation.sum(currentRate, currentStateSize, nextRate, nextStateSize);
 
             EigenDecomposition nextED = nextModel.getEigenDecomposition();
-            double[] nextEval = nextED.getEigenValues();
+            double[] nextEval = scaleForProductChain(nextED.getEigenValues(), i);
             double[] nextEvec = nextED.getEigenVectors();
-//            nextEvec = new double[] {1, 3.0 / 4.0, 1, -1.0 / 4.0};
             double[] nextIevcT = transpose(nextED.getInverseEigenVectors(), nextStateSize);
-//            nextIevc = new double[] {1.0 / 4.0, 3.0 / 4.0, 1, -1};
-
-//            System.err.println("evec0 = ");
-//            printSquareMatrix(currentEvec, currentStateSize);
-//            System.err.println("evec1 = ");
-//            printSquareMatrix(nextEvec, nextStateSize);
-//            System.exit(-1);
-
 
             currentEval = KroneckerOperation.sum(currentEval, nextEval);
 
@@ -165,14 +166,12 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
                     currentEvec, currentStateSize, currentStateSize,
                     nextEvec, nextStateSize, nextStateSize);
 
-//            transpose(nextIevc, nextStateSize);
             currentIevcT = KroneckerOperation.product(
                     currentIevcT, currentStateSize, currentStateSize,
                     nextIevcT, nextStateSize, nextStateSize);
             currentStateSize *= nextStateSize;
 
         }
-//        transpose(currentIevc, currentStateSize);
 
         rateMatrix = currentRate;
 
@@ -192,7 +191,6 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
 //    }
 
     // transposes a square matrix
-
     private static double[] transpose(double[] mat, int dim) {
         double[] out = new double[dim * dim];
         for (int i = 0; i < dim; i++) {
@@ -204,7 +202,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     }
 
     public FrequencyModel getFrequencyModel() {
-        throw new RuntimeException("KroneckerSumSubstitionModel does have a FrequencyModel");
+        throw new RuntimeException("ProductChainSumSubstitionModel currently does not have a FrequencyModel");
     }
 
     protected void frequenciesChanged() {
@@ -221,7 +219,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
 
     private final int numBaseModel;
     private final List<SubstitutionModel> baseModels;
+    private final List<SiteRateModel> rateModels;
     private final int[] stateSizes;
-    //    private final List<DataType> dataTypes;
     private double[] rateMatrix = null;
 }

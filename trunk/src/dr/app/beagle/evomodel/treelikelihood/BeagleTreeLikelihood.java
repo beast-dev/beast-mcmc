@@ -179,7 +179,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             );
 
             InstanceDetails instanceDetails = beagle.getDetails();
-            ResourceDetails resourceDetails = null;
+            ResourceDetails resourceDetails;
 
             if (instanceDetails != null) {
                 resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
@@ -266,6 +266,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             throw new RuntimeException(mte.toString());
         }
         hasInitialized = true;
+    }
+
+    public SiteRateModel getSiteRateModel() {
+        return siteRateModel;
+    }
+
+    public BranchRateModel getBranchRateModel() {
+        return branchRateModel;
     }
 
     protected int getScaleBufferCount() {

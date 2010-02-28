@@ -1,12 +1,11 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.BranchAttributeProvider;
-//import dr.evolution.datatype.DataType;
-//import dr.evolution.datatype.Nucleotides;
-//import dr.app.beagle.evomodel.substmodel.CodonLabeling;
+import dr.evolution.datatype.Codons;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -14,6 +13,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
+import dr.evomodel.branchratemodel.BranchRateModel;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -26,85 +26,93 @@ import java.util.ArrayList;
  *         This work is supported by NSF grant 0856099
  *         <p/>
  *         O'Brien JD, Minin VN and Suchard MA (2009) Learning to count: robust estimates for labeled distances between
- *         molecular sequences. Molecular Biology and Evolution, 26, 801-814 
+ *         molecular sequences. Molecular Biology and Evolution, 26, 801-814
  */
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements BranchAttributeProvider, Loggable {
 
     public CodonPartitionedRobustCounting(String name, Tree tree,
-                                          AncestralStateBeagleTreeLikelihood partition0,
-                                          AncestralStateBeagleTreeLikelihood partition1,
-                                          AncestralStateBeagleTreeLikelihood partition2,
+                                          AncestralStateBeagleTreeLikelihood[] partition,
+                                          Codons codons,
                                           CodonLabeling codonLabeling) {
-
         super(name);
         this.tree = tree;
 
-        this.partition0 = partition0;
-        this.partition1 = partition1;
-        this.partition2 = partition2;
+        if (partition.length != 3) {
+            throw new RuntimeException("CodonPartition models require 3 partitions");
+        }
+
+        this.partition = partition;
         this.codonLabeling = codonLabeling;
+        branchRateModel = partition[0].getBranchRateModel();
 
-        substModel0 = partition0.getSubstitutionModel();
-        substModel1 = partition1.getSubstitutionModel();
-        substModel2 = partition2.getSubstitutionModel();
+        List<SubstitutionModel> substModelsList = new ArrayList<SubstitutionModel>(3);
+        List<SiteRateModel> siteRateModelsList = new ArrayList<SiteRateModel>(3);
 
-        List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>(3);
-//        List<DataType> dataTypes = new ArrayList<DataType>(3);
+        numCodons = partition[0].getPatternWeights().length;
 
-        substModels.add(substModel0);
-//        dataTypes.add(Nucleotides.INSTANCE);
-        substModels.add(substModel1);
-//        dataTypes.add(Nucleotides.INSTANCE);
-        substModels.add(substModel2);
-//        dataTypes.add(Nucleotides.INSTANCE);
+        for (int i = 0; i < 3; i++) {
+            substModelsList.add(partition[i].getSubstitutionModel());
+            siteRateModelsList.add(partition[i].getSiteRateModel());
+            if (partition[i].getPatternWeights().length != numCodons) {
+                throw new RuntimeException("All sequence lengths must be equal in CodonPartitionedRobustCounting");
+            }
+//            addModel(partition[i].getSubstitutionModel()); // I do not believe these are necessary
+//            addModel(partition[i].getSiteRateModel());
+        }
 
-        productChain = new ProductChainSubstitutionModel("codonLabeling", //dataTypes,
-                substModels);
+        ProductChainSubstitutionModel productChainModel =
+                new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
 
-        addModel(substModel0);
-        addModel(substModel1);
-        addModel(substModel2);
+        markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
+        double[] synRegMatrix = CodonLabeling.getRegisterMatrix(codonLabeling, codons, true);
+        markovJumps.setRegistration(synRegMatrix);
+
+        condMeanMatrix = new double[64 * 64];
     }
 
-    public int getCountsForBranch(NodeRef child) {
+    public double[] getExpectedCountsForBranch(NodeRef child) {
 
         // Get child node reconstructed sequence
-        final int[] childSeq0 = partition0.getStatesForNode(tree, child);
-        final int[] childSeq1 = partition1.getStatesForNode(tree, child);
-        final int[] childSeq2 = partition2.getStatesForNode(tree, child);
+        final int[] childSeq0 = partition[0].getStatesForNode(tree, child);
+        final int[] childSeq1 = partition[1].getStatesForNode(tree, child);
+        final int[] childSeq2 = partition[2].getStatesForNode(tree, child);
 
         // Get parent node reconstructed sequence
         final NodeRef parent = tree.getParent(child);
-        final int[] parentSeq0 = partition0.getStatesForNode(tree, parent);
-        final int[] parentSeq1 = partition1.getStatesForNode(tree, parent);
-        final int[] parentSeq2 = partition2.getStatesForNode(tree, parent);
+        final int[] parentSeq0 = partition[0].getStatesForNode(tree, parent);
+        final int[] parentSeq1 = partition[1].getStatesForNode(tree, parent);
+        final int[] parentSeq2 = partition[2].getStatesForNode(tree, parent);
 
-        final int numCodons = childSeq0.length;
-        final int[] childCodon  = new int[3];
-        final int[] parentCodon = new int[3];
+        double branchRateTime = branchRateModel.getBranchRate(tree, child) * tree.getBranchLength(child);
 
-        int count = 0;
+        markovJumps.computeCondStatMarkovJumps(branchRateTime, condMeanMatrix);
+
+        double[] count = new double[numCodons];
 
         for (int i = 0; i < numCodons; i++) {
 
             // Construct this child and parent codon
-            childCodon[0] = childSeq0[i];
-            childCodon[1] = childSeq1[i];
-            childCodon[2] = childSeq2[i];
 
-            parentCodon[0] = parentSeq0[i];
-            parentCodon[1] = parentSeq1[i];
-            parentCodon[2] = parentSeq2[i];
+            final int childState = getCanonicalState(childSeq0[i], childSeq1[i], childSeq2[i]);
+            final int parentState = getCanonicalState(parentSeq0[i], parentSeq1[i], parentSeq2[i]);
+
+//            final int vChildState = getVladimirState(childSeq0[i], childSeq1[i], childSeq2[i]);
+//            final int vParentState = getVladimirState(parentSeq0[i], parentSeq1[i], parentSeq2[i]);
+
+            final double codonCount = condMeanMatrix[parentState * 64 + childState];
 
             if (DEBUG) {
 
                 System.err.println("Computing robust counts for " +
-                    parentCodon[0] + parentCodon[1] + parentCodon[2] + " -> " +
-                    childCodon[0] + childCodon[1] + childCodon[2]);
+                        parentSeq0[i] + parentSeq1[i] + parentSeq2[i] + " -> " +
+                        childSeq0[i] + childSeq1[i] + childSeq2[i] + " : " +
+//                        vParentState + " -> " + vChildState + " = " + codonCount);
+                        parentState + " -> " + childState + " = " + codonCount);
+                System.exit(-1);
             }
 
-            // TODO Compute robust counts
+            count[i] = codonCount;
         }
 
         return count;
@@ -115,13 +123,49 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
     }
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return String.valueOf(getCountsForBranch(node));
+        return String.valueOf(getExpectedCountsForBranch(node));
     }
 
-    public int getRobustCount() {
-        return 0;
+    public double getRobustCount() {
+        double[] count = new double[numCodons];
+
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                addToMatrix(count, getExpectedCountsForBranch(node));
+            }
+        }
+
+        double total = 0;
+        for (double x : count) {
+            total += x;
+        }
+        return total;
     }
 
+    private void addToMatrix(double[] total, double[] summant) {
+        final int length = summant.length;
+        for (int i = 0; i < length; i++) {
+            total[i] += summant[i];
+        }
+    }
+
+    private int getCanonicalState(int i, int j, int k) {
+        return i * 16 + j * 4 + k;
+    }
+
+//    private int getVladimirState(int i, int j, int k) {
+//        if (i == 1) i = 2;
+//        else if (i == 2) i = 1;
+//
+//        if (j == 1) j = 2;
+//        else if (j == 2) j = 1;
+//
+//        if (k == 1) k = 2;
+//        else if (k == 2) k = 1;
+//
+//        return i * 16 + j * 4 + k + 1;
+//    }
 
     public LogColumn[] getColumns() {
         return new LogColumn[]{
@@ -160,18 +204,16 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         }
     }
 
-    private final AncestralStateBeagleTreeLikelihood partition0;
-    private final AncestralStateBeagleTreeLikelihood partition1;
-    private final AncestralStateBeagleTreeLikelihood partition2;
-
-    private final SubstitutionModel substModel0;
-    private final SubstitutionModel substModel1;
-    private final SubstitutionModel substModel2;
-
-    private final ProductChainSubstitutionModel productChain;
+    private final AncestralStateBeagleTreeLikelihood[] partition;
+    private final MarkovJumpsSubstitutionModel markovJumps;
+    private final BranchRateModel branchRateModel;
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;
 
-    private static final boolean DEBUG = true;
+    private final double[] condMeanMatrix;
+
+    private int numCodons;
+
+    private static final boolean DEBUG = false;
 }

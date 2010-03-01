@@ -40,12 +40,12 @@ import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
-import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
-import dr.inference.xml.LoggerParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
+import dr.inferencexml.loggers.ColumnsParser;
+import dr.inferencexml.loggers.LoggerParser;
+import dr.inferencexml.loggers.TreeLoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
@@ -83,71 +83,71 @@ public class LogGenerator extends Generator {
                 });
 
         if (options.hasData()) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "Posterior"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "Posterior"),
+                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
             writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        writer.writeOpenTag(Columns.COLUMN,
+        writer.writeOpenTag(ColumnsParser.COLUMN,
                 new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Prior"),
-                        new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                        new Attribute.Default<String>(ColumnsParser.LABEL, "Prior"),
+                        new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                 }
         );
         writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
-        writer.writeCloseTag(Columns.COLUMN);
+        writer.writeCloseTag(ColumnsParser.COLUMN);
 
         if (options.hasData()) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "Likelihood"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "Likelihood"),
+                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
             writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "PopMean"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "PopMean"),
+                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
             writer.writeIDref(ParameterParser.PARAMETER, TraitGuesser.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
-                            new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + TreeModelParser.ROOT_HEIGHT),
+                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
 
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, branchRatesModelGenerator.getClockRateString(model)),
-                            new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, branchRatesModelGenerator.getClockRateString(model)),
+                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
@@ -163,7 +163,7 @@ public class LogGenerator extends Generator {
 //                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
 //            }
 //        }
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 //        for (PartitionClockModel model : options.getPartitionClockModels()) {
 //            branchRatesModelGenerator.writeLogStatistic(model, writer);

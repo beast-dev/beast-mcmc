@@ -4,7 +4,7 @@
 //package dr.inference.loggers;
 //
 //import dr.evolution.tree.Tree;
-//import dr.inference.xml.LoggerParser;
+//import dr.inferencexml.loggers.LoggerParser;
 //import dr.xml.AttributeRule;
 //import dr.xml.StringAttributeRule;
 //import dr.xml.XMLObject;

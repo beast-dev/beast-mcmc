@@ -66,10 +66,11 @@ import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.*;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
-import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
-import dr.inference.xml.LoggerParser;
 import dr.inferencexml.distribution.*;
+import dr.inferencexml.loggers.ColumnsParser;
+import dr.inferencexml.loggers.LoggerParser;
+import dr.inferencexml.loggers.TreeLoggerParser;
 import dr.inferencexml.model.*;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
@@ -2391,15 +2392,15 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
-        writer.writeOpenTag(Columns.COLUMN,
+        writer.writeOpenTag(ColumnsParser.COLUMN,
                 new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, label),
-                        new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                        new Attribute.Default<String>(ColumnsParser.LABEL, label),
+                        new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "0"),
+                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                 }
         );
         writer.writeTag(SumStatisticParser.SUM_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, name), true);
-        writer.writeCloseTag(Columns.COLUMN);
+        writer.writeCloseTag(ColumnsParser.COLUMN);
     }
 
     /**
@@ -2409,54 +2410,54 @@ public class BeastGenerator extends BeautiOptions {
      */
     private void writeScreenLog(XMLWriter writer) {
         if (alignment != null) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "Posterior"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "Posterior"),
+                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
             writer.writeTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.IDREF, "posterior"), true);
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        writer.writeOpenTag(Columns.COLUMN,
+        writer.writeOpenTag(ColumnsParser.COLUMN,
                 new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Prior"),
-                        new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                        new Attribute.Default<String>(ColumnsParser.LABEL, "Prior"),
+                        new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                 }
         );
         writer.writeTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.IDREF, "prior"), true);
-        writer.writeCloseTag(Columns.COLUMN);
+        writer.writeCloseTag(ColumnsParser.COLUMN);
 
         if (alignment != null) {
-            writer.writeOpenTag(Columns.COLUMN,
+            writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(Columns.LABEL, "Likelihood"),
-                            new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-                            new Attribute.Default<String>(Columns.WIDTH, "12")
+                            new Attribute.Default<String>(ColumnsParser.LABEL, "Likelihood"),
+                            new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
             writer.writeTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "likelihood"), true);
-            writer.writeCloseTag(Columns.COLUMN);
+            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        writer.writeOpenTag(Columns.COLUMN,
+        writer.writeOpenTag(ColumnsParser.COLUMN,
                 new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Root Height"),
-                        new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                        new Attribute.Default<String>(ColumnsParser.LABEL, "Root Height"),
+                        new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                 }
         );
         writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, "treeModel.rootHeight"), true);
-        writer.writeCloseTag(Columns.COLUMN);
+        writer.writeCloseTag(ColumnsParser.COLUMN);
 
-        writer.writeOpenTag(Columns.COLUMN,
+        writer.writeOpenTag(ColumnsParser.COLUMN,
                 new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, "Rate"),
-                        new Attribute.Default<String>(Columns.SIGNIFICANT_FIGURES, "6"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
+                        new Attribute.Default<String>(ColumnsParser.LABEL, "Rate"),
+                        new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                 }
         );
         if (clockModel == STRICT_CLOCK) {
@@ -2464,7 +2465,7 @@ public class BeastGenerator extends BeautiOptions {
         } else {
             writer.writeTag(RateStatisticParser.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, "meanRate"), true);
         }
-        writer.writeCloseTag(Columns.COLUMN);
+        writer.writeCloseTag(ColumnsParser.COLUMN);
 
         if (clockModel == RANDOM_LOCAL_CLOCK) {
             writeSumStatisticColumn(writer, "rateChanges", "Rate Changes");
@@ -2475,64 +2476,64 @@ public class BeastGenerator extends BeautiOptions {
 //			boolean nucs = alignment.getDataType() == Nucleotides.INSTANCE;
 //			if (nucs && codonHeteroPattern != null) {
 //				if (codonHeteroPattern.equals("112")) {
-//					writer.writeOpenTag(Columns.COLUMN,
+//					writer.writeOpenTag(ColumnsParser.COLUMN,
 //							new Attribute[] {
-//									new Attribute.Default<String>(Columns.LABEL, "L(codon pos 1+2)"),
-//									new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//									new Attribute.Default<String>(Columns.WIDTH, "12")
+//									new Attribute.Default<String>(ColumnsParser.LABEL, "L(codon pos 1+2)"),
+//									new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//									new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //							}
 //					);
 //					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood1"), true);
-//					writer.writeCloseTag(Columns.COLUMN);
-//					writer.writeOpenTag(Columns.COLUMN,
+//					writer.writeCloseTag(ColumnsParser.COLUMN);
+//					writer.writeOpenTag(ColumnsParser.COLUMN,
 //							new Attribute[] {
-//									new Attribute.Default<String>(Columns.LABEL, "L(codon pos 3)"),
-//									new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//									new Attribute.Default<String>(Columns.WIDTH, "12")
+//									new Attribute.Default<String>(ColumnsParser.LABEL, "L(codon pos 3)"),
+//									new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//									new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //							}
 //					);
 //					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood2"), true);
-//					writer.writeCloseTag(Columns.COLUMN);
+//					writer.writeCloseTag(ColumnsParser.COLUMN);
 //				} else if (codonHeteroPattern.equals("123")) {
 //					for (int i =1; i <= 3; i++) {
-//						writer.writeOpenTag(Columns.COLUMN,
+//						writer.writeOpenTag(ColumnsParser.COLUMN,
 //								new Attribute[] {
-//										new Attribute.Default<String>(Columns.LABEL, "L(codon pos "+i+")"),
-//										new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//										new Attribute.Default<String>(Columns.WIDTH, "12")
+//										new Attribute.Default<String>(ColumnsParser.LABEL, "L(codon pos "+i+")"),
+//										new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//										new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //								}
 //						);
 //						writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
-//						writer.writeCloseTag(Columns.COLUMN);
+//						writer.writeCloseTag(ColumnsParser.COLUMN);
 //					}
 //				}
 //			} else {
-//				writer.writeOpenTag(Columns.COLUMN,
+//				writer.writeOpenTag(ColumnsParser.COLUMN,
 //						new Attribute[] {
-//								new Attribute.Default<String>(Columns.LABEL, "L(tree)"),
-//								new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//								new Attribute.Default<String>(Columns.WIDTH, "12")
+//								new Attribute.Default<String>(ColumnsParser.LABEL, "L(tree)"),
+//								new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//								new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //						}
 //				);
 //				writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD), true);
-//				writer.writeCloseTag(Columns.COLUMN);
+//				writer.writeCloseTag(ColumnsParser.COLUMN);
 //			}
 //		}
 //		if (nodeHeightPrior == YULE || nodeHeightPrior == BIRTH_DEATH) {
-//			writer.writeOpenTag(Columns.COLUMN,
+//			writer.writeOpenTag(ColumnsParser.COLUMN,
 //					new Attribute[] {
-//							new Attribute.Default<String>(Columns.LABEL, "L(speciation)"),
-//							new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//							new Attribute.Default<String>(Columns.WIDTH, "12")
+//							new Attribute.Default<String>(ColumnsParser.LABEL, "L(speciation)"),
+//							new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//							new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //					}
 //			);
 //			writer.writeTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF, "speciation"), true);
 //		} else {
-//			writer.writeOpenTag(Columns.COLUMN,
+//			writer.writeOpenTag(ColumnsParser.COLUMN,
 //					new Attribute[] {
-//							new Attribute.Default<String>(Columns.LABEL, "L(coalecent)"),
-//							new Attribute.Default<String>(Columns.DECIMAL_PLACES, "4"),
-//							new Attribute.Default<String>(Columns.WIDTH, "12")
+//							new Attribute.Default<String>(ColumnsParser.LABEL, "L(coalecent)"),
+//							new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "4"),
+//							new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //					}
 //			);
 //			if (nodeHeightPrior == SKYLINE) {
@@ -2541,7 +2542,7 @@ public class BeastGenerator extends BeautiOptions {
 //				writer.writeTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"coalescent"), true);
 //			}
 //		}
-//		writer.writeCloseTag(Columns.COLUMN);
+//		writer.writeCloseTag(ColumnsParser.COLUMN);
 
     }
 

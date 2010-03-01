@@ -1,12 +1,13 @@
 package dr.evomodel.operators;
 
-import dr.inference.model.Parameter;
-import dr.inference.operators.*;
-import dr.math.MathUtils;
-import dr.xml.*;
-import dr.evomodel.tree.TreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
+import dr.inference.operators.*;
+import dr.inferencexml.operators.ScaleOperatorParser;
+import dr.math.MathUtils;
+import dr.xml.*;
 
 import java.util.*;
 
@@ -18,8 +19,8 @@ import java.util.*;
 public class NodeHeightScaleOperator extends AbstractCoercableOperator {
 
     public static final String NODE_HEIGHT_SCALE_OPERATOR = "nodeHeightScaleOperator";
-    public static final String SCALE_FACTOR = ScaleOperator.SCALE_FACTOR;
-    public static final String SCALE_ALL = ScaleOperator.SCALE_ALL;
+    public static final String SCALE_FACTOR = ScaleOperatorParser.SCALE_FACTOR;
+    public static final String SCALE_ALL = ScaleOperatorParser.SCALE_ALL;
 
     private final TreeModel tree;
     private final boolean scaleAll;

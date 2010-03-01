@@ -27,7 +27,6 @@ package dr.inference.operators;
 
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A generic operator for use with a sum-constrained vector parameter.
@@ -37,9 +36,6 @@ import dr.xml.*;
  * @version $Id: CenteredScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
 public class CenteredScaleOperator extends AbstractCoercableOperator {
-
-    public static final String CENTERED_SCALE = "centeredScale";
-    public static final String SCALE_FACTOR = "scaleFactor";
 
     public CenteredScaleOperator(Parameter parameter) {
         super(CoercionMode.DEFAULT);
@@ -129,45 +125,6 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return CENTERED_SCALE;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            double scale = xo.getDoubleAttribute(SCALE_FACTOR);
-            double weight = xo.getDoubleAttribute(WEIGHT);
-            CenteredScaleOperator op = new CenteredScaleOperator(parameter);
-            op.setWeight(weight);
-            op.scaleFactor = scale;
-            op.mode = CoercionMode.parseMode(xo);
-            return op;
-        }
-
-        public String getParserDescription() {
-            return "A centered-scale operator. This operator scales the the values of a multi-dimensional parameter so as to perserve the mean. It does this by expanding or conrtacting the parameter values around the mean.";
-        }
-
-        public Class getReturnType() {
-            return CenteredScaleOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                new ElementRule(Parameter.class)
-        };
-    };
-
     public String toString() {
         return getOperatorName() + "(scaleFactor=" + scaleFactor + ")";
     }
@@ -175,5 +132,5 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
     // Private instance variables
 
     private Parameter parameter = null;
-    private double scaleFactor = 0.5;
+    public double scaleFactor = 0.5;
 }

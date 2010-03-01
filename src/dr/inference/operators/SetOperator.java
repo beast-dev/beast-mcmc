@@ -27,7 +27,6 @@ package dr.inference.operators;
 
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -68,55 +67,6 @@ public class SetOperator extends SimpleMCMCOperator {
 
         return 0.0;
     }
-
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return "setOperator";
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double[] values = xo.getDoubleArrayAttribute("set");
-            double weight = xo.getDoubleAttribute("weight");
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            System.out.println("Creating set operator for parameter " + parameter.getParameterName());
-            System.out.print("  set = {" + values[0]);
-            for (int i = 1; i < values.length; i++) {
-                System.out.print(", " + values[i]);
-            }
-            System.out.println("}");
-
-            SetOperator operator = new SetOperator(parameter, values);
-            operator.setWeight(weight);
-
-            return operator;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents an operator on a set.";
-        }
-
-        public Class getReturnType() {
-            return SetOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleArrayRule("set"),
-                AttributeRule.newDoubleRule("weight"),
-                new ElementRule(Parameter.class)
-        };
-    };
 
     public Element createOperatorElement(Document document) {
         throw new RuntimeException("Not implememented!");

@@ -27,7 +27,6 @@ package dr.inference.operators;
 
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A generic operator that flips bits.
@@ -36,10 +35,6 @@ import dr.xml.*;
  * @version $Id$
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
-
-    public static final String BIT_FLIP_OPERATOR = "bitFlipOperator";
-    public static final String BITS = "bits";
-    public static final String USES_SUM_PRIOR = "usesPriorOnSum";
 
     public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum) {
 //       this(parameter,weight,1,usesPriorOnSum);
@@ -111,47 +106,6 @@ public class BitFlipOperator extends SimpleMCMCOperator {
         return getOperatorName();
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BIT_FLIP_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            boolean usesPriorOnSum = xo.getAttribute(USES_SUM_PRIOR,true);
-
-            return new BitFlipOperator(parameter, weight, usesPriorOnSum);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a bit-flip operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WEIGHT),
-//                AttributeRule.newIntegerRule(BITS,true),
-                AttributeRule.newBooleanRule(USES_SUM_PRIOR,true),
-                new ElementRule(Parameter.class)
-        };
-
-    };
     // Private instance variables
 
     private Parameter parameter = null;

@@ -29,11 +29,9 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.List;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 /**
  * This class implements a simple operator schedule.
@@ -42,10 +40,6 @@ import java.util.logging.Logger;
  * @version $Id: SimpleOperatorSchedule.java,v 1.5 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
-
-	public static final String OPERATOR_SCHEDULE = "operators";
-	public static final String SEQUENTIAL = "sequential";
-	public static final String OPTIMIZATION_SCHEDULE = "optimizationSchedule";
 
 	List<MCMCOperator> operators = null;
 	double totalWeight = 0;
@@ -168,63 +162,4 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			return MCMCOperator.Utils.getAcceptanceProbability(op);
 		}
 	}
-
-	public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() {
-			return OPERATOR_SCHEDULE;
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			SimpleOperatorSchedule schedule = new SimpleOperatorSchedule();
-
-			if (xo.hasAttribute(SEQUENTIAL)) {
-				schedule.setSequential(xo.getBooleanAttribute(SEQUENTIAL));
-			}
-
-
-			if (xo.hasAttribute(OPTIMIZATION_SCHEDULE)) {
-				String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
-                Logger.getLogger("dr.inference").info("Optimization Schedule: " + type);
-
-                if (type.equals(OperatorSchedule.LOG_STRING))
-					schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);
-				else if (type.equals(OperatorSchedule.SQRT_STRING))
-					schedule.setOptimizationSchedule(SQRT_SCHEDULE);
-				else if (!type.equals(OperatorSchedule.DEFAULT_STRING))
-					throw new RuntimeException("Unsupported optimization schedule");
-			}
-
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof MCMCOperator) {
-					schedule.addOperator((MCMCOperator) child);
-				}
-			}
-			return schedule;
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private final XMLSyntaxRule[] rules = {
-				AttributeRule.newBooleanRule(SEQUENTIAL, true),
-				new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE),
-				AttributeRule.newStringRule(OPTIMIZATION_SCHEDULE, true)
-		};
-
-		public String getParserDescription() {
-			return "A simple operator scheduler";
-		}
-
-		public Class getReturnType() {
-			return SimpleOperatorSchedule.class;
-		}
-	};
 }

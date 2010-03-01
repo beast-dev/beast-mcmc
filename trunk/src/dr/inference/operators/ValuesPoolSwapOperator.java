@@ -2,24 +2,23 @@ package dr.inference.operators;
 
 import dr.inference.model.ValuesPool;
 import dr.inference.model.Variable;
+import dr.inferencexml.operators.ValuesPoolSwapOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * @author Joseph Heled
  *         Date: 8/09/2009
  */
 public class ValuesPoolSwapOperator extends SimpleMCMCOperator {
-    public static String VALUESPOOL_OPERATOR = "poolSwapOperator";
 
     private final ValuesPool pool;
 
-    ValuesPoolSwapOperator(ValuesPool pool) {
+    public ValuesPoolSwapOperator(ValuesPool pool) {
         this.pool = pool;
     }
 
     public String getOperatorName() {
-        return VALUESPOOL_OPERATOR + "(" + pool.getModelName() + ")";
+        return ValuesPoolSwapOperatorParser.VALUESPOOL_OPERATOR + "(" + pool.getModelName() + ")";
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -72,38 +71,4 @@ public class ValuesPoolSwapOperator extends SimpleMCMCOperator {
         return null;
     }
 
-
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return VALUESPOOL_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final ValuesPool parameter = (ValuesPool) xo.getChild(ValuesPool.class);
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final MCMCOperator op = new ValuesPoolSwapOperator(parameter) ;
-            op.setWeight(weight);
-            return op;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return ".";
-        }
-
-        public Class getReturnType() {
-            return SelectorOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(WEIGHT),
-                    new ElementRule(ValuesPool.class),
-            };
-        }
-    };
 }

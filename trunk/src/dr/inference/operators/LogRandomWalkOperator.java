@@ -27,9 +27,8 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inferencexml.operators.ScaleOperatorParser;
+import dr.inferencexml.operators.LogRandomWalkOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A generic scale operator for use with a multi-dimensional parameters.
@@ -39,12 +38,6 @@ import dr.xml.*;
  * @version $Id$
  */
 public class LogRandomWalkOperator extends AbstractCoercableOperator {
-
-    public static final String LOGRANDOMWALK_OPERATOR = "logRandomWalkOperator";
-    // Use same attributes as scale operator to help users
-    public static final String SCALE_ALL = ScaleOperatorParser.SCALE_ALL;
-    public static final String SCALE_ALL_IND = ScaleOperatorParser.SCALE_ALL_IND;
-    public static final String WINDOW_SIZE = "window";
 
     private double size;
     private Parameter parameter = null;
@@ -117,7 +110,7 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "logRandomWalk" + (scaleAllInd ? "-all" : "") +
+        return LogRandomWalkOperatorParser.LOGRANDOMWALK_OPERATOR + (scaleAllInd ? "-all" : "") +
                 (scaleAllInd ? "-independently" : "") +
                 "(" + parameter.getParameterName() + ")";
     }
@@ -154,60 +147,6 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
             return "";
         }
     }
-
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return LOGRANDOMWALK_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            CoercionMode mode = CoercionMode.parseMode(xo);
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final double size = xo.getDoubleAttribute(WINDOW_SIZE);
-            final boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
-            final boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
-
-            if( size <= 0.0 ) {
-                throw new XMLParseException("size must be positive");
-            }
-
-            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            return new LogRandomWalkOperator(parameter, size, mode, weight, scaleAll, scaleAllInd);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a scale operator on a given parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WINDOW_SIZE),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-
-                AttributeRule.newBooleanRule(SCALE_ALL, true),
-                AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
-
-                new ElementRule(Parameter.class),
-        };
-
-    };
 
     public String toString() {
         return getOperatorName();

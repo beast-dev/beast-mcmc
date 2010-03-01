@@ -68,8 +68,6 @@ import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.loggers.Columns;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.BitFlipOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inference.xml.LoggerParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.*;
@@ -1706,7 +1704,7 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeOperatorSchedule(ArrayList<Operator> operators, XMLWriter writer) {
         writer.writeOpenTag(
-                SimpleOperatorSchedule.OPERATOR_SCHEDULE,
+                SimpleOperatorScheduleParser.OPERATOR_SCHEDULE,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "operators")}
         );
 
@@ -1715,7 +1713,7 @@ public class BeastGenerator extends BeautiOptions {
                 writeOperator(operator, writer);
         }
 
-        writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
+        writer.writeCloseTag(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
     }
 
     private void writeOperator(Operator operator, XMLWriter writer) {
@@ -1900,13 +1898,13 @@ public class BeastGenerator extends BeautiOptions {
     }
 
     private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(BitFlipOperator.BIT_FLIP_OPERATOR,
+        writer.writeOpenTag(BitFlipOperatorParser.BIT_FLIP_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>("weight", operator.weight),
                 }
         );
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
+        writer.writeCloseTag(BitFlipOperatorParser.BIT_FLIP_OPERATOR);
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
@@ -2162,7 +2160,7 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
         }
 
-        writer.writeTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE, new Attribute.Default<String>(XMLParser.IDREF, "operators"), true);
+        writer.writeTag(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, new Attribute.Default<String>(XMLParser.IDREF, "operators"), true);
 
         // write log to screen
         writer.writeOpenTag(LoggerParser.LOG,

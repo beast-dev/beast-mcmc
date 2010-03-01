@@ -41,10 +41,10 @@ import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.*;
-import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
+import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
 import dr.util.Version;
 import dr.xml.XMLParser;
@@ -346,6 +346,7 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("beast");
         writer.flush();
+        writer.close();
     }
 
     /**
@@ -685,7 +686,7 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
         }
 
-        writer.writeIDref(SimpleOperatorSchedule.OPERATOR_SCHEDULE, "operators");
+        writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen    	
         logGenerator.writeLogToScreen(writer, branchRatesModelGenerator);

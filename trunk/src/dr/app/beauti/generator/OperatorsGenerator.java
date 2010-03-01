@@ -17,7 +17,6 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.BitFlipOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
@@ -50,7 +49,7 @@ public class OperatorsGenerator extends Generator {
         // TODO: multi-prior, currently simplify to share same prior case
         if (options.isShareSameTreePrior() && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
             operatorAttributes = new Attribute[2];
-            operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorSchedule.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
+            operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {
 //				break;
 //			default:
@@ -60,7 +59,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeComment("Define operators");
         writer.writeOpenTag(
-                SimpleOperatorSchedule.OPERATOR_SCHEDULE,
+                SimpleOperatorScheduleParser.OPERATOR_SCHEDULE,
                 operatorAttributes
 //				new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "operators")}
         );
@@ -73,7 +72,7 @@ public class OperatorsGenerator extends Generator {
             }
         }
 
-        writer.writeCloseTag(SimpleOperatorSchedule.OPERATOR_SCHEDULE);
+        writer.writeCloseTag(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
     }
 
     private void writeOperator(Operator operator, XMLWriter writer) {
@@ -380,11 +379,11 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(BitFlipOperator.BIT_FLIP_OPERATOR,
+        writer.writeOpenTag(BitFlipOperatorParser.BIT_FLIP_OPERATOR,
                 getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(BitFlipOperator.BIT_FLIP_OPERATOR);
+        writer.writeCloseTag(BitFlipOperatorParser.BIT_FLIP_OPERATOR);
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {

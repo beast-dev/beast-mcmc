@@ -26,10 +26,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * Given a values vector (data) and an indicators vector (boolean vector indicating whether the corrosponding value
@@ -55,9 +52,6 @@ import dr.xml.*;
  * @version $Id$
  */
 public class BitSwapOperator extends SimpleMCMCOperator {
-
-    public static final String BIT_SWAP_OPERATOR = "bitSwapOperator";
-    public static final String RADIUS = "radius";
 
     private final Parameter data;
     private final Parameter indicators;
@@ -185,64 +179,4 @@ public class BitSwapOperator extends SimpleMCMCOperator {
 
         return hastingsRatio;
     }
-
-    private static final String DATA = MixedDistributionLikelihoodParser.DATA;
-    private static final String INDICATORS = MixedDistributionLikelihoodParser.INDICATORS;
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BIT_SWAP_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            Parameter data = (Parameter) ((XMLObject) xo.getChild(DATA)).getChild(Parameter.class);
-            Parameter indicators = (Parameter) ((XMLObject) xo.getChild(INDICATORS)).getChild(Parameter.class);
-            int radius = -1;
-
-            if (xo.hasAttribute(RADIUS)) {
-                double rd = xo.getDoubleAttribute(RADIUS);
-
-                if (rd > 0) {
-                    if (rd < 1) {
-                        rd = Math.round(rd * indicators.getDimension());
-                    }
-                    radius = (int) Math.round(rd);
-                    if (!(radius >= 1 && radius < indicators.getDimension() - 1)) {
-                        radius = -1;
-                    }
-                }
-                if (radius < 1) {
-                    throw new XMLParseException("invalid radius " + rd);
-                }
-            }
-
-            return new BitSwapOperator(data, indicators, radius, weight);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a bit-swap operator on a given parameter and data.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule(RADIUS),
-                new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
-                new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
-        };
-
-    };
 }

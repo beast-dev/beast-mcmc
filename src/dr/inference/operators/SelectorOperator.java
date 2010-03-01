@@ -2,8 +2,8 @@ package dr.inference.operators;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inferencexml.operators.SelectorOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +16,13 @@ import java.util.List;
  *         Date: 4/09/2009
  */
 public class SelectorOperator extends SimpleMCMCOperator {
-    public static String SELECTOR_OPERATOR = "selectorOperator";
     private final Parameter selector;
 
     private final int[] np_m1;
 
     private final int[] np_m2;
 
-    SelectorOperator(Parameter selector) {
+    public SelectorOperator(Parameter selector) {
         this.selector = selector;
         final int len = selector.getSize();
         np_m1 = new int[len +1];
@@ -43,7 +42,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
     }
     
     public String getOperatorName() {
-        return SELECTOR_OPERATOR + "(" + selector.getParameterName() + ")";
+        return SelectorOperatorParser.SELECTOR_OPERATOR + "(" + selector.getParameterName() + ")";
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -331,37 +330,4 @@ public class SelectorOperator extends SimpleMCMCOperator {
         return r;
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SELECTOR_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            final double weight = xo.getDoubleAttribute(WEIGHT);
-            final SelectorOperator op = new SelectorOperator(parameter);
-            op.setWeight(weight);
-            return op;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return ".";
-        }
-
-        public Class getReturnType() {
-            return SelectorOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(WEIGHT),
-                    new ElementRule(Parameter.class),
-            };
-        }
-    };
 }

@@ -32,11 +32,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.operators.OperatorSchedule;
 import dr.util.Identifiable;
-import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import java.util.ArrayList;
 
 /**
  * A heuristic optimizer that uses the MCMC framework.
@@ -46,8 +43,6 @@ import java.util.ArrayList;
  * @version $Id: MLOptimizer.java,v 1.5 2006/06/13 03:50:54 alexei Exp $
  */
 public class MLOptimizer implements Runnable, Identifiable {
-
-	public static final String CHAIN_LENGTH = "chainLength";
 
 	/** the likelihood function */
 	private final Likelihood likelihood;
@@ -207,62 +202,6 @@ public class MLOptimizer implements Runnable, Identifiable {
 	public Element createElement(Document d) {
 		throw new RuntimeException("Not implemented!");
 	}
-
-	/**
-	 * Parses an alignment element and returns an alignment object.
-	 */
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() { return "optimizer"; }
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
-
-			OperatorSchedule opsched = null;
-			dr.inference.model.Likelihood likelihood = null;
-			ArrayList<Logger> loggers = new ArrayList<Logger>();
-
-			for (int i = 0; i < xo.getChildCount(); i++) {
-				Object child = xo.getChild(i);
-				if (child instanceof dr.inference.model.Likelihood) {
-					likelihood = (dr.inference.model.Likelihood)child;
-				} else if (child instanceof OperatorSchedule) {
-					opsched = (OperatorSchedule)child;
-				} else if (child instanceof Logger) {
-					loggers.add((Logger)child);
-				} else {
-					throw new XMLParseException("Unrecognized element found in optimizer element:" + child);
-				}
-			}
-
-			Logger[] loggerArray = new Logger[loggers.size()];
-			loggers.toArray(loggerArray);
-
-            return new MLOptimizer("optimizer1", chainLength, likelihood, opsched, loggerArray);
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-
-		public String getParserDescription() {
-			return "This element returns a maximum likelihood heuristic optimizer and runs the optimization as a side effect.";
-		}
-
-		public Class getReturnType() { return MLOptimizer.class; }
-
-		public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
-		private final XMLSyntaxRule[] rules = {
-			AttributeRule.newIntegerRule(CHAIN_LENGTH),
-			new ElementRule(OperatorSchedule.class ),
-			new ElementRule(Likelihood.class ),
-			new ElementRule(Logger.class, 1, Integer.MAX_VALUE )
-		};
-
-	};
 
 	public String getId() { return id; }
 

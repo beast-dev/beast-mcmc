@@ -23,13 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.mcmc;
+package dr.inferencexml;
 
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.model.*;
+import dr.inference.mcmc.MCMC;
+import dr.inference.mcmc.MCMCOptions;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorSchedule;
-
 import dr.xml.*;
 
 import java.util.ArrayList;

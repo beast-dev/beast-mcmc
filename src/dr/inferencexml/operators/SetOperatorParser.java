@@ -7,7 +7,7 @@ import dr.xml.*;
 
 /**
  */
-public class SetOperatorparser1 extends AbstractXMLObjectParser {
+public class SetOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SET_OPERATOR = "setOperator";
     public static final String SET = "set";

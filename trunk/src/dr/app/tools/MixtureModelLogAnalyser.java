@@ -108,7 +108,6 @@ public class MixtureModelLogAnalyser {
      * @param discreteVariableName  tag for the name of the discrete variable
      */
     private void report(String name, int burnin, String discreteVariableName) {
-        int count = 0;
 
         try {
             FileReader fileReader = new FileReader(new File(name));
@@ -132,7 +131,7 @@ public class MixtureModelLogAnalyser {
                         }
                     }
 
-                    if(count>=burnin) {
+                    if(Integer.parseInt(split[0])>=burnin) {
                         if(hash.containsKey(split[discreteVariableIndex])) {
                             hash.put(split[discreteVariableIndex], new Integer(hash.get(split[discreteVariableIndex]) + 1));
                         }
@@ -140,8 +139,6 @@ public class MixtureModelLogAnalyser {
                             hash.put(split[discreteVariableIndex], new Integer(1));
                         }
                     }
-
-                    count++;
                 }
 
 

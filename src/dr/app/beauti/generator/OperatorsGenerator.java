@@ -17,9 +17,10 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
-import dr.inference.operators.*;
+import dr.inference.operators.BitFlipOperator;
+import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
-import dr.inferencexml.operators.RandomWalkOperatorParser;
+import dr.inferencexml.operators.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -172,27 +173,27 @@ public class OperatorsGenerator extends Generator {
 
     private void writeScaleOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                ScaleOperator.SCALE_OPERATOR,
+                ScaleOperatorParser.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+        writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
 
     private void writeScaleOperator(Operator operator, XMLWriter writer, boolean indepedently) {
         writer.writeOpenTag(
-                ScaleOperator.SCALE_OPERATOR,
+                ScaleOperatorParser.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight),
-                        new Attribute.Default<String>(ScaleOperator.SCALE_ALL_IND, indepedently ? "true" : "false")
+                        new Attribute.Default<String>(ScaleOperatorParser.SCALE_ALL_IND, indepedently ? "true" : "false")
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+        writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
 
     private void writeRandomWalkOperator(Operator operator, XMLWriter writer) {
@@ -241,10 +242,10 @@ public class OperatorsGenerator extends Generator {
 
     private void writeScaleAllOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                ScaleOperator.SCALE_OPERATOR,
+                ScaleOperatorParser.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
-                        new Attribute.Default<String>(ScaleOperator.SCALE_ALL, "true"),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<String>(ScaleOperatorParser.SCALE_ALL, "true"),
                         getWeightAttribute(operator.weight)
                 });
 
@@ -258,46 +259,46 @@ public class OperatorsGenerator extends Generator {
             writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
         }
 
-        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+        writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
 
     private void writeUpDownOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
+        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
 
-        writer.writeOpenTag(UpDownOperator.UP);
+        writer.writeOpenTag(UpDownOperatorParser.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
         if (!operator.parameter1.isFixed && !(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN)) {
         	writeParameter1Ref(writer, operator);
         }
-        writer.writeCloseTag(UpDownOperator.UP);
+        writer.writeCloseTag(UpDownOperatorParser.UP);
 
-        writer.writeOpenTag(UpDownOperator.DOWN);
+        writer.writeOpenTag(UpDownOperatorParser.DOWN);
         if (operator.tag == null) {
 //	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
             writeParameter2Ref(writer, operator);
         } else {
         	writer.writeIDref(operator.tag,  operator.idref);
         }
-        writer.writeCloseTag(UpDownOperator.DOWN);
+        writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
-        writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
+        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
     }
 
     private void writeCenteredOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(CenteredScaleOperator.CENTERED_SCALE,
+        writer.writeOpenTag(CenteredScaleOperatorParser.CENTERED_SCALE,
                 new Attribute[]{
-                        new Attribute.Default<Double>(CenteredScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(CenteredScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(CenteredScaleOperator.CENTERED_SCALE);
+        writer.writeCloseTag(CenteredScaleOperatorParser.CENTERED_SCALE);
     }
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
@@ -311,10 +312,10 @@ public class OperatorsGenerator extends Generator {
                 for (int i = 1; i < parameterWeights.length; i++) {
                     pw += " " + parameterWeights[i];
                 }
-                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
                         new Attribute[]{
-                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, pw),
+                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.tuning),
+                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
                                 getWeightAttribute(operator.weight)
                         }
                 );
@@ -329,32 +330,32 @@ public class OperatorsGenerator extends Generator {
                 for (int i = 1; i < parameterWeights.length; i++) {
                     pw += " " + parameterWeights[i];
                 }
-                writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
                         new Attribute[]{
-                                new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
-                                new Attribute.Default<String>(DeltaExchangeOperator.PARAMETER_WEIGHTS, pw),
+                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.tuning),
+                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
                                 getWeightAttribute(operator.weight)
                         }
                 );
             }
 
         } else {
-            writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+            writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
                     new Attribute[]{
-                            new Attribute.Default<Double>(DeltaExchangeOperator.DELTA, operator.tuning),
+                            new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.tuning),
                             getWeightAttribute(operator.weight)
                     }
             );
         }
 
         writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
+        writer.writeCloseTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE);
     }
 
     private void writeIntegerDeltaOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(DeltaExchangeOperator.DELTA_EXCHANGE,
+        writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
                 new Attribute[]{
-                        new Attribute.Default<String>(DeltaExchangeOperator.DELTA, Integer.toString((int) operator.tuning)),
+                        new Attribute.Default<String>(DeltaExchangeOperatorParser.DELTA, Integer.toString((int) operator.tuning)),
                         new Attribute.Default<String>("integer", "true"),
                         getWeightAttribute(operator.weight),
                         new Attribute.Default<String>("autoOptimize", "false")
@@ -362,11 +363,11 @@ public class OperatorsGenerator extends Generator {
         );
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(DeltaExchangeOperator.DELTA_EXCHANGE);
+        writer.writeCloseTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE);
     }
 
     private void writeSwapOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(SwapOperator.SWAP_OPERATOR,
+        writer.writeOpenTag(SwapOperatorParser.SWAP_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<String>("size", Integer.toString((int) operator.tuning)),
                         getWeightAttribute(operator.weight),
@@ -375,7 +376,7 @@ public class OperatorsGenerator extends Generator {
         );
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(SwapOperator.SWAP_OPERATOR);
+        writer.writeCloseTag(SwapOperatorParser.SWAP_OPERATOR);
     }
 
     private void writeBitFlipOperator(Operator operator, XMLWriter writer) {
@@ -402,11 +403,11 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeIntegerUniformOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UniformIntegerOperator.UNIFORM_INTEGER_OPERATOR,
+        writer.writeOpenTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR,
                 getWeightAttribute(operator.weight));
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(UniformIntegerOperator.UNIFORM_INTEGER_OPERATOR);
+        writer.writeCloseTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR);
     }
 
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
@@ -467,16 +468,16 @@ public class OperatorsGenerator extends Generator {
 
     private void writeScaleWithIndicatorsOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                ScaleOperator.SCALE_OPERATOR,
+                ScaleOperatorParser.SCALE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
         writeParameter1Ref(writer, operator);
-        writer.writeOpenTag(ScaleOperator.INDICATORS, new Attribute.Default<String>(ScaleOperator.PICKONEPROB, "1.0"));
+        writer.writeOpenTag(ScaleOperatorParser.INDICATORS, new Attribute.Default<String>(ScaleOperatorParser.PICKONEPROB, "1.0"));
         writeParameter2Ref(writer, operator);
-        writer.writeCloseTag(ScaleOperator.INDICATORS);
-        writer.writeCloseTag(ScaleOperator.SCALE_OPERATOR);
+        writer.writeCloseTag(ScaleOperatorParser.INDICATORS);
+        writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
 
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
@@ -502,14 +503,14 @@ public class OperatorsGenerator extends Generator {
 
 
     private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
-    	writer.writeOpenTag(UpDownOperator.UP_DOWN_OPERATOR,
+    	writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
 
-        writer.writeOpenTag(UpDownOperator.UP);
+        writer.writeOpenTag(UpDownOperatorParser.UP);
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
 			if (model.isEstimatedRate()) {
@@ -544,9 +545,9 @@ public class OperatorsGenerator extends Generator {
 	        }
         }// nothing for EBSP
 
-        writer.writeCloseTag(UpDownOperator.UP);
+        writer.writeCloseTag(UpDownOperatorParser.UP);
 
-        writer.writeOpenTag(UpDownOperator.DOWN);
+        writer.writeOpenTag(UpDownOperatorParser.DOWN);
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) {
 	        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
@@ -561,9 +562,9 @@ public class OperatorsGenerator extends Generator {
         	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
         }
 
-        writer.writeCloseTag(UpDownOperator.DOWN);
+        writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
-        writer.writeCloseTag(UpDownOperator.UP_DOWN_OPERATOR);
+        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
     }
 
     private Attribute getWeightAttribute(double weight) {

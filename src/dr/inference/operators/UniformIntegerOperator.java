@@ -1,8 +1,8 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.UniformIntegerOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A generic uniform sampler/operator for use with a multi-dimensional parameter.
@@ -12,8 +12,6 @@ import dr.xml.*;
  * @version $Id: UniformOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class UniformIntegerOperator extends SimpleMCMCOperator {
-
-    public final static String UNIFORM_INTEGER_OPERATOR = "uniformIntegerOperator";
 
     public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
         this.parameter = parameter;
@@ -86,58 +84,8 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
         }
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return UNIFORM_INTEGER_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            int lower = (int)(double)parameter.getBounds().getLowerLimit(0);
-            if (xo.hasAttribute("lower")) lower = xo.getIntegerAttribute("lower");
-
-            int upper = (int)(double)parameter.getBounds().getUpperLimit(0);
-            if (xo.hasAttribute("upper")) upper = xo.getIntegerAttribute("upper");
-
-            if (upper == lower || lower == (int) Double.NEGATIVE_INFINITY || upper == (int) Double.POSITIVE_INFINITY) {
-                throw new XMLParseException(this.getParserName() + " boundaries not found in parameter " + parameter.getParameterName() + " Use operator lower and upper !");
-            }
-
-            return new UniformIntegerOperator(parameter, lower, upper, weight);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "An operator that picks new parameter values uniformly at random.";
-        }
-
-        public Class getReturnType() {
-            return UniformIntegerOperator.class;
-        }
-
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule("upper", true),
-                AttributeRule.newDoubleRule("lower", true),
-                new ElementRule(Parameter.class)
-        };
-    };
-
     public String toString() {
-        return UNIFORM_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ")";
+        return UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 
     //PRIVATE STUFF

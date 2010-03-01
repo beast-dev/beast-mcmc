@@ -8,7 +8,7 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
-import dr.inference.xml.LoggerParser;
+import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
 import java.io.*;

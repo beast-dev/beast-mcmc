@@ -1,4 +1,4 @@
-package dr.evomodelxml.tree;
+package dr.inferencexml.loggers;
 
 import dr.evolution.colouring.BranchColouring;
 import dr.evolution.colouring.TreeColouring;
@@ -8,7 +8,6 @@ import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
-import dr.inference.xml.LoggerParser;
 import dr.xml.*;
 
 import java.io.PrintWriter;

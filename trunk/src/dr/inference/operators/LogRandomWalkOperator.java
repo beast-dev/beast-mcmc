@@ -27,6 +27,7 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -41,8 +42,8 @@ public class LogRandomWalkOperator extends AbstractCoercableOperator {
 
     public static final String LOGRANDOMWALK_OPERATOR = "logRandomWalkOperator";
     // Use same attributes as scale operator to help users
-    public static final String SCALE_ALL = ScaleOperator.SCALE_ALL;
-    public static final String SCALE_ALL_IND = ScaleOperator.SCALE_ALL_IND;
+    public static final String SCALE_ALL = ScaleOperatorParser.SCALE_ALL;
+    public static final String SCALE_ALL_IND = ScaleOperatorParser.SCALE_ALL_IND;
     public static final String WINDOW_SIZE = "window";
 
     private double size;

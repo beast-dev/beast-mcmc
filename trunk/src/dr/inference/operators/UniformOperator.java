@@ -27,8 +27,8 @@ package dr.inference.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.UniformOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * A generic uniform sampler/operator for use with a multi-dimensional parameter.
@@ -98,45 +98,8 @@ public class UniformOperator extends SimpleMCMCOperator {
 //        }
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return "uniformOperator";
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-            return new UniformOperator(parameter, weight);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "An operator that picks new parameter values uniformly at random.";
-        }
-
-        public Class getReturnType() {
-            return UniformOperator.class;
-        }
-
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(WEIGHT),
-                new ElementRule(Parameter.class)
-        };
-    };
-
     public String toString() {
-        return "uniformOperator(" + parameter.getParameterName() + ")";
+        return UniformOperatorParser.UNIFORM_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 
     //PRIVATE STUFF

@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.xml.*;
 
 /**
@@ -69,7 +70,7 @@ public class LNVarianceOperator extends ScaleOperator {
 
             CoercionMode mode = CoercionMode.parseMode(xo);
             double weight = xo.getDoubleAttribute(WEIGHT);
-            double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+            double scaleFactor = xo.getDoubleAttribute(ScaleOperatorParser.SCALE_FACTOR);
 
             if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {
                 throw new XMLParseException("scaleFactor must be between 0.0 and 1.0");
@@ -97,7 +98,7 @@ public class LNVarianceOperator extends ScaleOperator {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
+                AttributeRule.newDoubleRule(ScaleOperatorParser.SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 new ElementRule(LogNormalDistributionModel.class)

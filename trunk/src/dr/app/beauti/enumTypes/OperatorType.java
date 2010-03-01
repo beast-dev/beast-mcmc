@@ -24,7 +24,7 @@
 package dr.app.beauti.enumTypes;
 
 import dr.evomodelxml.operators.TreeNodeSlideParser;
-import dr.inference.operators.ScaleOperator;
+import dr.inferencexml.operators.ScaleOperatorParser;
 
 /**
  * @author Alexei Drummond
@@ -38,7 +38,7 @@ public enum OperatorType {
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
     UP_DOWN_ALL_RATES_HEIGHTS("upDownAllRatesHeights"),
-    SCALE_ALL(ScaleOperator.SCALE_ALL),
+    SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     CENTERED_SCALE("centeredScale"),
     DELTA_EXCHANGE("deltaExchange"),

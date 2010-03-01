@@ -26,8 +26,8 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.SwapOperatorParser;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,8 +40,6 @@ import java.util.List;
  * @author Andrew Rambaut
  */
 public class SwapOperator extends SimpleMCMCOperator {
-
-    public final static String SWAP_OPERATOR = "swapOperator";
     private int size = 1;
 
     public SwapOperator(Parameter parameter, int size) {
@@ -86,56 +84,8 @@ public class SwapOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SWAP_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            double weight = xo.getDoubleAttribute("weight");
-            int size = xo.getIntegerAttribute("size");
-
-            boolean autoOptimize = xo.getBooleanAttribute("autoOptimize");
-            if (autoOptimize) throw new XMLParseException("swapOperator can't be optimized!");
-
-            System.out.println("Creating swap operator for parameter " + parameter.getParameterName() + " (weight=" + weight + ")");
-
-            SwapOperator so = new SwapOperator(parameter, size);
-            so.setWeight(weight);
-
-            return so;
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element represents an operator that swaps values in a multi-dimensional parameter.";
-        }
-
-        public Class getReturnType() {
-            return SwapOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-
-                AttributeRule.newDoubleRule("weight"),
-                AttributeRule.newIntegerRule("size"),
-                AttributeRule.newBooleanRule("autoOptimize"),
-                new ElementRule(Parameter.class)
-        };
-    };
-
     public String getOperatorName() {
-        return "swapOperator(" + parameter.getParameterName() + ")";
+        return SwapOperatorParser.SWAP_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 
     public String getPerformanceSuggestion() {

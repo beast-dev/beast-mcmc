@@ -123,7 +123,15 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
     }
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return String.valueOf(getExpectedCountsForBranch(node));
+        double[] counts = getExpectedCountsForBranch(node);
+        if (counts.length == 1) {
+            return String.valueOf(counts[0]);
+        }
+        StringBuffer sb = new StringBuffer("{");
+        for (int i = 0; i < counts.length - 1; i++)
+            sb.append(Double.toString(counts[i])).append(",");
+        sb.append(Double.toString(counts[counts.length - 1])).append("}");
+        return sb.toString();
     }
 
     public double getRobustCount() {

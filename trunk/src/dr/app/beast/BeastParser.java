@@ -390,7 +390,7 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.inference.model.SubStatistic.PARSER);
 
         // Markov chains and loggers
-//        addXMLObjectParser(new dr.inference.mcmc.MCMCParser());
+//        addXMLObjectParser(new dr.inferencexml.MCMCParser());
 //        addXMLObjectParser(dr.inference.ml.MLOptimizer.PARSER);
 //
 //        addXMLObjectParser(new dr.inference.xml.LoggerParser());

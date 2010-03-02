@@ -23,7 +23,7 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		throw new RuntimeException("Not yet implemented for optimization");
 	}
 
-	protected boolean requiresScale() {
+	public boolean requiresScale() {
 		return false;
 	}
 

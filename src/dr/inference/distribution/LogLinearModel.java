@@ -31,7 +31,7 @@ public class LogLinearModel extends GeneralizedLinearModel {
         return false;
     }
 
-    protected boolean requiresScale() {
+    public boolean requiresScale() {
         return false;
     }
 }

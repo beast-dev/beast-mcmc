@@ -172,7 +172,7 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
     class BayesFactorsModel extends AbstractTableModel {
 
-        String[] columnNames = {"Trace", "ln P(model | data)", "S.E."};
+        String[] columnNames = {"Trace", "ln P(data | model)", "S.E."};
 
         private DecimalFormat formatter2 = new DecimalFormat("####0.###");
 

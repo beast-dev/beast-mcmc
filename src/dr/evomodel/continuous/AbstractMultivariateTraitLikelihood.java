@@ -55,17 +55,17 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String RECIPROCAL_RATES = "reciprocalRates";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
-                                       TreeModel treeModel,
-                                       MultivariateDiffusionModel diffusionModel,
-                                       CompoundParameter traitParameter,
-                                       List<Integer> missingIndices,
-                                       boolean cacheBranches,
-                                       boolean scaleByTime,
-                                       boolean useTreeLength,
-                                       BranchRateModel rateModel,
-                                       Model samplingDensity,
-                                       boolean reportAsMultivariate,
-                                       boolean reciprocalRates) {
+                                               TreeModel treeModel,
+                                               MultivariateDiffusionModel diffusionModel,
+                                               CompoundParameter traitParameter,
+                                               List<Integer> missingIndices,
+                                               boolean cacheBranches,
+                                               boolean scaleByTime,
+                                               boolean useTreeLength,
+                                               BranchRateModel rateModel,
+                                               Model samplingDensity,
+                                               boolean reportAsMultivariate,
+                                               boolean reciprocalRates) {
 
         super(TRAIT_LIKELIHOOD);
 
@@ -83,7 +83,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             addModel(rateModel);
         }
 
-        if (samplingDensity != null) {           
+        if (samplingDensity != null) {
             addModel(samplingDensity);
         }
 
@@ -97,9 +97,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             cachedLogLikelihoods = new double[treeModel.getNodeCount()];
             storedCachedLogLikelihood = new double[treeModel.getNodeCount()];
             validLogLikelihoods = new boolean[treeModel.getNodeCount()];
-            storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];            
+            storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];
         }
-		
+
         this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;
         this.reciprocalRates = reciprocalRates;
@@ -264,7 +264,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         // All parameter changes are handled first by the treeModel
         if (!cacheBranches)
-            likelihoodKnown = false;        
+            likelihoodKnown = false;
     }
 
     // **************************************************************
@@ -414,7 +414,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             final int whichLower = i % lower.length;
             final int whichUpper = i % upper.length;
             final double newValue = MathUtils.uniform(lower[whichLower],upper[whichUpper]);
-            trait.setParameterValue(i, newValue);    
+            trait.setParameterValue(i, newValue);
         }
         //diffusionModel.randomize(trait);
     }
@@ -526,7 +526,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            CompoundParameter traitParameter = (CompoundParameter) xo.getElementFirstChild(TRAIT_PARAMETER);
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
             boolean integrate = xo.getAttribute(INTEGRATE,false);
@@ -540,34 +539,71 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             List<Integer> missingIndices = null;
             String traitName = DEFAULT_TRAIT_NAME;
 
+            XMLObject xoc = xo.getChild(TRAIT_PARAMETER);
+            Parameter parameter = (Parameter)xoc.getChild(Parameter.class);
+
+            CompoundParameter traitParameter = null;
+            boolean existingTraitParameter = false;
+
+            if (parameter instanceof CompoundParameter) {
+                // if we have been passed a CompoundParameter, this will be a leaf trait
+                // parameter from a tree model so use this to allow for individual sampling
+                // of leaf parameters.
+                traitParameter =(CompoundParameter)parameter;
+                existingTraitParameter = true;
+            } else {
+
+                // create a compound parameter of appropriate dimensions
+                traitParameter = new CompoundParameter(parameter.getId());
+
+                ParameterParser.replaceParameter(xoc, traitParameter);
+
+            }
+
             if (xo.hasAttribute(TRAIT_NAME)) {
 
                 traitName = xo.getStringAttribute(TRAIT_NAME);
+
+                boolean traitDimensionKnown = existingTraitParameter;
 
                 // Fill in attributeValues
                 int taxonCount = treeModel.getTaxonCount();
                 for (int i = 0; i < taxonCount; i++) {
                     String taxonName = treeModel.getTaxonId(i);
                     String paramName = taxonName + "." + traitName;
-                    Parameter traitParam = getTraitParameterByName(traitParameter, paramName);
-                    if (traitParam == null)
-                        throw new RuntimeException("Missing trait parameters at tree tips");
-                    String object = (String) treeModel.getTaxonAttribute(i, traitName);
+
+                    Parameter traitParam;
+                    if (existingTraitParameter) {
+                        traitParam = getTraitParameterByName(traitParameter, paramName);
+                        if (traitParam == null) {
+                            throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                        }
+                    } else {
+                        traitParam = new Parameter.Default(paramName);
+                        traitParameter.addParameter(traitParam);
+                    }
+
+                    String object = (String)treeModel.getTaxonAttribute(i, traitName);
                     if (object == null)
                         throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
                     else {
                         StringTokenizer st = new StringTokenizer(object);
                         int count = st.countTokens();
-                        if (count != traitParam.getDimension())
-                            throw new RuntimeException("Trait length must match trait parameter dimension");
+                        if (count != traitParam.getDimension()) {
+                            if (traitDimensionKnown) {
+                                throw new RuntimeException("Trait length must match trait parameter dimension");
+                            } else {
+                                traitParam.setDimension(count);
+                            }
+                        }
                         for (int j = 0; j < count; j++) {
                             String oneValue = st.nextToken();
                             double value = Double.NaN;
                             if (oneValue.compareTo("NA") == 0) {
                                 Logger.getLogger("dr.evomodel.continuous").info(
                                         "Warning: Missing value in tip for taxon " + taxonName +
-                                        " (filling with 0)"   // See comment below
-                                );                                
+                                                " (filling with 0)"   // See comment below
+                                );
                             } else {
                                 try {
                                     value = new Double(oneValue);
@@ -606,15 +642,15 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     if (numTraits != treeModel.getExternalNodeCount()) {
                         throw new XMLParseException(
                                 "Dimensionality of '" + traitParameter.getId() + "' (" + numTraits + ") is not equal to the number" +
-                                " of tree tips (" + treeModel.getExternalNodeCount() + ")");
-                    }                    
+                                        " of tree tips (" + treeModel.getExternalNodeCount() + ")");
+                    }
 
                     for (int j = 0; j < numTraits; j++) {
                         String parameterName = traitParameter.getParameter(j).getId();
-                        if (parameterName.startsWith("node") || parameterName.startsWith("root")) {                            
+                        if (parameterName.startsWith("node") || parameterName.startsWith("root")) {
                             throw new XMLParseException(
                                     "Internal/root node trait parameters are not allowed when " +
-                                    "using the integrated observed data multivariateTraitLikelihoood");
+                                            "using the integrated observed data multivariateTraitLikelihoood");
                         }
                     }
                 }
@@ -636,20 +672,20 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     throw new XMLParseException("Only multivariate normal priors allowed for Gibbs sampling the root trait");
 
                 MultivariateNormalDistribution rootDistribution =
-                    (MultivariateNormalDistribution) rootPrior.getDistribution();
+                        (MultivariateNormalDistribution) rootPrior.getDistribution();
 
                 like =
-                     new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-                            traitParameter, missingIndices, cacheBranches,
-                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                            rootDistribution, reciprocalRates);
+                        new IntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                                traitParameter, missingIndices, cacheBranches,
+                                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                                rootDistribution, reciprocalRates);
             } else {
 
                 like =
-                    new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-                            traitParameter, missingIndices, cacheBranches,
-                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                            reciprocalRates);
+                        new SampledMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                                traitParameter, missingIndices, cacheBranches,
+                                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                                reciprocalRates);
             }
 
             if (!integrate && xo.hasChildNamed(RANDOMIZE)) {

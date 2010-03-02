@@ -7,10 +7,10 @@ import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
+import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
@@ -455,14 +455,14 @@ public class OperatorsGenerator extends Generator {
 
     private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                GMRFSkyrideBlockUpdateOperator.BLOCK_UPDATE_OPERATOR,
+                GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
-                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperator.SCALE_FACTOR, operator.tuning),
+                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,  modelPrefix + "skyride");
-        writer.writeCloseTag(GMRFSkyrideBlockUpdateOperator.BLOCK_UPDATE_OPERATOR);
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,  modelPrefix + "skyride");
+        writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
     }
 
     private void writeScaleWithIndicatorsOperator(Operator operator, XMLWriter writer) {

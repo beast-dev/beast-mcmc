@@ -23,8 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.trace;
+package dr.inferencexml.trace;
 
+import dr.inference.trace.*;
 import dr.util.Attribute;
 import dr.util.NumberFormatter;
 import dr.xml.*;

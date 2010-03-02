@@ -96,7 +96,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private void setTipDataValuesForNode(NodeRef node) {
         // Set tip data values
         int index = node.getNumber();
-        double[] traitValue = treeModel.getMultivariateNodeTrait(node, traitName);
+        double[] traitValue = traitParameter.getParameter(index).getParameterValues();
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
         missing[index] = false;
     }

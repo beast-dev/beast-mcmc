@@ -1,13 +1,13 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodelxml.substmodel.PositiveDefiniteSubstitutionModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.MachineAccuracy;
 import dr.math.matrixAlgebra.Matrix;
-import dr.xml.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,8 +23,6 @@ import java.util.Map;
  */
 
 public class PositiveDefiniteSubstitutionModel extends AbstractModel implements SubstitutionModel, Loggable {
-
-    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "positiveDefiniteSubstitutionModel";
 
     protected DataType dataType = null;
 
@@ -44,7 +42,7 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
     Map<Double, Integer> mapTimes;
 
     public PositiveDefiniteSubstitutionModel(MatrixParameter parameter) {
-        super(SVS_GENERAL_SUBSTITUTION_MODEL);
+        super(PositiveDefiniteSubstitutionModelParser.SVS_GENERAL_SUBSTITUTION_MODEL);
 
         stateCount = parameter.getRowDimension();
         Ksquared = stateCount * stateCount;
@@ -948,41 +946,6 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
         index = null;
         omtrx = null;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return SVS_GENERAL_SUBSTITUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            MatrixParameter ratesParameter = (MatrixParameter) xo.getChild(MatrixParameter.class);
-
-            return new PositiveDefiniteSubstitutionModel(ratesParameter);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
-        }
-
-        public Class getReturnType() {
-            return SubstitutionModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(MatrixParameter.class)
-        };
-
-    };
 
     private MatrixParameter rates;
 }

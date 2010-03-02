@@ -1,9 +1,9 @@
 package dr.inference.operators;
 
-import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
+import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.inferencexml.model.MaskedParameterParser;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -103,7 +103,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
             if (prior.getDistribution().getType().compareTo(MultivariateNormalDistribution.TYPE) != 0)
                 throw new XMLParseException("Only a multivariate normal prior is conjugate");
 
-            XMLObject cxo = (XMLObject) xo.getChild(GeneralizedLinearModel.INDICATOR);
+            XMLObject cxo = (XMLObject) xo.getChild(GeneralizedLinearModelParser.INDICATOR);
             Parameter indicators = (Parameter) cxo.getChild(Parameter.class);
 
             cxo = (XMLObject) xo.getChild(MaskedParameterParser.MASKING);
@@ -141,7 +141,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
                 new ElementRule(Parameter.class),
                 new ElementRule(MultivariateDistributionLikelihood.class),
                 new ElementRule(LinearRegression.class),
-                new ElementRule(GeneralizedLinearModel.INDICATOR,
+                new ElementRule(GeneralizedLinearModelParser.INDICATOR,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
                         }),

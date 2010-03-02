@@ -29,18 +29,15 @@ package dr.evomodel.coalescent;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
-import dr.xml.*;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.NotConvergedException;
 import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
-
-import java.util.logging.Logger;
 
 /**
  * A likelihood function for a Gaussian Markov random field on a log population size trajectory.
@@ -55,16 +52,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
 	// PUBLIC STUFF
 
-	public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
-	public static final String POPULATION_PARAMETER = "populationSizes";
-	public static final String GROUP_SIZES = "groupSizes";
-	public static final String PRECISION_PARAMETER = "precisionParameter";
-	public static final String POPULATION_TREE = "populationTree";
-	public static final String LAMBDA_PARAMETER = "lambdaParameter";
-	public static final String BETA_PARAMETER = "betaParameter";
-	public static final String COVARIATE_MATRIX = "covariateMatrix";
-	public static final String RANDOMIZE_TREE = "randomizeTree";
-	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 	public static final double LOG_TWO_TIMES_PI = 1.837877;
 	public static final boolean TIME_AWARE_IS_ON_BY_DEFAULT = true;
 
@@ -91,13 +78,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
 
 	public GMRFSkyrideLikelihood() {
-		super(SKYLINE_LIKELIHOOD);
+		super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 	}
 
 	public GMRFSkyrideLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
 	                             Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                             boolean timeAwareSmoothing) {
-		super(SKYLINE_LIKELIHOOD);
+		super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
 
 		this.popSizeParameter = popParameter;
@@ -158,7 +145,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.");
 	}
 
-	private static void checkTree(TreeModel treeModel) {
+	public static void checkTree(TreeModel treeModel) {
 
 		// todo Should only be run if there exists a zero-length interval
 
@@ -467,112 +454,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	// ****************************************************************
 	// Private and protected stuff
 	// ****************************************************************
-
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() {
-			return SKYLINE_LIKELIHOOD;
-		}
-		
-		public String[] getParserNames(){
-			return new String[]{getParserName(),"skyrideLikelihood","gmrfSkylineLikelihood"};
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
-			Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = xo.getChild(PRECISION_PARAMETER);
-			Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = xo.getChild(POPULATION_TREE);
-			TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
-
-			cxo = xo.getChild(GROUP_SIZES);
-			Parameter groupParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			if (popParameter.getDimension() != groupParameter.getDimension())
-				throw new XMLParseException("Population and group size parameters must have the same length");
-
-			Parameter lambda;
-			if (xo.getChild(LAMBDA_PARAMETER) != null) {
-				cxo = xo.getChild(LAMBDA_PARAMETER);
-				lambda = (Parameter) cxo.getChild(Parameter.class);
-			} else {
-				lambda = new Parameter.Default(1.0);
-			}
-
-			Parameter beta = null;
-			if (xo.getChild(BETA_PARAMETER) != null) {
-				cxo = xo.getChild(BETA_PARAMETER);
-				beta = (Parameter) cxo.getChild(Parameter.class);
-			}
-
-			MatrixParameter dMatrix = null;
-			if (xo.getChild(COVARIATE_MATRIX) != null) {
-				cxo = xo.getChild(COVARIATE_MATRIX);
-				dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
-			}
-
-			boolean timeAwareSmoothing = TIME_AWARE_IS_ON_BY_DEFAULT;
-			if (xo.hasAttribute(TIME_AWARE_SMOOTHING)) {
-				timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
-			}
-
-			if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
-				throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
-
-			if (dMatrix != null) {
-				if (dMatrix.getRowDimension() != popParameter.getDimension())
-					throw new XMLParseException("Design matrix row dimension must equal the population parameter length.");
-				if (dMatrix.getColumnDimension() != beta.getDimension())
-					throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
-			}
-
-			if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
-				checkTree(treeModel);
-
-			Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
-					(timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
-
-			return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
-					lambda, beta, dMatrix, timeAwareSmoothing);
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "This element represents the likelihood of the tree given the population size vector.";
-		}
-
-		public Class getReturnType() {
-			return Likelihood.class;
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private final XMLSyntaxRule[] rules = {
-				new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-				new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-				new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-						new ElementRule(TreeModel.class)
-				}),
-				new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-				AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
-				AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
-		};
-	};
 }
 
 /*

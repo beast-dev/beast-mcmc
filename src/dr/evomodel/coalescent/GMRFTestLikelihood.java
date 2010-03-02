@@ -2,9 +2,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.tree.Tree;
 import dr.inference.model.DesignMatrix;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.xml.*;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 /**
@@ -15,11 +13,6 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  * To change this template use File | Settings | File Templates.
  */
 public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
-
-
-	public static final String SKYLINE_TEST_LIKELIHOOD = "gmrfTestLikelihood";
-	public static final String INTERVAL_PARAMETER = "intervals";
-	public static final String SUFFSTAT_PARAMETER = "sufficientStatistics";
 
 	public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
 		super(tree, popParameter, null, precParameter, lambda, beta, design,false);
@@ -117,66 +110,4 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 	}
 
-	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-		public String getParserName() {
-			return SKYLINE_TEST_LIKELIHOOD;
-		}
-
-		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-			XMLObject cxo = (XMLObject) xo.getChild(POPULATION_PARAMETER);
-			Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(PRECISION_PARAMETER);
-			Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(INTERVAL_PARAMETER);
-			Parameter intervalParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(SUFFSTAT_PARAMETER);
-			Parameter statParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(LAMBDA_PARAMETER);
-			Parameter lambda = (Parameter) cxo.getChild(Parameter.class);
-
-			cxo = (XMLObject) xo.getChild(BETA_PARAMETER);
-			Parameter betaParameter = (Parameter) cxo.getChild(Parameter.class);
-
-			DesignMatrix designMatrix = (DesignMatrix) xo.getChild(DesignMatrix.class);
-
-
-			return new GMRFTestLikelihood(popParameter, precParameter, lambda, betaParameter, designMatrix, intervalParameter, statParameter);
-
-		}
-
-		//************************************************************************
-		// AbstractXMLObjectParser implementation
-		//************************************************************************
-
-		public String getParserDescription() {
-			return "This element represents the likelihood of the tree given the population size vector.";
-		}
-
-		public Class getReturnType() {
-			return Likelihood.class;
-		}
-
-		public XMLSyntaxRule[] getSyntaxRules() {
-			return rules;
-		}
-
-		private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-				new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-				new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-
-				new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
-						new ElementRule(Parameter.class)
-				}),
-		};
-	};
 }

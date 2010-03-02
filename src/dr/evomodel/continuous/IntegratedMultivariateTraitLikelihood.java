@@ -53,6 +53,13 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         lowerPrecisionCache = new double[treeModel.getNodeCount()];
         logRemainderDensityCache = new double[treeModel.getNodeCount()];
 
+        if (cacheBranches) {
+            storedMeanCache = new double[dim * treeModel.getNodeCount()];
+            storedUpperPrecisionCache = new double[treeModel.getNodeCount()];
+            storedLowerPrecisionCache = new double[treeModel.getNodeCount()];
+            storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
+        }
+
         missing = new boolean[treeModel.getNodeCount()]; // A placeholder for Andrew to work with
         Arrays.fill(missing, true); // All internal and root nodes are missing
 

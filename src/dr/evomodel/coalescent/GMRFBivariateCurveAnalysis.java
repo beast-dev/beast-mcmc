@@ -1,21 +1,14 @@
 package dr.evomodel.coalescent;
 
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
+import dr.inferencexml.trace.TraceAnalysisParser;
+import dr.xml.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceAnalysisParser;
-import dr.inference.trace.TraceException;
-import dr.math.GammaFunction;
-import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
 
 public class GMRFBivariateCurveAnalysis {
 

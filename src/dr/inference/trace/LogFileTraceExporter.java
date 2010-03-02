@@ -1,11 +1,6 @@
 package dr.inference.trace;
 
-import dr.util.FileHelpers;
 import dr.util.TabularData;
-import dr.xml.AttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,43 +69,4 @@ public class LogFileTraceExporter extends TabularData {
         return null;
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-        private static final String FILENAME = "fileName";
-        private static final String BURN_IN = "burnIn";
-
-        public String getParserName() {
-            return "logFileTrace";
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final File file = FileHelpers.getFile(xo.getStringAttribute(FILENAME));
-            final int burnIn = xo.getAttribute(BURN_IN, -1);
-
-            try {
-                return new LogFileTraceExporter(file, burnIn);
-            } catch (Exception e) {
-                throw new XMLParseException(e.getMessage());
-            }
-        }
-
-        public String getParserDescription() {
-            return "reconstruct population graph from variable dimension run.";
-        }
-
-        public Class getReturnType() {
-            return LogFileTraceExporter.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(FILENAME, false, "trace log."),
-                AttributeRule.newIntegerRule(BURN_IN, true,
-                        "The number of states (not sampled states, but actual states) that are discarded from the" +
-                                " beginning of the trace before doing the analysis"),
-        };
-    };
 }

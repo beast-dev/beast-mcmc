@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.tree;
+package dr.evomodelxml;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeTraceAnalysis;
 import dr.xml.*;
 
 import java.io.File;

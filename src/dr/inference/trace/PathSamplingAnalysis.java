@@ -1,5 +1,6 @@
 package dr.inference.trace;
 
+import dr.inferencexml.trace.MarginalLikelihoodAnalysisParser;
 import dr.util.Attribute;
 import dr.util.FileHelpers;
 import dr.xml.*;
@@ -140,7 +141,7 @@ public class PathSamplingAnalysis {
                 int maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(MarginalLikelihoodAnalysis.BURN_IN, maxState / 5);
+                int burnin = xo.getAttribute(MarginalLikelihoodAnalysisParser.BURN_IN, maxState / 5);
 
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 5;

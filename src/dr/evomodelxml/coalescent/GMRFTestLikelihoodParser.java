@@ -3,15 +3,12 @@ package dr.evomodelxml.coalescent;
 import dr.evomodel.coalescent.GMRFTestLikelihood;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  *
  */
-public class GMRFTestLikelihoodParser extends GMRFSkyrideLikelihoodParser {
+public class GMRFTestLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String SKYLINE_TEST_LIKELIHOOD = "gmrfTestLikelihood";
     public static final String INTERVAL_PARAMETER = "intervals";
@@ -23,10 +20,10 @@ public class GMRFTestLikelihoodParser extends GMRFSkyrideLikelihoodParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
+        XMLObject cxo = xo.getChild(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
         Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(PRECISION_PARAMETER);
+        cxo = xo.getChild(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(INTERVAL_PARAMETER);
@@ -35,10 +32,10 @@ public class GMRFTestLikelihoodParser extends GMRFSkyrideLikelihoodParser {
         cxo = xo.getChild(SUFFSTAT_PARAMETER);
         Parameter statParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(LAMBDA_PARAMETER);
+        cxo = xo.getChild(GMRFSkyrideLikelihoodParser.LAMBDA_PARAMETER);
         Parameter lambda = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(BETA_PARAMETER);
+        cxo = xo.getChild(GMRFSkyrideLikelihoodParser.BETA_PARAMETER);
         Parameter betaParameter = (Parameter) cxo.getChild(Parameter.class);
 
         DesignMatrix designMatrix = (DesignMatrix) xo.getChild(DesignMatrix.class);
@@ -65,14 +62,14 @@ public class GMRFTestLikelihoodParser extends GMRFSkyrideLikelihoodParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+            new ElementRule(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
+            new ElementRule(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
 
-            new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
+            new ElementRule(GMRFSkyrideLikelihoodParser.LAMBDA_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
     };

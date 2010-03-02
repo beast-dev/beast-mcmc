@@ -1225,7 +1225,8 @@ public class TimeSlicer {
         if (returnList.size() > 0) {
             double[] doubleArray = new double[returnList.size()];
             for (int i = 0; i < doubleArray.length; i++)
-                doubleArray[i] = returnList.get(i);
+            doubleArray[i] = returnList.get(i);
+
             return doubleArray;
         }
         return null;
@@ -1265,6 +1266,8 @@ public class TimeSlicer {
             double[] doubleArray = new double[returnList.size()];
             for (int i = 0; i < doubleArray.length; i++)
                 doubleArray[i] = returnList.get(i);
+
+            //System.out.println(doubleArray.length);
             return doubleArray;
         }
         return null;
@@ -1595,25 +1598,28 @@ public class TimeSlicer {
                 sliceHeights = parseFileWithArray(sliceHeightsFileString);
             }
 
+            if (arguments.hasOption(MRSD)) {
+                mrsd = arguments.getRealOption(MRSD);
+            }
+
             String sliceTimesFileString = arguments.getStringOption(SLICE_FILE_TIMES);
             if (sliceTimesFileString != null) {
-                double[] sliceTimes = parseVariableLengthDoubleArray(sliceTimesFileString);
+                //System.out.println(sliceTimesFileString);
+                double[] sliceTimes = parseFileWithArray(sliceTimesFileString);
+                sliceHeights =  new double[sliceTimes.length];
                 for (int i = 0; i < sliceTimes.length; i++) {
                     if (mrsd == 0) {
                         sliceHeights[i] = sliceTimes[i];
                     } else {
+                        //System.out.println((mrsd - sliceTimes[i]));
                         sliceHeights[i] = mrsd - sliceTimes[i];
+
                     }
                 }
             }
 
             if (arguments.hasOption(BURNIN)) {
                 burnin = arguments.getIntegerOption(BURNIN);
-            }
-
-
-            if (arguments.hasOption(MRSD)) {
-                mrsd = arguments.getRealOption(MRSD);
             }
 
 

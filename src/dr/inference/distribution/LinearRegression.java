@@ -45,7 +45,7 @@ public class LinearRegression extends GeneralizedLinearModel {
                     throw new RuntimeException("Optimization not yet implemented.");
 	}
 
-	protected boolean requiresScale() {
+	public boolean requiresScale() {
 		return true;
 	}
 

@@ -2,8 +2,8 @@ package dr.inference.operators;
 
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.Parameter;
+import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -180,7 +180,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
             if (prior.getDistribution().getType().compareTo(MultivariateNormalDistribution.TYPE) != 0)
                 throw new XMLParseException("Only a multivariate normal prior is conjugate");
 
-            XMLObject cxo = xo.getChild(GeneralizedLinearModel.INDICATOR);
+            XMLObject cxo = xo.getChild(GeneralizedLinearModelParser.INDICATOR);
             Parameter indicators = null;
             if (cxo != null) {
                 indicators = (Parameter) cxo.getChild(Parameter.class);
@@ -212,7 +212,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
                 new ElementRule(Parameter.class),
                 new ElementRule(MultivariateDistributionLikelihood.class),
                 new ElementRule(LinearRegression.class),
-                new ElementRule(GeneralizedLinearModel.INDICATOR,
+                new ElementRule(GeneralizedLinearModelParser.INDICATOR,
                         new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class)
                         },true)

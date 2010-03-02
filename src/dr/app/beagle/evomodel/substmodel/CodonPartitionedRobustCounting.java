@@ -35,6 +35,17 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
                                           CodonLabeling codonLabeling) {
+        this(name, tree, partition, codons, codonLabeling,
+                RobustCountingOutputFormat.SUM_OVER_SITES, RobustCountingOutputFormat.SUM_OVER_SITES);
+
+    }
+
+    public CodonPartitionedRobustCounting(String name, Tree tree,
+                                          AncestralStateBeagleTreeLikelihood[] partition,
+                                          Codons codons,
+                                          CodonLabeling codonLabeling,
+                                          RobustCountingOutputFormat branchFormat,
+                                          RobustCountingOutputFormat logFormat) {
         super(name);
         this.tree = tree;
 
@@ -69,6 +80,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         markovJumps.setRegistration(synRegMatrix);
 
         condMeanMatrix = new double[64 * 64];
+
+        this.branchFormat = branchFormat;
+        this.logFormat = logFormat;
     }
 
     public double[] getExpectedCountsForBranch(NodeRef child) {
@@ -124,14 +138,27 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
         double[] counts = getExpectedCountsForBranch(node);
-        if (counts.length == 1) {
-            return String.valueOf(counts[0]);
+        final String returnString;
+
+        if (branchFormat == RobustCountingOutputFormat.SUM_OVER_SITES) {
+            double total = 0;
+            for (double x : counts) {
+                total += x;
+            }
+            returnString = String.valueOf(total);
+        } else if (branchFormat == RobustCountingOutputFormat.PER_SITE) {
+            if (counts.length == 1) {
+                return String.valueOf(counts[0]);
+            }
+            StringBuffer sb = new StringBuffer("{");
+            for (int i = 0; i < counts.length - 1; i++)
+                sb.append(Double.toString(counts[i])).append(",");
+            sb.append(Double.toString(counts[counts.length - 1])).append("}");
+            returnString = sb.toString();
+        } else {
+            throw new RuntimeException("Not yet implemented.");
         }
-        StringBuffer sb = new StringBuffer("{");
-        for (int i = 0; i < counts.length - 1; i++)
-            sb.append(Double.toString(counts[i])).append(",");
-        sb.append(Double.toString(counts[counts.length - 1])).append("}");
-        return sb.toString();
+        return returnString;
     }
 
     public double getRobustCount() {
@@ -147,6 +174,21 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         double total = 0;
         for (double x : count) {
             total += x;
+        }
+        return total;
+    }
+
+    public double getRobustCount(int site) {
+
+        if (site < 0 || site >= numCodons) {
+            throw new RuntimeException("Invalid site #");
+        }
+        double total = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                total += getExpectedCountsForBranch(node)[site];
+            }
         }
         return total;
     }
@@ -176,9 +218,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
 //    }
 
     public LogColumn[] getColumns() {
-        return new LogColumn[]{
-                new RobustCountColumn(codonLabeling.getText())
-        };
+
+        if (logFormat == RobustCountingOutputFormat.SUM_OVER_SITES) {
+            return new LogColumn[]{
+                    new RobustCountColumn(codonLabeling.getText())
+            };
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -218,6 +265,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;
+
+    private final RobustCountingOutputFormat branchFormat;
+    private final RobustCountingOutputFormat logFormat;
 
     private final double[] condMeanMatrix;
 

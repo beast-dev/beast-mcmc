@@ -3,6 +3,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.CodonPartitionedRobustCounting;
 import dr.app.beagle.evomodel.substmodel.CodonLabeling;
+import dr.app.beagle.evomodel.substmodel.RobustCountingOutputFormat;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -19,6 +20,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String SECOND = "secondPosition";
     public static final String THIRD = "thirdPosition";
     public static final String LABELING = "labeling";
+    public static final String BRANCH_FORMAT = "branchFormat";
+    public static final String LOG_FORMAT = "logFormat";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -58,12 +61,28 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             throw new XMLParseException("Unrecognized codon labeling '" + labelingString + "'");
         }
 
+        String branchFormatString = xo.getAttribute(BRANCH_FORMAT,
+                RobustCountingOutputFormat.SUM_OVER_SITES.getText());
+        RobustCountingOutputFormat branchFormat = RobustCountingOutputFormat.parseFromString(branchFormatString);
+        if (branchFormat == null) {
+            throw new XMLParseException("Unrecognized branch output format '" + branchFormat + "'");
+        }
+
+        String logFormatString = xo.getAttribute(BRANCH_FORMAT,
+                RobustCountingOutputFormat.SUM_OVER_SITES.getText());
+        RobustCountingOutputFormat logFormat = RobustCountingOutputFormat.parseFromString(logFormatString);
+        if (logFormat == null) {
+            throw new XMLParseException("Unrecognized branch output format '" + branchFormat + "'");
+        }
+
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
                 tree,
                 partition,
                 codons,
-                codonLabeling);
+                codonLabeling,
+                branchFormat,
+                logFormat);
     }
 
     private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{

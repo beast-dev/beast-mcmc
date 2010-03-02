@@ -32,7 +32,6 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
@@ -438,36 +437,36 @@ public class TreePriorGenerator extends Generator {
     		case GMRF_SKYRIDE:
 	            writer.writeComment("Generate a gmrfSkyrideLikelihood for GMRF Bayesian Skyride process");
 	            writer.writeOpenTag(
-	                    GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD,
+	                    GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,
 	                    new Attribute[]{
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skyride"),
-	                            new Attribute.Default<String>(GMRFSkyrideLikelihood.TIME_AWARE_SMOOTHING,
+	                            new Attribute.Default<String>(GMRFSkyrideLikelihoodParser.TIME_AWARE_SMOOTHING,
 	                                    prior.getSkyrideSmoothing() == TreePriorParameterizationType.TIME_AWARE_SKYRIDE ? "true" : "false"),
-	                            new Attribute.Default<String>(GMRFSkyrideLikelihood.RANDOMIZE_TREE,
+	                            new Attribute.Default<String>(GMRFSkyrideLikelihoodParser.RANDOMIZE_TREE,
 	                                    //TODO For GMRF, tree model/tree prior combination not implemented by BEAST yet. The validation is in BeastGenerator.checkOptions()
 	                                    prior.getTreeModel().getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
 	                    }
 	            );
 	
 	            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
-	            writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
+	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
                 writer.writeComment("skyride.logPopSize is log unit unlike other popSize");
 	            writeParameter(prior.getParameter("skyride.logPopSize"), skyrideIntervalCount, writer);
-	            writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_PARAMETER);
+	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
 	
-	            writer.writeOpenTag(GMRFSkyrideLikelihood.GROUP_SIZES);
+	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.GROUP_SIZES);
 	            writeParameter(prior.getParameter("skyride.groupSize"), skyrideIntervalCount, writer);
-	            writer.writeCloseTag(GMRFSkyrideLikelihood.GROUP_SIZES);
+	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.GROUP_SIZES);
 	
-	            writer.writeOpenTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
+	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 	            writeParameter(prior.getParameter("skyride.precision"), 1, writer);
-	            writer.writeCloseTag(GMRFSkyrideLikelihood.PRECISION_PARAMETER);
+	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 	
-	            writer.writeOpenTag(GMRFSkyrideLikelihood.POPULATION_TREE);
+	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
 	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
-	            writer.writeCloseTag(GMRFSkyrideLikelihood.POPULATION_TREE);
+	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
 	
-	            writer.writeCloseTag(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD);
+	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
 	            break;
 	        
@@ -515,7 +514,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, priorPrefix + "skyline");
                 break;
             case GMRF_SKYRIDE:
-                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
                 break;
             case YULE:
                 writer.writeIDref(YuleModelParser.YULE_MODEL, priorPrefix + "yule");
@@ -761,7 +760,7 @@ public class TreePriorGenerator extends Generator {
 //                writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, modelPrefix + "eml1");
                 break;
             case GMRF_SKYRIDE:
-                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case LOGISTIC:
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
@@ -794,7 +793,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, modelPrefix + "eml1");
                 break;
             case GMRF_SKYRIDE:
-                writer.writeIDref(GMRFSkyrideLikelihood.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case LOGISTIC:
                 writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");

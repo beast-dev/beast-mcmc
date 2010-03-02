@@ -1,14 +1,13 @@
 package dr.evomodel.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
-import dr.xml.*;
 import no.uib.cipr.matrix.*;
 
-import java.io.IOException;
-import java.util.logging.*;
+import java.util.logging.Logger;
 
 /* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a Gaussian Markov random field prior
  *
@@ -17,12 +16,6 @@ import java.util.logging.*;
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
-
-    public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String MAX_ITERATIONS = "maxIterations";
-    public static final String STOP_VALUE = "stopValue";
-    public static final String KEEP_LOG_RECORD = "keepLogRecord";
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -308,7 +301,7 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
     //MCMCOperator INTERFACE
 
     public final String getOperatorName() {
-        return BLOCK_UPDATE_OPERATOR;
+        return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
     public double getCoercableParameter() {
@@ -364,91 +357,6 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BLOCK_UPDATE_OPERATOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            boolean logRecord = xo.getAttribute(KEEP_LOG_RECORD, false);
-
-            Handler gmrfHandler;
-            Logger gmrfLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator");
-
-            gmrfLogger.setUseParentHandlers(false);
-
-            if (logRecord) {
-                gmrfLogger.setLevel(Level.FINE);
-
-                try {
-                    gmrfHandler = new FileHandler("GMRFBlockUpdate.log." + MathUtils.getSeed());
-                } catch (IOException e) {
-                    throw new RuntimeException(e.getMessage());
-                }
-                gmrfHandler.setLevel(Level.FINE);
-
-                gmrfHandler.setFormatter(new XMLFormatter() {
-                    public String format(LogRecord record) {
-                        return "<record>\n \t<message>\n\t" + record.getMessage()
-                                + "\n\t</message>\n<record>\n";
-                    }
-                });
-
-                gmrfLogger.addHandler(gmrfHandler);
-            }
-
-            CoercionMode mode = CoercionMode.parseMode(xo);
-            if (mode == CoercionMode.DEFAULT) mode = CoercionMode.COERCION_ON;
-
-            double weight = xo.getDoubleAttribute(WEIGHT);
-            double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-
-//            if (scaleFactor <= 0.0) {
-//                throw new XMLParseException("scaleFactor must be greater than 0.0");
-            if (scaleFactor < 1.0) {
-                throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
-            }
-
-            int maxIterations = xo.getAttribute(MAX_ITERATIONS, 200);
-
-            double stopValue = xo.getAttribute(STOP_VALUE, 0.01);
-
-            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
-
-            return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
-                    maxIterations, stopValue);
-
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "This element returns a GMRF block-update operator for the joint distribution of the population sizes and precision parameter.";
-        }
-
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                AttributeRule.newDoubleRule(STOP_VALUE, true),
-                AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
-                new ElementRule(GMRFSkyrideLikelihood.class)
-        };
-
-    };
 
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);

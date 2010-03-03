@@ -14,7 +14,6 @@ import dr.app.SnAPhyl.mcmcpanel.MCMCPanel;
 import dr.app.SnAPhyl.operatorspanel.OperatorsPanel;
 import dr.app.SnAPhyl.priorsPanel.DefaultPriorDialog;
 import dr.app.SnAPhyl.priorsPanel.PriorsPanel;
-
 import dr.app.SnAPhyl.util.BEAUTiImporter;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
@@ -22,12 +21,11 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.options.*;
-
-import dr.app.util.Utils;
-import dr.evolution.io.NexusImporter.MissingBlockException;
-import dr.evolution.io.Importer.ImportException;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.java16compat.FileNameExtensionFilter;
+import dr.app.util.Utils;
+import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NexusImporter.MissingBlockException;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
@@ -35,7 +33,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 
 /**
@@ -298,7 +297,8 @@ public class SnAPhylFrame extends BeautiFrame {
 
             if (n == JOptionPane.YES_OPTION) {
 	            try {
-	                generate(file);
+                    getAllOptions();
+	                generator.generateXML(file);
 
 	            } catch (IOException ioe) {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
@@ -312,14 +312,6 @@ public class SnAPhylFrame extends BeautiFrame {
 
         clearDirty();
         return true;
-    }
-
-    protected void generate(File file) throws IOException {
-        getAllOptions();
-
-        FileWriter fw = new FileWriter(file);
-        generator.generateXML(fw);
-        fw.close();
     }
 
     public Action getImportAction() {

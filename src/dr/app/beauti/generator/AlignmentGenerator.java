@@ -1,19 +1,22 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.enumTypes.BinaryModelType;
-import dr.evoxml.*;
-import dr.util.Attribute;
-import dr.xml.XMLParser;
-import dr.evolution.util.Taxon;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStateCovarion;
+import dr.evolution.util.Taxon;
+import dr.evoxml.AlignmentParser;
+import dr.evoxml.SequenceParser;
+import dr.evoxml.TaxonParser;
+import dr.util.Attribute;
+import dr.xml.XMLParser;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -88,7 +91,11 @@ public class AlignmentGenerator extends Generator {
             writer.writeOpenTag(SequenceParser.SEQUENCE);
             writer.writeIDref(TaxonParser.TAXON, taxon.getId());
             if (!options.samplePriorOnly) {
+//                writer.checkText(alignment.getAlignedSequenceString(i));
                 writer.writeText(alignment.getAlignedSequenceString(i));
+
+//                System.out.println(taxon.getId() + ": \n" + alignment.getAlignedSequenceString(i));
+//                System.out.println("len = " + alignment.getAlignedSequenceString(i).length() + "\n");
             } else {
                 writer.writeText("N");
             }

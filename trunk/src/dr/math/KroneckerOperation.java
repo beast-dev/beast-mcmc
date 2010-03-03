@@ -131,4 +131,41 @@ public class KroneckerOperation {
             }
         }
     }
+
+    public static double[][] product(double[][] A, double[][] B) {
+        final int m = A.length;
+        final int n = A[0].length;
+        final int p = B.length;
+        final int q = B[0].length;
+
+        double[][] out = new double[m * p][n * q];
+        product(A, B, out);
+        return out;
+    }
+
+    public static void product(double[][] A, double[][] B, double[][] out) {
+        final int m = A.length;
+        final int n = A[0].length;
+        final int p = B.length;
+        final int q = B[0].length;
+
+        if (out == null || out.length != m * p || out[0].length != n * q) {
+            throw new RuntimeException("Wrong dimensions in Kronecker product");
+        }
+
+        for (int i = 0; i < m; i++) {
+            final int iOffset = i * p;
+            for (int j = 0; j < n; j++) {
+                final int jOffset = j * q;
+                final double aij = A[i][j];
+
+                for (int k = 0; k < p; k++) {
+                    for (int l = 0; l < q; l++) {
+                        out[iOffset + k][jOffset + l] = aij * B[k][l];
+                    }
+                }
+
+            }
+        }        
+    }
 }

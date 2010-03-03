@@ -13,6 +13,7 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.KroneckerOperation;
 import dr.util.Citation;
 import dr.util.Author;
 
@@ -313,12 +314,13 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
     private void checkViaLargeMatrixInversion() {
 
-        // Perform a check based on filling in the (dimTrait * tipCount) * (dimTrait * tipCount) variance matrix
+        // Perform a check based on filling in the (dimTrait * tipCount) * (dimTrait * tipCount) precision matrix
         // And then integrating out the root trait value
 
-        // Form \Sigma (variance) and \Sigma^{-1} (precision)
-        double[][] treeTraitVarianceMatrix = makeMissingInTreeMVNormalVariance(computeTreeMVNormalVariance());
-        double[][] treeTraitPrecisionMatrix = new SymmetricMatrix(treeTraitVarianceMatrix).inverse().toComponents();
+        // Form \Sigma^{-1} (precision) = (tree precision) %x% (trait precision)
+
+        double[][] treeTraitPrecisionMatrix = computeTreeTraitPrecision(diffusionModel.getPrecisionmatrix());
+
         double totalLogDensity = 0;
 
         for (int datum = 0; datum < dimData; datum++) {
@@ -400,7 +402,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                 mean, new double[mean.length], precision,
                 Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(precision)), 1.0
         );
-//        logLikelihood -= NormalDistribution.logPdf(mean, 0.0, 1.0 / Math.sqrt(precision));
+
         System.err.println("Mean = " + new Vector(mean));
         System.err.println("Prec = " + new Matrix(precision));
         System.err.println("log density = " + logLikelihood);
@@ -421,7 +423,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             // Fill in precision scalar, traitValues already filled in
 
             if (missing[thisNumber]) {
-                upperPrecisionCache[thisNumber] = 0; // This is a guess, needs testing
+                upperPrecisionCache[thisNumber] = 0;
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
             } else { // not missing tip trait
                 upperPrecisionCache[thisNumber] = 1.0 / getRescaledBranchLength(node);
@@ -449,15 +451,16 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
         // Multiple child0 and child1 densities
-        
+
         if (totalPrecision == 0) {
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
-            for (int i = 0; i < dim; i++) {
-                meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
-                        meanCache[meanOffset1 + i] * precision1)
-                        / totalPrecision;
-            }
+//            for (int i = 0; i < dim; i++) {
+//                meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
+//                        meanCache[meanOffset1 + i] * precision1)
+//                        / totalPrecision;
+//            }
+            computeWeightedMean(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
         }
 
         if (!treeModel.isRoot(node)) {
@@ -472,36 +475,100 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
 
         if (precision0 != 0 && precision1 != 0) {
 
-            final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
+//            final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
+//
+//            for (int k = 0; k < dimData; k++) {
+//
+//                double childSS0 = 0;
+//                double childSS1 = 0;
+//                double crossSS = 0;
+//
+//                for (int i = 0; i < dimTrait; i++) {
+//
+//                    final double wChild0i = meanCache[meanOffset0 + k * dimTrait + i] * precision0;
+//                    final double wChild1i = meanCache[meanOffset1 + k * dimTrait + i] * precision1;
+//
+//                    for (int j = 0; j < dimTrait; j++) {
+//
+//                        final double child0j = meanCache[meanOffset0 + k * dimTrait + j];
+//                        final double child1j = meanCache[meanOffset1 + k * dimTrait + j];
+//
+//                        childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
+//                        childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
+//
+//                        crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[meanThisOffset + k * dimTrait + j];
+//                    }
+//                }
+//
+//                logRemainderDensityCache[thisNumber] +=
+//                        -dimTrait * LOG_SQRT_2_PI
+//                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
+//                                - 0.5 * (childSS0 + childSS1 - crossSS);
+//
+//
+//            }
+            incrementRemainderDensities(
+                    precisionMatrix,
+                    logDetPrecisionMatrix, thisNumber, meanThisOffset,
+                    meanOffset0,
+                    meanOffset1,
+                    precision0,
+                    precision1);
+        }
+    }
 
-            for (int k = 0; k < dimData; k++) {
+    private void incrementRemainderDensities(double[][] precisionMatrix,
+                                             double logDetPrecisionMatrix,
+                                             int thisIndex,
+                                             int thisOffset,
+                                             int childOffset0,
+                                             int childOffset1,
+                                             double precision0,
+                                             double precision1) {
 
-                double childSS0 = 0;
-                double childSS1 = 0;
-                double crossSS = 0;
+        final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
 
-                for (int i = 0; i < dimTrait; i++) {
+        for (int k = 0; k < dimData; k++) {
 
-                    final double wChild0i = meanCache[meanOffset0 + k * dimTrait + i] * precision0;
-                    final double wChild1i = meanCache[meanOffset1 + k * dimTrait + i] * precision1;
+            double childSS0 = 0;
+            double childSS1 = 0;
+            double crossSS = 0;
 
-                    for (int j = 0; j < dimTrait; j++) {
+            for (int i = 0; i < dimTrait; i++) {
 
-                        final double child0j = meanCache[meanOffset0 + k * dimTrait + j];
-                        final double child1j = meanCache[meanOffset1 + k * dimTrait + j];
+                final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
+                final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
 
-                        childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
-                        childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
+                for (int j = 0; j < dimTrait; j++) {
 
-                        crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[meanThisOffset + k * dimTrait + j];
-                    }
+                    final double child0j = meanCache[childOffset0 + k * dimTrait + j];
+                    final double child1j = meanCache[childOffset1 + k * dimTrait + j];
+
+                    childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
+                    childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
+
+                    crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[thisOffset + k * dimTrait + j];
                 }
-
-                logRemainderDensityCache[thisNumber] +=
-                        -dimTrait * LOG_SQRT_2_PI
-                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
-                                - 0.5 * (childSS0 + childSS1 - crossSS);
             }
+
+            logRemainderDensityCache[thisIndex] +=
+                    -dimTrait * LOG_SQRT_2_PI
+                            + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
+                            - 0.5 * (childSS0 + childSS1 - crossSS);
+        }
+    }
+
+    private void computeWeightedMean(int thisOffset,
+                                     int childOffset0,
+                                     int childOffset1,
+                                     double precision0,
+                                     double precision1) {
+
+        final double totalVariance = 1.0 / (precision0 + precision1);
+        for (int i = 0; i < dim; i++) {
+            meanCache[thisOffset + i] = (meanCache[childOffset0 + i] * precision0 +
+                    meanCache[childOffset1 + i] * precision1)
+                    * totalVariance;
         }
     }
 
@@ -527,12 +594,16 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         return trait;
     }
 
-    protected double[][] makeMissingInTreeMVNormalVariance(double[][] variance) {
+    protected double[][] removeMissingTipsInTreeVariance(double[][] variance) {
 
         final int tipCount = treeModel.getExternalNodeCount();
-        int nonMissing = countNonMissingTips();
+        final int nonMissing = countNonMissingTips();
 
-        double[][] outVariance = new double[nonMissing * dimTrait][nonMissing * dimTrait];
+        if (nonMissing == tipCount) { // Do nothing
+            return variance;
+        }
+
+        double[][] outVariance = new double[nonMissing][nonMissing];
 
         int iReal = 0;
         for (int i = 0; i < tipCount; i++) {
@@ -542,13 +613,8 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                 for (int j = 0; j < tipCount; j++) {
                     if (!missing[j]) {
 
-                        for (int k = 0; k < dimTrait; k++) {
-                            for (int l = 0; l < dimTrait; l++) {
-                                System.arraycopy(
-                                        variance[i * dimTrait + k], j * dimTrait,
-                                        outVariance[iReal * dimTrait], jReal * dimTrait, dimTrait);
-                            }
-                        }
+                        outVariance[iReal][jReal] = variance[i][j];
+
                         jReal++;
                     }
                 }
@@ -558,58 +624,75 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
         return outVariance;
     }
 
-
-    // This function is used for debugging; return the multivariate normal variance of
-    // all tree tips and internal nodes *conditional* on the root
-    protected double[][] computeTreeMVNormalVariance() {
-
-        final int tipCount = treeModel.getExternalNodeCount();
-        double[][] variance = new double[dimTrait * tipCount][dimTrait * tipCount];
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
-        double[][] traitVariance = new SymmetricMatrix(traitPrecision).inverse().toComponents();
-        System.err.println("Trait variance:\n" + new Matrix(traitVariance));
-
-        for (int i = 0; i < tipCount; i++) {
-            int rowOffset = i * dimTrait;
-
-            // Fill in diagonal block
-            double marginalTime = getRescaledLengthToRoot(treeModel.getExternalNode(i));
-            for (int k = 0; k < dimTrait; k++) {
-                for (int l = k; l < dimTrait; l++) {
-                    variance[rowOffset + k][rowOffset + l] = traitVariance[k][l] * marginalTime;
+    protected double[][] computeTreeTraitPrecision(double[][] traitPrecision) {
+        double[][] treePrecision = computeTreePrecision();
+        if (dimTrait > 1) {
+            treePrecision = KroneckerOperation.product(treePrecision, traitPrecision);
+        } else {
+            final double precision = traitPrecision[0][0];
+            for (int i = 0; i < treePrecision.length; i++) {
+                for (int j = 0; j < treePrecision[i].length; j++) {
+                    treePrecision[i][j] *= precision;
                 }
             }
+        }
+        return treePrecision;
+    }
 
+    public double[][] computeTreePrecision() {
+        return new SymmetricMatrix(computeTreeVariance()).inverse().toComponents();
+    }
+
+    private NodeRef findMRCA(int iTip, int jTip) {
+        Set<String> leafNames = new HashSet<String>();
+        leafNames.add(treeModel.getTaxonId(iTip));
+        leafNames.add(treeModel.getTaxonId(jTip));
+        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+    }
+
+    public double[][] computeTreeVariance() {
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[tipCount][tipCount];
+
+        for (int i = 0; i < tipCount; i++) {
+
+            // Fill in diagonal
+            double marginalTime = getRescaledLengthToRoot(treeModel.getExternalNode(i));
+            variance[i][i] = marginalTime;
+
+            // Fill in upper right triangle, TODO Optimization possible here? or even necessary?
             for (int j = i + 1; j < tipCount; j++) {
-                Set<String> leafNames = new HashSet<String>();
-                leafNames.add(treeModel.getTaxonId(i));
-                leafNames.add(treeModel.getTaxonId(j));
-                NodeRef mrca = Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+//                Set<String> leafNames = new HashSet<String>();
+//                leafNames.add(treeModel.getTaxonId(i));
+//                leafNames.add(treeModel.getTaxonId(j));
+//                NodeRef mrca = Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+                NodeRef mrca = findMRCA(i,j);
 
-                // Fill in off-diagonal block
-                double sharedTime = getRescaledLengthToRoot(mrca);
-                if (sharedTime > 0) {
-                    int colOffset = j * dimTrait;
-                    for (int k = 0; k < dimTrait; k++) {
-                        for (int l = 0; l < dimTrait; l++) {
-                            variance[rowOffset + k][colOffset + l] = traitVariance[k][l] * sharedTime;
-                        }
-                    }
-                }
+                variance[i][j] = getRescaledLengthToRoot(mrca);
             }
         }
 
         // Make symmetric
-        for (int i = 0; i < dimTrait * tipCount; i++) {
-            for (int j = i + 1; j < dimTrait * tipCount; j++) {
+        for (int i = 0; i < tipCount; i++) {
+            for (int j = i + 1; j < tipCount; j++) {
                 variance[j][i] = variance[i][j];
             }
         }
-        System.err.println("");
-        System.err.println("Conditional variance:\n" + new Matrix(variance));
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
+        }
+
+        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+        }
+
         return variance;
     }
-
 
     private int countNonMissingTips() {
         int tipCount = treeModel.getExternalNodeCount();
@@ -750,7 +833,6 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             }
         } else { // draw conditional on parentState
 
-//            if (Double.isInfinite(lowerPrecisionCache[thisIndex])) {
             if (!missing[thisIndex]) {
 
                 System.arraycopy(meanCache, thisIndex * dim, drawnStates, thisIndex * dim, dim);

@@ -2,6 +2,7 @@ package dr.evomodel.operators;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.OperatorFailedException;
@@ -50,6 +51,10 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
 
         boolean hasDistributionModel = ratePriorModel == null;
         boolean hasDistribution = ratePrior == null;
+
+        if (traitModel instanceof IntegratedMultivariateTraitLikelihood) {
+            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood");
+        }
 
         if ((hasDistribution && hasDistributionModel) || (!hasDistribution && !hasDistributionModel)) {
             throw new RuntimeException("Can only provide one prior density in TraitRateGibbsOperation");

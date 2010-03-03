@@ -72,7 +72,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 RobustCountingOutputFormat.SUM_OVER_SITES.getText());
         RobustCountingOutputFormat logFormat = RobustCountingOutputFormat.parseFromString(logFormatString);
         if (logFormat == null) {
-            throw new XMLParseException("Unrecognized branch output format '" + branchFormat + "'");
+            throw new XMLParseException("Unrecognized log output format '" + branchFormat + "'");
         }
 
         return new CodonPartitionedRobustCounting(

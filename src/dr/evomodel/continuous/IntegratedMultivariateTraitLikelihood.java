@@ -61,7 +61,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
         }
 
-        missing = new boolean[treeModel.getNodeCount()]; // A placeholder for Andrew to work with
+        missing = new boolean[treeModel.getNodeCount()];
         Arrays.fill(missing, true); // All internal and root nodes are missing
 
         // Set up reusable temporary storage
@@ -92,6 +92,10 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                     "\tMarking taxon " + treeModel.getTaxonId(whichTip) + " as completely missing");
             missing[whichTip] = true;
         }
+    }
+
+    public int getNumberOfDatum() {
+        return dimData * countNonMissingTips();
     }
 
     private void setTipDataValuesForNode(NodeRef node) {
@@ -139,6 +143,7 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
                         new Author[]{
                                 new Author("O", "Pybus"),
                                 new Author("P", "Lemey"),
+                                new Author("A", "Rambaut"),
                                 new Author("MA", "Suchard")
                         },
                         Citation.Status.IN_PREPARATION
@@ -242,6 +247,58 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             likelihoodKnown = false;
         }
         super.handleVariableChangedEvent(variable, index, type);
+    }
+
+
+    private double[][] computeTipTraitOuterProduct(int tip0, int tip1) {
+        double[][] outerProduct = new double[dimTrait][dimTrait];
+
+        final int offset0 = dim * tip0;
+        final int offset1 = dim * tip1;
+
+        for (int i = 0; i < dimTrait; i++) {
+            for (int j = 0; j < dimTrait; j++) {
+                for (int k = 0; k < dimData; k++) {
+                    outerProduct[i][j] += meanCache[offset0 + k * dimTrait + i] * meanCache[offset1 + k * dimTrait + j];
+                }
+            }
+        }
+        return outerProduct;
+    }
+
+    private void computeAllTipTraitOuterProducts() {
+        final int nTips = treeModel.getExternalNodeCount();
+
+        if (tipTraitOuterProducts == null) {
+            tipTraitOuterProducts = new double[nTips][nTips][][];
+        }
+
+        for (int i = 0; i < nTips; i++) {
+            if (!missing[i]) {
+                tipTraitOuterProducts[i][i] = computeTipTraitOuterProduct(i, i);
+                for (int j = i + 1; j < nTips; j++) {
+                    if (!missing[j]) {
+                        tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = computeTipTraitOuterProduct(i, j);
+                    } else {
+                        tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = null;
+                    }
+                }
+            } else {
+                for (int j = 0; j < nTips; j++) {
+                    tipTraitOuterProducts[i][j] = null;
+                }
+            }
+        }
+    }
+
+    // Returns the outer product of the tip traits for taxon 0 and taxon 1,
+    // or null if either taxon 0 or taxon 1 is missing
+    public double[][] getTipTraitOuterProduct(int tip0, int tip1) {
+        if (updateOuterProducts) {
+            computeAllTipTraitOuterProducts();
+            updateOuterProducts = false;
+        }
+        return tipTraitOuterProducts[tip0][tip1];
     }
 
     private double determineSumOfSquares(double[] y, double[] Ay, double[][] A, double scale) {
@@ -661,12 +718,17 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
             variance[i][i] = marginalTime;
 
             // Fill in upper right triangle, TODO Optimization possible here? or even necessary?
+
+            // Short answer: yes.  This function is really only needed in the Gibbs operator on the precision.
+            // In this operator, we need the weighted sum of outer products, which are also available via
+            // dynamic programming [ O(N) instead of O(N^2) ] by modifying incrementRemainderDensities.
+
             for (int j = i + 1; j < tipCount; j++) {
 //                Set<String> leafNames = new HashSet<String>();
 //                leafNames.add(treeModel.getTaxonId(i));
 //                leafNames.add(treeModel.getTaxonId(j));
 //                NodeRef mrca = Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
-                NodeRef mrca = findMRCA(i,j);
+                NodeRef mrca = findMRCA(i, j);
 
                 variance[i][j] = getRescaledLengthToRoot(mrca);
             }
@@ -919,6 +981,9 @@ public class IntegratedMultivariateTraitLikelihood extends AbstractMultivariateT
     private double zBz; // Prior sum-of-squares contribution
 
     private double[] zeroDimVector;
+
+    private boolean updateOuterProducts = true;
+    private double[][][][] tipTraitOuterProducts = null;
 
     // Reusable temporary storage
     private double[] Bz;

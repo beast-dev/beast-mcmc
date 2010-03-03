@@ -8,6 +8,7 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
@@ -15,24 +16,26 @@ import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
-import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
-import dr.app.beauti.options.*;
-import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.STARBEASTOptions;
+import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
+import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
 import dr.app.beauti.taxonsetspanel.TaxaPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
-import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.util.Taxon;
-import dr.app.java16compat.FileNameExtensionFilter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
@@ -43,7 +46,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -604,7 +609,8 @@ public class BeautiFrame extends DocumentFrame {
 
             if (n == JOptionPane.YES_OPTION) {
 	            try {
-	                generate(file);
+	                getAllOptions();
+                    generator.generateXML(file);
 
 	            } catch (IOException ioe) {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
@@ -618,14 +624,6 @@ public class BeautiFrame extends DocumentFrame {
 
         clearDirty();
         return true;
-    }
-
-    protected void generate(File file) throws IOException {
-        getAllOptions();
-
-        FileWriter fw = new FileWriter(file);
-        generator.generateXML(fw);
-        fw.close();
     }
 
     public JComponent getExportableComponent() {

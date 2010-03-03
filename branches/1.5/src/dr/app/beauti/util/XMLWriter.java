@@ -139,14 +139,35 @@ public class XMLWriter extends java.io.PrintWriter {
     }
 
     public void writeText(String string) {
-        for (int i = 0; i < level; i++) {
-            write('\t');
+
+        int subLength = 2000;
+
+        for (int l = 0; l < string.length(); l += subLength) {
+            int e = l + subLength;
+            if (e > string.length()) e = string.length();
+            for (int i = 0; i < level; i++) {
+                write('\t');
+            }
+            println(string.substring(l, e));
+            flush();
         }
-        println(string);
+
+    }
+
+    public void checkText(String string) {
+        int count = 0;
+        for (char ch : string.toCharArray()) {
+            if (ch == 'A' || ch == 'C' || ch == 'G' || ch == 'T') {
+
+            } else {
+                System.out.println("invalid char = " + ch + ", count = " + count);
+            }
+            count++;
+        }
     }
 
     public void writeIDref(String tagName, String paramName) {
-       writeTag(tagName, new Attribute[]{new Attribute.Default<String>(dr.xml.XMLParser.IDREF, paramName)}, true);
+        writeTag(tagName, new Attribute[]{new Attribute.Default<String>(dr.xml.XMLParser.IDREF, paramName)}, true);
     }
 }
 

@@ -88,7 +88,12 @@ public class AlignmentGenerator extends Generator {
             writer.writeOpenTag(SequenceParser.SEQUENCE);
             writer.writeIDref(TaxonParser.TAXON, taxon.getId());
             if (!options.samplePriorOnly) {
+//                writer.checkText(alignment.getAlignedSequenceString(i));
                 writer.writeText(alignment.getAlignedSequenceString(i));
+
+//                System.out.println(taxon.getId() + ": \n" + alignment.getAlignedSequenceString(i));
+//                System.out.println("len = " + alignment.getAlignedSequenceString(i).length() + "\n");
+                
             } else {
                 writer.writeText("N");
             }

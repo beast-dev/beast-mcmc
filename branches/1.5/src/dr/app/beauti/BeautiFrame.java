@@ -604,7 +604,8 @@ public class BeautiFrame extends DocumentFrame {
 
             if (n == JOptionPane.YES_OPTION) {
 	            try {
-	                generate(file);
+                    getAllOptions();
+                    generator.generateXML(file);                
 
 	            } catch (IOException ioe) {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
@@ -618,14 +619,6 @@ public class BeautiFrame extends DocumentFrame {
 
         clearDirty();
         return true;
-    }
-
-    protected void generate(File file) throws IOException {
-        getAllOptions();
-
-        FileWriter fw = new FileWriter(file);
-        generator.generateXML(fw);
-        fw.close();
     }
 
     public JComponent getExportableComponent() {

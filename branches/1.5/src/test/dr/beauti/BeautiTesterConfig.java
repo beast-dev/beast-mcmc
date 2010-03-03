@@ -253,9 +253,7 @@ public class BeautiTesterConfig {
         System.out.println("Generating: " + name);
         String fileName = name + ".xml";
         try {
-            FileWriter fw = new FileWriter(fileName);
-            generator.generateXML(fw);
-            fw.close();
+            generator.generateXML(new File(fileName));
         } catch (IOException e) {
             e.printStackTrace();
         }

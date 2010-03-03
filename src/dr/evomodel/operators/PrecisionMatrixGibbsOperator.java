@@ -27,6 +27,8 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
+import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.MatrixParameter;
@@ -53,15 +55,16 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     public static final String PRIOR = "prior";
     public static final String TRAIT_MODEL = "traitModel";
 
-    private AbstractMultivariateTraitLikelihood traitModel;
-    private MatrixParameter precisionParam;
-    private WishartDistribution priorDistribution;
-    private int priorDf;
+    private final AbstractMultivariateTraitLikelihood traitModel;
+    private final MatrixParameter precisionParam;
+//    private WishartDistribution priorDistribution;
+    private final int priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
-    private TreeModel treeModel;
-    private int dim;
+    private final TreeModel treeModel;
+    private final int dim;
     private int numberObservations;
-    private String traitName;
+    private final String traitName;
+    private final boolean isSampledTraitLikelihood;
 
     public PrecisionMatrixGibbsOperator(
             AbstractMultivariateTraitLikelihood traitModel,
@@ -70,7 +73,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         super();
         this.traitModel = traitModel;
         this.precisionParam = (MatrixParameter) traitModel.getDiffusionModel().getPrecisionParameter();
-        this.priorDistribution = priorDistribution;
+//        this.priorDistribution = priorDistribution;
         this.priorDf = priorDistribution.df();
         this.priorInverseScaleMatrix = null;
         if (priorDistribution.scaleMatrix() != null)
@@ -81,11 +84,23 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         traitName = traitModel.getTraitName();
         dim = precisionParam.getRowDimension(); // assumed to be square
 
+        isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
+
+        if (!isSampledTraitLikelihood) {
+            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood");
+        }
+
     }
 
 
     public int getStepCount() {
         return 1;
+    }
+
+    private void computeIntegratedTraitOuterProduct(double[][] S,
+                                                    IntegratedMultivariateTraitLikelihood traitLikelihood) {
+
+        double[][] treeVarianceMatrix;// = traitLikelihood.
     }
 
     private void incrementsOuterProduct(double[][] S, NodeRef node) {
@@ -111,7 +126,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                         S[j][i] = S[i][j] += delta[i] * delta[j];
                 }
                 numberObservations++;
-            } 
+            }
         }
         // recurse down tree
         for (int i = 0; i < treeModel.getChildCount(node); i++)
@@ -127,7 +142,12 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         SymmetricMatrix S2;
         SymmetricMatrix inverseS2 = null;
         numberObservations = 0;
-        incrementsOuterProduct(S, treeModel.getRoot());
+
+        if (isSampledTraitLikelihood) {
+            incrementsOuterProduct(S, treeModel.getRoot());
+        } else { // IntegratedTraitLikelihood
+            throw new RuntimeException("Not yet implemented");
+        }
 
         try {
             S2 = new SymmetricMatrix(S);

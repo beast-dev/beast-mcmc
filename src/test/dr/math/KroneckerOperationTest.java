@@ -2,6 +2,7 @@ package test.dr.math;
 
 import junit.framework.TestCase;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.KroneckerOperation;
 
 /**
@@ -13,7 +14,7 @@ public class KroneckerOperationTest extends TestCase {
 
         double[] C;
         if (m == -1 || n == -1) {
-            C = KroneckerOperation.sum(A,B);
+            C = KroneckerOperation.sum(A, B);
         } else {
             C = KroneckerOperation.sum(A, m, B, n);
         }
@@ -32,8 +33,34 @@ public class KroneckerOperationTest extends TestCase {
         didPass(C, trueC);
     }
 
+    private void testKroneckerProduct(double[][] A, double[][] B, double[][] trueC) {
+        double[][] C = KroneckerOperation.product(A, B);
+        printMatrix(A, "A = ");
+        printMatrix(B, "B = ");
+        printMatrix(C, "A %x% B = ");
+        didPass(C, trueC);
+    }
+
     private void printMatrix(double[] A, int m, int n, String text) {
         System.out.println(text + new Vector(A) + " (" + m + " x " + n + ")");
+    }
+
+    private void printMatrix(double[][] A, String text) {
+        System.out.println(text + "\n" + new Matrix(A));
+    }
+
+    private void didPass(double[][] C, double[][] trueC) {
+        boolean passed = true;
+        for (int i = 0; i < C.length; i++) {
+            for (int j = 0; j < C[i].length; j++) {
+                assertEquals(C[i][j], trueC[i][j], 1E-10);
+                if (C[i][j] != trueC[i][j]) {
+                    passed = false;
+                    break;
+                }
+            }
+        }
+        System.out.println("Passed = " + passed + "\n");
     }
 
     private void didPass(double[] C, double[] trueC) {
@@ -82,9 +109,9 @@ public class KroneckerOperationTest extends TestCase {
         testKroneckerSum(D, 2, E, 3, trueF);
 
         // test sum for column-vectors
-        double[] V1 = {1,2,3};
-        double[] V2 = {4,5};
-        double[] Vtrue = {5,6,6,7,7,8};
+        double[] V1 = {1, 2, 3};
+        double[] V2 = {4, 5};
+        double[] Vtrue = {5, 6, 6, 7, 7, 8};
         testKroneckerSum(V1, -1, V2, -1, Vtrue);
     }
 
@@ -109,9 +136,23 @@ public class KroneckerOperationTest extends TestCase {
         testKroneckerProduct(D, 2, 3, E, 2, 2, trueF);
 
         // test product for column-vectors
-        double[] V1 = {1,2,3};
-        double[] V2 = {4,5};
-        double[] Vtrue = {4,5,8,10,12,15};
+        double[] V1 = {1, 2, 3};
+        double[] V2 = {4, 5};
+        double[] Vtrue = {4, 5, 8, 10, 12, 15};
         testKroneckerProduct(V1, 3, 1, V2, 2, 1, Vtrue);
+
+        double[][] DD = {
+                {1, 2, 3},
+                {3, 2, 1}};
+        double[][] EE = {
+                {2, 1},
+                {2, 3}};
+        double[][] trueFF = {
+                {2, 1, 4, 2, 6, 3},
+                {2, 3, 4, 6, 6, 9},
+                {6, 3, 4, 2, 2, 1},
+                {6, 9, 4, 6, 2, 3}};
+        testKroneckerProduct(DD, EE, trueFF);
+
     }
 }

@@ -25,9 +25,11 @@
 
 package dr.xml;
 
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.util.FileHelpers;
 import dr.util.Identifiable;
-import dr.inference.model.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 
@@ -69,7 +71,9 @@ public class XMLParser {
             XMLObjectParser oldParser = parserStore.get(parserName);
             if (oldParser != null) {
                 if (!canReplace) {
-                    throw new IllegalArgumentException("New parser (" + parser.getParserName() + ") cannot replace existing parser (" + oldParser.getParserName() + ")");
+                    throw new IllegalArgumentException("New parser (" + parser.getParserName()
+                            + ") in {" + parser.getReturnType() + "} cannot replace existing parser ("
+                            + oldParser.getParserName() + ") in {" + oldParser.getReturnType() + "}");
                 } else {
                     replaced = true;
                 }

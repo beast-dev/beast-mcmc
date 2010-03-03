@@ -31,7 +31,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames(){
-        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD, SKYLINE_LIKELIHOOD};
+        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD}; // cannot duplicate 
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

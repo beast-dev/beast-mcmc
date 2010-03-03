@@ -57,7 +57,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     private final AbstractMultivariateTraitLikelihood traitModel;
     private final MatrixParameter precisionParam;
-//    private WishartDistribution priorDistribution;
+    //    private WishartDistribution priorDistribution;
     private final int priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
     private final TreeModel treeModel;
@@ -89,21 +89,48 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         if (!isSampledTraitLikelihood) {
             throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood");
         }
-
     }
-
 
     public int getStepCount() {
         return 1;
     }
 
-    private void computeIntegratedTraitOuterProduct(double[][] S,
-                                                    IntegratedMultivariateTraitLikelihood traitLikelihood) {
-
-        double[][] treeVarianceMatrix;// = traitLikelihood.
+    private void incrementScaledSquareMatrix(double[][] out, double[][] in, double scalar, int dim) {
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                out[i][j] += scalar * in[i][j];
+            }
+        }
     }
 
-    private void incrementsOuterProduct(double[][] S, NodeRef node) {
+//    private void zeroSquareMatrix(double[][] out, int dim) {
+//        for (int i = 0; i < dim; i++) {
+//            for (int j = 0; j < dim; j++) {
+//                out[i][j] = 0.0;
+//            }
+//        }
+//    }
+
+    private void incrementOuterProduct(double[][] S,
+                                       IntegratedMultivariateTraitLikelihood integratedLikelihood) {
+        double[][] treePrecisionMatrix = integratedLikelihood.computeTreePrecision();
+//        zeroSquareMatrix(S, dim); // Not needed as S is freshly created
+        final int nTips = treePrecisionMatrix.length;
+
+        for (int i = 0; i < nTips; i++) {
+            incrementScaledSquareMatrix(S,
+                    integratedLikelihood.getTipTraitOuterProduct(i, i),
+                    treePrecisionMatrix[i][i], dim);
+            for (int j = i + 1; j < nTips; j++) {
+                incrementScaledSquareMatrix(S,
+                        integratedLikelihood.getTipTraitOuterProduct(i, j),
+                        2.0 * treePrecisionMatrix[i][j], dim);
+            }
+        }
+        numberObservations = integratedLikelihood.getNumberOfDatum();
+    }
+
+    private void incrementOuterProduct(double[][] S, NodeRef node) {
 
         if (!treeModel.isRoot(node)) {
 
@@ -125,28 +152,27 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                     for (int j = i; j < dim; j++)
                         S[j][i] = S[i][j] += delta[i] * delta[j];
                 }
-                numberObservations++;
+                numberObservations++; // This assumes a *single* observation per tip
             }
         }
         // recurse down tree
         for (int i = 0; i < treeModel.getChildCount(node); i++)
-            incrementsOuterProduct(S, treeModel.getChild(node, i));
+            incrementOuterProduct(S, treeModel.getChild(node, i));
     }
 
-
-    public double doOperation() throws OperatorFailedException {
+    public double[][] getOperationScaleMatrixAndSetObservationCount() {
 
         // calculate sum-of-the-weighted-squares matrix over tree
-
         double[][] S = new double[dim][dim];
         SymmetricMatrix S2;
         SymmetricMatrix inverseS2 = null;
-        numberObservations = 0;
+        numberObservations = 0; // Need to reset, as incrementOuterProduct can be recursive
 
         if (isSampledTraitLikelihood) {
-            incrementsOuterProduct(S, treeModel.getRoot());
+            incrementOuterProduct(S, treeModel.getRoot());
         } else { // IntegratedTraitLikelihood
-            throw new RuntimeException("Not yet implemented");
+            incrementOuterProduct(S, (IntegratedMultivariateTraitLikelihood) traitModel);
+            // TODO This remains completely untested! and can actually be done in O(N) via dynamic programming
         }
 
         try {
@@ -159,9 +185,17 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             illegalDimension.printStackTrace();
         }
 
-        int df = priorDf + numberObservations;
+        assert inverseS2 != null;
 
-        double[][] draw = WishartDistribution.nextWishart(df, inverseS2.toComponents());
+        return inverseS2.toComponents();
+    }
+
+    public double doOperation() throws OperatorFailedException {
+
+        final double[][] scaleMatrix = getOperationScaleMatrixAndSetObservationCount();
+        final int df = priorDf + numberObservations;
+
+        double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
 
         for (int i = 0; i < dim; i++) {
             Parameter column = precisionParam.getParameter(i);
@@ -171,7 +205,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         precisionParam.fireParameterChangedEvent();
 
         return 0;
-
     }
 
     public String getPerformanceSuggestion() {
@@ -206,7 +239,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
             return new PrecisionMatrixGibbsOperator(
                     traitModel, (WishartDistribution) prior.getDistribution(), weight
-//                    precMatrix, (WishartDistribution) prior.getDistribution(), treeModel, weight
             );
         }
 
@@ -231,7 +263,5 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 new ElementRule(AbstractMultivariateTraitLikelihood.class),
                 new ElementRule(MultivariateDistributionLikelihood.class),
         };
-
     };
-
 }

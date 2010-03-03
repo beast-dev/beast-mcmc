@@ -78,7 +78,7 @@ public class CommandLineBeauti {
         //beautiOptions.guessDates();
 
         try {
-            generate(new File(outputFileName));
+            generator.generateXML(new File(outputFileName));
 
         } catch (IOException ioe) {
             System.err.println("Unable to generate file: " + ioe.getMessage());
@@ -263,12 +263,5 @@ public class CommandLineBeauti {
 
         return true;
     }
-
-    private void generate(File file) throws IOException {
-        FileWriter fw = new FileWriter(file);
-        generator.generateXML(fw);
-        fw.close();
-    }
-
 
 }

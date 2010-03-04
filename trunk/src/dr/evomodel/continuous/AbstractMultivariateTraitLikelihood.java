@@ -691,10 +691,23 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         throw new XMLParseException("Must specify a conjugate or multivariate normal root prior");
                     }
 
-//                    double[] mean = ((Parameter) cxo.getChild(Parameter.class)).getParameterValues();
-//                    double pseudoObservations = cxo.getAttribute(PRIOR_SAMPLE_SIZE, 1.0);
 
-                    throw new RuntimeException("Not yet implemented");
+                    Parameter meanParameter = (Parameter) cxo.getChild(MultivariateDistributionLikelihood.MVN_MEAN)
+                            .getChild(Parameter.class);
+
+                    if (meanParameter.getDimension() != diffusionModel.getPrecisionmatrix().length) {
+                        throw new XMLParseException("Root prior mean dimension does not match trait diffusion dimension");
+                    }
+
+                    Parameter sampleSizeParameter = (Parameter) cxo.getChild(PRIOR_SAMPLE_SIZE).getChild(Parameter.class);
+
+                    double[] mean = meanParameter.getParameterValues();
+                    double pseudoObservations = sampleSizeParameter.getParameterValue(0);
+
+                    like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                            traitParameter, missingIndices, cacheBranches,
+                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                            mean, pseudoObservations, reciprocalRates);
                 }
             } else {
 
@@ -769,14 +782,15 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         new ElementRule(Parameter.class)
                 }),
                 AttributeRule.newBooleanRule(INTEGRATE, true),
-                new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class),
+//                new XORRule(
+                        new ElementRule(MultivariateDistributionLikelihood.class, true),
                         new ElementRule(CONJUGATE_ROOT_PRIOR, new XMLSyntaxRule[]{
                                 new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
                                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                                AttributeRule.newDoubleRule(PRIOR_SAMPLE_SIZE),
-                        }),
-                        true),
+                                new ElementRule(PRIOR_SAMPLE_SIZE,
+                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),                               
+                        }, true),
+//                        true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class, true),

@@ -45,25 +45,25 @@
         </precisionParameter>
     </multivariateNormalPrior>
 -->
-	<multivariateNormalPrior id="rootPrior">
-	   <meanParameter>
-		 <parameter value="0.0 0.0"/>
-		   </meanParameter>
-	   	<precisionParameter>
-	 		<matrixParameter>
-	   			<parameter value="0.001 0.0"/>
-	   			<parameter value="0.0 0.001"/>
-	 		</matrixParameter>
-	   	</precisionParameter>
-	</multivariateNormalPrior>
+	<!--<multivariateNormalPrior id="rootPrior">-->
+	   <!--<meanParameter>-->
+		 <!--<parameter value="0.0 0.0"/>-->
+		   <!--</meanParameter>-->
+	   	<!--<precisionParameter>-->
+	 		<!--<matrixParameter>-->
+	   			<!--<parameter value="0.001 0.0"/>-->
+	   			<!--<parameter value="0.0 0.001"/>-->
+	 		<!--</matrixParameter>-->
+	   	<!--</precisionParameter>-->
+	<!--</multivariateNormalPrior>-->
             
     <multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
-<!--		
-			<matrixParameter id="precisionMatrix">
-				<parameter id="prec.col1" value="2.0"/>
-			</matrixParameter>
--->
+
+			<!--<matrixParameter id="precisionMatrix">-->
+				<!--<parameter id="prec.col1" value="2.0"/>-->
+			<!--</matrixParameter>-->
+
 			<matrixParameter id="precisionMatrix">
 				<parameter id="col1" value="2.00 0.50"/>
 				<parameter id="col2" value="0.50 1.00"/>
@@ -78,7 +78,16 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-		<multivariateNormalPrior idref="rootPrior"/>
+		<!--<multivariateNormalPrior idref="rootPrior"/>-->
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="-4.0 2.0"/>
+                <!--<parameter value="-4.0"/>-->
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="2.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
 	</multivariateTraitLikelihood>
 		
 	<operators id="operators">

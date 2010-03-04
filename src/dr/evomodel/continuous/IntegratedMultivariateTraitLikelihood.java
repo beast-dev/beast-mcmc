@@ -70,7 +70,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         Arrays.fill(missing, true); // All internal and root nodes are missing
 
         // Set up reusable temporary storage
-        Bz = new double[dimTrait];
         Ay = new double[dimTrait];
         tmpM = new double[dimTrait][dimTrait];
         tmp2 = new double[dimTrait];
@@ -139,7 +138,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         double logLikelihood = 0;
         double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
-        double[] rootMean = tmp2;
+        double[] conditionalRootMean = tmp2;
 
         // Use dynamic programming to compute conditional likelihoods at each internal node
         postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision);
@@ -153,16 +152,21 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         // Compute the contribution of each datum at the root
         final int rootIndex = treeModel.getRoot().getNumber();
-        double rootPrecision = lowerPrecisionCache[rootIndex];
+
+        // Precision scalar of datum conditional on root
+        double conditionalRootPrecision = lowerPrecisionCache[rootIndex];
+
         for (int datum = 0; datum < dimData; datum++) {
 
             double thisLogLikelihood = 0;
-            System.arraycopy(meanCache, rootIndex * dim + datum * dimTrait, rootMean, 0, dimTrait);
+
+            // Get conditional mean of datum conditional on root
+            System.arraycopy(meanCache, rootIndex * dim + datum * dimTrait, conditionalRootMean, 0, dimTrait);
 
             if (DEBUG) {
                 System.err.println("Datum #" + datum);
-                System.err.println("root mean: " + new Vector(rootMean));
-                System.err.println("root prec: " + rootPrecision);
+                System.err.println("root mean: " + new Vector(conditionalRootMean));
+                System.err.println("root prec: " + conditionalRootPrecision);
                 System.err.println("diffusion prec: " + new Matrix(traitPrecision));
             }
 
@@ -172,33 +176,37 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             // y = likelihood mean
 
             // y'Ay
-            double yAy = determineSumOfSquares(rootMean, Ay, traitPrecision, rootPrecision); // Fills in Ay
+            double yAy = computeWeightedAverageAndSumOfSquares(conditionalRootMean, Ay, traitPrecision, dimTrait,
+                    conditionalRootPrecision); // Also fills in Ay
 
-            if (rootPrecision != 0) {
+            if (conditionalRootPrecision != 0) {
                 thisLogLikelihood += -LOG_SQRT_2_PI * dimTrait
-                        + 0.5 * (logDetTraitPrecision + dimTrait * Math.log(rootPrecision) - yAy);
+                        + 0.5 * (logDetTraitPrecision + dimTrait * Math.log(conditionalRootPrecision) - yAy);
             }
 
             if (DEBUG) {
                 double[][] T = new double[dimTrait][dimTrait];
                 for (int i = 0; i < dimTrait; i++) {
                     for (int j = 0; j < dimTrait; j++) {
-                        T[i][j] = traitPrecision[i][j] * rootPrecision;
+                        T[i][j] = traitPrecision[i][j] * conditionalRootPrecision;
                     }
                 }
                 System.err.println("Conditional root MVN precision = \n" + new Matrix(T));
-                System.err.println("Conditional root MVN density = " + MultivariateNormalDistribution.logPdf(rootMean, new double[dimTrait], T,
+                System.err.println("Conditional root MVN density = " + MultivariateNormalDistribution.logPdf(
+                        conditionalRootMean, new double[dimTrait], T,
                         Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(T)), 1.0));
             }
 
             if (integrateRoot) {
                 // Integrate root trait out against rootPrior
-                thisLogLikelihood += integrateLogLikelihoodAtRoot(Ay, Bz, tmpM, traitPrecision, rootPrecision); // Ay is destroyed
+                thisLogLikelihood += integrateLogLikelihoodAtRoot(conditionalRootMean, Ay, tmpM, traitPrecision,
+                        conditionalRootPrecision); // Ay is destroyed
             }
 
             if (DEBUG) {
                 System.err.println("yAy = " + yAy);
-                System.err.println("logLikelihood (before remainders) = " + thisLogLikelihood + " (should match conditional root MVN density when root not integrated out)");
+                System.err.println("logLikelihood (before remainders) = " + thisLogLikelihood +
+                        " (should match conditional root MVN density when root not integrated out)");
             }
 
             logLikelihood += thisLogLikelihood;
@@ -279,12 +287,13 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return tipTraitOuterProducts[tip0][tip1];
     }
 
-    protected double determineSumOfSquares(double[] y, double[] Ay, double[][] A, double scale) {
+    protected final static double computeWeightedAverageAndSumOfSquares(double[] y, double[] Ay, double[][] A,
+                                                                        int dim, double scale) {
         // returns Ay and yAy
         double yAy = 0;
-        for (int i = 0; i < dimTrait; i++) {
+        for (int i = 0; i < dim; i++) {
             Ay[i] = 0;
-            for (int j = 0; j < dimTrait; j++)
+            for (int j = 0; j < dim; j++)
                 Ay[i] += A[i][j] * y[j] * scale;
             yAy += y[i] * Ay[i];
         }
@@ -299,9 +308,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return sumLogRemainders;
     }
 
-    protected abstract double integrateLogLikelihoodAtRoot(double[] Ay, double[] Bz,
-                                                           double[][] AplusB,
-                                                           double[][] treePrecision, double rootPrecision);
+    protected abstract double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,
+                                                           double[] marginalRootMean,
+                                                           double[][] temporaryStorage,
+                                                           double[][] treePrecisionMatrix,
+                                                           double conditionalRootPrecision);
 
     private void checkViaLargeMatrixInversion() {
 
@@ -389,7 +400,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //                        meanCache[meanOffset1 + i] * precision1)
 //                        / totalPrecision;
 //            }
-            computeWeightedMean(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
+            computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
         }
 
         if (!treeModel.isRoot(node)) {
@@ -404,38 +415,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (precision0 != 0 && precision1 != 0) {
 
-//            final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
-//
-//            for (int k = 0; k < dimData; k++) {
-//
-//                double childSS0 = 0;
-//                double childSS1 = 0;
-//                double crossSS = 0;
-//
-//                for (int i = 0; i < dimTrait; i++) {
-//
-//                    final double wChild0i = meanCache[meanOffset0 + k * dimTrait + i] * precision0;
-//                    final double wChild1i = meanCache[meanOffset1 + k * dimTrait + i] * precision1;
-//
-//                    for (int j = 0; j < dimTrait; j++) {
-//
-//                        final double child0j = meanCache[meanOffset0 + k * dimTrait + j];
-//                        final double child1j = meanCache[meanOffset1 + k * dimTrait + j];
-//
-//                        childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
-//                        childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
-//
-//                        crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[meanThisOffset + k * dimTrait + j];
-//                    }
-//                }
-//
-//                logRemainderDensityCache[thisNumber] +=
-//                        -dimTrait * LOG_SQRT_2_PI
-//                                + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
-//                                - 0.5 * (childSS0 + childSS1 - crossSS);
-//
-//
-//            }
             incrementRemainderDensities(
                     precisionMatrix,
                     logDetPrecisionMatrix, thisNumber, meanThisOffset,
@@ -446,7 +425,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    private void incrementRemainderDensities(double[][] precisionMatrix,
+    private final void incrementRemainderDensities(double[][] precisionMatrix,
                                              double logDetPrecisionMatrix,
                                              int thisIndex,
                                              int thisOffset,
@@ -487,11 +466,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    private void computeWeightedMean(int thisOffset,
-                                     int childOffset0,
-                                     int childOffset1,
-                                     double precision0,
-                                     double precision1) {
+    private final void computeWeightedMeanCache(int thisOffset,
+                                                int childOffset0,
+                                                int childOffset1,
+                                                double precision0,
+                                                double precision1) {
 
         final double totalVariance = 1.0 / (precision0 + precision1);
         for (int i = 0; i < dim; i++) {
@@ -718,9 +697,40 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    protected abstract double[][] computeMarginalRootMeanAndPrecision(double[] rootMean, double[][] treePrecision, double rootPrecision);
 
-    private void preOrderTraverseSample(TreeModel treeModel, NodeRef node, int parentIndex, double[][] treePrecision, double[][] treeVariance) {
+    // Computes x^t A y, used many times in these computations
+
+    protected final static double computeQuadraticProduct(double[] x, double[][] A, double[] y, int dim) {
+        double sum = 0;
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                sum += x[i] * A[i][j] * y[j];
+            }
+        }
+        return sum;
+    }
+
+    // Computes the weighted average of two vectors, used many times in these computations
+
+    protected final static void computeWeightedAverage(double[] in0, double weight0,
+                                                       double[] in1, double weight1,
+                                                       final int dim,
+                                                       double[] out) {
+
+        final double totalInverseWeight = 1.0 / (weight0 + weight1);
+        for (int i = 0; i < dim; i++) {
+            out[i] = (in0[i] * weight0 + in1[i] * weight1) * totalInverseWeight;
+        }
+    }
+
+    protected abstract double[][] computeMarginalRootMeanAndVariance(double[] conditionalRootMean,
+                                                                     double[][] treePrecisionMatrix,
+                                                                     double[][] treeVarianceMatrix,
+                                                                     double conditionalRootPrecision);
+
+
+    private void preOrderTraverseSample(TreeModel treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
+                                        double[][] treeVariance) {
 
         final int thisIndex = node.getNumber();
 
@@ -734,7 +744,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             for (int datum = 0; datum < dimData; datum++) {
                 System.arraycopy(meanCache, thisIndex * dim + datum * dimTrait, rootMean, 0, dimTrait);
 
-                double[][] variance = computeMarginalRootMeanAndPrecision(rootMean, treePrecision, rootPrecision);
+                double[][] variance = computeMarginalRootMeanAndVariance(rootMean, treePrecision, treeVariance,
+                        rootPrecision);
 
                 double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(rootMean, variance);
 
@@ -827,15 +838,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected int dimTrait;
     protected int dim;
 
-    protected double[] rootPriorMean;
-    protected double[][] rootPriorPrecision;
-    protected double logRootPriorPrecisionDeterminant;
-
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
-
-//    protected double zBz; // Prior sum-of-squares contribution
 
     private double[] zeroDimVector;
 
@@ -843,7 +848,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     private double[][][][] tipTraitOuterProducts = null;
 
     // Reusable temporary storage
-    protected double[] Bz;
     protected double[] Ay;
     protected double[][] tmpM;
     protected double[] tmp2;

@@ -40,7 +40,8 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         setRootPrior(rootPrior); // Semi-conjugate multivariate normal with own mean and precision
     }
 
-    protected double integrateLogLikelihoodAtRoot(double[] Ay, double[] Bz,
+    protected double integrateLogLikelihoodAtRoot(double[] y,
+                                                  double[] Ay,
                                                   double[][] AplusB,
                                                   double[][] treePrecision, double rootPrecision) {
         double detAplusB = 0;
@@ -158,13 +159,9 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
 
     private void setRootPriorSumOfSquares() {
         if (integrateRoot) {
+            Bz = new double[dimTrait];
             // z'Bz -- sum-of-squares root contribution
-            for (int i = 0; i < dimTrait; i++) {
-                Bz[i] = 0;
-                for (int j = 0; j < dimTrait; j++)
-                    Bz[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
-                zBz += rootPriorMean[i] * Bz[i];
-            }
+            zBz = computeWeightedAverageAndSumOfSquares(rootPriorMean, Bz, rootPriorPrecision, dimTrait, 1.0);
         } else {
             zBz = 0;
         }
@@ -184,9 +181,10 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
 
     private double zBz; // Prior sum-of-squares contribution
 
-    protected double[][] computeMarginalRootMeanAndPrecision(double[] rootMean, double[][] treePrecision, double rootPrecision) {
+    protected double[][] computeMarginalRootMeanAndVariance(double[] rootMean, double[][] treePrecision,
+                                                            double[][] treeVariance, double rootPrecision) {
 
-        determineSumOfSquares(rootMean, Ay, treePrecision, rootPrecision); // Fills in Ay
+        computeWeightedAverageAndSumOfSquares(rootMean, Ay, treePrecision, dimTrait, rootPrecision); // Fills in Ay
 
         double[][] AplusB = tmpM;
 
@@ -208,4 +206,9 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         }
         return invAplusB;
     }
+
+    private double[] rootPriorMean;
+    private double[][] rootPriorPrecision;
+    private double logRootPriorPrecisionDeterminant;
+    private double[] Bz;
 }

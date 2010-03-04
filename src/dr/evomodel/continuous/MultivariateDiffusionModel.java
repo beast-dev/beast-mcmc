@@ -40,10 +40,11 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
 
-    public void randomize(Parameter trait) {
-    }
+//    public void randomize(Parameter trait) {
+//    }
 
     public void check(Parameter trait) throws XMLParseException {
+        assert trait != null;       
     }
 
     public Parameter getPrecisionParameter() {

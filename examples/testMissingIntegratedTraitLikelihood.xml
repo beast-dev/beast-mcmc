@@ -36,7 +36,7 @@
 
     <multivariateNormalPrior id="rootPrior">
         <meanParameter>
-            <parameter value="0.0"/>
+            <parameter value="10.0"/>
         </meanParameter>
         <precisionParameter>
             <matrixParameter>
@@ -91,7 +91,7 @@
 		logL = <multivariateTraitLikelihood idref="traitLikelihood"/>
 	</report>
 
-	<mcmc id="mcmc" chainLength="1">
+	<mcmc id="mcmc" chainLength="10">
 		<posterior id="posterior">
 			<multivariateTraitLikelihood idref="traitLikelihood"/>
 		</posterior>

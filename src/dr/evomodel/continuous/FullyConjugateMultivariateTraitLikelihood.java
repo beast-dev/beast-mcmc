@@ -149,13 +149,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return retValue;
     }
 
-    protected double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix,
-                                                                    double[] tipTraits) {
-
-//        throw new RuntimeException("Not yet implemented (for debugging purposes only)");
-        return 0;
-    }
-
     private void setRootPriorSumOfSquares(double[][] treePrecisionMatrix) {
 
         zBz = computeQuadraticProduct(rootPriorMean, treePrecisionMatrix, rootPriorMean, dimTrait) * rootPriorSampleSize;

@@ -101,6 +101,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return dimData * countNonMissingTips();
     }
 
+    public double getTotalTreePrecision() {
+        getLogLikelihood(); // Do peeling if necessary
+        final int rootIndex = treeModel.getRoot().getNumber();
+        return lowerPrecisionCache[rootIndex];
+    }
+
     private void setTipDataValuesForNode(NodeRef node) {
         // Set tip data values
         int index = node.getNumber();
@@ -133,6 +139,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return getLogLikelihood();
     }
 
+    public abstract boolean getCacheOuterProducts();
+
     public double calculateLogLikelihood() {
 
         double logLikelihood = 0;
@@ -140,8 +148,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] conditionalRootMean = tmp2;
 
+        final boolean cacheOuterProducts = getCacheOuterProducts();
+
+        if (cacheOuterProducts) {
+            if (outerProductsCache == null) {
+                outerProductsCache = new double[dimTrait][dimTrait];
+            } else {
+                zeroMatrix(outerProductsCache);
+            }
+        }
+
         // Use dynamic programming to compute conditional likelihoods at each internal node
-        postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision);
+        postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, cacheOuterProducts);
 
         if (DEBUG) {
             System.err.println("mean: " + new Vector(meanCache));
@@ -287,8 +305,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return tipTraitOuterProducts[tip0][tip1];
     }
 
-    protected final static double computeWeightedAverageAndSumOfSquares(double[] y, double[] Ay, double[][] A,
-                                                                        int dim, double scale) {
+    protected static double computeWeightedAverageAndSumOfSquares(double[] y, double[] Ay, double[][] A,
+                                                                  int dim, double scale) {
         // returns Ay and yAy
         double yAy = 0;
         for (int i = 0; i < dim; i++) {
@@ -354,7 +372,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         areStatesRedrawn = false;
     }
 
-    void postOrderTraverse(TreeModel treeModel, NodeRef node, double[][] precisionMatrix, double logDetPrecisionMatrix) {
+    void postOrderTraverse(TreeModel treeModel, NodeRef node, double[][] precisionMatrix,
+                           double logDetPrecisionMatrix, boolean cacheOuterProducts) {
 
         final int thisNumber = node.getNumber();
 
@@ -375,8 +394,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         final NodeRef childNode0 = treeModel.getChild(node, 0);
         final NodeRef childNode1 = treeModel.getChild(node, 1);
 
-        postOrderTraverse(treeModel, childNode0, precisionMatrix, logDetPrecisionMatrix);
-        postOrderTraverse(treeModel, childNode1, precisionMatrix, logDetPrecisionMatrix);
+        postOrderTraverse(treeModel, childNode0, precisionMatrix, logDetPrecisionMatrix, cacheOuterProducts);
+        postOrderTraverse(treeModel, childNode1, precisionMatrix, logDetPrecisionMatrix, cacheOuterProducts);
 
         final int childNumber0 = childNode0.getNumber();
         final int childNumber1 = childNode1.getNumber();
@@ -395,11 +414,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (totalPrecision == 0) {
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
-//            for (int i = 0; i < dim; i++) {
-//                meanCache[meanThisOffset + i] = (meanCache[meanOffset0 + i] * precision0 +
-//                        meanCache[meanOffset1 + i] * precision1)
-//                        / totalPrecision;
-//            }
+
             computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
         }
 
@@ -421,20 +436,26 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                     meanOffset0,
                     meanOffset1,
                     precision0,
-                    precision1);
+                    precision1,
+                    cacheOuterProducts);
         }
     }
 
-    private final void incrementRemainderDensities(double[][] precisionMatrix,
+    private void incrementRemainderDensities(double[][] precisionMatrix,
                                              double logDetPrecisionMatrix,
                                              int thisIndex,
                                              int thisOffset,
                                              int childOffset0,
                                              int childOffset1,
                                              double precision0,
-                                             double precision1) {
+                                             double precision1,
+                                             boolean cacheOuterProducts) {
 
         final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
+
+        if (cacheOuterProducts) {
+            incrementOuterProducts(thisOffset, childOffset0, childOffset1, precision0, precision1);
+        }
 
         for (int k = 0; k < dimData; k++) {
 
@@ -466,11 +487,52 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    private final void computeWeightedMeanCache(int thisOffset,
-                                                int childOffset0,
-                                                int childOffset1,
-                                                double precision0,
-                                                double precision1) {
+    private void zeroMatrix(double[][] mat) {
+        for (double[] v : mat) {
+            Arrays.fill(v, 0.0);
+        }
+    }
+
+    private void incrementOuterProducts(int thisOffset,
+                                        int childOffset0,
+                                        int childOffset1,
+                                        double precision0,
+                                        double precision1) {
+
+//        if (outerProductsCache == null) {
+//            outerProductsCache = new double[dimTrait][dimTrait];
+//        }
+
+        final double[][] outerProduct = outerProductsCache;
+
+//        zeroMatrix(outerProduct);
+
+        for (int k = 0; k < dimData; k++) {
+
+            for (int i = 0; i < dimTrait; i++) {
+
+                final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
+                final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
+
+                for (int j = 0; j < dimTrait; j++) {
+
+                    final double child0j = meanCache[childOffset0 + k * dimTrait + j];
+                    final double child1j = meanCache[childOffset1 + k * dimTrait + j];
+
+                    outerProduct[i][j] += wChild0i * child0j;
+                    outerProduct[i][j] += wChild1i * child1j;
+
+                    outerProduct[i][j] -= (wChild0i + wChild1i) * meanCache[thisOffset + k * dimTrait + j];
+                }
+            }
+        }
+    }
+
+    private void computeWeightedMeanCache(int thisOffset,
+                                          int childOffset0,
+                                          int childOffset1,
+                                          double precision0,
+                                          double precision1) {
 
         final double totalVariance = 1.0 / (precision0 + precision1);
         for (int i = 0; i < dim; i++) {
@@ -700,7 +762,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     // Computes x^t A y, used many times in these computations
 
-    protected final static double computeQuadraticProduct(double[] x, double[][] A, double[] y, int dim) {
+    protected static double computeQuadraticProduct(double[] x, double[][] A, double[] y, int dim) {
         double sum = 0;
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
@@ -712,10 +774,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     // Computes the weighted average of two vectors, used many times in these computations
 
-    protected final static void computeWeightedAverage(double[] in0, double weight0,
-                                                       double[] in1, double weight1,
-                                                       final int dim,
-                                                       double[] out) {
+    protected static void computeWeightedAverage(double[] in0, double weight0,
+                                                 double[] in1, double weight1,
+                                                 final int dim,
+                                                 double[] out) {
 
         final double totalInverseWeight = 1.0 / (weight0 + weight1);
         for (int i = 0; i < dim; i++) {
@@ -846,6 +908,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     private boolean updateOuterProducts = true;
     private double[][][][] tipTraitOuterProducts = null;
+    protected double[][] outerProductsCache;
 
     // Reusable temporary storage
     protected double[] Ay;

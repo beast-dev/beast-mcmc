@@ -40,6 +40,11 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         setRootPrior(rootPrior); // Semi-conjugate multivariate normal with own mean and precision
     }
 
+    @Override
+    public boolean getCacheOuterProducts() {
+        return false;  // No need for outer products, as Gibbs sampling of diffusion matrix is not possible
+    }
+
     protected double integrateLogLikelihoodAtRoot(double[] y,
                                                   double[] Ay,
                                                   double[][] AplusB,

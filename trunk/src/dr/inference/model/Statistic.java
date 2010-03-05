@@ -113,7 +113,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             return getStatisticName();
         }
 
-        public final double[] getAttributeValue() {
+        public double[] getAttributeValue() {
             double[] stats = new double[getDimension()];
             for (int i = 0; i < stats.length; i++) {
                 stats[i] = getStatisticValue(i);

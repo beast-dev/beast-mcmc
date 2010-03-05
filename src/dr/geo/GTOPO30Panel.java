@@ -1,3 +1,28 @@
+/*
+ * GTOPO30Panel.java
+ *
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.geo;
 
 import dr.gui.ColorFunction;
@@ -17,6 +42,8 @@ public class GTOPO30Panel extends JPanel {
 
     int minLat, maxLat;
     int minLong, maxLong;
+
+    double scale = 0.5;
 
     public GTOPO30Panel(String[] filenames, ColorFunction colorFunction) throws IOException {
 
@@ -52,6 +79,14 @@ public class GTOPO30Panel extends JPanel {
         }
     }
 
+    public Dimension getPreferredSize() {
+
+        return new Dimension(
+                (int) Math.round(tiles[0].length * GTOPO30Tile.NCOLS * scale),
+                (int) Math.round(tiles.length * GTOPO30Tile.NROWS * scale));
+
+    }
+
     /**
      * @param y latitudinal pixel, increasing south from north edge
      * @param x longitudinal pixel index, increasing east from west edge
@@ -67,17 +102,9 @@ public class GTOPO30Panel extends JPanel {
         return tiles[tileY][tileX].getHeight(ty, tx);
     }
 
-    public static void main(String[] args) throws IOException {
-
-        ColorFunction function = new ColorFunction(
-                new Color[]{Color.blue, Color.yellow, Color.green.darker(), Color.orange.darker(), Color.white, Color.pink},
-                new float[]{-410, 0, 100, 1500, 4000, 8800});
-
-        GTOPO30Panel panel = new GTOPO30Panel(args, function);
-
-        JFrame frame = new JFrame("GTOPO30");
-        frame.getContentPane().add(BorderLayout.CENTER, panel);
-        frame.setSize(1200, 1000);
-        frame.setVisible(true);
+    public void setScale(double scale) {
+        this.scale = scale;
+        setSize(getPreferredSize());
+        repaint();
     }
 }

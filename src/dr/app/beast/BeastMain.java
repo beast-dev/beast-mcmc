@@ -248,7 +248,7 @@ public class BeastMain {
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
 //                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
 //                                "in number of states."),
-                        new Arguments.IntegerOption("threads", "the number of computational threads to use (default 1)"),
+                        new Arguments.IntegerOption("threads", "the number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "use Java only, no native implementations"),
                         new Arguments.Option("beagle", "use beagle library if available"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
@@ -259,6 +259,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
+                        new Arguments.StringOption("beagle_scaling", new String[] { "default", "none", "dynamic", "always"}, 
+                                false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -322,6 +324,10 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_instances")) {
             System.setProperty("beagle.instance.count", Integer.toString(arguments.getIntegerOption("beagle_instances")));
+        }
+
+        if (arguments.hasOption("beagle_scaling")) {
+            System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
         }
 
         if (arguments.hasOption("threads")) {

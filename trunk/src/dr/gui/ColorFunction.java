@@ -19,8 +19,8 @@ public class ColorFunction {
         this.points = points;
 
         if (points.length != colors.length) throw new IllegalArgumentException();
-        if (points[0] != 0.0) throw new IllegalArgumentException();
-        if (points[points.length - 1] != 1.0) throw new IllegalArgumentException();
+        //if (points[0] != 0.0) throw new IllegalArgumentException();
+        //if (points[points.length - 1] != 1.0) throw new IllegalArgumentException();
         for (int i = 0; i < points.length - 1; i++) {
             if (points[i + 1] < points[i]) {
                 throw new IllegalArgumentException();
@@ -36,7 +36,6 @@ public class ColorFunction {
             }
         }
         return Color.BLACK;
-
     }
 
     private Color interpolate(Color x, Color y, float s, float t) {

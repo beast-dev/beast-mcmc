@@ -39,7 +39,7 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
     }
 
     @Override
-    public boolean getCacheOuterProducts() {
+    public boolean getComputeWishartSufficientStatistics() {
         return false;  // No need for outer products, as Gibbs sampling of diffusion matrix is not possible
     }
 

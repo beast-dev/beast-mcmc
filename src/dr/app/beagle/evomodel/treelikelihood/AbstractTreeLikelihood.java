@@ -45,7 +45,7 @@ import dr.xml.Reportable;
 
 public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+    protected static final boolean COUNT_TOTAL_OPERATIONS = false;
 
     public AbstractTreeLikelihood(String name, PatternList patternList,
                                   TreeModel treeModel) {

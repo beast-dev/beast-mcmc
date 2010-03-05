@@ -8,9 +8,8 @@ public enum PartialsRescalingScheme {
 
     DEFAULT("default"),
     NONE("none"),
-    ALWAYS_RESCALE("alwaysRescale"),
-    STATIC_RESCALING("staticRescaling"),
-    DYNAMIC_RESCALING("dynamicRescaling");
+    DYNAMIC("dynamic"),
+    ALWAYS("always");
 
     PartialsRescalingScheme(String text) {
         this.text = text;
@@ -27,7 +26,7 @@ public enum PartialsRescalingScheme {
             if (scheme.getText().compareToIgnoreCase(text) == 0)
                 return scheme;
         }
-        return null;
+        return DEFAULT;
     }
 
 }

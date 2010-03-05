@@ -1,14 +1,12 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -17,9 +15,7 @@ import dr.util.Author;
 import dr.util.Citation;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -95,10 +91,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                     "\tMarking taxon " + treeModel.getTaxonId(whichTip) + " as completely missing");
             missing[whichTip] = true;
         }
-    }
-
-    public int getNumberOfDatum() {
-        return dimData * countNonMissingTips();
     }
 
     public double getTotalTreePrecision() {
@@ -234,7 +226,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (DEBUG) { // Root trait is univariate!!!
             System.err.println("logLikelihood (final) = " + logLikelihood);
-            checkViaLargeMatrixInversion();
+//            checkViaLargeMatrixInversion();
         }
 
         areStatesRedrawn = false;  // Should redraw internal node states when needed
@@ -250,59 +242,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             likelihoodKnown = false;
         }
         super.handleVariableChangedEvent(variable, index, type);
-    }
-
-
-    private double[][] computeTipTraitOuterProduct(int tip0, int tip1) {
-        double[][] outerProduct = new double[dimTrait][dimTrait];
-
-        final int offset0 = dim * tip0;
-        final int offset1 = dim * tip1;
-
-        for (int i = 0; i < dimTrait; i++) {
-            for (int j = 0; j < dimTrait; j++) {
-                for (int k = 0; k < dimData; k++) {
-                    outerProduct[i][j] += meanCache[offset0 + k * dimTrait + i] * meanCache[offset1 + k * dimTrait + j];
-                }
-            }
-        }
-        return outerProduct;
-    }
-
-    private void computeAllTipTraitOuterProducts() {
-        final int nTips = treeModel.getExternalNodeCount();
-
-        if (tipTraitOuterProducts == null) {
-            tipTraitOuterProducts = new double[nTips][nTips][][];
-        }
-
-        for (int i = 0; i < nTips; i++) {
-            if (!missing[i]) {
-                tipTraitOuterProducts[i][i] = computeTipTraitOuterProduct(i, i);
-                for (int j = i + 1; j < nTips; j++) {
-                    if (!missing[j]) {
-                        tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = computeTipTraitOuterProduct(i, j);
-                    } else {
-                        tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = null;
-                    }
-                }
-            } else {
-                for (int j = 0; j < nTips; j++) {
-                    tipTraitOuterProducts[i][j] = null;
-                }
-            }
-        }
-    }
-
-    // Returns the outer product of the tip traits for taxon 0 and taxon 1,
-    // or null if either taxon 0 or taxon 1 is missing
-
-    public double[][] getTipTraitOuterProduct(int tip0, int tip1) {
-        if (updateOuterProducts) {
-            computeAllTipTraitOuterProducts();
-            updateOuterProducts = false;
-        }
-        return tipTraitOuterProducts[tip0][tip1];
     }
 
     protected static double computeWeightedAverageAndSumOfSquares(double[] y, double[] Ay, double[][] A,
@@ -331,41 +270,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                            double[][] temporaryStorage,
                                                            double[][] treePrecisionMatrix,
                                                            double conditionalRootPrecision);
-
-    private void checkViaLargeMatrixInversion() {
-
-        // Perform a check based on filling in the (dimTrait * tipCount) * (dimTrait * tipCount) precision matrix
-        // And then integrating out the root trait value
-
-        // Form \Sigma^{-1} (precision) = (tree precision) %x% (trait precision)
-
-        double[][] treeTraitPrecisionMatrix = computeTreeTraitPrecision(diffusionModel.getPrecisionmatrix());
-
-        double totalLogDensity = 0;
-
-        for (int datum = 0; datum < dimData; datum++) {
-
-            double[] tipTraits = fillLeafTraits(datum);
-
-            System.err.println("Datum #" + datum);
-            System.err.println("tipTraits = " + new Vector(tipTraits));
-            System.err.println("tipPrecision = \n" + new Matrix(treeTraitPrecisionMatrix));
-
-            double checkLogLikelihood = MultivariateNormalDistribution.logPdf(tipTraits, new double[tipTraits.length], treeTraitPrecisionMatrix,
-                    Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(treeTraitPrecisionMatrix)), 1.0);
-
-            System.err.println("tipDensity = " + checkLogLikelihood + " (should match final likelihood when root not integrated out and no missing data)");
-
-            // Convolve root prior
-            if (integrateRoot) {
-                checkLogLikelihood += integrateLogLikelihoodAtRootFromFullTreeMatrix(treeTraitPrecisionMatrix, tipTraits);
-            }
-            totalLogDensity += checkLogLikelihood;
-        }
-        System.err.println("Total logLikelihood (via tree) = " + totalLogDensity);
-    }
-
-    protected abstract double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix, double[] tipTraits);
 
     public void makeDirty() {
         super.makeDirty();
@@ -499,13 +403,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                         double precision0,
                                         double precision1) {
 
-//        if (outerProductsCache == null) {
-//            outerProductsCache = new double[dimTrait][dimTrait];
-//        }
-
         final double[][] outerProduct = outerProductsCache;
-
-//        zeroMatrix(outerProduct);
 
         for (int k = 0; k < dimData; k++) {
 
@@ -563,152 +461,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         System.arraycopy(drawnStates, index * dim, trait, 0, dim);
         return trait;
     }
-
-    protected double[][] removeMissingTipsInTreeVariance(double[][] variance) {
-
-        final int tipCount = treeModel.getExternalNodeCount();
-        final int nonMissing = countNonMissingTips();
-
-        if (nonMissing == tipCount) { // Do nothing
-            return variance;
-        }
-
-        double[][] outVariance = new double[nonMissing][nonMissing];
-
-        int iReal = 0;
-        for (int i = 0; i < tipCount; i++) {
-            if (!missing[i]) {
-
-                int jReal = 0;
-                for (int j = 0; j < tipCount; j++) {
-                    if (!missing[j]) {
-
-                        outVariance[iReal][jReal] = variance[i][j];
-
-                        jReal++;
-                    }
-                }
-                iReal++;
-            }
-        }
-        return outVariance;
-    }
-
-    protected double[][] computeTreeTraitPrecision(double[][] traitPrecision) {
-        double[][] treePrecision = computeTreePrecision();
-        if (dimTrait > 1) {
-            treePrecision = KroneckerOperation.product(treePrecision, traitPrecision);
-        } else {
-            final double precision = traitPrecision[0][0];
-            for (int i = 0; i < treePrecision.length; i++) {
-                for (int j = 0; j < treePrecision[i].length; j++) {
-                    treePrecision[i][j] *= precision;
-                }
-            }
-        }
-        return treePrecision;
-    }
-
-    public double[][] computeTreePrecision() {
-        return new SymmetricMatrix(computeTreeVariance()).inverse().toComponents();
-    }
-
-    private NodeRef findMRCA(int iTip, int jTip) {
-        Set<String> leafNames = new HashSet<String>();
-        leafNames.add(treeModel.getTaxonId(iTip));
-        leafNames.add(treeModel.getTaxonId(jTip));
-        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
-    }
-
-    public double[][] computeTreeVariance() {
-        final int tipCount = treeModel.getExternalNodeCount();
-        double[][] variance = new double[tipCount][tipCount];
-
-        for (int i = 0; i < tipCount; i++) {
-
-            // Fill in diagonal
-            double marginalTime = getRescaledLengthToRoot(treeModel.getExternalNode(i));
-            variance[i][i] = marginalTime;
-
-            // Fill in upper right triangle, TODO Optimization possible here? or even necessary?
-
-            // Short answer: yes.  This function is really only needed in the Gibbs operator on the precision.
-            // In this operator, we need the weighted sum of outer products, which are also available via
-            // dynamic programming [ O(N) instead of O(N^2) ] by modifying incrementRemainderDensities.
-
-            for (int j = i + 1; j < tipCount; j++) {
-//                Set<String> leafNames = new HashSet<String>();
-//                leafNames.add(treeModel.getTaxonId(i));
-//                leafNames.add(treeModel.getTaxonId(j));
-//                NodeRef mrca = Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
-                NodeRef mrca = findMRCA(i, j);
-
-                variance[i][j] = getRescaledLengthToRoot(mrca);
-            }
-        }
-
-        // Make symmetric
-        for (int i = 0; i < tipCount; i++) {
-            for (int j = i + 1; j < tipCount; j++) {
-                variance[j][i] = variance[i][j];
-            }
-        }
-
-        if (DEBUG) {
-            System.err.println("");
-            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
-        }
-
-        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
-
-        if (DEBUG) {
-            System.err.println("");
-            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
-        }
-
-        return variance;
-    }
-
-    protected int countNonMissingTips() {
-        int tipCount = treeModel.getExternalNodeCount();
-        for (int i = 0; i < tipCount; i++) {
-            if (missing[i]) {
-                tipCount--;
-            }
-        }
-        return tipCount;
-    }
-
-    protected double[] fillLeafTraits(int datum) {
-
-        final int tipCount = treeModel.getExternalNodeCount();
-
-        final int nonMissingTipCount = countNonMissingTips();
-
-        double[] traits = new double[dimTrait * nonMissingTipCount];
-        int index = 0;
-        for (int i = 0; i < tipCount; i++) {
-
-            if (!missing[i]) {
-                for (int k = 0; k < dimTrait; k++) {
-                    traits[index++] = meanCache[dim * i + datum * dimTrait + k];
-                }
-            }
-        }
-        return traits;
-    }
-
-    private double getRescaledLengthToRoot(NodeRef node) {
-        double length = 0;
-        final NodeRef root = treeModel.getRoot();
-        while (node != root) {
-            length += getRescaledBranchLength(node);
-            node = treeModel.getParent(node);
-        }
-        return length;
-    }
-
-    private boolean areStatesRedrawn = false;
 
     public void redrawAncestralStates() {
 
@@ -882,12 +634,14 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    private double[] meanCache;
-    private double[] upperPrecisionCache;
+    private boolean areStatesRedrawn = false;
+
+    protected double[] meanCache;
+    protected double[] upperPrecisionCache;
     private double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
-    private boolean[] missing;
+    protected boolean[] missing;
 
     private double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
@@ -905,9 +659,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected static boolean DEBUG_PREORDER = false;
 
     private double[] zeroDimVector;
-
-    private boolean updateOuterProducts = true;
-    private double[][][][] tipTraitOuterProducts = null;
+    
     protected double[][] outerProductsCache;
 
     // Reusable temporary storage

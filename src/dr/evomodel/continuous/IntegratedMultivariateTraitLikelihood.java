@@ -3,11 +3,10 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+import dr.inference.loggers.LogColumn;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
@@ -47,7 +46,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (dim % dimTrait != 0)
             throw new RuntimeException("dim is not divisible by dimTrait");
 
-        dimData = dim / dimTrait;
+        numData = dim / dimTrait;
 
         meanCache = new double[dim * treeModel.getNodeCount()];
         drawnStates = new double[dim * treeModel.getNodeCount()];
@@ -76,7 +75,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         StringBuffer sb = new StringBuffer();
         sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
-        sb.append("\tNumber of observations: ").append(dimData).append("\n");
+        sb.append("\tNumber of observations: ").append(numData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
@@ -131,7 +130,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return getLogLikelihood();
     }
 
-    public abstract boolean getCacheOuterProducts();
+    public abstract boolean getComputeWishartSufficientStatistics();
 
     public double calculateLogLikelihood() {
 
@@ -140,18 +139,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] conditionalRootMean = tmp2;
 
-        final boolean cacheOuterProducts = getCacheOuterProducts();
+        final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
 
-        if (cacheOuterProducts) {
-            if (outerProductsCache == null) {
-                outerProductsCache = new double[dimTrait][dimTrait];
-            } else {
-                zeroMatrix(outerProductsCache);
-            }
+        if (computeWishartStatistics) {
+//            if (wishartStatistics == null) {
+                wishartStatistics = new WishartSufficientStatistics(dimTrait);
+//            } else {
+//                wishartStatistics.clear();
+//            }
         }
 
         // Use dynamic programming to compute conditional likelihoods at each internal node
-        postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, cacheOuterProducts);
+        postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
 
         if (DEBUG) {
             System.err.println("mean: " + new Vector(meanCache));
@@ -166,7 +165,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         // Precision scalar of datum conditional on root
         double conditionalRootPrecision = lowerPrecisionCache[rootIndex];
 
-        for (int datum = 0; datum < dimData; datum++) {
+        for (int datum = 0; datum < numData; datum++) {
 
             double thisLogLikelihood = 0;
 
@@ -361,7 +360,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             incrementOuterProducts(thisOffset, childOffset0, childOffset1, precision0, precision1);
         }
 
-        for (int k = 0; k < dimData; k++) {
+        for (int k = 0; k < numData; k++) {
 
             double childSS0 = 0;
             double childSS1 = 0;
@@ -391,21 +390,15 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    private void zeroMatrix(double[][] mat) {
-        for (double[] v : mat) {
-            Arrays.fill(v, 0.0);
-        }
-    }
-
     private void incrementOuterProducts(int thisOffset,
                                         int childOffset0,
                                         int childOffset1,
                                         double precision0,
                                         double precision1) {
 
-        final double[][] outerProduct = outerProductsCache;
+        final double[][] outerProduct = wishartStatistics.getScaleMatrix();
 
-        for (int k = 0; k < dimData; k++) {
+        for (int k = 0; k < numData; k++) {
 
             for (int i = 0; i < dimTrait; i++) {
 
@@ -424,6 +417,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 }
             }
         }
+        wishartStatistics.incrementDf(1); // Peeled one node
     }
 
     private void computeWeightedMeanCache(int thisOffset,
@@ -555,7 +549,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             final int rootIndex = treeModel.getRoot().getNumber();
             double rootPrecision = lowerPrecisionCache[rootIndex];
 
-            for (int datum = 0; datum < dimData; datum++) {
+            for (int datum = 0; datum < numData; datum++) {
                 System.arraycopy(meanCache, thisIndex * dim + datum * dimTrait, rootMean, 0, dimTrait);
 
                 double[][] variance = computeMarginalRootMeanAndVariance(rootMean, treePrecision, treeVariance,
@@ -593,7 +587,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 double[] mean = Ay; // temporary storage
                 double[][] var = tmpM; // temporary storage
 
-                for (int datum = 0; datum < dimData; datum++) {
+                for (int datum = 0; datum < numData; datum++) {
 
                     int parentOffset = parentIndex * dim + datum * dimTrait;
                     int thisOffset = thisIndex * dim + datum * dimTrait;
@@ -634,6 +628,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())};
+    }
+
     private boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
@@ -650,7 +649,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     private double[] drawnStates;
 
-    protected int dimData;
+    protected int numData;
     protected int dimTrait;
     protected int dim;
 
@@ -659,8 +658,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected static boolean DEBUG_PREORDER = false;
 
     private double[] zeroDimVector;
-    
-    protected double[][] outerProductsCache;
+
+    protected WishartSufficientStatistics wishartStatistics;
 
     // Reusable temporary storage
     protected double[] Ay;

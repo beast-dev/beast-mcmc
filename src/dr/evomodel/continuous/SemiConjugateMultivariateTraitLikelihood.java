@@ -7,8 +7,6 @@ import dr.inference.model.Model;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
-import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
 
@@ -95,73 +93,6 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         return retValue;
     }
 
-    protected double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix,
-                                                                    double[] tipTraits) {
-
-        double logLikelihood = 0;
-        //final int tipCount = treeModel.getExternalNodeCount();
-        final int tipCount = countNonMissingTips();
-
-        // 1^t\Sigma^{-1} y + Pz
-        double[] mean = Ay;
-        for (int i = 0; i < dimTrait; i++) {
-            mean[i] = 0;
-            for (int j = 0; j < dimTrait; j++) {
-                mean[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
-            }
-
-            for (int j = 0; j < tipCount; j++) {
-                final int rowOffset = j * dimTrait + i;
-                for (int k = 0; k < tipCount * dimTrait; k++) {
-                    mean[i] += treeTraitPrecisionMatrix[rowOffset][k] * tipTraits[k];
-                }
-            }
-        }
-
-        // 1^t \Sigma^{-1} 1 + P
-        double[][] precision = tmpM;
-        for (int i = 0; i < dimTrait; i++) {
-            for (int j = 0; j < dimTrait; j++) {
-                precision[i][j] = rootPriorPrecision[i][j];
-                for (int k = 0; k < tipCount; k++) {
-                    for (int l = 0; l < tipCount; l++) {
-                        precision[i][j] += treeTraitPrecisionMatrix[k * dimTrait + i][l * dimTrait + j];
-                    }
-                }
-            }
-        }
-        double[] normalizedMean = tmp2;
-        double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
-        for (int i = 0; i < dimTrait; i++) {
-            normalizedMean[i] = 0.0;
-            for (int j = 0; j < dimTrait; j++) {
-                normalizedMean[i] += variance[i][j] * mean[j];
-            }
-        }
-        mean = normalizedMean;
-
-        // We know:  y ~ MVN(x, A) and x ~ N(m, B)
-        // Therefore p(x | y) = N( (A+B)^{-1}(Ay + Bm), A + B)
-        // We want: p( y ) = p( y | x ) p( x ) / p( x | y ) for any value x, say x = 0
-
-        logLikelihood += MultivariateNormalDistribution.logPdf(
-                rootPriorMean, new double[rootPriorMean.length], rootPriorPrecision,
-                logRootPriorPrecisionDeterminant, 1.0
-        );
-
-        logLikelihood -= MultivariateNormalDistribution.logPdf(
-                mean, new double[mean.length], precision,
-                Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(precision)), 1.0
-        );
-
-        if (DEBUG) {
-            System.err.println("Mean = " + new Vector(mean));
-            System.err.println("Prec = " + new Matrix(precision));
-            System.err.println("log density = " + logLikelihood);
-        }
-        return logLikelihood;
-    }
-
     private void setRootPriorSumOfSquares() {
         if (integrateRoot) {
             Bz = new double[dimTrait];
@@ -183,8 +114,6 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         }
         setRootPriorSumOfSquares();
     }
-
-    private double zBz; // Prior sum-of-squares contribution
 
     protected double[][] computeMarginalRootMeanAndVariance(double[] rootMean, double[][] treePrecision,
                                                             double[][] treeVariance, double rootPrecision) {
@@ -212,8 +141,9 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         return invAplusB;
     }
 
-    private double[] rootPriorMean;
-    private double[][] rootPriorPrecision;
-    private double logRootPriorPrecisionDeterminant;
-    private double[] Bz;
+    protected double[] rootPriorMean;
+    protected double[][] rootPriorPrecision;
+    protected double logRootPriorPrecisionDeterminant;
+    protected double[] Bz;
+    private double zBz; // Prior sum-of-squares contribution
 }

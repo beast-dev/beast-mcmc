@@ -41,6 +41,25 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
+    public double getRootPriorSampleSize() {
+        return rootPriorSampleSize;
+    }
+
+    public double[] getRootPriorMean() {
+        double[] out = new double[rootPriorMean.length];
+        System.arraycopy(rootPriorMean, 0, out, 0, out.length);
+        return out;
+//        return rootPriorMean;
+    }
+
+    public double[][] getOuterProducts() {
+        // TODO Only recompute when necessary
+        cacheOutProducts = true;
+        calculateLogLikelihood();
+        cacheOutProducts = false;
+        // TODO Return copy?
+        return outerProductsCache;
+    }
 
 //    private double getLogPrecisionDetermination() {
 //        return Math.log(diffusionModel.getDeterminantPrecisionMatrix()) + dimTrait * Math.log(rootPriorSampleSize);
@@ -51,6 +70,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if (model == diffusionModel) {
             priorInformationKnown = false;
         }
+        super.handleModelChangedEvent(model, object, index);
     }
 
     public void restoreState() {
@@ -63,6 +83,11 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
+    @Override
+    public boolean getCacheOuterProducts() {
+        return cacheOutProducts;
+    }
+    
     protected double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,
                                                   double[] marginalRootMean,
                                                   double[][] notUsed,
@@ -81,12 +106,32 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             computeWeightedAverage(conditionalRootMean, conditionalRootPrecision, rootPriorMean, rootPriorSampleSize,
                     dimTrait, marginalRootMean);
             
-            square = computeQuadraticProduct(marginalRootMean, treePrecisionMatrix, marginalRootMean, dimTrait) * marginalPrecision;
+            square = computeQuadraticProduct(marginalRootMean, treePrecisionMatrix, marginalRootMean, dimTrait)
+                    * marginalPrecision;
 
+            if (cacheOutProducts) {
+
+//                System.err.println("Condition SS:\n" + new Matrix(outerProductsCache));
+
+                final double weight = conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+                for (int i = 0; i < dimTrait; i++) {
+                    final double diffi = conditionalRootMean[i] - rootPriorMean[i];
+                    for (int j = 0; j < dimTrait; j++) {
+                        outerProductsCache[i][j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
+                    }
+                }
+//                System.err.println("Maringal  SS:\n" + new Matrix(outerProductsCache));
+            }
         } else {
             // 1D is very simple
             final double x = conditionalRootMean[0] * conditionalRootPrecision + rootPriorMean[0] * rootPriorSampleSize;
             square = x * x * treePrecisionMatrix[0][0] * marginalVariance;
+
+            if (cacheOutProducts) {
+
+                final double y = conditionalRootMean[0] - rootPriorMean[0];
+                outerProductsCache[0][0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+            }
         }
 
         if (!priorInformationKnown) {
@@ -107,7 +152,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     protected double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix,
                                                                     double[] tipTraits) {
 
-        throw new RuntimeException("Not yet implemented (for debugging purposes only)");
+//        throw new RuntimeException("Not yet implemented (for debugging purposes only)");
+        return 0;
     }
 
     private void setRootPriorSumOfSquares(double[][] treePrecisionMatrix) {
@@ -141,4 +187,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution
+
+    private boolean cacheOutProducts = false;
 }

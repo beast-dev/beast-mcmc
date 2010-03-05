@@ -21,7 +21,7 @@ public class WishartDistribution implements MultivariateDistribution {
     private double logNormalizationConstant;
 
     /**
-     * A Wishart distribution class for \nu degrees of freedom and inverse scale matrix S
+     * A Wishart distribution class for \nu degrees of freedom and scale matrix S
      * Expectation = \nu * S
      *
      * @param df
@@ -129,11 +129,13 @@ public class WishartDistribution implements MultivariateDistribution {
      * Generate a random draw from a Wishart distribution
      * Follows Odell and Feiveson (1996) JASA 61, 199-203
      *
+     * Returns a random variable with expectation = df * scaleMatrix
+     *
      * @param df
      * @param scaleMatrix
      * @return
      */
-    public static double[][] nextWishart(int df, double[][] scaleMatrix) {
+    public static double[][] nextWishart(double df, double[][] scaleMatrix) {
 
         int dim = scaleMatrix.length;
         double[][] draw = new double[dim][dim];

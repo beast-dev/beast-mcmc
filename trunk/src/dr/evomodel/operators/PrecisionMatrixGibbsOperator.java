@@ -38,8 +38,10 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.WishartDistribution;
+import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+//import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 /**
@@ -116,17 +118,22 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                                        FullyConjugateMultivariateTraitLikelihood integratedLikelihood) {
 
 
-        double[][] outerProducts = integratedLikelihood.getOuterProducts();
+        final WishartSufficientStatistics sufficientStatistics = integratedLikelihood.getWishartStatistics();
+        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
 
-        double totalTreePrecision = integratedLikelihood.getTotalTreePrecision();
+        final double df = sufficientStatistics.getDf();
+//        final double df = 2;
+
+//        final double df = integratedLikelihood.getTotalTreePrecision();
 
 //        System.err.println("OuterProducts = \n" + new Matrix(outerProducts));
-//        System.err.println("Total tree P  = " + totalTreePrecision);
+//        System.err.println("Total tree DF  = " + df);
+//        System.exit(-1);
 
         for (int i = 0; i < outerProducts.length; i++) {
             System.arraycopy(outerProducts[i], 0, S[i], 0, S[i].length);
         }
-        numberObservations = totalTreePrecision;
+        numberObservations = df;
     }
 
     private void incrementOuterProduct(double[][] S, NodeRef node) {

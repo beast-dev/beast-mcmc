@@ -4,6 +4,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
+import dr.math.distributions.WishartSufficientStatistics;
 
 import java.util.List;
 
@@ -52,13 +53,20 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //        return rootPriorMean;
     }
 
-    public double[][] getOuterProducts() {
-        // TODO Only recompute when necessary
-        cacheOutProducts = true;
+//    public double[][] getOuterProducts() {
+//        // TODO Only recompute when necessary
+//        computeWishartStatistics = true;
+//        calculateLogLikelihood();
+//        computeWishartStatistics = false;
+//        // TODO Return copy?
+//        return outerProductsCache;
+//    }
+
+    public WishartSufficientStatistics getWishartStatistics() {
+        computeWishartStatistics = true;
         calculateLogLikelihood();
-        cacheOutProducts = false;
-        // TODO Return copy?
-        return outerProductsCache;
+        computeWishartStatistics = false;
+        return wishartStatistics;
     }
 
 //    private double getLogPrecisionDetermination() {
@@ -84,8 +92,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     @Override
-    public boolean getCacheOuterProducts() {
-        return cacheOutProducts;
+    public boolean getComputeWishartSufficientStatistics() {
+        return computeWishartStatistics;
     }
     
     protected double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,
@@ -109,28 +117,29 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             square = computeQuadraticProduct(marginalRootMean, treePrecisionMatrix, marginalRootMean, dimTrait)
                     * marginalPrecision;
 
-            if (cacheOutProducts) {
+            if (computeWishartStatistics) {
 
-//                System.err.println("Condition SS:\n" + new Matrix(outerProductsCache));
+                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
 
                 final double weight = conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
                 for (int i = 0; i < dimTrait; i++) {
                     final double diffi = conditionalRootMean[i] - rootPriorMean[i];
                     for (int j = 0; j < dimTrait; j++) {
-                        outerProductsCache[i][j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
+                        outerProducts[i][j] += diffi * weight * (conditionalRootMean[j] - rootPriorMean[j]);
                     }
                 }
-//                System.err.println("Maringal  SS:\n" + new Matrix(outerProductsCache));
+                wishartStatistics.incrementDf(1);
             }
         } else {
             // 1D is very simple
             final double x = conditionalRootMean[0] * conditionalRootPrecision + rootPriorMean[0] * rootPriorSampleSize;
             square = x * x * treePrecisionMatrix[0][0] * marginalVariance;
 
-            if (cacheOutProducts) {
-
+            if (computeWishartStatistics) {
+                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
                 final double y = conditionalRootMean[0] - rootPriorMean[0];
-                outerProductsCache[0][0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+                outerProducts[0][0] += y * y * conditionalRootPrecision * rootPriorSampleSize * marginalVariance;
+                wishartStatistics.incrementDf(1);
             }
         }
 
@@ -181,5 +190,5 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution
 
-    private boolean cacheOutProducts = false;
+    private boolean computeWishartStatistics = false;
 }

@@ -129,7 +129,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
     }
 
     public int getNumberOfDatum() {
-        return dimData * countNonMissingTips();
+        return numData * countNonMissingTips();
     }
 
     protected double integrateLogLikelihoodAtRootFromFullTreeMatrix(double[][] treeTraitPrecisionMatrix,
@@ -259,7 +259,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
 
         double totalLogDensity = 0;
 
-        for (int datum = 0; datum < dimData; datum++) {
+        for (int datum = 0; datum < numData; datum++) {
 
             double[] tipTraits = fillLeafTraits(datum);
 
@@ -289,7 +289,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
 
         for (int i = 0; i < dimTrait; i++) {
             for (int j = 0; j < dimTrait; j++) {
-                for (int k = 0; k < dimData; k++) {
+                for (int k = 0; k < numData; k++) {
                     outerProduct[i][j] += meanCache[offset0 + k * dimTrait + i] * meanCache[offset1 + k * dimTrait + j];
                 }
             }

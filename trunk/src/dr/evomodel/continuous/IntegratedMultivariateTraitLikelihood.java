@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
@@ -435,10 +436,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     protected double[] getRootNodeTrait() {
-        return traitForNode(treeModel, treeModel.getRoot(), traitName);
+        return getTraitForNode(treeModel, treeModel.getRoot(), traitName);
     }
 
-    protected double[] traitForNode(TreeModel tree, NodeRef node, String traitName) {
+    public double[] getTraitForNode(Tree tree, NodeRef node, String traitName) {
 
         if (tree != treeModel) {
             throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");

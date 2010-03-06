@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
@@ -139,8 +140,8 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
     }
 
 
-    protected double[] traitForNode(TreeModel treeModel, NodeRef node, String traitName) {
-        return treeModel.getMultivariateNodeTrait(node,traitName);
+    public double[] getTraitForNode(Tree treeModel, NodeRef node, String traitName) {
+        return ((TreeModel)treeModel).getMultivariateNodeTrait(node,traitName);
     }
-              
+
 }

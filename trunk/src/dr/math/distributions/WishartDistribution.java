@@ -16,16 +16,16 @@ public class WishartDistribution implements MultivariateDistribution {
     private int df;
     private int dim;
     private double[][] scaleMatrix;
-    private Matrix S;
-    private Matrix Sinv;
+    private double[] Sinv;
+    private Matrix SinvMat;
     private double logNormalizationConstant;
 
     /**
      * A Wishart distribution class for \nu degrees of freedom and scale matrix S
      * Expectation = \nu * S
      *
-     * @param df
-     * @param scaleMatrix
+     * @param df          degrees of freedom
+     * @param scaleMatrix scaleMatrix
      */
 
     public WishartDistribution(int df, double[][] scaleMatrix) {
@@ -33,11 +33,14 @@ public class WishartDistribution implements MultivariateDistribution {
         this.scaleMatrix = scaleMatrix;
         this.dim = scaleMatrix.length;
 
-        S = new Matrix(scaleMatrix);
-        Sinv = S.inverse();
+        SinvMat = new Matrix(scaleMatrix).inverse();
+        double[][] tmp = SinvMat.toComponents();
+        Sinv = new double[dim * dim];
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(tmp[i], 0, Sinv, i * dim, dim);
+        }
 
         computeNormalizationConstant();
-
     }
 
     public WishartDistribution(int dim) { // returns a non-informative (unormalizable) density
@@ -81,7 +84,7 @@ public class WishartDistribution implements MultivariateDistribution {
         return null;
     }
 
-    private void testMe() {
+    public void testMe() {
 
         int length = 100000;
 
@@ -128,12 +131,12 @@ public class WishartDistribution implements MultivariateDistribution {
     /**
      * Generate a random draw from a Wishart distribution
      * Follows Odell and Feiveson (1996) JASA 61, 199-203
-     *
+     * <p/>
      * Returns a random variable with expectation = df * scaleMatrix
      *
-     * @param df
-     * @param scaleMatrix
-     * @return
+     * @param df          degrees of freedom
+     * @param scaleMatrix scaleMatrix
+     * @return a random draw
      */
     public static double[][] nextWishart(double df, double[][] scaleMatrix) {
 
@@ -161,6 +164,7 @@ public class WishartDistribution implements MultivariateDistribution {
             cholesky = (new CholeskyDecomposition(cholesky)).getL();
             // caution: this returns the lower triangular form
         } catch (IllegalDimension illegalDimension) {
+            throw new RuntimeException("Numerical exception in WishartDistribution");
         }
 
         double[][] result = new double[dim][dim];
@@ -183,35 +187,52 @@ public class WishartDistribution implements MultivariateDistribution {
     }
 
     public double logPdf(double[] x) {
-        Matrix W = new Matrix(x, dim, dim);
-        return logPdf(W, Sinv, df, dim, logNormalizationConstant);
+        if (x.length == 4) { // bivariate
+            return logPdf2D(x, Sinv, df, dim, logNormalizationConstant);
+        } else {
+            return logPdfSlow(x);
+        }
     }
+
+    public double logPdfSlow(double[] x) {
+        Matrix W = new Matrix(x, dim, dim);
+        return logPdf(W, SinvMat, df, dim, logNormalizationConstant);
+    }
+
+    public static double logPdf2D(double[] W, double[] Sinv, int df, int dim, double logNormalizationConstant) {
+
+        final double det = W[0] * W[3] - W[1] * W[2];
+        if (det <= 0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        double logDensity = Math.log(det);
+        logDensity *= 0.5 * (df - dim - 1);
+
+        // logDensity -= 0.5 * tr(Sinv %*% W)
+        final double trace = Sinv[0] * W[0] + Sinv[1] * W[2] + Sinv[2] * W[1] + Sinv[3] * W[3];
+        logDensity -= 0.5 * trace;
+
+        logDensity += logNormalizationConstant;
+
+        return logDensity;
+    }
+
 
     public static double logPdf(Matrix W, Matrix Sinv, int df, int dim, double logNormalizationConstant) {
 
         double logDensity = 0;
 
-//		System.err.println("yoyo "+df+" "+dim);
-
-//        double det = 0;
         try {
             if (!W.isPD())
                 return Double.NEGATIVE_INFINITY;
 
             final double det = W.determinant();
-//		} catch (IllegalDimension illegalDimension) {
-//			illegalDimension.printStackTrace();
-//		}
 
             if (det <= 0) {
-//			System.err.println("Not PD:\n"+W);
-//			System.err.println("det = "+det);
-//			System.exit(-1);
                 return Double.NEGATIVE_INFINITY;
             }
 
-//		try {
-//			logDensity = Math.log(W.determinant());
             logDensity = Math.log(det);
 
             logDensity *= 0.5;
@@ -226,14 +247,20 @@ public class WishartDistribution implements MultivariateDistribution {
                     logDensity -= 0.5 * product.component(i, i);
             }
 
-            // System.err.println(Sinv);
-
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
 
         logDensity += logNormalizationConstant;
         return logDensity;
+    }
+
+    public static void testBivariateMethod() {
+        System.out.println("Testing new computations ...");
+        WishartDistribution wd = new WishartDistribution(5, new double[][]{{2.0, -0.5}, {-0.5, 2.0}});
+        double[] W = new double[]{4.0, 1.0, 1.0, 3.0};
+        System.out.println("Fast logPdf = " + wd.logPdf(W));
+        System.out.println("Slow logPdf = " + wd.logPdfSlow(W));
     }
 
     public static void main(String[] argv) {
@@ -259,5 +286,7 @@ public class WishartDistribution implements MultivariateDistribution {
         x = new double[]{10.0};
         System.out.println("Wishart, uninformative, PDF(10.0): " + wd.logPdf(x));
         // These tests show the correspondence between a 1D Wishart and a Gamma
+        testBivariateMethod();
+
     }
 }

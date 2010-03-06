@@ -461,6 +461,11 @@ public interface Parameter extends Statistic, Variable<Double> {
             this.bounds = null;
         }
 
+        public Default(String id, double[] values) {
+            this(values);
+            setId(id);
+        }
+
         public Default(double[] values) {
             this.values = new double[values.length];
             System.arraycopy(values, 0, this.values, 0, values.length);

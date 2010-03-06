@@ -3,7 +3,6 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.BranchAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc Suchard
@@ -12,13 +11,12 @@ public abstract class BivariateTraitBranchAttributeProvider implements BranchAtt
 
     public static final String FORMAT = "%5.4f";
 
-    public BivariateTraitBranchAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood) {
+    public BivariateTraitBranchAttributeProvider(AbstractMultivariateTraitLikelihood traitLikelihood) {
 
         traitName = traitLikelihood.getTraitName();
         label = traitName + extensionName();
-        treeModel = traitLikelihood.getTreeModel();
 
-        double[] rootTrait = treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
+        double[] rootTrait = traitLikelihood.getRootNodeTrait();
         if (rootTrait.length != 2)
             throw new RuntimeException("BivariateTraitBranchAttributeProvider only works for 2D traits");
     }
@@ -37,12 +35,12 @@ public abstract class BivariateTraitBranchAttributeProvider implements BranchAtt
 
     public String getAttributeForBranch(Tree tree, NodeRef node) {
 
-        if (tree != treeModel)
+        if (tree != traitLikelihood.getTreeModel())
             throw new RuntimeException("Bad bug.");
 
         NodeRef parent = tree.getParent(node);
-        double[] startTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-        double[] endTrait = treeModel.getMultivariateNodeTrait(node, traitName);
+        double[] startTrait = traitLikelihood.getTraitForNode(tree, parent, traitName);
+        double[] endTrait = traitLikelihood.getTraitForNode(tree, node, traitName);
         double startTime = tree.getNodeHeight(parent);
         double endTime = tree.getNodeHeight(node);
 
@@ -51,7 +49,7 @@ public abstract class BivariateTraitBranchAttributeProvider implements BranchAtt
 
     }
 
-    protected TreeModel treeModel;
+    protected AbstractMultivariateTraitLikelihood traitLikelihood;
     protected String traitName;
     protected String label;
 

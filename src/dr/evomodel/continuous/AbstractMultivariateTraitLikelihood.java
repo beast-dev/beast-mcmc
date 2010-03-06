@@ -393,10 +393,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
     }
 
-    protected abstract double[] traitForNode(TreeModel tree, NodeRef node, String traitName);
+    public abstract double[] getTraitForNode(Tree tree, NodeRef node, String traitName);
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        double trait[] = traitForNode(treeModel, node, traitName);
+        double trait[] = getTraitForNode(treeModel, node, traitName);
         String[] value;
         if (!reportAsMultivariate || trait.length == 1) {
             value = new String[trait.length];

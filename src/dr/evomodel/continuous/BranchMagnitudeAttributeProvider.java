@@ -13,7 +13,7 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
     public static String DISTANCE_EXTENSION = ".distance";
     public static final String RATE_EXTENSION = ".rate";
 
-    public BranchMagnitudeAttributeProvider(SampledMultivariateTraitLikelihood traitLikelihood, boolean scale) {
+    public BranchMagnitudeAttributeProvider(AbstractMultivariateTraitLikelihood traitLikelihood, boolean scale) {
         super(traitLikelihood);
         this.scale = scale;
         label = traitName + extensionName(); 
@@ -36,7 +36,7 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
 
          public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-             SampledMultivariateTraitLikelihood traitLikelihood = (SampledMultivariateTraitLikelihood)
+             AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
                      xo.getChild(SampledMultivariateTraitLikelihood.class);
 
              boolean scale = xo.getAttribute(SCALE,false);
@@ -46,7 +46,7 @@ public class BranchMagnitudeAttributeProvider extends BivariateTraitBranchAttrib
 
          public XMLSyntaxRule[] getSyntaxRules() {
              return new XMLSyntaxRule[] {
-                 new ElementRule(SampledMultivariateTraitLikelihood.class),
+                 new ElementRule(AbstractMultivariateTraitLikelihood.class),
                  AttributeRule.newBooleanRule(SCALE,true),
              };
          }

@@ -6,16 +6,6 @@
 <!--       http://beast.bio.ed.ac.uk/                                        -->
 <beast>
 	
-	<!-- The list of sampling locations                                        -->
-	<!-- K = 7                                                                 -->
-	<location id="Fujian"/> 
-	<location id="Guangdong"/> 
-	<location id="Guangxi"/> 
-	<location id="Hebei"/> 
-	<location id="Henan"/> 
-	<location id="HongKong"/> 
-	<location id="Hunan"/> 
-
 	<!-- The list of taxa analyse (can also include dates/ages).                 -->
 	<!-- ntax=98                                                                -->
 	<!-- each taxon has a location attribute                                    -->
@@ -817,15 +807,18 @@
 		<alignment idref="alignment"/>
 	</patterns>
 	
-	<!-- The general data type for locations                                   -->
+	<!-- START discrete traits          		                               -->
+	<!-- The general data type for trait                                       -->
     <generalDataType id="geography">
-		<location idref="Fujian"/> 
-		<location idref="Guangdong"/> 
-		<location idref="Guangxi"/> 
-		<location idref="Hebei"/> 
-		<location idref="Henan"/> 
-		<location idref="HongKong"/> 
-		<location idref="Hunan"/> 
+	<!-- The list of sampling locations                                        -->
+	<!-- K = 7                                                                 -->
+		<state code="Fujian"/> 
+		<state code="Guangdong"/> 
+		<state code="Guangxi"/> 
+		<state code="Hebei"/> 
+		<state code="Henan"/> 
+		<state code="HongKong"/> 
+		<state code="Hunan"/> 
     </generalDataType>
 
 	<!-- 1 unique site pattern for locations                                   -->
@@ -833,6 +826,7 @@
 		<generalDataType idref="geography"/>
 		<taxa idref="taxa"/>
 	</attributePatterns>
+	<!-- END discrete traits          		                               -->
 
 	<!-- A prior assumption that the population size has remained constant       -->
 	<!-- throughout the time spanned by the genealogy.                           -->
@@ -938,6 +932,7 @@
 		<discretizedBranchRates idref="branchRates"/>
 	</treeLikelihood>
 	
+	<!-- START discrete traits          		                               -->
 	<!-- CTMC model for discrete state reconstructions             -->
 	<svsGeneralSubstitutionModel id="originModel" name="origin">
 		<dataType idref="geography"/>
@@ -981,6 +976,7 @@
         <siteModel idref="geoSiteModel"/>
         <svsGeneralSubstitutionModel idref="originModel"/>
     </ancestralTreeLikelihood>
+	<!-- END discrete traits          		                               -->
 
 	<operators id="operators" optimizationSchedule="log">
 		<scaleOperator scaleFactor="0.75" weight="1">
@@ -1027,15 +1023,14 @@
 		<wilsonBalding weight="3">
 			<treeModel idref="treeModel"/>
 		</wilsonBalding>
-<!-- discrete state model operators -->
+	<!-- START discrete traits          		                               -->
 		<scaleOperator scaleFactor="0.75" weight="10">
 			<parameter idref="geoSiteModel.mu"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.75" weight="30" scaleAllIndependently="true" autoOptimize="true">
 			<parameter idref="rates"/>
 		</scaleOperator>
-<!-- BSSVS operators	-->
-<!--
+	<!-- START BSSVS discrete traits          		                               -->
 		<bitFlipOperator weight="30">
 			<parameter idref="indicators"/>
 		</bitFlipOperator>
@@ -1043,6 +1038,8 @@
 			<svsGeneralSubstitutionModel idref="originModel"/>
 			<parameter idref="geoSiteModel.mu"/>
 		</bitFlipInSubstitutionModelOperator> -->
+	<!-- END BSSVS discrete traits          		                               -->
+	<!-- END discrete traits          		                               -->
 	</operators>
 	
 	<mcmc id="mcmc" chainLength="20000000" autoOptimize="true">
@@ -1052,7 +1049,8 @@
 					<parameter idref="constant.popSize"/>
 				</jeffreysPrior>
 				<coalescentLikelihood idref="coalescent"/>
-<!-- discrete state model priors -->
+
+	<!-- START discrete traits          		                               -->
 				<cachedPrior>
 					<gammaPrior shape="1.0" scale="1.0" offset="0.0">
 						<parameter idref="rates"/>
@@ -1062,17 +1060,19 @@
 				<exponentialPrior mean="1" offset="0">
 					<parameter idref="geoSiteModel.mu"/>
 				</exponentialPrior>
-<!-- BSSVS truncated Poisson prior	-->
-<!--
+	<!-- START BSSVS discrete traits          		                               -->
 				<poissonPrior mean="0.693" offset="6.0">
 					<statistic idref="nonZeroRates"/>
 				</poissonPrior>
--->
+	<!-- END BSSVS discrete traits          		                               -->
 				<svsGeneralSubstitutionModel idref="originModel"/>
+	<!-- END discrete traits          		                               -->
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="treeLikelihood"/>
+	<!-- START discrete traits          		                               -->
 				<ancestralTreeLikelihood idref="geoTreeLikelihood"/>
+	<!-- END discrete traits          		                               -->
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
@@ -1092,9 +1092,11 @@
 			<column label="Rate" sf="6" width="12">
 				<rateStatistic idref="meanRate"/>
 			</column>
+	<!-- START discrete traits          		                               -->
 			<column label="nonZeroRates" sf="6" width="12">
 	   			<sumStatistic idref="nonZeroRates"/>
 			</column>
+	<!-- END discrete traits          			                               -->
 		</log>
 		<log id="fileLog" logEvery="10000" fileName="H5N1_HA_discrete.log">
 			<posterior idref="posterior"/>
@@ -1108,23 +1110,29 @@
 			<parameter idref="ucld.mean"/>
 			<parameter idref="ucld.stdev"/>
 			<rateStatistic idref="coefficientOfVariation"/>
+			<rateCovarianceStatistic idref="covariance"/>
+	<!-- START discrete traits          		                               -->
 			<parameter idref="geoSiteModel.mu"/>
 			<ancestralTreeLikelihood idref="geoTreeLikelihood"/>
-			<rateCovarianceStatistic idref="covariance"/>
+	<!-- END discrete traits          		                               -->
 			<treeLikelihood idref="treeLikelihood"/>
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
+	<!-- START discrete traits          		                               -->
 		 <log id="rateMatrixLog" logEvery="10000" fileName="H5N1_HA_discrete_rateMatrix.log">
 			<parameter idref="rates"/>
 			<parameter idref="indicators"/>
    			<sumStatistic idref="nonZeroRates"/>
    			<parameter idref="geoSiteModel.mu"/>
 		</log>
+	<!-- END discrete traits          		                               -->
 		<logTree id="treeFileLog" logEvery="10000" nexusFormat="true" fileName="H5N1_HA_discrete.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<discretizedBranchRates idref="branchRates"/>
+	<!-- START discrete traits          		                               -->
 			<!-- this entry annotates trees with the discrete reconstructions -->
 			<ancestralTreeLikelihood idref="geoTreeLikelihood"/>
+	<!-- END discrete traits          		                               -->
 			<posterior idref="posterior"/>
 		</logTree>
 	</mcmc>

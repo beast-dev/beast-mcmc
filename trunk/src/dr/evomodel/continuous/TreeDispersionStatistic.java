@@ -85,7 +85,7 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
 
             boolean option = xo.getAttribute(BOOLEAN_OPTION, false); // Default value is false
 
-            AbstractMultivariateTraitLikelihood traitLikelihood = (SampledMultivariateTraitLikelihood)
+            AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
                     xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
             return new TreeDispersionStatistic(name, tree, traitLikelihood, option);

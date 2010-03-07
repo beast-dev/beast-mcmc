@@ -30,7 +30,7 @@ public class PluginLoader {
 	       List<String> plugins = new ArrayList<String> ();
 	       File pluginFile = PluginLoader.getPluginFolder();
 
-	       Logger.getLogger("dr.app.plugin").info("looking for plugins in" + pluginFile.getAbsolutePath());
+	       Logger.getLogger("dr.app.plugin").info("Looking for plugins in " + pluginFile.getAbsolutePath());
 
            File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
 	           public boolean accept(File pathname) {
@@ -75,14 +75,14 @@ public class PluginLoader {
           //the class loader must still be assigned if the plugin isnt enabled so
 	      //documents from that plugin can still be displayed.
           final String loggerName = "dr.app.plugin";
-          Logger.getLogger(loggerName).info("loading plugin " + pluginName);
+          Logger.getLogger(loggerName).info("Loading plugin " + pluginName);
 	      File pluginDir = PluginLoader.getPluginFolder();
 	      File file = new File(pluginDir, pluginName);
 
 	      try {
 	          URL[] urls;
 	          if (!file.exists()) {
-	        	  Logger.getLogger(loggerName).info("loading jar file");
+	        	  Logger.getLogger(loggerName).info("Loading jar file");
 	              file = new File(pluginDir, pluginName + ".jar");
 	              urls = new URL[]{file.toURL()};
 	          }
@@ -110,7 +110,7 @@ public class PluginLoader {
 	              }
 	              urls[ count ++ ] = file.toURL();
 
-                  Logger.getLogger(loggerName).info("adding " + file + " to class path");
+                  Logger.getLogger(loggerName).info("Adding " + file + " to class path");
 
 	              for (File jarFile : files) {
 	                  urls[count++] = jarFile.toURL();

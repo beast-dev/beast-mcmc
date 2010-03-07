@@ -43,6 +43,8 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
     public static final String STD_ERROR = "stdError";
+    public static final String EXPECTATION = "expectation";
+    public static final String COMPUTE_MSE = "computeMSE";
 
     public String getParserName() {
         return TRACE_ANALYSIS;
@@ -52,6 +54,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 
         String fileName = xo.getStringAttribute(FILE_NAME);
         boolean withStdError = xo.getAttribute(STD_ERROR, false);
+        boolean computeMSE = xo.getAttribute(COMPUTE_MSE, false);
         try {
 
             File file = new File(fileName);
@@ -85,14 +88,21 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
                             double estimate = distribution.getMean();
                             double error = corr.getStdErrorOfMean();
 
-                            System.out.println("E[" + statName + "]=" + formatter.format(expectation));
+                            System.out.print("E[" + statName + "] = " + formatter.format(expectation));
 
-                            if (expectation > (estimate - (2 * error)) && expectation < (estimate + (2 * error))) {
-                                System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                            if (computeMSE) {
+                                double MSE = distribution.getMeanSquaredError(expectation);
+                                System.out.println(" MSE = " + formatter.format(MSE));
                             } else {
-                                System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
-                            }
+                                System.out.println("");
 
+
+                                if (expectation > (estimate - (2 * error)) && expectation < (estimate + (2 * error))) {
+                                    System.out.println("OK:       " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                                } else {
+                                    System.out.print("WARNING: " + formatter.format(estimate) + " +- " + formatter.format(error) + "\n");
+                                }
+                            }
                         }
                     }
                 }
@@ -131,7 +141,8 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new StringAttributeRule(FILE_NAME, "The name of a BEAST log file (can not include trees, which should be logged separately"),
             AttributeRule.newIntegerRule(BURN_IN, true),
-            new ElementRule("expectation", new XMLSyntaxRule[]{AttributeRule.newStringRule("name"), AttributeRule.newStringRule("value")}, 0, Integer.MAX_VALUE),
-            AttributeRule.newBooleanRule(STD_ERROR,true),
+            new ElementRule(EXPECTATION, new XMLSyntaxRule[]{AttributeRule.newStringRule("name"), AttributeRule.newStringRule("value")}, 0, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(STD_ERROR, true),
+            AttributeRule.newBooleanRule(COMPUTE_MSE, true),
     };
 }

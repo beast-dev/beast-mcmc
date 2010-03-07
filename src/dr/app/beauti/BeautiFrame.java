@@ -9,9 +9,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
-import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.SequenceErrorModelComponentFactory;
-import dr.app.beauti.components.TipDateSamplingComponentFactory;
+import dr.app.beauti.components.*;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
@@ -106,7 +104,8 @@ public class BeautiFrame extends DocumentFrame {
 
         ComponentFactory[] components = {
                 SequenceErrorModelComponentFactory.INSTANCE,
-                TipDateSamplingComponentFactory.INSTANCE
+                TipDateSamplingComponentFactory.INSTANCE,
+//                DiscreteTraitsComponentFactory.INSTANCE
         };
 
         beautiOptions = new BeautiOptions(components);
@@ -591,7 +590,7 @@ public class BeautiFrame extends DocumentFrame {
         DefaultPriorDialog defaultPriorDialog = new DefaultPriorDialog(this);
         if (!defaultPriorDialog.showDialog(beautiOptions)) {
            return false;
-        }                   
+        }
 
         // offer stem as default
         exportChooser.setSelectedFile(new File(beautiOptions.fileNameStem + ".xml"));

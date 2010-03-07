@@ -73,6 +73,28 @@ public class DiscreteStatistics {
     }
 
     /**
+     * compute the mean squared error
+     *
+     * @param x list of numbers
+     * @param trueValue truth
+     * @return MSE
+     */
+
+    public static double meanSquaredError(double[] x, double trueValue) {
+
+        if (x == null || x.length == 0) {
+            throw new IllegalArgumentException();
+        }
+
+        double total = 0;
+        for(double sample : x) {
+            total += (sample - trueValue) * (sample - trueValue);
+        }
+        total /= x.length;       
+        return total;
+    }
+
+    /**
      * compute median
      *
      * @param x list of numbers

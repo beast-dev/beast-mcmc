@@ -102,10 +102,20 @@ public class TraceDistribution {
         return maximum;
     }
 
+    public double getMeanSquaredError(double trueValue) {
+
+        if (values == null) {
+            throw new RuntimeException("Trace values not yet set");
+        }
+        return DiscreteStatistics.meanSquaredError(values, trueValue);
+    }
+
     /**
      * @param values the values to analyze
      */
     private void analyseDistribution(double[] values) {
+
+        this.values = values;
 
         mean = DiscreteStatistics.mean(values);
         stdError = DiscreteStatistics.stdev(values);
@@ -166,4 +176,6 @@ public class TraceDistribution {
     protected double variance;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
+
+    protected double[] values;
 }

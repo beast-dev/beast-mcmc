@@ -56,13 +56,12 @@ public class TraceAnalysis {
     }
 
     public static TraceList report(String fileName) throws java.io.IOException, TraceException {
-
         return report(fileName, -1, null);
     }
+
     public static TraceList report(String fileName, int burnin, String likelihoodName) throws java.io.IOException, TraceException {
         return report(fileName, burnin, likelihoodName,false);
     }
-
 
     public static TraceList report(String fileName, int inBurnin, String likelihoodName, boolean withStdError)
             throws java.io.IOException, TraceException {
@@ -80,17 +79,17 @@ public class TraceAnalysis {
 //            throw new TraceException("Trace file is empty.");
 //        }
         traces.loadTraces();
-                
+
         int burnin = inBurnin;
         if (burnin == -1) {
-            burnin = traces.getStateCount() / 10;
+            burnin = traces.getMaxState() / 10;
         }
 
         traces.setBurnIn(burnin);
 
         System.out.println();
-        System.out.println("burnIn   = " + burnin);
-        System.out.println("maxState = " + traces.getMaxState());
+        System.out.println("burnIn   <= " + burnin);
+        System.out.println("maxState  = " + traces.getMaxState());
         System.out.println();
 
         System.out.print(formatter.formatToFieldWidth("statistic", firstField));
@@ -99,7 +98,7 @@ public class TraceAnalysis {
         if (!withStdError)
             names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
         else
-            names = new String[]{"mean", "sterr", "hpdLower", "hpdUpper", "ESS"};
+            names = new String[]{"mean", "stdErr", "hpdLower", "hpdUpper", "ESS"};
 
         for (String name : names) {
             System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
@@ -148,7 +147,8 @@ public class TraceAnalysis {
             }
 
             if (traceIndex == -1) {
-                throw new TraceException("Column '" + likelihoodName + "' can not be found for marginal likelihood analysis.");
+                throw new TraceException("Column '" + likelihoodName +
+                        "' can not be found for marginal likelihood analysis.");
             }
 
             boolean harmonicOnly = false;
@@ -269,6 +269,4 @@ public class TraceAnalysis {
         System.out.println(maxState);
         return traces;
     }
-
-
 }

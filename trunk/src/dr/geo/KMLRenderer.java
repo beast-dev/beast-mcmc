@@ -155,4 +155,8 @@ public class KMLRenderer implements Lattice {
     public void paintLattice(Graphics g) {
         g.drawImage(image, 0, 0, null);
     }
+
+    public void setBounds(Rectangle2D bounds) {
+        this.bounds = bounds;
+    }
 }

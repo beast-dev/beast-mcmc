@@ -50,6 +50,7 @@ public class GTOPO30Browser extends JFrame implements ChangeListener {
 
         gtopo30panel = new GTOPO30Panel(tilefiles, function);
 
+
         scrollPane = new JScrollPane(gtopo30panel);
 
         getContentPane().add(BorderLayout.CENTER, scrollPane);

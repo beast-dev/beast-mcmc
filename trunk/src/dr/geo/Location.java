@@ -19,6 +19,10 @@ public class Location {
         return loc.i == i && loc.j == j;
     }
 
+    public String toString() {
+        return "(" + i + ", " + j + ")";
+    }
+
     public int hashCode() {
         return (i * 1009 + j);
     }

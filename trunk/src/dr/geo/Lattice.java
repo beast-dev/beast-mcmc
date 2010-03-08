@@ -12,8 +12,6 @@ public interface Lattice {
 
     int latticeHeight();
 
-    void setState(int i, int j, int state);
-
     int getState(int i, int j);
 
     public void paintLattice(Graphics g);

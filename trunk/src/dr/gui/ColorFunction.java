@@ -51,4 +51,11 @@ public class ColorFunction {
         return new Color(rgba3[0], rgba3[1], rgba3[2], rgba3[3]);
     }
 
+    public void setAlpha(float alpha) {
+
+        for (int i = 0; i < colors.length; i++) {
+            float[] rgba = colors[i].getRGBComponents(rgba1);
+            colors[i] = new Color(rgba[0], rgba[1], rgba[2], alpha);
+        }
+    }
 }

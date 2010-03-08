@@ -1,7 +1,10 @@
 package dr.geo;
 
+import dr.gui.ColorFunction;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.Random;
 
 /**
@@ -10,15 +13,20 @@ import java.util.Random;
 public class InhomogeneousRandomWalk extends JComponent {
 
     Lattice lattice;
-    double[][] rates;
+    RateMatrix rates;
     int i, j;
     Random random;
     double time;
     int[][] sample;
     int maxSample = 0;
 
+    ColorFunction cf = new ColorFunction(
+            new Color[]{Color.white, Color.blue, Color.magenta, Color.red},
+            new float[]{0.0f, 0.10f, 0.20f, 1.0f}
+    );
+
     public InhomogeneousRandomWalk(
-            Lattice lattice, Location loc, Random random, double[][] rates) {
+            Lattice lattice, Location loc, Random random, RateMatrix rates) {
 
         this.lattice = lattice;
         this.rates = rates;
@@ -27,7 +35,6 @@ public class InhomogeneousRandomWalk extends JComponent {
         this.random = random;
 
         sample = new int[lattice.latticeWidth()][lattice.latticeHeight()];
-
     }
 
     public Dimension getPreferredSize() {
@@ -41,12 +48,11 @@ public class InhomogeneousRandomWalk extends JComponent {
         for (int i = 0; i < lattice.latticeWidth(); i++) {
             for (int j = 0; j < lattice.latticeHeight(); j++) {
                 if (sample[i][j] > 0) {
-                    if (lattice.getState(i, j) == 0) {
-                        g.setColor(Color.green);
-                    } else {
-                        g.setColor(new Color(sample[i][j] * 255 / maxSample, 0, 0));
+                    if (lattice.getState(i, j) >= 0) {
+                        float intensity = (float) sample[i][j] / (float) maxSample;
+                        g.setColor(cf.getColor(intensity));
+                        g.drawRect(i, j, 1, 1);
                     }
-                    g.drawRect(i, j, 1, 1);
                 }
             }
         }
@@ -92,19 +98,19 @@ public class InhomogeneousRandomWalk extends JComponent {
         double moveDown = 0.0;
 
         if (i > 0) {
-            moveLeft = rates[fromState][lattice.getState(i - 1, j)];
+            moveLeft = rates.getRate(fromState, lattice.getState(i - 1, j));
         }
 
         if (i < lattice.latticeWidth() - 1) {
-            moveRight = rates[fromState][lattice.getState(i + 1, j)];
+            moveRight = rates.getRate(fromState, lattice.getState(i + 1, j));
         }
 
         if (j > 0) {
-            moveUp = rates[fromState][lattice.getState(i, j - 1)];
+            moveUp = rates.getRate(fromState, lattice.getState(i, j - 1));
         }
 
         if (j < lattice.latticeHeight() - 1) {
-            moveDown = rates[fromState][lattice.getState(i, j + 1)];
+            moveDown = rates.getRate(fromState, lattice.getState(i, j + 1));
         }
 
         double totalRate =
@@ -147,43 +153,41 @@ public class InhomogeneousRandomWalk extends JComponent {
 
     public static void main(String[] args) {
 
-        Random random = new Random();
-//
-//        final int width = 100;
-//        final int height = 100;
-//
-//        IslandLattice lattice = new IslandLattice(width, height);
-//        java.util.List<Location> islands = lattice.addIslands(20, random);
-//        System.out.println("Created " + islands.size() + " islands");
-//
-//        int growth = 380;
-//
-//        int attempts = lattice.growIslands(growth, random);
-//        System.out.println("Took " + attempts + " attempts to grow islands by " + growth);
-//
-//
-//        lattice.smooth(2);
-//        System.out.println("Homogeneous P_island=" + (double)lattice.sum() / (double)(width*height));
-//
+        String kmlFile = args[0];
+        double left = Double.parseDouble(args[1]);
+        double top = Double.parseDouble(args[2]);
+        double width = Double.parseDouble(args[3]);
+        double height = Double.parseDouble(args[4]);
 
-        double[][] rates = new double[2][2];
+        Rectangle2D bounds = new Rectangle2D.Double(left, top, width, height);
+
+        Random random = new Random();
+
+
+        final double[][] rates = new double[2][2];
         rates[0][0] = 0.0;
         rates[0][1] = 0.0;
         rates[1][0] = 0.0;
         rates[1][1] = 2.0;
 
-        KMLRenderer renderer = new KMLRenderer(args[0], Color.white, Color.blue);
-        renderer.render(900);
+        KMLRenderer renderer = new KMLRenderer(kmlFile, Color.white, Color.black);
+        renderer.setBounds(bounds);
+        renderer.render(1000);
 
+        RateMatrix matrix = new RateMatrix() {
 
-        InhomogeneousRandomWalk walk = new InhomogeneousRandomWalk(renderer, new Location(0, 0), random, rates);
+            public double getRate(int i, int j) {
+                return rates[i][j];
+            }
+        };
+
+        InhomogeneousRandomWalk walk = new InhomogeneousRandomWalk(renderer, new Location(0, 0), random, matrix);
 
         for (int i = 0; i < 5; i++) {
             Location start = Lattice.Utils.getRandomLocation(renderer, 1, random);
             for (int j = 0; j < 1000; j++) {
                 walk.simulate(start, 4000);
             }
-
         }
         JFrame frame = new JFrame();
 

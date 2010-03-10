@@ -25,6 +25,7 @@
 
 package dr.inference.trace;
 
+import java.lang.reflect.Array;
 
 
 /**
@@ -34,82 +35,146 @@ package dr.inference.trace;
  * @author Alexei Drummond
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
-public class Trace {
+public abstract class Trace<T> implements TraceType<T> {
 
-	public static final int INITIAL_SIZE = 1000;
-	public static final int INCREMENT_SIZE = 1000;
+    //    private TraceType traceType = TraceType.CONTINUOUS;
+    protected T[] values = (T[]) new Object[INITIAL_SIZE];
+    protected int valueCount = 0;
+    protected final String name;
 
-	public Trace(String name) {
-
-		this.name = name;
-	}
+//    public Trace(String name) {
+//        this.name = name;
+//    }
 
     public Trace(String name, int initialSize) {
         this.name = name;
-        if( initialSize > 0 ) {
-            this.values = new double[initialSize];
+        if (initialSize > 0) {
+            this.values = (T[]) new Object[initialSize];
         }
     }
 
-    public Trace(String name, double[] values) {
-
+    public Trace(String name, T[] values) {
         this.name = name;
-        this.values = new double[values.length];
-		valueCount = values.length;
-		System.arraycopy(values, 0, this.values, 0, values.length);
-	}
+        this.values = (T[]) new Object[values.length];
+        valueCount = values.length;
+        System.arraycopy(values, 0, this.values, 0, values.length);
+    }
 
-	/**
-	 * @param value the valued to be added
-	 */
-	public void add(double value) {
+    /**
+     * @param values the values to be added
+     */
+//    public <T> void add(T[] values) {
+//        for (T value : values) {
+//            this.add(value);
+//        }
+//        valueCount += values.length;
+//    }
 
-		if (valueCount == values.length) {
-			double[] newValues = new double[valueCount + INCREMENT_SIZE];
-			System.arraycopy(values, 0, newValues, 0, values.length);
-			values = newValues;
-		}
+    public int getCount() {
+        return valueCount;
+    }
 
-		values[valueCount] = value;
-		valueCount++;
-	}
+    public T getValue(int index) {
+        return values[index];
+    }
 
-	/**
-	 * @param values the values to be added
-	 */
-	public void add(double[] values) {
-        for (double value : values) {
-            add(value);
-        }
-        valueCount += values.length;
-	}
+    public void getValues(int start, double[] destination) {
+        getValues(start, destination, 0);
+    }
 
-	public int getCount() {
-		return valueCount;
-	}
-
-	public double getValue(int index) {
-		return values[index];
-	}
-
-	public void getValues(int start, double[] destination) {
-		getValues(start, destination, 0);
-	}
-	public void getValues(int start, double[] destination, int offset) {
-		System.arraycopy(values, start, destination, offset, valueCount - start);
-	}
+    public void getValues(int start, double[] destination, int offset) {
+        System.arraycopy(values, start, destination, offset, valueCount - start);
+    }
 
     public void getValues(int start, int count, double[] destination, int offset) {
         System.arraycopy(values, start, destination, offset, count);
     }
 
-	public String getName() { return name; }
+    public String getName() {
+        return name;
+    }    
 
-	//************************************************************************
-	// private methods
-	//************************************************************************
+//    public TraceType getTraceType() {
+//        return traceType;
+//    }
+//
+//    public void setTraceType(TraceType traceType) {
+//        this.traceType = traceType;
+//    }
 
-	private double[] values = new double[INITIAL_SIZE];
-	private int valueCount = 0;
-	private final String name;
+//    public class DiscreteTrace extends Trace<Integer> {
+//        public DiscreteTrace(String name, int initialSize) {
+//            super(name, initialSize);
+//        }
+//
+//        public DiscreteTrace(String name, Integer[] values) {
+//            super(name, values);
+//        }
+//
+//        public void add(Integer value) {
+//            if (valueCount == values.length) {
+//                Integer[] newValues = new Integer[valueCount + INCREMENT_SIZE];
+//                System.arraycopy(values, 0, newValues, 0, values.length);
+//                super.values = newValues;
+//            }
+//
+//            super.values[valueCount] = value;
+//            super.valueCount++;
+//        }
+//
+//        public Integer parserValueWithType(String value) {
+//            return Integer.parseInt(value);
+//        }
+//    }
+
+//    public class ContinuousTrace extends Trace<Double> {
+//        public ContinuousTrace(String name, int initialSize) {
+//            super(name, initialSize);
+//        }
+//
+//        public ContinuousTrace(String name, Double[] values) {
+//            super(name, values);
+//        }
+//
+//        public void add(Double value) {
+//            if (valueCount == values.length) {
+//                Double[] newValues = new Double[valueCount + INCREMENT_SIZE];
+//                System.arraycopy(values, 0, newValues, 0, values.length);
+//                super.values = newValues;
+//            }
+//
+//            super.values[valueCount] = value;
+//            super.valueCount++;
+//        }
+//
+//        public Double parserValueWithType(String value) {
+//            return Double.parseDouble(value);
+//        }
+//    }
+
+//    public class CategoryTrace extends Trace<String> {
+//        public CategoryTrace(String name, int initialSize) {
+//            super(name, initialSize);
+//        }
+//
+//        public CategoryTrace(String name, String[] values) {
+//            super(name, values);
+//        }
+//
+//        public void add(String value) {
+//            if (valueCount == values.length) {
+//                String[] newValues = new String[valueCount + INCREMENT_SIZE];
+//                System.arraycopy(values, 0, newValues, 0, values.length);
+//                super.values = newValues;
+//            }
+//
+//            super.values[valueCount] = value;
+//            super.valueCount++;
+//        }
+//
+//        public String parserValueWithType(String value) {
+//            return value;
+//        }
+//    }
+
 }

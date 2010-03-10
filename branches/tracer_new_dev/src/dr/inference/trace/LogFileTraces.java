@@ -30,6 +30,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 /**
  * A class that stores a set of traces from a single chain
@@ -136,7 +137,7 @@ public class LogFileTraces extends AbstractTraceList {
     }
 
     public double getStateValue(int trace, int index) {
-        return getTrace(trace).getValue(index + (burnIn / stepSize));
+        return (Double) getTrace(trace).getValue(index + (burnIn / stepSize));
     }
 
     /**
@@ -149,7 +150,7 @@ public class LogFileTraces extends AbstractTraceList {
     public void getStateValues(int nState, double[] destination, int offset) {
         final int index1 = nState + (burnIn / stepSize);
         for (int k = 0; k < destination.length; ++k) {
-            destination[k] = getTrace(k + offset).getValue(index1);
+            destination[k] = (Double) getTrace(k + offset).getValue(index1);
         }
     }
 
@@ -203,6 +204,8 @@ public class LogFileTraces extends AbstractTraceList {
         // lines starting with # are ignored, assuming comments in Migrate or BEAST file
         while (token.startsWith("[") || token.startsWith("#")) {
 
+            initializeTraceType(tokens); // using # to define type
+
             tokens = reader.tokenizeLine();
 
             // read over empty lines
@@ -223,7 +226,7 @@ public class LogFileTraces extends AbstractTraceList {
             addTrace(labels[i], numberOfLines);
         }
 
-        int statCount = getTraceCount();
+        int traceCount = getTraceCount();
 
         boolean firstState = true;
 
@@ -256,13 +259,16 @@ public class LogFileTraces extends AbstractTraceList {
                 throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
             }
 
-            double[] values = new double[statCount];
-            for (int i = 0; i < statCount; i++) {
+//            Object[] values = new Object[traceCount];
+            for (int i = 0; i < traceCount; i++) {
                 if (tokens.hasMoreTokens()) {
+                    String value = tokens.nextToken();
+                    
+                    if (state == 0) assignTraceTypeAccordingValue(value);
 
                     try {
-                        values[i] = Double.parseDouble(tokens.nextToken());
-                        addValue(i, values[i]);
+//                        values[i] = Double.parseDouble(tokens.nextToken());
+                        addValue(i, value);
                     } catch (NumberFormatException nfe) {
                         throw new TraceException("State " + state + ": Expected real value in column " + (i + 1) +
                                 " (Line " + reader.getLineNumber() + ")");
@@ -278,6 +284,46 @@ public class LogFileTraces extends AbstractTraceList {
         burnIn = (int) (0.1 * lastState);
     }
 
+    private void assignTraceTypeAccordingValue(String value) {
+        //todo
+    }
+
+    private void initializeTraceType(StringTokenizer tokens) {
+        String token = tokens.nextToken();
+        if (token.startsWith("#") &&
+                (token.contains(TraceType.Type.DISCRETE.toString()) || token.contains(TraceType.Type.DISCRETE.toString().toUpperCase()))){
+           token = tokens.nextToken(); // move to next
+           while (tokens.hasMoreTokens()) {
+               tracesType.put(token, TraceType.Type.DISCRETE);
+               token = tokens.nextToken();
+           }
+        } else if (token.startsWith("#") &&
+                (token.contains(TraceType.Type.CATEGORY.toString()) || token.contains(TraceType.Type.CATEGORY.toString().toUpperCase()))){
+           token = tokens.nextToken(); // move to next
+           while (tokens.hasMoreTokens()) {
+               tracesType.put(token, TraceType.Type.CATEGORY);
+               token = tokens.nextToken();
+           }
+        }
+    }
+
+    public Trace<?> assignTraceType(String name, int numberOfLines) {
+        Trace<?> trace = null;
+        if (tracesType != null) {
+            if (tracesType.get(name) == TraceType.Type.DISCRETE) {
+                trace = new DiscreteTrace(name, numberOfLines);
+//                trace.setTraceType(TraceType.DISCRETE);
+            } else if (tracesType.get(name) == TraceType.Type.CATEGORY) {
+                trace = new CategoryTrace(name, numberOfLines);
+//                trace.setTraceType(TraceType.CATEGORY);
+            }
+        } else {
+            trace = new ContinuousTrace(name, numberOfLines); // default CONTINUOUS
+        }
+        return trace;
+    }
+
+
     //************************************************************************
     // private methods
     //************************************************************************
@@ -291,7 +337,15 @@ public class LogFileTraces extends AbstractTraceList {
      * @param numberOfLines a hint about the number of lines, must be > 0
      */
     private void addTrace(String name, int numberOfLines) {
-        traces.add(new Trace(name, numberOfLines));
+        traces.add(assignTraceType(name, numberOfLines));
+    }
+
+    private void replaceTrace(String name, int numberOfLines, TraceType type) {
+        for (int i = 0; i < traces.size(); i++) {
+            if (traces.get(i).getName().equalsIgnoreCase(name) ) {
+                    //TODO
+            }
+        }
     }
 
     /**
@@ -323,14 +377,17 @@ public class LogFileTraces extends AbstractTraceList {
      * @param nTrace trace index
      * @param value  next value
      */
-    private void addValue(int nTrace, double value) {
-        getTrace(nTrace).add(value);
+    private void addValue(int nTrace, String value) {
+        getTrace(nTrace).add(getTrace(nTrace).parserValueWithType(value));
     }
 
     private final File file;
     private final String name;
 
-    private final List<Trace> traces = new ArrayList<Trace>();
+    private final List<Trace<?>> traces = new ArrayList<Trace<?>>();
+    // List traces is added before having types
+    // tracesType only save DISCRETE and CATEGORY
+    private TreeMap<String, TraceType.Type> tracesType = new TreeMap<String, TraceType.Type>();
 
     private int burnIn = -1;
     private int firstState = -1;

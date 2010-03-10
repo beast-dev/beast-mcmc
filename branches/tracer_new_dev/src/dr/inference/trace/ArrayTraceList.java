@@ -25,7 +25,7 @@ public class ArrayTraceList extends AbstractTraceList {
         }
 
         Trace stateTrace = traces.get(0);
-        this.stepSize = (int) Math.round(stateTrace.getValue(1) - stateTrace.getValue(0));
+        this.stepSize = (int) Math.round((Double) stateTrace.getValue(1) - (Double) stateTrace.getValue(0));
     }
 
     public String getName() {

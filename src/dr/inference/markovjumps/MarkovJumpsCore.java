@@ -127,62 +127,40 @@ public class MarkovJumpsCore {
                                             double[] rateReg,
                                             double   time,
                                             double[] countMatrix) {
-
-        // TODO Implement Taylor expansion for small time
-
-        int index;
-
         // Equation (37) from Minin and Suchard
         populateAuxInt(eval,time,auxInt);
 
         // Equation (36) from Minin and Suchard
         // Take rate.reg%*%rate.eigen$vectors
-        index = 0;
-        for(int i=0; i<stateCount; i++) {
-            for(int j=0; j<stateCount; j++) {
-                tmp1[index] = 0;
-                for(int k=0; k<stateCount; k++) {
-                    tmp1[index] += rateReg[i * stateCount + k] * evec[k * stateCount + j];
-                }
-                index++;
-            }
-        }
+        matrixMultiply(rateReg, evec, stateCount, tmp1);
 
         // Take int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors)
-        index = 0;
-        for(int i=0; i<stateCount; i++) {
-            for(int j=0; j<stateCount; j++) {
-                tmp2[index] = 0;
-                for(int k=0; k<stateCount; k++) {
-                    tmp2[index] += ievc[i * stateCount  + k] * tmp1[k * stateCount + j];
-                }
-                tmp2[index] *= auxInt[i * stateCount + j];
-                index++;
-            }
+        matrixMultiply(ievc, tmp1, stateCount, tmp2);
+        for (int i = 0; i < stateCount2; i++) {
+            tmp2[i] *= auxInt[i];
         }
 
         // Take (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
         //        rate.eigen$invvectors
-        index = 0;
-        for(int i=0; i<stateCount; i++) {
-            for(int j=0; j<stateCount; j++) {
-                tmp1[index] = 0;
-                for(int k=0; k<stateCount; k++) {
-                    tmp1[index] += tmp2[i * stateCount + k] * ievc[k * stateCount + j];
-                }
-                index++;
-            }
-        }
+        matrixMultiply(tmp2, ievc, stateCount, tmp1);
 
         // Take factorial.moments = rate.eigen$vectors%*%
         //      (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
         //        rate.eigen$invvectors
-        index = 0;
-        for(int i=0; i<stateCount; i++) {
-            for(int j=0; j<stateCount; j++) {
-                countMatrix[index] = 0;
-                for(int k=0; k<stateCount; k++) {
-                    countMatrix[index] += evec[i * stateCount + k] * tmp1[k * stateCount + j];
+        matrixMultiply(evec, tmp1, stateCount, countMatrix);
+    }
+
+    // Computes C = A %*% B for square matrices A and B
+    private static void matrixMultiply(final double[] A,
+                                       final double[] B,
+                                       final int dim,
+                                       final double[] C) {
+        int index = 0;
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                C[index] = 0;
+                for (int k = 0; k < dim; k++) {
+                    C[index] += A[i * dim + k] * B[k * dim + j];
                 }
                 index++;
             }

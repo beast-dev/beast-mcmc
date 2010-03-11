@@ -6,7 +6,6 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.speciation.UltrametricSpeciationModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -33,7 +32,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) {
 
         XMLObject cxo = xo.getChild(MODEL);
-        SpeciationModel specModel = (SpeciationModel) cxo.getChild(UltrametricSpeciationModel.class);
+        SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
 
         cxo = xo.getChild(TREE);
         Tree tree = (Tree) cxo.getChild(Tree.class);
@@ -91,7 +90,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(MODEL, new XMLSyntaxRule[]{
-                    new ElementRule(UltrametricSpeciationModel.class)
+                    new ElementRule(SpeciationModel.class)
             }),
             new ElementRule(TREE, new XMLSyntaxRule[]{
                     new ElementRule(Tree.class)

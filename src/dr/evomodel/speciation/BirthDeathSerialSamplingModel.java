@@ -52,14 +52,18 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     // extant sampling proportion
     Variable<Double> p;
 
+    //boolean death rate is relative?
+    boolean relativeDeath = false;
+
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
             Variable<Double> mu,
             Variable<Double> psi,
             Variable<Double> p,
+            boolean relativeDeath,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -68,6 +72,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> mu,
             Variable<Double> psi,
             Variable<Double> p,
+            boolean relativeDeath,
             Type units) {
 
         super(modelName, units);
@@ -87,6 +92,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         this.psi = psi;
         addVariable(psi);
         psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.relativeDeath = relativeDeath;
 
     }
 
@@ -154,7 +161,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     }
 
     public double death() {
-        return mu.getValue(0);
+        return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
     }
 
     public double psi() {
@@ -168,12 +175,12 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     /**
      * Generic likelihood calculation
      *
-     * @param tree
+     * @param tree the tree to calculate likelihood of
      * @return log-likelihood of density
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
 
-        System.out.println("calculating tree log likelihood");
+        //System.out.println("calculating tree log likelihood");
 
         // extant leaves
         int n = 0;
@@ -190,8 +197,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             }
         }
 
-        System.out.println("m = " + m);
-        System.out.println("n = " + n);
+        //System.out.println("m = " + m);
+        //System.out.println("n = " + n);
 
         double x1 = tree.getNodeHeight(tree.getRoot());
         double c1 = c1();

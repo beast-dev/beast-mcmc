@@ -26,7 +26,6 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
 import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -43,10 +42,10 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String BIRTH_DEATH_SERIAL_MODEL = "birthDeathSerialSampling";
     public static final String LAMBDA = "birthRate";
     public static final String MU = "deathRate";
+    public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
     public static final String TREE_TYPE = "type";
-    public static final String CONDITIONAL_ON_ROOT = "conditionalOnRoot";
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -57,16 +56,24 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-        final Parameter mu = (Parameter) xo.getElementFirstChild(MU);
+
+        boolean relativeDeath = xo.hasChildNamed(RELATIVE_MU);
+
+        Parameter mu;
+        if (relativeDeath) {
+            mu = (Parameter) xo.getElementFirstChild(RELATIVE_MU);
+        } else {
+            mu = (Parameter) xo.getElementFirstChild(MU);
+        }
+
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
-
 
         Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
 
         final String modelName = xo.getId();
 
-        return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, units);
+        return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath, units);
     }
 
     //************************************************************************
@@ -78,7 +85,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     }
 
     public Class getReturnType() {
-        return BirthDeathGernhard08Model.class;
+        return BirthDeathSerialSamplingModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -87,9 +94,10 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            AttributeRule.newBooleanRule(CONDITIONAL_ON_ROOT, true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new XORRule(
+                    new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]

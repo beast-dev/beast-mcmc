@@ -144,7 +144,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             new ElementRule(INDICATOR,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
-                    }),
+                    }, true),
             AttributeRule.newBooleanRule(NORMALIZATION, true),
             AttributeRule.newDoubleRule(MAX_CONDITION_NUMBER, true),
             AttributeRule.newBooleanRule(CONNECTED, true),

@@ -655,7 +655,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyline.groupSize");
                 break;
             case EXTENDED_SKYLINE:
-                writeSumStatisticColumn(writer, "demographic.populationSizeChanges", "popSize_changes");
+                writer.writeIDref(SumStatistic.SUM_STATISTIC, "demographic.populationSizeChanges");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.populationMean");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.popSize");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.indicators");

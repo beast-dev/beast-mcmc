@@ -1,19 +1,10 @@
 package dr.app.beauti.generator;
 
-import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.inference.loggers.Columns;
+import dr.app.beauti.options.*;
+import dr.app.beauti.util.XMLWriter;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.SumStatistic;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -29,18 +20,18 @@ public abstract class Generator {
 	protected static final String COALESCENT = "coalescent";
 	public static final String SP_TREE = "sptree";
 	protected static final String SPECIATION_LIKE = "speciation.likelihood";
-	public static final String SPLIT_POPS = "splitPopSize"; 
+	public static final String SPLIT_POPS = "splitPopSize";
 	protected static final String PDIST = "pdist";
 //	protected static final String STP = "stp";
 	protected static final String SPOPS = TraitGuesser.Traits.TRAIT_SPECIES + "." + "popSizesLikelihood";
-	
+
     protected final BeautiOptions options;
-    
+
 //    protected PartitionSubstitutionModel model;
 	protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
 
     protected Generator(BeautiOptions options) {
-        this.options = options;        
+        this.options = options;
     }
 
     public Generator(BeautiOptions options, ComponentFactory[] components) {
@@ -49,7 +40,7 @@ public abstract class Generator {
             for (ComponentFactory component : components) {
                 this.components.add(component.getGenerator(options));
             }
-        }        
+        }
     }
 
     public String getModelPrefix() {
@@ -59,7 +50,7 @@ public abstract class Generator {
 	public void setModelPrefix(String modelPrefix) {
 		this.modelPrefix = modelPrefix;
 	}
-	
+
     /**
      * fix a parameter
      *
@@ -99,7 +90,7 @@ public abstract class Generator {
     public void writeParameter(String id, PartitionOptions options, XMLWriter writer) {
         Parameter parameter = options.getParameter(id);
         String prefix = options.getPrefix();
-        
+
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + options.getPrefix());
         }
@@ -113,11 +104,11 @@ public abstract class Generator {
             }
         }
     }
-    
+
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
-        Parameter parameter = model.getParameter(id);        
+        Parameter parameter = model.getParameter(id);
         String prefix = model.getPrefix(num);
-        
+
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + model.getPrefix());
         }
@@ -161,7 +152,7 @@ public abstract class Generator {
         writeParameter(num, id, model, writer);
         writer.writeCloseTag(wrapperName);
     }
-    
+
     public void writeParameter(String wrapperName, String id, PartitionOptions options, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, options, writer);
@@ -241,19 +232,6 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
 
-
-    void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
-        writer.writeOpenTag(Columns.COLUMN,
-                new Attribute[]{
-                        new Attribute.Default<String>(Columns.LABEL, label),
-                        new Attribute.Default<String>(Columns.DECIMAL_PLACES, "0"),
-                        new Attribute.Default<String>(Columns.WIDTH, "12")
-                }
-        );
-        writer.writeIDref(SumStatistic.SUM_STATISTIC, name);
-        writer.writeCloseTag(Columns.COLUMN);
-    }
-
     private String multiDimensionValue(int dimension, double value) {
         String multi = "";
 
@@ -280,18 +258,18 @@ public abstract class Generator {
             }
         }
     }
-    
+
     protected int[] validateClockTreeModelCombination(PartitionTreeModel model) {
     	int autocorrelatedClockCount = 0;
         int randomLocalClockCount = 0;
-        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
+        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
         	PartitionClockModel clockModel = pd.getPartitionClockModel();
         	switch (clockModel.getClockType()) {
 //	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
 	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
         	}
         }
-        
+
         if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
         	//FAIL
             throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
@@ -301,5 +279,5 @@ public abstract class Generator {
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
-    
+
 }

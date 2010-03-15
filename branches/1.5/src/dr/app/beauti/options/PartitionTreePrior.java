@@ -129,7 +129,7 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch");
+        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
         createParameterJeffreysPrior("demographic.populationMean", "Extended Bayesian Skyline population prior mean",
                 PriorScaleType.TIME_SCALE, 1, 0, Double.POSITIVE_INFINITY);
 

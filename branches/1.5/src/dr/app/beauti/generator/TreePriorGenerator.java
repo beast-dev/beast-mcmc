@@ -542,21 +542,28 @@ public class TreePriorGenerator extends Generator {
 	                new Attribute.Default<String>(VariableDemographicModel.USE_MIDPOINTS, "true")
 	            }
 	        );
-	        
-//	        Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
-//	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
-//	        popSize.initial = populationMean.initial;
-	        
-	        writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
-//	        writer.writeComment("popSize value = populationMean value");
-	        writer.writeTag(ParameterParser.PARAMETER,
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"), true);
-//	        writeParameter(popSize, -1, writer); 
-	        writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
-	
-	        writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
-	        writeParameter(prior.getParameter(VariableDemographicModel.demoElementName + ".indicators"), -1, writer); // not need dimension
-	        writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
+	            	        
+            Parameter popSize = prior.getParameter(VariableDemographicModel.demoElementName + ".popSize");
+            Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+            popSize.initial = populationMean.initial;
+
+            writer.writeOpenTag(VariableDemographicModel.POPULATION_SIZES);
+            writer.writeComment("popSize value = populationMean value");
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute[]{
+                         new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".popSize"),
+                         new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
+//	        writeParameter(popSize, -1, writer);
+            writer.writeCloseTag(VariableDemographicModel.POPULATION_SIZES);
+
+//            Parameter indicators = prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators");
+            writer.writeOpenTag(VariableDemographicModel.INDICATOR_PARAMETER);
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute[]{
+                         new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".indicators"),
+                         new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(0.0))}, true); // also 0.0
+//	        writeParameter(prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators"), -1, writer); // not need dimension
+            writer.writeCloseTag(VariableDemographicModel.INDICATOR_PARAMETER);
 	
 	        writer.writeOpenTag(VariableDemographicModel.POPULATION_TREES);
 	        
@@ -604,7 +611,7 @@ public class TreePriorGenerator extends Generator {
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
 	        
 	        writer.writeComment("prefer populationMean value = 1");	        
-	        Parameter populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
+	        populationMean = prior.getParameter(VariableDemographicModel.demoElementName + ".populationMean");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModel.demoElementName + ".populationMean"),

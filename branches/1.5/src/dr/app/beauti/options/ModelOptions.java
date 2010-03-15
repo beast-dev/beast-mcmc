@@ -57,6 +57,10 @@ public class ModelOptions {
         new Parameter.Builder(name, description).build(parameters);
     }
 
+    public void createParameter(String name, String description, double initial) {
+        new Parameter.Builder(name, description).initial(initial).build(parameters);
+    }
+
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
                                             double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)

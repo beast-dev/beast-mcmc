@@ -543,19 +543,26 @@ public class TreePriorGenerator extends Generator {
 	            }
 	        );
 	        
-//	        Parameter popSize = prior.getParameter(VariableDemographicModelParser.demoElementName + ".popSize");
-//	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
-//	        popSize.initial = populationMean.initial;
+	        Parameter popSize = prior.getParameter(VariableDemographicModelParser.demoElementName + ".popSize");
+	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
+	        popSize.initial = populationMean.initial;
 	        
 	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_SIZES);
-//	        writer.writeComment("popSize value = populationMean value");
+	        writer.writeComment("popSize value = populationMean value");
 	        writer.writeTag(ParameterParser.PARAMETER,
-	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"), true);
-//	        writeParameter(popSize, -1, writer); 
+                    new Attribute[]{
+	                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"), 
+                         new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
+//	        writeParameter(popSize, -1, writer);
 	        writer.writeCloseTag(VariableDemographicModelParser.POPULATION_SIZES);
-	
+
+//            Parameter indicators = prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators");
 	        writer.writeOpenTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
-	        writeParameter(prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators"), -1, writer); // not need dimension
+            writer.writeTag(ParameterParser.PARAMETER,
+                    new Attribute[]{
+	                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".indicators"),
+                         new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(0.0))}, true); // also 0.0
+//	        writeParameter(prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators"), -1, writer); // not need dimension
 	        writer.writeCloseTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
 	
 	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_TREES);
@@ -604,7 +611,7 @@ public class TreePriorGenerator extends Generator {
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
 	        
 	        writer.writeComment("prefer populationMean value = 1");	        
-	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
+	        populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMean"),
@@ -655,7 +662,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "skyline.groupSize");
                 break;
             case EXTENDED_SKYLINE:
-                writeSumStatisticColumn(writer, "demographic.populationSizeChanges", "popSize_changes");
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, "demographic.populationSizeChanges");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.populationMean");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.popSize");
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "demographic.indicators");

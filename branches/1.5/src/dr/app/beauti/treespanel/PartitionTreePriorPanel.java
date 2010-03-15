@@ -57,7 +57,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    private JComboBox extendedBayesianSkylineCombo = new JComboBox(VariableDemographicModel.Type.values());
+    private JComboBox extendedBayesianSkylineCombo = new JComboBox(
+            new VariableDemographicModel.Type[]{VariableDemographicModel.Type.LINEAR, VariableDemographicModel.Type.STEPWISE});
 
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());

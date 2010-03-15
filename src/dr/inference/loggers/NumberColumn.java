@@ -47,10 +47,13 @@ public abstract class NumberColumn extends LogColumn.Abstract {
 	private DecimalFormat scientificFormat = null;
 
 
-	public NumberColumn(String label) { super(label); }
+	public NumberColumn(String label) {
+        super(label);
+        decimalFormat.setGroupingUsed(false); // not use comma
+    }
 	
 	public NumberColumn(String label, int sf) {
-		super(label); 
+		this(label);
 		setSignificantFigures(sf);
 	}
 	

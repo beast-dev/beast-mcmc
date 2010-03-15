@@ -5,8 +5,6 @@ import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.loggers.ColumnsParser;
-import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -232,19 +230,6 @@ public abstract class Generator {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, dimension, value, lower, upper, writer);
         writer.writeCloseTag(wrapperName);
-    }
-
-
-    void writeSumStatisticColumn(XMLWriter writer, String name, String label) {
-        writer.writeOpenTag(ColumnsParser.COLUMN,
-                new Attribute[]{
-                        new Attribute.Default<String>(ColumnsParser.LABEL, label),
-                        new Attribute.Default<String>(ColumnsParser.DECIMAL_PLACES, "0"),
-                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                }
-        );
-        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, name);
-        writer.writeCloseTag(ColumnsParser.COLUMN);
     }
 
     private String multiDimensionValue(int dimension, double value) {

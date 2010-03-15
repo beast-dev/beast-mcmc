@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.enumTypes.OperatorType;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;
@@ -55,6 +55,10 @@ public class ModelOptions {
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public void createParameter(String name, String description) {
         new Parameter.Builder(name, description).build(parameters);
+    }
+
+    public void createParameter(String name, String description, double initial) {
+        new Parameter.Builder(name, description).initial(initial).build(parameters);
     }
 
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,

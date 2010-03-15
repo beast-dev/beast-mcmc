@@ -25,17 +25,18 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.enumTypes.TreePriorParameterizationType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.enumTypes.TreePriorType;
-import dr.app.beauti.enumTypes.TreePriorParameterizationType;
 import dr.app.beauti.util.PanelUtils;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.EnumSet;
 
 /**
@@ -57,7 +58,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
 
-    private JComboBox extendedBayesianSkylineCombo = new JComboBox(VariableDemographicModel.Type.values());
+    private JComboBox extendedBayesianSkylineCombo = new JComboBox(
+            new VariableDemographicModel.Type[]{VariableDemographicModel.Type.LINEAR, VariableDemographicModel.Type.STEPWISE});
 
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());

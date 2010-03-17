@@ -29,31 +29,39 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A concrete implementation of PatternList. Patterns can be added and
  * removed from the list individually or in bulk from an alignment.
  *
- * @version $Id: Patterns.java,v 1.10 2005/07/08 11:27:53 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: Patterns.java,v 1.10 2005/07/08 11:27:53 rambaut Exp $
  */
 public class Patterns implements PatternList {
 
     public static final int COUNT_INCREMENT = 100;
 
-    /** number of patterns */
+    /**
+     * number of patterns
+     */
     protected int patternCount = 0;
 
-    /** length of patterns */
+    /**
+     * length of patterns
+     */
     protected int patternLength = 0;
 
-    /** weights of each pattern */
+    /**
+     * weights of each pattern
+     */
     protected double[] weights = new double[COUNT_INCREMENT];
 
-    /** site patterns [pattern][taxon] */
+    /**
+     * site patterns [pattern][taxon]
+     */
     protected int[][] patterns = new int[COUNT_INCREMENT][];
 
     protected DataType dataType = null;
@@ -86,11 +94,11 @@ public class Patterns implements PatternList {
      * Constructor
      */
     public Patterns(List<SiteList> siteLists) {
-    	for(SiteList siteList : siteLists) {
-    		addPatterns(siteList, 0, 0, 1);
-    	}
+        for (SiteList siteList : siteLists) {
+            addPatterns(siteList, 0, 0, 1);
+        }
     }
-    
+
     /**
      * Constructor
      */
@@ -116,7 +124,7 @@ public class Patterns implements PatternList {
 
             int newPatternCount = div;
             if (subSet < rem) {
-                newPatternCount ++;
+                newPatternCount++;
             }
 
             int[][] newPatterns = new int[newPatternCount][];
@@ -172,10 +180,10 @@ public class Patterns implements PatternList {
             int[] pattern = siteList.getSitePattern(i);
 
             // don't add patterns that are all gaps or all ambiguous
-            if (!isInvariant(pattern) ||
-                    (	!isGapped(pattern) &&
+            if (pattern != null && (!isInvariant(pattern) ||
+                    (!isGapped(pattern) &&
                             !isAmbiguous(pattern) &&
-                            !isUnknown(pattern) ) ) {
+                            !isUnknown(pattern)))) {
 
                 addPattern(pattern, 1.0);
             }
@@ -208,9 +216,9 @@ public class Patterns implements PatternList {
 
             // don't add patterns that are all gaps or all ambiguous
             if (!isInvariant(pattern) ||
-                    (	!isGapped(pattern) &&
+                    (!isGapped(pattern) &&
                             !isAmbiguous(pattern) &&
-                            !isUnknown(pattern) ) ) {
+                            !isUnknown(pattern))) {
 
                 addPattern(pattern, patternList.getPatternWeight(i));
             }
@@ -357,6 +365,7 @@ public class Patterns implements PatternList {
 
     /**
      * compares two patterns
+     *
      * @return true if they are identical
      */
     private boolean comparePatterns(int[] pattern1, int[] pattern2) {
@@ -392,6 +401,7 @@ public class Patterns implements PatternList {
     /**
      * Gets the length of the pattern strings which will usually be the
      * same as the number of taxa
+     *
      * @return the length of patterns
      */
     public int getPatternLength() {
@@ -400,6 +410,7 @@ public class Patterns implements PatternList {
 
     /**
      * Gets the pattern as an array of state numbers (one per sequences)
+     *
      * @return the pattern at patternIndex
      */
     public int[] getPattern(int patternIndex) {
@@ -499,9 +510,9 @@ public class Patterns implements PatternList {
 
 
     /**
-     * @return an object representing the named attributed for the given taxon.
      * @param taxonIndex the index of the taxon whose attribute is being fetched.
-     * @param name the name of the attribute of interest.
+     * @param name       the name of the attribute of interest.
+     * @return an object representing the named attributed for the given taxon.
      */
     public Object getTaxonAttribute(int taxonIndex, String name) {
         if (taxonList == null) throw new RuntimeException("Patterns has no TaxonList");

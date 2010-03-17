@@ -6,17 +6,16 @@ import com.lowagie.text.pdf.DefaultFontMapper;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
+import dr.app.gui.FileDrop;
+import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.TracePanel;
+import dr.gui.chart.ChartRuntimeException;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
 import dr.inference.trace.TraceList;
-import dr.app.java16compat.FileNameExtensionFilter;
-import dr.app.gui.FileDrop;
-import dr.gui.chart.ChartRuntimeException;
-import dr.evolution.io.Importer;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableRenderer;
@@ -29,9 +28,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -42,7 +38,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Iterator;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 

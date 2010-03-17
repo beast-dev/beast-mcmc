@@ -25,16 +25,14 @@
 
 package dr.app.tracer.application;
 
-import org.virion.jam.framework.MenuFactory;
 import org.virion.jam.framework.AbstractFrame;
 import org.virion.jam.framework.Application;
 import org.virion.jam.framework.MenuBarFactory;
+import org.virion.jam.framework.MenuFactory;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
-
-import dr.app.beauti.BeautiFrame;
+import java.awt.event.KeyEvent;
 
 /**
  * @author rambaut

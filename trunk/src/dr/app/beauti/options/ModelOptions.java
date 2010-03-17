@@ -39,9 +39,9 @@ import java.util.Map;
  */
 public class ModelOptions {
 
-    protected Map<String, Parameter> parameters = new HashMap<String, Parameter>();
-    protected Map<String, Operator> operators = new HashMap<String, Operator>();
-   	protected Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    protected static final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
+    protected static final Map<String, Operator> operators = new HashMap<String, Operator>();
+   	protected static final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;

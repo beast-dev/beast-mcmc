@@ -26,6 +26,7 @@ import dr.app.beauti.options.PartitionTreePrior;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.io.NexusImporter;
+import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
@@ -34,7 +35,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-
+import dr.evolution.datatype.Nucleotides;
 
 
 /**
@@ -49,7 +50,7 @@ public class BEAUTiImporter {
     public BEAUTiImporter(BeautiOptions options) {
         this.options = options;
     }
- 
+
     public void importFromFile(BeautiFrame frame, File file) throws Exception {
         try {
             Reader reader = new FileReader(file);
@@ -63,6 +64,9 @@ public class BEAUTiImporter {
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
                 importNexusFile(frame, file);
+            } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
+                // is a FASTA file
+                importFastaFile(frame, file);
             } else {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
@@ -71,7 +75,7 @@ public class BEAUTiImporter {
             throw new IOException(e.getMessage());
         }
     }
-    
+
     // xml
     private void importBEASTFile(File file) throws IOException, JDOMException, ImportException {
         try {
@@ -98,7 +102,7 @@ public class BEAUTiImporter {
         }
 
     }
-    
+
     // nexus
     private void importNexusFile(BeautiFrame frame, File file) throws Exception {
         TaxonList taxa = null;
@@ -211,10 +215,27 @@ public class BEAUTiImporter {
 
         setData(frame, taxa, alignment, trees, model, charSets, file.getName());
     }
+
+    // FASTA
+    private void importFastaFile(BeautiFrame frame, File file) throws Exception {
+        try {
+            FileReader reader = new FileReader(file);
+
+            FastaImporter importer = new FastaImporter(reader, Nucleotides.INSTANCE);
+
+            Alignment alignment = importer.importAlignment();
+
+            setData(null, alignment, alignment, null, null, null, file.getName());
+        } catch (ImportException e) {
+            throw new ImportException (e.getMessage());
+        } catch (IOException e) {
+            throw new IOException (e.getMessage());
+        }
+    }
     
     //TODO need refactory to simplify
     private void setData(BeautiFrame frame, TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
-            List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
+                         List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
 
@@ -262,7 +283,7 @@ public class BEAUTiImporter {
                 }
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                    
+
                     int adt = frame.allowDifferentTaxaJOptionPane();
                     //TODO still have swing code
                     if (adt == JOptionPane.YES_OPTION) {
@@ -323,35 +344,35 @@ public class BEAUTiImporter {
             }
             for (PartitionData partition : partitions) {
                 options.dataPartitions.add(partition);
-                
-                if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet                
+
+                if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
                     partition.setPartitionSubstitutionModel(model);
                     model.addPartitionData(partition);
-                    
+
                     // use same tree model and same tree prior in beginning
                     if (options.getPartitionTreeModels() != null
                             && options.getPartitionTreeModels().size() == 1) {
                         PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
-                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior       
+                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
                     }
                     if (partition.getPartitionTreeModel() == null) {
                         // PartitionTreeModel based on PartitionData
                         PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
                         partition.setPartitionTreeModel(ptm);
-                        
+
                         // PartitionTreePrior always based on PartitionTreeModel
                         PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
                         ptm.setPartitionTreePrior(ptp);
-                        
+
 //                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;                                                
+//                        options.shareSameTreePrior = true;
                     }
 
                     // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
                     if (options.getPartitionClockModels() != null
                             && options.getPartitionClockModels().size() == 1) {
-                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);                      
-                        partition.setPartitionClockModel(pcm);                        
+                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);
+                        partition.setPartitionClockModel(pcm);
                     }
                     if (partition.getPartitionClockModel() == null) {
                         // PartitionClockModel based on PartitionData
@@ -361,7 +382,7 @@ public class BEAUTiImporter {
                     }
 //                    options.clockModelOptions.fixRateOfFirstClockPartition();
 
-                } else {// only this works                    
+                } else {// only this works
                     if (options.getPartitionSubstitutionModels() != null
                             && options.getPartitionSubstitutionModels().size() == 1) { // use same substitution model in beginning
                         PartitionSubstitutionModel psm = options.getPartitionSubstitutionModels().get(0);
@@ -394,7 +415,7 @@ public class BEAUTiImporter {
                         ptm.setPartitionTreePrior(ptp);
 
 //                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;                                                
+//                        options.shareSameTreePrior = true;
                     }
 
                     // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -411,13 +432,13 @@ public class BEAUTiImporter {
                     }
                 }
             }
-            
+
             options.updateLinksBetweenPDPCMPSMPTMPTPP();
             options.updatePartitionClockTreeLinks();
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
     }
-    
+
     private void addTrees(List<Tree> trees) {
         if (trees != null && trees.size() > 0) {
             for (Tree tree : trees) {

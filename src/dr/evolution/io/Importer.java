@@ -37,11 +37,11 @@ import java.io.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public abstract class Importer { 
+public abstract class Importer {
 
 	public static class ImportException extends Exception {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7858834683324203750L;
 		public ImportException() { super(); }
@@ -50,7 +50,7 @@ public abstract class Importer {
 
     public static class DuplicateFieldException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 8047146381348414810L;
 		public DuplicateFieldException() { super(); }
@@ -59,8 +59,8 @@ public abstract class Importer {
 
     public static class BadFormatException extends ImportException {
 		/**
-		 * 
-		 */                         
+		 *
+		 */
 		private static final long serialVersionUID = -8206831989674620748L;
 		public BadFormatException() { super(); }
 		public BadFormatException(String message) { super(message); }
@@ -68,7 +68,7 @@ public abstract class Importer {
 
     public static class UnparsableDataException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 5905130039882401006L;
 		public UnparsableDataException() { super(); }
@@ -77,7 +77,7 @@ public abstract class Importer {
 
     public static class MissingFieldException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -7576489210458327552L;
 		public MissingFieldException() { super(); }
@@ -86,7 +86,7 @@ public abstract class Importer {
 
     public static class ShortSequenceException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7460033398106047073L;
 		public ShortSequenceException() { super(); }
@@ -95,7 +95,7 @@ public abstract class Importer {
 
     public static class TooFewTaxaException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6349041350075169247L;
 		public TooFewTaxaException() { super(); }
@@ -104,7 +104,7 @@ public abstract class Importer {
 
     public static class UnknownTaxonException extends ImportException {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 6611115782536515250L;
 		public UnknownTaxonException() { super(); }
@@ -118,23 +118,23 @@ public abstract class Importer {
 		this.reader = new LineNumberReader(reader);
 		this.commentWriter = null;
 	}
-	
+
 	public Importer(Reader reader, Writer commentWriter) {
 		this.reader = new LineNumberReader(reader);
-		this.commentWriter = new BufferedWriter(commentWriter);
+		this.commentWriter = commentWriter != null ? new BufferedWriter(commentWriter) : null;
 	}
-	
-	public void setCommentDelimiters(char line) { 
+
+	public void setCommentDelimiters(char line) {
 		hasComments = true;
 		this.lineComment = line;
 	}
-	
-	public void setCommentDelimiters(char start, char stop) { 
+
+	public void setCommentDelimiters(char start, char stop) {
 		hasComments = true;
 		this.startComment = start;
 		this.stopComment = stop;
 	}
-	
+
     public void setCommentDelimiters(char start, char stop, char line) {
         hasComments = true;
         this.startComment = start;
@@ -150,17 +150,17 @@ public abstract class Importer {
         this.writeComment = write;
         this.metaComment = meta;
 	}
-	
-	public void setCommentWriter(Writer commentWriter) { 
+
+	public void setCommentWriter(Writer commentWriter) {
 		this.commentWriter = new BufferedWriter(commentWriter);
 	}
 
-	public int getLineNumber() { 
-		return reader.getLineNumber(); 
+	public int getLineNumber() {
+		return reader.getLineNumber();
 	}
 
-	public int getLastDelimiter() { 
-		return lastDelimiter; 
+	public int getLastDelimiter() {
+		return lastDelimiter;
 	}
 
 	public char nextCharacter() throws IOException {
@@ -169,13 +169,13 @@ public abstract class Importer {
 		}
 		return (char)lastChar;
 	}
-		
+
 	public char readCharacter() throws IOException {
-	
+
 		skipSpace();
-		
+
 		char ch = read();
-	
+
 		while (hasComments && (ch == startComment || ch == lineComment)) {
 			skipComments(ch);
 			skipSpace();
@@ -188,17 +188,17 @@ public abstract class Importer {
 	public void unreadCharacter(char ch) {
 		lastChar = ch;
 	}
-		
+
 	public char next() throws IOException {
 		if (lastChar == '\0') {
 			lastChar = read();
 		}
 		return (char)lastChar;
 	}
-		
+
 	public char read() throws IOException {
 		int ch;
-		
+
 		if (lastChar == '\0') {
 			ch = reader.read();
 			if (ch <= 0) {
@@ -208,7 +208,7 @@ public abstract class Importer {
 			ch = lastChar;
 			lastChar = '\0';
 		}
-		
+
 		return (char)ch;
 	}
 
@@ -216,15 +216,15 @@ public abstract class Importer {
 	 * Reads a line, skipping over any comments.
 	 */
 	public String readLine() throws IOException {
-	
+
 		StringBuffer line = new StringBuffer();
-		
+
 		char ch = read();
 
 		try {
-		
+
 			while (ch != '\n' && ch != '\r') {
-			
+
 				if (hasComments) {
 					if (ch == lineComment) {
 						skipComments(ch);
@@ -239,18 +239,18 @@ public abstract class Importer {
 				line.append(ch);
 				ch = read();
 			}
-			
-			// accommodate DOS line endings.. 
+
+			// accommodate DOS line endings..
 			if (ch == '\r') {
 				if (next() == '\n') read();
 			}
 
 			lastDelimiter = ch;
-		
+
 		} catch (EOFException e) {
 			// We catch an EOF and return the line we have so far
 		}
-		
+
 		return line.toString();
 	}
 
@@ -270,9 +270,9 @@ public abstract class Importer {
 
 		try {
 			int n = 0;
-			
+
 			while (n < maxSites && delimiters.indexOf(ch) == -1) {
-			
+
 				if (hasComments && (ch == startComment || ch == lineComment)) {
 					skipComments(ch);
 					ch = read();
@@ -281,7 +281,7 @@ public abstract class Importer {
 				if (!Character.isWhitespace(ch)) {
 
 					char ch1 = ch;
-					
+
 					if (gapCharacters.indexOf(ch) != -1) {
 						ch1 = DataType.GAP_CHARACTER;
 					} else if (missingCharacters.indexOf(ch) != -1) {
@@ -293,27 +293,27 @@ public abstract class Importer {
 						if (n >= matchSequence.length()) {
 							throw new ImportException("Match sequences too short");
 						}
-						
+
 						ch1 = matchSequence.charAt(n);
 					}
-					
+
 					sequence.append(ch1);
-					
+
 					n++;
 				}
-				
+
 				ch = read();
 			}
-			
+
 			lastDelimiter = ch;
 
 			if (Character.isWhitespace((char)lastDelimiter)) {
 				ch = nextCharacter();
 				if (delimiters.indexOf(ch) != -1) {
-					lastDelimiter = readCharacter();				
+					lastDelimiter = readCharacter();
 				}
 			}
-			
+
 		} catch (EOFException e) {
 			// We catch an EOF and return the sequences we have so far
 		}
@@ -325,18 +325,18 @@ public abstract class Importer {
 	 * @param dataType the dataType of the sequences
 	 * @param delimiters list of characters that will stop the reading
 	 */
-	public void readSequenceLine(StringBuffer sequence, DataType dataType, 
+	public void readSequenceLine(StringBuffer sequence, DataType dataType,
 								String delimiters,
 								String gapCharacters, String missingCharacters,
 								String matchCharacters, String matchSequence) throws IOException, ImportException {
-			
+
 		char ch = read();
 
 		try {
 			int n = 0;
-			
+
 			while (ch != '\r' && ch != '\n' && delimiters.indexOf(ch) == -1) {
-			
+
 				if (hasComments) {
 					if (ch == lineComment) {
 						skipComments(ch);
@@ -350,7 +350,7 @@ public abstract class Importer {
 
 				if (ch != ' ' && ch != '\t') {
 					char ch1 = ch;
-					
+
 					if (gapCharacters.indexOf(ch) != -1) {
 						ch1 = DataType.GAP_CHARACTER;
 					} else if (missingCharacters.indexOf(ch) != -1) {
@@ -362,31 +362,31 @@ public abstract class Importer {
 						if (n >= matchSequence.length()) {
 							throw new ImportException("Match sequences too short");
 						}
-						
+
 						ch1 = matchSequence.charAt(n);
 					}
-					
+
 					sequence.append(ch1);
-					
+
 					n++;
 				}
-				
+
 				ch = read();
 			}
-			
+
 			if (ch == '\r') {
 				if (next() == '\n') read();
 			}
-			
+
 			lastDelimiter = ch;
-			
+
 			if (Character.isWhitespace((char)lastDelimiter)) {
 				ch = nextCharacter();
 				if (delimiters.indexOf(ch) != -1) {
-					lastDelimiter = readCharacter();				
+					lastDelimiter = readCharacter();
 				}
 			}
-			
+
 		} catch (EOFException e) {
 			// We catch an EOF and return the sequences we have so far
 		}
@@ -443,62 +443,62 @@ public abstract class Importer {
 	}
 
 	/**
-	 * Reads a token stopping when any whitespace or a comment is found. 
+	 * Reads a token stopping when any whitespace or a comment is found.
 	 * If the token begins with a quote char then all characters will be
 	 * included in token until a matching quote is found (including whitespace or comments).
 	 */
 	public String readToken() throws IOException {
 		return readToken("");
 	}
-	
+
 	/**
-	 * Reads a token stopping when any whitespace, a comment or when any character 
+	 * Reads a token stopping when any whitespace, a comment or when any character
 	 * in delimiters is found. If the token begins with a quote char
-	 * then all characters will be included in token until a matching 
+	 * then all characters will be included in token until a matching
 	 * quote is found (including whitespace or comments).
 	 */
 	public String readToken(String delimiters) throws IOException {
 		int space = 0;
 		char ch, ch2, quoteChar = '\0';
 		boolean done = false, first = true, quoted = false, isSpace;
-				
+
 		nextCharacter();
-		
+
 		StringBuffer token = new StringBuffer();
 
 		while (!done) {
 			ch = read();
-			
+
 			try {
 				isSpace = Character.isWhitespace(ch);
-				
+
 				if (quoted && ch == quoteChar) { // Found the closing quote
 					ch2 = read();
-						
-					if (ch == ch2) {	
+
+					if (ch == ch2) {
 						// A repeated quote character so add this to the token
 						token.append(ch);
-					} else {		
+					} else {
 						// otherwise it terminates the token
-						
+
 						lastDelimiter = ' ';
 						unreadCharacter(ch2);
 						done = true;
 						quoted = false;
 					}
-				} else if (first && (ch == '\'' || ch == '"')) { 	
+				} else if (first && (ch == '\'' || ch == '"')) {
 					// if the opening character is a quote
 					// read everything up to the closing quote
-					quoted = true;						
+					quoted = true;
 					quoteChar = ch;
 					first = false;
 					space = 0;
 				} else if ( ch == startComment || ch == lineComment ) {
 					skipComments(ch);
 					lastDelimiter = ' ';
-					done = true;	
+					done = true;
 				} else {
-					if (quoted) { 
+					if (quoted) {
 						// compress multiple spaces into one
 						if (isSpace) {
 							space++;
@@ -506,8 +506,8 @@ public abstract class Importer {
 						} else {
 							space = 0;
 						}
-						
-						if (space < 2) { 
+
+						if (space < 2) {
 							token.append(ch);
 						}
 					} else if (isSpace) {
@@ -526,19 +526,19 @@ public abstract class Importer {
 				done = true;
 			}
 		}
-		
+
 		if (Character.isWhitespace((char)lastDelimiter)) {
 			ch = nextCharacter();
 			while (Character.isWhitespace(ch)) {
 				read();
 				ch = nextCharacter();
 			}
-			
+
 			if (delimiters.indexOf(ch) != -1) {
-				lastDelimiter = readCharacter();				
+				lastDelimiter = readCharacter();
 			}
 		}
-		
+
 		return token.toString();
 	}
 
@@ -546,7 +546,7 @@ public abstract class Importer {
 	 * Skips over any comments. The opening comment delimiter is passed.
 	 */
 	protected void skipComments(char delimiter) throws IOException {
-	
+
 		char ch;
 		int n=1;
 		boolean write = false;
@@ -560,7 +560,7 @@ public abstract class Importer {
             // combine two consecutive meta comments
             meta = lastMetaComment!= null ? new StringBuffer(lastMetaComment + ";") : new StringBuffer();
 		}
-		
+
         lastMetaComment = null;
 
 		if (delimiter == lineComment) {
@@ -598,9 +598,9 @@ public abstract class Importer {
 	 * Skips to the end of the line. If a comment is found then this is read.
 	 */
 	public void skipToEndOfLine() throws IOException {
-	
+
 		char ch;
-		
+
 		do {
 			ch = read();
 			if (hasComments) {
@@ -615,7 +615,7 @@ public abstract class Importer {
 			}
 
 		} while (ch != '\n' && ch != '\r');
-		 
+
 		if (ch == '\r') {
 			if (nextCharacter() == '\n') read();
 		}
@@ -626,13 +626,13 @@ public abstract class Importer {
 	 * comments.
 	 */
 	public void skipWhile(String skip) throws IOException {
-	
+
 		char ch;
-		
+
 		do {
 			ch = read();
 		} while ( skip.indexOf(ch) > -1 );
-		
+
 		unreadCharacter(ch);
 	}
 
@@ -653,17 +653,17 @@ public abstract class Importer {
 	}
 
 	/**
-	 * Skips over the file until a character from delimiters is found. Returns 
-	 * the delimiter found. Will skip comments and will ignore delimiters within 
+	 * Skips over the file until a character from delimiters is found. Returns
+	 * the delimiter found. Will skip comments and will ignore delimiters within
 	 * comments.
 	 */
 	public char skipUntil(String skip) throws IOException {
 		char ch;
-		
+
 		do {
 			ch = readCharacter();
 		} while ( skip.indexOf(ch) == -1 );
-		
+
 		return ch;
 	}
 
@@ -676,7 +676,7 @@ public abstract class Importer {
     }
 
 	// Private stuff
-	
+
 	private LineNumberReader reader;
 	private BufferedWriter commentWriter = null;
 

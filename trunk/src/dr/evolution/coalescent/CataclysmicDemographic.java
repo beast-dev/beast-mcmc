@@ -135,6 +135,10 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 		double spikeHeight = getN0() * Math.exp(catTime * d);
 		x -= intensityUpToSpike;
 		
+		if(r == 0){
+			return spikeHeight*x + catTime;
+		}
+		
 		return catTime + Math.log(1.0 + spikeHeight * x * r)/r;
 		//throw new UnsupportedOperationException();
 	}

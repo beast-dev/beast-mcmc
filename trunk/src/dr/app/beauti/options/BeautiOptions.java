@@ -125,7 +125,7 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
-        traitOptions = new TraitOptions(this);
+        generalTraitOptions = new GeneralTraitOptions(this);
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -693,7 +693,7 @@ public class BeautiOptions extends ModelOptions {
                     dataPartitions.size() +
                     (dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (starBEASTOptions.isSpeciesAnalysis()) {                
+            if (starBEASTOptions.isSpeciesAnalysis()) {
                 int num = starBEASTOptions.getSpeciesList().size();
                 message += ", " + num + " species"; // species is both singular and plural
             }
@@ -792,8 +792,8 @@ public class BeautiOptions extends ModelOptions {
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
 
-    public TraitOptions traitOptions = new TraitOptions(this);
-    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);     
+    public GeneralTraitOptions generalTraitOptions = new GeneralTraitOptions(this);
+    public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 

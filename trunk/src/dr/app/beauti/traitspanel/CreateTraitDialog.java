@@ -25,8 +25,9 @@
 
 package dr.app.beauti.traitspanel;
 
-import dr.app.beauti.options.*;
-
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.options.TraitsOptions;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -42,7 +43,8 @@ public class CreateTraitDialog {
     private JFrame frame;
 
 
-    JTextField nameField;
+//    JTextField nameField;
+    JComboBox nameCombo;
     JComboBox typeCombo;
 
     OptionsPanel optionPanel;
@@ -50,13 +52,14 @@ public class CreateTraitDialog {
     public CreateTraitDialog(JFrame frame) {
         this.frame = frame;
 
-        nameField = new JTextField(TraitGuesser.Traits.TRAIT_SPECIES.toString());
-        nameField.setColumns(20);
+//        nameField = new JTextField(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+//        nameField.setColumns(20);
 
+        nameCombo = new JComboBox(TraitGuesser.Traits.values());
         typeCombo = new JComboBox(TraitGuesser.TraitType.values());
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Name:", nameField);
+        optionPanel.addComponentWithLabel("Name:", nameCombo);
         optionPanel.addComponentWithLabel("Type:", typeCombo);
 
 
@@ -113,7 +116,7 @@ public class CreateTraitDialog {
         }
 
         // check that the trait name doesn't exist
-        if (options.traitOptions.containTrait(getName())) {
+        if (TraitsOptions.containTrait(getName())) {
             int option = JOptionPane.showConfirmDialog(frame,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -132,7 +135,8 @@ public class CreateTraitDialog {
     }
 
     public String getName() {
-        return nameField.getText();
+//        return nameField.getText();
+        return nameCombo.getSelectedItem().toString();
     }
 
     public TraitGuesser.TraitType getType() {

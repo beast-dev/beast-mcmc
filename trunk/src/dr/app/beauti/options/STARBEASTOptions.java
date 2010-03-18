@@ -28,13 +28,11 @@ import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.Generator;
-import dr.evolution.util.Taxon;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -42,25 +40,21 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class STARBEASTOptions extends ModelOptions {
+public class STARBEASTOptions extends TraitsOptions {
 
 
 	public static final String TREE_FILE_NAME = "trees";
-	// Instance variables
-    private final BeautiOptions options;
-   
+
     public final String POP_MEAN = "popMean";
     public final String SPECIES_TREE_FILE_NAME = TraitGuesser.Traits.TRAIT_SPECIES 
     							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
- 
 
-    public STARBEASTOptions(BeautiOptions options) {    	
-    	this.options = options;
-               
-    	initSpeciesParametersAndOperators();
+    public STARBEASTOptions(BeautiOptions options) {
+        super(options);
     }
-    
-    private void initSpeciesParametersAndOperators() {
+
+    @Override
+    protected void initTraitParametersAndOperators() {
         double spWeights = 5.0;
         double spTuning = 0.9;
 
@@ -90,7 +84,7 @@ public class STARBEASTOptions extends ModelOptions {
         createScaleOperator(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
 
         createOperator(TraitGuesser.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
-                
+
         //TODO: more
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -99,7 +93,6 @@ public class STARBEASTOptions extends ModelOptions {
 
     }
 
-   
     /**
      * return a list of parameters that are required
      *
@@ -160,28 +153,11 @@ public class STARBEASTOptions extends ModelOptions {
     /////////////////////////////////////////////////////////////
 
     public boolean isSpeciesAnalysis() {
-        return options.traitOptions.containTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+        return containTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString());
     }
 
     public List<String> getSpeciesList() {
-        List<String> species = new ArrayList<String>();
-        String sp;
-
-        if (options.taxonList != null) {
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                Taxon taxon = options.taxonList.getTaxon(i);
-                sp = (String) taxon.getAttribute(TraitGuesser.Traits.TRAIT_SPECIES.toString());
-
-                if (sp == null) return null;
-
-                if (!species.contains(sp)) {
-                    species.add(sp);
-                }
-            }
-            return species;
-        } else {
-            return null;
-        }
+        return super.getStatesListOfTrait(TraitGuesser.Traits.TRAIT_SPECIES.toString());
     } 
 
 }

@@ -23,7 +23,10 @@
 
 package dr.app.beauti.options;
 
-import java.util.*;
+import dr.evolution.util.Taxon;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -32,20 +35,24 @@ import java.util.*;
  * @author Walter Xie
  * @version $Id$
  */
-public class TraitOptions extends ModelOptions {
+public abstract class TraitsOptions extends ModelOptions {
+     public static final String TREE_FILE_NAME = "trees";
 
 	// Instance variables
-    private final BeautiOptions options;
+    protected final BeautiOptions options;
 
-    public List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
+    public static final List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
 //    public Map<String , TraitGuesser> traits = new HashMap<String, TraitGuesser>(); // traits map
     
-    public TraitOptions(BeautiOptions options) {
+    public TraitsOptions(BeautiOptions options) {
     	this.options = options;
+        initTraitParametersAndOperators();
     }
 
+    protected abstract void initTraitParametersAndOperators(); 
+
     /////////////////////////////////////////////////////////////
-    public boolean containTrait(String traitName) {
+    public static boolean containTrait(String traitName) {
         for (TraitGuesser trait : traits) {
             if (trait.getTraitName().equalsIgnoreCase(traitName))
                 return true;
@@ -53,11 +60,33 @@ public class TraitOptions extends ModelOptions {
         return false;
     }
 
-    public TraitGuesser getTrait(String traitName) {
+    public static TraitGuesser getTrait(String traitName) {
         for (TraitGuesser trait : traits) {
             if (trait.getTraitName().equalsIgnoreCase(traitName))
                 return trait;
         }
         return null;
     }
+    
+    public List<String> getStatesListOfTrait(String traitName) {
+        List<String> species = new ArrayList<String>();
+        String sp;
+
+        if (options.taxonList != null) {
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Taxon taxon = options.taxonList.getTaxon(i);
+                sp = (String) taxon.getAttribute(traitName);
+
+                if (sp == null) return null;
+
+                if (!species.contains(sp)) {
+                    species.add(sp);
+                }
+            }
+            return species;
+        } else {
+            return null;
+        }
+    }
+
 }

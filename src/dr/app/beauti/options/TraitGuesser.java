@@ -55,8 +55,8 @@ public class TraitGuesser {
     }
 
     public static enum Traits {
-
-        TRAIT_SPECIES("species");
+        TRAIT_SPECIES("species"),
+        TRAIT_LOCATIONS("locations");
 
         Traits(String name) {
             this.name = name;

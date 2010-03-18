@@ -9,16 +9,15 @@
 package dr.app.beauti;
 
 import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
-import dr.app.beauti.components.*;
+import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.SequenceErrorModelComponentFactory;
+import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.STARBEASTOptions;
-import dr.app.beauti.options.TraitGuesser;
+import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
@@ -438,11 +437,6 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     private void importMultiTraits(final File file) throws IOException {
-//        if( beautiOptions.taxonList == null ) {
-//             JOptionPane.showMessageDialog(this, "No taxa loaded yet - noting done!",
-//                            "No taxa loaded", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        } // move to doImportTraits()
 
         try {
             Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
@@ -468,12 +462,12 @@ public class BeautiFrame extends DocumentFrame {
                 TraitGuesser newTrait = new TraitGuesser(label, t);
 
                 int selRow;
-                if (beautiOptions.traitOptions.containTrait(label)) {
-                    selRow = beautiOptions.traitOptions.traits.indexOf(beautiOptions.traitOptions.getTrait(label));
-                    beautiOptions.traitOptions.traits.set(selRow, newTrait);
+                if (TraitsOptions.containTrait(label)) {
+                    selRow = TraitsOptions.traits.indexOf(TraitsOptions.getTrait(label));
+                    TraitsOptions.traits.set(selRow, newTrait);
                 } else {
-                    beautiOptions.traitOptions.traits.add(newTrait);
-                    selRow = beautiOptions.traitOptions.traits.size() - 1;
+                    TraitsOptions.traits.add(newTrait);
+                    selRow = TraitsOptions.traits.size() - 1;
                 }
                 traitsPanel.traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
@@ -714,7 +708,7 @@ public class BeautiFrame extends DocumentFrame {
         return importTraitsAction;
     }
 
-    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits...") {
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Trait") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

@@ -309,8 +309,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Traits ++++++++++++++++++
         // traits tag
-        if (options.traitOptions.traits.size() > 0) {
-            for (TraitGuesser trait : options.traitOptions.traits) {
+        if (TraitsOptions.traits.size() > 0) {
+            for (TraitGuesser trait : TraitsOptions.traits) {
                 writeTraits(writer, trait, options.taxonList);
             }
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);

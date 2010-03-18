@@ -319,7 +319,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
 
-            computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
+//            computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
+
+            computeWeightedAverage(
+                    meanCache, meanOffset0, precision0,
+                    meanCache, meanOffset1, precision1,
+                    meanCache, meanThisOffset, dim);
         }
 
         if (!treeModel.isRoot(node)) {
@@ -421,19 +426,19 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         wishartStatistics.incrementDf(1); // Peeled one node
     }
 
-    private void computeWeightedMeanCache(int thisOffset,
-                                          int childOffset0,
-                                          int childOffset1,
-                                          double precision0,
-                                          double precision1) {
-
-        final double totalVariance = 1.0 / (precision0 + precision1);
-        for (int i = 0; i < dim; i++) {
-            meanCache[thisOffset + i] = (meanCache[childOffset0 + i] * precision0 +
-                    meanCache[childOffset1 + i] * precision1)
-                    * totalVariance;
-        }
-    }
+//    private void computeWeightedMeanCache(int thisOffset,
+//                                          int childOffset0,
+//                                          int childOffset1,
+//                                          double precision0,
+//                                          double precision1) {
+//
+//        final double totalVariance = 1.0 / (precision0 + precision1);
+//        for (int i = 0; i < dim; i++) {
+//            meanCache[thisOffset + i] = (meanCache[childOffset0 + i] * precision0 +
+//                    meanCache[childOffset1 + i] * precision1)
+//                    * totalVariance;
+//        }
+//    }
 
     protected double[] getRootNodeTrait() {
         return getTraitForNode(treeModel, treeModel.getRoot(), traitName);
@@ -521,14 +526,14 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     // Computes the weighted average of two vectors, used many times in these computations
 
-    protected static void computeWeightedAverage(double[] in0, double weight0,
-                                                 double[] in1, double weight1,
-                                                 final int dim,
-                                                 double[] out) {
+    protected static void computeWeightedAverage(double[] in0, int offset0, double weight0,
+                                                 double[] in1, int offset1, double weight1,
+                                                 double[] out2, int offset2,
+                                                 int length) {
 
         final double totalInverseWeight = 1.0 / (weight0 + weight1);
-        for (int i = 0; i < dim; i++) {
-            out[i] = (in0[i] * weight0 + in1[i] * weight1) * totalInverseWeight;
+        for (int i = 0; i < length; i++) {
+            out2[offset2 + i] = (in0[offset0 + i] * weight0 + in1[offset1 + i] * weight1) * totalInverseWeight;
         }
     }
 

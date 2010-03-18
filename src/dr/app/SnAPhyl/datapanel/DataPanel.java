@@ -230,7 +230,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void guessTrait() {
         if (options.taxonList != null) { // validation of check empty taxonList
-//            TraitGuesser guesser = options.traitOptions.cureentTraitGuesser;
+//            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
             TraitGuesser guesser = new TraitGuesser();
 
             if (guessTraitDialog == null) {

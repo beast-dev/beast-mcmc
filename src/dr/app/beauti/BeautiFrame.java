@@ -191,7 +191,7 @@ public class BeautiFrame extends DocumentFrame {
 
         importChooser.setMultiSelectionEnabled(true);
         importChooser.setFileFilter(new FileNameExtensionFilter(
-                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast"));
+                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
         importChooser.setDialogTitle("Import Aligment...");
     }
 

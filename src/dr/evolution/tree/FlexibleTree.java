@@ -186,7 +186,7 @@ public class FlexibleTree implements MutableTree {
             node = (FlexibleNode) Tree.Utils.postorderSuccessor(this, node);
             //System.out.print("node = " + node.getId() + " ");
             if (node.isExternal()) {
-                if (taxonNumberMap != null) {
+                if (taxonNumberMap != null && taxonNumberMap.size() > 0) {
                     i = taxonNumberMap.get(node.getTaxon());
                 }
 
@@ -194,7 +194,7 @@ public class FlexibleTree implements MutableTree {
                 //System.out.println("  leaf number " + i);
                 nodes[i] = node;
 
-                if (taxonNumberMap == null) {
+                if (taxonNumberMap == null || taxonNumberMap.size() == 0) {
                     i++;
                 }
             } else {

@@ -95,7 +95,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     public boolean getComputeWishartSufficientStatistics() {
         return computeWishartStatistics;
     }
-    
+
     protected double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,
                                                   double[] marginalRootMean,
                                                   double[][] notUsed,
@@ -111,9 +111,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
         if (dimTrait > 1) {
 
-            computeWeightedAverage(conditionalRootMean, conditionalRootPrecision, rootPriorMean, rootPriorSampleSize,
-                    dimTrait, marginalRootMean);
-            
+            computeWeightedAverage(conditionalRootMean, 0, conditionalRootPrecision, rootPriorMean, 0, rootPriorSampleSize,
+                    marginalRootMean, 0, dimTrait);
+
             square = computeQuadraticProduct(marginalRootMean, treePrecisionMatrix, marginalRootMean, dimTrait)
                     * marginalPrecision;
 
@@ -164,15 +164,15 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = true;
     }
 
-    protected double[][] computeMarginalRootMeanAndVariance(double[] conditionalRootMean, 
+    protected double[][] computeMarginalRootMeanAndVariance(double[] conditionalRootMean,
                                                             double[][] notUsed,
-                                                            double[][] treeVarianceMatrix, 
+                                                            double[][] treeVarianceMatrix,
                                                             double conditionalRootPrecision) {
 
         final double[][] outVariance = tmpM; // Use a temporary buffer, will stay valid for only a short while
 
-        computeWeightedAverage(conditionalRootMean, conditionalRootPrecision, rootPriorMean, rootPriorSampleSize,
-                dimTrait, conditionalRootMean);
+        computeWeightedAverage(conditionalRootMean, 0, conditionalRootPrecision, rootPriorMean, 0, rootPriorSampleSize,
+                conditionalRootMean, 0, dimTrait);
 
         final double totalVariance = 1.0 / (conditionalRootPrecision + rootPriorSampleSize);
         for (int i = 0; i < dimTrait; i++) {

@@ -123,8 +123,20 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 	}
 	
 	public double getInverseIntensity(double x) {
+		double d = getDeclineRate();
+		double r = getGrowthRate();
+		double intensityUpToSpike = (Math.exp(catTime*-d)-1.0)/getN0()/-d;
 		
-		throw new UnsupportedOperationException();
+		if(x < intensityUpToSpike){
+			return -Math.log(1.0 - getN0() * d * x)/d;
+		}
+		
+		
+		double spikeHeight = getN0() * Math.exp(catTime * d);
+		x -= intensityUpToSpike;
+		
+		return catTime + Math.log(1.0 + spikeHeight * x * r)/r;
+		//throw new UnsupportedOperationException();
 	}
 	
 	public int getNumArguments() {

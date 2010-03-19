@@ -685,7 +685,6 @@ public class BeautiOptions extends ModelOptions {
     }
 
 
-	
 	public String statusMessage() {
         String message = "";
         if (hasData()) {
@@ -709,6 +708,10 @@ public class BeautiOptions extends ModelOptions {
 
             if (starBEASTOptions.isSpeciesAnalysis()) {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
+            }
+
+            if (generalTraitOptions.isPhylogeographic()) {
+                message += ";    Phylogeographic Analysis";
             }
             
             message += ";    " + clockModelOptions.statusMessageClockModel();

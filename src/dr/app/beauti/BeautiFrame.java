@@ -443,13 +443,13 @@ public class BeautiFrame extends DocumentFrame {
 
             for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
                 final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
-                final String label = e.getKey();
+                final String traitName = e.getKey();
 
                 Boolean warningGiven = false;
                 for (String[] v : e.getValue()) {
                     final Class c1 = Utils.detectTYpe(v[1]);
                     if (c != c1 && !warningGiven) {
-                        JOptionPane.showMessageDialog(this, "Not all values of same type in column" + label,
+                        JOptionPane.showMessageDialog(this, "Not all values of same type in column" + traitName,
                                 "Incompatible values", JOptionPane.WARNING_MESSAGE);
                         warningGiven = true;
                         // TODO Error - not all values of same type
@@ -459,17 +459,9 @@ public class BeautiFrame extends DocumentFrame {
                 TraitGuesser.TraitType t = (c == Boolean.class || c == String.class) ? TraitGuesser.TraitType.DISCRETE :
                         (c == Integer.class) ? TraitGuesser.TraitType.INTEGER : TraitGuesser.TraitType.CONTINUOUS;
 
-                TraitGuesser newTrait = new TraitGuesser(label, t);
+                TraitGuesser newTrait = new TraitGuesser(traitName, t);
 
-                int selRow;
-                if (TraitsOptions.containTrait(label)) {
-                    selRow = TraitsOptions.traits.indexOf(TraitsOptions.getTrait(label));
-                    TraitsOptions.traits.set(selRow, newTrait);
-                } else {
-                    TraitsOptions.traits.add(newTrait);
-                    selRow = TraitsOptions.traits.size() - 1;
-                }
-                traitsPanel.traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+                if (validateTraitName(traitName)) traitsPanel.addTrait(newTrait, traitsPanel.traitsTable);
 
                 for (final String[] v : e.getValue()) {
                     final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
@@ -477,7 +469,7 @@ public class BeautiFrame extends DocumentFrame {
                         // if the taxon isn't in the list then ignore it.
                         // TODO provide a warning of unmatched taxa
                         final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
-                        taxon.setAttribute(label, Utils.constructFromString(c, v[1]));
+                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
                     }
                 }
             }
@@ -485,6 +477,42 @@ public class BeautiFrame extends DocumentFrame {
             JOptionPane.showMessageDialog(this, "Error in loading traits file: " + e.getMessage(),
                     "Error Loading file", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    public boolean validateTraitName(String traitName) {
+        // check that the name is valid
+        if (traitName.trim().length() == 0) {
+            Toolkit.getDefaultToolkit().beep();
+            return false;
+        }
+
+        // disallow a trait called 'date'
+        if (traitName.equalsIgnoreCase("date")) {
+            JOptionPane.showMessageDialog(this,
+                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
+                            " to set dates for taxa.",
+                    "Reserved trait name",
+                    JOptionPane.WARNING_MESSAGE);
+
+            return false;
+        }
+
+        // check that the trait name doesn't exist
+        if (TraitsOptions.containTrait(traitName)) {
+            int option = JOptionPane.showConfirmDialog(this,
+                    "A trait of this name already exists. Do you wish to replace\n" +
+                            "it with this new trait? This may result in the loss or change\n" +
+                            "in trait values for the taxa.",
+                    "Overwrite trait?",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (option == JOptionPane.NO_OPTION) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void setupSpeciesAnalysis() {
@@ -513,7 +541,7 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void removeSepciesAnalysisSetup() {
+    public void removeSepciesAnalysis() {
 //        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
 //
 //        int i = tabbedPane.indexOfTab("Trees");
@@ -529,8 +557,12 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public PartitionTreePrior getCurrentPartitionTreePrior() {
-    	return treesPanel.currentTreeModel.getPartitionTreePrior();
+    public void setupPhylogeographicAnalysis() {
+    	setStatusMessage();
+    }
+
+    public void removePhylogeographicAnalysis() {
+    	setStatusMessage();
     }
 
     public void setupEBSP() {
@@ -538,6 +570,10 @@ public class BeautiFrame extends DocumentFrame {
     	dataPanel.unlinkAll();
 
     	setAllOptions();
+    }
+
+    public PartitionTreePrior getCurrentPartitionTreePrior() {
+    	return treesPanel.currentTreeModel.getPartitionTreePrior();
     }
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates

@@ -264,18 +264,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
 
-    public void clearTrait() {
-//        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-//            java.util.Date origin = new java.util.Date(0);
-//
-//            double d = 0.0;
-//
-//            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-//            options.taxonList.getTaxon(i).setAttribute("date", date);
-//        }
-//
-//        // adjust the dates to the current timescale...
-//        timeScaleChanged();
+    public void clearTraitValues(String traitName) {
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            options.taxonList.getTaxon(i).setAttribute(traitName, "");
+        }
 
         dataTableModel.fireTableDataChanged();
     }
@@ -301,10 +293,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             try {
                 currentTrait.guessTrait(options);
 
-//                addTrait(currentTrait.getTraitName(), currentTrait.getTraitType());
-                if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-                    frame.setupSpeciesAnalysis();
-                }
             } catch (IllegalArgumentException iae) {
                 JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
             }
@@ -321,7 +309,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             createTraitDialog = new CreateTraitDialog(frame);
         }
 
-        int result = createTraitDialog.showDialog(options);
+        int result = createTraitDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
             String name = createTraitDialog.getName();
             TraitGuesser.TraitType type = createTraitDialog.getType();
@@ -330,15 +318,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             
 // The createTraitDialog will have already checked if the
             // user is overwriting an existing trait
-            int selRow;
-            if (TraitsOptions.containTrait(name)) {
-                selRow = TraitsOptions.traits.indexOf(TraitsOptions.getTrait(name));
-                TraitsOptions.traits.set(selRow, newTrait);
-            } else {
-                TraitsOptions.traits.add(newTrait);
-                selRow = TraitsOptions.traits.size() - 1;
+            addTrait(newTrait, traitsTable);
+
+            if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+                frame.setupSpeciesAnalysis();
+            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_LOCATIONS.toString())) {
+                frame.setupPhylogeographicAnalysis();
             }
-            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
 //            fireTraitsChanged();
             traitsTableModel.fireTableDataChanged();
@@ -348,29 +334,28 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-//    private void addTrait(String traitName, TraitGuesser.TraitType traitType) {
-//
-//        if (!options.selecetedTraits.contains(traitName)) {
-//            options.selecetedTraits.add(traitName);
-//        }
-//        options.traitTypes.put(traitName, traitType);
-//
-//        traitsTableModel.fireTableDataChanged();
-//        int row = options.selecetedTraits.size() - 1;
-//        traitsTable.getSelectionModel().setSelectionInterval(row, row);
-//
-//        fireTraitsChanged();
-//        traitSelectionChanged();
-//    }
+    public void addTrait(TraitGuesser newTrait, JTable traitsTable) {
+        int selRow;
+        if (TraitsOptions.containTrait(newTrait.getTraitName())) {
+            clearTraitValues(newTrait.getTraitName()); // Clear trait values
+            selRow = TraitsOptions.traits.indexOf(TraitsOptions.getTrait(newTrait.getTraitName()));
+            TraitsOptions.traits.set(selRow, newTrait);
+        } else {
+            TraitsOptions.traits.add(newTrait);
+            selRow = TraitsOptions.traits.size() - 1;
+        }
+        traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+    }
 
     private void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
         TraitsOptions.traits.remove(selRow);
         if (currentTrait != null) {
+            clearTraitValues(currentTrait.getTraitName()); // Clear trait values
             if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-                frame.removeSepciesAnalysisSetup();
+                frame.removeSepciesAnalysis();
             } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_LOCATIONS.toString())) {
-
+                frame.removePhylogeographicAnalysis();
             }
 
 //            if (selRow > 0) {
@@ -396,7 +381,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            clearTrait();
+            if (currentTrait != null) clearTraitValues(currentTrait.getTraitName()); // Clear trait values
         }
     }
 

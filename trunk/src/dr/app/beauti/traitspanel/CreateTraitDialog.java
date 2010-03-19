@@ -25,14 +25,12 @@
 
 package dr.app.beauti.traitspanel;
 
-import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TraitsOptions;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 /**
  * @author Andrew Rambaut
@@ -40,8 +38,7 @@ import java.awt.*;
  */
 public class CreateTraitDialog {
 
-    private JFrame frame;
-
+    private final BeautiFrame frame;
 
 //    JTextField nameField;
     JComboBox nameCombo;
@@ -49,7 +46,7 @@ public class CreateTraitDialog {
 
     OptionsPanel optionPanel;
 
-    public CreateTraitDialog(JFrame frame) {
+    public CreateTraitDialog(BeautiFrame frame) {
         this.frame = frame;
 
 //        nameField = new JTextField(TraitGuesser.Traits.TRAIT_SPECIES.toString());
@@ -65,7 +62,7 @@ public class CreateTraitDialog {
 
     }
 
-    public int showDialog(BeautiOptions options) {
+    public int showDialog() {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -90,48 +87,11 @@ public class CreateTraitDialog {
             }
             done = true;
             if (result != JOptionPane.CANCEL_OPTION) {
-                done = validate(options);
+                done = frame.validateTraitName(getName());
             }
         } while (!done);
 
         return result;
-    }
-
-    private boolean validate(BeautiOptions options) {
-        // check that the name is valid
-        if (getName().trim().length() == 0) {
-            Toolkit.getDefaultToolkit().beep();
-            return false;
-        }
-
-        // disallow a trait called 'date'
-        if (getName().equalsIgnoreCase("date")) {
-            JOptionPane.showMessageDialog(frame,
-                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
-                            " to set dates for taxa.",
-                    "Reserved trait name",
-                    JOptionPane.WARNING_MESSAGE);
-
-            return false;
-        }
-
-        // check that the trait name doesn't exist
-        if (TraitsOptions.containTrait(getName())) {
-            int option = JOptionPane.showConfirmDialog(frame,
-                    "A trait of this name already exists. Do you wish to replace\n" +
-                            "it with this new trait? This may result in the loss or change\n" +
-                            "in trait values for the taxa.",
-                    "Overwrite trait?",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (option == JOptionPane.NO_OPTION) {
-                return false;
-            }
-
-        }
-
-        return true;
     }
 
     public String getName() {

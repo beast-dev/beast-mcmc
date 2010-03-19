@@ -25,8 +25,6 @@
 
 package dr.app.util;
 
-import dr.app.beauti.options.TraitGuesser;
-
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,6 +38,7 @@ import java.util.List;
  * @author adru001
  */
 public class Utils {
+    public static final String TRAITS = "traits";
 
     public static String absName(File file) {
         return (file != null) ? file.getAbsolutePath() : null;
@@ -58,7 +57,8 @@ public class Utils {
         java.awt.Frame frame = new java.awt.Frame();
         java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message,
                 java.awt.FileDialog.LOAD);
-        chooser.show();
+//        chooser.show();
+        chooser.setVisible(true);
         if (chooser.getFile() == null) return null;
         java.io.File file = new java.io.File(chooser.getDirectory(), chooser.getFile());
         chooser.dispose();
@@ -72,7 +72,8 @@ public class Utils {
         java.awt.Frame frame = new java.awt.Frame();
         java.awt.FileDialog chooser = new java.awt.FileDialog(frame, message,
                 java.awt.FileDialog.SAVE);
-        chooser.show();
+//        chooser.show();
+        chooser.setVisible(true);
         java.io.File file = new java.io.File(chooser.getDirectory(), chooser.getFile());
         chooser.dispose();
         frame.dispose();
@@ -129,10 +130,11 @@ public class Utils {
     /**
      * Load traits from file.
      *
-     * @param file
-     * @param delimiter
+     * @param file      File
+     * @param delimiter String
      * @return A map whose key is the trait. The value is a list of <taxa, value> as a string array of size 2.
-     * @throws IOException
+     * @throws java.io.IOException  IOException
+     * @throws dr.app.util.Arguments.ArgumentException   ArgumentException
      */
     public static Map<String, List<String[]>> importTraitsFromFile(File file, final String delimiter)
             throws IOException, Arguments.ArgumentException {
@@ -143,16 +145,17 @@ public class Utils {
         // define where is the trait keyword in the 1st row of file
         final int startAt = 1;
 
-        final String[] labels = line.split(delimiter);
-        for (int k = 0; k < labels.length; ++k) {
-            labels[k] = labels[k].trim();
+        final String[] traitNames = line.split(delimiter);
+        for (int k = 0; k < traitNames.length; ++k) {
+            traitNames[k] = traitNames[k].trim();
         }
 
-        if (labels[0].length() > 0) throw new Arguments.ArgumentException("1st row should be a tab plus trait key word");
+        if (!(traitNames[0].equalsIgnoreCase(TRAITS) || traitNames[0].length() < 1))
+            throw new Arguments.ArgumentException("Wrong file format:\ntrait key word should be declared in the 1st row");
 
-        Map<String, java.util.List<String[]>> traits = new HashMap<String, java.util.List<String[]>>();
-        for (int i = startAt; i < labels.length; i++) {
-            traits.put(labels[i], new ArrayList<String[]>());
+        Map<String, List<String[]>> traits = new HashMap<String, List<String[]>>();
+        for (int i = startAt; i < traitNames.length; i++) {
+            traits.put(traitNames[i], new ArrayList<String[]>());
         }
 
         line = nextNonCommentLine(reader);
@@ -160,12 +163,14 @@ public class Utils {
             String[] values = line.split(delimiter);
 
             assert (values.length > 0);
+            if (values.length != traitNames.length)
+                 throw new Arguments.ArgumentException("Wrong file format:\neach trait should have its corresponding value");
 
             try {
-                if (labels[startAt].equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-                    importSpecies(traits, values, labels, startAt);
+                if (traitNames[0].equalsIgnoreCase(TRAITS)) {
+                    importStatesMoreThanTaxon(traits, values, traitNames, startAt);
                 } else {
-                    importStatesMoreThanTaxon(traits, values, labels[startAt]);
+                    importSpecies(traits, values, traitNames, startAt);
                 }
             } catch (Arguments.ArgumentException e) {
                 e.printStackTrace();
@@ -176,13 +181,13 @@ public class Utils {
         return traits;
     }
 
-    private static void importSpecies(Map<String, java.util.List<String[]>> traits, String[] values, String[] labels, int startAt)
+    private static void importSpecies(Map<String, List<String[]>> traits, String[] values, String[] traitNames, int startAt)
             throws Arguments.ArgumentException {
         // first column is label for the redundant "taxa" name
         final String first = values[0].trim();
-        int k = Arrays.asList(labels).indexOf(first);
+        int k = Arrays.asList(traitNames).indexOf(first);
         if (k >= 0) {
-            java.util.List<String[]> trait = traits.get(first);
+            List<String[]> trait = traits.get(first);
             if (trait == null) {
                 throw new Arguments.ArgumentException("undefined trait " + first);
             }
@@ -192,23 +197,30 @@ public class Utils {
             }
         } else {
             for (int i = startAt; i < values.length; i++) {
-                if (i < labels.length) {
-                    java.util.List<String[]> column = traits.get(labels[i]);
+                if (i < traitNames.length) {
+                    List<String[]> column = traits.get(traitNames[i]);
                     column.add(new String[]{first, values[i].trim()});
                 }
             }
         }
     }
 
-    private static void importStatesMoreThanTaxon(Map<String, java.util.List<String[]>> traits, String[] values, final String keyword)
+    private static void importStatesMoreThanTaxon(Map<String, List<String[]>> traits, String[] values, String[] traitNames, int startAt)
             throws Arguments.ArgumentException {
         // first column is label taxon name
 
-        java.util.List<String[]> trait = traits.get(keyword);
+        if (traitNames.length < 2) {
+            throw new Arguments.ArgumentException("Wrong file format:\ntrait key words in the 1st row are loaded improperly");
+        } else if (traitNames.length - startAt < 1) {
+            throw new Arguments.ArgumentException("startAt set improperly");
+        }
 
-        if (trait == null) throw new Arguments.ArgumentException("undefined trait " + keyword);
+        for (int i = 0; i < (traitNames.length - startAt); i++) {
+            List<String[]> trait = traits.get(traitNames[i + startAt]);
+            if (trait == null) throw new Arguments.ArgumentException("undefined trait " + traitNames[i + startAt]);
 
-        trait.add(new String[]{values[0].trim(), values[1].trim()}); // {taxon_name, trait}
+            trait.add(new String[]{values[0].trim(), values[i + startAt].trim()}); // {taxon_name, trait}
+        }
     }
 
     /**
@@ -217,6 +229,8 @@ public class Utils {
      * then it is returned with this trimmed off. Otherwise the file name is
      * return as it is.
      *
+     * @param fileName        String
+     * @param extensions      String[]
      * @return the trimmed filename
      */
     public static String trimExtensions(String fileName, String[] extensions) {
@@ -234,6 +248,8 @@ public class Utils {
     }
 
     /**
+     * @param caller   Object
+     * @param name     String
      * @return a named image from file or resource bundle.
      */
     public static Image getImage(Object caller, String name) {

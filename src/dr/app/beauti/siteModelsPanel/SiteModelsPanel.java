@@ -72,11 +72,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     TitledBorder modelBorder;
 
     BeautiFrame frame = null;
-    CreateModelDialog createModelDialog = null;
+//    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
     boolean hasAlignment = false;
 
 //    SequenceErrorModelComponentOptions comp;
+
+    LocationSiteModelPanel locationSiteModelPanel;
 
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
@@ -165,18 +167,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         
         settingOptions = true;
 
-        //setModelOptions(currentModel);
-
-//        clockModelCombo.setSelectedItem(options.clockType);
-//        comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
-//        errorModelCombo.setSelectedItem(comp.errorModelType);
-//
-//        if (clockModelPanel != null) {
-//            clockModelPanel.setOptions(options);
-//        }
-
-        settingOptions = false;
-
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
         if (options.getPartitionSubstitutionModels().size() > 0) {
@@ -189,11 +179,21 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
-        
-//        rateOptionCombo.setSelectedItem(options.rateOptionClockModel);
-//        substitutionRateField.setValue(options.meanSubstitutionRate);   
-//        
-//        fireModelsChanged();
+
+
+        if (options.generalTraitOptions.isPhylogeographic()) {
+            if (locationSiteModelPanel == null) {
+                locationSiteModelPanel = new LocationSiteModelPanel(options.siteModelOptions);
+                TitledBorder border = new TitledBorder("Location Substitution Model");
+                locationSiteModelPanel.setBorder(border);
+                this.add(locationSiteModelPanel, BorderLayout.SOUTH);
+            }
+        } else if (locationSiteModelPanel != null) {
+            this.remove(locationSiteModelPanel);
+            locationSiteModelPanel = null;
+        }
+
+        settingOptions = false;
         
         validate();
         repaint();
@@ -205,22 +205,22 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
 
 
-    private void createModel() {
-        if (createModelDialog == null) {
-            createModelDialog = new CreateModelDialog(frame);
-        }
-
-        int result = createModelDialog.showDialog();
-        if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
-//            options.addPartitionSubstitutionModel(model);
-            modelTableModel.fireTableDataChanged();
-            int row = options.getPartitionSubstitutionModels().size() - 1;
-            modelTable.getSelectionModel().setSelectionInterval(row, row);
-        }
-
-//        fireModelsChanged();
-    }
+//    private void createModel() {
+//        if (createModelDialog == null) {
+//            createModelDialog = new CreateModelDialog(frame);
+//        }
+//
+//        int result = createModelDialog.showDialog();
+//        if (result != JOptionPane.CANCEL_OPTION) {
+//            PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, createModelDialog.getName(), createModelDialog.getDataType());
+////            options.addPartitionSubstitutionModel(model);
+//            modelTableModel.fireTableDataChanged();
+//            int row = options.getPartitionSubstitutionModels().size() - 1;
+//            modelTable.getSelectionModel().setSelectionInterval(row, row);
+//        }
+//
+////        fireModelsChanged();
+//    }
 
 //    public void removeSelection() {
 //        int selRow = modelTable.getSelectedRow();

@@ -120,7 +120,7 @@ public class BeautiOptions extends ModelOptions {
         operatorAnalysis = false;
         operatorAnalysisFileName = null;
         
-//        substitutionModelOptions = new SubstitutionModelOptions(this);
+        siteModelOptions = new SiteModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
@@ -199,108 +199,6 @@ public class BeautiOptions extends ModelOptions {
         
         priorOptions.selectParameters(parameters);
 
-//        boolean multiplePartitions = getTotalActivePartitionSubstitutionModelCount() > 1;
-        // add all Parameter (with prefix) into parameters list     
-        
-
-//
-//        double growthRateMaximum = 1E6;
-//        double birthRateMaximum = 1E6;
-//        double substitutionRateMaximum = 100;
-//        double logStdevMaximum = 10;
-//        double substitutionParameterMaximum = 100;
-//        double initialRootHeight = 1;
-//        double initialRate = 1;
-//
-//
-//        if (clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-//            double rate = clockModelOptions.getMeanRelativeRate();
-//
-//            growthRateMaximum = 1E6 * rate;
-//            birthRateMaximum = 1E6 * rate;
-//
-//            if (hasData()) {
-//                initialRootHeight = meanDistance / rate;
-//
-//                initialRootHeight = round(initialRootHeight, 2);
-//            }
-//
-//        } else {
-//            if (maximumTipHeight > 0) {
-//                initialRootHeight = maximumTipHeight * 10.0;
-//            }
-//
-//            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
-//        }
-//
-//        double timeScaleMaximum = round(initialRootHeight * 1000.0, 2);
-//
-//        for (Parameter param : parameters) {
-////            if (dataReset) param.priorEdited = false;
-//
-//            if (!param.priorEdited) {
-//                switch (param.scale) {
-//                    case TIME_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-//                        param.initial = initialRootHeight;
-//                        break;
-//                    case T50_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(timeScaleMaximum, param.upper);
-//                        param.initial = initialRootHeight / 5.0;
-//                        break;
-//                    case GROWTH_RATE_SCALE:
-//                        param.uniformLower = Math.max(-growthRateMaximum, param.lower);
-//                        param.uniformUpper = Math.min(growthRateMaximum, param.upper);
-//                        break;
-//                    case BIRTH_RATE_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(birthRateMaximum, param.upper);
-//                        break;
-//                    case SUBSTITUTION_RATE_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(substitutionRateMaximum, param.upper);
-//                        param.initial = initialRate;
-//                        break;
-//                    case LOG_STDEV_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(logStdevMaximum, param.upper);
-//                        break;
-//                    case SUBSTITUTION_PARAMETER_SCALE:
-//                        param.uniformLower = Math.max(0.0, param.lower);
-//                        param.uniformUpper = Math.min(substitutionParameterMaximum, param.upper);
-//                        break;
-//
-//                    case UNITY_SCALE:
-//                        param.uniformLower = 0.0;
-//                        param.uniformUpper = 1.0;
-//                        break;
-//
-//                    case ROOT_RATE_SCALE:
-//                        param.initial = initialRate;
-//                        param.gammaAlpha = 0.5;
-//                        param.gammaBeta = param.initial / 0.5;
-//                        break;
-//
-//                    case LOG_VAR_SCALE:
-//                        param.initial = initialRate;
-//                        param.gammaAlpha = 2.0;
-//                        param.gammaBeta = param.initial / 2.0;
-//                        break;
-//
-//                }
-//                if (param.isNodeHeight) {
-//                    param.lower = maximumTipHeight;
-//                    param.uniformLower = maximumTipHeight;
-//                    param.uniformUpper = timeScaleMaximum;
-//                    param.initial = initialRootHeight;
-//                }
-//            }
-//        }
-//
-////        dataReset = false;
-
         return parameters;
     }
 
@@ -342,48 +240,6 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
-//        priorOptions.selectOperators(ops);
-        
-//        if (multiplePartitions) {
-//        if (hasCodon()) {
-//            Operator deltaMuOperator = getOperator("deltaMu");
-//
-//            // update delta mu operator weight
-//            deltaMuOperator.weight = 0.0;
-//            for (PartitionSubstitutionModel pm : getPartitionSubstitutionModels()) {
-//                deltaMuOperator.weight += pm.getCodonPartitionCount();
-//            }
-//
-//            ops.add(deltaMuOperator);
-//        }
-
-//        double initialRootHeight = 1;
-//
-//        if (clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-//            double rate = clockModelOptions.getMeanRelativeRate();
-//
-//            if (hasData()) {
-//                initialRootHeight = meanDistance / rate;
-//                initialRootHeight = round(initialRootHeight, 2);
-//            }
-//
-//        } else {
-//            if (maximumTipHeight > 0) {
-//                initialRootHeight = maximumTipHeight * 10.0;
-//            }
-//        }
-
-//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            Operator op = tree.getOperator("subtreeSlide");
-//            if (!op.tuningEdited) {
-//                op.tuning = initialRootHeight / 10.0;
-//            }
-//        }
-        
-//        for (Operator op : ops) {
-//        	System.out.println(op.prefix + " + " + op.getName());
-//        }
-
         return ops;
     }
     
@@ -399,39 +255,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return null;
     }
-    
-//    public boolean isFixedSubstitutionRate() {
-//        return fixedSubstitutionRate;
-//    }
-//    public void updateFixedRateClockModel() {
-//    	if (getPartitionClockModels().size() > 0) {
-//    		
-//	    	if (rateOptionClockModel == FixRateType.FIX_FIRST_PARTITION) {
-//	    		// fix rate of 1st partition
-//	    		for (PartitionClockModel model : getPartitionClockModels()) {
-//	    			if (getPartitionClockModels().indexOf(model) < 1) {
-//	    				model.setFixedRate(true);
-//	    			} else {
-//	    				model.setFixedRate(false);
-//	    			}
-//	            }
-//	    		
-//	    	} else if (rateOptionClockModel == FixRateType.FIX_MEAN) {
-//	    		// TODO check
-//	    		for (PartitionClockModel model : getPartitionClockModels()) {
-//	    			model.setFixedRate(true);
-//	            }
-//	    		
-//	    	} else {
-//	    		// estimate all rate
-//	    		for (PartitionClockModel model : getPartitionClockModels()) {
-//	    			model.setFixedRate(false);
-//	            }
-//	    		
-//	    	}
-//    	}
-//    }
-    
 
 
     public boolean isEBSPSharingSamePrior() {
@@ -790,7 +613,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean operatorAnalysis = false;
     public String operatorAnalysisFileName = null;
     
-//    public SubstitutionModelOptions substitutionModelOptions = new SubstitutionModelOptions(this);
+    public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);

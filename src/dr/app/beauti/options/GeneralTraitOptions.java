@@ -61,6 +61,12 @@ public class GeneralTraitOptions extends TraitsOptions {
      */
     public void selectOperators(List<Operator> ops) {
 
-    }    
+    }
+
+    /////////////////////////////////////////////////////////////
+
+    public boolean isPhylogeographic() {
+        return containTrait(TraitGuesser.Traits.TRAIT_LOCATIONS.toString());
+    }
 
 }

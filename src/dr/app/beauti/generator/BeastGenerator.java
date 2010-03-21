@@ -31,6 +31,7 @@ import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -80,6 +81,7 @@ public class BeastGenerator extends Generator {
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
+    private final GeneralTraitGenerator generalTraitGenerator;
     private final STARBEASTGenerator starEASTGeneratorGenerator;
     private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
@@ -100,6 +102,7 @@ public class BeastGenerator extends Generator {
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
         logGenerator = new LogGenerator(options, components);
 
+        generalTraitGenerator = new GeneralTraitGenerator(options, components); 
         starEASTGeneratorGenerator = new STARBEASTGenerator(options, components);
     }
 
@@ -180,9 +183,11 @@ public class BeastGenerator extends Generator {
     /**
      * Generate a beast xml file from these beast options
      *
-     * @param w the writer
+     * @param file   File
+     * @throws java.io.IOException  IOException
+     * @throws dr.app.util.Arguments.ArgumentException    ArgumentException
      */
-    public void generateXML(File file) throws IOException {
+    public void generateXML(File file) throws IOException, Arguments.ArgumentException {
 
         XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(file)));
 
@@ -357,27 +362,29 @@ public class BeastGenerator extends Generator {
      *
      * @param writer    the writer
      * @param taxonList the taxon list to write
+     * @throws dr.app.util.Arguments.ArgumentException        ArgumentException
      */
-    private void writeTaxa(XMLWriter writer, TaxonList taxonList) {
+    private void writeTaxa(XMLWriter writer, TaxonList taxonList) throws Arguments.ArgumentException {
         // -1 (single taxa), 0 (1st gene of multi-taxa)
 
         writer.writeComment("The list of taxa analyse (can also include dates/ages).");
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
+        boolean hasAttr = options.generalTraitOptions.hasTrait();
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
 
             boolean hasDate = false;
-
             if (options.clockModelOptions.isTipCalibrated()) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
-
-            writer.writeTag(TaxonParser.TAXON, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, taxon.getId())}, !hasDate);
+            writer.writeTag(TaxonParser.TAXON, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, taxon.getId())},
+                    !(hasDate || hasAttr)); // false if any of hasDate or hasAttr is true
 
 
             if (hasDate) {
@@ -400,8 +407,14 @@ public class BeastGenerator extends Generator {
                 };
 
                 writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
-                writer.writeCloseTag(TaxonParser.TAXON);
             }
+
+            if (hasAttr) {
+                generalTraitGenerator.writeAtrrTrait(taxon, writer);
+            }
+
+            if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
+
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
         }
@@ -649,7 +662,7 @@ public class BeastGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitGuesser.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitsOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);

@@ -92,7 +92,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4))); 
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitGuesser.TraitType.values());
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitsOptions.TraitType.values());
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
@@ -312,7 +312,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int result = createTraitDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
             String name = createTraitDialog.getName();
-            TraitGuesser.TraitType type = createTraitDialog.getType();
+            TraitsOptions.TraitType type = createTraitDialog.getType();
             TraitGuesser newTrait = new TraitGuesser(name, type);
             currentTrait = newTrait;
             
@@ -320,9 +320,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             // user is overwriting an existing trait
             addTrait(newTrait, traitsTable);
 
-            if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+            if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.setupSpeciesAnalysis();
-            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_LOCATIONS.toString())) {
+            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) {
                 frame.setupPhylogeographicAnalysis();
             }
 
@@ -352,9 +352,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         TraitsOptions.traits.remove(selRow);
         if (currentTrait != null) {
             clearTraitValues(currentTrait.getTraitName()); // Clear trait values
-            if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
+            if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.removeSepciesAnalysis();
-            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_LOCATIONS.toString())) {
+            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) {
                 frame.removePhylogeographicAnalysis();
             }
 
@@ -455,7 +455,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                     TraitsOptions.traits.get(row).setTraitName(aValue.toString());
                     break;
                 case 1:
-                    TraitsOptions.traits.get(row).setTraitType((TraitGuesser.TraitType) aValue);
+                    TraitsOptions.traits.get(row).setTraitType((TraitsOptions.TraitType) aValue);
                     break;
             }            
         }
@@ -463,7 +463,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
 //            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
             return !TraitsOptions.traits.get(row).getTraitName().
-                    equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString());
+                    equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString());
         }
 
         public String getColumnName(int column) {

@@ -37,7 +37,7 @@ public class TraitGuesser {
     public TraitGuesser() {
     }
 
-    public TraitGuesser(String traitName, TraitType traitType) {
+    public TraitGuesser(String traitName, TraitsOptions.TraitType traitType) {
         this.traitName = traitName;
         this.traitType = traitType;
     }
@@ -48,32 +48,11 @@ public class TraitGuesser {
         REGEX
     }
 
-    public static enum TraitType {
-        DISCRETE,
-        INTEGER,
-        CONTINUOUS
-    }
-
-    public static enum Traits {
-        TRAIT_SPECIES("species"),
-        TRAIT_LOCATIONS("locations");
-
-        Traits(String name) {
-            this.name = name;
-        }
-
-        public String toString() {
-            return name;
-        }
-
-        private final String name;
-    }
-
 //    private boolean guessTrait = false; // no use ??
 
     private GuessType guessType = GuessType.SUFFIX;
-    private String traitName = Traits.TRAIT_SPECIES.toString();
-    private TraitType traitType = TraitType.DISCRETE;
+    private String traitName = TraitsOptions.Traits.TRAIT_SPECIES.toString();
+    private TraitsOptions.TraitType traitType = TraitsOptions.TraitType.DISCRETE;
 
     private int index = 0;
     private String separator;
@@ -97,11 +76,11 @@ public class TraitGuesser {
         this.traitName = traitName;
     }
 
-    public TraitType getTraitType() {
+    public TraitsOptions.TraitType getTraitType() {
         return traitType;
     }
 
-    public void setTraitType(TraitType traitType) {
+    public void setTraitType(TraitsOptions.TraitType traitType) {
         this.traitType = traitType;
     }
 

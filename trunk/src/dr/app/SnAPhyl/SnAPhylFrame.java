@@ -304,6 +304,10 @@ public class SnAPhylFrame extends BeautiFrame {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
 	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
 	                return false;
+	            } catch (Exception ioe) {
+	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
+	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+	                return false;
 	            }
             } else {
             	doGenerateSnAPhyl();

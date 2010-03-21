@@ -645,6 +645,10 @@ public class BeautiFrame extends DocumentFrame {
 	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
 	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
 	                return false;
+	            } catch (Exception e) {
+	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
+	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+	                return false;
 	            }
             } else {
             	doGenerate();

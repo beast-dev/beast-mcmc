@@ -456,8 +456,8 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
 
-                TraitGuesser.TraitType t = (c == Boolean.class || c == String.class) ? TraitGuesser.TraitType.DISCRETE :
-                        (c == Integer.class) ? TraitGuesser.TraitType.INTEGER : TraitGuesser.TraitType.CONTINUOUS;
+                TraitsOptions.TraitType t = (c == Boolean.class || c == String.class) ? TraitsOptions.TraitType.DISCRETE :
+                        (c == Integer.class) ? TraitsOptions.TraitType.INTEGER : TraitsOptions.TraitType.CONTINUOUS;
 
                 TraitGuesser newTrait = new TraitGuesser(traitName, t);
 

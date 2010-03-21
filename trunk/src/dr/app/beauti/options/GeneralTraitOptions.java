@@ -66,7 +66,11 @@ public class GeneralTraitOptions extends TraitsOptions {
     /////////////////////////////////////////////////////////////
 
     public boolean isPhylogeographic() {
-        return containTrait(TraitGuesser.Traits.TRAIT_LOCATIONS.toString());
+        return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
     }
 
+    public boolean hasTrait() { // exclude species at moment
+        return (   (traits.size() > 0 && (!containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString())))
+                || (traits.size() > 1 && containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString()))   );
+    }
 }

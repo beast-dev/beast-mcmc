@@ -36,7 +36,27 @@ import java.util.List;
  * @version $Id$
  */
 public abstract class TraitsOptions extends ModelOptions {
-     public static final String TREE_FILE_NAME = "trees";
+
+    public static enum TraitType {
+        DISCRETE,
+        INTEGER,
+        CONTINUOUS
+    }
+
+    public static enum Traits {
+        TRAIT_SPECIES("species"),
+        TRAIT_LOCATIONS("locations");
+
+        Traits(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    }
 
 	// Instance variables
     protected final BeautiOptions options;

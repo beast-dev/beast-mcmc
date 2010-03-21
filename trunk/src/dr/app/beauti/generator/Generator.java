@@ -23,7 +23,7 @@ public abstract class Generator {
 	public static final String SPLIT_POPS = "splitPopSize"; 
 	protected static final String PDIST = "pdist";
 //	protected static final String STP = "stp";
-	protected static final String SPOPS = TraitGuesser.Traits.TRAIT_SPECIES + "." + "popSizesLikelihood";
+	protected static final String SPOPS = TraitsOptions.Traits.TRAIT_SPECIES + "." + "popSizesLikelihood";
 	
     protected final BeautiOptions options;
     

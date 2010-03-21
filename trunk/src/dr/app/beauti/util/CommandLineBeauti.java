@@ -80,7 +80,7 @@ public class CommandLineBeauti {
         try {
             generator.generateXML(new File(outputFileName));
 
-        } catch (IOException ioe) {
+        } catch (Exception ioe) {
             System.err.println("Unable to generate file: " + ioe.getMessage());
         }
     }

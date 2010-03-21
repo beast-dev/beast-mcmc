@@ -256,7 +256,7 @@ public class BeautiTesterConfig {
         String fileName = name + ".xml";
         try {
             generator.generateXML(new File(fileName));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

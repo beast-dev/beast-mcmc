@@ -42,7 +42,6 @@ import java.util.List;
  */
 public class STARBEASTOptions extends TraitsOptions {
 
-
 	public static final String TREE_FILE_NAME = "trees";
 
     public final String POP_MEAN = "popMean";
@@ -157,7 +156,11 @@ public class STARBEASTOptions extends TraitsOptions {
     }
 
     public List<String> getSpeciesList() {
-        return super.getStatesListOfTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString());
-    } 
+        return super.getStatesListOfTrait(options.taxonList, TraitsOptions.Traits.TRAIT_SPECIES.toString());
+    }
+
+    public String getDescription() {
+        return "Species definition: binds taxa, species and gene trees";
+    }
 
 }

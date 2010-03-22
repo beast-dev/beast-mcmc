@@ -43,8 +43,9 @@ import java.util.logging.Logger;
  */
 public class AttributePatternsParser extends AbstractXMLObjectParser {
 
-    public static final String ATTRIBUTE_PATTERNS = "attributePatterns";
     public static final String ATTRIBUTE = "attribute";
+    public static final String PATTERNS = "Patterns";
+    public static final String ATTRIBUTE_PATTERNS = ATTRIBUTE + PATTERNS;
 
     public String getParserName() { return ATTRIBUTE_PATTERNS; }
 

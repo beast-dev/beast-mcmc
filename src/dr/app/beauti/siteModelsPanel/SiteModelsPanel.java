@@ -181,7 +181,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
 
-        if (options.generalTraitOptions.isPhylogeographic()) {
+        if (options.phylogeographicOptions.isPhylogeographic()) {
             if (locationSiteModelPanel == null) {
                 locationSiteModelPanel = new LocationSiteModelPanel(options.siteModelOptions);
                 TitledBorder border = new TitledBorder("Location Substitution Model");

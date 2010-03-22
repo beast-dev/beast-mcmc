@@ -88,8 +88,8 @@ public class BeastGenerator extends Generator {
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
 
-        alignmentGenerator = new AlignmentGenerator (options, components);   
-        tmrcaStatisticsGenerator = new TMRCAStatisticsGenerator (options, components);                
+        alignmentGenerator = new AlignmentGenerator(options, components);
+        tmrcaStatisticsGenerator = new TMRCAStatisticsGenerator(options, components);
         substitutionModelGenerator = new SubstitutionModelGenerator(options, components);
         treePriorGenerator = new TreePriorGenerator(options, components);
         treeLikelihoodGenerator = new TreeLikelihoodGenerator(options, components);
@@ -102,7 +102,7 @@ public class BeastGenerator extends Generator {
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
         logGenerator = new LogGenerator(options, components);
 
-        generalTraitGenerator = new GeneralTraitGenerator(options, components); 
+        generalTraitGenerator = new GeneralTraitGenerator(options, components);
         starEASTGeneratorGenerator = new STARBEASTGenerator(options, components);
     }
 
@@ -183,9 +183,10 @@ public class BeastGenerator extends Generator {
     /**
      * Generate a beast xml file from these beast options
      *
-     * @param file   File
-     * @throws java.io.IOException  IOException
-     * @throws dr.app.util.Arguments.ArgumentException    ArgumentException
+     * @param file File
+     * @throws java.io.IOException IOException
+     * @throws dr.app.util.Arguments.ArgumentException
+     *                             ArgumentException
      */
     public void generateXML(File file) throws IOException, Arguments.ArgumentException {
 
@@ -220,7 +221,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         if (taxonSets != null && taxonSets.size() > 0) {
-            tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets); 
+            tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
         }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
@@ -237,7 +238,7 @@ public class BeastGenerator extends Generator {
         }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
 
-            //++++++++++++++++ Tree Prior Model ++++++++++++++++++
+        //++++++++++++++++ Tree Prior Model ++++++++++++++++++
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             treePriorGenerator.writeTreePriorModel(prior, writer);
             writer.writeText("");
@@ -296,7 +297,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
 
         //++++++++++++++++ Site Model ++++++++++++++++++
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {            
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeSiteModel(model, writer); // site model
             substitutionModelGenerator.writeAllMus(model, writer); // allMus
             writer.writeText("");
@@ -316,7 +317,7 @@ public class BeastGenerator extends Generator {
         // traits tag
         if (TraitsOptions.traits.size() > 0) {
             for (TraitGuesser trait : TraitsOptions.traits) {
-                writeTraits(writer, trait, options.taxonList);
+                writeEachTrait(writer, trait, options.taxonList);
             }
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }
@@ -362,7 +363,8 @@ public class BeastGenerator extends Generator {
      *
      * @param writer    the writer
      * @param taxonList the taxon list to write
-     * @throws dr.app.util.Arguments.ArgumentException        ArgumentException
+     * @throws dr.app.util.Arguments.ArgumentException
+     *          ArgumentException
      */
     private void writeTaxa(XMLWriter writer, TaxonList taxonList) throws Arguments.ArgumentException {
         // -1 (single taxa), 0 (1st gene of multi-taxa)
@@ -371,7 +373,7 @@ public class BeastGenerator extends Generator {
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = options.generalTraitOptions.hasTrait();
+        boolean hasAttr = TraitsOptions.hasTraitExcludeSpecies();
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -440,32 +442,39 @@ public class BeastGenerator extends Generator {
     /**
      * Generate traits block regarding specific trait name (currently only <species>) from options
      *
-     * @param writer     XMLWriter
-     * @param trait      trait
-     * @param taxonList  TaxonList
+     * @param writer    XMLWriter
+     * @param trait     trait
+     * @param taxonList TaxonList
      */
-    private void writeTraits(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
-
+    private void writeEachTrait(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-            writer.writeComment("Species definition: binds taxa, species and gene trees");
+            writer.writeComment(options.starBEASTOptions.getDescription());
+        } else if (options.phylogeographicOptions.isPhylogeographic()) {
+            writer.writeComment(options.phylogeographicOptions.getPhylogeographicDescription());
         }
         writer.writeComment("trait = " + trait.getTraitName() + " trait_type = " + trait.getTraitType());
 
-        writer.writeOpenTag(trait.getTraitName(), new Attribute[]{new Attribute.Default<String>(XMLParser.ID, trait.getTraitName())});
-        //new Attribute.Default<String>("traitType", traitType)});
-
-        // write sub-tags for species
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+            writer.writeOpenTag(trait.getTraitName(), new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, trait.getTraitName())});
+            //new Attribute.Default<String>("traitType", traitType)});
             starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
-        } // end write sub-tags for species
+            writer.writeCloseTag(trait.getTraitName());
 
-        writer.writeCloseTag(trait.getTraitName());
-
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             starEASTGeneratorGenerator.writeSTARBEAST(writer);
-        }
 
+        } else { // general traits
+            generalTraitGenerator.writeGeneralDataType(trait.getTraitName(), writer);
+
+//            if (options.phylogeographicOptions.isPhylogeographic()) {
+//                generalTraitGenerator
+//            } else {
+//                generalTraitGenerator
+//            }
+
+
+        }
     }
 
 
@@ -591,7 +600,7 @@ public class BeastGenerator extends Generator {
 
         // no codon, unique patterns site patterns
         if (offset == 0 && every == 1)
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix()+ SitePatternsParser.PATTERNS));
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + SitePatternsParser.PATTERNS));
 
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
@@ -637,7 +646,7 @@ public class BeastGenerator extends Generator {
     /**
      * Write the MCMC block.
      *
-     * @param writer  XMLWriter
+     * @param writer XMLWriter
      */
     public void writeMCMC(XMLWriter writer) {
         writer.writeComment("Define MCMC");
@@ -651,7 +660,7 @@ public class BeastGenerator extends Generator {
             attributes.add(new Attribute.Default<String>("operatorAnalysis", options.operatorAnalysisFileName));
         }
 
-        writer.writeOpenTag("mcmc",attributes);
+        writer.writeOpenTag("mcmc", attributes);
 
         if (options.hasData()) {
             writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
@@ -708,7 +717,7 @@ public class BeastGenerator extends Generator {
         logGenerator.writeLogToScreen(writer, branchRatesModelGenerator);
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
-                        substitutionModelGenerator, treeLikelihoodGenerator);
+                substitutionModelGenerator, treeLikelihoodGenerator);
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 

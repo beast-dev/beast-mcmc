@@ -125,7 +125,7 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
-        generalTraitOptions = new GeneralTraitOptions(this);
+        phylogeographicOptions = new PhylogeographicOptions(this);
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -533,7 +533,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (generalTraitOptions.isPhylogeographic()) {
+            if (phylogeographicOptions.isPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
             
@@ -618,7 +618,7 @@ public class BeautiOptions extends ModelOptions {
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
 
-    public GeneralTraitOptions generalTraitOptions = new GeneralTraitOptions(this);
+    public PhylogeographicOptions phylogeographicOptions = new PhylogeographicOptions(this);
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

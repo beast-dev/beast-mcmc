@@ -28,12 +28,12 @@ import java.util.List;
 /**
  * @author Walter Xie
  */
-public class GeneralTraitOptions extends TraitsOptions {
+public class PhylogeographicOptions extends GeneralTraitOptions {
 
 //    public static final String TREE_FILE_NAME = "trees";
 
 
-    public GeneralTraitOptions(BeautiOptions options) {
+    public PhylogeographicOptions(BeautiOptions options) {
          super(options);
     }
 
@@ -65,5 +65,12 @@ public class GeneralTraitOptions extends TraitsOptions {
 
     /////////////////////////////////////////////////////////////
 
+    public boolean isPhylogeographic() {
+        return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
+    }
 
+    public String getPhylogeographicDescription() {
+        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
+    }
 }
+

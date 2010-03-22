@@ -23,6 +23,7 @@
 
 package dr.app.beauti.options;
 
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
 import java.util.ArrayList;
@@ -88,13 +89,13 @@ public abstract class TraitsOptions extends ModelOptions {
         return null;
     }
     
-    public List<String> getStatesListOfTrait(String traitName) {
+    public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
         List<String> species = new ArrayList<String>();
         String sp;
 
-        if (options.taxonList != null) {
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                Taxon taxon = options.taxonList.getTaxon(i);
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
                 sp = (String) taxon.getAttribute(traitName);
 
                 if (sp == null) return null;
@@ -107,6 +108,11 @@ public abstract class TraitsOptions extends ModelOptions {
         } else {
             return null;
         }
+    }
+
+    public static boolean hasTraitExcludeSpecies() { // exclude species at moment
+        return (   (traits.size() > 0 && (!containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString())))
+                || (traits.size() > 1 && containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString()))   );
     }
 
 }

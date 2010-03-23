@@ -73,10 +73,22 @@ public class ModelOptions {
                   .initial(initial).shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).build(parameters);
     }
 
+    public void createCachedGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                          double shape, double scale, double lower, double upper, boolean priorFixed) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial)
+                  .shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).isCached(true).build(parameters);
+    }
+
     public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,
                                              double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.JEFFREYS_PRIOR)
                 .initial(initial).lower(lower).upper(upper).build(parameters);
+    }
+
+    public void createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                double mean, double offset, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
+                  .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
@@ -98,7 +110,18 @@ public class ModelOptions {
 
     public void createScaleOperator(String parameterName, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+        String description;
+        if (parameter.getDescription() == null) {
+            description = parameterName;
+        } else {
+            description = parameter.getDescription();
+        }
+        new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+    }
+
+    public void createScaleOperator(String parameterName, String description, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
     }
 
 //    public void createScaleAllOperator(String parameterName, double tuning, double weight) { // tuning = 0.75
@@ -130,7 +153,7 @@ public class ModelOptions {
         }
     }
 
-    public void createTagOperator(String key, String name, String description, String parameterName, OperatorType type,
+    public void createTagInsideOperator(String key, String name, String description, String parameterName, OperatorType type,
                                   String tag, String idref, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight)

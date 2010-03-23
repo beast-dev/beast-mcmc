@@ -26,7 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.Taxa;
-import dr.math.distributions.*;
+import dr.math.distributions.Distribution;
 
 import java.util.Map;
 
@@ -49,6 +49,8 @@ public class Parameter {
     public final Taxa taxa;
     public final boolean isNodeHeight;
     public final boolean isStatistic;
+    public final boolean isCached;
+
     private final PartitionOptions options;     
 
     // editable Builder para
@@ -82,6 +84,7 @@ public class Parameter {
         private Taxa taxa = null;
         private boolean isNodeHeight = false;
         private boolean isStatistic = false;
+        private boolean isCached = false;
         private PartitionOptions options = null;    
         
         private PriorType priorType = PriorType.NONE;
@@ -124,6 +127,11 @@ public class Parameter {
             return this;
         }
         
+        public Builder isCached(boolean isCached) {
+            this.isCached = isCached;
+            return this;
+        }
+
         public Builder isStatistic(boolean isStatistic) {
             this.isStatistic = isStatistic;
             return this;
@@ -208,6 +216,7 @@ public class Parameter {
         taxa = builder.taxa;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
+        isCached = builder.isCached;
         options = builder.options;            
         priorType = builder.priorType;
         isDiscrete = builder.isDiscrete;

@@ -33,6 +33,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
+import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
 import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
@@ -75,11 +76,22 @@ public class ParameterPriorGenerator extends Generator {
         ArrayList<Parameter> parameters = options.selectParameters();
         for (Parameter parameter : parameters) {
             if (parameter.priorType != PriorType.NONE) {
-                if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                if (parameter.isCached) {
+                    writeCachedParameterPrior(parameter, writer);
+                } else if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                     writeParameterPrior(parameter, writer);
                 }
             }
         }
+    }
+
+    private void writeCachedParameterPrior(Parameter parameter, XMLWriter writer) {
+        writer.writeOpenTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
+
+        writeParameterPrior(parameter, writer);
+        writeParameterIdref(writer, parameter);
+        
+        writer.writeCloseTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
     }
 
     /**

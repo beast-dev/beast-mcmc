@@ -193,6 +193,10 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectParameters(parameters);
         }
 
+        if (phylogeographicOptions.isPhylogeographic()) { // locations
+        	phylogeographicOptions.selectParameters(parameters);
+        }
+
         selectComponentParameters(this, parameters);
         
         selectComponentStatistics(this, parameters);
@@ -236,6 +240,10 @@ public class BeautiOptions extends ModelOptions {
 
         if (starBEASTOptions.isSpeciesAnalysis()) { // species
         	starBEASTOptions.selectOperators(ops);
+        }
+
+        if (phylogeographicOptions.isPhylogeographic()) { // locations
+        	phylogeographicOptions.selectOperators(ops);
         }
 
         selectComponentOperators(this, ops);

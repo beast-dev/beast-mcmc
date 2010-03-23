@@ -7,6 +7,7 @@ import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
@@ -17,6 +18,7 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.operators.RateBitExchangeOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
@@ -119,6 +121,12 @@ public class OperatorsGenerator extends Generator {
                 break;
             case BITFLIP:
                 writeBitFlipOperator(operator, writer);
+                break;
+            case BITFIP_IN_SUBST:
+                writeBitFlipInSubstOperator(operator, writer);
+                break;
+            case RATE_BIT_EXCHANGE:
+                writeRateBitExchangeOperator(operator, writer);
                 break;
             case TREE_BIT_MOVE:
                 writeTreeBitMoveOperator(operator, writer);
@@ -384,6 +392,30 @@ public class OperatorsGenerator extends Generator {
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         writer.writeCloseTag(BitFlipOperatorParser.BIT_FLIP_OPERATOR);
+    }
+
+    private void writeBitFlipInSubstOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR, new Attribute[]{
+                new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
+                getWeightAttribute(operator.weight)});
+        writeParameter1Ref(writer, operator);
+//        writeOperatorRef(writer, operator);
+        writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);        
+    }
+
+    private void writeRateBitExchangeOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(RateBitExchangeOperator.OPERATOR_NAME,
+                getWeightAttribute(operator.weight));
+
+        writer.writeOpenTag(RateBitExchangeOperator.BITS);
+        writeParameter1Ref(writer, operator);
+        writer.writeCloseTag(RateBitExchangeOperator.BITS);
+
+        writer.writeOpenTag(RateBitExchangeOperator.RATES);
+        writeParameter2Ref(writer, operator);
+        writer.writeCloseTag(RateBitExchangeOperator.RATES);
+
+        writer.writeCloseTag(RateBitExchangeOperator.OPERATOR_NAME);
     }
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {

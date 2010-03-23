@@ -23,7 +23,9 @@
 
 package dr.app.beauti.enumTypes;
 
+import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
+import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.operators.ScaleOperatorParser;
 
 /**
@@ -45,6 +47,8 @@ public enum OperatorType {
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),
     SWAP("swap"),
     BITFLIP("bitFlip"),
+    BITFIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator
+    RATE_BIT_EXCHANGE(RateBitExchangeOperator.OPERATOR_NAME), // rateBitExchangeOperator
     TREE_BIT_MOVE("treeBitMove"),
     SAMPLE_NONACTIVE("sampleNoneActiveOperator"),
     SCALE_WITH_INDICATORS("scaleWithIndicators"),
@@ -55,7 +59,7 @@ public enum OperatorType {
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     WILSON_BALDING("wilsonBalding"),
-    NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
+    NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT); // nodeReHeight
 
     OperatorType(String displayName) {
         this.displayName = displayName;

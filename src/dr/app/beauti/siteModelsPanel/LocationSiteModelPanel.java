@@ -24,42 +24,47 @@
  */
 package dr.app.beauti.siteModelsPanel;
 
-import dr.app.beauti.enumTypes.TreePriorType;
-import dr.app.beauti.options.SiteModelOptions;
+import dr.app.beauti.options.PhylogeographicOptions;
 import dr.app.beauti.util.PanelUtils;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.EnumSet;
 
 /**
  *@author Walter Xie
  */
 public class LocationSiteModelPanel extends OptionsPanel {
 
-    private JComboBox locationSiteModelCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
+    private JComboBox locationSiteModelCombo = new JComboBox(PhylogeographicOptions.LocationSubstModelType.values());
+    private JCheckBox activeBSSVS = new JCheckBox("Active BSSVS");
 
-    final SiteModelOptions siteModelOptions;
+
+    final PhylogeographicOptions phylogeographicOptions;
 
     private boolean settingOptions = false;
 
 
-    public LocationSiteModelPanel(SiteModelOptions siteModelOptions) {
-    	super(12, 8);
+    public LocationSiteModelPanel(final PhylogeographicOptions phylogeographicOptions) {
+    	super(12, 30);
 
-        this.siteModelOptions = siteModelOptions;
+        this.phylogeographicOptions = phylogeographicOptions;
 
         PanelUtils.setupComponent(locationSiteModelCombo);
         locationSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-
-                setupPanel();
+                phylogeographicOptions.setLocationSubstType(
+                        (PhylogeographicOptions.LocationSubstModelType) locationSiteModelCombo.getSelectedItem());
             }
         });
 
-
+        PanelUtils.setupComponent(activeBSSVS);
+        activeBSSVS.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                phylogeographicOptions.setActiveBSSVS(activeBSSVS.isSelected());
+            }
+        });
 
         setupPanel();
     }
@@ -70,18 +75,17 @@ public class LocationSiteModelPanel extends OptionsPanel {
 
         addComponentWithLabel("Location Substitution Model:", locationSiteModelCombo);
 
-
+        addComponent(activeBSSVS);
 
         validate();
         repaint();
     }
 
     public void setOptions() {
-
-
         settingOptions = true;
 
-
+        locationSiteModelCombo.setSelectedItem(phylogeographicOptions.getLocationSubstType());
+        activeBSSVS.setSelected(phylogeographicOptions.isActiveBSSVS());
 
         settingOptions = false;
 
@@ -91,8 +95,6 @@ public class LocationSiteModelPanel extends OptionsPanel {
 
     public void getOptions() {
         if (settingOptions) return;
-
-
 
     }
 

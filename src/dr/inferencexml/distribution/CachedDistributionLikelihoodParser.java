@@ -13,18 +13,18 @@ import java.util.logging.Logger;
  */
 public class CachedDistributionLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String MODEL_NAME = "cachedPrior";
+    public static final String CACHED_PRIOR = "cachedPrior";
 
    // public static final String RATE_BLOCK = "rates";
     //public static final String INDICATOR_BLOCK = "indicators";
 
     public String getParserName() {
-        return MODEL_NAME;
+        return CACHED_PRIOR;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final String name = xo.hasId() ? xo.getId() : MODEL_NAME;
+        final String name = xo.hasId() ? xo.getId() : CACHED_PRIOR;
 
         final AbstractDistributionLikelihood likelihood = (AbstractDistributionLikelihood) xo.getChild(AbstractDistributionLikelihood.class);
         final Variable variable = (Variable) xo.getChild(Variable.class);

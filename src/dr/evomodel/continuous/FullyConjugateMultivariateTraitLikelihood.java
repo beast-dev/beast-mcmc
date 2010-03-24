@@ -42,24 +42,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
-    public double getRootPriorSampleSize() {
-        return rootPriorSampleSize;
-    }
+//    public double getRootPriorSampleSize() {
+//        return rootPriorSampleSize;
+//    }
 
-    public double[] getRootPriorMean() {
-        double[] out = new double[rootPriorMean.length];
-        System.arraycopy(rootPriorMean, 0, out, 0, out.length);
-        return out;
-//        return rootPriorMean;
-    }
-
-//    public double[][] getOuterProducts() {
-//        // TODO Only recompute when necessary
-//        computeWishartStatistics = true;
-//        calculateLogLikelihood();
-//        computeWishartStatistics = false;
-//        // TODO Return copy?
-//        return outerProductsCache;
+//    public double[] getRootPriorMean() {
+//        double[] out = new double[rootPriorMean.length];
+//        System.arraycopy(rootPriorMean, 0, out, 0, out.length);
+//        return out;
 //    }
 
     public WishartSufficientStatistics getWishartStatistics() {

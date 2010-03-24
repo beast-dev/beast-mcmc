@@ -7,6 +7,7 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.evolution.datatype.TwoStates;
 import dr.math.matrixAlgebra.Vector;
 import dr.inference.model.Parameter;
+import test.dr.math.MathTestCase;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.Arrays;
  * @author Marc A. Suchard
  */
 
-public class ProductChainSubstitutionModelTest extends TestCase {
+public class ProductChainSubstitutionModelTest extends MathTestCase {
 
     private void setUpTwoStatesEqualRate() {
         FrequencyModel freqModel0 = new FrequencyModel(TwoStates.INSTANCE,
@@ -118,13 +119,6 @@ public class ProductChainSubstitutionModelTest extends TestCase {
         };
     }
 
-    private void assertEquals(double[] a, double[] b, double accuracy) {
-        assertEquals(a.length, b.length);
-        for (int i = 0; i < a.length; i++) {
-            assertEquals(a[i], b[i], accuracy);
-        }
-    }
-
     public void testTwoStateProductChainEqualRate() {
         setUpTwoStatesEqualRate();
         loop("TwoStateEqualRate");
@@ -174,14 +168,6 @@ public class ProductChainSubstitutionModelTest extends TestCase {
         System.out.println("Finite time (0.5) probabilities = ");
         printSquareMatrix(testProbs, stateCount);
         assertEquals(testProbs, markovJumpsProbs, accuracy);
-    }
-
-    private void printSquareMatrix(double[] A, int dim) {
-        double[] row = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            System.arraycopy(A, i * dim, row, 0, dim);
-            System.out.println(new Vector(row));
-        }
     }
 
     List<SubstitutionModel> baseModels;

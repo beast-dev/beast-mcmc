@@ -35,13 +35,7 @@ import java.util.List;
 /**
  * @author Walter Xie
  */
-public class PhylogeographicOptions extends GeneralTraitOptions {
-
-    public static final String PHYLOGEOGRAPHIC = "phylogeographic ";
-    public static final String GEO_ = "geo.";
-
-    private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
-    private boolean activeBSSVS = false;
+public class DiscreteTraitOptions extends TraitsOptions {
 
     public static enum LocationSubstModelType {
         SYM_SUBST("Symmetric substitution model"),
@@ -57,35 +51,40 @@ public class PhylogeographicOptions extends GeneralTraitOptions {
 
         private final String name;
     }
+    
+    public static final String PHYLOGEOGRAPHIC = "phylogeographic ";
 
-    public PhylogeographicOptions(BeautiOptions options) {
-        super(options);
+    private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
+    private boolean activeBSSVS = false;
+
+    public DiscreteTraitOptions(TraitGuesser traitGuesser) {
+        super(traitGuesser);
     }
 
     @Override
     protected void initTraitParametersAndOperators() {
 
-        createParameterUniformPrior(GEO_ + "frequencies", PHYLOGEOGRAPHIC + "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createCachedGammaPrior(GEO_ + "rates", "location substitution model rates",
+        createParameterUniformPrior(PREFIX_ + "frequencies", PHYLOGEOGRAPHIC + "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createCachedGammaPrior(PREFIX_ + "rates", "location substitution model rates",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
-        createParameter(GEO_ + "indicators", "location substitution model rate indicators");
+        createParameter(PREFIX_ + "indicators", "location substitution model rate indicators");
 
-        createParameterExponentialPrior(GEO_ + "mu", PHYLOGEOGRAPHIC + "mutation rate parameter",
+        createParameterExponentialPrior(PREFIX_ + "mu", PHYLOGEOGRAPHIC + "mutation rate parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
 
-        createDiscreteStatistic(GEO_ + "nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
+        createDiscreteStatistic(PREFIX_ + "nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
 
-        createOperator(GEO_ + "rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
-        createScaleOperator(GEO_ + "mu", "for mutation rate parameter", demoTuning, 10);
+        createOperator(PREFIX_ + "rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
+        createScaleOperator(PREFIX_ + "mu", "for mutation rate parameter", demoTuning, 10);
 
-        createOperator(GEO_ + "indicators", OperatorType.BITFLIP, -1.0, 30);
-        createTagInsideOperator(OperatorType.BITFIP_IN_SUBST.toString(), GEO_ + "mu",
-                "bit Flip In Substitution Model Operator", GEO_ + "mu", OperatorType.BITFIP_IN_SUBST,
-                SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, GEO_ + AbstractSubstitutionModel.MODEL, demoTuning, 30);
+        createOperator(PREFIX_ + "indicators", OperatorType.BITFLIP, -1.0, 30);
+        createTagInsideOperator(OperatorType.BITFIP_IN_SUBST.toString(), PREFIX_ + "mu",
+                "bit Flip In Substitution Model Operator", PREFIX_ + "mu", OperatorType.BITFIP_IN_SUBST,
+                SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, PREFIX_ + AbstractSubstitutionModel.MODEL, demoTuning, 30);
 
-        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, GEO_ + "indicators, " + GEO_ + "rates",  
+        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, PREFIX_ + "indicators, " + PREFIX_ + "rates",
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
-                GEO_ + "indicators", GEO_ + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
+                PREFIX_ + "indicators", PREFIX_ + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
     }
 
 
@@ -94,13 +93,14 @@ public class PhylogeographicOptions extends GeneralTraitOptions {
      *
      * @param params the parameter list
      */
+    @Override
     public void selectParameters(List<Parameter> params) {
-        params.add(getParameter(GEO_ + "frequencies"));
-        params.add(getParameter(GEO_ + "rates"));
-        params.add(getParameter(GEO_ + "indicators"));
-        params.add(getParameter(GEO_ + "mu"));
+        params.add(getParameter(PREFIX_ + "frequencies"));
+        params.add(getParameter(PREFIX_ + "rates"));
+        params.add(getParameter(PREFIX_ + "indicators"));
+        params.add(getParameter(PREFIX_ + "mu"));
 
-        if (activeBSSVS) params.add(getParameter(GEO_ + "nonZeroRates"));
+        if (activeBSSVS) params.add(getParameter(PREFIX_ + "nonZeroRates"));
     }
 
     /**
@@ -108,12 +108,13 @@ public class PhylogeographicOptions extends GeneralTraitOptions {
      *
      * @param ops the operator list
      */
+    @Override
     public void selectOperators(List<Operator> ops) {
-        ops.add(getOperator(GEO_ + "rates"));
-        ops.add(getOperator(GEO_ + "mu"));
+        ops.add(getOperator(PREFIX_ + "rates"));
+        ops.add(getOperator(PREFIX_ + "mu"));
 
         if (activeBSSVS) {
-            ops.add(getOperator(GEO_ + "indicators"));
+            ops.add(getOperator(PREFIX_ + "indicators"));
             ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()));
 
             if (locationSubstType == LocationSubstModelType.ASYM_SUBST)
@@ -123,15 +124,6 @@ public class PhylogeographicOptions extends GeneralTraitOptions {
     }
 
     /////////////////////////////////////////////////////////////
-
-    public boolean isPhylogeographic() {
-        return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
-    }
-
-    public String getPhylogeographicDescription() {
-        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
-    }
-
 
     public LocationSubstModelType getLocationSubstType() {
         return locationSubstType;

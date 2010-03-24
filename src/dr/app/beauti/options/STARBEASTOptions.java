@@ -40,7 +40,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class STARBEASTOptions extends TraitsOptions {
+public class STARBEASTOptions extends ModelOptions {
 
 	public static final String TREE_FILE_NAME = "trees";
 
@@ -48,11 +48,13 @@ public class STARBEASTOptions extends TraitsOptions {
     public final String SPECIES_TREE_FILE_NAME = TraitsOptions.Traits.TRAIT_SPECIES
     							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
 
+    private final BeautiOptions options;
+
     public STARBEASTOptions(BeautiOptions options) {
-        super(options);
+        this.options = options;
+        initTraitParametersAndOperators();
     }
 
-    @Override
     protected void initTraitParametersAndOperators() {
         double spWeights = 5.0;
         double spTuning = 0.9;
@@ -152,11 +154,11 @@ public class STARBEASTOptions extends TraitsOptions {
     /////////////////////////////////////////////////////////////
 
     public boolean isSpeciesAnalysis() {
-        return containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString());
+        return TraitsOptions.containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString());
     }
 
     public List<String> getSpeciesList() {
-        return super.getStatesListOfTrait(options.taxonList, TraitsOptions.Traits.TRAIT_SPECIES.toString());
+        return TraitsOptions.getStatesListOfTrait(options.taxonList, TraitsOptions.Traits.TRAIT_SPECIES.toString());
     }
 
     public String getDescription() {

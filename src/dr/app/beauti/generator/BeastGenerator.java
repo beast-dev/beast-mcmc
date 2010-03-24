@@ -373,7 +373,7 @@ public class BeastGenerator extends Generator {
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = TraitsOptions.hasTraitExcludeSpecies();
+        boolean hasAttr = TraitsOptions.hasDiscreteTraitsExcludeSpecies();
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -450,8 +450,8 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment(options.starBEASTOptions.getDescription());
-        } else if (options.phylogeographicOptions.isPhylogeographic()) {
-            writer.writeComment(options.phylogeographicOptions.getPhylogeographicDescription());
+        } else if (TraitsOptions.isPhylogeographic()) {
+            writer.writeComment(TraitsOptions.getPhylogeographicDescription());
         }
         writer.writeComment("trait = " + trait.getTraitName() + " trait_type = " + trait.getTraitType());
 
@@ -467,7 +467,7 @@ public class BeastGenerator extends Generator {
         } else { // general traits
             generalTraitGenerator.writeGeneralDataType(trait.getTraitName(), writer);
 
-//            if (options.phylogeographicOptions.isPhylogeographic()) {
+//            if (options.discreteTraitOptions.isPhylogeographic()) {
 //                generalTraitGenerator
 //            } else {
 //                generalTraitGenerator

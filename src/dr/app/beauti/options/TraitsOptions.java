@@ -60,17 +60,30 @@ public abstract class TraitsOptions extends ModelOptions {
     }
 
 	// Instance variables
-    protected final BeautiOptions options;
+//    protected final BeautiOptions options;
 
     public static final List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
 //    public Map<String , TraitGuesser> traits = new HashMap<String, TraitGuesser>(); // traits map
     
-    public TraitsOptions(BeautiOptions options) {
-    	this.options = options;
+//    public TraitsOptions(BeautiOptions options) {
+//    	this.options = options;
+//        initTraitParametersAndOperators();
+//    }
+    protected final String PREFIX_;
+//    private final TraitGuesser traitGuesser;
+    protected String traitName;
+
+    public TraitsOptions(TraitGuesser traitGuesser) {
+//        this.traitGuesser = traitGuesser;
+        this.traitName = traitGuesser.getTraitName();
+        PREFIX_ = traitName + ".";
         initTraitParametersAndOperators();
     }
 
-    protected abstract void initTraitParametersAndOperators(); 
+    protected abstract void initTraitParametersAndOperators();
+
+    protected abstract void selectParameters(List<Parameter> params);
+    protected abstract void selectOperators(List<Operator> ops);
 
     /////////////////////////////////////////////////////////////
     public static boolean containTrait(String traitName) {
@@ -110,9 +123,30 @@ public abstract class TraitsOptions extends ModelOptions {
         }
     }
 
-    public static boolean hasTraitExcludeSpecies() { // exclude species at moment
-        return (   (traits.size() > 0 && (!containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString())))
-                || (traits.size() > 1 && containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString()))   );
+    public static List<TraitGuesser> getDiscreteTraitsExcludeSpecies() { // exclude species at moment
+        List<TraitGuesser> discreteTraitsExcludeSpecies = new ArrayList<TraitGuesser>();
+        for (TraitGuesser trait : traits) {
+            if (  (!trait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString()))
+                    && trait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
+                discreteTraitsExcludeSpecies.add(trait);
+            }
+        }
+        return discreteTraitsExcludeSpecies;
     }
 
+    public static boolean hasDiscreteTraitsExcludeSpecies() { // exclude species at moment
+        return getDiscreteTraitsExcludeSpecies() != null && getDiscreteTraitsExcludeSpecies().size() > 0;
+    }
+
+    public static boolean isPhylogeographic() {
+        return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
+    }
+
+    public static String getPhylogeographicDescription() {
+        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
+    }
+
+    public String toString() {
+        return traitName;
+    }
 }

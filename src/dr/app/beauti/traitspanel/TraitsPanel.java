@@ -206,6 +206,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
+        if (!options.hasData()) {
+            TraitsOptions.traits.clear();
+        }
 //        int selRow = traitsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
 //
@@ -322,8 +325,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
             if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.setupSpeciesAnalysis();
-            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) {
-                frame.setupPhylogeographicAnalysis();
+            } else if (currentTrait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
+                frame.updateDiscreteTraitAnalysis();
             }
 
 //            fireTraitsChanged();
@@ -354,8 +357,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             clearTraitValues(currentTrait.getTraitName()); // Clear trait values
             if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.removeSepciesAnalysis();
-            } else if (currentTrait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) {
-                frame.removePhylogeographicAnalysis();
+            } else if (currentTrait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
+                frame.updateDiscreteTraitAnalysis();
             }
 
 //            if (selRow > 0) {

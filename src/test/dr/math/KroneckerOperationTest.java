@@ -1,6 +1,5 @@
 package test.dr.math;
 
-import junit.framework.TestCase;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.KroneckerOperation;
@@ -8,7 +7,7 @@ import dr.math.KroneckerOperation;
 /**
  * @author Marc A. Suchard
  */
-public class KroneckerOperationTest extends TestCase {
+public class KroneckerOperationTest extends MathTestCase {
 
     private void testKroneckerSum(double[] A, int m, double[] B, int n, double[] trueC) {
 

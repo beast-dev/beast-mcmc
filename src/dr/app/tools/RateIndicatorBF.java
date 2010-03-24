@@ -454,7 +454,12 @@ public class RateIndicatorBF {
         minMax[1] = supportedRateIndicators[supportedRateIndicators.length - 1];
 
         try {
-            PrintWriter outFile = new PrintWriter(new FileWriter(outFileName), true);
+            PrintWriter outFile;
+            if (outFileName != null) {
+                outFile = new PrintWriter(new FileWriter(outFileName), true);
+            } else {
+                outFile = new PrintWriter(System.out);
+            }
             //sort expected rateIndicator
             if (bayesFactor) {
                 outFile.println("Indicator cutoff (for BF = "+cutoff+") = "+getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible));
@@ -474,11 +479,29 @@ public class RateIndicatorBF {
                      outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount));
                 }  else {
                      outFile.print("="+BF);
-                }                            
-                outFile.print(": between "+supportedLocations[o][0]+" (long: "+supportedLongitudes[o][0]+"; lat: "+ supportedLatitudes[o][0]+")" +
-                            " and "+ supportedLocations[o][1]+" (long: "+supportedLongitudes[o][1]+"; lat: "+ supportedLatitudes[o][1]+")"
-                );
-                outFile.print("\r");
+                }
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(" : between ")
+                        .append(supportedLocations[o][0]);
+                if (!Double.isNaN(supportedLongitudes[o][0])) {
+                    sb.append(" (long: ")
+                            .append(supportedLongitudes[o][0])
+                            .append("; lat: ")
+                            .append(supportedLatitudes[o][0])
+                            .append(")");
+                }
+                sb.append(" and ")
+                        .append(supportedLocations[o][1]);
+                if (!Double.isNaN(supportedLongitudes[o][1])) {
+                    sb.append(" (long: ")
+                            .append(supportedLongitudes[o][1])
+                            .append("; lat: ")
+                            .append(supportedLatitudes[o][1])
+                            .append(")");
+                }
+                outFile.print(sb.toString());
+                outFile.println();
             }
             outFile.close();
         } catch(IOException io) {

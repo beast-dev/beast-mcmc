@@ -125,7 +125,7 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions = new TreeModelOptions(this);
         priorOptions = new PriorOptions(this);
         
-        phylogeographicOptions = new PhylogeographicOptions(this);
+//        traitsOptions = new TraitsOptions(this);
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -193,8 +193,8 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectParameters(parameters);
         }
 
-        if (phylogeographicOptions.isPhylogeographic()) { // locations
-        	phylogeographicOptions.selectParameters(parameters);
+        for (TraitGuesser trait : TraitsOptions.getDiscreteTraitsExcludeSpecies()) { // discrete traits including locations
+        	trait.getTraitsOptions().selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
@@ -242,8 +242,8 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectOperators(ops);
         }
 
-        if (phylogeographicOptions.isPhylogeographic()) { // locations
-        	phylogeographicOptions.selectOperators(ops);
+        for (TraitGuesser trait : TraitsOptions.getDiscreteTraitsExcludeSpecies()) { // discrete traits including locations
+        	trait.getTraitsOptions().selectOperators(ops);
         }
 
         selectComponentOperators(this, ops);
@@ -541,7 +541,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (phylogeographicOptions.isPhylogeographic()) {
+            if (TraitsOptions.isPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
             
@@ -626,7 +626,7 @@ public class BeautiOptions extends ModelOptions {
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
 
-    public PhylogeographicOptions phylogeographicOptions = new PhylogeographicOptions(this);
+//    public TraitsOptions traitsOptions = new TraitsOptions(this);
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

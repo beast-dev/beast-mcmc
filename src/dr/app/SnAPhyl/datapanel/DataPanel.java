@@ -27,7 +27,6 @@ import dr.app.SnAPhyl.SnAPhylFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.options.TraitsOptions;
 import dr.app.beauti.traitspanel.GuessTraitDialog;
 import dr.app.beauti.util.PanelUtils;
@@ -232,10 +231,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void guessTrait() {
         if (options.taxonList != null) { // validation of check empty taxonList
 //            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
-            TraitGuesser guesser = new TraitGuesser();
+//            TraitGuesser guesser = new TraitGuesser();
 
             if (guessTraitDialog == null) {
-                guessTraitDialog = new GuessTraitDialog(frame, guesser);
+//                guessTraitDialog = new GuessTraitDialog(frame, guesser);
             }
 //            GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTrait);
             int result = guessTraitDialog.showDialog();
@@ -247,7 +246,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             guessTraitDialog.setupGuesser();
 
             try {
-                guesser.guessTrait(options);
+//                guesser.guessTrait(options);
 
 //                if (guesser.getTraitName().equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
 //                    frame.setupSpeciesAnalysis();

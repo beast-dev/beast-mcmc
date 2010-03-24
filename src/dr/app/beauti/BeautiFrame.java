@@ -557,11 +557,7 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void setupPhylogeographicAnalysis() {
-    	setStatusMessage();
-    }
-
-    public void removePhylogeographicAnalysis() {
+    public void updateDiscreteTraitAnalysis() {
     	setStatusMessage();
     }
 

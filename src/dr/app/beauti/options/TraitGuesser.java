@@ -34,12 +34,17 @@ import java.util.regex.Pattern;
  */
 public class TraitGuesser {
 
-    public TraitGuesser() {
-    }
+    private final TraitsOptions traitsOptions;
 
     public TraitGuesser(String traitName, TraitsOptions.TraitType traitType) {
         this.traitName = traitName;
         this.traitType = traitType;
+
+        if (traitType == TraitsOptions.TraitType.DISCRETE) {
+            traitsOptions = new DiscreteTraitOptions(this);
+        } else {
+            traitsOptions = null; //TODO integer and continuous
+        }
     }
 
     public static enum GuessType {
@@ -60,6 +65,10 @@ public class TraitGuesser {
 
     ////////////////////////////////////////////////////////////////
 
+    public TraitsOptions getTraitsOptions() {
+        return traitsOptions;
+    }
+    
     public GuessType getGuessType() {
         return guessType;
     }

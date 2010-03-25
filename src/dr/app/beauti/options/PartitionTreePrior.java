@@ -57,7 +57,7 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         this.options = options;
-        this.name = treeModel.getName();
+        this.partitionName = treeModel.getName();
         this.treeModel = treeModel;
 
         initTreePriorParaAndOpers();
@@ -72,7 +72,7 @@ public class PartitionTreePrior extends PartitionOptions {
      */
     public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
         this.options = options;
-        this.name = name;
+        this.partitionName = name;
         this.treeModel = source.treeModel;
 
         this.nodeHeightPrior = source.nodeHeightPrior;
@@ -368,11 +368,6 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public BeautiOptions getOptions() {
         return options;
-    }
-
-    @Override
-    public Class<PartitionTreePrior> getPartitionClassType() {        
-        return PartitionTreePrior.class;
     }
 
 }

@@ -36,12 +36,10 @@ import java.util.List;
  */
 public abstract class PartitionOptions extends ModelOptions {
 
-    protected String name;
+    protected String partitionName;
 
 	protected abstract void selectParameters(List<Parameter> params);
     protected abstract void selectOperators(List<Operator> ops);
-
-    protected abstract Class<?> getPartitionClassType();
 
     public abstract String getPrefix();    
 
@@ -86,11 +84,11 @@ public abstract class PartitionOptions extends ModelOptions {
     }
  
     public String getName() {
-        return name;
+        return partitionName;
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.partitionName = name;
     }
 
     public String toString() {

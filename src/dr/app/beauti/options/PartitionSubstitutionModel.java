@@ -23,11 +23,10 @@
 
 package dr.app.beauti.options;
 
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
-import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.*;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.AminoAcidModelType;
+import dr.evomodel.substmodel.NucModelType;
 
 import java.util.List;
 
@@ -102,7 +101,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name, DataType dataType) {
 
         this.options = options;
-        this.name = name;
+        this.partitionName = name;
         this.dataType = dataType;
 
         initSubstModelParaAndOpers();
@@ -890,8 +889,4 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         return prefix;
     }
 
-    @Override
-    public Class<PartitionSubstitutionModel> getPartitionClassType() {        
-        return PartitionSubstitutionModel.class;
-    }
 }

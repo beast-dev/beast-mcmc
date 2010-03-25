@@ -447,32 +447,33 @@ public class BeastGenerator extends Generator {
      * @param taxonList TaxonList
      */
     private void writeEachTrait(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
+        String traitName = trait.getTraitName();
+
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment(options.starBEASTOptions.getDescription());
-        } else if (TraitsOptions.isPhylogeographic()) {
+        } else if (trait.getTraitsOptions().isSpecifiedTraitAnalysis(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) { // locations
             writer.writeComment(TraitsOptions.getPhylogeographicDescription());
         }
-        writer.writeComment("trait = " + trait.getTraitName() + " trait_type = " + trait.getTraitType());
+        writer.writeComment("trait = " + traitName + " trait_type = " + trait.getTraitType());
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-            writer.writeOpenTag(trait.getTraitName(), new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, trait.getTraitName())});
+            writer.writeOpenTag(traitName, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, traitName)});
             //new Attribute.Default<String>("traitType", traitType)});
             starEASTGeneratorGenerator.writeMultiSpecies(taxonList, writer);
-            writer.writeCloseTag(trait.getTraitName());
+            writer.writeCloseTag(traitName);
 
             starEASTGeneratorGenerator.writeSTARBEAST(writer);
 
         } else { // general traits
-            generalTraitGenerator.writeGeneralDataType(trait.getTraitName(), writer);
+            generalTraitGenerator.writeGeneralDataType((DiscreteTraitOptions) trait.getTraitsOptions(), writer);
 
-//            if (options.discreteTraitOptions.isPhylogeographic()) {
-//                generalTraitGenerator
-//            } else {
-//                generalTraitGenerator
-//            }
+            if (trait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
+                generalTraitGenerator.writeLocationSubstSiteModel((DiscreteTraitOptions) trait.getTraitsOptions(), writer);
+            } else {
 
+            }
 
         }
     }

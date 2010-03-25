@@ -57,7 +57,7 @@ public class PartitionTreeModel extends PartitionModelOptions {
 
     public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
-        this.name = partition.getName();
+        this.partitionName = partition.getName();
         
         allPartitionData.clear();
         addPartitionData(partition);
@@ -74,7 +74,7 @@ public class PartitionTreeModel extends PartitionModelOptions {
      */
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
         this.options = options;
-        this.name = name;
+        this.partitionName = name;
 
         this.allPartitionData.clear();
         for (PartitionData partition: source.allPartitionData) {
@@ -222,11 +222,6 @@ public class PartitionTreeModel extends PartitionModelOptions {
             prefix += getName() + ".";
         }
         return prefix;
-    }
-
-    @Override
-    public Class<PartitionTreeModel> getPartitionClassType() {        
-        return PartitionTreeModel.class;
     }
 
 }

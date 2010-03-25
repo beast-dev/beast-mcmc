@@ -47,7 +47,7 @@ public class PartitionClockModel extends PartitionModelOptions {
 
     public PartitionClockModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
-        this.name = partition.getName();
+        this.partitionName = partition.getName();
 
         allPartitionData.clear();
         addPartitionData(partition);
@@ -64,7 +64,7 @@ public class PartitionClockModel extends PartitionModelOptions {
      */
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
         this.options = options;
-        this.name = name;
+        this.partitionName = name;
 
         this.allPartitionData.clear();
         for (PartitionData partition: source.allPartitionData) {
@@ -272,11 +272,6 @@ public class PartitionClockModel extends PartitionModelOptions {
             prefix += getName() + ".";
         }
         return prefix;
-    }
-
-    @Override
-    public Class<PartitionClockModel> getPartitionClassType() {        
-        return PartitionClockModel.class;
     }
 
 }

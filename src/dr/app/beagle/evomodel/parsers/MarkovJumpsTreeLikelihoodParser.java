@@ -10,6 +10,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.xml.*;
 import dr.inference.model.Parameter;
 import dr.inference.markovjumps.MarkovJumpsCore;
@@ -89,8 +90,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         return treeLikelihood;
     }
 
-    private int parseAllChildren(XMLObject xo,
-                                 MarkovJumpsBeagleTreeLikelihood treeLikelihood,
+    public static int parseAllChildren(XMLObject xo,
+                                 MarkovJumpsRegisterAcceptor acceptor,
                                  int stateCount,
                                  String jumpTag,
                                  MarkovJumpsType type,
@@ -110,7 +111,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 if (registerParameter.getId() == null) {
                     registerParameter.setId(jumpTag+(registersFound+1));
                 }
-                treeLikelihood.addRegister(registerParameter, type, scaleRewards);
+                acceptor.addRegister(registerParameter, type, scaleRewards);
                 registersFound++;
             }
         }

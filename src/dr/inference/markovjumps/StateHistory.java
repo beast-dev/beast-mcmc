@@ -3,7 +3,6 @@ package dr.inference.markovjumps;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,12 +49,28 @@ public class StateHistory {
         accumulateSufficientStatistics(null, times);
         return times;
     }
+
+    public double getTotalRegisteredCounts(double[] register) {
+        int[] counts = getJumpCounts();
+        double total = 0;
+        for (int i = 0; i < counts.length; i++) {
+            total += counts[i] * register[i];
+        }
+        return total;
+    }
+
+    public double getTotalReward(double[] register) {
+        double[] times = getWaitingTimes();
+        double total = 0;
+        for (int i = 0; i < times.length; i++) {
+            total += times[i] * register[i];
+        }
+        return total;
+    }
     
     public void accumulateSufficientStatistics(int[] counts, double[] times) {
         checkFinalized(true);
         int nJumps = getNumberOfJumps();
-
-//        System.out.println("nJump = " + nJumps);
 
         StateChange initialState = stateList.get(0);
         int currentState = initialState.getState();
@@ -75,8 +90,7 @@ public class StateHistory {
             }
             currentState = nextState;
             currentTime = nextTime;
-        }
-       
+        }       
     }
 
     public int getNumberOfJumps() {

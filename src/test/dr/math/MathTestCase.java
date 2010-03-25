@@ -22,4 +22,12 @@ public class MathTestCase extends TestCase {
             System.out.println(new Vector(row));
         }
     }
+
+    protected static double accumulate(double[] vector) {
+        double total = 0;
+        for (double x : vector) {
+            total += x;
+        }
+        return total;
+    }
 }

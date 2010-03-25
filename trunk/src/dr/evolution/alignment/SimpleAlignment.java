@@ -25,6 +25,7 @@
 
 package dr.evolution.alignment;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
@@ -406,11 +407,14 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
 
         StringBuffer buffer = new StringBuffer();
-        buffer.append("Site count = ").append(getSiteCount()).append("\n");
-        buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n");
-        buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n");
-        buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n");
-        buffer.append("Unique site patterns = ").append(getUniquePatternCount()).append("\n\n");
+
+        if (!(dataType instanceof Codons)) {
+            buffer.append("Site count = ").append(getSiteCount()).append("\n");
+            buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n");
+            buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n");
+            buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n");
+            buffer.append("Unique site patterns = ").append(getUniquePatternCount()).append("\n\n");
+        }
         for (int i = 0; i < getSequenceCount(); i++) {
             String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
             buffer.append(">" + name + "\n");

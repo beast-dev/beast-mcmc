@@ -10,6 +10,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.loggers.LogColumn;
@@ -29,7 +30,8 @@ import java.util.ArrayList;
  *         Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.
  *         Journal of Mathematical Biology, 56, 391-412.
  */
-public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood {
+public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
+    implements MarkovJumpsRegisterAcceptor {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                            BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,

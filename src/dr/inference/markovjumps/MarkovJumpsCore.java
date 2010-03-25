@@ -151,10 +151,10 @@ public class MarkovJumpsCore {
     }
 
     // Computes C = A %*% B for square matrices A and B
-    private static void matrixMultiply(final double[] A,
-                                       final double[] B,
-                                       final int dim,
-                                       final double[] C) {
+    public static void matrixMultiply(final double[] A,
+                                      final double[] B,
+                                      final int dim,
+                                      final double[] C) {
         int index = 0;
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {

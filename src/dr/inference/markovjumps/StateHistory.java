@@ -9,18 +9,18 @@ import java.util.List;
  * A class to represent the complete state history of a continuous-time Markov chain in the
  * interval [0,T].
  *
- * @author Marc A. Suchard
- *
  * This work is supported by NSF grant 0856099
+ *
+ * @author Marc A. Suchard
  */
 
 public class StateHistory {
 
-    public StateHistory(int startingState, int stateCount) {
-        this(0.0, startingState, stateCount);
-    }
+//    private StateHistory(int startingState, int stateCount) {
+//        this(0.0, startingState, stateCount);
+//    }
 
-    public StateHistory(double startingTime, int startingState, int stateCount) {
+    protected StateHistory(double startingTime, int startingState, int stateCount) {
         stateList = new ArrayList<StateChange>();
         stateList.add(new StateChange(startingTime, startingState));
         this.stateCount = stateCount;
@@ -132,6 +132,15 @@ public class StateHistory {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    public static StateHistory simulateConditionalOnEndingState(double startingTime,
+                                                                int startingState,
+                                                                double endingTime,
+                                                                int endingState,
+                                                                double[] lambda,
+                                                                int stateCount) {
+        throw new RuntimeException("Impossible to simulate a conditioned CTMC in StateHistory");
     }
 
     public static StateHistory simulateUnconditionalOnEndingState(double startingTime,

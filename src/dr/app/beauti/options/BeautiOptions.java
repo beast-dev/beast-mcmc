@@ -541,7 +541,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (TraitsOptions.isPhylogeographic()) {
+            if (TraitsOptions.hasPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
             

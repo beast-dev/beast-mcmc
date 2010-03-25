@@ -29,9 +29,9 @@ package dr.app.beauti.enumTypes;
  */
 public enum PopulationSizeModelType {
 
-    CONTINUOUS_CONSTANT("Continuous & constant root"),
-    CONTINUOUS("Continuous"),
-    CONSTANT("Constant");
+    CONTINUOUS_CONSTANT("Piecewise linear & constant root"),
+    CONTINUOUS("Piecewise linear"),
+    CONSTANT("Piecewise constant");
 
     PopulationSizeModelType(String name) {
         this.name = name;

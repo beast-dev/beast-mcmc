@@ -55,7 +55,7 @@ public class DiscreteTraitOptions extends TraitsOptions {
     public static final String PHYLOGEOGRAPHIC = "phylogeographic ";
 
     private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
-    private boolean activeBSSVS = false;
+    private boolean activateBSSVS = false;
 
     public DiscreteTraitOptions(TraitGuesser traitGuesser) {
         super(traitGuesser);
@@ -64,27 +64,27 @@ public class DiscreteTraitOptions extends TraitsOptions {
     @Override
     protected void initTraitParametersAndOperators() {
 
-        createParameterUniformPrior(PREFIX_ + "frequencies", PHYLOGEOGRAPHIC + "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
-        createCachedGammaPrior(PREFIX_ + "rates", "location substitution model rates",
+        createParameterUniformPrior("frequencies", PHYLOGEOGRAPHIC + "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createCachedGammaPrior("rates", "location substitution model rates",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
-        createParameter(PREFIX_ + "indicators", "location substitution model rate indicators");
+        createParameter("indicators", "location substitution model rate indicators");
 
-        createParameterExponentialPrior(PREFIX_ + "mu", PHYLOGEOGRAPHIC + "mutation rate parameter",
+        createParameterExponentialPrior("mu", PHYLOGEOGRAPHIC + "mutation rate parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
 
-        createDiscreteStatistic(PREFIX_ + "nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
+        createDiscreteStatistic("nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
 
-        createOperator(PREFIX_ + "rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
-        createScaleOperator(PREFIX_ + "mu", "for mutation rate parameter", demoTuning, 10);
+        createOperator("rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
+        createScaleOperator("mu", "for mutation rate parameter", demoTuning, 10);
 
-        createOperator(PREFIX_ + "indicators", OperatorType.BITFLIP, -1.0, 30);
-        createTagInsideOperator(OperatorType.BITFIP_IN_SUBST.toString(), PREFIX_ + "mu",
-                "bit Flip In Substitution Model Operator", PREFIX_ + "mu", OperatorType.BITFIP_IN_SUBST,
+        createOperator("indicators", OperatorType.BITFLIP, -1.0, 30);
+        createTagInsideOperator(OperatorType.BITFIP_IN_SUBST.toString(), "mu",
+                "bit Flip In Substitution Model Operator", "mu", OperatorType.BITFIP_IN_SUBST,
                 SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, PREFIX_ + AbstractSubstitutionModel.MODEL, demoTuning, 30);
-
-        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, PREFIX_ + "indicators, " + PREFIX_ + "rates",
+        // <svsGeneralSubstitutionModel idref="originModel"/>
+        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(indicators, rates)",
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
-                PREFIX_ + "indicators", PREFIX_ + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
+                "indicators", "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
     }
 
 
@@ -95,12 +95,14 @@ public class DiscreteTraitOptions extends TraitsOptions {
      */
     @Override
     public void selectParameters(List<Parameter> params) {
-        params.add(getParameter(PREFIX_ + "frequencies"));
-        params.add(getParameter(PREFIX_ + "rates"));
-        params.add(getParameter(PREFIX_ + "indicators"));
-        params.add(getParameter(PREFIX_ + "mu"));
+        params.add(getParameter("frequencies"));
+        params.add(getParameter("rates"));
+        params.add(getParameter("mu"));
 
-        if (activeBSSVS) params.add(getParameter(PREFIX_ + "nonZeroRates"));
+        if (activateBSSVS) {
+            params.add(getParameter("indicators"));         
+            params.add(getParameter("nonZeroRates"));
+        }
     }
 
     /**
@@ -110,17 +112,22 @@ public class DiscreteTraitOptions extends TraitsOptions {
      */
     @Override
     public void selectOperators(List<Operator> ops) {
-        ops.add(getOperator(PREFIX_ + "rates"));
-        ops.add(getOperator(PREFIX_ + "mu"));
+        ops.add(getOperator("rates"));
+        ops.add(getOperator("mu"));
 
-        if (activeBSSVS) {
-            ops.add(getOperator(PREFIX_ + "indicators"));
+        if (activateBSSVS) {
+            ops.add(getOperator("indicators"));
             ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()));
 
             if (locationSubstType == LocationSubstModelType.ASYM_SUBST)
                 ops.add(getOperator(RateBitExchangeOperator.OPERATOR_NAME));
         }
 
+    }
+
+    @Override
+    public boolean isSpecifiedTraitAnalysis(String traitName) {
+        return this.partitionName == traitName;
     }
 
     /////////////////////////////////////////////////////////////
@@ -133,12 +140,12 @@ public class DiscreteTraitOptions extends TraitsOptions {
         this.locationSubstType = locationSubstType;
     }
 
-    public boolean isActiveBSSVS() {
-        return activeBSSVS;
+    public boolean isActivateBSSVS() {
+        return activateBSSVS;
     }
 
-    public void setActiveBSSVS(boolean activeBSSVS) {
-        this.activeBSSVS = activeBSSVS;
+    public void setActivateBSSVS(boolean activateBSSVS) {
+        this.activateBSSVS = activateBSSVS;
     }
 
 }

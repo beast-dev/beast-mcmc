@@ -36,7 +36,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public abstract class TraitsOptions extends ModelOptions {
+public abstract class TraitsOptions extends PartitionOptions {
 
     public static enum TraitType {
         DISCRETE,
@@ -59,9 +59,6 @@ public abstract class TraitsOptions extends ModelOptions {
         private final String name;
     }
 
-	// Instance variables
-//    protected final BeautiOptions options;
-
     public static final List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
 //    public Map<String , TraitGuesser> traits = new HashMap<String, TraitGuesser>(); // traits map
     
@@ -69,14 +66,14 @@ public abstract class TraitsOptions extends ModelOptions {
 //    	this.options = options;
 //        initTraitParametersAndOperators();
 //    }
+
     protected final String PREFIX_;
 //    private final TraitGuesser traitGuesser;
-    protected String traitName;
 
     public TraitsOptions(TraitGuesser traitGuesser) {
 //        this.traitGuesser = traitGuesser;
-        this.traitName = traitGuesser.getTraitName();
-        PREFIX_ = traitName + ".";
+        this.partitionName = traitGuesser.getTraitName();
+        PREFIX_ = partitionName + ".";
         initTraitParametersAndOperators();
     }
 
@@ -84,6 +81,8 @@ public abstract class TraitsOptions extends ModelOptions {
 
     protected abstract void selectParameters(List<Parameter> params);
     protected abstract void selectOperators(List<Operator> ops);
+
+    public abstract boolean isSpecifiedTraitAnalysis(String traitName);
 
     /////////////////////////////////////////////////////////////
     public static boolean containTrait(String traitName) {
@@ -138,7 +137,7 @@ public abstract class TraitsOptions extends ModelOptions {
         return getDiscreteTraitsExcludeSpecies() != null && getDiscreteTraitsExcludeSpecies().size() > 0;
     }
 
-    public static boolean isPhylogeographic() {
+    public static boolean hasPhylogeographic() {
         return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
     }
 
@@ -146,7 +145,7 @@ public abstract class TraitsOptions extends ModelOptions {
         return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
     }
 
-    public String toString() {
-        return traitName;
+    public String getPrefix() {
+        return PREFIX_;
     }
 }

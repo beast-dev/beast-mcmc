@@ -38,7 +38,7 @@ import java.awt.event.ItemListener;
 public class DiscreteTraitSiteModelPanel extends OptionsPanel {
 
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(DiscreteTraitOptions.LocationSubstModelType.values());
-    private JCheckBox activeBSSVS = new JCheckBox("Active BSSVS");
+    private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
 
 
     final DiscreteTraitOptions discreteTraitOptions;
@@ -59,10 +59,10 @@ public class DiscreteTraitSiteModelPanel extends OptionsPanel {
             }
         });
 
-        PanelUtils.setupComponent(activeBSSVS);
-        activeBSSVS.addItemListener(new ItemListener() {
+        PanelUtils.setupComponent(activateBSSVS);
+        activateBSSVS.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                discreteTraitOptions.setActiveBSSVS(activeBSSVS.isSelected());
+                discreteTraitOptions.setActivateBSSVS(activateBSSVS.isSelected());
             }
         });
 
@@ -75,7 +75,7 @@ public class DiscreteTraitSiteModelPanel extends OptionsPanel {
 
         addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
 
-        addComponent(activeBSSVS);
+        addComponent(activateBSSVS);
 
         validate();
         repaint();
@@ -85,7 +85,7 @@ public class DiscreteTraitSiteModelPanel extends OptionsPanel {
         settingOptions = true;
 
         discreteTraitSiteModelCombo.setSelectedItem(discreteTraitOptions.getLocationSubstType());
-        activeBSSVS.setSelected(discreteTraitOptions.isActiveBSSVS());
+        activateBSSVS.setSelected(discreteTraitOptions.isActivateBSSVS());
 
         settingOptions = false;
 

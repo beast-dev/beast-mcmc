@@ -10,6 +10,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
 
     public static String SUM_STATISTIC = "sumStatistic";
     public static String SUM = "sum";
+    public static String ELEMENTWISE = "elementwise";
 
     public String[] getParserNames() {
         return new String[]{getParserName(), SUM};
@@ -21,7 +22,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        boolean elementwise = xo.getAttribute("elementwise", false);
+        boolean elementwise = xo.getAttribute(ELEMENTWISE, false);
 
         String name = SUM_STATISTIC;
         if (xo.hasAttribute(Statistic.NAME) || xo.hasAttribute(dr.xml.XMLParser.ID)) {
@@ -60,7 +61,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule("elementwise", true),
+            AttributeRule.newBooleanRule(ELEMENTWISE, true),
             new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
     };
 }

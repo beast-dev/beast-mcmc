@@ -282,8 +282,4 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         return noDuplicatedPrefix(model.getPrefix(), tree.getPrefix());
     }
 
-    @Override
-    public Class<PartitionClockModelTreeModelLink> getPartitionClassType() {        
-        return PartitionClockModelTreeModelLink.class;
-    }
 }

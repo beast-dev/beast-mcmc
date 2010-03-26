@@ -447,7 +447,7 @@ public class BeastGenerator extends Generator {
      * @param taxonList TaxonList
      */
     private void writeEachTrait(XMLWriter writer, TraitData trait, TaxonList taxonList) {
-        String traitName = trait.getTraitName();
+        String traitName = trait.getName();
 
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species

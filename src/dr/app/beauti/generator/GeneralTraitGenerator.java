@@ -54,17 +54,17 @@ public class GeneralTraitGenerator extends Generator {
      */
     public void writeAtrrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
         for (TraitData trait : BeautiOptions.getDiscreteIntegerTraits()) {
-            if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
+            if (!trait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
 
-                if (taxon.containsAttribute(trait.getTraitName())) {
-                    throw new Arguments.ArgumentException("Cannot find trait " + trait.getTraitName()
+                if (taxon.containsAttribute(trait.getName())) {
+                    throw new Arguments.ArgumentException("Cannot find trait " + trait.getName()
                             + "\nin taxon " + taxon.getId());
                 }
 
                 writer.writeOpenTag(Attribute.ATTRIBUTE, new Attribute[]{
-                        new Attribute.Default<String>(Attribute.NAME, trait.getTraitName())});
+                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                taxon.getAttribute(trait.getTraitName());
+                taxon.getAttribute(trait.getName());
                 writer.writeCloseTag(SpeciesBindingsParser.GENE_TREES);
             }
         }

@@ -67,7 +67,7 @@ public class GuessTraitDialog {
         optionPanel = new OptionsPanel(12, 12);
 
         JTextField traitNameField = new JTextField(18);
-        traitNameField.setText(guesser.getTraitData().getTraitName());
+        traitNameField.setText(guesser.getTraitData().getName());
         traitNameField.setEnabled(false);
         optionPanel.addComponentWithLabel("The trait name: ", traitNameField);
 //        traitNameField.addKeyListener(new java.awt.event.KeyListener() {

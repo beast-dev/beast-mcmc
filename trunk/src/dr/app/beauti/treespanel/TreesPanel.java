@@ -25,11 +25,14 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.enumTypes.TreePriorType;
-import dr.app.beauti.*;
-import dr.app.beauti.options.*;
-
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -45,7 +48,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -485,7 +489,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     
     private boolean isUsed(int row) {
         PartitionTreeModel model = options.getPartitionTreeModels().get(row);
-        for (PartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : BeautiOptions.dataPartitions) {
             if (partition.getPartitionTreeModel() == model) {
                 return true;
             }

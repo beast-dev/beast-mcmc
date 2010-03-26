@@ -27,7 +27,10 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.DiscreteTraitOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.HeaderRenderer;
@@ -227,10 +230,10 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
 
-        if (TraitsOptions.hasDiscreteTraitsExcludeSpecies()) {
+        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
             if (currentDiscreteTraitOption == null) {
                 setCurrentDiscreteTraitModel(
-                    (DiscreteTraitOptions) TraitsOptions.getDiscreteTraitsExcludeSpecies().get(0).getTraitsOptions());
+                    (DiscreteTraitOptions) BeautiOptions.getDiscreteTraitsExcludeSpecies().get(0).getTraitOptions());
                 this.add(d_splitPane, BorderLayout.SOUTH);
             }
         } else if (currentDiscreteTraitOption != null) {
@@ -343,7 +346,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (PartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : BeautiOptions.dataPartitions) {
             if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }
@@ -359,7 +362,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         int selRow = discreteTraitTable.getSelectedRow();
         if (selRow >= 0) {
             setCurrentDiscreteTraitModel(
-                (DiscreteTraitOptions) TraitsOptions.getDiscreteTraitsExcludeSpecies().get(selRow).getTraitsOptions());
+                (DiscreteTraitOptions) BeautiOptions.getDiscreteTraitsExcludeSpecies().get(selRow).getTraitOptions());
         }
     }
 
@@ -485,14 +488,14 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         public int getRowCount() {
-            if (TraitsOptions.getDiscreteTraitsExcludeSpecies() == null) return 0;
-            return TraitsOptions.getDiscreteTraitsExcludeSpecies().size();
+            if (BeautiOptions.getDiscreteTraitsExcludeSpecies() == null) return 0;
+            return BeautiOptions.getDiscreteTraitsExcludeSpecies().size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return TraitsOptions.getDiscreteTraitsExcludeSpecies().get(row).getTraitName();
+                    return BeautiOptions.getDiscreteTraitsExcludeSpecies().get(row).getTraitName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

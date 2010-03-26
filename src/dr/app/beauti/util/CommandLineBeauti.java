@@ -246,8 +246,8 @@ public class CommandLineBeauti {
                     new String[]{"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
             if (alignment != null) {
-                PartitionData partition = new PartitionData(beautiOptions, beautiOptions.fileNameStem, file.getName(), alignment);
-                beautiOptions.dataPartitions.add(partition);
+                PartitionData partition = new PartitionData(beautiOptions.fileNameStem, file.getName(), alignment);
+                BeautiOptions.dataPartitions.add(partition);
                 beautiOptions.dataType = alignment.getDataType();
 
 //                Patterns patterns = new Patterns(alignment);

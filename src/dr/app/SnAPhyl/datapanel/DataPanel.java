@@ -27,7 +27,7 @@ import dr.app.SnAPhyl.SnAPhylFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.TraitsOptions;
+import dr.app.beauti.options.TraitOptions;
 import dr.app.beauti.traitspanel.GuessTraitDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.Date;
@@ -173,12 +173,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
     private void setupTable() {
 
         dataTableModel.fireTableStructureChanged();
-        if (options.dataPartitions.size() > 0 && options.dataPartitions.get(0).getAlignment() != null) {
+        if (BeautiOptions.dataPartitions.size() > 0 && BeautiOptions.dataPartitions.get(0).getAlignment() != null) {
 
             dataTable.getColumnModel().getColumn(4).setCellRenderer(sequenceRenderer);
             dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
 
-            sequenceRenderer.setText(options.dataPartitions.get(0).getAlignment().getSequence(0).getSequenceString());
+            sequenceRenderer.setText(BeautiOptions.dataPartitions.get(0).getAlignment().getSequence(0).getSequenceString());
             int w = sequenceRenderer.getPreferredSize().width + 8;
             dataTable.getColumnModel().getColumn(4).setPreferredWidth(w);
         }
@@ -308,8 +308,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public int getColumnCount() {
-            if (options == null || options.dataPartitions.size() < 1
-                    || options.dataPartitions.get(0).getAlignment().getAlignedSequenceString(0) == null) {
+            if (options == null || BeautiOptions.dataPartitions.size() < 1
+                    || BeautiOptions.dataPartitions.get(0).getAlignment().getAlignedSequenceString(0) == null) {
                 return columnNames2.length;
             } else {
                 return columnNames1.length;
@@ -328,7 +328,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 0:
                     return options.taxonList.getTaxonId(row);
                 case 1:
-                    Object value = options.taxonList.getTaxon(row).getAttribute(TraitsOptions.Traits.TRAIT_SPECIES.toString());
+                    Object value = options.taxonList.getTaxon(row).getAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString());
                     if (value != null) {
                         return value;
                     } else {
@@ -344,7 +344,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         return "-";
                     }
                 case 4:
-                    return options.dataPartitions.get(0).getAlignment().getAlignedSequenceString(row);
+                    return BeautiOptions.dataPartitions.get(0).getAlignment().getAlignedSequenceString(row);
             }
             return null;
         }
@@ -355,7 +355,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     options.taxonList.getTaxon(row).setId(aValue.toString());
                     break;
                 case 1:
-                    options.taxonList.getTaxon(row).setAttribute(TraitsOptions.Traits.TRAIT_SPECIES.toString(), aValue);
+                    options.taxonList.getTaxon(row).setAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString(), aValue);
                     break;
                 case 2:
                     break;
@@ -377,7 +377,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 return (date != null);
             }
             if (col == 1) {
-                Object t = options.taxonList.getTaxon(row).getAttribute(TraitsOptions.Traits.TRAIT_SPECIES.toString());
+                Object t = options.taxonList.getTaxon(row).getAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString());
                 return (t != null);
             }
             return false;

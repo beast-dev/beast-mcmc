@@ -1,33 +1,13 @@
 package dr.app.beauti.util;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.JOptionPane;
-
-import org.jdom.JDOMException;
-
-
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.*;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.io.NexusImporter;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
 import dr.evolution.tree.Tree;
@@ -35,7 +15,14 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evolution.datatype.Nucleotides;
+import org.jdom.JDOMException;
+
+import javax.swing.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -336,14 +323,14 @@ public class BEAUTiImporter {
             List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(options, charSet.getName(), fileName,
+                    partitions.add(new PartitionData(charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
             }
             for (PartitionData partition : partitions) {
-                options.dataPartitions.add(partition);
+                BeautiOptions.dataPartitions.add(partition);
 
                 if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
                     partition.setPartitionSubstitutionModel(model);

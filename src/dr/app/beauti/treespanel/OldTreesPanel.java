@@ -26,12 +26,12 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.tools.TemporalRooting;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
@@ -338,7 +338,7 @@ public class OldTreesPanel extends BeautiPanel {
 
         treePriorPanel.addSeparator();
 
-        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
+        createTreeAction.setEnabled(options != null && BeautiOptions.dataPartitions.size() > 0);
 
         treesTableModel.fireTableDataChanged();
 

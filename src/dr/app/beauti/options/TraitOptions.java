@@ -36,7 +36,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public abstract class TraitsOptions extends PartitionOptions {
+public abstract class TraitOptions extends PartitionModelOptions {
 
     public static enum TraitType {
         DISCRETE,
@@ -59,7 +59,7 @@ public abstract class TraitsOptions extends PartitionOptions {
         private final String name;
     }
 
-    public static final List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
+//    public static final List<TraitGuesser> traits = new ArrayList<TraitGuesser>();  // traits list
 //    public Map<String , TraitGuesser> traits = new HashMap<String, TraitGuesser>(); // traits map
     
 //    public TraitsOptions(BeautiOptions options) {
@@ -70,9 +70,12 @@ public abstract class TraitsOptions extends PartitionOptions {
     protected final String PREFIX_;
 //    private final TraitGuesser traitGuesser;
 
-    public TraitsOptions(TraitGuesser traitGuesser) {
-//        this.traitGuesser = traitGuesser;
-        this.partitionName = traitGuesser.getTraitName();
+    public TraitOptions(TraitData partition) {
+        this.partitionName = partition.getName();
+
+        allPartitionData.clear();
+        addPartitionData(partition);
+
         PREFIX_ = partitionName + ".";
         initTraitParametersAndOperators();
     }
@@ -85,64 +88,26 @@ public abstract class TraitsOptions extends PartitionOptions {
     public abstract boolean isSpecifiedTraitAnalysis(String traitName);
 
     /////////////////////////////////////////////////////////////
-    public static boolean containTrait(String traitName) {
-        for (TraitGuesser trait : traits) {
-            if (trait.getTraitName().equalsIgnoreCase(traitName))
-                return true;
-        }
-        return false;
-    }
 
-    public static TraitGuesser getTrait(String traitName) {
-        for (TraitGuesser trait : traits) {
-            if (trait.getTraitName().equalsIgnoreCase(traitName))
-                return trait;
-        }
-        return null;
-    }
-    
     public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
-        List<String> species = new ArrayList<String>();
-        String sp;
+        List<String> states = new ArrayList<String>();
+        String attr;
 
         if (taxonList != null) {
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {
                 Taxon taxon = taxonList.getTaxon(i);
-                sp = (String) taxon.getAttribute(traitName);
+                attr = (String) taxon.getAttribute(traitName);
 
-                if (sp == null) return null;
+                if (attr == null) return null;
 
-                if (!species.contains(sp)) {
-                    species.add(sp);
+                if (!states.contains(attr)) {
+                    states.add(attr);
                 }
             }
-            return species;
+            return states;
         } else {
             return null;
         }
-    }
-
-    public static List<TraitGuesser> getDiscreteTraitsExcludeSpecies() { // exclude species at moment
-        List<TraitGuesser> discreteTraitsExcludeSpecies = new ArrayList<TraitGuesser>();
-        for (TraitGuesser trait : traits) {
-            if (  (!trait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString()))
-                    && trait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
-                discreteTraitsExcludeSpecies.add(trait);
-            }
-        }
-        return discreteTraitsExcludeSpecies;
-    }
-
-    public static boolean hasDiscreteTraitsExcludeSpecies() { // exclude species at moment
-        return getDiscreteTraitsExcludeSpecies() != null && getDiscreteTraitsExcludeSpecies().size() > 0;
-    }
-
-    public static boolean hasPhylogeographic() {
-        return containTrait(TraitsOptions.Traits.TRAIT_LOCATIONS.toString());
-    }
-
-    public static String getPhylogeographicDescription() {
-        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
     }
 
     public String getPrefix() {

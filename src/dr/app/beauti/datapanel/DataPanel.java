@@ -26,11 +26,14 @@ package dr.app.beauti.datapanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
-import dr.app.beauti.alignmentviewer.*;
+import dr.app.beauti.alignmentviewer.AlignmentViewer;
+import dr.app.beauti.alignmentviewer.AminoAcidDecorator;
+import dr.app.beauti.alignmentviewer.NucleotideDecorator;
+import dr.app.beauti.alignmentviewer.StateCellDecorator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
-import dr.evolution.datatype.DataType;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.datatype.DataType;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.HeaderRenderer;
@@ -44,8 +47,10 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -83,7 +88,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     BeautiOptions options = null;
 
-    public DataPanel(BeautiFrame parent, Action importDataAction, Action removeDataAction) {
+    public DataPanel(BeautiFrame parent, Action importDataAction, Action removeDataAction, Action importTraitsAction) {
 
         this.frame = parent;
 
@@ -196,12 +201,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(importDataAction);
         actionPanel1.setRemoveAction(removeDataAction);
-
         removeDataAction.setEnabled(false);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
+
+        button = new JButton(importTraitsAction);
+        controlPanel1.add(button);
 
         allowDifferentTaxaCheck.setSelected(false);
         allowDifferentTaxaCheck.addItemListener(new ItemListener() {
@@ -226,7 +233,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             JFrame frame = new JFrame();
             frame.setSize(800, 600);
 
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
             Alignment alignment = partition.getAlignment();
             AlignmentViewer viewer = new AlignmentViewer();
             if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
@@ -330,17 +337,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
         int[] selRows = dataTable.getSelectedRows();
         Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
         for (int row : selRows) {
-            partitionsToRemove.add(options.dataPartitions.get(row));
+            partitionsToRemove.add(BeautiOptions.dataPartitions.get(row));
         }
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
-        options.dataPartitions.removeAll(partitionsToRemove);
+        BeautiOptions.dataPartitions.removeAll(partitionsToRemove);
 
-        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
+        if (options.allowDifferentTaxa && BeautiOptions.dataPartitions.size() < 2) {
             uncheckAllowDifferentTaxa();
         }
 
-        if (options.dataPartitions.size() == 0) {
+        if (BeautiOptions.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
@@ -373,7 +380,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
@@ -395,7 +402,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
         DataType dateType = null;
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
             if (dateType == null) {
                 dateType = partition.getPartitionSubstitutionModel().getDataType();
             } else {
@@ -441,7 +448,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     private void unlinkClocks() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
 
             PartitionClockModel model = partition.getPartitionClockModel();
             if (!model.getName().equals(partition.getName())) {
@@ -462,7 +469,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
 
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
@@ -496,7 +503,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkTrees() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName())) {
@@ -527,7 +534,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
 
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
@@ -591,11 +598,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.dataPartitions.size();
+            return BeautiOptions.dataPartitions.size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
@@ -621,7 +628,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

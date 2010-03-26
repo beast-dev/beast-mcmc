@@ -193,8 +193,9 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectParameters(parameters);
         }
 
-        for (TraitGuesser trait : TraitsOptions.getDiscreteTraitsExcludeSpecies()) { // discrete traits including locations
-        	trait.getTraitsOptions().selectParameters(parameters);
+        for (TraitData trait : getTraitsList()) { // all traits including locations
+            if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
+        	   trait.getTraitOptions().selectParameters(parameters);
         }
 
         selectComponentParameters(this, parameters);
@@ -242,8 +243,9 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectOperators(ops);
         }
 
-        for (TraitGuesser trait : TraitsOptions.getDiscreteTraitsExcludeSpecies()) { // discrete traits including locations
-        	trait.getTraitsOptions().selectOperators(ops);
+        for (TraitData trait : getTraitsList()) { // all traits including locations
+        	if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
+                trait.getTraitOptions().selectOperators(ops);
         }
 
         selectComponentOperators(this, ops);
@@ -515,7 +517,78 @@ public class BeautiOptions extends ModelOptions {
         return legal;
     }
 
+    // +++++++++++++ Traits +++++++++++++
+    public static List<TraitData> getTraitsList() {
+        List<TraitData> traits = new ArrayList<TraitData>();
+        for (PartitionData partition : dataPartitions) {
+            if (partition.getTraitType() != null) {
+                traits.add((TraitData) partition);
+            }
+        }
+        return traits;
+    }
 
+    public static List<TraitData> getDiscreteIntegerTraits() {
+        List<TraitData> traits = new ArrayList<TraitData>();
+        for (PartitionData partition : dataPartitions) {
+            if (partition.getTraitType() != null && partition.getTraitType() != TraitOptions.TraitType.CONTINUOUS) {
+                traits.add((TraitData) partition);
+            }
+        }
+        return traits;
+    }
+
+    public static boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
+        return getDiscreteIntegerTraits().size() > 1
+                || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitOptions.Traits.TRAIT_SPECIES.toString())));
+    }
+
+    public static boolean containTrait(String traitName) {
+        for (TraitData trait : getTraitsList()) {
+            if (trait.getTraitName().equalsIgnoreCase(traitName))
+                return true;
+        }
+        return false;
+    }
+
+    public static int addTrait(TraitData newTrait) {
+        int selRow;
+        String traitName = newTrait.getTraitName();
+        if (containTrait(traitName)) {
+            clearTraitValues(traitName); // Clear trait values
+            selRow = dataPartitions.indexOf(getTrait(traitName));
+            dataPartitions.set(selRow, newTrait);
+        } else {
+            dataPartitions.add(newTrait);
+            selRow = dataPartitions.size() - 1; // start 0
+        }
+        return selRow;
+    }
+
+    public static void removeTrait(String traitName) {
+        if (containTrait(traitName)) {
+            clearTraitValues(traitName); // Clear trait values
+            dataPartitions.remove(getTrait(traitName));
+        }
+    }
+
+    public static void clearTraitValues(String traitName) {
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonList.getTaxon(i).setAttribute(traitName, "");
+        }
+    }
+
+    public static TraitData getTrait(String traitName) {
+        for (TraitData trait : getTraitsList()) {
+            if (trait.getTraitName().equalsIgnoreCase(traitName))
+                return trait;
+        }
+        return null;
+    }
+
+
+
+    // ++++++++++++++++++++ message bar +++++++++++++++++
 	public String statusMessage() {
         String message = "";
         if (hasData()) {
@@ -541,7 +614,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (TraitsOptions.hasPhylogeographic()) {
+            if (DiscreteTraitOptions.hasPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
             
@@ -562,14 +635,12 @@ public class BeautiOptions extends ModelOptions {
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
-//    public boolean dataReset = true;
 
-    public Taxa taxonList = null;
+    public static Taxa taxonList = null;
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
 
-//    public double meanDistance = 1.0;
     public DateUnitsType datesUnits = DateUnitsType.YEARS;
     public DateUnitsType datesDirection = DateUnitsType.FORWARDS;
     public double maximumTipHeight = 0.0;
@@ -580,19 +651,16 @@ public class BeautiOptions extends ModelOptions {
 //
 //    public List<String> selecetedTraits = new ArrayList<String>();
 //    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
-   
+
     // Data 
-    public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    public static final List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
     
-//    public boolean shareSameTreePrior = true;
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
 
-//    public FixRateType rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION; 
-//    public boolean fixedSubstitutionRate = true;
-//    public double meanSubstitutionRate = 1.0;
     public boolean unlinkPartitionRates = true;
 
     public Units.Type units = Units.Type.SUBSTITUTIONS;
@@ -631,4 +699,7 @@ public class BeautiOptions extends ModelOptions {
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
+    public static ArrayList<TraitData> getDiscreteTraitsExcludeSpecies() {
+        return new ArrayList<TraitData>();  //Todo remove after
+    }
 }

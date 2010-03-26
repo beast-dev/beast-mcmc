@@ -25,21 +25,12 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.options.*;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
-import dr.math.*;
-import dr.util.NumberFormatter;
-import dr.evolution.datatype.*;
-import org.virion.jam.components.RealNumberField;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
 
 /**
  * @author Andrew Rambaut
@@ -90,7 +81,7 @@ public class GenerateTreeDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         partitionCombo.removeAllItems();
-        for (PartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : BeautiOptions.dataPartitions) {
             partitionCombo.addItem(partition);
         }
         final JDialog dialog = optionPane.createDialog(frame, "Construct New Tree");

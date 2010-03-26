@@ -34,17 +34,10 @@ import java.util.regex.Pattern;
  */
 public class TraitGuesser {
 
-    private final TraitsOptions traitsOptions;
+    private final TraitData traitData;
 
-    public TraitGuesser(String traitName, TraitsOptions.TraitType traitType) {
-        this.traitName = traitName;
-        this.traitType = traitType;
-
-        if (traitType == TraitsOptions.TraitType.DISCRETE) {
-            traitsOptions = new DiscreteTraitOptions(this);
-        } else {
-            traitsOptions = null; //TODO integer and continuous
-        }
+    public TraitGuesser(TraitData traitData) {
+        this.traitData = traitData;
     }
 
     public static enum GuessType {
@@ -56,8 +49,8 @@ public class TraitGuesser {
 //    private boolean guessTrait = false; // no use ??
 
     private GuessType guessType = GuessType.SUFFIX;
-    private String traitName = TraitsOptions.Traits.TRAIT_SPECIES.toString();
-    private TraitsOptions.TraitType traitType = TraitsOptions.TraitType.DISCRETE;
+//    private String traitName = TraitsOptions.Traits.TRAIT_SPECIES.toString();
+//    private TraitsOptions.TraitType traitType = TraitsOptions.TraitType.DISCRETE;
 
     private int index = 0;
     private String separator;
@@ -65,8 +58,8 @@ public class TraitGuesser {
 
     ////////////////////////////////////////////////////////////////
 
-    public TraitsOptions getTraitsOptions() {
-        return traitsOptions;
+    public TraitData getTraitData() {
+        return traitData;
     }
     
     public GuessType getGuessType() {
@@ -75,22 +68,6 @@ public class TraitGuesser {
 
     public void setGuessType(GuessType guessType) {
         this.guessType = guessType;
-    }
-
-    public String getTraitName() {
-        return traitName;
-    }
-
-    public void setTraitName(String traitName) {
-        this.traitName = traitName;
-    }
-
-    public TraitsOptions.TraitType getTraitType() {
-        return traitType;
-    }
-
-    public void setTraitType(TraitsOptions.TraitType traitType) {
-        this.traitType = traitType;
     }
 
     public int getIndex() {
@@ -143,7 +120,7 @@ public class TraitGuesser {
                 //
             }
 
-            options.taxonList.getTaxon(i).setAttribute(traitName, value);
+            options.taxonList.getTaxon(i).setAttribute(traitData.getTraitName(), value);
         }
     }
 
@@ -182,7 +159,7 @@ public class TraitGuesser {
             	if (i == 0) {
             		throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
             	} else {
-            		return label + seperator + traitName;
+            		return label + seperator + traitData.getTraitName();
             	}
             }
 

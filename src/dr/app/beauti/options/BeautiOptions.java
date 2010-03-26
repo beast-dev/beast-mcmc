@@ -194,7 +194,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (TraitData trait : getTraitsList()) { // all traits including locations
-            if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
+            if (!trait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
         	   trait.getTraitOptions().selectParameters(parameters);
         }
 
@@ -244,7 +244,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (TraitData trait : getTraitsList()) { // all traits including locations
-        	if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
+        	if (!trait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
                 trait.getTraitOptions().selectOperators(ops);
         }
 
@@ -545,7 +545,7 @@ public class BeautiOptions extends ModelOptions {
 
     public static boolean containTrait(String traitName) {
         for (TraitData trait : getTraitsList()) {
-            if (trait.getTraitName().equalsIgnoreCase(traitName))
+            if (trait.getName().equalsIgnoreCase(traitName))
                 return true;
         }
         return false;
@@ -553,14 +553,14 @@ public class BeautiOptions extends ModelOptions {
 
     public static int addTrait(TraitData newTrait) {
         int selRow;
-        String traitName = newTrait.getTraitName();
+        String traitName = newTrait.getName();
         if (containTrait(traitName)) {
             clearTraitValues(traitName); // Clear trait values
             selRow = dataPartitions.indexOf(getTrait(traitName));
             dataPartitions.set(selRow, newTrait);
         } else {
             dataPartitions.add(newTrait);
-            selRow = dataPartitions.size() - 1; // start 0
+            selRow = getTraitsList().size() - 1; // start 0
         }
         return selRow;
     }
@@ -580,7 +580,7 @@ public class BeautiOptions extends ModelOptions {
 
     public static TraitData getTrait(String traitName) {
         for (TraitData trait : getTraitsList()) {
-            if (trait.getTraitName().equalsIgnoreCase(traitName))
+            if (trait.getName().equalsIgnoreCase(traitName))
                 return trait;
         }
         return null;

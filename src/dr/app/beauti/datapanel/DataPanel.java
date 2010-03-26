@@ -582,8 +582,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Subst. Model", "Clock Model", "Partition Tree"};
-        String[] columnNames2 = {"Name", "FileName", "Taxa", "Sites", "Sequence Type", "Subst. Model"};
+        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Data Type", "Subst. Model", "Clock Model", "Partition Tree"};
+        String[] columnNames2 = {"Partition Name", "File Name", "Taxa", "Sites", "Sequence Type", "Subst. Model"};
 
         public DataTableModel() {
         }

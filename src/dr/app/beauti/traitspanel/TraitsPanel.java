@@ -102,8 +102,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         traitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
-                traitSelectionChanged();
-                dataTableModel.fireTableDataChanged();
+//                traitSelectionChanged();
+//                dataTableModel.fireTableDataChanged();
             }
         });
 
@@ -320,7 +320,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             // user is overwriting an existing trait
             addTrait(newTrait, traitsTable);
 
-            if (currentTrait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
+            if (currentTrait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.setupSpeciesAnalysis();
             } else if (currentTrait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
@@ -344,8 +344,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         BeautiOptions.removeTrait(traitsTable.getValueAt(selRow, 0).toString());
 
         if (currentTrait != null) {
-            clearTraitValues(currentTrait.getTraitName()); // Clear trait values
-            if (currentTrait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
+            clearTraitValues(currentTrait.getName()); // Clear trait values
+            if (currentTrait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
                 frame.removeSepciesAnalysis();
             } else if (currentTrait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
@@ -374,7 +374,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            if (currentTrait != null) clearTraitValues(currentTrait.getTraitName()); // Clear trait values
+            if (currentTrait != null) clearTraitValues(currentTrait.getName()); // Clear trait values
         }
     }
 
@@ -435,7 +435,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return BeautiOptions.getTraitsList().get(row).getTraitName();
+                    return BeautiOptions.getTraitsList().get(row).getName();
                 case 1:
                     return BeautiOptions.getTraitsList().get(row).getTraitType();
             }
@@ -445,7 +445,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             switch (col) {
                 case 0:
-                    BeautiOptions.getTraitsList().get(row).setTraitName(aValue.toString());
+                    BeautiOptions.getTraitsList().get(row).setName(aValue.toString());
                     break;
                 case 1:
                     BeautiOptions.getTraitsList().get(row).setTraitType((TraitOptions.TraitType) aValue);
@@ -455,8 +455,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
 //            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
-            return !(BeautiOptions.getTraitsList().get(row).getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())
-                  || BeautiOptions.getTraitsList().get(row).getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_LOCATIONS.toString()));
+            return !(BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())
+                  || BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_LOCATIONS.toString()));
         }
 
         public String getColumnName(int column) {
@@ -519,7 +519,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 case 1:
                     Object value = null;
                     if (currentTrait != null) {
-                        value = options.taxonList.getTaxon(row).getAttribute(currentTrait.getTraitName());
+                        value = options.taxonList.getTaxon(row).getAttribute(currentTrait.getName());
                     }
                     if (value != null) {
                         return value;
@@ -537,7 +537,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //                    options.taxonList.getTaxon(row).setLocation(location);
 //                }            	
                 if (currentTrait != null) {
-                    options.taxonList.getTaxon(row).setAttribute(currentTrait.getTraitName(), aValue);
+                    options.taxonList.getTaxon(row).setAttribute(currentTrait.getName(), aValue);
                 }
 
             }
@@ -545,7 +545,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             if (col == 1) {
-                Object t = options.taxonList.getTaxon(row).getAttribute(currentTrait.getTraitName());
+                Object t = options.taxonList.getTaxon(row).getAttribute(currentTrait.getName());
                 return (t != null);
             } else {
                 return false;

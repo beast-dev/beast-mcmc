@@ -6,7 +6,7 @@ package dr.app.beauti.options;
 public class TraitData extends PartitionData {
     private TraitOptions traitOptions;
 
-    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
+//    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
     private TraitOptions.TraitType traitType = TraitOptions.TraitType.DISCRETE;
 
 
@@ -26,13 +26,6 @@ public class TraitData extends PartitionData {
     }
 
     /////////////////////////////////////////////////////////////////////////
-    public String getTraitName() {
-        return traitName;
-    }
-
-    public void setTraitName(String traitName) {
-        this.traitName = traitName;
-    }
 
     public TraitOptions.TraitType getTraitType() {
         return traitType;

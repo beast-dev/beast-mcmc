@@ -219,19 +219,19 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         System.err.println("C = " + new Vector(c));                        
     }
 
-    private int stateCount;
+    public int stateCount;
     private double[] rateReg;
     private double[] transitionProbs;
     private double[] rateMatrix;
-    private double[] registration;
+    protected double[] registration;
 
-    private SubstitutionModel substModel;
+    protected SubstitutionModel substModel;
     private EigenDecomposition eigenDecomposition;
     private MarkovJumpsCore markovJumpsCore;
 
     private boolean regRateChanged = true;
 
-    private MarkovJumpsType type;
+    protected MarkovJumpsType type;
 }
 
 /*

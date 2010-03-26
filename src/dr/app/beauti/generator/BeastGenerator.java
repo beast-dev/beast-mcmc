@@ -212,7 +212,7 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
             writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
             // write all taxa in each gene tree regarding each data partition,
-            for (PartitionData partition : options.dataPartitions) {
+            for (PartitionData partition : BeautiOptions.dataPartitions) {
                 // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
                 writeDifferentTaxaForMultiGene(partition, writer);
             }
@@ -231,7 +231,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         if (!options.samplePriorOnly) {
-            for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+            for (PartitionData partition : BeautiOptions.dataPartitions) { // Each PD has one TreeLikelihood
                 writePatternList(partition, writer);
                 writer.writeText("");
             }
@@ -306,7 +306,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
-        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+        for (PartitionData partition : BeautiOptions.dataPartitions) { // Each PD has one TreeLikelihood
             treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
             writer.writeText("");
         }
@@ -315,8 +315,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Traits ++++++++++++++++++
         // traits tag
-        if (TraitsOptions.traits.size() > 0) {
-            for (TraitGuesser trait : TraitsOptions.traits) {
+        if (BeautiOptions.getTraitsList().size() > 0) {
+            for (TraitData trait : BeautiOptions.getTraitsList()) {
                 writeEachTrait(writer, trait, options.taxonList);
             }
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
@@ -373,7 +373,7 @@ public class BeastGenerator extends Generator {
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = TraitsOptions.hasDiscreteTraitsExcludeSpecies();
+        boolean hasAttr = BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies();
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -446,14 +446,14 @@ public class BeastGenerator extends Generator {
      * @param trait     trait
      * @param taxonList TaxonList
      */
-    private void writeEachTrait(XMLWriter writer, TraitGuesser trait, TaxonList taxonList) {
+    private void writeEachTrait(XMLWriter writer, TraitData trait, TaxonList taxonList) {
         String traitName = trait.getTraitName();
 
         writer.writeText("");
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment(options.starBEASTOptions.getDescription());
-        } else if (trait.getTraitsOptions().isSpecifiedTraitAnalysis(TraitsOptions.Traits.TRAIT_LOCATIONS.toString())) { // locations
-            writer.writeComment(TraitsOptions.getPhylogeographicDescription());
+        } else if (trait.getTraitOptions().isSpecifiedTraitAnalysis(TraitOptions.Traits.TRAIT_LOCATIONS.toString())) { // locations
+            writer.writeComment(DiscreteTraitOptions.getPhylogeographicDescription());
         }
         writer.writeComment("trait = " + traitName + " trait_type = " + trait.getTraitType());
 
@@ -467,10 +467,10 @@ public class BeastGenerator extends Generator {
             starEASTGeneratorGenerator.writeSTARBEAST(writer);
 
         } else { // general traits
-            generalTraitGenerator.writeGeneralDataType((DiscreteTraitOptions) trait.getTraitsOptions(), writer);
+            generalTraitGenerator.writeGeneralDataType((DiscreteTraitOptions) trait.getTraitOptions(), writer);
 
-            if (trait.getTraitType() == TraitsOptions.TraitType.DISCRETE) {
-                generalTraitGenerator.writeLocationSubstSiteModel((DiscreteTraitOptions) trait.getTraitsOptions(), writer);
+            if (trait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
+                generalTraitGenerator.writeLocationSubstSiteModel((DiscreteTraitOptions) trait.getTraitOptions(), writer);
             } else {
 
             }
@@ -672,7 +672,7 @@ public class BeastGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitsOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);

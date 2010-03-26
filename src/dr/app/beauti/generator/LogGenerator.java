@@ -124,7 +124,7 @@ public class LogGenerator extends Generator {
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER, TraitsOptions.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitOptions.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
@@ -209,7 +209,7 @@ public class LogGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitsOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
@@ -219,14 +219,14 @@ public class LogGenerator extends Generator {
             // prior on species tree
             writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
 
-            writer.writeIDref(ParameterParser.PARAMETER, TraitsOptions.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitOptions.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
 
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-                writer.writeIDref(ParameterParser.PARAMETER, TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
             } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitsOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             } else {
                 throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
             }
@@ -315,7 +315,7 @@ public class LogGenerator extends Generator {
             // species tree log
             writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, TraitsOptions.Traits.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
+                            new Attribute.Default<String>(XMLParser.ID, TraitOptions.Traits.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
                             new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
                             new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
                             new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME),

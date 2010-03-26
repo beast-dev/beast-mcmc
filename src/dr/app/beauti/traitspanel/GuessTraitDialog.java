@@ -26,7 +26,7 @@
 package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TraitsOptions;
+import dr.app.beauti.options.TraitOptions;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -67,7 +67,7 @@ public class GuessTraitDialog {
         optionPanel = new OptionsPanel(12, 12);
 
         JTextField traitNameField = new JTextField(18);
-        traitNameField.setText(guesser.getTraitName());
+        traitNameField.setText(guesser.getTraitData().getTraitName());
         traitNameField.setEnabled(false);
         optionPanel.addComponentWithLabel("The trait name: ", traitNameField);
 //        traitNameField.addKeyListener(new java.awt.event.KeyListener() {
@@ -88,8 +88,8 @@ public class GuessTraitDialog {
 //                    }
 //                }
 //        );
-        JComboBox traitTypeComb = new JComboBox(TraitsOptions.TraitType.values());
-        traitTypeComb.setSelectedItem(guesser.getTraitType());
+        JComboBox traitTypeComb = new JComboBox(TraitOptions.TraitType.values());
+        traitTypeComb.setSelectedItem(guesser.getTraitData().getTraitType());
         traitTypeComb.setEnabled(false);
         optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
 

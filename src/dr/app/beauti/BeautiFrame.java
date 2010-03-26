@@ -113,7 +113,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction());
+        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction(), getImportTraitsAction());
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
@@ -456,10 +456,10 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
 
-                TraitsOptions.TraitType t = (c == Boolean.class || c == String.class) ? TraitsOptions.TraitType.DISCRETE :
-                        (c == Integer.class) ? TraitsOptions.TraitType.INTEGER : TraitsOptions.TraitType.CONTINUOUS;
+                TraitOptions.TraitType t = (c == Boolean.class || c == String.class) ? TraitOptions.TraitType.DISCRETE :
+                        (c == Integer.class) ? TraitOptions.TraitType.INTEGER : TraitOptions.TraitType.CONTINUOUS;
 
-                TraitGuesser newTrait = new TraitGuesser(traitName, t);
+                TraitData newTrait = new TraitData(traitName, file.getName(), t);
 
                 if (validateTraitName(traitName)) traitsPanel.addTrait(newTrait, traitsPanel.traitsTable);
 
@@ -498,7 +498,7 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         // check that the trait name doesn't exist
-        if (TraitsOptions.containTrait(traitName)) {
+        if (BeautiOptions.containTrait(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -732,7 +732,7 @@ public class BeautiFrame extends DocumentFrame {
         return importAlignmentAction;
     }
 
-    protected AbstractAction importAlignmentAction = new AbstractAction("Import Alignment...") {
+    protected AbstractAction importAlignmentAction = new AbstractAction("Import Alignment(s)") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
@@ -744,7 +744,7 @@ public class BeautiFrame extends DocumentFrame {
         return importTraitsAction;
     }
 
-    protected AbstractAction importTraitsAction = new AbstractAction("Import Trait") {
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Trait(s)") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

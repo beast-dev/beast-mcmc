@@ -37,7 +37,7 @@ public class AlignmentGenerator extends Generator {
     public void writeAlignments(XMLWriter writer) {
         List<Alignment> alignments = new ArrayList<Alignment>();
 
-        for (PartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : BeautiOptions.dataPartitions) {
             Alignment alignment = partition.getAlignment();
             if (!alignments.contains(alignment)) {
                 alignments.add(alignment);

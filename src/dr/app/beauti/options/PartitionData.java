@@ -33,7 +33,7 @@ import dr.evolution.distance.JukesCantorDistanceMatrix;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionData extends ModelOptions {  // extends PartitionOptions {
+public class PartitionData {  // extends PartitionOptions {
 
     private final String fileName;
     private final Alignment alignment;
@@ -47,19 +47,16 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
     private int toSite;
     private int every = 1;
 
-    private final BeautiOptions options;
-
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
 
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
-        this(options, name, fileName, alignment, -1, -1, 1);
+    public PartitionData(String name, String fileName, Alignment alignment) {
+        this(name, fileName, alignment, -1, -1, 1);
     }
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
-        this.options = options;
+    public PartitionData(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
@@ -69,11 +66,18 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
         this.toSite = toSite;
         this.every = every;
 
-        Patterns patterns = new Patterns(alignment);
-        distances = new JukesCantorDistanceMatrix(patterns);
-        meanDistance = distances.getMeanDistance();
+        if (alignment != null) {
+            Patterns patterns = new Patterns(alignment);
+            distances = new JukesCantorDistanceMatrix(patterns);
+            meanDistance = distances.getMeanDistance();
+        } else {
+            distances = null;
+            meanDistance = 0.0;
+        }
+    }
 
-//        meanDistance = 0.0;
+    public TraitOptions.TraitType getTraitType() {
+        return null; // if null, then PartitionData, otherwise TraitData
     }
 
     public double getMeanDistance() {
@@ -99,7 +103,7 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
     public String toString() {
         return getName();
     }
-    
+
     public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
         this.model = model;
     }
@@ -168,7 +172,7 @@ public class PartitionData extends ModelOptions {  // extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.dataPartitions != null && options.dataPartitions.size() > 1) { 
+        if (BeautiOptions.dataPartitions != null && BeautiOptions.dataPartitions.size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }

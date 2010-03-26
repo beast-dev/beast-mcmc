@@ -3,8 +3,8 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DiscreteTraitOptions;
-import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TraitsOptions;
+import dr.app.beauti.options.TraitData;
+import dr.app.beauti.options.TraitOptions;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.util.Taxon;
@@ -53,8 +53,8 @@ public class GeneralTraitGenerator extends Generator {
      *          ArgumentException
      */
     public void writeAtrrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
-        for (TraitGuesser trait : TraitsOptions.traits) {
-            if (!trait.getTraitName().equalsIgnoreCase(TraitsOptions.Traits.TRAIT_SPECIES.toString())) {
+        for (TraitData trait : BeautiOptions.getDiscreteIntegerTraits()) {
+            if (!trait.getTraitName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
 
                 if (taxon.containsAttribute(trait.getTraitName())) {
                     throw new Arguments.ArgumentException("Cannot find trait " + trait.getTraitName()
@@ -77,7 +77,7 @@ public class GeneralTraitGenerator extends Generator {
      * @param writer       XMLWriter
      */
     public void writeGeneralDataType(DiscreteTraitOptions traitOptions, XMLWriter writer) {
-        List<String> generalData = TraitsOptions.getStatesListOfTrait(options.taxonList, traitOptions.getName());
+        List<String> generalData = TraitOptions.getStatesListOfTrait(options.taxonList, traitOptions.getName());
 
         // <generalDataType>
         writer.writeOpenTag(GeneralDataTypeParser.GENERAL_DATA_TYPE, new Attribute[]{

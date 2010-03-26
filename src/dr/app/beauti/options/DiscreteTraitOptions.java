@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author Walter Xie
  */
-public class DiscreteTraitOptions extends TraitsOptions {
+public class DiscreteTraitOptions extends TraitOptions {
 
     public static enum LocationSubstModelType {
         SYM_SUBST("Symmetric substitution model"),
@@ -57,8 +57,8 @@ public class DiscreteTraitOptions extends TraitsOptions {
     private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
     private boolean activateBSSVS = false;
 
-    public DiscreteTraitOptions(TraitGuesser traitGuesser) {
-        super(traitGuesser);
+    public DiscreteTraitOptions(TraitData partition) {
+        super(partition);
     }
 
     @Override
@@ -146,6 +146,14 @@ public class DiscreteTraitOptions extends TraitsOptions {
 
     public void setActivateBSSVS(boolean activateBSSVS) {
         this.activateBSSVS = activateBSSVS;
+    }     
+
+    public static boolean hasPhylogeographic() {
+        return BeautiOptions.containTrait(Traits.TRAIT_LOCATIONS.toString());
+    }
+
+    public static String getPhylogeographicDescription() {
+        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
     }
 
 }

@@ -160,11 +160,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.dataPartitions.size();
+            return BeautiOptions.dataPartitions.size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = BeautiOptions.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();

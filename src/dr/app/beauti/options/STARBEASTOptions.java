@@ -45,7 +45,7 @@ public class STARBEASTOptions extends ModelOptions {
 	public static final String TREE_FILE_NAME = "trees";
 
     public final String POP_MEAN = "popMean";
-    public final String SPECIES_TREE_FILE_NAME = TraitsOptions.Traits.TRAIT_SPECIES
+    public final String SPECIES_TREE_FILE_NAME = TraitOptions.Traits.TRAIT_SPECIES
     							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
 
     private final BeautiOptions options;
@@ -59,32 +59,32 @@ public class STARBEASTOptions extends ModelOptions {
         double spWeights = 5.0;
         double spTuning = 0.9;
 
-        createParameterJeffreysPrior(TraitsOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
+        createParameterJeffreysPrior(TraitOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
         		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         // species tree Yule
-        createParameterJeffreysPrior(TraitsOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+        createParameterJeffreysPrior(TraitOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
                 "Speices tree: Yule process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         // species tree Birth Death
-        createParameterJeffreysPrior(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
+        createParameterJeffreysPrior(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
                 "Speices tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
+        createParameterUniformPrior(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
                 "Speices tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
 
         createParameterJeffreysPrior(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
         		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameter(TraitsOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
+        createParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
 
-        createScaleOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
+        createScaleOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN, spTuning, spWeights);
 
-        createScaleOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
-        createScaleOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createScaleOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, demoTuning, demoWeights);
+        createScaleOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
 
         createScaleOperator(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, 0.5, 94);
 
-        createOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
+        createOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, OperatorType.NODE_REHIGHT, demoTuning, 94);
 
         //TODO: more
 
@@ -101,13 +101,13 @@ public class STARBEASTOptions extends ModelOptions {
      */
     public void selectParameters(List<Parameter> params) {
 
-        params.add(getParameter(TraitsOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+        params.add(getParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            params.add(getParameter(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
-            params.add(getParameter(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            params.add(getParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
+            params.add(getParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            params.add(getParameter(TraitsOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+            params.add(getParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
         }
 
 //    	params.add(getParameter(SpeciesTreeModel.SPECIES_TREE + "." + Generator.SPLIT_POPS));
@@ -122,11 +122,11 @@ public class STARBEASTOptions extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-        ops.add(getOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN));
+        ops.add(getOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + POP_MEAN));
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            ops.add(getOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
-            ops.add(getOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            ops.add(getOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
+            ops.add(getOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             
 //            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
 //            ops.add(getOperator("upDownBirthDeathSTPop"));
@@ -135,7 +135,7 @@ public class STARBEASTOptions extends ModelOptions {
 //            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
 //            }
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            ops.add(getOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
+            ops.add(getOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
             
 //            ops.add(getOperator("upDownYuleSpeciesTree"));
 //            ops.add(getOperator("upDownYuleSTPop"));
@@ -147,18 +147,18 @@ public class STARBEASTOptions extends ModelOptions {
 
         ops.add(getOperator(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS));
 
-        ops.add(getOperator(TraitsOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT));
+        ops.add(getOperator(TraitOptions.Traits.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT));
         //TODO: more
     }
     
     /////////////////////////////////////////////////////////////
 
     public boolean isSpeciesAnalysis() {
-        return TraitsOptions.containTrait(TraitsOptions.Traits.TRAIT_SPECIES.toString());
+        return BeautiOptions.containTrait(TraitOptions.Traits.TRAIT_SPECIES.toString());
     }
 
     public List<String> getSpeciesList() {
-        return TraitsOptions.getStatesListOfTrait(options.taxonList, TraitsOptions.Traits.TRAIT_SPECIES.toString());
+        return TraitOptions.getStatesListOfTrait(options.taxonList, TraitOptions.Traits.TRAIT_SPECIES.toString());
     }
 
     public String getDescription() {

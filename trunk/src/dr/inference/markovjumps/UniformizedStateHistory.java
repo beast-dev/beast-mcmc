@@ -2,9 +2,6 @@ package dr.inference.markovjumps;
 
 import dr.math.MathUtils;
 
-import java.util.List;
-import java.util.ArrayList;
-
 /**
  * A class to represent a complete state history of a continuous-time Markov chain in the
  * interval [0,T] simulated using the Uniformization Method
@@ -56,7 +53,7 @@ public class UniformizedStateHistory extends StateHistory {
                                                                 int stateCount) {
 
         return simulateConditionalOnEndingState(startingTime, startingState, endingTime, endingState,
-                transitionProbability,lambda, stateCount, new SubordinatedProcess(lambda, stateCount));
+                transitionProbability, stateCount, new SubordinatedProcess(lambda, stateCount));
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,
@@ -64,7 +61,6 @@ public class UniformizedStateHistory extends StateHistory {
                                                                 double endingTime,
                                                                 int endingState,
                                                                 double transitionProbability,
-                                                                double[] lambda,
                                                                 int stateCount,
                                                                 SubordinatedProcess subordinator) {
         /**

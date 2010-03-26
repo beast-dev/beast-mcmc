@@ -68,6 +68,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
     protected List<MarkovJumpsType> jumpTypes;
     protected List<double[][]> realizedJumps;
     protected int nJumpProcesses = 0;
+    protected boolean sumAcrossSites;
 
     private final Map<String, Integer> idMap = new HashMap<String, Integer>();
 
@@ -82,6 +83,11 @@ public class CompleteHistorySimulator extends SimpleAlignment
      */
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications) {
+        this(tree, siteModel, branchRateModel, nReplications, false);
+    }
+
+    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+                                    int nReplications, boolean sumAcrossSites) {
         this.tree = tree;
         this.siteModel = siteModel;
         this.branchRateModel = branchRateModel;
@@ -89,6 +95,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
         stateCount = this.siteModel.getSubstitutionModel().getDataType().getStateCount();
         categoryCount = this.siteModel.getCategoryCount();
 
+        this.sumAcrossSites = sumAcrossSites;
 
         List<String> taxaIds = new ArrayList<String>();
         for (int i = 0; i < tree.getTaxonCount(); i++) {
@@ -199,14 +206,22 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private String formattedValue(Tree tree, NodeRef node, int jump) {
         StringBuffer sb = new StringBuffer();
         double[] values = getMarkovJumpsForNodeAndRegister(tree, node, jump);
-        sb.append("{");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) {
-                sb.append(",");
+        if (sumAcrossSites) {
+            double total = 0;
+            for (double x : values) {
+                total += x;
             }
-            sb.append(values[i]);
+            sb.append(total);
+        } else {
+            sb.append("{");
+            for (int i = 0; i < values.length; i++) {
+                if (i > 0) {
+                    sb.append(",");
+                }
+                sb.append(values[i]);
+            }
+            sb.append("}");
         }
-        sb.append("}");
         return sb.toString();
     }
 
@@ -217,7 +232,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
         sb.append(super.toString());
         sb.append("\n");
 
-        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+        Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
                 format, null,
                 (nJumpProcesses > 0 ? new NodeAttributeProvider[]{this} : null),
                 null,

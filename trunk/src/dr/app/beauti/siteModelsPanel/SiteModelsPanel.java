@@ -495,7 +495,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return BeautiOptions.getDiscreteTraitsExcludeSpecies().get(row).getTraitName();
+                    return BeautiOptions.getDiscreteTraitsExcludeSpecies().get(row).getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

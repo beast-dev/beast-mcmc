@@ -120,7 +120,7 @@ public class TraitGuesser {
                 //
             }
 
-            options.taxonList.getTaxon(i).setAttribute(traitData.getTraitName(), value);
+            options.taxonList.getTaxon(i).setAttribute(traitData.getName(), value);
         }
     }
 
@@ -159,7 +159,7 @@ public class TraitGuesser {
             	if (i == 0) {
             		throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
             	} else {
-            		return label + seperator + traitData.getTraitName();
+            		return label + seperator + traitData.getName();
             	}
             }
 

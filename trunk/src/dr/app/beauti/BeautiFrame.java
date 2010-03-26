@@ -461,7 +461,8 @@ public class BeautiFrame extends DocumentFrame {
 
                 TraitData newTrait = new TraitData(traitName, file.getName(), t);
 
-                if (validateTraitName(traitName)) traitsPanel.addTrait(newTrait, traitsPanel.traitsTable);
+                if (validateTraitName(traitName))
+                    traitsPanel.addTrait(newTrait, traitsPanel.traitsTable);
 
                 for (final String[] v : e.getValue()) {
                     final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);

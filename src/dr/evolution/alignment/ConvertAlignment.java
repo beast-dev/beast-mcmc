@@ -25,13 +25,9 @@
 
 package dr.evolution.alignment;
 
-import dr.evolution.datatype.AminoAcids;
-import dr.evolution.datatype.CodonTable;
-import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.*;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
-
 import java.util.*;
 
 /**
@@ -105,7 +101,10 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 				throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
 			}
 		} else if (originalType == DataType.CODONS) {
-			if (newType != DataType.AMINO_ACIDS) {
+			if (!(newType == DataType.AMINO_ACIDS || newType == DataType.NUCLEOTIDES)) {
+
+                                  System.err.println("originalType = " + originalType);
+                                  System.err.println("newType = " + newType);
 				throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
 			}
 		} else {
@@ -237,7 +236,12 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
 			}
 
 		} else if (originalType == DataType.CODONS) {
+                        if (newType == DataType.AMINO_ACIDS) {
 			state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
+                        } else { // newType == DataType.CODONS
+                            String string = alignment.getAlignedSequenceString(taxonIndex);
+                            state = Nucleotides.INSTANCE.getState(string.charAt(siteIndex));
+                        }
 		}
 
 		return state;
@@ -334,6 +338,20 @@ public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTM
             taxa.add(getTaxon(i));
         }
         return taxa;
+    }
+
+    public String toString() {
+        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
+
+        StringBuffer buffer = new StringBuffer();
+
+        for (int i = 0; i < getSequenceCount(); i++) {
+            String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
+            buffer.append(">").append(name).append("\n");
+            buffer.append(getAlignedSequenceString(i)).append("\n");
+        }
+
+        return buffer.toString();
     }
 
     public Iterator<Taxon> iterator() {

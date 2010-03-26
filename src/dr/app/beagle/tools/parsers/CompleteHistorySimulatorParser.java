@@ -31,6 +31,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
     public static final String SYN_JUMPS = "reportSynonymousMutations";
     public static final String NON_SYN_JUMPS = "reportNonSynonymousMutations";
+    public static final String SUM_SITES = "sumAcrossSites";
 
     public String getParserName() {
         return HISTORY_SIMULATOR;
@@ -51,7 +52,10 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
         String jumpTag = xo.getAttribute(JUMP_TAG_NAME, JUMP_TAG);
 
-        CompleteHistorySimulator history = new CompleteHistorySimulator(tree, siteModel, rateModel, nReplications);
+        boolean sumAcrossSites = xo.getAttribute(SUM_SITES, false);
+
+        CompleteHistorySimulator history = new CompleteHistorySimulator(tree, siteModel, rateModel, nReplications,
+                sumAcrossSites);
 
         XMLObject cxo = xo.getChild(COUNTS);
         if (cxo != null) {
@@ -108,5 +112,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(REPLICATIONS),
             AttributeRule.newBooleanRule(SYN_JUMPS, true),
             AttributeRule.newBooleanRule(NON_SYN_JUMPS, true),
+            AttributeRule.newBooleanRule(SUM_SITES, true),
     };
 }

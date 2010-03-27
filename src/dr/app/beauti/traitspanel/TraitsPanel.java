@@ -31,7 +31,6 @@ import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
-import dr.app.beauti.options.TraitOptions;
 import dr.app.beauti.util.PanelUtils;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
@@ -93,7 +92,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4))); 
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitOptions.TraitType.values());
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitData.TraitType.values());
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         col.setCellRenderer(comboBoxRenderer);
 
@@ -312,7 +311,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int result = createTraitDialog.showDialog();
         if (result != JOptionPane.CANCEL_OPTION) {
             String name = createTraitDialog.getName();
-            TraitOptions.TraitType type = createTraitDialog.getType();
+            TraitData.TraitType type = createTraitDialog.getType();
             TraitData newTrait = new TraitData(name, "", type);
             currentTrait = newTrait;
 
@@ -320,9 +319,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             // user is overwriting an existing trait
             addTrait(newTrait, traitsTable);
 
-            if (currentTrait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
+            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
                 frame.setupSpeciesAnalysis();
-            } else if (currentTrait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
+            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
             }
 
@@ -345,9 +344,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         if (currentTrait != null) {
             clearTraitValues(currentTrait.getName()); // Clear trait values
-            if (currentTrait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())) {
+            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
                 frame.removeSepciesAnalysis();
-            } else if (currentTrait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
+            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
             }
 
@@ -448,15 +447,15 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                     BeautiOptions.getTraitsList().get(row).setName(aValue.toString());
                     break;
                 case 1:
-                    BeautiOptions.getTraitsList().get(row).setTraitType((TraitOptions.TraitType) aValue);
+                    BeautiOptions.getTraitsList().get(row).setTraitType((TraitData.TraitType) aValue);
                     break;
             }            
         }
 
         public boolean isCellEditable(int row, int col) {
 //            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
-            return !(BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString())
-                  || BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_LOCATIONS.toString()));
+            return !(BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())
+                  || BeautiOptions.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
         }
 
         public String getColumnName(int column) {

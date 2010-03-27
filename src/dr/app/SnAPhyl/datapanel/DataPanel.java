@@ -27,7 +27,7 @@ import dr.app.SnAPhyl.SnAPhylFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.TraitOptions;
+import dr.app.beauti.options.TraitData;
 import dr.app.beauti.traitspanel.GuessTraitDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.Date;
@@ -328,7 +328,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 0:
                     return options.taxonList.getTaxonId(row);
                 case 1:
-                    Object value = options.taxonList.getTaxon(row).getAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString());
+                    Object value = options.taxonList.getTaxon(row).getAttribute(TraitData.Traits.TRAIT_SPECIES.toString());
                     if (value != null) {
                         return value;
                     } else {
@@ -355,7 +355,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     options.taxonList.getTaxon(row).setId(aValue.toString());
                     break;
                 case 1:
-                    options.taxonList.getTaxon(row).setAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString(), aValue);
+                    options.taxonList.getTaxon(row).setAttribute(TraitData.Traits.TRAIT_SPECIES.toString(), aValue);
                     break;
                 case 2:
                     break;
@@ -377,7 +377,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 return (date != null);
             }
             if (col == 1) {
-                Object t = options.taxonList.getTaxon(row).getAttribute(TraitOptions.Traits.TRAIT_SPECIES.toString());
+                Object t = options.taxonList.getTaxon(row).getAttribute(TraitData.Traits.TRAIT_SPECIES.toString());
                 return (t != null);
             }
             return false;

@@ -284,7 +284,7 @@ public class TreePriorGenerator extends Generator {
 	            );
 	            
 	            // initial value for pop mean is the same as what used to be the value for the population size
-	            Parameter para = options.starBEASTOptions.getParameter(TraitOptions.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+	            Parameter para = options.starBEASTOptions.getParameter(TraitData.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	            prior.getParameter("constant.popSize").initial = para.initial;
 	
 	            writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);

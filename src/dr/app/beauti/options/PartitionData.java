@@ -76,7 +76,7 @@ public class PartitionData {  // extends PartitionOptions {
         }
     }
 
-    public TraitOptions.TraitType getTraitType() {
+    public TraitData.TraitType getTraitType() {
         return null; // if null, then PartitionData, otherwise TraitData
     }
 
@@ -168,6 +168,10 @@ public class PartitionData {  // extends PartitionOptions {
         } else {
             return 0;
         }
+    }
+
+    public String getDataType() {
+        return alignment.getDataType().getDescription();
     }
 
     public String getPrefix() {

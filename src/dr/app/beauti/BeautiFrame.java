@@ -456,8 +456,8 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
 
-                TraitOptions.TraitType t = (c == Boolean.class || c == String.class) ? TraitOptions.TraitType.DISCRETE :
-                        (c == Integer.class) ? TraitOptions.TraitType.INTEGER : TraitOptions.TraitType.CONTINUOUS;
+                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
 
                 TraitData newTrait = new TraitData(traitName, file.getName(), t);
 

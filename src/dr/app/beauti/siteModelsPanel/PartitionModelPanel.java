@@ -83,9 +83,9 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
-    PartitionSubstitutionModel model;
+    protected final PartitionSubstitutionModel model;
 
-    public PartitionModelPanel(PartitionSubstitutionModel partitionModel) {
+    public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
 
         super(12, 30);
 

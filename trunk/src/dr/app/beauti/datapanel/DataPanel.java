@@ -613,7 +613,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 3:
                     return "" + partition.getSiteCount(); // sequence length
                 case 4:
-                    return partition.getAlignment().getDataType().getDescription();
+                    return partition.getDataType();
                 case 5:
 //                    return partition.getPloidyType();
 //                case 6:

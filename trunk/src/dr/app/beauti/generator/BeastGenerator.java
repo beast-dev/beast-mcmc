@@ -449,11 +449,11 @@ public class BeastGenerator extends Generator {
     private void writeEachTrait(XMLWriter writer, TraitData trait, TaxonList taxonList) {
         String traitName = trait.getName();
 
-        writer.writeText("");
+        writer.writeText("");                                                        
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writer.writeComment(options.starBEASTOptions.getDescription());
-        } else if (trait.getTraitOptions().isSpecifiedTraitAnalysis(TraitOptions.Traits.TRAIT_LOCATIONS.toString())) { // locations
-            writer.writeComment(DiscreteTraitOptions.getPhylogeographicDescription());
+        } else if (trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_LOCATIONS.toString())) { // locations
+            writer.writeComment(TraitData.getPhylogeographicDescription());
         }
         writer.writeComment("trait = " + traitName + " trait_type = " + trait.getTraitType());
 
@@ -467,13 +467,13 @@ public class BeastGenerator extends Generator {
             starEASTGeneratorGenerator.writeSTARBEAST(writer);
 
         } else { // general traits
-            generalTraitGenerator.writeGeneralDataType((DiscreteTraitOptions) trait.getTraitOptions(), writer);
-
-            if (trait.getTraitType() == TraitOptions.TraitType.DISCRETE) {
-                generalTraitGenerator.writeLocationSubstSiteModel((DiscreteTraitOptions) trait.getTraitOptions(), writer);
-            } else {
-
-            }
+//            generalTraitGenerator.writeGeneralDataType((DiscreteTraitData) trait.getTraitData(), writer);
+//
+//            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+//                generalTraitGenerator.writeLocationSubstSiteModel((DiscreteTraitData) trait.getTraitData(), writer);
+//            } else {
+//
+//            }
 
         }
     }
@@ -672,7 +672,7 @@ public class BeastGenerator extends Generator {
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitOptions.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.Traits.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);

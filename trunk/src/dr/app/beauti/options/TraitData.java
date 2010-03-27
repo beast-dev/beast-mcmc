@@ -1,43 +1,134 @@
 package dr.app.beauti.options;
 
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  */
 public class TraitData extends PartitionData {
-    private TraitOptions traitOptions;
+    public static enum TraitType {
+        DISCRETE,
+        INTEGER,
+        CONTINUOUS
+    }
 
+    public static enum Traits {
+        TRAIT_SPECIES("species"),
+        TRAIT_LOCATIONS("locations");
+
+        Traits(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    }
 //    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
-    private TraitOptions.TraitType traitType = TraitOptions.TraitType.DISCRETE;
+    private TraitType traitType = TraitType.DISCRETE;
 
 
-    public TraitData(String traitName, String fileName, TraitOptions.TraitType traitType) {
+    public TraitData(String traitName, String fileName, TraitType traitType) {
         super(traitName, fileName, null);
         this.traitType = traitType;
 
-        createTraitOptions();
+//        createTraitOptions();
     }   
 
-    private void createTraitOptions(){
-        if (traitType == TraitOptions.TraitType.DISCRETE) {
-            traitOptions = new DiscreteTraitOptions(this);
-        } else {
-            traitOptions = null; //TODO integer and continuous
-        }
-    }
+//    private void createTraitOptions(){
+//        if (traitType == TraitOptions.TraitType.DISCRETE) {
+//            traitOptions = new DiscreteTraitOptions(this);
+//        } else {
+//            traitOptions = null; //TODO integer and continuous
+//        }
+//    }
 
     /////////////////////////////////////////////////////////////////////////
 
-    public TraitOptions.TraitType getTraitType() {
+    public TraitType getTraitType() {
         return traitType;
     }
 
-    public void setTraitType(TraitOptions.TraitType traitType) {
+    public void setTraitType(TraitType traitType) {
         this.traitType = traitType;
-        createTraitOptions();
     }
 
-    public TraitOptions getTraitOptions() {
-        return traitOptions;
+//    public TraitOptions getTraitOptions() {
+//        return traitOptions;
+//    }
+
+    public int getSiteCount() {
+        return 0;
+    }
+
+    public int getTaxaCount() {
+        return BeautiOptions.taxonList.getTaxonCount();
+    }
+
+    public String getDataType() {
+        return getTraitType().toString();
+    }
+
+
+    public boolean isSpecifiedTraitAnalysis(String traitName) {
+        return  getName() == traitName;
+    }
+
+    public List<String> getStatesListOfTrait(Taxa taxonList) {
+        List<String> states = new ArrayList<String>();
+        String attr;
+
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                attr = (String) taxon.getAttribute(getName());
+
+                if (attr == null) return null;
+
+                if (!states.contains(attr)) {
+                    states.add(attr);
+                }
+            }
+            return states;
+        } else {
+            return null;
+        }
+    }
+
+    public static boolean hasPhylogeographic() {
+        return BeautiOptions.containTrait(TraitData.Traits.TRAIT_LOCATIONS.toString());
+    }
+
+    public static String getPhylogeographicDescription() {
+        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
+    }
+
+    
+    public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
+        List<String> states = new ArrayList<String>();
+        String attr;
+
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                attr = (String) taxon.getAttribute(traitName);
+
+                if (attr == null) return null;
+
+                if (!states.contains(attr)) {
+                    states.add(attr);
+                }
+            }
+            return states;
+        } else {
+            return null;
+        }
     }
     
 }

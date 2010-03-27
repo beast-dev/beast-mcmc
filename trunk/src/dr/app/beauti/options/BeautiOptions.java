@@ -193,10 +193,10 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectParameters(parameters);
         }
 
-        for (TraitData trait : getTraitsList()) { // all traits including locations
-            if (!trait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
-        	   trait.getTraitOptions().selectParameters(parameters);
-        }
+//        for (TraitData trait : getTraitsList()) { // all traits including locations
+//            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+//        	   trait.gets.selectParameters(parameters);
+//        }
 
         selectComponentParameters(this, parameters);
         
@@ -243,10 +243,10 @@ public class BeautiOptions extends ModelOptions {
         	starBEASTOptions.selectOperators(ops);
         }
 
-        for (TraitData trait : getTraitsList()) { // all traits including locations
-        	if (!trait.getName().equalsIgnoreCase(TraitOptions.Traits.TRAIT_SPECIES.toString()))
-                trait.getTraitOptions().selectOperators(ops);
-        }
+//        for (TraitData trait : getTraitsList()) { // all traits including locations
+//        	if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+//                trait.getTraitData().selectOperators(ops);
+//        }
 
         selectComponentOperators(this, ops);
 
@@ -299,7 +299,9 @@ public class BeautiOptions extends ModelOptions {
 
         for (PartitionData partition : givenDataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model != null && (!activeModels.contains(model))) {
+            if (model != null && (!activeModels.contains(model))
+                    // species excluded
+                    && (!partition.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))) {
                 activeModels.add(model);
             }
         }
@@ -531,7 +533,7 @@ public class BeautiOptions extends ModelOptions {
     public static List<TraitData> getDiscreteIntegerTraits() {
         List<TraitData> traits = new ArrayList<TraitData>();
         for (PartitionData partition : dataPartitions) {
-            if (partition.getTraitType() != null && partition.getTraitType() != TraitOptions.TraitType.CONTINUOUS) {
+            if (partition.getTraitType() != null && partition.getTraitType() != TraitData.TraitType.CONTINUOUS) {
                 traits.add((TraitData) partition);
             }
         }
@@ -540,7 +542,7 @@ public class BeautiOptions extends ModelOptions {
 
     public static boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
         return getDiscreteIntegerTraits().size() > 1
-                || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitOptions.Traits.TRAIT_SPECIES.toString())));
+                || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitData.Traits.TRAIT_SPECIES.toString())));
     }
 
     public static boolean containTrait(String traitName) {
@@ -614,7 +616,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (DiscreteTraitOptions.hasPhylogeographic()) {
+            if (TraitData.hasPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
             

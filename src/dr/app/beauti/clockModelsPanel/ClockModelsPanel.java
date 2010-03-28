@@ -29,13 +29,12 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.util.PanelUtils;
-
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.OptionsPanel;
@@ -396,7 +395,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
             return buffer.toString();
         }
     }
-    
+
     class ClockTableCellRenderer extends TableRenderer {
 
         public ClockTableCellRenderer(int alignment, Insets insets) {
@@ -429,5 +428,114 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
 
     }
+
+    class DiscreteTraitModelTableModel extends AbstractTableModel {
+
+            /**
+             *
+             */
+             String[] columnNames = {"Clock Model Name", "Molecular Clock Model", "Estimate", "Rate"};
+
+        public DiscreteTraitModelTableModel() {
+        }
+
+        public int getColumnCount() {
+//        	if (estimateRelatieRateCheck.isSelected()) {
+//        		return columnNames2.length;
+//        	} else {
+        		return columnNames.length;
+//        	}
+        }
+
+        public int getRowCount() {
+            if (options == null) return 0;
+            return options.getPartitionTraitsClockModels().size();
+        }
+
+        public Object getValueAt(int row, int col) {
+            PartitionClockModel model = options.getPartitionTraitsClockModels().get(row);
+            switch (col) {
+                case 0:
+                    return model.getName();
+                case 1:
+                    return model.getClockType();
+                case 2:
+                    return model.isEstimatedRate();
+                case 3:
+                    return model.getRate();
+            }
+            return null;
+        }
+
+        public void setValueAt(Object aValue, int row, int col) {
+            PartitionClockModel model = options.getPartitionTraitsClockModels().get(row);
+            switch (col) {
+                case 0:
+                    String name = ((String) aValue).trim();
+                    if (name.length() > 0) {
+                        model.setName(name);
+                    }
+                    break;
+                case 1:
+                    model.setClockType((ClockType) aValue);
+                    break;
+                case 2:
+                    model.setEstimatedRate((Boolean) aValue);
+//                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
+//                        if (!options.clockModelOptions.validateRelativeTo()) {
+//                            JOptionPane.showMessageDialog(frame, "It must have at least one clock rate to be fixed !",
+//                                    "Validation Of Relative To ?th Rate", JOptionPane.WARNING_MESSAGE);
+//                            model.setEstimatedRate(false);
+//                        }
+//                    }
+                    break;
+                case 3:
+                	model.setRate((Double) aValue);
+                    options.selectParameters();
+                	break;
+                default:
+                    throw new IllegalArgumentException("unknown column, " + col);
+            }
+            
+        }
+
+        public boolean isCellEditable(int row, int col) {
+
+            return true;
+        }
+
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
+
+        public Class getColumnClass(int c) {
+            if (getRowCount() == 0) {
+                return Object.class;
+            }
+            return getValueAt(0, c).getClass();
+        }
+
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+
+            buffer.append(getColumnName(0));
+            for (int j = 1; j < getColumnCount(); j++) {
+                buffer.append("\t");
+                buffer.append(getColumnName(j));
+            }
+            buffer.append("\n");
+
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
+
+            return buffer.toString();
+        }
+       }
 
 }

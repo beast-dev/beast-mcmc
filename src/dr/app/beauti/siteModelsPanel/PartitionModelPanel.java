@@ -26,13 +26,14 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
-import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.options.PartitionDiscreteTraitSubstModel;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.AminoAcidModelType;
+import dr.evomodel.substmodel.NucModelType;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -52,9 +53,9 @@ import java.util.logging.Logger;
 public class PartitionModelPanel extends OptionsPanel {
 
     // Components
-	private static final long serialVersionUID = -1645661616353099424L;
-	
-	private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(NucModelType.HKY, NucModelType.TN93).toArray());
+    private static final long serialVersionUID = -1645661616353099424L;
+
+    private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(NucModelType.HKY, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck
@@ -83,6 +84,10 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
+    private JComboBox discreteTraitSiteModelCombo = new JComboBox(PartitionDiscreteTraitSubstModel.LocationSubstModelType.values());
+    private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
+
+
     protected final PartitionSubstitutionModel model;
 
     public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
@@ -96,7 +101,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(nucSubstCombo);
         nucSubstCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model.setNucSubstitutionModel( (NucModelType) nucSubstCombo.getSelectedItem());                
+                model.setNucSubstitutionModel((NucModelType) nucSubstCombo.getSelectedItem());
             }
         });
         nucSubstCombo.setToolTipText("<html>Select the type of nucleotide substitution model.</html>");
@@ -122,7 +127,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(useAmbiguitiesTreeLikelihoodCheck);
         useAmbiguitiesTreeLikelihoodCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	model.setUseAmbiguitiesTreeLikelihood(useAmbiguitiesTreeLikelihoodCheck.isSelected());
+                model.setUseAmbiguitiesTreeLikelihood(useAmbiguitiesTreeLikelihoodCheck.isSelected());
             }
         });
         useAmbiguitiesTreeLikelihoodCheck.setToolTipText("<html>Detemine useAmbiguities in &lt treeLikelihood &gt .</html>");
@@ -152,7 +157,7 @@ public class PartitionModelPanel extends OptionsPanel {
                         } else {
                             gammaCatLabel.setEnabled(false);
                             gammaCatCombo.setEnabled(false);
-                        }                        
+                        }
 
                         if (codingCombo.getSelectedIndex() != 0) {
                             heteroUnlinkCheck.setEnabled(heteroCombo.getSelectedIndex() != 0);
@@ -191,6 +196,21 @@ public class PartitionModelPanel extends OptionsPanel {
         dolloCheck.setEnabled(true);
         dolloCheck.setToolTipText("<html>Activates a stochastic dollo model - Alekseyenko, Lee & Suchard(2008) Syst Biol 57: 772-784.</html>");
 
+        PanelUtils.setupComponent(discreteTraitSiteModelCombo);
+        discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                ((PartitionDiscreteTraitSubstModel) model).setLocationSubstType(
+                        (PartitionDiscreteTraitSubstModel.LocationSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
+            }
+        });
+
+        PanelUtils.setupComponent(activateBSSVS);
+        activateBSSVS.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                ((PartitionDiscreteTraitSubstModel) model).setActivateBSSVS(activateBSSVS.isSelected());
+            }
+        });
+
         setupPanel();
         setOpaque(false);
     }
@@ -212,22 +232,27 @@ public class PartitionModelPanel extends OptionsPanel {
 
         int dataType = model.getDataType().getType();
         switch (dataType) {
-            case DataType.NUCLEOTIDES:                
-                nucSubstCombo.setSelectedItem(model.getNucSubstitutionModel());  
+            case DataType.NUCLEOTIDES:
+                nucSubstCombo.setSelectedItem(model.getNucSubstitutionModel());
                 frequencyCombo.setSelectedItem(model.getFrequencyPolicy());
 
                 break;
 
             case DataType.AMINO_ACIDS:
                 aaSubstCombo.setSelectedItem(model.getAaSubstitutionModel());
-                
+
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 binarySubstCombo.setSelectedItem(model.getBinarySubstitutionModel());
                 useAmbiguitiesTreeLikelihoodCheck.setSelected(model.isUseAmbiguitiesTreeLikelihood());
-                
+
+                break;
+
+            case DataType.GENERAL:
+                discreteTraitSiteModelCombo.setSelectedItem(((PartitionDiscreteTraitSubstModel) model).getLocationSubstType());
+                activateBSSVS.setSelected(((PartitionDiscreteTraitSubstModel) model).isActivateBSSVS());
                 break;
 
             default:
@@ -325,9 +350,14 @@ public class PartitionModelPanel extends OptionsPanel {
                 gammaCatCombo.setEnabled(false);
 
                 addSeparator();
-                
+
                 addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
 
+                break;
+
+            case DataType.GENERAL:
+                addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
+                addComponent(activateBSSVS);
                 break;
 
             default:
@@ -415,5 +445,5 @@ public class PartitionModelPanel extends OptionsPanel {
         }
         );
     }
-   
+
 }

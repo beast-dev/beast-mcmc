@@ -79,6 +79,9 @@ public class GeneralDataType extends DataType implements Identifiable {
         this.ambiguousStateCount = 0;
     }
 
+    // for BEAUti trait PartitionDiscreteTraitSubstModel
+    public GeneralDataType() {}
+
     /**
      * Add an alias (a state code that represents a particular state).
      * Note that all this does is put an extra entry in the stateNumbers

@@ -334,7 +334,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void addTrait(TraitData newTrait, JTable traitsTable) {
-        int selRow = BeautiOptions.addTrait(newTrait);
+        int selRow = options.addTrait(newTrait);
         traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
     }
 

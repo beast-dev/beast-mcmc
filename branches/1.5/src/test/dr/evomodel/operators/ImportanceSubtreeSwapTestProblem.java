@@ -3,17 +3,17 @@
  */
 package test.dr.evomodel.operators;
 
+
 import java.io.IOException;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
-//import dr.evolution.io.NewickImporter;
+
+import dr.evolution.io.NewickImporter;
 import dr.evolution.io.Importer.ImportException;
-//import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
-import dr.evomodel.operators.GibbsSubtreeSwap;
-//import dr.evomodel.operators.ImportanceSubtreeSwap;
+import dr.evomodel.operators.ImportanceSubtreeSwap;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.CoercionMode;
@@ -23,26 +23,23 @@ import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inference.operators.UniformOperator;
 
-
 /**
- * @author Sebastian Hoehna
+ * @author shhn001
  *
  */
-public class GibbsSubtreeSwapTest  extends OperatorAssert{
+public class ImportanceSubtreeSwapTestProblem extends OperatorAssert{
 
 
 	public static Test suite() {
-        return new TestSuite(GibbsSubtreeSwapTest.class);
+        return new TestSuite(ImportanceSubtreeSwapTestProblem.class);
     }
 	
 	/**
-	 * Test method for {@link dr.evomodel.operators.GibbsSubtreeSwap#doOperation()}.
+	 * Test method for {@link dr.evomodel.operators.ImportanceSubtreeSwap#doOperation()}.
 	 * @throws ImportException 
 	 * @throws IOException 
 	 */
 	public void testDoOperation() throws IOException, ImportException {
-		// assumes that the posterior is equal for all trees!!!		
-		
 		// probability of picking (A,B) node is 1/(2n-3) = 1/7
         // probability of swapping with D is 1/2
         // total = 1/14
@@ -52,19 +49,6 @@ public class GibbsSubtreeSwapTest  extends OperatorAssert{
         // total = 1/35
 
         //total = 1/14 + 1/35 = 7/70 = 0.1
-		
-		// now we calculate the same for the backward proposal
-		// this is needed for the Hastings ratio
-		
-		// probability of picking (A,B) node is 1/(2n-3) = 1/7
-        // probability of swapping with D is 1/3
-        // total = 1/21
-
-        //probability of picking {D} node is 1/(2n-3) = 1/7
-        //probability of picking {A,B} is 1/4
-        // total = 1/28
-
-        //total = 1/21 + 1/28 = 4/84 + 3/84 = 7/84 = 1/12 
     	
     	System.out.println("Test 1: Forward");
 
@@ -77,16 +61,13 @@ public class GibbsSubtreeSwapTest  extends OperatorAssert{
 
             try {
                 TreeModel treeModel = new TreeModel("treeModel", tree5);
-                GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
-                double hr = operator.operate(null, null);
+                ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
+                operator.doOperation();
 
                 String tree = Tree.Utils.newickNoLengths(treeModel);
 
                 if (tree.equals(treeMatch)) {
-//                	System.out.println("Expected Hastings ratio = " + 5.0/6.0 + " in log = " + Math.log(5.0/6.0));
-//                	System.out.println("Obtained Hastings ratio = " + Math.exp(hr) + " in log = " + hr);
-                	TestCase.assertEquals(Math.log(5.0/6.0), hr, 0.00000001);
-                	count += 1;
+                    count += 1;
                 }
 
             } catch (OperatorFailedException e) {
@@ -100,7 +81,55 @@ public class GibbsSubtreeSwapTest  extends OperatorAssert{
         System.out.println("Number of tries:\t" + reps);
         System.out.println("Number of ratio:\t" + p_1);
         System.out.println("Number of expected ratio:\t" + 0.1);
-        assertExpectation(0.1, p_1, reps);        
+        assertExpectation(0.1, p_1, reps);
+        
+        // lets see what the backward probability is for the hastings ratio
+        
+        // (((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0) -> ((((A,B),C),D),E)
+        
+        // probability of picking (A,B) node is 1/(2n-3) = 1/7
+        // probability of swapping with D is 1/3
+        // total = 1/21
+
+        //probability of picking {D} node is 1/(2n-2) = 1/7
+        //probability of picking {A,B} is 1/4
+        // total = 1/28
+
+        //total = 1/21 + 1/28 = 7/84 = 0.08333333
+        
+    	System.out.println("Test 2: Backward");
+        
+        treeMatch = "((((A,B),C),D),E);";
+        NewickImporter importer = new NewickImporter("(((D:2.0,C:2.0):1.0,(A:1.0,B:1.0):2.0):1.0,E:4.0);");
+        FlexibleTree tree5_2 = (FlexibleTree) importer.importTree(null);
+
+        count = 0;
+
+        for (int i = 0; i < reps; i++) {
+
+            try {
+                TreeModel treeModel = new TreeModel("treeModel", tree5_2);
+                ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 0);
+                operator.doOperation();
+
+                String tree = Tree.Utils.newickNoLengths(treeModel);
+
+                if (tree.equals(treeMatch)) {
+                    count += 1;
+                }
+
+            } catch (OperatorFailedException e) {
+                e.printStackTrace();
+            }
+
+        }
+        double p_2 = (double) count / (double) reps;
+
+        System.out.println("Number of proposals:\t" + count);
+        System.out.println("Number of tries:\t" + reps);
+        System.out.println("Number of ratio:\t" + p_2);
+        System.out.println("Number of expected ratio:\t" + 0.0833333);
+        assertExpectation(0.0833333, p_2, reps);
 	}
 	
 	 public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
@@ -108,7 +137,7 @@ public class GibbsSubtreeSwapTest  extends OperatorAssert{
 	        Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
 	        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
-	        GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
+	        ImportanceSubtreeSwap operator = new ImportanceSubtreeSwap(treeModel, 1.0, 1);
 	        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
 	        UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
@@ -119,4 +148,5 @@ public class GibbsSubtreeSwapTest  extends OperatorAssert{
 
 	        return schedule;
 	    }
+
 }

@@ -25,20 +25,12 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.options.PartitionDiscreteTraitSubstModel;
-import dr.app.beauti.util.PanelUtils;
-import org.virion.jam.panels.OptionsPanel;
-
-import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 /**
  *@author Walter Xie
  */
 public class DiscreteTraitSiteModelPanel extends PartitionModelPanel {
 
-    private JComboBox discreteTraitSiteModelCombo = new JComboBox(PartitionDiscreteTraitSubstModel.LocationSubstModelType.values());
-    private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
 
 
     final PartitionDiscreteTraitSubstModel discreteTraitModel;
@@ -51,20 +43,7 @@ public class DiscreteTraitSiteModelPanel extends PartitionModelPanel {
 
         this.discreteTraitModel = discreteTraitModel;
 
-        PanelUtils.setupComponent(discreteTraitSiteModelCombo);
-        discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                discreteTraitModel.setLocationSubstType(
-                        (PartitionDiscreteTraitSubstModel.LocationSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
-            }
-        });
 
-        PanelUtils.setupComponent(activateBSSVS);
-        activateBSSVS.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                discreteTraitModel.setActivateBSSVS(activateBSSVS.isSelected());
-            }
-        });
 
         setupPanel();
     }
@@ -73,9 +52,6 @@ public class DiscreteTraitSiteModelPanel extends PartitionModelPanel {
 
         removeAll();
 
-        addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
-
-        addComponent(activateBSSVS);
 
         validate();
         repaint();
@@ -83,9 +59,6 @@ public class DiscreteTraitSiteModelPanel extends PartitionModelPanel {
 
     public void setOptions() {
         settingOptions = true;
-
-        discreteTraitSiteModelCombo.setSelectedItem(discreteTraitModel.getLocationSubstType());
-        activateBSSVS.setSelected(discreteTraitModel.isActivateBSSVS());
 
         settingOptions = false;
 

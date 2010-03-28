@@ -33,7 +33,7 @@ public class PartitionDiscreteTraitSubstModel extends PartitionSubstitutionModel
     private boolean activateBSSVS = false;
 
     public PartitionDiscreteTraitSubstModel(BeautiOptions options, TraitData partition) {
-        super(options, partition.getName(), new GeneralDataType(partition.getStatesListOfTrait(BeautiOptions.taxonList)));
+        super(options, partition.getName(), new GeneralDataType());
     }
 
     public PartitionDiscreteTraitSubstModel(BeautiOptions options, String name, PartitionDiscreteTraitSubstModel source) {
@@ -45,7 +45,7 @@ public class PartitionDiscreteTraitSubstModel extends PartitionSubstitutionModel
     }
 
 
-    protected void initTraitParametersAndOperators() {
+    protected void initSubstModelParaAndOpers() {
 
         createParameterUniformPrior("frequencies", getName() + " base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
         createCachedGammaPrior("rates", "location substitution model rates",

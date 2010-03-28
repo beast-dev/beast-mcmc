@@ -335,6 +335,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             case DataType.TWO_STATES:
                 title = "Binary";
                 break;
+            case DataType.GENERAL:
+                title = "Discrete Traits";
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 
@@ -470,61 +473,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             return buffer.toString();
         }
     }
-
-//    class DiscreteTraitModelTableModel extends AbstractTableModel {
-//
-//        /**
-//         *
-//         */
-//        private static final long serialVersionUID = -6707994233020715574L;
-//        String[] columnNames = {"Discrete Trait(s)"};
-//
-//        public DiscreteTraitModelTableModel() {
-//        }
-//
-//        public int getColumnCount() {
-//            return columnNames.length;
-//        }
-//
-//        public int getRowCount() {
-//            if (BeautiOptions.getDiscreteTraitsExcludeSpecies() == null) return 0;
-//            return BeautiOptions.getDiscreteTraitsExcludeSpecies().size();
-//        }
-//
-//        public Object getValueAt(int row, int col) {
-//            switch (col) {
-//                case 0:
-//                    return BeautiOptions.getDiscreteTraitsExcludeSpecies().get(row).getName();
-//                default:
-//                    throw new IllegalArgumentException("unknown column, " + col);
-//            }
-//        }
-//
-//        public boolean isCellEditable(int row, int col) {
-//            return false;
-//        }
-//
-////        public void setValueAt(Object value, int row, int col) {
-////            String name = ((String) value).trim();
-////            if (name.length() > 0) {
-////                PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-////                model.setName(name); //TODO: update every same model in diff PD?
-////                updateBorder();
-//////                fireModelsChanged();
-////            }
-////        }
-//
-//        public String getColumnName(int column) {
-//            return columnNames[column];
-//        }
-//
-//        public Class getColumnClass(int c) {
-//            if (getRowCount() == 0) {
-//                return Object.class;
-//            }
-//            return getValueAt(0, c).getClass();
-//        }
-//    }
 
     class ModelsTableCellRenderer extends TableRenderer {
 

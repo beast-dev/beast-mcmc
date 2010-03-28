@@ -109,7 +109,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
 
     // only init in PartitionSubstitutionModel
-    private void initSubstModelParaAndOpers() {
+    protected void initSubstModelParaAndOpers() {
         double substWeights = 0.1;
 
         //Substitution model parameters

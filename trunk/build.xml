@@ -330,6 +330,7 @@
 					<include name="test/dr/evomodel/substmodel/**/*Test.java" />
                     <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
 					<include name="test/dr/inference/**/*Test.java"/>
+                    <include name="test/dr/math/**/*Test.java"/>
 				</fileset>
 			</batchtest>
 		</junit>
@@ -345,7 +346,7 @@
 	</target>
 
 
-	<property name="version" value="1.6.0pre" />
+	<property name="version" value="1.6.pre.1" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />

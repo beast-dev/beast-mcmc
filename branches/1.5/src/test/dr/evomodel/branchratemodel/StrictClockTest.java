@@ -3,7 +3,7 @@ package test.dr.evomodel.branchratemodel;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.RandomLocalClockModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.ConstantPopulationModel;
 import dr.evomodel.operators.ExchangeOperator;
@@ -12,24 +12,21 @@ import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.HKYParser;
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.*;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.math.MathUtils;
-import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.PoissonDistribution;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -39,13 +36,11 @@ import java.util.List;
 
 /**
  * @author Walter Xie
- * convert testRandomLocalClock.xml in the folder /example
- * the Random Local Clock model has problem
+ * convert testStrictClock.xml in the folder /example
  */
+public class StrictClockTest extends TraceCorrelationAssert {
 
-public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
-
-    public RandomLocalClockTestProblem(String name) {
+    public StrictClockTest(String name) {
         super(name);
     }
 
@@ -54,36 +49,25 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
 
         MathUtils.setSeed(666);
 
-        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
+        createAlignment(DENGUE4_TAXON_SEQUENCE, Nucleotides.INSTANCE);
     }
 
 
-    public void testRandomLocalClock() throws Exception {
-        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 0.077, 0, Double.POSITIVE_INFINITY);
+    public void testStrictClock() throws Exception {
+        Parameter popSize = new Parameter.Default(ConstantPopulationModel.POPULATION_SIZE, 380.0, 0, 38000.0);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
         coalescent.setId("coalescent");
 
         // clock model
-        Parameter ratesParameter = new Parameter.Default(RandomLocalClockModel.RATES, 10, 1);
-        Parameter rateIndicatorParameter = new Parameter.Default(RandomLocalClockModel.RATE_INDICATORS, 10, 1);
-        Parameter meanRateParameter = new Parameter.Default(RandomLocalClockModel.CLOCK_RATE, 1, 1.0);
+        Parameter rateParameter =  new Parameter.Default(StrictClockBranchRates.RATE, 2.3E-5, 0, 100.0);
 
-        RandomLocalClockModel branchRateModel = new RandomLocalClockModel(treeModel, meanRateParameter,
-                rateIndicatorParameter, ratesParameter, false);
-
-        SumStatistic rateChanges = new SumStatistic("rateChangeCount", true);
-        rateChanges.addStatistic(rateIndicatorParameter);
-
-        RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatistic.MEAN);
-        RateStatistic coefficientOfVariation = new RateStatistic(RateStatistic.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,
-                true, true, RateStatistic.COEFFICIENT_OF_VARIATION);
-        RateCovarianceStatistic covariance = new RateCovarianceStatistic("covariance", treeModel, branchRateModel);
+        StrictClockBranchRates branchRateModel = new StrictClockBranchRates(rateParameter);
 
         // Sub model
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, 100.0);
 
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
@@ -107,11 +91,13 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        operator = new ScaleOperator(ratesParameter, 0.75);
-        operator.setWeight(10.0);
+        operator = new ScaleOperator(rateParameter, 0.75);
+        operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        operator = new BitFlipOperator(rateIndicatorParameter, 15.0, true);
+        Parameter allInternalHeights = treeModel.createNodeHeightsParameter(true, true, false);
+        operator = new UpDownOperator(new Scalable[]{new Scalable.Default(rateParameter)},
+                new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, CoercionMode.COERCION_ON);
         schedule.addOperator(operator);
 
         operator = new ScaleOperator(popSize, 0.75);
@@ -128,7 +114,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 0.0077, true, false, false, false, CoercionMode.COERCION_ON);
+        operator = new SubtreeSlideOperator(treeModel, 15.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);
@@ -144,20 +130,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         schedule.addOperator(operator);
 
         //CompoundLikelihood
-        OneOnXPrior likelihood1 = new OneOnXPrior();
-        likelihood1.addData(popSize);
-        OneOnXPrior likelihood2 = new OneOnXPrior();
-        likelihood2.addData(kappa);
-        DistributionLikelihood likelihood3 = new DistributionLikelihood(new GammaDistribution(0.5, 2.0), 0.0);
-        likelihood3.addData(ratesParameter);
-        DistributionLikelihood likelihood4 = new DistributionLikelihood(new PoissonDistribution(1.0), 0.0);
-        likelihood4.addData(rateChanges);
-
-        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
-        likelihoods.add(likelihood1);
-        likelihoods.add(likelihood2);
-        likelihoods.add(likelihood3);
-        likelihoods.add(likelihood4);
+        List<Likelihood> likelihoods = new ArrayList<Likelihood>();        
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
         prior.setId(CompoundLikelihood.PRIOR);
@@ -176,25 +149,21 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         ArrayLogFormatter formatter = new ArrayLogFormatter(false);
 
         MCLogger[] loggers = new MCLogger[2];
-        loggers[0] = new MCLogger(formatter, 1000, false);
+        loggers[0] = new MCLogger(formatter, 500, false);
         loggers[0].add(posterior);
-        loggers[0].add(prior);
         loggers[0].add(treeLikelihood);
         loggers[0].add(rootHeight);
-        loggers[0].add(kappa);
-//        loggers[0].add(meanRate);
-        loggers[0].add(rateChanges);
-        loggers[0].add(coefficientOfVariation);
-        loggers[0].add(covariance);
+        loggers[0].add(rateParameter);
         loggers[0].add(popSize);
-        loggers[0].add(coalescent);         
+        loggers[0].add(kappa);
+        loggers[0].add(coalescent);
 
         loggers[1] = new MCLogger(new TabDelimitedFormatter(System.out), 10000, false);
         loggers[1].add(posterior);
         loggers[1].add(treeLikelihood);
         loggers[1].add(rootHeight);
-        loggers[1].add(meanRate);
-        loggers[1].add(rateChanges);
+        loggers[1].add(rateParameter);
+        loggers[1].add(coalescent);
 
         // MCMC
         MCMC mcmc = new MCMC("mcmc1");
@@ -220,49 +189,38 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
             traceList.analyseTrace(i);
         }
 
-//        <expectation name="posterior" value="-1818.26"/>
-//        <expectation name="prior" value="-2.70143"/>
-//        <expectation name="likelihood" value="-1815.56"/>
-//        <expectation name="treeModel.rootHeight" value="6.363E-2"/>
-//        <expectation name="constant.popSize" value="9.67405E-2"/>
-//        <expectation name="hky.kappa" value="30.0394"/>
-//        <expectation name="coefficientOfVariation" value="7.02408E-2"/>
-//        covariance 0.47952
-//        <expectation name="rateChangeCount" value="0.40786"/>
-//        <expectation name="coalescent" value="7.29521"/>
+//        <expectation name="posterior" value="-3928.71"/>
+//        <expectation name="clock.rate" value="8.04835E-4"/>
+//        <expectation name="constant.popSize" value="37.3762"/>
+//        <expectation name="hky.kappa" value="18.2782"/>
+//        <expectation name="treeModel.rootHeight" value="69.0580"/>
+//        <expectation name="treeLikelihood" value="-3856.59"/>
+//        <expectation name="coalescent" value="-72.1285"/>
 
         TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.POSTERIOR));
-        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -1818.26);
-
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihood.PRIOR));
-        assertExpectation(CompoundLikelihood.PRIOR, likelihoodStats, -2.70143);
+        assertExpectation(CompoundLikelihood.POSTERIOR, likelihoodStats, -3928.71);
 
         likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihood.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -1815.56);
+        assertExpectation(TreeLikelihood.TREE_LIKELIHOOD, likelihoodStats, -3856.59);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
-        assertExpectation(TREE_HEIGHT, treeHeightStats, 6.363E-2);
+        assertExpectation(TREE_HEIGHT, treeHeightStats, 69.0580);
 
         TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 30.0394);
+        assertExpectation(HKYParser.KAPPA, kappaStats, 18.2782);
 
-        TraceCorrelation rateChangeStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("rateChangeCount"));
-        assertExpectation("rateChangeCount", rateChangeStats, 0.40786);
-
-        TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatistic.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatistic.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 7.02408E-2);
-
-        TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
-        assertExpectation("covariance", covarianceStats, 0.47952);
+        TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(StrictClockBranchRates.RATE));
+        assertExpectation(StrictClockBranchRates.RATE, rateStats, 8.04835E-4);        
 
         TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModel.POPULATION_SIZE));
-        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 9.67405E-2);
+        assertExpectation(ConstantPopulationModel.POPULATION_SIZE, popStats, 37.3762);
 
         TraceCorrelation coalescentStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("coalescent"));
-        assertExpectation("coalescent", coalescentStats, 7.29521);
+        assertExpectation("coalescent", coalescentStats, -72.1285);
     }
 
     public static Test suite() {
-        return new TestSuite(RandomLocalClockTestProblem.class);
+        return new TestSuite(StrictClockTest.class);
     }
 }
+

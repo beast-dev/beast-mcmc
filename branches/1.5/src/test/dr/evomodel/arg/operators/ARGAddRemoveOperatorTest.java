@@ -13,7 +13,9 @@ import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.*;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Likelihood;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
@@ -28,7 +30,8 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc Suchard

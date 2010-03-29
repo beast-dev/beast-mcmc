@@ -1,0 +1,24 @@
+CC=gcc
+CFLAGS_PPC=-arch ppc -O2 -funroll-loops 
+CFLAGS_I386=-arch i386 -O2 -funroll-loops -mtune=i686
+
+INCLUDES=-I/Library/Java/Home/include
+
+all: libNucleotideLikelihoodCore.PPC.jnilib libNucleotideLikelihoodCore.i386.jnilib
+	lipo -create libNucleotideLikelihoodCore.PPC.jnilib libNucleotideLikelihoodCore.i386.jnilib -output libNucleotideLikelihoodCore.jnilib
+
+libNucleotideLikelihoodCore.PPC.jnilib: NucleotideLikelihoodCore.PPC.o
+	${CC} -framework JavaVM -arch ppc -dynamiclib -o libNucleotideLikelihoodCore.PPC.jnilib NucleotideLikelihoodCore.PPC.o
+
+libNucleotideLikelihoodCore.i386.jnilib: NucleotideLikelihoodCore.i386.o
+	${CC} -framework JavaVM -arch i386 -dynamiclib -o libNucleotideLikelihoodCore.i386.jnilib NucleotideLikelihoodCore.i386.o
+
+NucleotideLikelihoodCore.PPC.o: NucleotideLikelihoodCore.c
+	${CC} ${CFLAGS_PPC} ${INCLUDES} -o NucleotideLikelihoodCore.PPC.o -c NucleotideLikelihoodCore.c
+
+NucleotideLikelihoodCore.i386.o: NucleotideLikelihoodCore.c
+	${CC} ${CFLAGS_I386} ${INCLUDES} -o NucleotideLikelihoodCore.i386.o -c NucleotideLikelihoodCore.c
+
+clean:
+	/bin/rm -f *.jnilib *.o
+	

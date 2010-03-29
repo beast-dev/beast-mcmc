@@ -1,4 +1,4 @@
-                    BEAST v1.5.3 2002-2009
+                    BEAST v1.5.4 2002-2010
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,7 +17,40 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 9th December 2009
+Last updated: alexei@cs.auckland.ac.nz - 29th March 2010
+
+================================================================================
+
+Version 1.5.4 released on 29th March 2010
+
+    Bug Fixes
+		Many bugs fixed that were introduced in 1.5.3 including:
+
+		Issue 52:  Commas put into years displayed in BEAUti
+		Issue 59:  examples/testCoalescent.xml
+		Issue 74:  mcmc.operators
+		Issue 161: BEAUTi: review all initial rates and root heights
+		           calculations
+		Issue 162: Fix unstable JUnit test
+		Issue 198: Improper JUnit test code causes incorrect failure in
+		           Hudson
+		Issue 241: BEAUTi: operator subtreeSlide size should not be INF
+		Issue 270: BEASTParserDoc is unable to generate Wiki format
+		Issue 267: BEAUTi: The user should *always* be allowed to fix
+		           the rates if they want
+		Issue 268: BEAUti: prior distribution error message "find
+		           incorrect number format"
+		Issue 277: Typo in BEAUTi - Unable to overwrite exsting file
+		Issue 282: BEAUti: AlignmentGenerator cannot print sequence with
+		           long sites properly
+		Issue 285: BEAST: ComplexSubstitutionModelParser can only refer to
+		           SVS not ComplexSubstitutionModel
+		Issue 286: BEAUti: remove exponential in VariableDemographicModel
+		           from BEAUti
+		Issue 287: BEAUti: EBSP VariableDemographicModel popSize value =
+		           populationMean value and indicators value = 0
+		Issue 288: BEAUti: avoid comma generated in the numbers in the log
+
 
 ================================================================================
 

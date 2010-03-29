@@ -537,7 +537,7 @@
                         vmoptions="-Xmx1024M"
 		    			arguments="-window -working -options"
 		                version="${version}"
-		                infostring="${BEAST_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+		                infostring="${BEAST_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >
 			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
 			<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -558,7 +558,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${BEAUti_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Walter Xie"
+                        infostring="${BEAUti_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Walter Xie"
                         bundleid="dr.app.beauti" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>
@@ -581,7 +581,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.logcombiner" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -598,7 +598,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.treeannotator" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>

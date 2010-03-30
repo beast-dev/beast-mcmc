@@ -349,12 +349,16 @@ public class BeautiOptions extends ModelOptions {
         return activeModels;
     }
 
-    public List<PartitionClockModel> getPartitionClockModels() {
+    public List<PartitionClockModel> getPartitionNonTraitsClockModels() {
         return getPartitionClockModels(getNonTraitsDataList());
     }
 
      public List<PartitionClockModel> getPartitionTraitsClockModels() {
         return getPartitionClockModels(getTraitsList());
+    }
+
+    public List<PartitionClockModel> getPartitionClockModels() {
+        return getPartitionClockModels(dataPartitions);
     }
 
     // ++++++++++++++ Partition Tree Model ++++++++++++++ 

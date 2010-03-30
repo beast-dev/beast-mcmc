@@ -76,14 +76,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
 //    SequenceErrorModelComponentOptions comp;
 
-//    JTable discreteTraitTable = null;
-//    JPanel discreteTraitPanelParent;
-//    DiscreteTraitOptions currentDiscreteTraitOption = null;
-//    Map<DiscreteTraitOptions, DiscreteTraitSiteModelPanel> discreteTraitPanels = new HashMap<DiscreteTraitOptions, DiscreteTraitSiteModelPanel>();
-//    TitledBorder discreteTraitBorder;
-//
-//    JSplitPane d_splitPane;
-
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();
@@ -147,45 +139,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         add(splitPane, BorderLayout.CENTER);
 
 //        comp = new SequenceErrorModelComponentOptions();
-
-        //=======================  Discrete Trait Substitution Model =========================
-//        discreteTraitTable = new JTable(new DiscreteTraitModelTableModel());
-//
-//        discreteTraitTable.getTableHeader().setReorderingAllowed(false);
-//        discreteTraitTable.getTableHeader().setResizingAllowed(false);
-//        discreteTraitTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-//
-////        final TableColumnModel d_model = discreteTraitTable.getColumnModel();
-////        final TableColumn d_tableColumn0 = d_model.getColumn(0);
-////        d_tableColumn0.setCellRenderer(new ModelsTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-//
-//        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(discreteTraitTable);
-//
-//        discreteTraitTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//        discreteTraitTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-//            public void valueChanged(ListSelectionEvent evt) {
-//                 selectionDiscreteTraitChanged();
-//            }
-//        });
-//
-//        JScrollPane d_scrollPane = new JScrollPane(discreteTraitTable,
-//                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-//        d_scrollPane.setOpaque(false);
-//
-//        discreteTraitPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-//        discreteTraitPanelParent.setOpaque(false);
-//        discreteTraitBorder = new TitledBorder("Discrete Trait Substitution Model");
-//        discreteTraitPanelParent.setBorder(discreteTraitBorder);
-//
-////        setCurrentDiscreteTraitModel(null);
-//
-//        d_splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, d_scrollPane, discreteTraitPanelParent);
-//        d_splitPane.setDividerLocation(180);
-//        d_splitPane.setContinuousLayout(true);
-//        d_splitPane.setBorder(BorderFactory.createEmptyBorder());
-//        d_splitPane.setOpaque(false);
-//        d_splitPane.setPreferredSize(new Dimension(splitPane.getWidth(), 180));
     }    
        
     private void resetPanel() {
@@ -227,18 +180,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
             modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
-
-
-//        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
-//            if (currentDiscreteTraitOption == null) {
-//                setCurrentDiscreteTraitModel(
-//                    (DiscreteTraitOptions) BeautiOptions.getDiscreteTraitsExcludeSpecies().get(0).getTraitOptions());
-//                this.add(d_splitPane, BorderLayout.SOUTH);
-//            }
-//        } else if (currentDiscreteTraitOption != null) {
-//            this.remove(d_splitPane);
-//            currentDiscreteTraitOption = null;
-//        }
 
         settingOptions = false;
         
@@ -359,42 +300,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     public JComponent getExportableComponent() {
         return this;
     }
-
-//    private void selectionDiscreteTraitChanged() {
-//        int selRow = discreteTraitTable.getSelectedRow();
-//        if (selRow >= 0) {
-//            setCurrentDiscreteTraitModel(
-//                (DiscreteTraitOptions) BeautiOptions.getDiscreteTraitsExcludeSpecies().get(selRow).getTraitOptions());
-//        }
-//    }
-//
-//    /**
-//     * Sets the current model that this model panel is displaying
-//     *
-//     * @param model the new model to display
-//     */
-//    private void setCurrentDiscreteTraitModel(DiscreteTraitOptions option) {
-//
-//        if (option != null) {
-//            if (currentDiscreteTraitOption != null) discreteTraitPanelParent.removeAll();
-//
-//            DiscreteTraitSiteModelPanel panel = discreteTraitPanels.get(option);
-//            if (panel == null) {
-//                panel = new DiscreteTraitSiteModelPanel(option);
-//                discreteTraitPanels.put(option, panel);
-//            }
-//
-//            currentDiscreteTraitOption = option;
-//            discreteTraitPanelParent.add(panel);
-//
-//            updateDiscreteTraitBorder();
-//        }
-//    }
-//
-//    private void updateDiscreteTraitBorder() {
-//        discreteTraitBorder.setTitle("Discrete Trait Substitution Model for Trait " + currentDiscreteTraitOption.toString());
-//        repaint();
-//    }
 
     class ModelTableModel extends AbstractTableModel {
 

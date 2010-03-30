@@ -242,15 +242,9 @@ public class GraphModel extends TreeModel {
 	   }
    }
    
-   public boolean hasObjectOnEdge(NodeRef parent, NodeRef child, Object o)
+   public boolean hasObjectOnEdge(NodeRef child, int parentEdge, Object o)
    {
-	   if(((GraphModel.Node)child).parent==parent && 
-			   ((GraphModel.Node)child).hasObject(0, o))
-		   return true;
-	   if(((GraphModel.Node)child).parent2==parent && 
-			   ((GraphModel.Node)child).hasObject(1, o))
-		   return true;
-	   return false;
+	   return ((GraphModel.Node)child).hasObject(parentEdge, o);
    }
    
    int storedINC = -1;
@@ -320,7 +314,6 @@ public class GraphModel extends TreeModel {
    public void addPartition(NodeRef node, int edge, Partition range)
    {
        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
-	   // walk from node to root removing a site range
 	   Node n = (Node)node;
 	   n.addObject(edge, range);
 	   pushTreeChangedEvent(n);
@@ -328,6 +321,7 @@ public class GraphModel extends TreeModel {
 
    public void addPartitionUntilCoalescence(NodeRef node, Partition partition)
    {
+	   // walk from node to root adding a partition
 	   Node n = (Node)node;
 	   while(n!=null){
 		   if(n.hasObject(0,partition)||n.hasObject(1, partition))
@@ -403,6 +397,9 @@ public class GraphModel extends TreeModel {
    protected void handleModelChangedEvent(Model model, Object object, int index) 
    {
        // presumably a constituent partition has changed
+   }
+   public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+	   super.handleVariableChangedEvent(variable, index, type);
    }
    
    /**

@@ -251,6 +251,8 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
     	  graphModel.addChild(root, newReassortment);
     	  
     	  graphModel.setNodeHeight(root, newBifurcationHeight);
+          System.out.println(graphModel.linkDump());
+
       }
       
       	
@@ -258,10 +260,17 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
       // send it up the new recombination edge
       HashSet<Object> parts = ((GraphModel.Node)reassortChild).getObjects(0);
       for(Object o : parts){
-          Partition part = (Partition)o;
           boolean b = MathUtils.nextBoolean();
-    	  graphModel.addPartition(newReassortment, b ? 0 : 1, part);
-		  graphModel.addPartitionUntilCoalescence(newReassortment, part);
+    	  graphModel.addPartition(newReassortment, b ? 0 : 1, (Partition)o);
+      }
+      // propagate partitions up from newBifurcation's children
+      parts = ((GraphModel.Node)bifurcationChild).getObjects(0);
+      for(Object o : parts){
+    	  graphModel.addPartition(newBifurcation, 0, (Partition)o);
+      }
+      parts = ((GraphModel.Node)newReassortment).getObjects(1);
+      for(Object o : parts){
+    	  graphModel.addPartition(newBifurcation, 0, (Partition)o);
       }
 
       try{
@@ -371,6 +380,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     }catch(InvalidTreeException e){
 	    	 
 	     }
+         System.out.println(graphModel.linkDump());
 	     
 	     
 	     

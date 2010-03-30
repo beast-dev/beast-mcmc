@@ -14,6 +14,8 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 		super(stateCount);
 	}
 
+	boolean[] partialsDirty;	// records whether a partials buffer has been dirtied yet
+
     /**
      * grows storage in partial likelihood arrays to accommodate more nodes.
      * reallocates and copies all storage
@@ -64,7 +66,7 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
         for(int i=nodeCount-add; i<nodeCount; i++)
             createNodePartials(i);
         
-
+        partialsDirty = new boolean[nodeCount];
     }
 
     //
@@ -72,6 +74,30 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
     // BEGIN OVERRIDES FROM AbstractLikelihoodCore
     //    
     
+    public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories) {
+    	super.initialize(nodeCount, patternCount, matrixCount, integrateCategories);
+    	partialsDirty = new boolean[nodeCount];
+    }
+    /*
+     * since only part of the partials may be updated, copy the whole enchilada as backup
+     * this may not be as bad as it sounds, since most decent OSes have copy-on-write for pages
+     */
+    public void setNodePartialsForUpdate(int nodeIndex) {
+    	if(!partialsDirty[nodeIndex]){
+	        System.arraycopy(partials[currentPartialsIndices[nodeIndex]][nodeIndex], 0, partials[1-currentPartialsIndices[nodeIndex]][nodeIndex], 0, partials[currentPartialsIndices[nodeIndex]][nodeIndex].length);
+	        currentPartialsIndices[nodeIndex] = 1 - currentPartialsIndices[nodeIndex];
+    	}
+    	partialsDirty[nodeIndex]=true;
+    }
+
+
+    // prepare for updates, mark all partials buffers as clean
+    public void storeState() {
+    	super.storeState();
+    	for(int i=0; i<partialsDirty.length; i++)
+    		partialsDirty[i]=false;
+    }
+
     /**
      * Calculates partial likelihoods at a node for a range of sites.
      *
@@ -179,9 +205,10 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 												int[] states2, double[] matrices2,
 												double[] partials3, int left, int right)
 	{
-		int v = left;
+		int inc = partials3.length / matrixCount;
 
 		for (int l = 0; l < matrixCount; l++) {
+			int v = l*inc + left*stateCount;
 
 			for (int k = left; k < right; k++) {
 
@@ -241,11 +268,11 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 	{
 
 		double sum, tmp;
-
-		int u = left;
-		int v = left;
+		int inc = partials3.length / matrixCount;
 
 		for (int l = 0; l < matrixCount; l++) {
+			int u = inc*l + left*stateCount;
+			int v = inc*l + left*stateCount;
 			for (int k = left; k < right; k++) {
 
 				int state1 = states1[k];
@@ -300,10 +327,11 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 	{
 		double sum1, sum2;
 
-		int u = left;
-		int v = left;
+		int inc = partials3.length / matrixCount;
 
 		for (int l = 0; l < matrixCount; l++) {
+			int u = l*inc + left*stateCount;
+			int v = l*inc + left*stateCount;
 
 			for (int k = left; k < right; k++) {
 
@@ -486,8 +514,8 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 	protected void calculateIntegratePartials(double[] inPartials, double[] proportions, double[] outPartials, int left, int right)
 	{
 
-		int u = left;
-		int v = left;
+		int u = left*stateCount;
+		int v = left*stateCount;
 		for (int k = left; k < right; k++) {
 
 			for (int i = 0; i < stateCount; i++) {
@@ -499,8 +527,10 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
 		}
 
 
+		int inc = inPartials.length / matrixCount;
 		for (int l = 1; l < matrixCount; l++) {
-			u = left;
+			u = left*stateCount;
+			v = l*inc+left*stateCount;
 
 			for (int k = left; k < right; k++) {
 

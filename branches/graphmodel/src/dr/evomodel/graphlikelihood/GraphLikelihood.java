@@ -17,12 +17,14 @@ import dr.evomodel.graph.PartitionModel.PartitionChangedEvent;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeModel.TreeChangedEvent;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.evomodel.treelikelihood.TipPartialsModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 
 public class GraphLikelihood extends AbstractTreeLikelihood {
 
@@ -65,6 +67,9 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         this.categoryCount = siteModel.getCategoryCount();
 
     	updatePattern = new boolean[patternList.getPatternCount()];
+    	updateNode = new boolean[graphModel.getNodeCount()];
+    	updatePartition = new boolean[partitionModel.getPartitionCount()];
+    	updateNodePartition = new boolean[graphModel.getNodeCount()][partitionModel.getPartitionCount()];
 
     	
         // BEGIN TreeLikelihood LOGGER CODE
@@ -147,6 +152,8 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 	        throw new RuntimeException(mte.toString());
 	    }
 
+	    // mark everything dirty initially
+    	updateAllNodes();
 	}
     
     protected static SiteList createConcatenatedSiteList(PartitionModel pm){
@@ -179,34 +186,65 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     	// FIXME: need to update all the data structures here
     	boolean[] tmp = new boolean[updateNode.length*2];
     	System.arraycopy(updateNode, 0, tmp, 0, updateNode.length);
-    	for(int i=updateNode.length; i<tmp.length; i++)
-    		tmp[i]=false;
     	updateNode = tmp;
+    	boolean[][] tmp2 = new boolean[nodeCount][updateNodePartition[0].length];
+    	for(int i=0; i<updateNodePartition.length; i++){
+    		System.arraycopy(updateNodePartition[i], 0, tmp2[i], 0, tmp2[i].length);
+    	}
+    	updateNodePartition = tmp2;
+    }
+
+    /**
+     * Grow the number of partitions the likelihood calc can handle
+     * Call this when number of partitions in PartitionModel exceeds current storage capacity
+     */
+    protected void growPartitionStorage(){
+    	int newPartCount = updatePartition.length*2;
+    	boolean[] tmp = new boolean[newPartCount];
+    	System.arraycopy(updatePartition, 0, tmp, 0, updatePartition.length);
+    	updatePartition = tmp;
+    	boolean[][] tmp2 = new boolean[nodeCount][newPartCount];
+    	for(int i=0; i<nodeCount; i++)
+        	System.arraycopy(updateNodePartition[i], 0, tmp2[i], 0, updateNodePartition[i].length);
+    	updateNodePartition = tmp2;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-    	if(treeModel.getNodeCount() >= nodeCount)
+    	while(treeModel.getNodeCount() >= nodeCount)
     	{
     		growNodeStorage(); // need more node storage!
+    	}
+    	while(partitionModel.getPartitionCount() > updatePartition.length){
+    	    growPartitionStorage();
     	}
     	if(model instanceof PartitionModel){
     		// the partitions changed, do something here
     		// just mark all affected site patterns as dirty
-    		PartitionChangedEvent pce = (PartitionChangedEvent)object;
-    		if(pce.hasNewSection())
-    		{
-    			// mark only the new section as dirty
-    			for(int i=pce.getNewSectionLeft(); i<pce.getNewSectionRight(); i++)
-    			{
-    				updatePattern[i]=true;
-    			}
+    		if(object instanceof PartitionChangedEvent){
+	    		PartitionChangedEvent pce = (PartitionChangedEvent)object;
+	    		updatePartition[pce.getPartition().getNumber()] = true;
+	    		if(pce.hasNewSection())
+	    		{
+	    			// mark only the new section as dirty
+	    			for(int i=pce.getNewSectionLeft(); i<pce.getNewSectionRight(); i++)
+	    			{
+	    				updatePattern[i]=true;
+	    			}
+	    		}
+    		}else{
+    			// a whole partition is dirty, possibly due to a siteModel or branchRateModel change
+    			updatePartition[index] = true;
     		}
-    	}else{
+    	}else if(model instanceof GraphModel){    		
     		// otherwise the TreeLikelihood can handle it
+    		if(object instanceof TreeChangedEvent){
+	    		TreeChangedEvent tce = (TreeChangedEvent)object;
+	    		updateNode[tce.getNode().getNumber()]=true;
+    		}
+//    		else if(object instanceof Parameter.Default){
+//    			updateNode[((Parameter.Default)object).];
+//    		}
     	}
-    	// this is not efficient, only temporary for testing
-    	for(int i=0; i<updateNode.length; i++)
-    		updateNode[i]=true;
 
     	super.handleModelChangedEvent(model, object, index);
     }
@@ -233,9 +271,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         }
 
         final NodeRef root = treeModel.getRoot();
-        for(int i=0; i<partitionModel.getPartitionCount(); i++){
-            traverse(treeModel, root, partitionModel, partitionModel.getPartition(i));
-        }
+        traverse((GraphModel)treeModel, root, partitionModel);
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -251,9 +287,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             // and try again...
             updateAllNodes();
             updateAllPatterns();
-            for(int i=0; i<partitionModel.getPartitionCount(); i++){
-                traverse(treeModel, root, partitionModel, partitionModel.getPartition(i));
-            }
+            traverse((GraphModel)treeModel, root, partitionModel);
 
             logL = 0.0;
             for (int i = 0; i < patternCount; i++) {
@@ -272,94 +306,95 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
     
-    
     /**
      * partition-aware traversal
-     * updateNode[i]==true indicates all partitions at the node should be updated
-     * updatePartition[j]==true indicates all nodes containing partition j to update
-     * updateNodePartition[i][j]==true indicates node i, partition j for update.
      */
-    protected boolean traverse(Tree tree, NodeRef node, PartitionModel partitionModel, Partition p) 
+    protected void traverse(GraphModel gm, NodeRef node, PartitionModel partitionModel) 
     {
-    	GraphModel gm = (GraphModel)tree;
-        boolean update = false;
+    	if(node==null)	return;	// nothing to see here
+    	if(((GraphModel.Node)node).getChildCount()==1)
+    	{
+    		System.out.print("watchme\n");
+    	}
 
         int nodeNum = node.getNumber();
 
-        // which parent has this partition?
-        NodeRef parent = null;
-        GraphModel.Node gnode = (GraphModel.Node)node;
-        if(gnode.hasObject(0, p))
-        	parent = gm.getParent(node, 0);
-    	else
-    		parent = gm.getParent(node, 1);
+        GraphModel.Node child1 = (GraphModel.Node)gm.getChild(node, 0);
+        GraphModel.Node child2 = (GraphModel.Node)gm.getChild(node, 1);
 
-        if(parent==null&&gm.getParent(node)!=null){
-        	// partition does not pass through this node.
-        	System.err.println("Partition not at node");
-        }
-
-        // does this one need to be updated?
-        if (parent != null && updateNode[nodeNum]) {
-            update = true;
-        }
-                
         // If the node has children update the partial likelihoods.
-        if (tree.getChildCount(node)>0) 
-        {
-            GraphModel.Node child1 = (GraphModel.Node)gm.getChild(node, 0);
-            GraphModel.Node child2 = (GraphModel.Node)gm.getChild(node, 1);
+        traverse(gm, child1, partitionModel);
+        traverse(gm, child2, partitionModel);
 
-            boolean has1 = gm.hasObjectOnEdge(node, child1, p);
-            boolean has2 = child2 != null ? gm.hasObjectOnEdge(node, child2, p) : false;
+        for(int pI=0; pI < partitionModel.getPartitionCount(); pI++){
+        	Partition p = partitionModel.getPartition(pI);
 
-            // traverse to child nodes if necessary
-            boolean update1 = has1 ? traverse(tree, child1, partitionModel, p) : false;
-            boolean update2 = has2 ? traverse(tree, child2, partitionModel, p) : false;
+        	// which parent has this partition?
+            NodeRef parent = null;
+            GraphModel.Node gnode = (GraphModel.Node)node;
+            if(gnode.hasObject(0, p))
+            	parent = gm.getParent(node, 0);
+        	else if(gnode.hasObject(1, p))
+        		parent = gm.getParent(node, 1);
 
-            // If we have two children with the partition, and
-            // either child node was updated then update this node too
-            if (has1&&has2&&(update1 || update2)) 
-            {
-                final int childNum1 = child1.getNumber();
-                final int childNum2 = child2.getNumber();
-                
-                // First update the transition probability matrix(ices) for child branches
-                setNodeMatrix(gm, p, child1);
-                setNodeMatrix(gm, p, child2);
+            if(parent==null&&gm.getParent(node)!=null){
+            	// partition does not pass through this node.
+            	continue;
+            }
 
-                likelihoodCore.setNodePartialsForUpdate(nodeNum);
-
-                // determine the left and right bounds of this partition
-                int l = remapSite(p.getSiteList(), p.getLeftSite());
-                int r = remapSite(p.getSiteList(), p.getRightSite());
-                if (integrateAcrossCategories) {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, l, r);
-                } else {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories, l, r);
-                }
-
-                if (COUNT_TOTAL_OPERATIONS) {
-                    totalOperationCount ++;
-                }
-
-
-                if (parent == null) {
-                    // No parent this is the root of the tree -
-                    // calculate the pattern likelihoods
-                    FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
-                    double[] frequencies = frequencyModel.getFrequencies();
-                    double[] partials = getRootPartials(p);
-                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
-                }
-
+            // does this one need to be updated?
+            boolean update = false;
+            if (updateNode[nodeNum] || updateNodePartition[nodeNum][p.getNumber()] || updatePartition[p.getNumber()]) {
                 update = true;
             }
+                    
+            // If the node has children update the partial likelihoods.
+            if (gm.getChildCount(node)>0 && update)
+            {
+            	int c1p = gm.getParent(child1, 0)==node ? 0 : 1;
+            	int c2p = (child2!=null && gm.getParent(child2, 0)==node) ? 0 : 1;
+                boolean has1 = gm.hasObjectOnEdge(child1, c1p, p);
+                boolean has2 = child2 != null ? gm.hasObjectOnEdge(child2, c2p, p) : false;
+
+                // If we have two children with the partition, and
+                // either child node was updated then update this node too
+                if (has1&&has2) 
+                {
+                    // First update the transition probability matrix(ices) for child branches
+                	// and get the node number where the partition bifurcates
+                    final int peelChild1 = setNodeMatrix(gm, p, child1);
+                    final int peelChild2 = setNodeMatrix(gm, p, child2);
+
+                    likelihoodCore.setNodePartialsForUpdate(nodeNum);
+
+                    // determine the left and right bounds of this partition
+                    int l = remapSite(p.getSiteList(), p.getLeftSite());
+                    int r = remapSite(p.getSiteList(), p.getRightSite());
+                    if (integrateAcrossCategories) {
+                        likelihoodCore.calculatePartials(peelChild1, peelChild2, nodeNum, l, r);
+                    } else {
+                        likelihoodCore.calculatePartials(peelChild1, peelChild2, nodeNum, siteCategories, l, r);
+                    }
+
+                    if (COUNT_TOTAL_OPERATIONS) {
+                        totalOperationCount ++;
+                    }
+
+                    if (parent == null) {
+                        // No parent this is the root of the tree -
+                        // calculate the pattern likelihoods
+                        FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
+                        double[] frequencies = frequencyModel.getFrequencies();
+                        double[] partials = getRootPartials(p);
+                        likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
+                    }
+                }
+            }
+            if(update&&parent!=null)
+            	updateNodePartition[parent.getNumber()][p.getNumber()]=true;
         }
-
-        return update;
-
     }
+    
 
     /**
      * Set the child node's matrix immediately prior to integrating partials
@@ -367,9 +402,10 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
      * @param p
      * @param n
      */
-    protected void setNodeMatrix(GraphModel g, Partition p, NodeRef n)
+    protected int setNodeMatrix(GraphModel g, Partition p, NodeRef n)
     {
-        double branchTime = getRateTime(g, p, n);
+        int[] peelChild = new int[1];	// the descendant where the partition bifurcates
+        double branchTime = getRateTime(g, p, n, peelChild);
         int nodeNum = n.getNumber();
 
         likelihoodCore.setNodeMatrixForUpdate(nodeNum);
@@ -380,6 +416,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
             likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
         }
+        return peelChild[0];
     }
     
     /*
@@ -388,9 +425,12 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
      * Handles the situation where a partition may be defined at only one
      * child node, so the total rate*time to integrate over includes the
      * next descendant also
+     * @param peelChild	an array of size 1, the value will be set to the node id of the
+     * 					child where the partition bifurcates
      */
-    protected double getRateTime(GraphModel g, Partition p, NodeRef n)
+    protected double getRateTime(GraphModel g, Partition p, NodeRef n, int[] peelChild)
     {
+    	peelChild[0] = n.getNumber();
         BranchRateModel branchRateModel = p.getBranchRateModel();
         NodeRef parent = g.getParent(n);
     	// find nearest node at or below n where p is
@@ -402,18 +442,23 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         if (branchRateTime < 0.0) {
             throw new RuntimeException("Negative branch length: " + branchRateTime);
         }
+        GraphModel.Node c1 = (GraphModel.Node)g.getChild(n, 0);
+        GraphModel.Node c2 = (GraphModel.Node)g.getChild(n, 1);
         if(g.getChildCount(n)==1){
-        	if(g.hasObjectOnEdge(n, g.getChild(n, 0), p))
-    			branchRateTime += getRateTime(g, p, g.getChild(n, 0));
+        	int c1p = g.getParent(c1, 0)==n ? 0 : 1;
+        	if(g.hasObjectOnEdge(c1, c1p, p))
+    			branchRateTime += getRateTime(g, p, c1, peelChild);
     		else
     			System.err.println("Partition dead-end");
         }else if(g.getChildCount(n)==2){
-        	boolean has1 = g.hasObjectOnEdge(n, g.getChild(n, 0), p);
-        	boolean has2 = g.hasObjectOnEdge(n, g.getChild(n, 1), p);
+        	int c1p = g.getParent(c1, 0)==n ? 0 : 1;
+        	int c2p = g.getParent(c2, 0)==n ? 0 : 1;
+        	boolean has1 = g.hasObjectOnEdge(c1, c1p, p);
+        	boolean has2 = g.hasObjectOnEdge(c2, c2p, p);
         	if(has1&&!has2)
-    			branchRateTime += getRateTime(g, p, g.getChild(n, 0));
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 0), peelChild);
         	if(!has1&&has2)
-    			branchRateTime += getRateTime(g, p, g.getChild(n, 1));
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 1), peelChild);
         	if(!has1&&!has2)
     			System.err.println("Partition dead-end");
         }

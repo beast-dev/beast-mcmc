@@ -8,7 +8,6 @@ import java.util.List;
 import dr.evolution.alignment.SiteList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
@@ -28,7 +27,6 @@ public class PartitionModel extends AbstractModel {
     protected List<SiteList> siteLists;	// the set of one or more siteLists on which this partition exists
 
 	protected Partition[] partitions;
-	protected Partition[] storedPartitions;
 	protected LinkedList<Partition> freePartitions;
 
 	protected HashMap<Partition,List<Model>> modelsOnPartition;
@@ -49,16 +47,13 @@ public class PartitionModel extends AbstractModel {
 		
 		this.siteLists.addAll(siteLists);
 		partitions = new Partition[siteLists.size()];
-		storedPartitions = new Partition[siteLists.size()];
 		modelsOnPartition = new HashMap<Partition, List<Model>>();
 		for(int i=0; i<siteLists.size(); i++)
 		{
 			partitions[i] = new Partition(siteLists.get(i));
 			partitions[i].setNumber(i);
-			storedPartitions[i] = new Partition(siteLists.get(i));
-			storedPartitions[i].setNumber(i);
+			addModel(partitions[i]);
 			modelsOnPartition.put(partitions[i], new ArrayList<Model>());
-			modelsOnPartition.put(storedPartitions[i], new ArrayList<Model>());
 		}
 	}
 	
@@ -105,22 +100,14 @@ public class PartitionModel extends AbstractModel {
        if(freePartitions.size()==0){
 	       // need to expand storage to accommodate additional nodes
 	       Partition[] tmp = new Partition[partitions.length*2];
-	       Partition[] tmp2 = new Partition[storedPartitions.length*2];
 	       System.arraycopy(partitions, 0, tmp, 0, partitions.length);
-	       System.arraycopy(storedPartitions, 0, tmp2, 0, storedPartitions.length);
 	       for(int i=partitions.length; i<tmp.length; i++)
 	       {
 	    	   tmp[i] = new Partition();
 	    	   tmp[i].setNumber(i);
 	    	   freePartitions.push(tmp[i]);
 	       }
-	       for(int i=storedPartitions.length; i<tmp2.length; i++)
-	       {
-	    	   tmp2[i] = new Partition();
-	    	   tmp2[i].setNumber(i);
-	       }
 	       partitions = tmp;
-	       storedPartitions = tmp2;
        }
 
        // get a new Partition and copy the values of the provided one
@@ -176,8 +163,9 @@ public class PartitionModel extends AbstractModel {
 
 	@Override
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		// TODO Auto-generated method stub
-
+		// forward model changes from constituent partitions
+		int num = ((Partition)object).getNumber();
+		fireModelChanged(object, num);
 	}
 
 	@Override
@@ -208,15 +196,11 @@ public class PartitionModel extends AbstractModel {
 
 	@Override
 	protected void restoreState() {
-		partitions = storedPartitions;
 		modelsOnPartition = storedModelsOnPartition;
 	}
 
 	@Override
 	protected void storeState() {
-		for(int i = 0; i<partitions.length; i++){
-			storedPartitions[i].copyPartition(partitions[i]);
-		}
 		storedModelsOnPartition = modelsOnPartition;
 	}
 

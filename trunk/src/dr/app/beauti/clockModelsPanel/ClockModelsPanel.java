@@ -65,7 +65,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 	
 	JTable dataTable = null;
     DataTableModel dataTableModel = null;
-    
+    JScrollPane scrollPane;
 //    JComboBox rateOptionCombo = new JComboBox(FixRateType.values());
     JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:   mean =");
 //    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
@@ -79,37 +79,23 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     BeautiOptions options = null;
     boolean settingOptions = false;
 
+    JTable discreteTraitTable = null;
+    JScrollPane d_scrollPane;
+    boolean activateDiscreteTraitsTable = false;
+    JPanel panelParent;
     public ClockModelsPanel(BeautiFrame parent) {
 
 		this.frame = parent;
 
 		dataTableModel = new DataTableModel();
 		dataTable = new JTable(dataTableModel);
-		        
-//		dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-		dataTable.getTableHeader().setReorderingAllowed(false);
-		dataTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-		dataTable.getColumnModel().getColumn(0).setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		
-		TableColumn col = dataTable.getColumnModel().getColumn(1);
-		ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-		comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-		col.setCellRenderer(comboBoxRenderer);
-		
-		col = dataTable.getColumnModel().getColumn(2);
-		col.setPreferredWidth(6);
-				
-		col = dataTable.getColumnModel().getColumn(3);
-		col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-		col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
-        
-		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
-		
-		JScrollPane scrollPane = new JScrollPane(dataTable,
+        initTable(dataTable);
+
+        scrollPane = new JScrollPane(dataTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setOpaque(false);
+		scrollPane.setOpaque(false);        
 		
 		PanelUtils.setupComponent(errorModelCombo);
 		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
@@ -179,20 +165,58 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         // panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
 		modelPanelParent.add(panel);
-		
+
 //		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, modelPanelParent);
 //		splitPane.setDividerLocation(400);
 //		splitPane.setContinuousLayout(true);
 //		splitPane.setBorder(BorderFactory.createEmptyBorder());
 //		splitPane.setOpaque(false);
-
-		setOpaque(false);
+        setOpaque(false);
 		setLayout(new BorderLayout(0, 0));
 		setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
 		add(scrollPane, BorderLayout.NORTH);
-		add(modelPanelParent, BorderLayout.SOUTH);
+		add(modelPanelParent, BorderLayout.CENTER);
+
+//        panelParent = new JPanel(new BorderLayout(0, 0));
+//        panelParent.add(scrollPane, BorderLayout.NORTH);
+//		panelParent.add(modelPanelParent, BorderLayout.SOUTH);
+//
+//        add(panelParent, BorderLayout.NORTH);
 
 		comp = new SequenceErrorModelComponentOptions();
+
+        //=======================  Discrete Trait Substitution Model =========================
+        discreteTraitTable = new JTable(new DiscreteTraitModelTableModel());
+
+        initTable(discreteTraitTable);
+
+        d_scrollPane = new JScrollPane(discreteTraitTable,
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		d_scrollPane.setOpaque(false);
+        d_scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth(), 150));
+    }
+
+    private void initTable(JTable dataTable){
+        //		dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+		dataTable.getTableHeader().setReorderingAllowed(false);
+		dataTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
+		dataTable.getColumnModel().getColumn(0).setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
+		TableColumn col = dataTable.getColumnModel().getColumn(1);
+		ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
+		comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+		col.setCellRenderer(comboBoxRenderer);
+
+		col = dataTable.getColumnModel().getColumn(2);
+		col.setPreferredWidth(6);
+
+		col = dataTable.getColumnModel().getColumn(3);
+		col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+		col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
+
+		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
     }
      
     private void modelsChanged() {
@@ -220,6 +244,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         this.options = options;
 
+        if (!options.hasData() && activateDiscreteTraitsTable) {
+    		this.remove(d_scrollPane);
+            activateDiscreteTraitsTable = false;
+        }
+
         settingOptions = true;
         
 //      clockModelCombo.setSelectedItem(options.clockType);
@@ -236,7 +265,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         
         int selRow = dataTable.getSelectedRow();
         dataTableModel.fireTableDataChanged();
-        if (options.getPartitionClockModels().size() > 0) {
+        if (options.getPartitionNonTraitsClockModels().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
@@ -248,6 +277,17 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         dataTableModel.fireTableDataChanged();
+
+        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            if (!activateDiscreteTraitsTable) {
+                this.add(d_scrollPane, BorderLayout.SOUTH);
+                activateDiscreteTraitsTable = true;
+                scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth(), 300));
+            }
+        } else {
+            this.remove(d_scrollPane);
+            activateDiscreteTraitsTable = false;
+        }
     }
 
     public void getOptions(BeautiOptions options) {
@@ -290,16 +330,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            if (options.getPartitionClockModels().size() < 2) {
+            if (options.getPartitionNonTraitsClockModels().size() < 2) {
             	fixedMeanRateCheck.setEnabled(false);
             } else {
             	fixedMeanRateCheck.setEnabled(true);
             }
-            return options.getPartitionClockModels().size();
+            return options.getPartitionNonTraitsClockModels().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionClockModel model = options.getPartitionClockModels().get(row);
+            PartitionClockModel model = options.getPartitionNonTraitsClockModels().get(row);
             switch (col) {
                 case 0:
                     return model.getName();
@@ -314,7 +354,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            PartitionClockModel model = options.getPartitionClockModels().get(row);
+            PartitionClockModel model = options.getPartitionNonTraitsClockModels().get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
@@ -449,6 +489,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
+//            System.out.println(options.getPartitionTraitsClockModels().size());
             return options.getPartitionTraitsClockModels().size();
         }
 

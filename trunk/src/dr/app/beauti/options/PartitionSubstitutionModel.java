@@ -24,9 +24,12 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.*;
+import dr.app.beauti.generator.GeneralTraitGenerator;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
+import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.List;
 
@@ -48,9 +51,11 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
+    private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
+    private boolean activateBSSVS = false;
 
     public boolean useAmbiguitiesTreeLikelihood = false;
-    
+
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
     private boolean gammaHetero = false;
     private int gammaCategories = 4;
@@ -63,7 +68,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     private boolean dolloModel = false;
 
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
-        this(options, partition.getName(), partition.getAlignment().getDataType());
+
+        this(options, partition.getName(),
+                (partition.getTraitType() == null) ? partition.getAlignment().getDataType() : new GeneralDataType());
 
         allPartitionData.clear();
         addPartitionData(partition);
@@ -80,9 +87,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         this(options, name, source.dataType);
 
         this.allPartitionData.clear();
-        for (PartitionData partition: source.allPartitionData) {
-        	this.allPartitionData.add(partition);			
-		}
+        for (PartitionData partition : source.allPartitionData) {
+            this.allPartitionData.add(partition);
+        }
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -109,6 +116,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
 
     // only init in PartitionSubstitutionModel
+
     protected void initSubstModelParaAndOpers() {
         double substWeights = 0.1;
 
@@ -156,7 +164,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         createParameterGammaPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
 
-        
+
 //        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -242,7 +250,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
 //              OperatorType.CENTERED_SCALE, 0.75, 3.0);
         createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-        		 "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
+                "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
                 OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
 
         createScaleOperator("kappa", demoTuning, substWeights);
@@ -250,13 +258,13 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         createScaleOperator("CP2.kappa", demoTuning, substWeights);
         createScaleOperator("CP1+2.kappa", demoTuning, substWeights);
         createScaleOperator("CP3.kappa", demoTuning, substWeights);
-        
+
         createScaleOperator("kappa1", demoTuning, substWeights);
         createScaleOperator("CP1.kappa1", demoTuning, substWeights);
         createScaleOperator("CP2.kappa1", demoTuning, substWeights);
         createScaleOperator("CP1+2.kappa1", demoTuning, substWeights);
         createScaleOperator("CP3.kappa1", demoTuning, substWeights);
-        
+
         createScaleOperator("kappa2", demoTuning, substWeights);
         createScaleOperator("CP1.kappa2", demoTuning, substWeights);
         createScaleOperator("CP2.kappa2", demoTuning, substWeights);
@@ -292,12 +300,36 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);
 //        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+
+        //***************************************************
+        createParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" :  " ") + "base frequencies",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
+        createCachedGammaPrior("trait.rates", "location substitution model rates",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
+        createParameter("trait.indicators", "location substitution model rate indicators");
+
+        // = strick clock TODO trait.mu belongs Clock Model?
+        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" :  " ") + "mutation rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
+
+        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
+
+        createOperator("trait.rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
+        createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);
+        createScaleOperator("trait.mu", demoTuning, 10);
+        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
+                "bit Flip In Substitution Model Operator on clock.rate", getParameter("trait.mu"),
+                GeneralTraitGenerator.getLocationSubstModelTag(this), getPrefix() + getName(),
+                OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
+        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(trait.indicators, trait.rates)",
+                "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
+                "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
     }
 
     ////////////////////////////////////////////////////////////////
 
     public void selectParameters(List<Parameter> params) {
-    	boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
+        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -328,10 +360,10 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        
+
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
-                            case HKY:                            
+                            case HKY:
                                 params.add(getParameter("CP1+2.kappa"));
                                 params.add(getParameter("CP3.kappa"));
                                 break;
@@ -353,14 +385,14 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                       
+
                     } else {
                         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                     }
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
                         case HKY:
-                        	params.add(getParameter("kappa"));
+                            params.add(getParameter("kappa"));
                             break;
                         case TN93:
                             params.add(getParameter("kappa1"));
@@ -374,9 +406,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                    }                    
+                    }
                 }
-                
+
                 if (includeRelativeRates) {
                     if (codonHeteroPattern.equals("123")) {
                         params.add(getParameter("CP1.mu"));
@@ -422,9 +454,20 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 if (includeRelativeRates) {
                     params.add(getParameter("mu"));
                 }
-                
+
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);
+                break;
+
+            case DataType.GENERAL:
+                params.add(getParameter("trait.frequencies"));
+                params.add(getParameter("trait.rates"));
+//               params.add(getParameter("trait.mu"));
+
+                if (activateBSSVS) {
+                    params.add(getParameter("trait.indicators"));
+                    params.add(getParameter("trait.nonZeroRates"));
+                }
                 break;
 
             default:
@@ -491,19 +534,19 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     public void selectOperators(List<Operator> ops) {
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
-        
+
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
 
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
-                            case HKY:                            
+                            case HKY:
                                 ops.add(getOperator("CP1.kappa"));
                                 ops.add(getOperator("CP2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
                                 break;
-                                
+
                             case TN93:
                                 ops.add(getOperator("CP1.kappa1"));
                                 ops.add(getOperator("CP2.kappa1"));
@@ -528,10 +571,10 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
                             case HKY:
-                            	ops.add(getOperator("CP1+2.kappa"));
+                                ops.add(getOperator("CP1+2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
                                 break;
-                                
+
                             case TN93:
                                 ops.add(getOperator("CP1+2.kappa1"));
                                 ops.add(getOperator("CP3.kappa1"));
@@ -551,17 +594,17 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                             default:
                                 throw new IllegalArgumentException("Unknown nucleotides substitution model");
                         }
-                        
+
                     } else {
                         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                     }
-                    
+
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
                         case HKY:
-                        	ops.add(getOperator("kappa"));
+                            ops.add(getOperator("kappa"));
                             break;
-                            
+
                         case TN93:
                             ops.add(getOperator("kappa1"));
                             ops.add(getOperator("kappa2"));
@@ -575,7 +618,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
-                    }                    
+                    }
                 }
 
                 // only AMINO_ACIDS not addFrequency
@@ -603,6 +646,19 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyOps(ops, includeRelativeRates);
+                break;
+
+            case DataType.GENERAL:
+                ops.add(getOperator("trait.rates"));
+//               ops.add(getOperator("trait.mu"));
+
+                if (activateBSSVS) {
+                    ops.add(getOperator("trait.indicators"));
+//                    ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()+ "mu"));
+
+                    if (locationSubstType == LocationSubstModelType.ASYM_SUBST)
+                        ops.add(getOperator(RateBitExchangeOperator.OPERATOR_NAME));
+                }
                 break;
 
             default:
@@ -676,7 +732,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         }
     }
 
-        /**
+    /**
      * @return true either if the options have more than one partition or any partition is
      *         broken into codon positions.
      */
@@ -723,7 +779,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
      * This returns an integer vector of the number of sites in each partition (including any codon partitions). These
      * are strictly in the same order as the 'mu' relative rates are listed.
      *
-     * @return  weights for each partition model
+     * @return weights for each partition model
      */
     public int[] getPartitionCodonWeights() {
         int[] weights = new int[getCodonPartitionCount()];
@@ -740,8 +796,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
         return weights;
     }
-    
+
     ///////////////////////////////////////////////////////
+
     public NucModelType getNucSubstitutionModel() {
         return nucSubstitutionModel;
     }
@@ -764,6 +821,22 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     public void setBinarySubstitutionModel(BinaryModelType binarySubstitutionModel) {
         this.binarySubstitutionModel = binarySubstitutionModel;
+    }
+
+    public LocationSubstModelType getLocationSubstType() {
+        return locationSubstType;
+    }
+
+    public void setLocationSubstType(LocationSubstModelType locationSubstType) {
+        this.locationSubstType = locationSubstType;
+    }
+
+    public boolean isActivateBSSVS() {
+        return activateBSSVS;
+    }
+
+    public void setActivateBSSVS(boolean activateBSSVS) {
+        this.activateBSSVS = activateBSSVS;
     }
 
     public FrequencyPolicyType getFrequencyPolicy() {
@@ -848,7 +921,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     public void setDolloModel(boolean dolloModel) {
         this.dolloModel = dolloModel;
     }
-    
+
     public boolean isUseAmbiguitiesTreeLikelihood() {
         return useAmbiguitiesTreeLikelihood;
     }

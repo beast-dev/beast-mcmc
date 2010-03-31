@@ -175,6 +175,10 @@ public class BeautiOptions extends ModelOptions {
         }
         clockModelOptions.selectParameters();
 
+        for (PartitionClockModelSubstModelLink clockSubst : getTraitClockSubstLinks()) {
+            clockSubst.selectParameters(parameters);
+        }
+
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
             tree.selectParameters(parameters);
         }
@@ -225,6 +229,10 @@ public class BeautiOptions extends ModelOptions {
             model.selectOperators(ops);
         }
         clockModelOptions.selectOperators(ops);
+
+        for (PartitionClockModelSubstModelLink clockSubst : getTraitClockSubstLinks()) {
+            clockSubst.selectOperators(ops);
+        }
 
         for (PartitionTreeModel tree : getPartitionTreeModels()) {
             tree.selectOperators(ops);
@@ -293,7 +301,7 @@ public class BeautiOptions extends ModelOptions {
         return models;
     }
 
-    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<PartitionData> givenDataPartitions) {
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<? extends PartitionData> givenDataPartitions) {
 
         List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
 
@@ -437,6 +445,10 @@ public class BeautiOptions extends ModelOptions {
         return partitionClockTreeLinks;
     }
 
+    public List<PartitionClockModelSubstModelLink> getTraitClockSubstLinks() {
+        return partitionClockSubstLinks;
+    }
+
     public PartitionClockModelTreeModelLink getPartitionClockTreeLink(PartitionClockModel model, PartitionTreeModel tree) {
         for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
             if (clockTree.getPartitionClockModel().equals(model) && clockTree.getPartitionTreeTree().equals(tree)) {
@@ -447,8 +459,9 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-    public void updatePartitionClockTreeLinks() {
+    public void updatePartitionAllLinks() {
         partitionClockTreeLinks.clear();
+        partitionClockSubstLinks.clear();
 
         for (PartitionClockModel model : getPartitionClockModels()) {
             for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
@@ -456,6 +469,16 @@ public class BeautiOptions extends ModelOptions {
 
                 if (!partitionClockTreeLinks.contains(clockTree)) {
                     partitionClockTreeLinks.add(clockTree);
+                }
+            }
+        }
+
+        for (PartitionClockModel model : getPartitionTraitsClockModels()) {
+            for (PartitionSubstitutionModel subst : getPartitionSubstitutionModels(model.getAllPartitionData())) {
+                PartitionClockModelSubstModelLink clockSubst = new PartitionClockModelSubstModelLink(this, model, subst);
+
+                if (!partitionClockSubstLinks.contains(clockSubst)) {
+                    partitionClockSubstLinks.add(clockSubst);
                 }
             }
         }
@@ -591,7 +614,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         if (newTrait.getPartitionSubstitutionModel() == null) {
-            PartitionDiscreteTraitSubstModel substModel = new PartitionDiscreteTraitSubstModel(this, newTrait);
+            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(this, newTrait);
             newTrait.setPartitionSubstitutionModel(substModel);
         }
 
@@ -700,6 +723,8 @@ public class BeautiOptions extends ModelOptions {
 
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
+    // ClockModel <=> SubstModel
+    private List<PartitionClockModelSubstModelLink> partitionClockSubstLinks = new ArrayList<PartitionClockModelSubstModelLink>();
 
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();

@@ -28,7 +28,7 @@ package dr.app.beauti.siteModelsPanel;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.options.PartitionDiscreteTraitSubstModel;
+import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
@@ -84,7 +84,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
-    private JComboBox discreteTraitSiteModelCombo = new JComboBox(PartitionDiscreteTraitSubstModel.LocationSubstModelType.values());
+    private JComboBox discreteTraitSiteModelCombo = new JComboBox(LocationSubstModelType.values());
     private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
 
 
@@ -199,15 +199,14 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                ((PartitionDiscreteTraitSubstModel) model).setLocationSubstType(
-                        (PartitionDiscreteTraitSubstModel.LocationSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
+                model.setLocationSubstType((LocationSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
             }
         });
 
         PanelUtils.setupComponent(activateBSSVS);
         activateBSSVS.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                ((PartitionDiscreteTraitSubstModel) model).setActivateBSSVS(activateBSSVS.isSelected());
+                model.setActivateBSSVS(activateBSSVS.isSelected());
             }
         });
 
@@ -251,8 +250,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.GENERAL:
-                discreteTraitSiteModelCombo.setSelectedItem(((PartitionDiscreteTraitSubstModel) model).getLocationSubstType());
-                activateBSSVS.setSelected(((PartitionDiscreteTraitSubstModel) model).isActivateBSSVS());
+                discreteTraitSiteModelCombo.setSelectedItem(model.getLocationSubstType());
+                activateBSSVS.setSelected(model.isActivateBSSVS());
                 break;
 
             default:

@@ -226,10 +226,10 @@ public class BEAUTiImporter {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
 
-        if (options.taxonList == null) {
+        if (BeautiOptions.taxonList == null) {
             // This is the first partition to be loaded...
 
-            options.taxonList = new Taxa(taxa);
+            BeautiOptions.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;
@@ -261,8 +261,8 @@ public class BEAUTiImporter {
             // This is an additional partition so check it uses the same taxa
             if (!options.allowDifferentTaxa) { // not allow Different Taxa
                 List<String> oldTaxa = new ArrayList<String>();
-                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
+                for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+                    oldTaxa.add(BeautiOptions.taxonList.getTaxon(i).getId());
                 }
                 List<String> newTaxa = new ArrayList<String>();
                 for (int i = 0; i < taxa.getTaxonCount(); i++) {
@@ -279,12 +279,12 @@ public class BEAUTiImporter {
                         //changeTabs();// can be added, if required in future
 
                         List<String> prevTaxa = new ArrayList<String>();
-                        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                            prevTaxa.add(options.taxonList.getTaxon(i).getId());
+                        for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+                            prevTaxa.add(BeautiOptions.taxonList.getTaxon(i).getId());
                         }
                         for (int i = 0; i < taxa.getTaxonCount(); i++) {
                             if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                                options.taxonList.addTaxon(taxa.getTaxon(i));
+                                BeautiOptions.taxonList.addTaxon(taxa.getTaxon(i));
                             }
                         }
 
@@ -293,18 +293,18 @@ public class BEAUTiImporter {
                     }
                 }
             } else { // allow Different Taxa
-                // AR - it will be much simpler just to consider options.taxonList
+                // AR - it will be much simpler just to consider BeautiOptions.taxonList
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
 
                 // add the new diff taxa
                 List<String> prevTaxa = new ArrayList<String>();
-                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                    prevTaxa.add(options.taxonList.getTaxon(i).getId());
+                for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+                    prevTaxa.add(BeautiOptions.taxonList.getTaxon(i).getId());
                 }
                 for (int i = 0; i < taxa.getTaxonCount(); i++) {
                     if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                        options.taxonList.addTaxon(taxa.getTaxon(i));
+                        BeautiOptions.taxonList.addTaxon(taxa.getTaxon(i));
                     }
                 }
 

@@ -400,6 +400,8 @@ public class OperatorsGenerator extends Generator {
                 getWeightAttribute(operator.weight)});
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
+        writer.writeIDref(operator.tag, operator.idref);
+        // <svsGeneralSubstitutionModel idref="originModel"/>
         writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);        
     }
 

@@ -191,7 +191,10 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     }
 
-
+    private void fireModelsChanged() {
+        options.updatePartitionAllLinks();
+        frame.setDirty();
+    }
 
 //    private void createModel() {
 //        if (createModelDialog == null) {
@@ -341,7 +344,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
                 model.setName(name); //TODO: update every same model in diff PD?
                 updateBorder();
-//                fireModelsChanged();
+                fireModelsChanged();
             }
         }
 

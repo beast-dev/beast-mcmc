@@ -79,7 +79,7 @@ public class GeneralDataType extends DataType implements Identifiable {
         this.ambiguousStateCount = 0;
     }
 
-    // for BEAUti trait PartitionDiscreteTraitSubstModel
+    // for BEAUti trait PartitionSubstitutionModel
     public GeneralDataType() {}
 
     /**

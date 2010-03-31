@@ -268,7 +268,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     private void fireDataChanged() {
         options.updateLinksBetweenPDPCMPSMPTMPTPP();
-        options.updatePartitionClockTreeLinks();
+        options.updatePartitionAllLinks();
         
         options.clockModelOptions.fixRateOfFirstClockPartition(); //TODO correct?
 

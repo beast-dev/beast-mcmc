@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
-import java.util.List;
-
 import dr.app.beauti.enumTypes.FixRateType;
+
+import java.util.List;
 
 
 /**
@@ -58,7 +58,7 @@ public class PriorOptions extends ModelOptions {
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
                 
-        double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.dataPartitions);
+        double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(BeautiOptions.getNonTraitsDataList());
         double avgInitialRootHeight = rootAndRate[0];
         double avgInitialRate = rootAndRate[1];
         

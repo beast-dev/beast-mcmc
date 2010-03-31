@@ -101,7 +101,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         traitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
-//                traitSelectionChanged();
+                traitSelectionChanged();
 //                dataTableModel.fireTableDataChanged();
             }
         });
@@ -260,7 +260,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             currentTrait = null;
             removeTraitAction.setEnabled(false);
         }
-//        dataTableModel.fireTableDataChanged();
+        dataTableModel.fireTableDataChanged();
 //        traitsTableModel.fireTableDataChanged();
     }
 
@@ -318,7 +318,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
 // The createTraitDialog will have already checked if the
             // user is overwriting an existing trait
-            addTrait(newTrait, traitsTable);
+            addTrait(newTrait);
 
             if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
                 frame.setupSpeciesAnalysis();
@@ -334,7 +334,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void addTrait(TraitData newTrait, JTable traitsTable) {
+    public void addTrait(TraitData newTrait) {
         int selRow = options.addTrait(newTrait);
         traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
     }

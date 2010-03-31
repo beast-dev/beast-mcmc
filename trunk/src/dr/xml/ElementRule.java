@@ -42,42 +42,57 @@ public class ElementRule implements XMLSyntaxRule {
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type   Class
+     */
 	public ElementRule(Class type) {
 		this(type, null, null, 1, 1);
 	}
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type       Class
+     * @param optional   boolean
+     */
 	public ElementRule(Class type, boolean optional) {
 		this(type, null, null, (optional ? 0 : 1), 1);
 	}
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type              Class
+     * @param description       String
+     */
 	public ElementRule(Class type, String description) {
 		this(type, description, null, 1, 1);
 	}
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type   Class
+     * @param min    int
+     * @param max    int
+     */
 	public ElementRule(Class type, int min, int max) {
 		this(type, null, null, min, max);
 	}
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type           Class
+     * @param description    String
+     * @param example        String
+     */
 	public ElementRule(Class type, String description, String example) {
 		this(type, description, example, 1, 1);
 	}
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param type              Class
+     * @param description       String
+     * @param min               int
+     * @param max               int
+     */
 	public ElementRule(Class type, String description, int min, int max) {
 		this(type, description, null, min, max);
 	}
@@ -167,7 +182,10 @@ public class ElementRule implements XMLSyntaxRule {
 
 	/**
 	 * Creates a required element rule.
-	 */
+     * @param name             String
+     * @param rules            XMLSyntaxRule[]
+     * @param description      String
+     */
 	public ElementRule(String name, XMLSyntaxRule[] rules, String description) {
 		this.name = name;
 		this.rules = rules;
@@ -185,7 +203,12 @@ public class ElementRule implements XMLSyntaxRule {
 
 	/**
 	 * Creates an element rule.
-	 */
+     * @param name          String
+     * @param rules         XMLSyntaxRule[]
+     * @param description   String
+     * @param min           int
+     * @param max           int
+     */
 	public ElementRule(String name, XMLSyntaxRule[] rules, String description, int min, int max) {
 		this.name = name;
 		this.rules = rules;
@@ -245,17 +268,20 @@ public class ElementRule implements XMLSyntaxRule {
 	 * @return a string describing the rule.
 	 */
 	public String ruleString() {
-		if (c != null) {
-			return "ELEMENT of type " + getTypeName() + " REQUIRED";
-		} else {
-            String howMany;
+		 String howMany;
             if( min == 1 && max == 1 ) {
                 howMany = "Exactly one";
+            } else if (min == max) {
+                howMany = "Exactly " + min;
             } else if( (min <= 1) && max == Integer.MAX_VALUE ) {
                 howMany = "Any number of";
             } else {
                 howMany = "between " + min + " and " + max;
             }
+
+        if (c != null) {
+            return howMany + " ELEMENT of type " + getTypeName() + " REQUIRED";
+		} else {
             StringBuffer buffer = new StringBuffer(howMany + " ELEMENT of name " + name + " REQUIRED containing");
             for (XMLSyntaxRule rule : rules) {
                 buffer.append("\n    ").append(rule.ruleString());
@@ -379,7 +405,8 @@ public class ElementRule implements XMLSyntaxRule {
 	public XMLSyntaxRule[] getRules() { return rules; }
 
 	/**
-	 * @return true if the given object is compatible with the required class.
+	 * @param o Object
+     * @return true if the given object is compatible with the required class.
 	 */
 	private boolean isCompatible(Object o) {
 

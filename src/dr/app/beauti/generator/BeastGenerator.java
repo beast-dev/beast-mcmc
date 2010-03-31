@@ -114,7 +114,7 @@ public class BeastGenerator extends Generator {
      */
     public void checkOptions() throws IllegalArgumentException {
         //++++++++++++++++ Taxon List ++++++++++++++++++
-        TaxonList taxonList = options.taxonList;
+        TaxonList taxonList = BeautiOptions.taxonList;
         Set<String> ids = new HashSet<String>();
 
         ids.add(TaxaParser.TAXA);
@@ -206,7 +206,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
 
         //++++++++++++++++ Taxon List ++++++++++++++++++
-        writeTaxa(writer, options.taxonList);
+        writeTaxa(writer, BeautiOptions.taxonList);
 
         if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
             writer.writeText("");
@@ -317,7 +317,7 @@ public class BeastGenerator extends Generator {
         // traits tag
         if (BeautiOptions.getTraitsList().size() > 0) {
             for (TraitData trait : BeautiOptions.getTraitsList()) {
-                writeEachTrait(writer, trait, options.taxonList);
+                writeEachTrait(writer, trait, BeautiOptions.taxonList);
             }
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         }

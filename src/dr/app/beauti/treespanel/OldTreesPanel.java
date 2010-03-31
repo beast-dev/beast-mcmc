@@ -411,7 +411,7 @@ public class OldTreesPanel extends BeautiPanel {
 //
 //        options.skyrideSmoothing = gmrfBayesianSkyrideCombo.getSelectedIndex();
 //        // the taxon list may not exist yet... this should be set when generating...
-////        options.skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
+////        options.skyrideIntervalCount = taxonList.taxonList.getTaxonCount() - 1;
 //
 //        options.startingTreeType = (StartingTreeType) startingTreeCombo.getSelectedItem();
 //        options.userStartingTree = getSelectedUserTree();

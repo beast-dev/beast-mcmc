@@ -247,13 +247,13 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         boolean backwards = directionCombo.getSelectedItem() == DateUnitsType.BACKWARDS;
 
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-            Date date = options.taxonList.getTaxon(i).getDate();
+        for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+            Date date = BeautiOptions.taxonList.getTaxon(i).getDate();
             double d = date.getTimeValue();
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
-            options.taxonList.getTaxon(i).setDate(newDate);
+            BeautiOptions.taxonList.getTaxon(i).setDate(newDate);
         }
 
         calculateHeights();
@@ -324,13 +324,13 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     }
 
     public void clearDates() {
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+        for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
             java.util.Date origin = new java.util.Date(0);
 
             double d = 0.0;
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            options.taxonList.getTaxon(i).setAttribute("date", date);
+            BeautiOptions.taxonList.getTaxon(i).setAttribute("date", date);
         }
 
         // adjust the dates to the current timescale...
@@ -358,7 +358,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         String warningMessage = null;
 
-        guesser.guessDates(options.taxonList);
+        guesser.guessDates(BeautiOptions.taxonList);
 
         if (warningMessage != null) {
             JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
@@ -407,26 +407,26 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private void calculateHeights() {
 
         options.maximumTipHeight = 0.0;
-        if (options.taxonList == null || options.taxonList.getTaxonCount() == 0) return;
+        if (BeautiOptions.taxonList == null || BeautiOptions.taxonList.getTaxonCount() == 0) return;
 
         heights = null;
 
         dr.evolution.util.Date mostRecent = null;
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-            Date date = options.taxonList.getTaxon(i).getDate();
+        for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+            Date date = BeautiOptions.taxonList.getTaxon(i).getDate();
             if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
                 mostRecent = date;
             }
         }
 
         if (mostRecent != null) {
-            heights = new double[options.taxonList.getTaxonCount()];
+            heights = new double[BeautiOptions.taxonList.getTaxonCount()];
 
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
             double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                Taxon taxon = options.taxonList.getTaxon(i);
+            for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+                Taxon taxon = BeautiOptions.taxonList.getTaxon(i);
                 Date date = taxon.getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
@@ -456,17 +456,17 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            if (options.taxonList == null) return 0;
+            if (BeautiOptions.taxonList == null) return 0;
 
-            return options.taxonList.getTaxonCount();
+            return BeautiOptions.taxonList.getTaxonCount();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.taxonList.getTaxonId(row);
+                    return BeautiOptions.taxonList.getTaxonId(row);
                 case 1:
-                    Date date = options.taxonList.getTaxon(row).getDate();
+                    Date date = BeautiOptions.taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         return date.getTimeValue();
                     } else {
@@ -484,13 +484,13 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 0) {
-                options.taxonList.getTaxon(row).setId(aValue.toString());
+                BeautiOptions.taxonList.getTaxon(row).setId(aValue.toString());
             } else if (col == 1) {
-                Date date = options.taxonList.getTaxon(row).getDate();
+                Date date = BeautiOptions.taxonList.getTaxon(row).getDate();
                 if (date != null) {
                     double d = (Double) aValue;
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
-                    options.taxonList.getTaxon(row).setDate(newDate);
+                    BeautiOptions.taxonList.getTaxon(row).setDate(newDate);
                 }
             }
 
@@ -500,7 +500,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
             if (col == 0) return false;
             if (col == 1) {
-                Date date = options.taxonList.getTaxon(row).getDate();
+                Date date = BeautiOptions.taxonList.getTaxon(row).getDate();
                 return (date != null);
             }
             return false;

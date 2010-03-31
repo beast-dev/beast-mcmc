@@ -17,7 +17,10 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.STARBEASTOptions;
+import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
@@ -395,7 +398,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImportTraits() {
-        if (beautiOptions.taxonList != null) { // validation of check empty taxonList
+        if (BeautiOptions.taxonList != null) { // validation of check empty taxonList
             FileDialog dialog = new FileDialog(this,
                     "Import Traits File...",
                     FileDialog.LOAD);
@@ -465,11 +468,11 @@ public class BeautiFrame extends DocumentFrame {
                     traitsPanel.addTrait(newTrait, traitsPanel.traitsTable);
 
                 for (final String[] v : e.getValue()) {
-                    final int index = beautiOptions.taxonList.getTaxonIndex(v[0]);
+                    final int index = BeautiOptions.taxonList.getTaxonIndex(v[0]);
                     if (index >= 0) {
                         // if the taxon isn't in the list then ignore it.
                         // TODO provide a warning of unmatched taxa
-                        final Taxon taxon = beautiOptions.taxonList.getTaxon(index);
+                        final Taxon taxon = BeautiOptions.taxonList.getTaxon(index);
                         taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
                     }
                 }

@@ -421,7 +421,7 @@ public class BEAUTiImporter {
             }
 
             options.updateLinksBetweenPDPCMPSMPTMPTPP();
-            options.updatePartitionClockTreeLinks();
+            options.updatePartitionAllLinks();
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
     }

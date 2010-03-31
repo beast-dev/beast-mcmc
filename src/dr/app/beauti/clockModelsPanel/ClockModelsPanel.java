@@ -225,7 +225,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
     
     private void fireModelsChanged() {
-        options.updatePartitionClockTreeLinks();
+        options.updatePartitionAllLinks();
         frame.setStatusMessage();
         frame.setDirty();
     }

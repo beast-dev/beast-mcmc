@@ -1,32 +1,17 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.util.Taxon;
-import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.speciation.SpeciesBindingsParser;
 import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
-import dr.evomodelxml.substmodel.FrequencyModelParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
-import dr.evoxml.AttributePatternsParser;
-import dr.evoxml.GeneralDataTypeParser;
-import dr.evoxml.TaxaParser;
-import dr.inference.model.ParameterParser;
-import dr.inferencexml.model.ProductStatisticParser;
-import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
-import dr.xml.XMLParser;
-
-import java.util.List;
 
 /**
  * @author Walter Xie
@@ -40,6 +25,16 @@ public class GeneralTraitGenerator extends Generator {
 
     public GeneralTraitGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+    }
+
+    public static String getLocationSubstModelTag(PartitionSubstitutionModel substModel) {
+        if (substModel.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
+            return SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL;
+        } else if (substModel.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
+            return ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -106,7 +101,7 @@ public class GeneralTraitGenerator extends Generator {
      * @param writer       XMLWriter
      
     public void writeLocationSubstSiteModel(DiscreteTraitData TraitData, XMLWriter writer) {
-        if (TraitData.getLocationSubstType() == DiscreteTraitData.LocationSubstModelType.SYM_SUBST) {
+        if (TraitData.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
@@ -125,7 +120,7 @@ public class GeneralTraitGenerator extends Generator {
 
             writer.writeCloseTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL);
 
-        } else if (TraitData.getLocationSubstType() == DiscreteTraitData.LocationSubstModelType.ASYM_SUBST) {
+        } else if (TraitData.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, new Attribute[]{
@@ -240,19 +235,9 @@ public class GeneralTraitGenerator extends Generator {
         writer.writeCloseTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD);
     }
 
+*/
 
-    private void writeSubstModelRef(DiscreteTraitData TraitData, XMLWriter writer) {
-        String substModel = null;
-        if (TraitData.getLocationSubstType() == DiscreteTraitData.LocationSubstModelType.SYM_SUBST) {
-            substModel = SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL;
-        } else if (TraitData.getLocationSubstType() == DiscreteTraitData.LocationSubstModelType.ASYM_SUBST) {
-            substModel = ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
-        } else {
 
-        }
-        writer.writeIDref(substModel, TraitData.getPrefix() + AbstractSubstitutionModel.MODEL);
-    }
-    */
 
 }
 

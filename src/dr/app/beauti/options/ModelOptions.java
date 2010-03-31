@@ -153,9 +153,9 @@ public class ModelOptions {
         }
     }
 
-    public void createTagInsideOperator(String key, String name, String description, String parameterName, OperatorType type,
-                                  String tag, String idref, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
+    public void createParameterAndStringOperator(String key, String name, String description, Parameter parameter,
+                                  String tag, String idref, OperatorType type, double tuning, double weight) {
+//        Parameter parameter = getParameter(parameterName);
         operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight)
                 .tag(tag).idref(idref).build());
     }

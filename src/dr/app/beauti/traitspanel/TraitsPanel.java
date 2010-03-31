@@ -241,6 +241,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void fireTraitsChanged() {
         traitsTableModel.fireTableDataChanged();
+        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
@@ -325,9 +326,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 frame.updateDiscreteTraitAnalysis();
             }
 
-//            fireTraitsChanged();
-            traitsTableModel.fireTableDataChanged();
-            dataTableModel.fireTableDataChanged();          
+            fireTraitsChanged();
+//            traitsTableModel.fireTableDataChanged();
+//            dataTableModel.fireTableDataChanged();
 
 //            traitSelectionChanged();
         }
@@ -445,6 +446,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     BeautiOptions.getTraitsList().get(row).setName(aValue.toString());
+                    fireTraitsChanged();
                     break;
                 case 1:
                     BeautiOptions.getTraitsList().get(row).setTraitType((TraitData.TraitType) aValue);

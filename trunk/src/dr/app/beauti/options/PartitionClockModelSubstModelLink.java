@@ -2,6 +2,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.generator.GeneralTraitGenerator;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
 
         createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), "clock.rate",
                 "bit Flip In Substitution Model Operator on clock.rate", clockModel.getParameter("clock.rate"),
-                GeneralTraitGenerator.getLocationSubstModelTag(substModel), substModel.getPrefix() + substModel.getName(),
+                GeneralTraitGenerator.getLocationSubstModelTag(substModel), substModel.getPrefix() + AbstractSubstitutionModel.MODEL,
                 OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
 
     }

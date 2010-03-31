@@ -558,7 +558,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     // +++++++++++++ Traits +++++++++++++
-    public List<PartitionData> getNonTraitsDataList() {
+    public static List<PartitionData> getNonTraitsDataList() {
         List<PartitionData> nonTraitsData = new ArrayList<PartitionData>();
         for (PartitionData partition : dataPartitions) {
             if (partition.getTraitType() == null) {

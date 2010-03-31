@@ -2,23 +2,30 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
+import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.substmodel.NucModelType;
+import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.GeneralDataTypeParser;
 import dr.evoxml.MergePatternsParser;
 import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.model.CompoundParameterParser;
+import dr.inferencexml.model.ProductStatisticParser;
+import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -40,7 +47,7 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer the writer
      * @param model  the partition model to write in BEAST XML
      */
-    public void writeSubstitutionModel(PartitionSubstitutionModel model, XMLWriter writer) {
+    public void writeSubstitutionSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
 
         DataType dataType = model.getDataType();
         String dataTypeDescription = dataType.getDescription();
@@ -92,14 +99,14 @@ public class SubstitutionModelGenerator extends Generator {
                         } else {
                             writeHKYModel(-1, writer, model);
                         }
-                        
+
                     } else if (model.getNucSubstitutionModel() == NucModelType.TN93) {
                         if (model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                            	writeTN93Model(i, writer, model);
+                                writeTN93Model(i, writer, model);
                             }
                         } else {
-                        	writeTN93Model(-1, writer, model);
+                            writeTN93Model(-1, writer, model);
                         }
 
                     } else {
@@ -115,6 +122,16 @@ public class SubstitutionModelGenerator extends Generator {
                         }
                     }
                 }
+
+                //****************** Site Model *****************
+                if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
+                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                        writeNucSiteModel(i, writer, model);
+                    }
+                    writer.println();
+                } else {
+                    writeNucSiteModel(-1, writer, model);
+                }
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -128,6 +145,8 @@ public class SubstitutionModelGenerator extends Generator {
                                 new Attribute.Default<String>("type", aaModel)}, true
                 );
 
+                //****************** Site Model *****************
+                writeAASiteModel(writer, model);
                 break;
 
             case DataType.TWO_STATES:
@@ -142,7 +161,18 @@ public class SubstitutionModelGenerator extends Generator {
                         break;
                 }
 
+                //****************** Site Model *****************
+                writeTwoStateSiteModel(writer, model);
                 break;
+
+            case DataType.GENERAL:
+                writeDiscreteTraitsSubstModel(model, writer);
+                //****************** Site Model *****************
+                writeDiscreteTraitsSiteModel(model, writer);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown data type");
         }
     }
 
@@ -194,6 +224,7 @@ public class SubstitutionModelGenerator extends Generator {
         writeParameter(num, TN93Parser.KAPPA2, "kappa2", model, writer);
         writer.writeCloseTag(NucModelType.TN93.getXMLName());
     }
+
     /**
      * Write the GTR model XML block.
      *
@@ -220,8 +251,9 @@ public class SubstitutionModelGenerator extends Generator {
         writeParameter(num, GTRParser.G_TO_T, PartitionSubstitutionModel.GTR_RATE_NAMES[4], model, writer);
         writer.writeCloseTag(GTRParser.GTR_MODEL);
     }
-    
+
     // write frequencies for DNA data
+
     private void writeFrequencyModelDNA(XMLWriter writer, PartitionSubstitutionModel model, int num) {
         String dataTypeDescription = model.getDataType().getDescription();
         String prefix = model.getPrefix(num);
@@ -239,20 +271,20 @@ public class SubstitutionModelGenerator extends Generator {
             case ALLEQUAL:
             case ESTIMATED:
                 if (num == -1 || model.isUnlinkedFrequencyModel()) { // single partition, or multiple partitions unlinked frequency
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25") }, true);
+                            new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")}, true);
                 } else { // multiple partitions but linked frequency                    
                     if (num == 1) {
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "frequencies"),
-                                new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25") }, true);
+                                new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")}, true);
                     } else {
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                     }
                 }
                 break;
-                
+
             case EMPIRICAL:
                 if (num == -1 || model.isUnlinkedFrequencyModel()) { // single partition, or multiple partitions unlinked frequency
                     writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
@@ -262,23 +294,24 @@ public class SubstitutionModelGenerator extends Generator {
                     } else {
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                     }
-                }                
+                }
                 break;
         }
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
     }
-    
+
     // adding mergePatterns or alignment ref for EMPIRICAL
+
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-            if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) { 
+            if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
                 for (PartitionData partition : model.getAllPartitionData()) { //?
-                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);                        
-                }           
-            } else { 
+                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);
+                }
+            } else {
                 for (PartitionData partition : model.getAllPartitionData()) { //?
-                    writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());    
+                    writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
                 }
             }
         }
@@ -307,11 +340,11 @@ public class SubstitutionModelGenerator extends Generator {
                         new Attribute.Default<String>("dataType", dataTypeDescription)
                 }
         );
-        
+
         writeAlignmentRefInFrequencies(writer, model, prefix);
-        
+
         writeFrequencyModelBinary(writer, model, prefix);
-        
+
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
         writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -345,13 +378,13 @@ public class SubstitutionModelGenerator extends Generator {
             }
             double[] frequencies = patterns.getStateFrequencies();
             writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
-                            new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, frequencies[0] + " " + frequencies[1]) }, true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
+                    new Attribute.Default<String>(ParameterParser.VALUE, frequencies[0] + " " + frequencies[1])}, true);
             writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         } else {
-           writeFrequencyModelBinary(writer, model, prefix);
+            writeFrequencyModelBinary(writer, model, prefix);
         }
 
         writeParameter(BinaryCovarionModelParser.HIDDEN_FREQUENCIES,
@@ -362,18 +395,19 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(BinaryCovarionModelParser.COVARION_MODEL);
     }
-    
+
     // write frequencies for binary data
+
     private void writeFrequencyModelBinary(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
             case ALLEQUAL:
-            case ESTIMATED:                
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute[] {
+            case ESTIMATED:
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                        new Attribute.Default<String>(ParameterParser.VALUE, "0.5 0.5") }, true);                
+                        new Attribute.Default<String>(ParameterParser.VALUE, "0.5 0.5")}, true);
                 break;
-                
+
             case EMPIRICAL:
                 writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
                 break;
@@ -383,44 +417,165 @@ public class SubstitutionModelGenerator extends Generator {
     }
 
     /**
+     * Discrete Traits Subst Model
+     *
+     * @param model     PartitionSubstitutionModel
+     * @param writer    XMLWriter
+     */
+    private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
+        int numOfSates = TraitData.getStatesListOfTrait(BeautiOptions.taxonList, model.getAllPartitionData().get(0).getName()).size();
+        for (PartitionData partition : model.getAllPartitionData()) {
+            if (numOfSates != TraitData.getStatesListOfTrait(BeautiOptions.taxonList, partition.getName()).size()) {
+                throw new IllegalArgumentException("Discrete Traits having different number of states " +
+                        "\n" + "cannot share the same substitution model !");
+            }
+        }
+
+        if (model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
+            writer.writeComment("symmetric CTMC model for discrete state reconstructions");
+
+            writer.writeOpenTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
+
+            for (PartitionData partition : model.getAllPartitionData()) { //?
+                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+            }
+
+            writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
+
+            writeFrequencyModel(model, numOfSates, true, writer);
+
+            writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
+
+            //---------------- rates and indicators -----------------
+            writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, 1, writer);//TODO alway 1?
+
+            writer.writeCloseTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL);
+
+        } else if (model.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
+            writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
+
+            writer.writeOpenTag(ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL),
+                    new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
+
+            for (PartitionData partition : model.getAllPartitionData()) { //?
+                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+            }
+
+            writer.writeOpenTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+
+            writeFrequencyModel(model, numOfSates, null, writer);
+
+            writer.writeCloseTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+
+            //---------------- rates and indicators -----------------
+            writeRatesAndIndicators(model, numOfSates * (numOfSates - 1), null, writer);
+
+            writer.writeCloseTag(ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL);
+
+        } else {
+
+        }
+
+        if (model.isActivateBSSVS()) writeStatisticModel(model, writer);
+    }
+
+    private void writeFrequencyModel(PartitionSubstitutionModel model, int numOfSates, Boolean normalize, XMLWriter writer) {
+        if (normalize == null) {
+            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL);
+        } else {
+            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
+                    new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
+        }
+
+        for (PartitionData partition : model.getAllPartitionData()) { //?
+            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+        }
+
+        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+        writeParameter(model.getPrefix() + "tait.frequencies", numOfSates, Double.NaN, Double.NaN, Double.NaN, writer);
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+
+        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+    }
+
+    private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
+        writer.writeComment("rates and indicators");
+
+        if (relativeTo == null) {
+            writer.writeOpenTag(GeneralSubstitutionModelParser.RATES);
+        } else {
+            writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
+                    new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
+        }
+        model.getParameter("tait.rates").isFixed = true;
+        writeParameter(model.getParameter("tait.rates"), dimension, writer);
+        writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
+
+        if (model.isActivateBSSVS()) {
+            writer.writeOpenTag(SVSGeneralSubstitutionModel.INDICATOR);
+            model.getParameter("tait.indicators").isFixed = true;
+            writeParameter(model.getParameter("tait.indicators"), dimension, writer);
+            writer.writeCloseTag(SVSGeneralSubstitutionModel.INDICATOR);
+        }
+
+    }
+
+    private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
+        writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, "tait.nonZeroRates"),
+                new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.indicators");
+        writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
+
+        writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, "actualRates"),
+                new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.indicators");
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.rates");
+        writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
+    }
+
+    /**
      * Write the site model XML block.
      *
      * @param model            the partition model to write in BEAST XML
      * @param writer           the writer
      */
-    public void writeSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
-
-        switch (model.getDataType().getType()) {
-            case DataType.NUCLEOTIDES:
-                if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
-                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                        writeNucSiteModel(i, writer, model);
-                    }
-                    writer.println();
-                } else {
-                    writeNucSiteModel(-1, writer, model);
-                }
-                break;
-
-            case DataType.AMINO_ACIDS:
-                writeAASiteModel(writer, model);
-                break;
-
-            case DataType.TWO_STATES:
-            case DataType.COVARION:
-                writeTwoStateSiteModel(writer, model);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown data type");
-        }
-    }
+//    public void writeSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
+//
+//        switch (model.getDataType().getType()) {
+//            case DataType.NUCLEOTIDES:
+//                if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
+//                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+//                        writeNucSiteModel(i, writer, model);
+//                    }
+//                    writer.println();
+//                } else {
+//                    writeNucSiteModel(-1, writer, model);
+//                }
+//                break;
+//
+//            case DataType.AMINO_ACIDS:
+//                writeAASiteModel(writer, model);
+//                break;
+//
+//            case DataType.TWO_STATES:
+//            case DataType.COVARION:
+//                writeTwoStateSiteModel(writer, model);
+//                break;
+//
+//            default:
+//                throw new IllegalArgumentException("Unknown data type");
+//        }
+//    }
 
     /**
      * Write the allMus for each partition model.
      *
      * @param model  PartitionSubstitutionModel
-     * @param writer  XMLWriter
+     * @param writer XMLWriter
      */
     public void writeAllMus(PartitionSubstitutionModel model, XMLWriter writer) {
         if (model.hasCodon()) { // write allMus for codon model
@@ -477,7 +632,7 @@ public class SubstitutionModelGenerator extends Generator {
                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
                         }
                         break;
-                        
+
                     case TN93:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
@@ -492,26 +647,26 @@ public class SubstitutionModelGenerator extends Generator {
 
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
-                            for (int i = 1; i <= codonPartitionCount; i++) {                                
+                            for (int i = 1; i <= codonPartitionCount; i++) {
                                 for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
                                 }
                             }
-                        } else {                            
+                        } else {
                             for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                             }
                         }
                         break;
                 }
-                
+
                 if (model.getFrequencyPolicy() == FrequencyPolicyType.ESTIMATED) {
                     if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel() && model.isUnlinkedFrequencyModel()) {
-                    	for (int i = 1; i <= codonPartitionCount; i++) {
-                    		writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
+                        for (int i = 1; i <= codonPartitionCount; i++) {
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
                         }
                     } else {
-                    	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                     }
                 }
                 break;//NUCLEOTIDES
@@ -561,9 +716,9 @@ public class SubstitutionModelGenerator extends Generator {
     /**
      * Write the nucleotide site model XML block.
      *
-     * @param num              the model number
-     * @param writer           the writer
-     * @param model            the partition model to write in BEAST XML
+     * @param num    the model number
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
      */
     private void writeNucSiteModel(int num, XMLWriter writer, PartitionSubstitutionModel model) {
 
@@ -596,7 +751,7 @@ public class SubstitutionModelGenerator extends Generator {
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
             }
-            
+
         } else {
 
             switch (model.getNucSubstitutionModel()) {
@@ -614,28 +769,28 @@ public class SubstitutionModelGenerator extends Generator {
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown substitution model.");
-            }  
+            }
         }
-                  
+
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        
+
         if (model.hasCodon()) {
             writeParameter(num, GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
-        }              
+        }
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE, new Attribute.Default<String>(
                     GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "alpha", model, writer);
-            	writeParameter(num, "alpha", model, writer);
+                writeParameter(num, "alpha", model, writer);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
 //                    writeParameter(prefix2 + "alpha", model, writer);
-                	writeParameter("alpha", model, writer);
+                    writeParameter("alpha", model, writer);
                 } else {
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "alpha");                	
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "alpha");
                 }
             }
             writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
@@ -645,12 +800,12 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeOpenTag(GammaSiteModelParser.PROPORTION_INVARIANT);
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
 //                writeParameter(prefix + "pInv", model, writer);
-            	writeParameter(num, "pInv", model, writer);
+                writeParameter(num, "pInv", model, writer);
             } else {
                 // multiple partitions but linked heterogeneity
                 if (num == 1) {
 //                    writeParameter(prefix2 + "pInv", model, writer);
-                	 writeParameter("pInv", model, writer);
+                    writeParameter("pInv", model, writer);
                 } else {
                     writer.writeIDref(ParameterParser.PARAMETER, prefix2 + "pInv");
                 }
@@ -664,8 +819,8 @@ public class SubstitutionModelGenerator extends Generator {
     /**
      * Write the two states site model XML block.
      *
-     * @param writer           the writer
-     * @param model            the partition model to write in BEAST XML
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
      */
     private void writeTwoStateSiteModel(XMLWriter writer, PartitionSubstitutionModel model) {
 
@@ -713,8 +868,8 @@ public class SubstitutionModelGenerator extends Generator {
     /**
      * Write the AA site model XML block.
      *
-     * @param writer           the writer
-     * @param model            the partition model to write in BEAST XML
+     * @param writer the writer
+     * @param model  the partition model to write in BEAST XML
      */
     private void writeAASiteModel(XMLWriter writer, PartitionSubstitutionModel model) {
 
@@ -747,5 +902,20 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+    }
+
+    private void writeDiscreteTraitsSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
+        writer.writeOpenTag(SiteModel.SITE_MODEL, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + SiteModel.SITE_MODEL)});
+
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+
+//        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);
+//        writeParameter(model.getParameter("trait.mu"), -1, writer);
+//        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
+
+        writer.writeCloseTag(SiteModel.SITE_MODEL);
     }
 }

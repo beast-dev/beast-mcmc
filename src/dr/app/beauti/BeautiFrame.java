@@ -612,7 +612,7 @@ public class BeautiFrame extends DocumentFrame {
         try {
             generator.checkOptions();
         } catch (IllegalArgumentException iae) {
-            JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to generate file",
+            JOptionPane.showMessageDialog(this, iae.getMessage(), "Invalid BEAUti setting : ",
                     JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -642,7 +642,7 @@ public class BeautiFrame extends DocumentFrame {
                     generator.generateXML(file);
 
 	            } catch (IOException ioe) {
-	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + ioe.getMessage(),
+	                JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
 	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
 	                return false;
 	            } catch (Exception e) {

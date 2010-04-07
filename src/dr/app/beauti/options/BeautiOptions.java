@@ -321,6 +321,10 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionSubstitutionModels(dataPartitions);
     }
 
+    public List<PartitionSubstitutionModel> getPartitionTraitsSubstitutionModels() {
+        return getPartitionSubstitutionModels(getTraitsList());
+    }
+
 //    public int getTotalActivePartitionSubstitutionModelCount() {
 //        int totalPartitionCount = 0;
 //        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
@@ -381,7 +385,7 @@ public class BeautiOptions extends ModelOptions {
 //        return partitionTreeModels;
 //    }
 
-    public List<PartitionTreeModel> getPartitionTreeModels(List<PartitionData> givenDataPartitions) {
+    public List<PartitionTreeModel> getPartitionTreeModels(List<? extends PartitionData> givenDataPartitions) {
 
         List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
 

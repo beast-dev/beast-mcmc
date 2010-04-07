@@ -44,6 +44,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             u0[i] = 0.0;
             logWeight += 1.0 - p[i];
         }
+        // TODO There is a bug here; the code below assumes nodes are numbered in post-order
         for (i = treeModel.getExternalNodeCount(); i < L; ++i) {
             u0[i] = 1.0;
             node = treeModel.getNode(i);
@@ -58,42 +59,63 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         return -logWeight * lam.getParameterValue(0) / (getAverageRate() * mu.getParameterValue(0));
     }
 
-    void setNodePatternInclusion() {
-        int patternIndex, i, j, extantInTips;
-        nodePatternInclusion = new boolean[nodeCount][patternCount];
-        for (patternIndex = 0; patternIndex < patternCount; ++patternIndex) {
-            extantInTips = 0;
 
-            int states[];
-            int extantInTipsBelow[] = new int[treeModel.getNodeCount()];
+    private void setTipNodePatternInclusion() { // These values never change
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            final int nChildren = treeModel.getChildCount(node);
+            if (nChildren == 0) {
+                for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
+                    extantInTipsBelow[i][patternIndex] = 1;
+                    int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(node));
+                    int[] states = dataType.getStates(patterns.getPatternState(taxonIndex, patternIndex));
+                    for (int state : states) {
+                        if (state == deathState) {
+                            extantInTipsBelow[i][patternIndex] = 0;
+                        }
+                    }
+                    extantInTips[patternIndex] += extantInTipsBelow[i][patternIndex];
+                }
+            }
+        }
+    }
+
+    void setNodePatternInclusion() {
+        int patternIndex, i, j;
+        
+        if (nodePatternInclusion == null) {
+            nodePatternInclusion = new boolean[nodeCount][patternCount];
+        }
+
+        if (this.extantInTips == null) {
+            extantInTips = new int[patternCount];
+            extantInTipsBelow = new int[nodeCount][patternCount];
+            setTipNodePatternInclusion();
+        }
+
+        for (patternIndex = 0; patternIndex < patternCount; ++patternIndex) {
             for (i = 0; i < treeModel.getNodeCount(); ++i) {
                 NodeRef node = treeModel.getNode(i);
                 int nChildren = treeModel.getChildCount(node);
-                if (nChildren == 0) {    // I'm a tip
-                    extantInTipsBelow[i] = 1;
-                    int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(node));
-                    states = dataType.getStates(patterns.getPatternState(taxonIndex, patternIndex));
-                    for (int state : states) {
-                        if (state == deathState) {
-                            extantInTipsBelow[i] = 0;
-                        }
-                    }
-                    extantInTips += extantInTipsBelow[i];
-                } else {
-                    extantInTipsBelow[i] = 0;
+                // TODO There is a bug here; the code below assumes nodes are numbered in post-order
+                if (nChildren > 0) {
+                    extantInTipsBelow[i][patternIndex] = 0;
                     for (j = 0; j < nChildren; ++j) {
                         int childIndex = treeModel.getChild(node, j).getNumber();
-                        extantInTipsBelow[i] += extantInTipsBelow[childIndex];
+                        extantInTipsBelow[i][patternIndex] += extantInTipsBelow[childIndex][patternIndex];
                     }
                 }
             }
 
             for (i = 0; i < treeModel.getNodeCount(); ++i) {
-                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i] >= extantInTips);
+                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex] >= this.extantInTips[patternIndex]);
             }
 
         }
         nodePatternInclusionKnown = true;
     }
+
+    private int[] extantInTips;
+    private int[][] extantInTipsBelow;
 
 }

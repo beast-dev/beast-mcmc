@@ -39,6 +39,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.*;
@@ -657,6 +658,12 @@ public class BeastGenerator extends Generator {
             treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
         }
 
+        for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
+            // e.g. <svsGeneralSubstitutionModel idref="locations.model" /> 
+            writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+            writer.writeText("");
+        }
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
@@ -666,6 +673,10 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
+
+            if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+                generalTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
+            }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
@@ -677,7 +688,7 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen    	
-        logGenerator.writeLogToScreen(writer, branchRatesModelGenerator);
+        logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator);

@@ -1,10 +1,12 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -77,8 +79,8 @@ public class GeneralTraitGenerator extends Generator {
     /**
      * write <generalDataType> and <attributePatterns>
      *
-     * @param traitData    TraitData
-     * @param writer       XMLWriter
+     * @param traitData TraitData
+     * @param writer    XMLWriter
      */
     public void writeGeneralDataType(TraitData traitData, XMLWriter writer) {
         writer.writeComment("trait = " + traitData.getName() + " trait_type = " + traitData.getTraitType());
@@ -111,8 +113,9 @@ public class GeneralTraitGenerator extends Generator {
 
     /**
      * Ancestral Tree Likelihood
-     * @param traitData  TraitData
-     * @param writer     XMLWriter
+     *
+     * @param traitData TraitData
+     * @param writer    XMLWriter
      */
     public void writeAncestralTreeLikelihood(TraitData traitData, XMLWriter writer) {
         PartitionSubstitutionModel substModel = traitData.getPartitionSubstitutionModel();
@@ -129,18 +132,18 @@ public class GeneralTraitGenerator extends Generator {
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
-            	writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
+                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
             case RANDOM_LOCAL_CLOCK:
-            	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
 
             case AUTOCORRELATED_LOGNORMAL:
-            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
+                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
 
@@ -150,7 +153,15 @@ public class GeneralTraitGenerator extends Generator {
 
         writer.writeCloseTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD);
     }
-    
+
+    public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
+        for (TraitData traitData : BeautiOptions.getDiscreteIntegerTraits()) { // Each TD except Species has one AncestralTreeLikelihood
+            if (!traitData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+                        traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+        }
+    }
+
     public void writeLogs(XMLWriter writer) {
 
     }

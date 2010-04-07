@@ -33,6 +33,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
@@ -70,10 +71,11 @@ public class LogGenerator extends Generator {
     /**
      * write log to screen
      *
-     * @param writer                          XMLWriter
-     * @param branchRatesModelGenerator       BranchRatesModelGenerator
+     * @param writer                    XMLWriter
+     * @param branchRatesModelGenerator BranchRatesModelGenerator
      */
-    void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator) {
+    void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
+                          SubstitutionModelGenerator substitutionModelGenerator) {
         writer.writeComment("write log to screen");
 
         writer.writeOpenTag(LoggerParser.LOG,
@@ -165,9 +167,12 @@ public class LogGenerator extends Generator {
 //        }
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            branchRatesModelGenerator.writeLogStatistic(model, writer);
-//        }
+
+        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
+                substitutionModelGenerator.writeStatisticLog(model, writer);
+            }
+        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
 
@@ -179,11 +184,11 @@ public class LogGenerator extends Generator {
     /**
      * write log to file
      *
-     * @param writer                  XMLWriter
-     * @param treePriorGenerator      TreePriorGenerator
-     * @param branchRatesModelGenerator      BranchRatesModelGenerator
-     * @param substitutionModelGenerator     SubstitutionModelGenerator
-     * @param treeLikelihoodGenerator        TreeLikelihoodGenerator
+     * @param writer                     XMLWriter
+     * @param treePriorGenerator         TreePriorGenerator
+     * @param branchRatesModelGenerator  BranchRatesModelGenerator
+     * @param substitutionModelGenerator SubstitutionModelGenerator
+     * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
      */
     void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
                         SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator) {
@@ -257,8 +262,8 @@ public class LogGenerator extends Generator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(writer, model);
             if (model.hasCodon()) {
-            writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
-        }
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+            }
         }
 
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
@@ -306,8 +311,8 @@ public class LogGenerator extends Generator {
     /**
      * write tree log to file
      *
-     * @param writer   XMLWriter
-     */     
+     * @param writer XMLWriter
+     */
     void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 

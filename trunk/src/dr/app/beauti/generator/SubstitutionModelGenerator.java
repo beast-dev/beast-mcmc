@@ -483,9 +483,11 @@ public class SubstitutionModelGenerator extends Generator {
 
     private void writeFrequencyModel(PartitionSubstitutionModel model, int numOfSates, Boolean normalize, XMLWriter writer) {
         if (normalize == null) {
-            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL);
+            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + FrequencyModelParser.FREQUENCY_MODEL)});
         } else {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + FrequencyModelParser.FREQUENCY_MODEL),
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
@@ -494,7 +496,7 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-        writeParameter(model.getPrefix() + "tait.frequencies", numOfSates, Double.NaN, Double.NaN, Double.NaN, writer);
+        writeParameter(model.getPrefix() + "trait.frequencies", numOfSates, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
@@ -509,14 +511,14 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
-        model.getParameter("tait.rates").isFixed = true;
-        writeParameter(model.getParameter("tait.rates"), dimension, writer);
+        model.getParameter("trait.rates").isFixed = true;
+        writeParameter(model.getParameter("trait.rates"), dimension, writer);
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
         if (model.isActivateBSSVS()) {
             writer.writeOpenTag(SVSGeneralSubstitutionModel.INDICATOR);
-            model.getParameter("tait.indicators").isFixed = true;
-            writeParameter(model.getParameter("tait.indicators"), dimension, writer);
+            model.getParameter("trait.indicators").isFixed = true;
+            writeParameter(model.getParameter("trait.indicators"), dimension, writer);
             writer.writeCloseTag(SVSGeneralSubstitutionModel.INDICATOR);
         }
 
@@ -524,16 +526,16 @@ public class SubstitutionModelGenerator extends Generator {
 
     private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
         writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, "tait.nonZeroRates"),
+                new Attribute.Default<String>(XMLParser.ID, "trait.nonZeroRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.indicators");
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
         writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
         writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, "actualRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.indicators");
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "tait.rates");
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
         writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 

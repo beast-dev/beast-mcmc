@@ -21,6 +21,7 @@ import dr.evoxml.AttributePatternsParser;
 import dr.evoxml.GeneralDataTypeParser;
 import dr.evoxml.TaxaParser;
 import dr.util.Attribute;
+import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.util.List;
@@ -64,11 +65,11 @@ public class GeneralTraitGenerator extends Generator {
                             + "\nin taxon " + taxon.getId());
                 }
 
-                writer.writeOpenTag(Attribute.ATTRIBUTE, new Attribute[]{
+                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
                         new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                taxon.getAttribute(trait.getName());
-                writer.writeCloseTag(Attribute.ATTRIBUTE);
+                writer.writeText(taxon.getAttribute(trait.getName()).toString());
+                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
             }
         }
     }
@@ -100,7 +101,8 @@ public class GeneralTraitGenerator extends Generator {
 
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getPrefix() + AttributePatternsParser.PATTERNS)});
+                new Attribute.Default<String>(XMLParser.ID, traitData.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
+                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, traitData.getName())});
         writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
         writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, traitData.getPrefix() + DATA);
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);

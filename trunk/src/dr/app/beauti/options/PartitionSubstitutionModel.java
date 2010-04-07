@@ -306,7 +306,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
         createCachedGammaPrior("trait.rates", "location substitution model rates",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
-        createParameter("trait.indicators", "location substitution model rate indicators");
+        createParameter("trait.indicators", "location substitution model rate indicators", 1.0);
 
         // = strick clock TODO trait.mu belongs Clock Model?
         createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" :  " ") + "mutation rate parameter",

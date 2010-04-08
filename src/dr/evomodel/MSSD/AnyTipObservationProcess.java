@@ -2,6 +2,7 @@ package dr.evomodel.MSSD;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
@@ -36,24 +37,30 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         NodeRef node;
         double logWeight = 0.0;
 
+        double averageRate = getAverageRate();
+
         for (i = 0; i < L; ++i) {
-            p[i] = 1.0 - getNodeSurvivalProbability(i);
+            p[i] = 1.0 - getNodeSurvivalProbability(i, averageRate);
         }
 
-        for (i = 0; i < treeModel.getExternalNodeCount(); ++i) {
-            u0[i] = 0.0;
-            logWeight += 1.0 - p[i];
-        }
-        // TODO There is a bug here; the code below assumes nodes are numbered in post-order
-        for (i = treeModel.getExternalNodeCount(); i < L; ++i) {
-            u0[i] = 1.0;
-            node = treeModel.getNode(i);
-            for (j = 0; j < treeModel.getChildCount(node); ++j) {
-                //childNode = treeModel.getChild(node,j);
-                childNumber = treeModel.getChild(node, j).getNumber();
-                u0[i] *= 1.0 - p[childNumber] * (1.0 - u0[childNumber]);
+        Tree.Utils.postOrderTraversalList(treeModel, postOrderNodeList);
+
+        for (int postOrderIndex = 0; postOrderIndex < nodeCount; postOrderIndex++) {
+
+            i = postOrderNodeList[postOrderIndex];
+
+            if (i < treeModel.getExternalNodeCount()) { // Is tip
+                u0[i] = 0.0;
+                logWeight += 1.0 - p[i];
+            } else { // Is internal node or root
+                u0[i] = 1.0;
+                node = treeModel.getNode(i);
+                for (j = 0; j < treeModel.getChildCount(node); ++j) {                   
+                    childNumber = treeModel.getChild(node, j).getNumber();
+                    u0[i] *= 1.0 - p[childNumber] * (1.0 - u0[childNumber]);
+                }
+                logWeight += (1.0 - u0[i]) * (1.0 - p[i]);
             }
-            logWeight += (1.0 - u0[i]) * (1.0 - p[i]);
         }
 
         return -logWeight * lam.getParameterValue(0) / (getAverageRate() * mu.getParameterValue(0));
@@ -61,61 +68,79 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
 
 
     private void setTipNodePatternInclusion() { // These values never change
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
-            final int nChildren = treeModel.getChildCount(node);
-            if (nChildren == 0) {
-                for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                    extantInTipsBelow[i][patternIndex] = 1;
-                    int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(node));
-                    int[] states = dataType.getStates(patterns.getPatternState(taxonIndex, patternIndex));
-                    for (int state : states) {
-                        if (state == deathState) {
-                            extantInTipsBelow[i][patternIndex] = 0;
-                        }
+
+            for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
+                extantInTipsBelow[i][patternIndex] = 1;
+                int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(node));
+                int[] states = dataType.getStates(patterns.getPatternState(taxonIndex, patternIndex));
+                for (int state : states) {
+                    if (state == deathState) {
+                        extantInTipsBelow[i][patternIndex] = 0;
                     }
-                    extantInTips[patternIndex] += extantInTipsBelow[i][patternIndex];
                 }
+                extantInTips[patternIndex] += extantInTipsBelow[i][patternIndex];
+
+            }
+        }
+
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
+                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex] >=
+                        extantInTips[patternIndex]);
             }
         }
     }
 
     void setNodePatternInclusion() {
-        int patternIndex, i, j;
+
+        if (postOrderNodeList == null) {
+            postOrderNodeList = new int[nodeCount];         
+        }
         
         if (nodePatternInclusion == null) {
             nodePatternInclusion = new boolean[nodeCount][patternCount];
         }
 
-        if (this.extantInTips == null) {
+        if (extantInTips == null) {
             extantInTips = new int[patternCount];
             extantInTipsBelow = new int[nodeCount][patternCount];
             setTipNodePatternInclusion();
         }
 
-        for (patternIndex = 0; patternIndex < patternCount; ++patternIndex) {
-            for (i = 0; i < treeModel.getNodeCount(); ++i) {
-                NodeRef node = treeModel.getNode(i);
-                int nChildren = treeModel.getChildCount(node);
-                // TODO There is a bug here; the code below assumes nodes are numbered in post-order
-                if (nChildren > 0) {
-                    extantInTipsBelow[i][patternIndex] = 0;
-                    for (j = 0; j < nChildren; ++j) {
-                        int childIndex = treeModel.getChild(node, j).getNumber();
-                        extantInTipsBelow[i][patternIndex] += extantInTipsBelow[childIndex][patternIndex];
+        // Determine post-order traversal
+        Tree.Utils.postOrderTraversalList(treeModel, postOrderNodeList);
+
+        // Do post-order traversal
+        for (int postOrderIndex = 0; postOrderIndex < nodeCount; postOrderIndex++) {
+            NodeRef node = treeModel.getNode(postOrderNodeList[postOrderIndex]);
+            final int nChildren = treeModel.getChildCount(node);
+            if (nChildren > 0) {
+                final int nodeNumber = node.getNumber();
+                for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
+                    extantInTipsBelow[nodeNumber][patternIndex] = 0;
+                    for (int j = 0; j < nChildren; j++) {
+                        final int childIndex = treeModel.getChild(node,j).getNumber();
+                        extantInTipsBelow[nodeNumber][patternIndex] += extantInTipsBelow[childIndex][patternIndex];
                     }
                 }
             }
-
-            for (i = 0; i < treeModel.getNodeCount(); ++i) {
-                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex] >= this.extantInTips[patternIndex]);
-            }
-
         }
+
+        for (int i = treeModel.getExternalNodeCount(); i < treeModel.getNodeCount(); ++i) {
+            for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
+                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex]
+                        >= extantInTips[patternIndex]);
+            }
+        }
+        
         nodePatternInclusionKnown = true;
     }
 
     private int[] extantInTips;
     private int[][] extantInTipsBelow;
+
+    private int[] postOrderNodeList;
 
 }

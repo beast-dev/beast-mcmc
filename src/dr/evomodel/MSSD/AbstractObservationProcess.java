@@ -105,9 +105,40 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         int v = site * stateCount;
         double sum = 0.0;
         for (int i = 0; i < stateCount; i++) {
-            sum += frequencies[i] * partials[v];
+            sum += frequencies[i] * partials[v + i];
         }
         return Math.log(sum);
+    }
+
+
+    private void calculateNodePatternLikelihood(int nodeIndex,
+                                                      double[] freqs,
+                                                      LikelihoodCore likelihoodCore,
+                                                      double averageRate,
+                                                      double[] cumLike) {
+                    // get partials for node nodeIndex
+            likelihoodCore.getPartials(nodeIndex, nodePartials); // MAS
+            /*
+                multiply the partials by equilibrium probs
+                    this part could be optimized by first summing
+                    and then multiplying by equilibrium probs
+            */
+            double prob = Math.log(getNodeSurvivalProbability(nodeIndex, averageRate));
+
+            for (int j = 0; j < patternCount; ++j) {
+                if (nodePatternInclusion[nodeIndex * patternCount + j]) {
+                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
+                }
+            }
+    }
+
+    private double accumulateCorrectedLikelihoods(double[] cumLike, double ascertainmentCorrection,
+                                                  double[] patterWeights) {
+        double logL = 0;
+        for (int j = 0; j < patternCount; ++j) {
+            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
+        }
+        return logL;
     }
 
     public final double nodePatternLikelihood(double[] freqs, LikelihoodCore likelihoodCore) {
@@ -115,11 +146,12 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         double logL = gammaNorm;
 
         double birthRate = lam.getParameterValue(0);
-        double prob;
+        double logProb;
         if (!nodePatternInclusionKnown)
             setNodePatternInclusion();
-        if (nodePartials == null)
+        if (nodePartials == null) {
             nodePartials = new double[patternCount * stateCount];
+        }
 
         double averageRate = getAverageRate();
 
@@ -134,12 +166,13 @@ abstract public class AbstractObservationProcess extends AbstractModel {
                     and then multiplying by equilibrium probs
             */
 //            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);   // MAS Removed
-            prob = Math.log(getNodeSurvivalProbability(i, averageRate));
+            logProb = Math.log(getNodeSurvivalProbability(i, averageRate));
 
             for (j = 0; j < patternCount; ++j) {
                 if (nodePatternInclusion[i * patternCount + j]) {
-//                    cumLike[j] += Math.exp(nodeLikelihoods[j] + prob);  // MAS Replaced with line below
-                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
+//                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
+                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
+                                    + logProb);
                 }
             }
         }
@@ -155,9 +188,6 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
         double logTreeWeight = getLogTreeWeight();
 
-/*        System.err.println("Patterns contribution "+logL);
-        System.err.println("Patterns less gammanorm "+(logL-gammaNorm));
-        System.err.println("TreeWeight "+getLogTreeWeight(branchRateModel));*/
         if (integrateGainRate) {
             logL -= gammaNorm + logN + Math.log(-logTreeWeight * deathRate / birthRate) * totalPatterns;
         } else {
@@ -206,12 +236,16 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     abstract void setNodePatternInclusion();
 
     final public double getAverageRate() {
-        double avgRate = 0.0;
-        double proportions[] = siteModel.getCategoryProportions();
-        for (int i = 0; i < siteModel.getCategoryCount(); ++i) {
-            avgRate += proportions[i] * siteModel.getRateForCategory(i);
+        if (!averageRateKnown) {
+            double avgRate = 0.0;
+            double proportions[] = siteModel.getCategoryProportions();
+            for (int i = 0; i < siteModel.getCategoryCount(); ++i) {
+                avgRate += proportions[i] * siteModel.getRateForCategory(i);
+            }
+            averageRate = avgRate;
+            averageRateKnown = true;
         }
-        return avgRate;
+        return averageRate;
     }
 
     public double getNodeSurvivalProbability(int index, double averageRate) {
@@ -228,11 +262,19 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == siteModel) {
+            averageRateKnown = false;
+        }
         if (model == treeModel || model == siteModel || model == branchRateModel) {
             weightKnown = false;
         }
-        if (model == treeModel)
-            nodePatternInclusionKnown = false;
+        if (model == treeModel) {
+            if (object instanceof TreeModel.TreeChangedEvent) {
+                if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                    nodePatternInclusionKnown = false;
+                }
+            }
+        }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -244,11 +286,14 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     protected void storeState() {
+//        storedAverageRate = averageRate;
         storedLogTreeWeight = logTreeWeight;
         System.arraycopy(nodePatternInclusion, 0, storedNodePatternInclusion, 0, storedNodePatternInclusion.length);
     }
 
     protected void restoreState() {
+//        averageRate = storedAverageRate;
+        averageRateKnown = false;
         logTreeWeight = storedLogTreeWeight;
         boolean[] tmp = storedNodePatternInclusion;
         storedNodePatternInclusion = nodePatternInclusion;
@@ -264,6 +309,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
     private boolean integrateGainRate = false;
 
-//    private double storedAverageRate;
-//    private double averageRate;
+    private double storedAverageRate;
+    private double averageRate;
+    private boolean averageRateKnown = false;
 }

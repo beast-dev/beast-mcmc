@@ -15,6 +15,8 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.GammaFunction;
 
+import java.util.Arrays;
+
 /**
  * Package: AbstractObservationProcess
  * Description:
@@ -101,6 +103,14 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         return lam;
     }
 
+    private double calculateSiteLogLikelihood(int site, double[] partials, double[] frequencies) {
+        int v = site * stateCount;
+        double sum = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            sum += frequencies[i] * partials[v];
+        }
+        return Math.log(sum);
+    }
 
     public final double nodePatternLikelihood(double[] freqs, LikelihoodCore likelihoodCore) {
         int i, j;
@@ -113,30 +123,26 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         if (nodePartials == null)
             nodePartials = new double[patternCount * stateCount];
 
+        double averageRate = getAverageRate();
+
         for (j = 0; j < patternCount; ++j) cumLike[j] = 0;
 
         for (i = 0; i < nodeCount; ++i) {
             // get partials for node i
             likelihoodCore.getPartials(i, nodePartials);
-/*            System.err.println("Partials for node "+i);
-            for(int m=0; m<patternCount;++m){
-                System.err.print("[");
-                for(int n=0; n<stateCount;++n){
-                    System.err.print(" " +nodePartials[m*stateCount+n]);
-                }
-                System.err.println("]");
-            }*/
             /*
                 multiply the partials by equilibrium probs
                     this part could be optimized by first summing
                     and then multiplying by equilibrium probs
             */
-            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);
-            prob = Math.log(getNodeSurvivalProbability(i));
+//            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);   // MAS Removed
+            prob = Math.log(getNodeSurvivalProbability(i, averageRate));
 
             for (j = 0; j < patternCount; ++j) {
-                if (nodePatternInclusion[i][j])
-                    cumLike[j] += Math.exp(nodeLikelihoods[j] + prob);
+                if (nodePatternInclusion[i][j]) {
+//                    cumLike[j] += Math.exp(nodeLikelihoods[j] + prob);  // MAS Replaced with line below
+                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
+                }
             }
         }
 
@@ -210,13 +216,13 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         return avgRate;
     }
 
-    public double getNodeSurvivalProbability(int index) {
+    public double getNodeSurvivalProbability(int index, double averageRate) {
         NodeRef node = treeModel.getNode(index);
         NodeRef parent = treeModel.getParent(node);
 
         if (parent == null) return 1.0;
 
-        final double deathRate = mu.getParameterValue(0) * getAverageRate();
+        final double deathRate = mu.getParameterValue(0) * averageRate; //getAverageRate();
         final double branchRate = branchRateModel.getBranchRate(treeModel, node);
         // Get the operational time of the branch
         final double branchTime = branchRate * treeModel.getBranchLength(node);
@@ -257,4 +263,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     }
 
     private boolean integrateGainRate = false;
+
+    private double storedAverageRate;
+    private double averageRate;
 }

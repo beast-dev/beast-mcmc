@@ -714,6 +714,32 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
         }
 
         /**
+         * determine a postorder traversal list of nodes in a tree
+         *
+         */
+        public static void postOrderTraversalList(Tree tree, int[] postOrderList) {
+
+            final int nodeCount = tree.getNodeCount();
+            if (postOrderList.length != nodeCount) {
+                throw new IllegalArgumentException("Illegal list length");
+            }
+
+            int idx = nodeCount - 1;
+            int cidx = nodeCount - 1;
+
+            postOrderList[idx] = tree.getRoot().getNumber();
+
+            while (cidx > 0) {
+                NodeRef cNode = tree.getNode(postOrderList[idx]);
+                for(int i = 0; i < tree.getChildCount(cNode); ++i) {
+                    cidx -= 1;
+                    postOrderList[cidx] = tree.getChild(cNode, i).getNumber();
+                }
+                idx -= 1;
+            }
+        }
+
+        /**
          * determine postorder successor of a node
          *
          * @return next node

@@ -682,7 +682,6 @@ public class SubstitutionModelGenerator extends Generator {
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
-
                 String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
                     case BIN_SIMPLE:
@@ -696,6 +695,13 @@ public class SubstitutionModelGenerator extends Generator {
 
                 }
                 break;//BINARY
+
+            case DataType.GENERAL:
+                //TODO
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown data type");
         }
 
         if (model.isGammaHetero()) {
@@ -717,6 +723,15 @@ public class SubstitutionModelGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
             }
         }
+    }
+
+    public void writeRateLog(PartitionSubstitutionModel model, XMLWriter writer) {
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
+
+//        if (model.isActivateBSSVS()) { //TODO Alexei advised If "BSSVS" is not activated, rateIndicator should not be there.
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
+        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");                     
+//        }
     }
 
     public void writeStatisticLog(PartitionSubstitutionModel model, XMLWriter writer) {

@@ -42,6 +42,8 @@ import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
@@ -74,8 +76,8 @@ public class LogGenerator extends Generator {
      * @param writer                    XMLWriter
      * @param branchRatesModelGenerator BranchRatesModelGenerator
      */
-    void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
-                          SubstitutionModelGenerator substitutionModelGenerator) {
+    public void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
+                                 SubstitutionModelGenerator substitutionModelGenerator) {
         writer.writeComment("write log to screen");
 
         writer.writeOpenTag(LoggerParser.LOG,
@@ -191,9 +193,9 @@ public class LogGenerator extends Generator {
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
      * @param generalTraitGenerator
      */
-    void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
-                        SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator,
-                        GeneralTraitGenerator generalTraitGenerator) {
+    public void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
+                               SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator,
+                               GeneralTraitGenerator generalTraitGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -319,7 +321,7 @@ public class LogGenerator extends Generator {
      *
      * @param writer XMLWriter
      */
-    void writeTreeLogToFile(XMLWriter writer) {
+    public void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
@@ -405,6 +407,14 @@ public class LogGenerator extends Generator {
                 writer.writeIDref("posterior", "posterior");
             }
 
+            if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+                for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
+                    if (partitionData.getTraitType() != null && !partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+                        writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+                                partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                }
+            }
+
             writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         } // end For loop
 
@@ -459,5 +469,28 @@ public class LogGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
     }
 
+    public void writeAdditionalLogToFile(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
+                                         SubstitutionModelGenerator substitutionModelGenerator) {
+        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            writer.writeComment("write rate matrix log to file");
+
+            String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + "_rateMatrix.log";
+            writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, "rateMatrixLog"),
+                    new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
+                    new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
+
+            for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
+                substitutionModelGenerator.writeRateLog(model, writer);
+            }
+
+            for (PartitionClockModel model : options.getPartitionTraitsClockModels()) {
+                branchRatesModelGenerator.writeLog(model, writer);
+            }
+
+        }
+
+
+    }
 
 }

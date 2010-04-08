@@ -656,6 +656,7 @@ public class BeastGenerator extends Generator {
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
+            writer.writeText("");
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {

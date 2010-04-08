@@ -691,7 +691,7 @@ public class BeastGenerator extends Generator {
         logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
-                substitutionModelGenerator, treeLikelihoodGenerator);
+                substitutionModelGenerator, treeLikelihoodGenerator, generalTraitGenerator);
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 

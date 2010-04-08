@@ -189,9 +189,11 @@ public class LogGenerator extends Generator {
      * @param branchRatesModelGenerator  BranchRatesModelGenerator
      * @param substitutionModelGenerator SubstitutionModelGenerator
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
+     * @param generalTraitGenerator
      */
     void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
-                        SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                        SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator,
+                        GeneralTraitGenerator generalTraitGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -300,6 +302,10 @@ public class LogGenerator extends Generator {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE)
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+        }
+
+        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            generalTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
         }
 
         writer.writeCloseTag(LoggerParser.LOG);

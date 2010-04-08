@@ -72,23 +72,23 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             NodeRef node = treeModel.getNode(i);
 
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                extantInTipsBelow[i][patternIndex] = 1;
+                extantInTipsBelow[i * patternCount + patternIndex] = 1;
                 int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(node));
                 int[] states = dataType.getStates(patterns.getPatternState(taxonIndex, patternIndex));
                 for (int state : states) {
                     if (state == deathState) {
-                        extantInTipsBelow[i][patternIndex] = 0;
+                        extantInTipsBelow[i * patternCount + patternIndex] = 0;
                     }
                 }
-                extantInTips[patternIndex] += extantInTipsBelow[i][patternIndex];
+                extantInTips[patternIndex] += extantInTipsBelow[i * patternCount + patternIndex];
 
             }
         }
 
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex] >=
-                        extantInTips[patternIndex]);
+                nodePatternInclusion[i * patternCount + patternIndex] =
+                        (extantInTipsBelow[i * patternCount +patternIndex] >= extantInTips[patternIndex]);
             }
         }
     }
@@ -100,12 +100,13 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         }
         
         if (nodePatternInclusion == null) {
-            nodePatternInclusion = new boolean[nodeCount][patternCount];
+            nodePatternInclusion = new boolean[nodeCount * patternCount];
+            storedNodePatternInclusion = new boolean[nodeCount * patternCount];
         }
 
         if (extantInTips == null) {
             extantInTips = new int[patternCount];
-            extantInTipsBelow = new int[nodeCount][patternCount];
+            extantInTipsBelow = new int[nodeCount * patternCount];
             setTipNodePatternInclusion();
         }
 
@@ -119,10 +120,11 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             if (nChildren > 0) {
                 final int nodeNumber = node.getNumber();
                 for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                    extantInTipsBelow[nodeNumber][patternIndex] = 0;
+                    extantInTipsBelow[nodeNumber * patternCount + patternIndex] = 0;
                     for (int j = 0; j < nChildren; j++) {
                         final int childIndex = treeModel.getChild(node,j).getNumber();
-                        extantInTipsBelow[nodeNumber][patternIndex] += extantInTipsBelow[childIndex][patternIndex];
+                        extantInTipsBelow[nodeNumber * patternCount + patternIndex] +=
+                                extantInTipsBelow[childIndex * patternCount + patternIndex];
                     }
                 }
             }
@@ -130,8 +132,8 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
 
         for (int i = treeModel.getExternalNodeCount(); i < treeModel.getNodeCount(); ++i) {
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                nodePatternInclusion[i][patternIndex] = (extantInTipsBelow[i][patternIndex]
-                        >= extantInTips[patternIndex]);
+                nodePatternInclusion[i * patternCount + patternIndex] =
+                        (extantInTipsBelow[i * patternCount + patternIndex] >= extantInTips[patternIndex]);
             }
         }
         
@@ -139,7 +141,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
     }
 
     private int[] extantInTips;
-    private int[][] extantInTipsBelow;
+    private int[] extantInTipsBelow; // Easier to store/restore (later) if 1D array
 
     private int[] postOrderNodeList;
 

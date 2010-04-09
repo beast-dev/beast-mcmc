@@ -218,7 +218,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 tipDateSamplingLabel.setEnabled(enabled);
                 
                 frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
-                    
+
+                if (options.taxonList != null) timeScaleChanged();                         
             }
         });
 

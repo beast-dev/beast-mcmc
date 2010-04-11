@@ -225,7 +225,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         }
 
         public Class getReturnType() {
-            return SubstitutionModel.class;
+            return SVSGeneralSubstitutionModel.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -245,7 +245,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
                 new ElementRule(INDICATOR,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
-                        }),
+                        }, true),
                 new ElementRule(ROOT_FREQ,
                         new XMLSyntaxRule[]{
                                 new ElementRule(FrequencyModel.class)

@@ -5,6 +5,13 @@ import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
 
 /**
+ * This class incorporates uncertainty in the state at the tips of the tree and can
+ * be used to model processes like sequencing error and DNA damage. It can have a fixed
+ * (per site) base error rate and/or a time dependent error for which the probability
+ * of no error decays over sampling time exponentially with a given rate. This model
+ * is inspired by a brief description in Joe Felsenstein's book 'Inferring phylogenies'
+ * (2004: Sinauer Associates) and was ellaborated on for DNA damage in Rambaut et al
+ * (2008, MBE
  * @author Andrew Rambaut
  * @version $Id$
  */
@@ -79,7 +86,7 @@ public class SequenceErrorModel extends TipPartialsModel {
             }
 
         }
-        
+
         int k = 0;
         for (int j = 0; j < patternCount; j++) {
             switch (states[j]) {

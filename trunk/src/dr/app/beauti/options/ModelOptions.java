@@ -49,8 +49,8 @@ public class ModelOptions {
 	protected static final double branchWeights = 30.0;
 	protected static final double treeWeights = 15.0;
 	protected static final double rateWeights = 3.0;
-	
-	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();  
+
+	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
     public void createParameter(String name, String description) {
@@ -58,7 +58,7 @@ public class ModelOptions {
     }
 
     public void createParameter(String name, String description, double initial) {
-        new Parameter.Builder(name, description).initial(initial).build(parameters);
+        new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
     }
 
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
@@ -92,7 +92,7 @@ public class ModelOptions {
     }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
-    protected void createDiscreteStatistic(String name, String description) {
+    public void createDiscreteStatistic(String name, String description) {
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
                  .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
@@ -135,7 +135,7 @@ public class ModelOptions {
         operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
     }
 
-    public void createOperatorUsing2Parameters(String key, String name, String description, String parameterName1, String parameterName2, 
+    public void createOperatorUsing2Parameters(String key, String name, String description, String parameterName1, String parameterName2,
                                          OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);
@@ -149,7 +149,7 @@ public class ModelOptions {
                    .parameter2(parameter2).build());
         } else {
            operators.put(key, new Operator.Builder(name, description, parameter2, OperatorType.UP_DOWN, tuning, weight)
-                   .parameter2(parameter1).build());     
+                   .parameter2(parameter1).build());
         }
     }
 
@@ -191,7 +191,9 @@ public class ModelOptions {
 
     public Operator getOperator(String name) {
         Operator operator = operators.get(name);
-        if (operator == null) throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+        if (operator == null) {
+            throw new IllegalArgumentException("Operator with name, " + name + ", is unknown");
+        }
         return operator;
     }
 

@@ -85,6 +85,7 @@ public abstract class DataType
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
 	        registerDataType(HiddenCodons.DESCRIPTION+"2-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
 	        registerDataType(HiddenCodons.DESCRIPTION+"3-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
+            registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
         }
     }
 

@@ -60,9 +60,9 @@ import java.util.EnumSet;
  * @version $Id: ClockModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
-   
+
 	private static final long serialVersionUID = 2945922234432540027L;
-	
+
 	JTable dataTable = null;
     DataTableModel dataTableModel = null;
     JScrollPane scrollPane;
@@ -70,11 +70,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:   mean =");
 //    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
-    
+
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
-    
+
     SequenceErrorModelComponentOptions comp;
-    
+
     BeautiFrame frame = null;
     BeautiOptions options = null;
     boolean settingOptions = false;
@@ -95,8 +95,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         scrollPane = new JScrollPane(dataTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setOpaque(false);        
-		
+		scrollPane.setOpaque(false);
+
 		PanelUtils.setupComponent(errorModelCombo);
 		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
 						+ "post-mortem DNA damage.</html>");
@@ -121,14 +121,14 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		            fixedMeanRateCheck.setSelected(false);
 		            return;
 			    }
-				
+
 				meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 				if (fixedMeanRateCheck.isSelected()) {
 		        	options.clockModelOptions.fixMeanRate();
 		        } else {
 		        	options.clockModelOptions.fixRateOfFirstClockPartition();
 		        }
-				
+
 				frame.setDirty();
 				frame.repaint();
 			}
@@ -136,7 +136,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
 						+ "rather than try to infer it. If this option is turned off, then<br>"
 						+ "either the sequences should have dates or the tree should have<br>"
-						+ "sufficient calibration informations specified as priors.<br>" 
+						+ "sufficient calibration informations specified as priors.<br>"
 						+ "In addition, it is only available for multi-clock paritions." + "</html>");// TODO Alexei
 
 		PanelUtils.setupComponent(meanRateField);
@@ -151,16 +151,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //		meanRateField.setEnabled(true);
 
 		JPanel modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        modelPanelParent.setOpaque(false);  
-        TitledBorder modelBorder = new TitledBorder("");        
+        modelPanelParent.setOpaque(false);
+        TitledBorder modelBorder = new TitledBorder("");
         modelPanelParent.setBorder(modelBorder);
-		
+
 		OptionsPanel panel = new OptionsPanel(12, 20);
-		
+
 		meanRateField.setColumns(10);
 		panel.addComponents(fixedMeanRateCheck, meanRateField);
 //		panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", meanRateField);
-		
+
 		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
         // panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
@@ -218,25 +218,25 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
     }
-     
+
     private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
     }
-    
+
     private void fireModelsChanged() {
         options.updatePartitionAllLinks();
         frame.setStatusMessage();
         frame.setDirty();
     }
-    
-//    private void updateModelPanelBorder() {     	
+
+//    private void updateModelPanelBorder() {
 //    	if (options.hasData()) {
 //    		modelBorder.setTitle(options.clockModelOptions.getRateOptionClockModel().toString());
 //    	} else {
 //    		modelBorder.setTitle("Overall clock model(s) parameters");
 //    	}
-//    	
+//
 //        repaint();
 //    }
 
@@ -250,19 +250,18 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
 
         settingOptions = true;
-        
-//      clockModelCombo.setSelectedItem(options.clockType);
+
         comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
-      
+
         fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
         fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
-        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());  
-                
+        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
+
         settingOptions = false;
-        
+
         int selRow = dataTable.getSelectedRow();
         dataTableModel.fireTableDataChanged();
         if (options.getPartitionNonTraitsClockModels().size() > 0) {
@@ -271,7 +270,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
             }
             dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
-        
+
 //        fireModelsChanged();
 
         modelsChanged();
@@ -292,7 +291,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     public void getOptions(BeautiOptions options) {
     	if (settingOptions) return;
-    	
+
     	SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
@@ -302,8 +301,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //        	options.clockModelOptions.fixRateOfFirstClockPartition();
 //        }
         options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
-       
-//        fireModelsChanged();    	
+
+//        fireModelsChanged();
     }
 
     public JComponent getExportableComponent() {
@@ -385,21 +384,21 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
             fireModelsChanged();
         }
 
-        public boolean isCellEditable(int row, int col) {        	
+        public boolean isCellEditable(int row, int col) {
         	boolean editable;
 
-            switch (col) {                
+            switch (col) {
                 case 2:// Check box
                     editable = !fixedMeanRateCheck.isSelected();
                     break;
                 case 3:
                     editable = !fixedMeanRateCheck.isSelected() && !((Boolean) getValueAt(row, 2));
-                    break;                
+                    break;
                 default:
                     editable = true;
             }
 
-            return editable;        	    
+            return editable;
         }
 
         public String getColumnName(int column) {
@@ -454,8 +453,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     value,
                     aIsSelected,
                     aHasFocus,
-                    aRow, aColumn); 
-            
+                    aRow, aColumn);
+
             if (fixedMeanRateCheck.isSelected() && aColumn > 1) {
             	renderer.setForeground(Color.gray);
             } else if (!fixedMeanRateCheck.isSelected() && aColumn == 3 && (Boolean) aTable.getValueAt(aRow, 2)) {
@@ -463,7 +462,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
             } else {
             	renderer.setForeground(Color.black);
             }
-            
+
             return this;
         }
 
@@ -537,7 +536,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
-            
+
         }
 
         public boolean isCellEditable(int row, int col) {

@@ -35,98 +35,104 @@ import java.util.Map;
  * @author Alexei Drummond
  */
 public class Parameter {
-    
+
     private String prefix = null;
     private boolean priorEdited;
 
     private boolean meanInRealSpace = false;
-        
+
     // Required para
     private final String baseName;
     private final String description;
-    
+
     // final Builder para
     public final Taxa taxa;
     public final boolean isNodeHeight;
     public final boolean isStatistic;
     public final boolean isCached;
 
-    private final PartitionOptions options;     
+    private final PartitionOptions options;
 
     // editable Builder para
     public PriorScaleType scaleType;
     public double initial;
-    
+
     public boolean isFixed;
     public boolean isDiscrete;
-     
+
     public boolean priorFixed;
-    
+
     public PriorType priorType;
-    
+
     public double lower;
-    public double upper;   
+    public double upper;
     public double mean;
     public double stdev;
     public double shape;
-    public double scale;    
-    public double offset;    
-    
-    public static class Builder { 
+    public double scale;
+    public double offset;
+
+    public static class Builder {
         // Required para
         private final String baseName;
         private final String description;
-        
+
         // Optional para - initialized to default values
         private PriorScaleType scaleType = PriorScaleType.NONE;
         private double initial = Double.NaN;
-        
+        private int dimension = -1;
+
         private Taxa taxa = null;
         private boolean isNodeHeight = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
-        private PartitionOptions options = null;    
-        
+        private PartitionOptions options = null;
+
         private PriorType priorType = PriorType.NONE;
         private double upper = Double.NaN;
         private double lower = Double.NaN;
         public double mean = 0.0;
         public double stdev = 1.0;
         public double shape = 1.0;
-        public double scale = 1.0;    
-        public double offset = 0.0;   
-        
+        public double scale = 1.0;
+        public double offset = 0.0;
+
         private boolean isDiscrete = false;
         private boolean isFixed = false;
-        
+
         private boolean priorFixed = false;
-          
-                
+
+
         public Builder(String name, String description) {
             this.baseName = name;
             this.description = description;
         }
-        
+
         public Builder scaleType(PriorScaleType scaleType) {
             this.scaleType = scaleType;
             return this;
         }
-        
+
         public Builder initial(double initial) {
             this.initial = initial;
             return this;
         }
-        
+
+        public Builder dimension(int dimension) {
+            this.dimension = dimension;
+            return this;
+        }
+
         public Builder taxa(Taxa taxa) {
             this.taxa = taxa;
             return this;
         }
-        
+
         public Builder isNodeHeight(boolean isNodeHeight) {
             this.isNodeHeight = isNodeHeight;
             return this;
         }
-        
+
         public Builder isCached(boolean isCached) {
             this.isCached = isCached;
             return this;
@@ -136,27 +142,27 @@ public class Parameter {
             this.isStatistic = isStatistic;
             return this;
         }
-        
+
         public Builder partitionOptions(PartitionOptions options) {
             this.options = options;
             return this;
         }
-        
+
         public Builder prior(PriorType priorType) {
             this.priorType = priorType;
             return this;
         }
-        
+
         public Builder isDiscrete(boolean isDiscrete) {
             this.isDiscrete = isDiscrete;
             return this;
         }
-        
+
         public Builder isFixed(boolean isFixed) {
             this.isFixed = isFixed;
             return this;
         }
-        
+
         public Builder priorFixed(boolean priorFixed) {
             this.priorFixed = priorFixed;
             return this;
@@ -166,37 +172,37 @@ public class Parameter {
             this.upper = upper;
             return this;
         }
-        
+
         public Builder lower(double lower) {
             this.lower = lower;
             return this;
         }
-                
+
         public Builder mean(double mean) {
             this.mean = mean;
             return this;
         }
-        
+
         public Builder stdev(double stdev) {
             this.stdev = stdev;
             return this;
         }
-        
+
         public Builder shape(double shape) {
             this.shape = shape;
             return this;
         }
-        
+
         public Builder scale(double scale) {
             this.scale = scale;
             return this;
         }
-        
+
         public Builder offset(double offset) {
             this.offset = offset;
             return this;
         }
-        
+
         public Parameter build() {
             return new Parameter(this);
         }
@@ -207,34 +213,34 @@ public class Parameter {
             return parameter;
         }
     }
-    
+
     private Parameter(Builder builder) {
         baseName = builder.baseName;
         description = builder.description;
         scaleType = builder.scaleType;
-        initial = builder.initial;        
+        initial = builder.initial;
         taxa = builder.taxa;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
         isCached = builder.isCached;
-        options = builder.options;            
+        options = builder.options;
         priorType = builder.priorType;
         isDiscrete = builder.isDiscrete;
-        isFixed = builder.isFixed;        
+        isFixed = builder.isFixed;
         priorFixed = builder.priorFixed;
         upper = builder.upper;
-        lower = builder.lower;        
+        lower = builder.lower;
         mean = builder.mean;
         stdev = builder.stdev;
         shape = builder.shape;
-        scale = builder.scale;    
-        offset = builder.offset; 
-        
+        scale = builder.scale;
+        offset = builder.offset;
+
         // ExponentialDistribution(1.0 / mean)
         if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1;
-        if (priorType == PriorType.LOGNORMAL_PRIOR && meanInRealSpace && mean <= 0) mean = 0.01; 
-    } 
-    
+        if (priorType == PriorType.LOGNORMAL_PRIOR && meanInRealSpace && mean <= 0) mean = 0.01;
+    }
+
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++
     public void setPrefix(String prefix) {
         this.prefix = prefix;
@@ -284,12 +290,12 @@ public class Parameter {
             if (expMean == 0) {
                 expMean = dist.quantile(0.975);
             }
-            
+
             if (expMean == 0) {
                 expMean = 1.0;
             }
         }
-        
+
         return expMean;
     }
 
@@ -312,5 +318,5 @@ public class Parameter {
     public void setMeanInRealSpace(boolean meanInRealSpace) {
         this.meanInRealSpace = meanInRealSpace;
     }
-    
+
 }

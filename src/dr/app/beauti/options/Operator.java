@@ -41,6 +41,7 @@ public class Operator {
     public final OperatorType operatorType;
     public final Parameter parameter1;
     public final Parameter parameter2;
+    private final PartitionOptions options;
     public final String tag;
 
     // editable
@@ -62,6 +63,7 @@ public class Operator {
 
         // Optional para - initialized to default values
         private Parameter parameter2 = null;
+        private PartitionOptions options = null;
         private String tag = null;
         private String idref = null;
 
@@ -93,11 +95,15 @@ public class Operator {
             return this;
         }
 
+        public Builder partitionOptions(PartitionOptions options) {
+            this.options = options;
+            return this;
+        }
+
         public Builder tag(String tag) {
             this.tag = tag;
             return this;
         }
-
         public Builder idref(String idref) {
             this.idref = idref;
             return this;
@@ -122,6 +128,7 @@ public class Operator {
         tuning = builder.tuning;
         weight = builder.weight;
         parameter2 = builder.parameter2;
+        options = builder.options;
         tag = builder.tag;
         idref = builder.idref;
         inUse = builder.inUse;
@@ -149,6 +156,10 @@ public class Operator {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public PartitionOptions getOptions() {
+        return options;
     }
 
     public String getPrefix() {

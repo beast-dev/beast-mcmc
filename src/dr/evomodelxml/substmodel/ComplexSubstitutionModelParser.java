@@ -50,7 +50,8 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         if (ratesParameter.getDimension() != rateCount) {
-            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
+            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount)
+                    + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
         }
 
 
@@ -122,7 +123,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubstitutionModel.class;
+        return ComplexSubstitutionModelParser.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

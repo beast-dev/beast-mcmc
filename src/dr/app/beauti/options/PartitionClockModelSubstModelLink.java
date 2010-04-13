@@ -30,10 +30,8 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
 //                GeneralTraitGenerator.getLocationSubstModelTag(substModel), substModel.getPrefix() + substModel.getName(),
 //                OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
 
-        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), "clock.rate",
-                "bit Flip In Substitution Model Operator on clock.rate", clockModel.getParameter("clock.rate"),
-                GeneralTraitGenerator.getLocationSubstModelTag(substModel), substModel.getPrefix() + AbstractSubstitutionModel.MODEL,
-                OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
+        createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString(), "clock.rate",
+                "bit Flip In Substitution Model Operator on clock.rate", clockModel.getParameter("clock.rate"), substModel, demoTuning, 30);
 
     }
 

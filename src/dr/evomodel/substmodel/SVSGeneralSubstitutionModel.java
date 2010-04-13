@@ -19,8 +19,8 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         BayesianStochasticSearchVariableSelection {
 
     public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
-    public static final String INDICATOR = "rateIndicator";
-    public static final String ROOT_FREQ = "rootFrequencies";
+//    public static final String INDICATOR = "rateIndicator";
+//    public static final String ROOT_FREQ = "rootFrequencies";
 
 
     public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
@@ -135,7 +135,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         }
     }
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+/*    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String[] getParserNames() {
             return new String[] {
@@ -234,8 +234,9 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new XORRule(
-                        new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data", new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION}, false),
-                        new ElementRule(DataType.class)
+                    new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
+                            DataType.getRegisteredDataTypeNames(), false),
+                    new ElementRule(DataType.class)
                 ),
                 new ElementRule(GeneralSubstitutionModelParser.FREQUENCIES, FrequencyModel.class),
                 new ElementRule(GeneralSubstitutionModelParser.RATES,
@@ -245,14 +246,14 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
                 new ElementRule(INDICATOR,
                         new XMLSyntaxRule[]{
                                 new ElementRule(Parameter.class)
-                        }, true),
+                        }),//SVS needs indicator
                 new ElementRule(ROOT_FREQ,
                         new XMLSyntaxRule[]{
                                 new ElementRule(FrequencyModel.class)
                         }, 0, 1)
         };
 
-    };
+    }; */
     
     @Override
     public boolean isUsed() {

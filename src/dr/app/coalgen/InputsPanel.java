@@ -1,7 +1,7 @@
 /*
- * ModelPanel.java
+ * InputsPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -67,7 +67,7 @@ public class InputsPanel extends JPanel implements Exportable {
         optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
         add(optionPanel, BorderLayout.NORTH);
 
-        logFileButton.addActionListener( new ActionListener() {
+        logFileButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 FileDialog dialog = new FileDialog(frame,
                         "Select input log file...",
@@ -87,10 +87,11 @@ public class InputsPanel extends JPanel implements Exportable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }});
+            }
+        });
         logFileNameText.setEditable(false);
 
-        treesFileButton.addActionListener( new ActionListener() {
+        treesFileButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 FileDialog dialog = new FileDialog(frame,
                         "Select input trees file...",
@@ -106,16 +107,17 @@ public class InputsPanel extends JPanel implements Exportable {
                 treesFileNameText.setText(data.treesFile.getName());
 
                 frame.fireTracesChanged();
-            }});
+            }
+        });
         treesFileNameText.setEditable(false);
 
-        JPanel panel1 = new JPanel(new BorderLayout(0,0));
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(logFileNameText, BorderLayout.CENTER);
         panel1.add(logFileButton, BorderLayout.EAST);
         optionPanel.addComponentWithLabel("Log File: ", panel1);
 
-        JPanel panel2 = new JPanel(new BorderLayout(0,0));
+        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
         panel2.setOpaque(false);
         panel2.add(treesFileNameText, BorderLayout.CENTER);
         panel2.add(treesFileButton, BorderLayout.EAST);
@@ -132,7 +134,7 @@ public class InputsPanel extends JPanel implements Exportable {
     public void collectSettings() {
 
     }
-    
+
     public JComponent getExportableComponent() {
         return this;
     }

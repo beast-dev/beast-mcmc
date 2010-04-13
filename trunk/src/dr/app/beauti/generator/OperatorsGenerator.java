@@ -8,6 +8,7 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
@@ -400,7 +401,8 @@ public class OperatorsGenerator extends Generator {
                 getWeightAttribute(operator.weight)});
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeIDref(operator.tag, operator.idref);
+        PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
+        writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
         // <svsGeneralSubstitutionModel idref="originModel"/>
         writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);        
     }

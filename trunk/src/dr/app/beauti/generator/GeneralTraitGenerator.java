@@ -1,22 +1,20 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
-import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AttributePatternsParser;
@@ -42,7 +40,7 @@ public class GeneralTraitGenerator extends Generator {
 
     public static String getLocationSubstModelTag(PartitionSubstitutionModel substModel) {
         if (substModel.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
-            return SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL;
+            return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
         } else if (substModel.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
             return ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
         } else {
@@ -160,10 +158,6 @@ public class GeneralTraitGenerator extends Generator {
                 writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                         traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
         }
-    }
-
-    public void writeLogs(XMLWriter writer) {
-
     }
 
 }

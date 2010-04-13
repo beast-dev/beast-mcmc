@@ -306,21 +306,20 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
                 PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
         createCachedGammaPrior("trait.rates", "location substitution model rates",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
-        createParameter("trait.indicators", "location substitution model rate indicators", 1.0);
+        createParameter("trait.indicators", "location substitution model rate indicators (if BSSVS was selected)", 1.0);// BSSVS was selected
 
         // = strick clock TODO trait.mu belongs Clock Model?
         createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" :  " ") + "mutation rate parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
-
-        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter (if BSSVS was selected)");  // BSSVS was selected
+        // Poisson Prior
+        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // BSSVS was selected
 
         createOperator("trait.rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
-        createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);
+        createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);// BSSVS was selected
         createScaleOperator("trait.mu", demoTuning, 10);
-        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
-                "bit Flip In Substitution Model Operator on clock.rate", getParameter("trait.mu"),
-                GeneralTraitGenerator.getLocationSubstModelTag(this), getPrefix() + getName(),
-                OperatorType.BITFIP_IN_SUBST, demoTuning, 30);
+        //bit Flip on clock.rate in PartitionClockModelSubstModelLink
+        createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
+                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"),this, demoTuning, 30);
         createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(trait.indicators, trait.rates)",
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                 "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);

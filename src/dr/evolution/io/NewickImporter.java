@@ -1,7 +1,7 @@
 /*
  * NewickImporter.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -88,8 +88,8 @@ public class NewickImporter extends Importer implements TreeImporter {
             unreadCharacter('(');
 
             final FlexibleNode root = readInternalNode(taxonList);
-            if( getLastMetaComment() != null ) {
-               root.setAttribute(COMMENT, getLastMetaComment());
+            if (getLastMetaComment() != null) {
+                root.setAttribute(COMMENT, getLastMetaComment());
             }
 //			if (getLastDelimiter() != ';') {
 //				throw new BadFormatException("Expecting ';' after tree");
@@ -199,7 +199,7 @@ public class NewickImporter extends Importer implements TreeImporter {
         }
 
         final String comment = getLastMetaComment();
-        if( comment != null ) {
+        if (comment != null) {
             branch.setAttribute(COMMENT, comment);
             clearLastMetaComment();
         }
@@ -221,14 +221,15 @@ public class NewickImporter extends Importer implements TreeImporter {
         FlexibleNode node = new FlexibleNode();
 
         // read the opening '('
-        final char ch = readCharacter();                  assert ch == '(';
+        final char ch = readCharacter();
+        assert ch == '(';
 
         // read the first child
         node.addChild(readBranch(taxonList));
 
         // an internal node must have at least 2 children
         if (getLastDelimiter() != ',') {
-            throw new BadFormatException("Missing ',' in tree");
+            throw new BadFormatException("Expecting ',' in tree, but got '" + (char) getLastDelimiter() + "'");
         }
 
         // read subsequent children

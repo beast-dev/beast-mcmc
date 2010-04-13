@@ -1,7 +1,7 @@
 /*
  * NexusImporter.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -662,7 +662,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
             if (getLastDelimiter() != ';') {
                 throw new BadFormatException("Expecting ';' after sequences data, has '"
-                        + (char)getLastDelimiter() + "' in line " + getLineNumber());
+                        + (char) getLastDelimiter() + "' in line " + getLineNumber());
             }
 
         }
@@ -873,7 +873,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                             }
 
                             taxonNumberMap.put(taxon, number);
-                            count ++;
+                            count++;
                         }
 
                         tree = new FlexibleTree(root, false, true, taxonNumberMap);
@@ -906,23 +906,23 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                     if (scomment != null) {
                         // below is correct only if [&W] appears on it own
                         String c = scomment;
-                        while( c.length() > 0 ) {
+                        while (c.length() > 0) {
                             final char ch = c.charAt(0);
-                            if( ch == ';' ) {
+                            if (ch == ';') {
                                 c = c.substring(1);
                                 continue;
                             }
-                            if( ch == 'R' ) {
+                            if (ch == 'R') {
                                 // we only have rooted trees anyway
                                 c = c.substring(1);
-                            } else if ( ch == 'W' ) {
+                            } else if (ch == 'W') {
                                 int e = c.indexOf(';');
-                                if( e < 0 ) e = c.length();
+                                if (e < 0) e = c.length();
 
                                 try {
                                     final Float value = new Float(c.substring(2, e));
                                     tree.setAttribute("weight", value);
-                                } catch ( NumberFormatException ex) {
+                                } catch (NumberFormatException ex) {
                                     // don't fail, ignore
                                 }
                                 c = c.substring(e);
@@ -932,7 +932,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         }
                     }
 
-                    if( comment != null ) {
+                    if (comment != null) {
                         try {
                             parseMetaCommentPairs(comment, tree);
                         } catch (Importer.BadFormatException e) {
@@ -968,7 +968,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * accordingly). It then reads the branch length and SimpleNode that will
      * point at the new node or tip.
      */
-    private FlexibleNode readBranch(HashMap<String, Taxon> translationList) throws IOException, ImportException {
+    FlexibleNode readBranch(HashMap<String, Taxon> translationList) throws IOException, ImportException {
         double length = 0.0;
         FlexibleNode branch;
 
@@ -1015,7 +1015,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * Reads a node in. This could be a polytomy. Calls readBranch on each branch
      * in the node.
      */
-    private FlexibleNode readInternalNode(HashMap<String, Taxon> translationList) throws IOException, ImportException {
+    FlexibleNode readInternalNode(HashMap<String, Taxon> translationList) throws IOException, ImportException {
         FlexibleNode node = new FlexibleNode();
 
         // read the opening '('
@@ -1079,7 +1079,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * Reads an external node in.
      */
-    private FlexibleNode readExternalNode(HashMap<String, Taxon> translationList) throws ImportException, IOException {
+    FlexibleNode readExternalNode(HashMap<String, Taxon> translationList) throws ImportException, IOException {
         FlexibleNode node = new FlexibleNode();
 
         String label = readToken(":(),;");

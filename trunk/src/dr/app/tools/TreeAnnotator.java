@@ -1,7 +1,7 @@
 /*
  * TreeAnnotator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -65,6 +65,8 @@ public class TreeAnnotator {
     private final static boolean USE_R = false;
     private final static String HPD_2D_STRING = "80";
     private final static double HPD_2D = 0.80;
+
+    private static boolean forceIntegerToDiscrete = false;
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
@@ -628,7 +630,7 @@ public class TreeAnnotator {
                 if (clade.attributeValues != null && clade.attributeValues.size() > 0) {
                     double[] values = new double[clade.attributeValues.size()];
 
-                    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+                    HashMap<Object, Integer> hashMap = new HashMap<Object, Integer>();
 
                     Object[] v = clade.attributeValues.get(0);
                     if (v[i] != null) {
@@ -637,6 +639,8 @@ public class TreeAnnotator {
                         boolean isBoolean = v[i] instanceof Boolean;
 
                         boolean isDiscrete = v[i] instanceof String;
+
+                        if (forceIntegerToDiscrete && v[i] instanceof Integer) isDiscrete = true;
 
                         double minValue = Double.MAX_VALUE;
                         double maxValue = -Double.MAX_VALUE;
@@ -675,7 +679,7 @@ public class TreeAnnotator {
                         for (int j = 0; j < clade.attributeValues.size(); j++) {
                             Object value = clade.attributeValues.get(j)[i];
                             if (isDiscrete) {
-                                final String s = (String) value;
+                                final Object s = value;
                                 if (hashMap.containsKey(s)) {
                                     hashMap.put(s, hashMap.get(s) + 1);
                                 } else {
@@ -779,17 +783,17 @@ public class TreeAnnotator {
 
         }
 
-        private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
-            String mode = null;
+        private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<Object, Integer> values) {
+            Object mode = null;
             int maxCount = 0;
             int totalCount = 0;
             int countInMode = 1;
 
-            for (String key : values.keySet()) {
+            for (Object key : values.keySet()) {
                 int thisCount = values.get(key);
                 if (thisCount == maxCount) {
                     // I hope this is the intention
-                    mode = mode.concat("+" + key);
+                    mode = mode.toString().concat("+" + key);
                     countInMode++;
                 } else if (thisCount > maxCount) {
                     mode = key;
@@ -803,15 +807,15 @@ public class TreeAnnotator {
             tree.setNodeAttribute(node, label + ".prob", freq);
         }
 
-        private void annotateFrequencyAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
+        private void annotateFrequencyAttribute(MutableTree tree, NodeRef node, String label, HashMap<Object, Integer> values) {
             double totalCount = 0;
             Set keySet = values.keySet();
             int length = keySet.size();
             String[] name = new String[length];
             Double[] freq = new Double[length];
             int index = 0;
-            for (String key : values.keySet()) {
-                name[index] = key;
+            for (Object key : values.keySet()) {
+                name[index] = key.toString();
                 freq[index] = new Double(values.get(key));
                 totalCount += freq[index];
                 index++;
@@ -1250,9 +1254,10 @@ public class TreeAnnotator {
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false,
                                 "an option of 'keep' (default), 'median' or 'mean'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
+                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits.")
                 });
 
         try {
@@ -1261,6 +1266,11 @@ public class TreeAnnotator {
             progressStream.println(ae);
             printUsage(arguments);
             System.exit(1);
+        }
+
+        if (arguments.hasOption("forceDiscrete")) {
+            System.out.println("  Forcing integer traits to be treated as discrete traits.");
+            forceIntegerToDiscrete = true;
         }
 
         if (arguments.hasOption("help")) {

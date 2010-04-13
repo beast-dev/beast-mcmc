@@ -92,7 +92,7 @@ public class ModelOptions {
     }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
-    public void createDiscreteStatistic(String name, String description) {
+    public void createDiscreteStatistic(String name, String description) { // Poisson Prior
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
                  .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
@@ -153,11 +153,11 @@ public class ModelOptions {
         }
     }
 
-    public void createParameterAndStringOperator(String key, String name, String description, Parameter parameter,
-                                  String tag, String idref, OperatorType type, double tuning, double weight) {
+    public void createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
+                   PartitionOptions options, double tuning, double weight) {
 //        Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight)
-                .tag(tag).idref(idref).build());
+        operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFIP_IN_SUBST, tuning, weight)
+                .partitionOptions(options).build());
     }
 
     public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {

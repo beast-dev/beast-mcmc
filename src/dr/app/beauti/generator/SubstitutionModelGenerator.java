@@ -15,11 +15,8 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.substmodel.NucModelType;
-import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
-import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.GeneralDataTypeParser;
 import dr.evoxml.MergePatternsParser;
@@ -427,6 +424,9 @@ public class SubstitutionModelGenerator extends Generator {
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
         int numOfSates = TraitData.getStatesListOfTrait(BeautiOptions.taxonList, model.getAllPartitionData().get(0).getName()).size();
+
+        if (numOfSates < 1) throw new IllegalArgumentException("The number of states must be greater than 1 !");
+
         for (PartitionData partition : model.getAllPartitionData()) {
             if (numOfSates != TraitData.getStatesListOfTrait(BeautiOptions.taxonList, partition.getName()).size()) {
                 throw new IllegalArgumentException("Discrete Traits having different number of states " +
@@ -437,7 +437,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
-            writer.writeOpenTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
+            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
 
             for (PartitionData partition : model.getAllPartitionData()) { //?
@@ -451,9 +451,15 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
             //---------------- rates and indicators -----------------
-            writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, 1, writer);//TODO alway 1?
 
-            writer.writeCloseTag(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL);
+            if (!model.isActivateBSSVS()) {
+                writer.writeComment("Rates parameter in " + GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL
+                        + " element should have (" + (numOfSates * (numOfSates - 1) / 2) + " - 1) dimensions");
+                writeRatesAndIndicators(model, (numOfSates * (numOfSates - 1) / 2) - 1, 1, writer);           
+            } else {
+                writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, 1, writer);//TODO alway 1?
+            }
+            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
         } else if (model.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
@@ -468,7 +474,7 @@ public class SubstitutionModelGenerator extends Generator {
 
             writer.writeOpenTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
 
-            writeFrequencyModel(model, numOfSates, null, writer);
+            writeFrequencyModel(model, numOfSates, true, writer);
 
             writer.writeCloseTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
 
@@ -481,8 +487,8 @@ public class SubstitutionModelGenerator extends Generator {
 
         }
 
-//        if (model.isActivateBSSVS()) //TODO Alexei advised If "BSSVS" is not activated, rateIndicator should not be there.
-        writeStatisticModel(model, writer);
+        if (model.isActivateBSSVS()) // If "BSSVS" is not activated, rateIndicator should not be there.
+            writeStatisticModel(model, writer);
     }
 
     private void writeFrequencyModel(PartitionSubstitutionModel model, int numOfSates, Boolean normalize, XMLWriter writer) {
@@ -515,16 +521,18 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
+
         model.getParameter("trait.rates").isFixed = true;
         writeParameter(model.getParameter("trait.rates"), dimension, writer);
+
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
-//        if (model.isActivateBSSVS()) { //TODO Alexei advised If "BSSVS" is not activated, rateIndicator should not be there.
-        writer.writeOpenTag(SVSGeneralSubstitutionModel.INDICATOR);
-        model.getParameter("trait.indicators").isFixed = true;
-        writeParameter(model.getParameter("trait.indicators"), dimension, writer);
-        writer.writeCloseTag(SVSGeneralSubstitutionModel.INDICATOR);
-//        }
+        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+            writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
+            model.getParameter("trait.indicators").isFixed = true;
+            writeParameter(model.getParameter("trait.indicators"), dimension, writer);
+            writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
+        }
 
     }
 
@@ -728,26 +736,26 @@ public class SubstitutionModelGenerator extends Generator {
     public void writeRateLog(PartitionSubstitutionModel model, XMLWriter writer) {
         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
 
-//        if (model.isActivateBSSVS()) { //TODO Alexei advised If "BSSVS" is not activated, rateIndicator should not be there.
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");                     
-//        }
+        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
+            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
+        }
     }
 
     public void writeStatisticLog(PartitionSubstitutionModel model, XMLWriter writer) {
-//        if (model.isActivateBSSVS()) { //TODO Alexei advised If "BSSVS" is not activated, rateIndicator should not be there.
-        writer.writeOpenTag(ColumnsParser.COLUMN,
-                new Attribute[]{
-                        new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "nonZeroRates"),
-                        new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
-                        new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                }
-        );
+        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+            writer.writeOpenTag(ColumnsParser.COLUMN,
+                    new Attribute[]{
+                            new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "nonZeroRates"),
+                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
+                    }
+            );
 
-        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
+            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
 
-        writer.writeCloseTag(ColumnsParser.COLUMN);
-//        }
+            writer.writeCloseTag(ColumnsParser.COLUMN);
+        }
     }
 
     /**

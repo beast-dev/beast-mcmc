@@ -36,9 +36,8 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.geo.KernelDensityEstimator2D;
-import dr.geo.contouring.ContourPath;
 import dr.geo.contouring.ContourMaker;
+import dr.geo.contouring.ContourPath;
 import dr.geo.contouring.ContourWithSynder;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
@@ -55,6 +54,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
+/**
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
+ */
 public class TreeAnnotator {
 
     private final static Version version = new BeastVersion();
@@ -957,7 +960,7 @@ public class TreeAnnotator {
 
 
 //                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-                ContourMaker kde = new ContourWithSynder(values[0],values[1],N);
+                ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
 
                 ContourPath[] paths = kde.getContourPaths(hpd);
 

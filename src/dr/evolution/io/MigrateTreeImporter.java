@@ -41,6 +41,10 @@ import java.util.HashMap;
  */
 public class MigrateTreeImporter extends NexusImporter {
 
+    public static final String POP = "pop";
+    public static final String TO_POP = "toPop";
+    public static final String FROM_POP = "fromPop";
+
     public MigrateTreeImporter(Reader reader) {
         super(reader);
     }
@@ -54,8 +58,8 @@ public class MigrateTreeImporter extends NexusImporter {
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
 
-                Object toPop = tree.getNodeAttribute(node, "toPop");
-                Object pop = tree.getNodeAttribute(node, "pop");
+                Object toPop = tree.getNodeAttribute(node, TO_POP);
+                Object pop = tree.getNodeAttribute(node, POP);
 
                 if (toPop != null && pop != null && !toPop.equals(pop)) {
 
@@ -65,11 +69,11 @@ public class MigrateTreeImporter extends NexusImporter {
                     }
                     if (tree.isRoot(node)) nodeName = "root";
 
-                    throw new RuntimeException("toPop = " + toPop + ", pop = " + pop + " in node " + nodeName);
+                    throw new RuntimeException(TO_POP + " = " + toPop + ", " + POP + " = " + pop + " in node " + nodeName);
                 }
 
                 if (pop == null && toPop != null) {
-                    ((MutableTree) tree).setNodeAttribute(node, "pop", toPop);
+                    ((MutableTree) tree).setNodeAttribute(node, POP, toPop);
                 }
             }
             // convert fromPops to pops
@@ -79,15 +83,15 @@ public class MigrateTreeImporter extends NexusImporter {
                 if (!tree.isRoot(node)) {
 
                     NodeRef parent = tree.getParent(node);
-                    Object fromPop = tree.getNodeAttribute(node, "fromPop");
-                    Object pop = tree.getNodeAttribute(parent, "pop");
+                    Object fromPop = tree.getNodeAttribute(node, FROM_POP);
+                    Object pop = tree.getNodeAttribute(parent, POP);
 
                     if (fromPop != null && pop != null && !fromPop.equals(pop)) {
-                        throw new RuntimeException("fromPop = " + fromPop + ", pop = " + pop);
+                        throw new RuntimeException(FROM_POP + " = " + fromPop + ", " + POP + " = " + pop);
                     }
 
                     if (pop == null && fromPop != null) {
-                        ((MutableTree) tree).setNodeAttribute(parent, "pop", fromPop);
+                        ((MutableTree) tree).setNodeAttribute(parent, POP, fromPop);
                     }
                 }
             }
@@ -104,9 +108,9 @@ public class MigrateTreeImporter extends NexusImporter {
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
-            if (tree.getNodeAttribute(node, "pop") == null) {
-                ((MutableTree) tree).setNodeAttribute(node, "pop",
-                        tree.getNodeAttribute(tree.getParent(node), "pop"));
+            if (tree.getNodeAttribute(node, POP) == null) {
+                ((MutableTree) tree).setNodeAttribute(node, POP,
+                        tree.getNodeAttribute(tree.getParent(node), POP));
             }
         }
     }
@@ -117,7 +121,7 @@ public class MigrateTreeImporter extends NexusImporter {
             Object left = fillInternalGaps(tree, tree.getChild(node, 0));
             Object right = fillInternalGaps(tree, tree.getChild(node, 1));
 
-            if (tree.getNodeAttribute(node, "pop") == null) {
+            if (tree.getNodeAttribute(node, POP) == null) {
 
                 if (left == null && right == null) {
                     throw new RuntimeException("left and right are both null for node " + node.getNumber());
@@ -127,14 +131,14 @@ public class MigrateTreeImporter extends NexusImporter {
                 if (right == null) right = left;
 
                 if (left.equals(right)) {
-                    ((MutableTree) tree).setNodeAttribute(node, "pop", left);
+                    ((MutableTree) tree).setNodeAttribute(node, POP, left);
                     //System.out.println("Setting pop to " + left + " in node " + node.getNumber());
                 } else {
                     throw new RuntimeException(left + "!=" + right + " in children of node " + node.getNumber());
                 }
             }
         }
-        return tree.getNodeAttribute(node, "pop");
+        return tree.getNodeAttribute(node, POP);
     }
 
     /**
@@ -252,7 +256,7 @@ public class MigrateTreeImporter extends NexusImporter {
 
         int pop = Integer.parseInt(label.split("\\.")[0]);
 
-        node.setAttribute("pop", (pop - 1));
+        node.setAttribute(POP, (pop - 1));
 
         return node;
     }
@@ -276,11 +280,9 @@ public class MigrateTreeImporter extends NexusImporter {
         int to = Integer.parseInt(parts[0]);
         double time = Double.parseDouble(parts[1]);
 
-        if (branch.getAttribute("toPop") == null) {
-            branch.setAttribute("toPop", to);
-        }
+        if (branch.getAttribute(TO_POP) == null) branch.setAttribute(TO_POP, to);
 
-        branch.setAttribute("fromPop", from);
+        branch.setAttribute(FROM_POP, from);
     }
 
 

@@ -38,9 +38,23 @@ import java.io.*;
  */
 public class ConvertMigrateTrees {
 
+    static boolean forceDiscrete = false;
+
+    public static final String LABEL = "pop";
+
+
     public static void main(String[] args) throws IOException, Importer.ImportException {
 
-        String migrateFile = args[0];
+        String migrateFile = null;
+        if (args.length == 1) {
+            migrateFile = args[0];
+        } else if (args.length == 2 && args[0].equals("-d")) {
+            forceDiscrete = true;
+            migrateFile = args[1];
+        } else {
+            System.out.println("USAGE: ConvertMigrateTrees [-d] <migrateTreeFileName>");
+            System.exit(0);
+        }
 
         File file = makeInputNexus(migrateFile);
 
@@ -59,17 +73,19 @@ public class ConvertMigrateTrees {
         NodeAttributeProvider popAttributes = new NodeAttributeProvider() {
 
             public String[] getNodeAttributeLabel() {
-                return new String[]{"pop"};
+                return new String[]{LABEL};
             }
 
             public String[] getAttributeForNode(Tree tree, NodeRef node) {
-                Object attribute = tree.getNodeAttribute(node, "pop");
+                Object attribute = tree.getNodeAttribute(node, MigrateTreeImporter.POP);
                 if (attribute == null) {
 
-                    throw new RuntimeException("pop is null for node " + node.getNumber());
+                    throw new RuntimeException(MigrateTreeImporter.POP + " is null for node " + node.getNumber());
                 }
 
-                return new String[]{attribute.toString()};
+                String output = (forceDiscrete ? "d" : "") + attribute.toString();
+
+                return new String[]{output};
             }
         };
 

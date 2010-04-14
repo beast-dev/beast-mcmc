@@ -77,7 +77,11 @@ public abstract class TipPartialsModel extends AbstractModel {
         }
 
         states = new int[extNodeCount][];
+
+        taxaChanged();
     }
+
+    protected abstract void taxaChanged();
 
     public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex, String taxonId) {
         if (patternCount == 0) {

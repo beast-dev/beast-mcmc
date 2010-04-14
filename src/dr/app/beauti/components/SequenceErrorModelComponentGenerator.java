@@ -5,8 +5,7 @@ import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
-import dr.inference.model.ParameterParser;
-import dr.inference.model.StatisticParser;
+import dr.inference.model.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 import dr.evomodel.treelikelihood.APOBECErrorModel;
@@ -53,8 +52,13 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 if (component.isHypermutation()) {
                     writer.writeIDref(ParameterParser.PARAMETER, SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER);
                     writer.writeIDref(StatisticParser.STATISTIC, SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC);
-                    writer.writeIDref(ParameterParser.PARAMETER, SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER);
+                    writer.writeOpenTag(StatisticParser.STATISTIC,
+                            new Attribute.Default<String>("name", "isHypermutated"));
+                    writer.writeIDref(APOBECErrorModel.APOBEC_ERROR_MODEL,
+                            SequenceErrorModelComponentOptions.ERROR_MODEL);
+                    writer.writeCloseTag(StatisticParser.STATISTIC);
                 }
+
                 if (component.hasAgeDependentRate()) {
                     writer.writeIDref(ParameterParser.PARAMETER, SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER);
                 }

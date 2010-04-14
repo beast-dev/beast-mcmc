@@ -4,6 +4,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 import dr.evolution.util.TaxonList;
+import dr.evolution.tree.Tree;
 
 import java.util.logging.Logger;
 
@@ -34,24 +35,27 @@ public class APOBECErrorModel extends TipPartialsModel {
     public static final String HYPERMUTATION_RATE = "hypermutationRate";
     public static final String HYPERMUTATION_INDICATORS = "hypermutationIndicators";
 
-    public APOBECErrorModel(APOBECType type, TaxonList taxa, Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter) {
+    public APOBECErrorModel(APOBECType type, Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter) {
         super(APOBEC_ERROR_MODEL, null, null);
 
         this.type = type;
-
+        
         this.hypermutationRateParameter = hypermutationRateParameter;
         addVariable(this.hypermutationRateParameter);
 
-
         this.hypermuationIndicatorParameter = hypermuationIndicatorParameter;
-        if (hypermuationIndicatorParameter.getDimension() <= 1) {
-            this.hypermuationIndicatorParameter.setDimension(taxa.getTaxonCount());
-        }
+        
         addVariable(this.hypermuationIndicatorParameter);
 
         addStatistic(new TaxonHypermutatedStatistic());
     }
 
+    protected void taxaChanged() {
+        if (hypermuationIndicatorParameter.getDimension() <= 1) {
+            this.hypermuationIndicatorParameter.setDimension(tree.getExternalNodeCount());
+        }
+    }
+ 
     public void getTipPartials(int nodeIndex, double[] partials) {
         int[] states = this.states[nodeIndex];
 
@@ -150,26 +154,6 @@ public class APOBECErrorModel extends TipPartialsModel {
 
     }
 
-    public class TaxonHypermutatedStatistic extends Statistic.Abstract {
-
-        public TaxonHypermutatedStatistic() {
-            super("hypermutated");
-        }
-
-        public int getDimension() {
-            return hypermuationIndicatorParameter.getDimension();
-        }
-
-        public String getDimensionName(int dim) {
-            return taxonMap.get(dim);
-        }
-
-        public double getStatisticValue(int i) {
-            return hypermuationIndicatorParameter.getParameterValue(i);
-        }
-
-    }
-
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() { return APOBEC_ERROR_MODEL; }
@@ -190,7 +174,6 @@ public class APOBECErrorModel extends TipPartialsModel {
                 }
             }
 
-            TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
             Parameter hypermutationRateParameter = null;
             if (xo.hasChildNamed(HYPERMUTATION_RATE)) {
                 hypermutationRateParameter = (Parameter)xo.getElementFirstChild(HYPERMUTATION_RATE);
@@ -202,7 +185,7 @@ public class APOBECErrorModel extends TipPartialsModel {
             }
 
             APOBECErrorModel errorModel =  new APOBECErrorModel(
-                    type, taxa, hypermutationRateParameter, hypermuationIndicatorParameter);
+                    type, hypermutationRateParameter, hypermuationIndicatorParameter);
 
             Logger.getLogger("dr.evomodel").info("Using APOBEC error model, assuming APOBEC " + type.name());
 
@@ -224,11 +207,31 @@ public class APOBECErrorModel extends TipPartialsModel {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 AttributeRule.newStringRule("type", true),
-                new ElementRule(TaxonList.class, "The set of taxa used by the indicator parameter"),
                 new ElementRule(HYPERMUTATION_RATE, Parameter.class, "The hypermutation rate per target site per sequence"),
                 new ElementRule(HYPERMUTATION_INDICATORS, Parameter.class, "A binary indicator of whether the sequence is hypermutated"),
         };
     };
+
+    public class TaxonHypermutatedStatistic extends Statistic.Abstract {
+
+        public TaxonHypermutatedStatistic() {
+            super("isHypermutated");
+        }
+
+        public int getDimension() {
+            return hypermuationIndicatorParameter.getDimension();
+        }
+
+        public String getDimensionName(int dim) {
+            return taxonMap.get(dim);
+        }
+
+        public double getStatisticValue(int i) {
+            return hypermuationIndicatorParameter.getParameterValue(i);
+        }
+
+    }
+
 
     private final APOBECType type;
     private final Parameter hypermutationRateParameter;

@@ -55,6 +55,10 @@ public class SequenceErrorModel extends TipPartialsModel {
         }
     }
 
+    protected void taxaChanged() {
+        // nothing to do
+    }
+
     public void getTipPartials(int nodeIndex, double[] partials) {
         int[] states = this.states[nodeIndex];
 

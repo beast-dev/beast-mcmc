@@ -282,14 +282,14 @@ public class BEAUTiImporter {
             List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(charSet.getName(), fileName,
+                    partitions.add(new PartitionData(options, charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
             }
             for (PartitionData partition : partitions) {
-                BeautiOptions.dataPartitions.add(partition);
+                options.dataPartitions.add(partition);
                 
                 if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet                
                     partition.setPartitionSubstitutionModel(model);
@@ -380,7 +380,7 @@ public class BEAUTiImporter {
             }
             
             options.updateLinksBetweenPDPCMPSMPTMPTPP();
-            options.updatePartitionAllLinks();
+            options.updatePartitionClockTreeLinks();
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
     }

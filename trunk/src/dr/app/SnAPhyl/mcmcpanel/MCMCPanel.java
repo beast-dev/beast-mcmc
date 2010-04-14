@@ -33,6 +33,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.util.OSType;
 
+import dr.evomodel.coalescent.GMRFFixedGridImportanceSampler;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
@@ -65,7 +66,7 @@ public class MCMCPanel extends BeautiPanel {
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
     JTextField logFileNameField = new JTextField(fileNameStem + ".log");
-    JTextField treeFileNameField = new JTextField(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JTextField treeFileNameField = new JTextField(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
 
 
     JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
@@ -205,15 +206,15 @@ public class MCMCPanel extends BeautiPanel {
             
     	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
     		if (options.substTreeLog) {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             } else {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFN = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
             if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
             options.treeFileName.add(treeFN);
             
             if (options.substTreeLog) {
-            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
+            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME;
             	if (addTxt.isSelected()) treeFN = treeFN + ".txt"; 
             	options.substTreeFileName.add(treeFN);
             }            
@@ -300,7 +301,7 @@ public class MCMCPanel extends BeautiPanel {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
             logFileNameField.setText(fileNameStem + ".log");
-            treeFileNameField.setText(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+            treeFileNameField.setText(fileNameStem + "." + GMRFFixedGridImportanceSampler.TREE_FILE_NAME);
             operatorAnalaysisCheck.setSelected(false);
             operatorAnalaysisFileNameField.setText("");
         }

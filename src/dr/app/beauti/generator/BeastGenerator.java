@@ -213,7 +213,7 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
             writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
             // write all taxa in each gene tree regarding each data partition,
-            for (PartitionData partition : BeautiOptions.getNonTraitsDataList()) {
+            for (PartitionData partition : options.getNonTraitsDataList()) {
                 // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
                 writeDifferentTaxaForMultiGene(partition, writer);
             }
@@ -232,14 +232,14 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         if (!options.samplePriorOnly) {
-            for (PartitionData partition : BeautiOptions.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
+            for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
                 writePatternList(partition, writer);
                 writer.writeText("");
             }
         }
 
         //++++++++++++++++ General Data of Traits ++++++++++++++++++
-        for (TraitData trait : BeautiOptions.getTraitsList()) {
+        for (TraitData trait : options.getTraitsList()) {
             if (trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_LOCATIONS.toString())) { // locations
                 writer.writeComment(TraitData.getPhylogeographicDescription());
             }
@@ -318,7 +318,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
-        for (PartitionData partition : BeautiOptions.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
+        for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
             treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
             writer.writeText("");
         }
@@ -326,7 +326,7 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
 
         //++++++++++++++++ Ancestral Tree Likelihood ++++++++++++++++++
-        for (TraitData trait : BeautiOptions.getTraitsList()) {
+        for (TraitData trait : options.getTraitsList()) {
             generalTraitGenerator.writeAncestralTreeLikelihood(trait, writer);
         }
 
@@ -388,7 +388,7 @@ public class BeastGenerator extends Generator {
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies();
+        boolean hasAttr = options.hasDiscreteIntegerTraitsExcludeSpecies();
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -466,7 +466,7 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(traitName, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, traitName)});
         //new Attribute.Default<String>("traitType", traitType)});
-        starEASTGeneratorGenerator.writeMultiSpecies(BeautiOptions.taxonList, writer);
+        starEASTGeneratorGenerator.writeMultiSpecies(options.taxonList, writer);
         writer.writeCloseTag(traitName);
 
         starEASTGeneratorGenerator.writeSTARBEAST(writer);
@@ -675,7 +675,7 @@ public class BeastGenerator extends Generator {
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
 
-            if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
                 generalTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
             }
 

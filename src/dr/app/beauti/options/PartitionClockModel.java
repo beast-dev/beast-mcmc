@@ -231,7 +231,7 @@ public class PartitionClockModel extends PartitionModelOptions {
                 throw new IllegalArgumentException("Unknown clock model");
         } 
        
-        double selectedRate = options.clockModelOptions.getSelectedRate(BeautiOptions.getNonTraitsDataList());
+        double selectedRate = options.clockModelOptions.getSelectedRate(options.getNonTraitsDataList());
         
         rateParam.priorType = PriorType.GAMMA_PRIOR;
         rateParam.initial = selectedRate; 

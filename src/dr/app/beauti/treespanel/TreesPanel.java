@@ -489,7 +489,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     
     private boolean isUsed(int row) {
         PartitionTreeModel model = options.getPartitionTreeModels().get(row);
-        for (PartitionData partition : BeautiOptions.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             if (partition.getPartitionTreeModel() == model) {
                 return true;
             }

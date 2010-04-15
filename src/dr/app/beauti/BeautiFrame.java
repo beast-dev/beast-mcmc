@@ -62,7 +62,7 @@ public class BeautiFrame extends DocumentFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private final BeautiOptions beautiOptions;
+    private final BeautiOptions options;
     private final BeastGenerator generator;
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
@@ -110,8 +110,8 @@ public class BeautiFrame extends DocumentFrame {
 //                DiscreteTraitsComponentFactory.INSTANCE
         };
 
-        beautiOptions = new BeautiOptions(components);
-        generator = new BeastGenerator(beautiOptions, components);
+        options = new BeautiOptions(components);
+        generator = new BeastGenerator(options, components);
     }
 
     public void initializeComponents() {
@@ -153,7 +153,7 @@ public class BeautiFrame extends DocumentFrame {
                 } else {
                     getDeleteAction().setEnabled(false);
                 }
-                currentPanel.getOptions(beautiOptions);
+                currentPanel.getOptions(options);
                 setAllOptions();
                 currentPanel = selectedPanel;
             }
@@ -202,23 +202,23 @@ public class BeautiFrame extends DocumentFrame {
      * set all the options for all panels
      */
     public void setAllOptions() {
-        dataPanel.setOptions(beautiOptions);
-        tipDatesPanel.setOptions(beautiOptions);
-        traitsPanel.setOptions(beautiOptions);
-        taxaPanel.setOptions(beautiOptions);
-        siteModelsPanel.setOptions(beautiOptions);
-        clockModelsPanel.setOptions(beautiOptions);
-//        if (beautiOptions.isSpeciesAnalysis()) {
-//            speciesTreesPanel.setOptions(beautiOptions);
+        dataPanel.setOptions(options);
+        tipDatesPanel.setOptions(options);
+        traitsPanel.setOptions(options);
+        taxaPanel.setOptions(options);
+        siteModelsPanel.setOptions(options);
+        clockModelsPanel.setOptions(options);
+//        if (options.isSpeciesAnalysis()) {
+//            speciesTreesPanel.setOptions(options);
 //        } else
         if (DataPanel.ALLOW_UNLINKED_TREES) {
-            treesPanel.setOptions(beautiOptions);
+            treesPanel.setOptions(options);
         } else {
-            oldTreesPanel.setOptions(beautiOptions);
+            oldTreesPanel.setOptions(options);
         }
-        priorsPanel.setOptions(beautiOptions);
-        operatorsPanel.setOptions(beautiOptions);
-        mcmcPanel.setOptions(beautiOptions);
+        priorsPanel.setOptions(options);
+        operatorsPanel.setOptions(options);
+        mcmcPanel.setOptions(options);
 
         setStatusMessage();
     }
@@ -227,23 +227,23 @@ public class BeautiFrame extends DocumentFrame {
      * get all the options for all panels
      */
     private void getAllOptions() {
-        dataPanel.getOptions(beautiOptions);
-        tipDatesPanel.getOptions(beautiOptions);
-        traitsPanel.getOptions(beautiOptions);
-        taxaPanel.getOptions(beautiOptions);
-        siteModelsPanel.getOptions(beautiOptions);
-        clockModelsPanel.getOptions(beautiOptions);
-//        if (beautiOptions.isSpeciesAnalysis()) {
-//            speciesTreesPanel.getOptions(beautiOptions);
+        dataPanel.getOptions(options);
+        tipDatesPanel.getOptions(options);
+        traitsPanel.getOptions(options);
+        taxaPanel.getOptions(options);
+        siteModelsPanel.getOptions(options);
+        clockModelsPanel.getOptions(options);
+//        if (options.isSpeciesAnalysis()) {
+//            speciesTreesPanel.getOptions(options);
 //        } else
         if (DataPanel.ALLOW_UNLINKED_TREES) {
-            treesPanel.getOptions(beautiOptions);
+            treesPanel.getOptions(options);
         } else {
-            oldTreesPanel.getOptions(beautiOptions);
+            oldTreesPanel.getOptions(options);
         }
-        priorsPanel.getOptions(beautiOptions);
-        operatorsPanel.getOptions(beautiOptions);
-        mcmcPanel.getOptions(beautiOptions);
+        priorsPanel.getOptions(options);
+        operatorsPanel.getOptions(options);
+        mcmcPanel.getOptions(options);
     }
 
     public void doSelectAll() {
@@ -275,7 +275,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public boolean requestClose() {
-        if (isDirty() && beautiOptions.hasData()) {
+        if (isDirty() && options.hasData()) {
             int option = JOptionPane.showConfirmDialog(this,
                     "You have made changes but have not generated\n" +
                             "a BEAST XML file. Do you wish to generate\n" +
@@ -320,7 +320,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public String getDefaultFileName() {
-        return beautiOptions.fileNameStem + ".beauti";
+        return options.fileNameStem + ".beauti";
     }
 
     protected boolean writeToFile(File file) throws IOException {
@@ -337,7 +337,7 @@ public class BeautiFrame extends DocumentFrame {
                             "Invalid file name", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        BEAUTiImporter beautiImporter = new BEAUTiImporter(beautiOptions);
+                        BEAUTiImporter beautiImporter = new BEAUTiImporter(options);
                         beautiImporter.importFromFile(this, file);
 
                         setDirty();
@@ -373,7 +373,7 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
 
-            if (beautiOptions.allowDifferentTaxa) {
+            if (options.allowDifferentTaxa) {
                 setAllOptions();
                 dataPanel.selectAll();
                 dataPanel.unlinkTrees();
@@ -432,7 +432,7 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             setupSpeciesAnalysis();
         }
 
@@ -462,7 +462,7 @@ public class BeautiFrame extends DocumentFrame {
                 TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
                         (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
 
-                TraitData newTrait = new TraitData(traitName, file.getName(), t);
+                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
 
                 if (validateTraitName(traitName))
                     traitsPanel.addTrait(newTrait);
@@ -502,7 +502,7 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         // check that the trait name doesn't exist
-        if (BeautiOptions.containTrait(traitName)) {
+        if (options.containTrait(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -525,28 +525,28 @@ public class BeautiFrame extends DocumentFrame {
 //        dataPanel.unlinkModels();
 //        dataPanel.unlinkTrees();
 
-//        if (beautiOptions.getPartitionClockModels().size() > 1) {
+//        if (options.getPartitionClockModels().size() > 1) {
 //        	dataPanel.linkClocks();
 //        }
 
-//        beautiOptions.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);
+//        options.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+//        options.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 //
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
 //        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
-//        speciesTreesPanel.getOptions(beautiOptions);
+//        speciesTreesPanel.getOptions(options);
 
         treesPanel.updatePriorPanelForSpeciesAnalysis();
 
-        beautiOptions.starBEASTOptions = new STARBEASTOptions(beautiOptions);
-        beautiOptions.fileNameStem = "LogStem";
+        options.starBEASTOptions = new STARBEASTOptions(options);
+        options.fileNameStem = "LogStem";
 
         setStatusMessage();
     }
 
     public void removeSepciesAnalysis() {
-//        beautiOptions.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
+//        options.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
 //
 //        int i = tabbedPane.indexOfTab("Trees");
 //        tabbedPane.removeTabAt(i);
@@ -593,12 +593,12 @@ public class BeautiFrame extends DocumentFrame {
     public void setStatusMessage() {
         GUIValidate();
 
-        statusLabel.setText(beautiOptions.statusMessage());
+        statusLabel.setText(options.statusMessage());
     }
 
      public void GUIValidate() {
-         if (beautiOptions.starBEASTOptions.isSpeciesAnalysis()) {
-             if (beautiOptions.starBEASTOptions.getSpeciesList() == null) {
+         if (options.starBEASTOptions.isSpeciesAnalysis()) {
+             if (options.starBEASTOptions.getSpeciesList() == null) {
                  JOptionPane.showMessageDialog(this, "Species value is empty."
                          + "\nPlease go to Traits panel, either Import Traits,"
                          + "\nor Guess trait values", "*BEAST Error Message",
@@ -618,12 +618,12 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         DefaultPriorDialog defaultPriorDialog = new DefaultPriorDialog(this);
-        if (!defaultPriorDialog.showDialog(beautiOptions)) {
+        if (!defaultPriorDialog.showDialog(options)) {
            return false;
         }
 
         // offer stem as default
-        exportChooser.setSelectedFile(new File(beautiOptions.fileNameStem + ".xml"));
+        exportChooser.setSelectedFile(new File(options.fileNameStem + ".xml"));
 
         final int returnVal = exportChooser.showSaveDialog(this);
         if( returnVal == JFileChooser.APPROVE_OPTION ) {

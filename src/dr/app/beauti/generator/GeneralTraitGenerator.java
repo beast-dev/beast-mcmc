@@ -57,7 +57,7 @@ public class GeneralTraitGenerator extends Generator {
      *          ArgumentException
      */
     public void writeAtrrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
-        for (TraitData trait : BeautiOptions.getDiscreteIntegerTraits()) {
+        for (TraitData trait : options.getDiscreteIntegerTraits()) {
             if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
 
                 if (!taxon.containsAttribute(trait.getName())) {
@@ -153,7 +153,7 @@ public class GeneralTraitGenerator extends Generator {
     }
 
     public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
-        for (TraitData traitData : BeautiOptions.getDiscreteIntegerTraits()) { // Each TD except Species has one AncestralTreeLikelihood
+        for (TraitData traitData : options.getDiscreteIntegerTraits()) { // Each TD except Species has one AncestralTreeLikelihood
             if (!traitData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
                 writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                         traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);

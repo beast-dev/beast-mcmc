@@ -562,7 +562,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     // +++++++++++++ Traits +++++++++++++
-    public static List<PartitionData> getNonTraitsDataList() {
+    public List<PartitionData> getNonTraitsDataList() {
         List<PartitionData> nonTraitsData = new ArrayList<PartitionData>();
         for (PartitionData partition : dataPartitions) {
             if (partition.getTraitType() == null) {
@@ -572,7 +572,7 @@ public class BeautiOptions extends ModelOptions {
         return nonTraitsData;
     }
 
-    public static List<TraitData> getTraitsList() {
+    public List<TraitData> getTraitsList() {
         List<TraitData> traits = new ArrayList<TraitData>();
         for (PartitionData partition : dataPartitions) {
             if (partition.getTraitType() != null) {
@@ -582,7 +582,7 @@ public class BeautiOptions extends ModelOptions {
         return traits;
     }
 
-    public static List<TraitData> getDiscreteIntegerTraits() {
+    public List<TraitData> getDiscreteIntegerTraits() {
         List<TraitData> traits = new ArrayList<TraitData>();
         for (PartitionData partition : dataPartitions) {
             if (partition.getTraitType() != null && partition.getTraitType() != TraitData.TraitType.CONTINUOUS) {
@@ -592,12 +592,12 @@ public class BeautiOptions extends ModelOptions {
         return traits;
     }
 
-    public static boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
+    public boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
         return getDiscreteIntegerTraits().size() > 1
                 || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitData.Traits.TRAIT_SPECIES.toString())));
     }
 
-    public static boolean containTrait(String traitName) {
+    public boolean containTrait(String traitName) {
         for (TraitData trait : getTraitsList()) {
             if (trait.getName().equalsIgnoreCase(traitName))
                 return true;
@@ -635,7 +635,7 @@ public class BeautiOptions extends ModelOptions {
         return selRow; // only for trait panel
     }
 
-    public static void removeTrait(String traitName) {
+    public void removeTrait(String traitName) {
         if (containTrait(traitName)) {
             clearTraitValues(traitName); // Clear trait values
             dataPartitions.remove(getTrait(traitName));
@@ -648,7 +648,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public static TraitData getTrait(String traitName) {
+    public TraitData getTrait(String traitName) {
         for (TraitData trait : getTraitsList()) {
             if (trait.getName().equalsIgnoreCase(traitName))
                 return trait;
@@ -656,6 +656,9 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
+    public boolean hasPhylogeographic() {
+        return containTrait(TraitData.Traits.TRAIT_LOCATIONS.toString());
+    }
 
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
@@ -684,7 +687,7 @@ public class BeautiOptions extends ModelOptions {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (TraitData.hasPhylogeographic()) {
+            if (hasPhylogeographic()) {
                 message += ";    Phylogeographic Analysis";
             }
 
@@ -723,7 +726,7 @@ public class BeautiOptions extends ModelOptions {
 //    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
 
     // Data 
-    public static final List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
 
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();

@@ -212,45 +212,45 @@ public class BeautiTesterConfig {
         buildHeteroModels(key + "WAG", beautiOptions);
     }
 
-    public void buildTreePriorModels(String key, BeautiOptions beautiOptions) {
+    public void buildTreePriorModels(String key, BeautiOptions options) {
 
-//        beautiOptions.nodeHeightPrior = TreePrior.CONSTANT;
-//        buildClockModels(key + "+CP", beautiOptions);
+//        options.nodeHeightPrior = TreePrior.CONSTANT;
+//        buildClockModels(key + "+CP", options);
 //
-//        beautiOptions.nodeHeightPrior = TreePrior.EXPONENTIAL;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+EG", beautiOptions);
+//        options.nodeHeightPrior = TreePrior.EXPONENTIAL;
+//        options.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+EG", options);
 //
-//        beautiOptions.nodeHeightPrior = TreePrior.LOGISTIC;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+LG", beautiOptions);
+//        options.nodeHeightPrior = TreePrior.LOGISTIC;
+//        options.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+LG", options);
 //
-//        beautiOptions.nodeHeightPrior = TreePrior.EXPANSION;
-//        beautiOptions.parameterization = BeautiOptions.GROWTH_RATE;
-//        buildClockModels(key + "+XG", beautiOptions);
+//        options.nodeHeightPrior = TreePrior.EXPANSION;
+//        options.parameterization = BeautiOptions.GROWTH_RATE;
+//        buildClockModels(key + "+XG", options);
 //
-//        beautiOptions.nodeHeightPrior = TreePrior.SKYLINE;
-//        beautiOptions.skylineGroupCount = 3;
-//        beautiOptions.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
-//        buildClockModels(key + "+SKC", beautiOptions);
+//        options.nodeHeightPrior = TreePrior.SKYLINE;
+//        options.skylineGroupCount = 3;
+//        options.skylineModel = BeautiOptions.CONSTANT_SKYLINE;
+//        buildClockModels(key + "+SKC", options);
 //
-//        beautiOptions.skylineModel = BeautiOptions.LINEAR_SKYLINE;
-//        buildClockModels(key + "+SKL", beautiOptions);
+//        options.skylineModel = BeautiOptions.LINEAR_SKYLINE;
+//        buildClockModels(key + "+SKL", options);
 
     }
 
-    public void buildClockModels(String key, BeautiOptions beautiOptions) {
-//        beautiOptions.clockType = ClockType.STRICT_CLOCK;
-//        generate(key + "+CLOC", beautiOptions);
-//        beautiOptions.clockType = ClockType.UNCORRELATED_EXPONENTIAL;
-//        generate(key + "+UCED", beautiOptions);
-//        beautiOptions.clockType = ClockType.UNCORRELATED_LOGNORMAL;
-//        generate(key + "+UCLD", beautiOptions);
+    public void buildClockModels(String key, BeautiOptions options) {
+//        options.clockType = ClockType.STRICT_CLOCK;
+//        generate(key + "+CLOC", options);
+//        options.clockType = ClockType.UNCORRELATED_EXPONENTIAL;
+//        generate(key + "+UCED", options);
+//        options.clockType = ClockType.UNCORRELATED_LOGNORMAL;
+//        generate(key + "+UCLD", options);
     }
 
-    public void generate(String name, BeautiOptions beautiOptions) {
-        beautiOptions.logFileName = name + ".log";
-//        beautiOptions.treeFileName = name + ".trees";
+    public void generate(String name, BeautiOptions options) {
+        options.logFileName = name + ".log";
+//        options.treeFileName = name + ".trees";
 
         System.out.println("Generating: " + name);
         String fileName = name + ".xml";
@@ -264,7 +264,7 @@ public class BeautiTesterConfig {
         printlnScriptWriter(COMMEND + fileName);
     }
 
-    public void importFromFile(String fileName, BeautiOptions beautiOptions, boolean translate) {
+    public void importFromFile(String fileName, BeautiOptions options, boolean translate) {
 
         TaxonList taxa = null;
         Alignment alignment = null;
@@ -309,7 +309,7 @@ public class BeautiTesterConfig {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = importer.parseCharactersBlock(options.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -319,7 +319,7 @@ public class BeautiTesterConfig {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = importer.parseDataBlock(options.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }
@@ -341,11 +341,11 @@ public class BeautiTesterConfig {
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
-                        model = importer.parsePAUPBlock(beautiOptions, charSets);
+                        model = importer.parsePAUPBlock(options, charSets);
 
                     } else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
-                        model = importer.parseMrBayesBlock(beautiOptions, charSets);
+                        model = importer.parseMrBayesBlock(options, charSets);
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
@@ -380,10 +380,10 @@ public class BeautiTesterConfig {
             System.exit(1);
         }
 
-        if (beautiOptions.taxonList == null) {
+        if (options.taxonList == null) {
             // This is the first partition to be loaded...
 
-            beautiOptions.taxonList = new Taxa(taxa);
+            options.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;
@@ -412,8 +412,8 @@ public class BeautiTesterConfig {
             // This is an additional partition so check it uses the same taxa
 
             java.util.List<String> oldTaxa = new ArrayList<String>();
-            for (int i = 0; i < beautiOptions.taxonList.getTaxonCount(); i++) {
-                oldTaxa.add(beautiOptions.taxonList.getTaxon(i).getId());
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                oldTaxa.add(options.taxonList.getTaxon(i).getId());
             }
             java.util.List<String> newTaxa = new ArrayList<String>();
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
@@ -437,33 +437,33 @@ public class BeautiTesterConfig {
             java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
-                    partitions.add(new PartitionData(charSet.getName(), fileName,
+                    partitions.add(new PartitionData(options, charSet.getName(), fileName,
                             alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
                 }
             } else {
-                partitions.add(new PartitionData(fileNameStem, fileName, alignment));
+                partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
             }
             for (PartitionData partition : partitions) {
                 if (model != null) {
                     partition.setPartitionSubstitutionModel(model);
-//                    beautiOptions.addPartitionSubstitutionModel(model);
+//                    options.addPartitionSubstitutionModel(model);
                 } else {
-                    for (PartitionSubstitutionModel pm : beautiOptions.getPartitionSubstitutionModels()) {
+                    for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
                         if (pm.getDataType() == alignment.getDataType()) {
                             partition.setPartitionSubstitutionModel(pm);
                         }
                     }
                     if (partition.getPartitionSubstitutionModel() == null) {
-                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(beautiOptions, partition);
+                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(options, partition);
                         partition.setPartitionSubstitutionModel(pm);
-//                        beautiOptions.addPartitionSubstitutionModel(pm);
+//                        options.addPartitionSubstitutionModel(pm);
                     }
                 }
-                BeautiOptions.dataPartitions.add(partition);
+                options.dataPartitions.add(partition);
             }
         }
 
-        calculateHeights(beautiOptions);
+        calculateHeights(options);
     }
 
     private void calculateHeights(BeautiOptions options) {

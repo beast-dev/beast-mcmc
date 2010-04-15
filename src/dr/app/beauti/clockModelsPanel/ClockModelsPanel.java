@@ -277,7 +277,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         dataTableModel.fireTableDataChanged();
 
-        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
             if (!activateDiscreteTraitsTable) {
                 this.add(d_scrollPane, BorderLayout.SOUTH);
                 activateDiscreteTraitsTable = true;

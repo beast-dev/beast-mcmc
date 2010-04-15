@@ -46,8 +46,7 @@ import java.io.*;
  * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class CommandLineBeauti {
-    private final BeautiOptions beautiOptions = new BeautiOptions();
-    private final BeastGenerator generator = new BeastGenerator(beautiOptions, null);
+    private final BeautiOptions options = new BeautiOptions();
 
     public CommandLineBeauti(String inputFileName, String templateFileName, String outputFileName) {
 
@@ -75,9 +74,10 @@ public class CommandLineBeauti {
             return;
         }
 
-        //beautiOptions.guessDates();
+        //options.guessDates();
 
         try {
+            BeastGenerator generator = new BeastGenerator(options, null);
             generator.generateXML(new File(outputFileName));
 
         } catch (Exception ioe) {
@@ -89,7 +89,7 @@ public class CommandLineBeauti {
         try {
             SAXBuilder parser = new SAXBuilder();
             Document doc = parser.build(file);
-            beautiOptions.beautiTemplate.parse(doc);
+            options.beautiTemplate.parse(doc);
 
         } catch (dr.xml.XMLParseException xpe) {
             System.err.println("Error reading file: This may not be a BEAUti Template file");
@@ -134,7 +134,7 @@ public class CommandLineBeauti {
                             throw new NexusImporter.MissingBlockException("TAXA or DATA block must be defined before a CALIBRATION block");
                         }
 
-                        importer.parseCalibrationBlock(beautiOptions.taxonList);
+                        importer.parseCalibrationBlock(options.taxonList);
 
                     } else if (block == NexusImporter.CHARACTERS_BLOCK) {
 
@@ -146,7 +146,7 @@ public class CommandLineBeauti {
                             throw new NexusImporter.MissingBlockException("CHARACTERS or DATA block already defined");
                         }
 
-                        alignment = importer.parseCharactersBlock(beautiOptions.taxonList);
+                        alignment = importer.parseCharactersBlock(options.taxonList);
 
                     } else if (block == NexusImporter.DATA_BLOCK) {
 
@@ -156,7 +156,7 @@ public class CommandLineBeauti {
 
                         // A data block doesn't need a taxon block before it
                         // but if one exists then it will use it.
-                        alignment = importer.parseDataBlock(beautiOptions.taxonList);
+                        alignment = importer.parseDataBlock(options.taxonList);
                         if (taxa == null) {
                             taxa = alignment;
                         }
@@ -178,15 +178,15 @@ public class CommandLineBeauti {
 
 /*					} else if (block == NexusApplicationImporter.PAUP_BLOCK) {
 
-						importer.parsePAUPBlock(beautiOptions);
+						importer.parsePAUPBlock(options);
 
 					} else if (block == NexusApplicationImporter.MRBAYES_BLOCK) {
 
-						importer.parseMrBayesBlock(beautiOptions);
+						importer.parseMrBayesBlock(options);
 
 					} else if (block == NexusApplicationImporter.RHINO_BLOCK) {
 
-						importer.parseRhinoBlock(beautiOptions);
+						importer.parseRhinoBlock(options);
 */
                     } else {
                         // Ignore the block..
@@ -212,10 +212,10 @@ public class CommandLineBeauti {
             return false;
         }
 
-        if (beautiOptions.taxonList == null) {
+        if (options.taxonList == null) {
             // This is the first partition to be loaded...
 
-            beautiOptions.taxonList = new Taxa(taxa);
+            options.taxonList = new Taxa(taxa);
 
             // check the taxon names for invalid characters
             boolean foundAmp = false;
@@ -242,20 +242,20 @@ public class CommandLineBeauti {
                 }
             }
 
-            beautiOptions.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
+            options.fileNameStem = dr.app.util.Utils.trimExtensions(file.getName(),
                     new String[]{"nex", "NEX", "tre", "TRE", "nexus", "NEXUS"});
 
             if (alignment != null) {
-                PartitionData partition = new PartitionData(beautiOptions.fileNameStem, file.getName(), alignment);
-                BeautiOptions.dataPartitions.add(partition);
-                beautiOptions.dataType = alignment.getDataType();
+                PartitionData partition = new PartitionData(options, options.fileNameStem, file.getName(), alignment);
+                options.dataPartitions.add(partition);
+                options.dataType = alignment.getDataType();
 
 //                Patterns patterns = new Patterns(alignment);
 //                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);
-//                beautiOptions.meanDistance = distances.getMeanDistance();
+//                options.meanDistance = distances.getMeanDistance();
 
             } else {
-//                beautiOptions.meanDistance = 0.0;
+//                options.meanDistance = 0.0;
             }
         } else {
             // This is an additional partition so check it uses the same taxa

@@ -292,7 +292,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (PartitionData partition : BeautiOptions.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }

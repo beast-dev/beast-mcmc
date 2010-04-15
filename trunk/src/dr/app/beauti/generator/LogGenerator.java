@@ -33,7 +33,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
@@ -170,7 +169,7 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
             for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
                 substitutionModelGenerator.writeStatisticLog(model, writer);
             }
@@ -306,7 +305,7 @@ public class LogGenerator extends Generator {
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
         }
 
-        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
             generalTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
         }
 
@@ -407,7 +406,7 @@ public class LogGenerator extends Generator {
                 writer.writeIDref("posterior", "posterior");
             }
 
-            if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+            if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
                 for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
                     if (partitionData.getTraitType() != null && !partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
@@ -471,7 +470,7 @@ public class LogGenerator extends Generator {
 
     public void writeAdditionalLogToFile(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
                                          SubstitutionModelGenerator substitutionModelGenerator) {
-        if (BeautiOptions.hasDiscreteIntegerTraitsExcludeSpecies()) {
+        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
             writer.writeComment("write rate matrix log to file");
 
             String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + "_rateMatrix.log";

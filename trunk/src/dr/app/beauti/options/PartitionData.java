@@ -47,16 +47,19 @@ public class PartitionData {  // extends PartitionOptions {
     private int toSite;
     private int every = 1;
 
+    protected final BeautiOptions options;
+
     private PartitionSubstitutionModel model;
     private PartitionClockModel clockModel;
     private PartitionTreeModel treeModel;
 
 
-    public PartitionData(String name, String fileName, Alignment alignment) {
-        this(name, fileName, alignment, -1, -1, 1);
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
+        this(options, name, fileName, alignment, -1, -1, 1);
     }
 
-    public PartitionData(String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+        this.options = options;
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
@@ -176,7 +179,7 @@ public class PartitionData {  // extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (BeautiOptions.dataPartitions != null && BeautiOptions.dataPartitions.size() > 1) {
+        if (options.dataPartitions != null && options.dataPartitions.size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }

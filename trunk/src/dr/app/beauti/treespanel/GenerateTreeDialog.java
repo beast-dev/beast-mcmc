@@ -81,7 +81,7 @@ public class GenerateTreeDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         partitionCombo.removeAllItems();
-        for (PartitionData partition : BeautiOptions.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             partitionCombo.addItem(partition);
         }
         final JDialog dialog = optionPane.createDialog(frame, "Construct New Tree");

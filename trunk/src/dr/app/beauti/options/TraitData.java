@@ -34,8 +34,8 @@ public class TraitData extends PartitionData {
     private TraitType traitType = TraitType.DISCRETE;
 
 
-    public TraitData(String traitName, String fileName, TraitType traitType) {
-        super(traitName, fileName, null);
+    public TraitData(BeautiOptions options, String traitName, String fileName, TraitType traitType) {
+        super(options, traitName, fileName, null);
         this.traitType = traitType;
 
 //        createTraitOptions();
@@ -99,10 +99,6 @@ public class TraitData extends PartitionData {
         } else {
             return null;
         }
-    }
-
-    public static boolean hasPhylogeographic() {
-        return BeautiOptions.containTrait(TraitData.Traits.TRAIT_LOCATIONS.toString());
     }
 
     public static String getPhylogeographicDescription() {

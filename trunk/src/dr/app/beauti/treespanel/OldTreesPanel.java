@@ -338,7 +338,7 @@ public class OldTreesPanel extends BeautiPanel {
 
         treePriorPanel.addSeparator();
 
-        createTreeAction.setEnabled(options != null && BeautiOptions.dataPartitions.size() > 0);
+        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
         treesTableModel.fireTableDataChanged();
 

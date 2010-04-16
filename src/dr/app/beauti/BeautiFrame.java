@@ -398,7 +398,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImportTraits() {
-        if (BeautiOptions.taxonList != null) { // validation of check empty taxonList
+        if (options.taxonList != null) { // validation of check empty taxonList
             FileDialog dialog = new FileDialog(this,
                     "Import Traits File...",
                     FileDialog.LOAD);
@@ -468,11 +468,11 @@ public class BeautiFrame extends DocumentFrame {
                     traitsPanel.addTrait(newTrait);
 
                 for (final String[] v : e.getValue()) {
-                    final int index = BeautiOptions.taxonList.getTaxonIndex(v[0]);
+                    final int index = options.taxonList.getTaxonIndex(v[0]);
                     if (index >= 0) {
                         // if the taxon isn't in the list then ignore it.
                         // TODO provide a warning of unmatched taxa
-                        final Taxon taxon = BeautiOptions.taxonList.getTaxon(index);
+                        final Taxon taxon = options.taxonList.getTaxon(index);
                         taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
                     }
                 }

@@ -80,7 +80,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
     }
 
     public TaxonList getTaxonSet() {
-        TaxonList taxa = BeautiOptions.taxonList;
+        TaxonList taxa = options.taxonList;
 
         if (tipDateSamplingTaxonSet != null) {
             taxa = tipDateSamplingTaxonSet;

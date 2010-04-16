@@ -423,12 +423,12 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        int numOfSates = TraitData.getStatesListOfTrait(BeautiOptions.taxonList, model.getAllPartitionData().get(0).getName()).size();
+        int numOfSates = TraitData.getStatesListOfTrait(options.taxonList, model.getAllPartitionData().get(0).getName()).size();
 
         if (numOfSates < 1) throw new IllegalArgumentException("The number of states must be greater than 1 !");
 
         for (PartitionData partition : model.getAllPartitionData()) {
-            if (numOfSates != TraitData.getStatesListOfTrait(BeautiOptions.taxonList, partition.getName()).size()) {
+            if (numOfSates != TraitData.getStatesListOfTrait(options.taxonList, partition.getName()).size()) {
                 throw new IllegalArgumentException("Discrete Traits having different number of states " +
                         "\n" + "cannot share the same substitution model !");
             }

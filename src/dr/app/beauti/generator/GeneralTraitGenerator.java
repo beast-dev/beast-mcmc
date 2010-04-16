@@ -83,7 +83,7 @@ public class GeneralTraitGenerator extends Generator {
     public void writeGeneralDataType(TraitData traitData, XMLWriter writer) {
         writer.writeComment("trait = " + traitData.getName() + " trait_type = " + traitData.getTraitType());
 
-        List<String> generalData = TraitData.getStatesListOfTrait(BeautiOptions.taxonList, traitData.getName());
+        List<String> generalData = TraitData.getStatesListOfTrait(options.taxonList, traitData.getName());
 
         // <generalDataType>
         writer.writeOpenTag(GeneralDataTypeParser.GENERAL_DATA_TYPE, new Attribute[]{

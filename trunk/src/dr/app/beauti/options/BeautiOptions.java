@@ -365,7 +365,7 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionClockModels(getNonTraitsDataList());
     }
 
-     public List<PartitionClockModel> getPartitionTraitsClockModels() {
+    public List<PartitionClockModel> getPartitionTraitsClockModels() {
         return getPartitionClockModels(getTraitsList());
     }
 
@@ -642,7 +642,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public static void clearTraitValues(String traitName) {
+    public void clearTraitValues(String traitName) {
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             taxonList.getTaxon(i).setAttribute(traitName, "");
         }
@@ -709,7 +709,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
 
-    public static Taxa taxonList = null;
+    public Taxa taxonList = null;
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

@@ -43,10 +43,16 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public abstract String getPrefix();    
 
-    protected void createParameterClockRate(PartitionOptions options, String name, String description, PriorScaleType scale,
-            double value, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scale).prior(PriorType.UNIFORM_PRIOR).initial(value)
+    protected void createParameterClockRateUniform(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+            double initial, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).initial(initial)
                 .lower(lower).upper(upper).partitionOptions(options).build(parameters);
+    }
+
+    protected void createParameterClockRateGamma(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+            double initial, double shape, double scale, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial).
+                shape(shape).scale(scale).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,

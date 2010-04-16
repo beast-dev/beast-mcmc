@@ -97,20 +97,20 @@ public class TraitGuesser {
     ////////////////////////////////////////////////////////////////
     public void guessTrait(BeautiOptions options) {
 
-        for (int i = 0; i < BeautiOptions.taxonList.getTaxonCount(); i++) {
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
 
             String value = null;
 
             try {
                 switch (guessType) {
                     case SUFFIX:
-                        value = guessTraitFromSuffix(BeautiOptions.taxonList.getTaxonId(i), separator);
+                        value = guessTraitFromSuffix(options.taxonList.getTaxonId(i), separator);
                         break;
                     case PREFIX:
-                        value = guessTraitFromPrefix(BeautiOptions.taxonList.getTaxonId(i), separator);
+                        value = guessTraitFromPrefix(options.taxonList.getTaxonId(i), separator);
                         break;
                     case REGEX:
-                        value = guessTraitFromRegex(BeautiOptions.taxonList.getTaxonId(i), regex);
+                        value = guessTraitFromRegex(options.taxonList.getTaxonId(i), regex);
                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
@@ -120,7 +120,7 @@ public class TraitGuesser {
                 //
             }
 
-            BeautiOptions.taxonList.getTaxon(i).setAttribute(traitData.getName(), value);
+            options.taxonList.getTaxon(i).setAttribute(traitData.getName(), value);
         }
     }
 

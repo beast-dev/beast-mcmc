@@ -68,7 +68,7 @@ public class TraitData extends PartitionData {
     }
 
     public int getTaxaCount() {
-        return BeautiOptions.taxonList.getTaxonCount();
+        return options.taxonList.getTaxonCount();
     }
 
     public String getDataType() {

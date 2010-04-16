@@ -82,11 +82,22 @@ public class PartitionClockModel extends PartitionModelOptions {
 //    }
 
     private void initClockModelParaAndOpers() {
-        createParameterClockRate(this, "clock.rate", "substitution rate", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRate(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRate(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRate(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
-        
+        createParameterClockRateGamma(this, "clock.rate", "substitution rate",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateGamma(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY);
+
+//        createParameterClockRateUniform(this, "clock.rate", "substitution rate",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateUniform(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
+                PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
@@ -131,7 +142,11 @@ public class PartitionClockModel extends PartitionModelOptions {
 
                 default:
                     throw new IllegalArgumentException("Unknown clock model");
-            }   
+            }
+
+//            if (this.getAllPartitionData().get(0) instanceof TraitData) {
+//                rateParam.priorType = PriorType.JEFFREYS_PRIOR; // 1/location.clock.rate
+//            }
             
             rateParam.isFixed = fixed;
             if (fixed && options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO

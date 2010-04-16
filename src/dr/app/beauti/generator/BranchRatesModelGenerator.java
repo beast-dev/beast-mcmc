@@ -164,7 +164,7 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                    }
 	                } else {
-	                    categoryCount = (BeautiOptions.taxonList.getTaxonCount() - 1) * 2;
+	                    categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
 	                }
 	                writeParameter(clockTree.getParameter("branchRates.categories"), categoryCount, writer);
 	                writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);

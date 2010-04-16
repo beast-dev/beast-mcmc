@@ -448,7 +448,7 @@ public class TreePriorGenerator extends Generator {
 	                    }
 	            );
 	
-	            int skyrideIntervalCount = BeautiOptions.taxonList.getTaxonCount() - 1;
+	            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
                 writer.writeComment("skyride.logPopSize is log unit unlike other popSize");
 	            writeParameter(prior.getParameter("skyride.logPopSize"), skyrideIntervalCount, writer);

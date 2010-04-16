@@ -464,8 +464,14 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 //               params.add(getParameter("trait.mu"));
 
                 if (activateBSSVS) {
-                    params.add(getParameter("trait.indicators"));
-                    params.add(getParameter("trait.nonZeroRates"));
+                    getParameter("trait.indicators");
+                    Parameter nonZeroRates = getParameter("trait.nonZeroRates");
+                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
+                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
+                    }
+                    params.add(nonZeroRates);
                 }
                 break;
 
@@ -959,6 +965,19 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
         }
         return prefix;
+    }
+
+    public int getAveStates() {
+        int aveStates = 0;
+        int num = 0;
+        for (PartitionData partition : allPartitionData) {
+             if (partition instanceof TraitData) {
+                 aveStates = aveStates + ((TraitData) partition).getStatesListOfTrait(options.taxonList).size();
+                 num++;
+             }
+        }
+        if (num != 0) aveStates = aveStates / num;
+        return aveStates;
     }
 
 }

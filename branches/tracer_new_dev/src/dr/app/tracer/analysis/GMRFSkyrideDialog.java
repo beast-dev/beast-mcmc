@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -450,7 +451,7 @@ public class GMRFSkyrideDialog {
 
             popSizes = new double[popSizeCount][stateCount];
             for (int i = 0; i < popSizeCount; i++) {
-                traceList.getValues(firstPopSize + i, popSizes[i]);
+                traceList.getValues(firstPopSize + i, Trace.arrayCopy(popSizes[i]));
             }
         }
 
@@ -473,9 +474,9 @@ public class GMRFSkyrideDialog {
         public Object doWork() {
 
             double[] heights = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), Trace.arrayCopy(heights));
 
-            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

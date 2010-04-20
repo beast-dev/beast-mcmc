@@ -140,7 +140,7 @@ public class CombinedTraces implements TraceList {
         return getStateCount() * getStepSize();
     }
 
-    public void getValues(int index, double[] destination) {
+    public <T> void getValues(int index, T[] destination) {
         int offset = 0;
         for (TraceList traceList : traceLists) {
             traceList.getValues(index, destination, offset);
@@ -148,14 +148,14 @@ public class CombinedTraces implements TraceList {
         }
     }
 
-    public void getValues(int index, double[] destination, int offset) {
+    public <T> void getValues(int index, T[] destination, int offset) {
         for (TraceList traceList : traceLists) {
             traceList.getValues(index, destination, offset);
             offset += traceList.getStateCount();
         }
     }
 
-    public void getBurninValues(int index, double[] destination) {
+    public <T> void getBurninValues(int index, T[] destination) {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
@@ -180,8 +180,8 @@ public class CombinedTraces implements TraceList {
         return traceStatistics[index];
     }
 
-    public void analyseTrace(int index) {
-        double[] values = new double[getStateCount()];
+    public <T> void analyseTrace(int index) {
+        T[] values = (T[]) new Object[getStateCount()];
 
 	// no offset: burnin is handled inside each TraceList we own and invisible to us.
 
@@ -189,8 +189,8 @@ public class CombinedTraces implements TraceList {
             traceStatistics = new TraceCorrelation[getTraceCount()];
         }
 
-	getValues(index,values);
-        traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+	    getValues(index,values);
+        traceStatistics[index] = new TraceCorrelation <T> (values, getStepSize());
     }
 
     /**

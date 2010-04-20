@@ -1,6 +1,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 
@@ -110,9 +111,10 @@ public class FrequencyPanel extends JPanel implements Exportable {
         }
 
         double values[] = new double[traceList.getStateCount()];
-
         int traceIndex = traceList.getTraceIndex(traceName);
-        traceList.getValues(traceIndex, values);
+
+        traceList.getValues(traceIndex, Trace.arrayCopy(values));        
+
         FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
 
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);

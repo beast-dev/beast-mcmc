@@ -16,8 +16,8 @@ public abstract class AbstractTraceList implements TraceList {
         return traceStatistics[index];
     }
 
-    public void analyseTrace(int index) {
-        double[] values = new double[getStateCount()];
+    public <T> void analyseTrace(int index) {
+        T[] values = (T[]) new Object[getStateCount()];
         int offset = (getBurnIn() / getStepSize());
 
         if (traceStatistics == null) {
@@ -26,7 +26,7 @@ public abstract class AbstractTraceList implements TraceList {
 
         Trace trace = getTrace(index);
         trace.getValues(offset, values);
-        traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+        traceStatistics[index] = new TraceCorrelation<T>(values, getStepSize());
     }
 
     public void setBurnIn(int burnIn) {

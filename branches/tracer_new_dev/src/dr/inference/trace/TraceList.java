@@ -90,7 +90,7 @@ public interface TraceList {
      * @param index       the index of trace
      * @param destination the array to copy values into
      */
-    void getValues(int index, double[] destination);
+    <T> void getValues(int index, T[] destination);
 
     /**
      * get the values of trace with the given index (without burnin)
@@ -99,7 +99,7 @@ public interface TraceList {
      * @param destination the array to copy values into
      * @param offset      the start position for copying into the destination array
      */
-    void getValues(int index, double[] destination, int offset);
+    <T> void getValues(int index, T[] destination, int offset);
 
     /**
      * get the values of the burnin of the trace
@@ -107,20 +107,20 @@ public interface TraceList {
      * @param index       the index of trace
      * @param destination the array to copy values into
      */
-    void getBurninValues(int index, double[] destination);
+    <T> void getBurninValues(int index, T[] destination);
 
     /**
      * @param traceIndex the index of the trace
      * @return the trace distribution statistic object for the given index
      */
-    TraceDistribution getDistributionStatistics(int traceIndex);
+    TraceDistribution<?> getDistributionStatistics(int traceIndex);
 
     /**
      * @param traceIndex the index of the trace
      * @return the trace correlation statistic object for the given index
      */
-    TraceCorrelation getCorrelationStatistics(int traceIndex);
+    TraceCorrelation<?> getCorrelationStatistics(int traceIndex);
 
-    void analyseTrace(int index);
+    <T> void analyseTrace(int index);
 
 }

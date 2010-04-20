@@ -26,6 +26,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -210,7 +211,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         double values[] = new double[maxCount];
 
-        tl1.getValues(traceIndex1, values);
+        tl1.getValues(traceIndex1, Trace.arrayCopy(values));
 
         double samples1[] = new double[sampleSize];
         int k = 0;
@@ -219,7 +220,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
             k += minCount / sampleSize;
         }
 
-        tl2.getValues(traceIndex2, values);
+        tl2.getValues(traceIndex2, Trace.arrayCopy(values));
 
         double samples2[] = new double[sampleSize];
         k = 0;

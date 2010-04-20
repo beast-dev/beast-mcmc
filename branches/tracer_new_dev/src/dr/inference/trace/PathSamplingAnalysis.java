@@ -174,8 +174,8 @@ public class PathSamplingAnalysis {
 
                 double sampleLogLikelihood[] = new double[traces.getStateCount()];
                 double sampleTheta[] = new double[traces.getStateCount()];
-                traces.getValues(traceIndexLikelihood, sampleLogLikelihood);
-                traces.getValues(traceIndexTheta, sampleTheta);
+                traces.getValues(traceIndexLikelihood, Trace.arrayCopy(sampleLogLikelihood));
+                traces.getValues(traceIndexTheta, Trace.arrayCopy(sampleTheta));
 
                 PathSamplingAnalysis analysis = new PathSamplingAnalysis(
                         sampleLogLikelihood, likelihoodName,

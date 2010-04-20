@@ -85,16 +85,15 @@ public class ArrayTraceList extends AbstractTraceList {
      * @param index       the index of trace
      * @param destination the array to copy values into
      */
-    public void getValues(int index, double[] destination) {
-
-        traces.get(index).getValues(0, destination, burnin);
+    public <T> void getValues(int index, T[] destination) {
+        getTrace(index).getValues(0, destination, burnin);
     }
 
-    public void getValues(int index, double[] destination, int offset) {
-        traces.get(index).getValues(0, destination, offset);
+    public <T> void getValues(int index, T[] destination, int offset) {
+        getTrace(index).getValues(0, destination, offset);
     }
 
-    public void getBurninValues(int index, double[] destination) {
+    public <T> void getBurninValues(int index, T[] destination) {
         getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 

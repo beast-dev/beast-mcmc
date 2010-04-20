@@ -35,14 +35,14 @@ import dr.util.HeapSort;
  * @author Alexei Drummond
  * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class TraceDistribution {
+public class TraceDistribution<T extends Object> {
 
-    public TraceDistribution(double[] values) {
+    public TraceDistribution(T[] values) {
         analyseDistribution(values);
     }
 
-    public TraceDistribution(double[] values, double ESS) {
-        analyseDistribution(values);
+    public TraceDistribution(T[] values, double ESS) {
+        this(values);
         this.ESS = ESS;
     }
 
@@ -57,7 +57,7 @@ public class TraceDistribution {
     public double getVariance() {
         return variance;
     }
-    
+
     public double getStdError() {
         return stdError;
     }
@@ -67,7 +67,8 @@ public class TraceDistribution {
     }
 
     public double getGeometricMean() {
-        return geometricMean;     }
+        return geometricMean;
+    }
 
 
     public double getMedian() {
@@ -107,20 +108,51 @@ public class TraceDistribution {
         if (values == null) {
             throw new RuntimeException("Trace values not yet set");
         }
-        return DiscreteStatistics.meanSquaredError(values, trueValue);
+
+        if (values[0] instanceof Double) {
+            double[] doubleValues = new double[values.length];
+            for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Double) values[i]).doubleValue();
+            }
+
+            return DiscreteStatistics.meanSquaredError(doubleValues, trueValue);
+
+        } else {
+            throw new RuntimeException("Require Continuous Trace Type in the Trace Distribution: " + this);
+        }
+    }
+
+    private void analyseDistribution(T[] values) {
+        this.values = values;
+
+        if (values[0] instanceof Double) {
+            double[] doubleValues = new double[values.length];
+            for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Double) values[i]).doubleValue();
+            }
+            analyseDistributionContinuous(doubleValues);
+
+        } else if (values[0] instanceof Integer) {
+
+
+        } else if (values[0] instanceof String) {
+
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
+        }
     }
 
     /**
      * @param values the values to analyze
      */
-    private void analyseDistribution(double[] values) {
-
-        this.values = values;
+    private void analyseDistributionContinuous(double[] values) {
+//        this.values = values;   // move to analyseDistribution(T[] values)
 
         mean = DiscreteStatistics.mean(values);
         stdError = DiscreteStatistics.stdev(values);
         variance = DiscreteStatistics.variance(values);
-        
+
         minimum = Double.POSITIVE_INFINITY;
         maximum = Double.NEGATIVE_INFINITY;
 
@@ -177,5 +209,5 @@ public class TraceDistribution {
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
 
-    protected double[] values;
+    protected T[] values;
 }

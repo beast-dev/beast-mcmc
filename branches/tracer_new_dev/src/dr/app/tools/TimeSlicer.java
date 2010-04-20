@@ -13,6 +13,7 @@ import dr.geo.KernelDensityEstimator2D;
 import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.geo.math.SphericalPolarCoordinates;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.HeapSort;
@@ -445,7 +446,7 @@ public class TimeSlicer {
             if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 // Compute marginal means and standard deviations
                 for (int j = 0; j < dim; j++) {
-                    TraceDistribution trace = new TraceDistribution(x[j]);
+                    TraceDistribution trace = new TraceDistribution(Trace.arrayCopy(x[j]));
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
                     StringBuffer sb = new StringBuffer();

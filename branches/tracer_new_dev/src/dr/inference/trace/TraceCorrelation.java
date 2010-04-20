@@ -32,9 +32,9 @@ package dr.inference.trace;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation extends TraceDistribution {
+public class TraceCorrelation<T extends Object> extends TraceDistribution {
 
-    public TraceCorrelation(double[] values, int stepSize) {
+    public TraceCorrelation(T[] values, int stepSize) {
         super(values, stepSize);
 
         if (isValid) {
@@ -50,13 +50,34 @@ public class TraceCorrelation extends TraceDistribution {
         return ACT;
     }
 
+    private void analyseCorrelation(T[] values, int stepSize) {
+        this.values = values;
+
+         if (values[0] instanceof Double) {
+             double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Double) values[i]).doubleValue();
+            }
+             analyseCorrelationContinuous(doubleValues, stepSize);
+
+         } else if (values[0] instanceof Integer) {
+
+
+         } else if (values[0] instanceof String) {
+
+
+         } else {
+             throw new RuntimeException("Trace type is not recognized");
+         }
+    }
+
     /**
      * Analyze trace
      *
      * @param values   the values
      * @param stepSize the sampling frequency of the values
      */
-    private void analyseCorrelation(double[] values, int stepSize) {
+    private void analyseCorrelationContinuous(double[] values, int stepSize) {
 
         final int samples = values.length;
         int maxLag = Math.min(samples - 1, MAX_LAG);

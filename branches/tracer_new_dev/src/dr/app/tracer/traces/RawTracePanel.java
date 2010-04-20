@@ -1,6 +1,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 
@@ -244,7 +245,7 @@ public class RawTracePanel extends JPanel implements Exportable {
             for (String traceName : traceNames) {
                 double values[] = new double[tl.getStateCount()];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, values);
+                tl.getValues(traceIndex, Trace.arrayCopy(values));
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
@@ -253,7 +254,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                 double[] burninValues = null;
                 if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
                     burninValues = new double[tl.getBurninStateCount()];
-                    tl.getBurninValues(traceIndex, burninValues);
+                    tl.getBurninValues(traceIndex, Trace.arrayCopy(burninValues));
                 }
 
                 traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);

@@ -213,7 +213,7 @@ public class DensityRectangle {
 
         double[][] values = new double[2][traces.getStateCount()];
         for (int j = 0; j < 2; j++) {
-            traces.getValues(indices[j], values[j]);
+            traces.getValues(indices[j], Trace.arrayCopy(values[j]));
         }
         int totalSize = values[0].length;
         System.out.println("total samples = " + totalSize);

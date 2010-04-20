@@ -26,6 +26,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
@@ -277,7 +278,7 @@ public class DensityPanel extends JPanel implements Exportable {
             for (String traceName : traceNames) {
                 double values[] = new double[n];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, values);
+                tl.getValues(traceIndex, Trace.arrayCopy(values));
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;

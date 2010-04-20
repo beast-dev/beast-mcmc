@@ -154,11 +154,14 @@ public class TraceAnalysis {
             boolean harmonicOnly = false;
             int bootstrapLength = 1000;
 
-            double sample[] = new double[traces.getStateCount()];
+            Double sample[] = new Double[traces.getStateCount()];
             traces.getValues(traceIndex, sample);
 
+            double[] doubleSample = new double[sample.length];
+            System.arraycopy(sample, 0, doubleSample, 0, sample.length);
+
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                    sample,
+                    doubleSample,
                     traces.getTraceName(traceIndex), burnin,
                     harmonicOnly, bootstrapLength);
 
@@ -254,11 +257,14 @@ public class TraceAnalysis {
             boolean harmonicOnly = false;
             int bootstrapLength = 1000;
 
-            double sample[] = new double[traces.getStateCount()];
+            Double sample[] = new Double[traces.getStateCount()];
             traces.getValues(traceIndex, sample);
 
+            double[] doubleSample = new double[sample.length];
+            System.arraycopy(sample, 0, doubleSample, 0, sample.length);
+
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                    sample,
+                    doubleSample,
                     traces.getTraceName(traceIndex), burnin,
                     harmonicOnly, bootstrapLength);
 

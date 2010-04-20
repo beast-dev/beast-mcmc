@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -415,9 +416,9 @@ public class DemographicDialog {
 
             int index = traceList.getTraceIndex(rootHeightTrace);
             double[] heights = new double[n];
-            traceList.getValues(index, heights);
+            traceList.getValues(index, Trace.arrayCopy(heights));
 
-            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();
@@ -487,7 +488,7 @@ public class DemographicDialog {
 
             for (int j = 0; j < argIndices.length; j++) {
                 index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
-                traceList.getValues(index, values[j]);
+                traceList.getValues(index, Trace.arrayCopy(values[j]));
             }
 
             if (demographicCombo.getSelectedIndex() == 0) { // Constant Size

@@ -26,6 +26,7 @@
 package dr.app.tracer.analysis;
 
 import dr.inference.trace.MarginalLikelihoodAnalysis;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import dr.util.TaskListener;
 import org.virion.jam.components.WholeNumberField;
@@ -253,7 +254,7 @@ public class BayesFactorsDialog {
 
                 int index = traceList.getTraceIndex(likelihoodTrace);
                 double[] likelihoods = new double[traceList.getStateCount()];
-                traceList.getValues(index, likelihoods);
+                traceList.getValues(index, Trace.arrayCopy(likelihoods));
 
                 final MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
                         likelihoods,

@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -369,9 +370,9 @@ public class TraitThroughTimeDialog {
         public Object doWork() {
 
             double[] heights = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), Trace.arrayCopy(heights));
 
-            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

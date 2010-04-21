@@ -394,15 +394,15 @@ public class LogFileTraces extends AbstractTraceList {
     private <T> void addParsedValue(int nTrace, String value) {
         Trace<T> thisTrace = (Trace<T>) getTrace(nTrace);
 
-        if (thisTrace.getTraceType() == Double.class) {
+        if (thisTrace.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
              Double v = Double.parseDouble(value);
              thisTrace.add((T) v);
             
-         } else if (thisTrace.getTraceType() == Integer.class) {
+         } else if (thisTrace.getTraceType() == TraceFactory.TraceType.DISCRETE.getType()) {
              Integer v = Integer.parseInt(value);
              thisTrace.add((T) v);
 
-         } else if (thisTrace.getTraceType() == String.class) {
+         } else if (thisTrace.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
             thisTrace.add((T) value);
 
          } else {

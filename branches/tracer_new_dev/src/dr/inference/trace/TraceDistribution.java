@@ -35,7 +35,7 @@ import dr.util.HeapSort;
  * @author Alexei Drummond
  * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class TraceDistribution<T extends Object> {
+public class TraceDistribution<T> {
 
     public TraceDistribution(T[] values) {
         analyseDistribution(values);
@@ -44,6 +44,21 @@ public class TraceDistribution<T extends Object> {
     public TraceDistribution(T[] values, double ESS) {
         this(values);
         this.ESS = ESS;
+    }
+
+    public TraceFactory.TraceType getTraceType() {
+        if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+            return TraceFactory.TraceType.CONTINUOUS;
+
+        } else if (values[0].getClass() == TraceFactory.TraceType.DISCRETE.getType()) {
+            return TraceFactory.TraceType.DISCRETE;
+
+        } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
+            return TraceFactory.TraceType.CATEGORY;
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
+        }
     }
 
     public boolean isValid() {

@@ -96,8 +96,10 @@ public class Trace<T> {
         return values[index];
     }
 
-    public void getValues(int start, T[] destination) {
+    public T[] getValues(int start, int length) {
+        T[] destination = (T[]) new Object[length];
         getValues(start, destination, 0);
+        return destination;
     }
 
     public void getValues(int start, T[] destination, int offset) {
@@ -115,7 +117,7 @@ public class Trace<T> {
     public static Double[] arrayCopy(double[] src) {
         Double[] dest = new Double[src.length];
         for (int i=0; i < src.length; i++) {
-            dest[i] = src[i];
+            dest[i] = Double.valueOf(src[i]);
         }
         return dest;
     }

@@ -121,6 +121,6 @@ public interface TraceList {
      */
     TraceCorrelation<?> getCorrelationStatistics(int traceIndex);
 
-    <T> void analyseTrace(int index);
+    void analyseTrace(int index);
 
 }

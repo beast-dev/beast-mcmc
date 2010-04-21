@@ -6,19 +6,18 @@ import com.lowagie.text.pdf.DefaultFontMapper;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.TracePanel;
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.gui.FileDrop;
 import dr.gui.chart.ChartRuntimeException;
 import dr.evolution.io.Importer;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
+import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
 import org.virion.jam.util.LongTask;
 
@@ -28,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
@@ -156,6 +156,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         statisticTable.getColumnModel().getColumn(1).setCellRenderer(renderer);
         statisticTable.getColumnModel().getColumn(2).setPreferredWidth(50);
         statisticTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
+        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);        
+        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(50);
+        statisticTable.getColumnModel().getColumn(3).setCellRenderer(comboBoxRenderer);
         statisticTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         statisticTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -163,6 +167,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 statisticTableSelectionChanged();
             }
         });
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
 
         JScrollPane scrollPane2 = new JScrollPane(statisticTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -190,7 +196,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, leftPanel, tracePanel);
         splitPane2.setBorder(null);
-        splitPane2.setDividerLocation(300);
+        splitPane2.setDividerLocation(350);
 
         Color focusColor = UIManager.getColor("Focus.color");
         Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
@@ -1125,7 +1131,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     class StatisticTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Statistic", "Mean", "ESS"};
+        final String[] columnNames = {"Statistic", "Mean", "ESS", "Type"};
 
         private final DecimalFormat formatter = new DecimalFormat("0.###E0");
         private final DecimalFormat formatter2 = new DecimalFormat("####0.###");
@@ -1154,7 +1160,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-
+            if (col == 3) return td.getTraceType();
+            
             double value = 0.0;
             boolean warning = false;
             boolean extremeWarning = false;
@@ -1182,8 +1189,16 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             return string;
         }
 
+        public boolean isCellEditable(int row, int col) {
+             return true;
+            
+        }
+
         public Class getColumnClass(int c) {
-            return String.class;
+           if (getRowCount() == 0) {
+                return Object.class;
+            }
+            return getValueAt(0, c).getClass();
         }
     }
 

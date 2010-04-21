@@ -9,7 +9,7 @@ public class TraceFactory {
     public enum TraceType {
         CONTINUOUS("continuous", Double.class),
         DISCRETE("discrete", Integer.class),
-        CATEGORY("category", String.class),;
+        CATEGORY("category", String.class);
 
         TraceType(String name, Class type) {
             this.name = name;

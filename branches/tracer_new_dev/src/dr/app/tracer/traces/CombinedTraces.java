@@ -180,8 +180,8 @@ public class CombinedTraces implements TraceList {
         return traceStatistics[index];
     }
 
-    public <T> void analyseTrace(int index) {
-        T[] values = (T[]) new Object[getStateCount()];
+    public void analyseTrace(int index) {
+        Object[] values = new Object[getStateCount()];
 
 	// no offset: burnin is handled inside each TraceList we own and invisible to us.
 
@@ -189,8 +189,8 @@ public class CombinedTraces implements TraceList {
             traceStatistics = new TraceCorrelation[getTraceCount()];
         }
 
-	    getValues(index,values);
-        traceStatistics[index] = new TraceCorrelation <T> (values, getStepSize());
+	    getValues(index, values);
+        traceStatistics[index] = new TraceCorrelation (values, getStepSize());
     }
 
     /**

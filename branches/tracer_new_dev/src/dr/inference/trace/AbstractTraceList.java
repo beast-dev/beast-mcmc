@@ -16,17 +16,15 @@ public abstract class AbstractTraceList implements TraceList {
         return traceStatistics[index];
     }
 
-    public <T> void analyseTrace(int index) {
-        T[] values = (T[]) new Object[getStateCount()];
+    public void analyseTrace(int index) {
         int offset = (getBurnIn() / getStepSize());
 
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];
         }
 
-        Trace trace = getTrace(index);
-        trace.getValues(offset, values);
-        traceStatistics[index] = new TraceCorrelation<T>(values, getStepSize());
+        Trace trace = getTrace(index);        
+        traceStatistics[index] = new TraceCorrelation(trace.getValues(offset, getStateCount()), getStepSize());
     }
 
     public void setBurnIn(int burnIn) {

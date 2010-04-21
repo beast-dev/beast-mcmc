@@ -276,14 +276,14 @@ public class DensityPanel extends JPanel implements Exportable {
             int n = tl.getStateCount();
 
             for (String traceName : traceNames) {
-                double values[] = new double[n];
+                Double values[] = new Double[n];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, Trace.arrayCopy(values));
+                tl.getValues(traceIndex, values);
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                DensityPlot plot = new DensityPlot(values, minimumBins);
+                DensityPlot plot = new DensityPlot(Trace.arrayConvert(values), minimumBins);
                 plot.setName(name);
                 if (tl instanceof CombinedTraces) {
                     plot.setLineStyle(new BasicStroke(2.0f), paints[i]);

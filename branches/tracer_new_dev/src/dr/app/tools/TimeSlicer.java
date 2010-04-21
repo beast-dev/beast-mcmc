@@ -435,7 +435,7 @@ public class TimeSlicer {
             }
 
             int count = thisTrait.size();
-            double[][] x = new double[dim][count];
+            Double[][] x = new Double[dim][count];
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
                 double[] value = trait.getValue();
@@ -446,7 +446,7 @@ public class TimeSlicer {
             if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 // Compute marginal means and standard deviations
                 for (int j = 0; j < dim; j++) {
-                    TraceDistribution trace = new TraceDistribution(Trace.arrayCopy(x[j]));
+                    TraceDistribution trace = new TraceDistribution(x[j]);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
                     StringBuffer sb = new StringBuffer();
@@ -487,11 +487,11 @@ public class TimeSlicer {
 
                 ContourMaker contourMaker;
                 if (contourMode == ContourMode.JAVA)
-                    contourMaker = new KernelDensityEstimator2D(x[0], x[1]);
+                    contourMaker = new KernelDensityEstimator2D(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else if (contourMode == ContourMode.R)
-                    contourMaker = new ContourWithR(x[0], x[1]);
+                    contourMaker = new ContourWithR(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else if (contourMode == ContourMode.SNYDER)
-                    contourMaker = new ContourWithSynder(x[0], x[1]);
+                    contourMaker = new ContourWithSynder(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else
                     throw new RuntimeException("Unimplemented ContourModel!");
 
@@ -517,7 +517,14 @@ public class TimeSlicer {
                             testElement.addContent(coords.toXML());
                             Polygon2D testPolygon = new Polygon2D(testElement);
                             totalArea += testPolygon.calculateArea();
-                            numberOfPointsInPolygons += getNumberOfPointsInPolygon(x, testPolygon);
+
+                            double[][] dest = new double[x.length][x[0].length];
+                            for (int i = 0; i < x.length; i++) {
+                                for (int j = 0; j < x[0].length; j++) {
+                                    dest[i][j] = x[i][j].doubleValue();
+                                }
+                            }
+                            numberOfPointsInPolygons += getNumberOfPointsInPolygon(dest, testPolygon);
                         }
 
                         folderElement.addContent(placemarkElement);
@@ -1226,7 +1233,7 @@ public class TimeSlicer {
         if (returnList.size() > 0) {
             double[] doubleArray = new double[returnList.size()];
             for (int i = 0; i < doubleArray.length; i++)
-            doubleArray[i] = returnList.get(i);
+                doubleArray[i] = returnList.get(i);
 
             return doubleArray;
         }
@@ -1607,7 +1614,7 @@ public class TimeSlicer {
             if (sliceTimesFileString != null) {
                 //System.out.println(sliceTimesFileString);
                 double[] sliceTimes = parseFileWithArray(sliceTimesFileString);
-                sliceHeights =  new double[sliceTimes.length];
+                sliceHeights = new double[sliceTimes.length];
                 for (int i = 0; i < sliceTimes.length; i++) {
                     if (mrsd == 0) {
                         sliceHeights[i] = sliceTimes[i];

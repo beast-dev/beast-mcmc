@@ -253,11 +253,11 @@ public class BayesFactorsDialog {
                 final int offset = i * 100;
 
                 int index = traceList.getTraceIndex(likelihoodTrace);
-                double[] likelihoods = new double[traceList.getStateCount()];
-                traceList.getValues(index, Trace.arrayCopy(likelihoods));
+                Double[] likelihoods = new Double[traceList.getStateCount()];
+                traceList.getValues(index, likelihoods);
 
                 final MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                        likelihoods,
+                        Trace.arrayConvert(likelihoods),
                         traceList.getName(), traceList.getBurnIn(),
                         harmonicOnly, bootstrapLength);
 

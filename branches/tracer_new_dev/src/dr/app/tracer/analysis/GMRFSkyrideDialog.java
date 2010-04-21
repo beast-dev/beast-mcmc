@@ -427,7 +427,7 @@ public class GMRFSkyrideDialog {
 
         int stateCount;
 
-        double[][] popSizes;
+        Double[][] popSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -449,9 +449,9 @@ public class GMRFSkyrideDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new double[popSizeCount][stateCount];
+            popSizes = new Double[popSizeCount][stateCount];
             for (int i = 0; i < popSizeCount; i++) {
-                traceList.getValues(firstPopSize + i, Trace.arrayCopy(popSizes[i]));
+                traceList.getValues(firstPopSize + i, popSizes[i]);
             }
         }
 
@@ -473,10 +473,10 @@ public class GMRFSkyrideDialog {
 
         public Object doWork() {
 
-            double[] heights = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), Trace.arrayCopy(heights));
+            Double[] heights = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
-            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

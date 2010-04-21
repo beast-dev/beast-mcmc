@@ -352,10 +352,10 @@ public class LineagesThroughTimeDialog {
 
         public Object doWork() {
 
-            double[] heights = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), Trace.arrayCopy(heights));
+            Double[] heights = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
-            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

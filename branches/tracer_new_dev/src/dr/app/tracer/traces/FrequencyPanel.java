@@ -110,12 +110,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
             return;
         }
 
-        double values[] = new double[traceList.getStateCount()];
+        Double values[] = new Double[traceList.getStateCount()];
         int traceIndex = traceList.getTraceIndex(traceName);
 
-        traceList.getValues(traceIndex, Trace.arrayCopy(values));        
+        traceList.getValues(traceIndex, values);
 
-        FrequencyPlot plot = new FrequencyPlot(values, minimumBins);
+        FrequencyPlot plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins);
 
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
         if (td != null) {

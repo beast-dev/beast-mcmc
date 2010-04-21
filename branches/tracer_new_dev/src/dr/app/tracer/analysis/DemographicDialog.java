@@ -407,7 +407,7 @@ public class DemographicDialog {
             current = 0;
 
             int[] argIndices = argumentIndices[demographicCombo.getSelectedIndex()];
-            double[][] values = new double[argIndices.length][n];
+            Double[][] values = new Double[argIndices.length][n];
 
             Variate[] bins = new Variate[binCount];
             for (int k = 0; k < binCount; k++) {
@@ -415,10 +415,10 @@ public class DemographicDialog {
             }
 
             int index = traceList.getTraceIndex(rootHeightTrace);
-            double[] heights = new double[n];
-            traceList.getValues(index, Trace.arrayCopy(heights));
+            Double[] heights = new Double[n];
+            traceList.getValues(index, heights);
 
-            TraceDistribution distribution = new TraceDistribution(Trace.arrayCopy(heights), traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();
@@ -488,7 +488,7 @@ public class DemographicDialog {
 
             for (int j = 0; j < argIndices.length; j++) {
                 index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
-                traceList.getValues(index, Trace.arrayCopy(values[j]));
+                traceList.getValues(index, values[j]);
             }
 
             if (demographicCombo.getSelectedIndex() == 0) { // Constant Size

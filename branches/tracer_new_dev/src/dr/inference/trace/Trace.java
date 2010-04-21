@@ -114,13 +114,34 @@ public class Trace<T> {
         return name;
     }
 
-    public static Double[] arrayCopy(double[] src) {
-        Double[] dest = new Double[src.length];
+//    public static Double[] arrayCopy(double[] src) {
+//        Double[] dest = new Double[src.length];
+//        for (int i=0; i < src.length; i++) {
+//            dest[i] = Double.valueOf(src[i]);
+//        }
+//        return dest;
+//    }
+
+    public static double[] arrayConvert(Double[] src) {
+        double[] dest = new double[src.length];
         for (int i=0; i < src.length; i++) {
-            dest[i] = Double.valueOf(src[i]);
+            dest[i] = src[i].doubleValue();
         }
         return dest;
     }
+
+    public static int[] arrayConvert(Integer[] src) {
+        int[] dest = new int[src.length];
+        for (int i=0; i < src.length; i++) {
+            dest[i] = src[i].intValue();
+        }
+        return dest;
+    }
+
+    public static String[] arrayConvert(String[] src) {
+        return src;
+    }
+
 
     public Class getTraceType() {
         return values[0].getClass();

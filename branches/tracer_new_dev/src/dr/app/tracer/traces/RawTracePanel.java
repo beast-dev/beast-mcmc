@@ -243,21 +243,21 @@ public class RawTracePanel extends JPanel implements Exportable {
             int stateStep = tl.getStepSize();
 
             for (String traceName : traceNames) {
-                double values[] = new double[tl.getStateCount()];
+                Double values[] = new Double[tl.getStateCount()];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, Trace.arrayCopy(values));
+                tl.getValues(traceIndex, values);
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
 
-                double[] burninValues = null;
+                Double[] burninValues = null;
                 if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                    burninValues = new double[tl.getBurninStateCount()];
-                    tl.getBurninValues(traceIndex, Trace.arrayCopy(burninValues));
+                    burninValues = new Double[tl.getBurninStateCount()];
+                    tl.getBurninValues(traceIndex, burninValues);
                 }
 
-                traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
+                traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values), Trace.arrayConvert(burninValues), paints[i]);
 
                 if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
                     i++;

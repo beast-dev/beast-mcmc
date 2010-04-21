@@ -195,8 +195,8 @@ public class TimeDensityDialog {
 
         public Object doWork() {
 
-            double[] times = new double[stateCount];
-            traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), Trace.arrayCopy(times));
+            Double[] times = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), times);
 
             minTime = frame.getMinTime();
             maxTime = frame.getMaxTime();

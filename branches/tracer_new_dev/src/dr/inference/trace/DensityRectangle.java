@@ -211,9 +211,9 @@ public class DensityRectangle {
         traces.loadTraces();
         traces.setBurnIn(burnin);
 
-        double[][] values = new double[2][traces.getStateCount()];
+        Double[][] values = new Double[2][traces.getStateCount()];
         for (int j = 0; j < 2; j++) {
-            traces.getValues(indices[j], Trace.arrayCopy(values[j]));
+            traces.getValues(indices[j], values[j]);
         }
         int totalSize = values[0].length;
         System.out.println("total samples = " + totalSize);

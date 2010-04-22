@@ -1,10 +1,9 @@
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
-import dr.evolution.util.TaxonList;
-import dr.evolution.tree.Tree;
 
 import java.util.logging.Logger;
 
@@ -12,39 +11,19 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class APOBECErrorModel extends TipPartialsModel {
-    public enum APOBECType {
-        ALL("all"),
-        BOTH("both"),
-        HA3G("hA3G"),
-        HA3F("hA3F");
+public class HypermutantErrorModel extends TipPartialsModel {
 
-
-        APOBECType(String label) {
-            this.label = label;
-        }
-
-        public String toString() {
-            return label;
-        }
-
-        final String label;
-    }
-
-    public static final String APOBEC_ERROR_MODEL = "APOBECErrorModel";
+    public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";
     public static final String HYPERMUTATION_RATE = "hypermutationRate";
     public static final String HYPERMUTATION_INDICATORS = "hypermutationIndicators";
 
-    public APOBECErrorModel(APOBECType type, Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter) {
-        super(APOBEC_ERROR_MODEL, null, null);
-
-        this.type = type;
-        
+    public HypermutantErrorModel(Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter) {
+        super(HYPERMUTANT_ERROR_MODEL, null, null);
         this.hypermutationRateParameter = hypermutationRateParameter;
         addVariable(this.hypermutationRateParameter);
 
         this.hypermuationIndicatorParameter = hypermuationIndicatorParameter;
-        
+
         addVariable(this.hypermuationIndicatorParameter);
 
         addStatistic(new TaxonHypermutatedStatistic());
@@ -55,7 +34,68 @@ public class APOBECErrorModel extends TipPartialsModel {
             this.hypermuationIndicatorParameter.setDimension(tree.getExternalNodeCount());
         }
     }
- 
+
+    public void getTipPartials(int nodeIndex, double[] partials) {
+        int[] states = this.states[nodeIndex];
+        boolean isHypermutated = hypermuationIndicatorParameter.getParameterValue(nodeIndex) > 0.0;
+
+        double rate = hypermutationRateParameter.getParameterValue(0);
+
+        int k = 0;
+        for (int j = 0; j < patternCount; j++) {
+
+            switch (states[j]) {
+                case Nucleotides.A_STATE: // is an A
+                    partials[k] = 1.0;
+                    partials[k + 1] = 0.0;
+                    partials[k + 2] = 0.0;
+                    partials[k + 3] = 0.0;
+                    break;
+                case Nucleotides.C_STATE: // is an C
+                    partials[k] = 0.0;
+                    partials[k + 1] = 1.0;
+                    partials[k + 2] = 0.0;
+                    partials[k + 3] = 0.0;
+                    break;
+                case Nucleotides.G_STATE: // is an G
+                    partials[k] = 0.0;
+                    partials[k + 1] = 0.0;
+                    partials[k + 2] = 1.0;
+                    partials[k + 3] = 0.0;
+                    break;
+                case Nucleotides.UT_STATE: // is an T
+                    partials[k] = 0.0;
+                    partials[k + 1] = 0.0;
+                    partials[k + 2] = 0.0;
+                    partials[k + 3] = 1.0;
+                    break;
+                case Nucleotides.R_STATE: // is an A in a APOBEC context
+                    if (isHypermutated) {
+                        partials[k] = 1.0 - rate;
+                        partials[k + 1] = 0.0;
+                        partials[k + 2] = rate;
+                        partials[k + 3] = 0.0;
+                    } else {
+                        partials[k] = 1.0;
+                        partials[k + 1] = 0.0;
+                        partials[k + 2] = 0.0;
+                        partials[k + 3] = 0.0;
+                    }
+
+                    break;
+                default: // is an ambiguity
+                    partials[k] = 1.0;
+                    partials[k + 1] = 1.0;
+                    partials[k + 2] = 1.0;
+                    partials[k + 3] = 1.0;
+            }
+
+            k += stateCount;
+        }
+
+    }
+
+    /*
     public void getTipPartials(int nodeIndex, double[] partials) {
         int[] states = this.states[nodeIndex];
 
@@ -153,26 +193,13 @@ public class APOBECErrorModel extends TipPartialsModel {
         }
 
     }
+    */
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() { return APOBEC_ERROR_MODEL; }
+        public String getParserName() { return HYPERMUTANT_ERROR_MODEL; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            APOBECType type = APOBECType.HA3G;
-
-            if (xo.hasAttribute("type")) {
-                if (xo.getStringAttribute("type").equalsIgnoreCase("all")) {
-                    type = APOBECType.ALL;
-                } else if (xo.getStringAttribute("type").equalsIgnoreCase("both")) {
-                    type = APOBECType.BOTH;
-                } else if (xo.getStringAttribute("type").equalsIgnoreCase("hA3F")) {
-                    type = APOBECType.HA3F;
-                } else if (!xo.getStringAttribute("type").equalsIgnoreCase("hA3G")) {
-                    throw new XMLParseException("unrecognized option for attribute, 'type': " + xo.getStringAttribute("type"));
-                }
-            }
 
             Parameter hypermutationRateParameter = null;
             if (xo.hasChildNamed(HYPERMUTATION_RATE)) {
@@ -184,10 +211,9 @@ public class APOBECErrorModel extends TipPartialsModel {
                 hypermuationIndicatorParameter = (Parameter)xo.getElementFirstChild(HYPERMUTATION_INDICATORS);
             }
 
-            APOBECErrorModel errorModel =  new APOBECErrorModel(
-                    type, hypermutationRateParameter, hypermuationIndicatorParameter);
+            HypermutantErrorModel errorModel =  new HypermutantErrorModel(hypermutationRateParameter, hypermuationIndicatorParameter);
 
-            Logger.getLogger("dr.evomodel").info("Using APOBEC error model, assuming APOBEC " + type.name());
+            Logger.getLogger("dr.evomodel").info("Using APOBEC error model");
 
             return errorModel;
         }
@@ -201,12 +227,11 @@ public class APOBECErrorModel extends TipPartialsModel {
                     "This element returns a model that allows for APOBEC-type RNA editing.";
         }
 
-        public Class getReturnType() { return APOBECErrorModel.class; }
+        public Class getReturnType() { return HypermutantErrorModel.class; }
 
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                AttributeRule.newStringRule("type", true),
                 new ElementRule(HYPERMUTATION_RATE, Parameter.class, "The hypermutation rate per target site per sequence"),
                 new ElementRule(HYPERMUTATION_INDICATORS, Parameter.class, "A binary indicator of whether the sequence is hypermutated"),
         };
@@ -233,7 +258,6 @@ public class APOBECErrorModel extends TipPartialsModel {
     }
 
 
-    private final APOBECType type;
     private final Parameter hypermutationRateParameter;
     private final Parameter hypermuationIndicatorParameter;
 }

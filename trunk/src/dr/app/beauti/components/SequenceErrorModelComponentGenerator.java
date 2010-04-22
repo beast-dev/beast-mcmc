@@ -4,11 +4,13 @@ import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.alignment.HypermutantAlignment;
+import dr.evomodel.treelikelihood.HypermutantErrorModel;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
+import dr.evoxml.HypermutantAlignmentParser;
 import dr.inference.model.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-import dr.evomodel.treelikelihood.APOBECErrorModel;
 import dr.inferencexml.model.SumStatisticParser;
 
 /**
@@ -29,19 +31,26 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
         }
 
         switch (point) {
+            case AFTER_PATTERNS:
+                 if (comp.isHypermutation()) {
+                     return true;
+                 }
+                 break;
             case AFTER_SITE_MODEL:
             case IN_TREE_LIKELIHOOD:
             case IN_FILE_LOG_PARAMETERS:
                 return true;
-            default:
-                return false;
         }
+        return false;
     }
 
     protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
         SequenceErrorModelComponentOptions component = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
         switch (point) {
+            case AFTER_PATTERNS:
+                writeHypermutationAlignment(writer, component);
+                break;
             case AFTER_SITE_MODEL:
                 writeErrorModel(writer, component);
                 break;
@@ -54,7 +63,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                     writer.writeIDref(StatisticParser.STATISTIC, SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC);
                     writer.writeOpenTag(StatisticParser.STATISTIC,
                             new Attribute.Default<String>("name", "isHypermutated"));
-                    writer.writeIDref(APOBECErrorModel.APOBEC_ERROR_MODEL,
+                    writer.writeIDref(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL,
                             SequenceErrorModelComponentOptions.ERROR_MODEL);
                     writer.writeCloseTag(StatisticParser.STATISTIC);
                 }
@@ -76,41 +85,51 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
         return "Sequence Error Model";
     }
 
-    private void writeErrorModel(XMLWriter writer, SequenceErrorModelComponentOptions component) {
-        if (component.isHypermutation()) {
-
+    private void writeHypermutationAlignment(XMLWriter writer, SequenceErrorModelComponentOptions component) {
             final String errorType;
             switch (component.errorModelType) {
                 case HYPERMUTATION_ALL:
-                    errorType = APOBECErrorModel.APOBECType.ALL.toString();
+                    errorType = HypermutantAlignment.APOBECType.ALL.toString();
                     break;
                 case HYPERMUTATION_BOTH:
-                    errorType = APOBECErrorModel.APOBECType.BOTH.toString();
+                    errorType = HypermutantAlignment.APOBECType.BOTH.toString();
                     break;
                 case HYPERMUTATION_HA3F:
-                    errorType = APOBECErrorModel.APOBECType.HA3G.toString();
+                    errorType = HypermutantAlignment.APOBECType.HA3G.toString();
                     break;
                 case HYPERMUTATION_HA3G:
-                    errorType = APOBECErrorModel.APOBECType.HA3F.toString();
+                    errorType = HypermutantAlignment.APOBECType.HA3F.toString();
                     break;
                 default:
                     throw new RuntimeException("Unknown ErrorModelType: " + component.errorModelType.toString());
             }
             writer.writeOpenTag(
-                    APOBECErrorModel.APOBEC_ERROR_MODEL,
+                    HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, SequenceErrorModelComponentOptions.ERROR_MODEL),
+                            new Attribute.Default<String>(XMLParser.ID, "hypermutants"),
                             new Attribute.Default<String>("type", errorType)
                     }
             );
 
-            writer.writeIDref("taxa", "taxa");
+            writer.writeIDref("alignment", "alignment");
 
+            writer.writeCloseTag(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT);
 
-            writeParameter(APOBECErrorModel.HYPERMUTATION_RATE, SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
-            writeParameter(APOBECErrorModel.HYPERMUTATION_INDICATORS, SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);
+    }
 
-            writer.writeCloseTag(APOBECErrorModel.APOBEC_ERROR_MODEL);
+    private void writeErrorModel(XMLWriter writer, SequenceErrorModelComponentOptions component) {
+        if (component.isHypermutation()) {
+            writer.writeOpenTag(
+                    HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, SequenceErrorModelComponentOptions.ERROR_MODEL)
+                    }
+            );
+
+            writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
+            writeParameter(HypermutantErrorModel.HYPERMUTATION_INDICATORS, SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);
+
+            writer.writeCloseTag(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL);
 
             writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC),
@@ -121,7 +140,6 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
             final String errorType = (component.errorModelType == SequenceErrorType.AGE_TRANSITIONS ||
                     component.errorModelType == SequenceErrorType.BASE_TRANSITIONS ?
                     "transitions" : "all");
-
 
             writer.writeOpenTag(
                     SequenceErrorModelParser.SEQUENCE_ERROR_MODEL,

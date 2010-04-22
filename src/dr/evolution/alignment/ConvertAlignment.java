@@ -39,394 +39,183 @@ import java.util.*;
  *
  * @version $Id: ConvertAlignment.java,v 1.29 2005/05/24 20:25:55 rambaut Exp $
  */
-public class ConvertAlignment extends Alignment.Abstract implements dr.util.XHTMLable
+public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLable
 {
 
-	/**
-	 * Constructor.
-	 */
-	public ConvertAlignment() { }
-
-	/**
-	 * Constructor.
-	 */
-	public ConvertAlignment(DataType dataType) {
-		this(dataType, null, null);
-	}
-
-	/**
-	 * Constructor.
-	 */
-	public ConvertAlignment(DataType dataType, CodonTable codonTable) {
-		this(dataType, codonTable, null);
-	}
-
-	/**
-	 * Constructor.
-	 */
-	public ConvertAlignment(DataType dataType, Alignment alignment) {
-		this(dataType, null, alignment);
-	}
-
-	/**
-	 * Constructor.
-	 */
-	public ConvertAlignment(DataType dataType, CodonTable codonTable, Alignment alignment) {
-		setDataType(dataType);
-		setCodonTable(codonTable);
-		setAlignment(alignment);
-	}
-
-	/**
-	 * Sets the CodonTable of this alignment.
-	 */
-	public void setCodonTable(CodonTable codonTable) {
-		this.codonTable = codonTable;
-	}
-
-	/**
-	 * Sets the contained.
-	 */
-	public void setAlignment(Alignment alignment) {
-		if (dataType == null)
-			dataType = alignment.getDataType();
-
-		this.alignment = alignment;
-
-		int newType = dataType.getType();
-		int originalType = alignment.getDataType().getType();
-
-		if (originalType == DataType.NUCLEOTIDES) {
-			if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
-				throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-			}
-		} else if (originalType == DataType.CODONS) {
-			if (!(newType == DataType.AMINO_ACIDS || newType == DataType.NUCLEOTIDES)) {
-
-                                  System.err.println("originalType = " + originalType);
-                                  System.err.println("newType = " + newType);
-				throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-			}
-		} else {
-			throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-		}
-	}
-
-    // **************************************************************
-    // Alignment IMPLEMENTATION
-    // **************************************************************
-
-	/**
-	 * Sets the dataType of this alignment. This can be different from
-	 * the dataTypes of the contained alignment - they will be translated
-	 * as required.
-	 */
-	public void setDataType(DataType dataType) {
-		this.dataType = dataType;
-	}
-
-	/**
-	 * Returns string representation of single sequence in
-	 * alignment with gap characters included.
-	 */
-	public String getAlignedSequenceString(int sequenceIndex) {
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0, n = getSiteCount(); i < n; i++) {
-			buffer.append(dataType.getChar(getState(sequenceIndex, i)));
-		}
-		return buffer.toString();
-	}
-
-
-	/**
-	 * Returns string representation of single sequence in
-	 * alignment with gap characters excluded.
-	 */
-	public String getUnalignedSequenceString(int sequenceIndex) {
-		StringBuffer unaligned = new StringBuffer();
-		for (int i = 0, n = getSiteCount(); i < n; i++) {
-
-			int state = getState(sequenceIndex, i);
-			if (!dataType.isGapState(state)) {
-				unaligned.append(dataType.getChar(state));
-			}
-		}
-
-		return unaligned.toString();
-	}
-
-    // **************************************************************
-    // PatternList IMPLEMENTATION
-    // **************************************************************
-
-	/**
-	 * @return the DataType of this siteList
-	 */
-	public DataType getDataType() {
-		return dataType;
-	}
-
-    // **************************************************************
-    // SiteList IMPLEMENTATION
-    // **************************************************************
-
-	/**
-	 * @return number of sites
-	 */
-	public int getSiteCount() {
-		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
-
-		int originalType = alignment.getDataType().getType();
-		int count = alignment.getSiteCount();
-
-		if (originalType == DataType.NUCLEOTIDES) {
-			count /= 3;
-		}
-
-		return count;
-	}
-
-	/**
-	 * Gets the pattern of site as an array of state numbers (one per sequence)
-	 * @return the site pattern at siteIndex
-	 */
-	public int[] getSitePattern(int siteIndex) {
-		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
-
-		int i, n = getSequenceCount();
-
-		int[] pattern = new int[n];
-
-		for (i = 0; i < n; i++) {
-			pattern[i] = getState(i, siteIndex);
-		}
-
-		return pattern;
-	}
-
-	/**
-	 * Gets the pattern index at a particular site
-	 * @return the patternIndex
-	 */
-	public int getPatternIndex(int siteIndex) {
-		return siteIndex;
-	}
-
-	/**
-	 * @return the sequence state at (taxon, site)
-	 */
-	public int getState(int taxonIndex, int siteIndex) {
-		if (alignment == null) throw new RuntimeException("ConvertionAlignment has no alignment");
-
-		int newType = dataType.getType();
-		int originalType = alignment.getDataType().getType();
-
-		int state = 0;
-
-		if (originalType == DataType.NUCLEOTIDES) {
-			int siteIndex3 = siteIndex * 3;
-			int state1 = alignment.getState(taxonIndex, siteIndex3);
-			int state2 = alignment.getState(taxonIndex, siteIndex3 + 1);
-			int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
-
-			if (newType == DataType.CODONS) {
-				state = ((Codons)dataType).getState(state1, state2, state3);
-			} else { // newType == DataType.AMINO_ACIDS
-				state = codonTable.getAminoAcidState(((Codons)dataType).getCanonicalState(((Codons)dataType).getState(state1, state2, state3)));
-			}
-
-		} else if (originalType == DataType.CODONS) {
-                        if (newType == DataType.AMINO_ACIDS) {
-			state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
-                        } else { // newType == DataType.CODONS
-                            String string = alignment.getAlignedSequenceString(taxonIndex);
-                            state = Nucleotides.INSTANCE.getState(string.charAt(siteIndex));
-                        }
-		}
-
-		return state;
-	}
-
-   // **************************************************************
-    // SequenceList IMPLEMENTATION
-    // **************************************************************
-
-	/**
-	 * @return a count of the number of sequences in the list.
-	 */
-	public int getSequenceCount() {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getSequenceCount();
-	}
-
-	/**
-	 * @return the ith sequence in the list.
-	 */
-	public Sequence getSequence(int index) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getSequence(index);
-	}
-
-	/**
-	 * Sets an named attribute for a given sequence.
-	 * @param index the index of the sequence whose attribute is being set.
-	 * @param name the name of the attribute.
-	 * @param value the new value of the attribute.
-	 */
-	public void setSequenceAttribute(int index, String name, Object value) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		alignment.setSequenceAttribute(index, name, value);
-	}
-
-	/**
-	 * @return an object representing the named attributed for the given sequence.
-	 * @param index the index of the sequence whose attribute is being fetched.
-	 * @param name the name of the attribute of interest.
-	 */
-	public Object getSequenceAttribute(int index, String name) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getSequenceAttribute(index, name);
-	}
-
-    // **************************************************************
-    // TaxonList IMPLEMENTATION
-    // **************************************************************
-
-	/**
-	 * @return a count of the number of taxa in the list.
-	 */
-	public int getTaxonCount() {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxonCount();
-	}
-
-	/**
-	 * @return the ith taxon.
-	 */
-	public Taxon getTaxon(int taxonIndex) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxon(taxonIndex);
-	}
-
-	/**
-	 * @return the ID of the ith taxon.
-	 */
-	public String getTaxonId(int taxonIndex) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxonId(taxonIndex);
-	}
-
-	/**
-	 * returns the index of the taxon with the given id.
-	 */
-	public int getTaxonIndex(String id) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxonIndex(id);
-	}
-
-	/**
-	 * returns the index of the given taxon.
-	 */
-	public int getTaxonIndex(Taxon taxon) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxonIndex(taxon);
-	}
-
-    public List<Taxon> asList() {
-        List<Taxon> taxa = new ArrayList<Taxon>();
-        for (int i = 0, n = getTaxonCount(); i < n; i++) {
-            taxa.add(getTaxon(i));
-        }
-        return taxa;
-    }
-
-    public String toString() {
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
-
-        StringBuffer buffer = new StringBuffer();
-
-        for (int i = 0; i < getSequenceCount(); i++) {
-            String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
-            buffer.append(">").append(name).append("\n");
-            buffer.append(getAlignedSequenceString(i)).append("\n");
-        }
-
-        return buffer.toString();
-    }
-
-    public Iterator<Taxon> iterator() {
-        return new Iterator<Taxon>() {
-            private int index = -1;
-
-            public boolean hasNext() {
-                return index < getTaxonCount() - 1;
-            }
-
-            public Taxon next() {
-                index ++;
-                return getTaxon(index);
-            }
-
-            public void remove() { /* do nothing */ }
-        };
+    /**
+     * Constructor.
+     */
+    public ConvertAlignment(DataType dataType) {
+        this(dataType, null, null);
     }
 
     /**
-	 * @return an object representing the named attributed for the given taxon.
-	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
-	 * @param name the name of the attribute of interest.
-	 */
-	public Object getTaxonAttribute(int taxonIndex, String name) {
-		if (alignment == null) throw new RuntimeException("SitePatterns has no alignment");
-		return alignment.getTaxonAttribute(taxonIndex, name);
-	}
+     * Constructor.
+     */
+    public ConvertAlignment(DataType dataType, CodonTable codonTable) {
+        this(dataType, codonTable, null);
+    }
 
-	public String toXHTML() {
-		String xhtml = "<p><em>Converted Alignment</em> data type = ";
-		xhtml += getDataType().getDescription();
-		xhtml += ", no. taxa = ";
-		xhtml += getTaxonCount();
-		xhtml += ", no. sites = ";
-		xhtml += getSiteCount();
-		xhtml += "</p>";
+    /**
+     * Constructor.
+     */
+    public ConvertAlignment(DataType dataType, Alignment alignment) {
+        this(dataType, null, alignment);
+    }
 
-		xhtml += "<pre>";
+    /**
+     * Constructor.
+     */
+    public ConvertAlignment(DataType dataType, CodonTable codonTable, Alignment alignment) {
+        super(alignment);
+        setDataType(dataType);
+        setCodonTable(codonTable);
+        setAlignment(alignment);
+    }
 
-		int length, maxLength = 0;
-		for (int i =0; i < getTaxonCount(); i++) {
-			length = getTaxonId(i).length();
-			if (length > maxLength)
-				maxLength = length;
-		}
+    /**
+     * Sets the CodonTable of this alignment.
+     */
+    public void setCodonTable(CodonTable codonTable) {
+        this.codonTable = codonTable;
+    }
 
-		int count, state;
-		int type = dataType.getType();
+    /**
+     * Sets the contained.
+     */
+    public void setAlignment(Alignment alignment) {
+        if (dataType == null)
+            dataType = alignment.getDataType();
 
-		for (int i = 0; i < getTaxonCount(); i++) {
-			length = getTaxonId(i).length();
-			xhtml += getTaxonId(i);
-			for (int j = length; j <= maxLength; j++)
-				xhtml += " ";
+        this.alignment = alignment;
 
-			count = getSiteCount();
-			for (int j = 0; j < count; j++) {
-				state = getState(i, j);
-				if (type == DataType.CODONS)
-					xhtml += Codons.UNIVERSAL.getTriplet(state) + " ";
-				else
-					xhtml += AminoAcids.INSTANCE.getTriplet(state) + " ";
-			}
-			xhtml += "\n";
-		}
-		xhtml += "</pre>";
-		return xhtml;
-	}
+        int newType = dataType.getType();
+        int originalType = alignment.getDataType().getType();
 
-	// **************************************************************
-	// INSTANCE VARIABLES
-	// **************************************************************
+        if (originalType == DataType.NUCLEOTIDES) {
+            if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
+                throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
+            }
+        } else if (originalType == DataType.CODONS) {
+            if (!(newType == DataType.AMINO_ACIDS || newType == DataType.NUCLEOTIDES)) {
 
-	private DataType dataType = null;
-	private CodonTable codonTable = null;
-	private Alignment alignment = null;
+                System.err.println("originalType = " + originalType);
+                System.err.println("newType = " + newType);
+                throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
+            }
+        } else {
+            throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
+        }
+    }
+
+    /**
+     * Sets the dataType of this alignment. This can be different from
+     * the dataTypes of the contained alignment - they will be translated
+     * as required.
+     */
+    public void setDataType(DataType dataType) {
+        this.dataType = dataType;
+    }
+
+    /**
+     * @return the DataType of this siteList
+     */
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    /**
+     * @return number of sites
+     */
+    public int getSiteCount() {
+        if (alignment == null) throw new RuntimeException("ConvertAlignment has no alignment");
+
+        int originalType = alignment.getDataType().getType();
+        int count = alignment.getSiteCount();
+
+        if (originalType == DataType.NUCLEOTIDES) {
+            count /= 3;
+        }
+
+        return count;
+    }
+
+    /**
+     * @return the sequence state at (taxon, site)
+     */
+    public int getState(int taxonIndex, int siteIndex) {
+        if (alignment == null) throw new RuntimeException("ConvertAlignment has no alignment");
+
+        int newType = dataType.getType();
+        int originalType = alignment.getDataType().getType();
+
+        int state = 0;
+
+        if (originalType == DataType.NUCLEOTIDES) {
+            int siteIndex3 = siteIndex * 3;
+            int state1 = alignment.getState(taxonIndex, siteIndex3);
+            int state2 = alignment.getState(taxonIndex, siteIndex3 + 1);
+            int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
+
+            if (newType == DataType.CODONS) {
+                state = ((Codons)dataType).getState(state1, state2, state3);
+            } else { // newType == DataType.AMINO_ACIDS
+                state = codonTable.getAminoAcidState(((Codons)dataType).getCanonicalState(((Codons)dataType).getState(state1, state2, state3)));
+            }
+
+        } else if (originalType == DataType.CODONS) {
+            if (newType == DataType.AMINO_ACIDS) {
+                state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
+            } else { // newType == DataType.CODONS
+                String string = alignment.getAlignedSequenceString(taxonIndex);
+                state = Nucleotides.INSTANCE.getState(string.charAt(siteIndex));
+            }
+        }
+
+        return state;
+    }
+
+    public String toXHTML() {
+        String xhtml = "<p><em>Converted Alignment</em> data type = ";
+        xhtml += getDataType().getDescription();
+        xhtml += ", no. taxa = ";
+        xhtml += getTaxonCount();
+        xhtml += ", no. sites = ";
+        xhtml += getSiteCount();
+        xhtml += "</p>";
+
+        xhtml += "<pre>";
+
+        int length, maxLength = 0;
+        for (int i =0; i < getTaxonCount(); i++) {
+            length = getTaxonId(i).length();
+            if (length > maxLength)
+                maxLength = length;
+        }
+
+        int count, state;
+        int type = getDataType().getType();
+
+        for (int i = 0; i < getTaxonCount(); i++) {
+            length = getTaxonId(i).length();
+            xhtml += getTaxonId(i);
+            for (int j = length; j <= maxLength; j++)
+                xhtml += " ";
+
+            count = getSiteCount();
+            for (int j = 0; j < count; j++) {
+                state = getState(i, j);
+                if (type == DataType.CODONS)
+                    xhtml += Codons.UNIVERSAL.getTriplet(state) + " ";
+                else
+                    xhtml += AminoAcids.INSTANCE.getTriplet(state) + " ";
+            }
+            xhtml += "\n";
+        }
+        xhtml += "</pre>";
+        return xhtml;
+    }
+
+    private DataType dataType = null;
+    private CodonTable codonTable = null;
 }

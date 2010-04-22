@@ -52,6 +52,9 @@ public class Nucleotides extends DataType {
 	public static final int G_STATE = 2;
 	public static final int UT_STATE = 3;
 
+    public static final int R_STATE = 5; // A or G
+    public static final int Y_STATE = 6; // C or T
+
 	public static final int UNKNOWN_STATE = 16;
 	public static final int GAP_STATE = 17;
 	

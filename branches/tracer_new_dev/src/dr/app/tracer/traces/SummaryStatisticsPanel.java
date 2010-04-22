@@ -1,6 +1,7 @@
 package dr.app.tracer.traces;
 
 import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.TableRenderer;
@@ -23,6 +24,8 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     static final String MEDIAN_ROW = "median";
     static final String LOWER_ROW = "95% HPD lower";
     static final String UPPER_ROW = "95% HPD upper";
+    static final String CRED_SET_ROW = "95% Credible Set";
+    static final String INCRED_SET_ROW = "5% Incredible Set";
     static final String ACT_ROW = "auto-correlation time (ACT)";
     static final String ESS_ROW = "effective sample size (ESS)";
     static final String SUM_ESS_ROW = "effective sample size (sum of ESS)";
@@ -181,10 +184,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
         public Object getValueAt(int row, int col) {
 
-            if (col == 0) {
-                return rowNames[row];
-            }
-
             TraceCorrelation tc = null;
 
             if (traceLists != null && traceNames != null) {
@@ -196,6 +195,16 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 tc = tl.getCorrelationStatistics(index);
             } else {
                 return "-";
+            }
+
+            if (col == 0) {
+                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 5) {
+                    return CRED_SET_ROW;
+                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
+                    return INCRED_SET_ROW;
+                } else {
+                    return rowNames[row];
+                }
             }
 
             double value = 0.0;

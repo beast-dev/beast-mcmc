@@ -212,7 +212,7 @@ public class LogFileTraces extends AbstractTraceList {
         // lines starting with # are ignored, assuming comments in Migrate or BEAST file
         while (token.startsWith("[") || token.startsWith("#")) {
 
-            initializeTraceType(tokens); // using # to define type            
+            initializeTraceType(token, tokens); // using # to define type
 
             tokens = reader.tokenizeLine();
 
@@ -296,19 +296,21 @@ public class LogFileTraces extends AbstractTraceList {
         //todo
     }
 
-    private void initializeTraceType(StringTokenizer tokens) {
+    private void initializeTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
-            String token = tokens.nextToken();
-            if (token.contains(TraceFactory.TraceType.DISCRETE.toString())
-                    || token.contains(TraceFactory.TraceType.DISCRETE.toString().toUpperCase())) {
-                token = tokens.nextToken(); // move to next
+            String token; //= tokens.nextToken();
+            if (firstToken.contains(TraceFactory.TraceType.DISCRETE.toString())
+                    || firstToken.contains(TraceFactory.TraceType.DISCRETE.toString().toUpperCase())) {
+                token = tokens.nextToken(); // move to 1st trace name
+                tracesType.put(token, TraceFactory.TraceType.DISCRETE); // record 1st trace name if only 1 name
                 while (tokens.hasMoreTokens()) {
                     tracesType.put(token, TraceFactory.TraceType.DISCRETE);
                     token = tokens.nextToken();
                 }
-            } else if (token.contains(TraceFactory.TraceType.CATEGORY.toString())
-                    || token.contains(TraceFactory.TraceType.CATEGORY.toString().toUpperCase())) {
-                token = tokens.nextToken(); // move to next
+            } else if (firstToken.contains(TraceFactory.TraceType.CATEGORY.toString())
+                    || firstToken.contains(TraceFactory.TraceType.CATEGORY.toString().toUpperCase())) {
+                token = tokens.nextToken(); // move to 1st trace name
+                tracesType.put(token, TraceFactory.TraceType.CATEGORY);
                 while (tokens.hasMoreTokens()) {
                     tracesType.put(token, TraceFactory.TraceType.CATEGORY);
                     token = tokens.nextToken();

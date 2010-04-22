@@ -28,6 +28,11 @@ package dr.inference.trace;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
  * A class that stores the distribution statistics for a trace
  *
@@ -145,7 +150,7 @@ public class TraceDistribution<T> {
             for (int i = 0; i < values.length; i++) {
                 doubleValues[i] = ((Double) values[i]).doubleValue();
             }
-            analyseDistributionContinuous(doubleValues);
+            analyseDistributionContinuous(doubleValues, 0.95);
 
         } else if (values[0] instanceof Integer) {
 
@@ -161,7 +166,7 @@ public class TraceDistribution<T> {
     /**
      * @param values the values to analyze
      */
-    private void analyseDistributionContinuous(double[] values) {
+    private void analyseDistributionContinuous(double[] values, double proportion) {
 //        this.values = values;   // move to analyseDistribution(T[] values)
 
         mean = DiscreteStatistics.mean(values);
@@ -191,7 +196,7 @@ public class TraceDistribution<T> {
         median = DiscreteStatistics.quantile(0.5, values, indices);
         cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
         cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
-        calculateHPDInterval(0.95, values, indices);
+        calculateHPDInterval(proportion, values, indices);
         ESS = values.length;
 
         isValid = true;
@@ -225,4 +230,68 @@ public class TraceDistribution<T> {
     protected double ESS;
 
     protected T[] values;
+
+
+    public class CredibleSet<T> {
+        // <T, frequency> for T = Integer and String
+        public Map<T, Integer> credibleSet = new HashMap<T, Integer>();
+        public Map<T, Integer> inCredibleSet = new HashMap<T, Integer>();
+
+        public CredibleSet(T[] values, double proportion) {
+            credibleSet.clear();
+            for (T value : values) {
+               if (credibleSet.containsKey(value)) {
+                   Integer i = credibleSet.get(value);
+                   credibleSet.put(value, i++);
+               } else {
+                   credibleSet.put(value, 1);
+               }
+            }
+
+            for (T value : credibleSet.keySet()) {
+                double prob = credibleSet.get(value) / values.length;
+                if (prob < (1 - proportion)) {
+                    inCredibleSet.put(value, credibleSet.get(value));
+                    credibleSet.remove(value);
+                }
+            }
+        }
+
+        public CredibleSet(Double[] values, double proportion) {
+            analyseDistributionContinuous(Trace.arrayConvert(values), proportion);
+        }
+
+        public boolean inside(T value) {
+            return credibleSet.containsKey(value);
+        }
+
+        public boolean inside(Double value) {
+            return value <= hpdUpper && value >= hpdLower;
+        }
+
+        private String getSet(Map set) {
+            String line = "{";
+            Set<T> values = set.keySet();
+            TreeSet<T> sortedValues = new TreeSet<T>(values);
+            for (T value : sortedValues) {
+               line = line + value + ", ";
+            }
+            if (line.endsWith(", ")) {
+               line = line.substring(0, line.lastIndexOf(", ")) + "}";
+            } else {
+               line = "n/a"; 
+            }
+            return line;
+        }
+
+        public String getCredibleSet() {
+            return getSet(credibleSet);
+        }
+
+        public String getInCredibleSet() {
+            return getSet(inCredibleSet);
+        }
+    }
+
+
 }

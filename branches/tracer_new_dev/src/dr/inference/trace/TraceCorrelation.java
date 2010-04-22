@@ -32,7 +32,7 @@ package dr.inference.trace;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation<T extends Object> extends TraceDistribution {
+public class TraceCorrelation<T> extends TraceDistribution {
 
     public TraceCorrelation(T[] values, int stepSize) {
         super(values, stepSize);

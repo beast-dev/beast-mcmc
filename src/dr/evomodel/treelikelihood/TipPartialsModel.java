@@ -111,7 +111,7 @@ public abstract class TipPartialsModel extends AbstractModel {
      * some information that requires them. This mechanism is 'lazy' so that this method
      * can be safely called multiple times with minimal computational cost.
      */
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 

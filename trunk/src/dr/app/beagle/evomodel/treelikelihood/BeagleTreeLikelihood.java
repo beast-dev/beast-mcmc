@@ -164,9 +164,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));
             }
 
-            if (rescalingScheme == PartialsRescalingScheme.DEFAULT) {
+            if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
                 // the default is now to try and let BEAGLE do it
-                preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
+//                preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();   // NOT WORKING YET
+                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
             } else {
                 preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
             }

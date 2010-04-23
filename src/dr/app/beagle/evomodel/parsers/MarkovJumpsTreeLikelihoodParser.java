@@ -28,6 +28,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String COUNTS = MarkovJumpsType.COUNTS.getText();
     public static final String REWARDS = MarkovJumpsType.REWARDS.getText();
     public static final String SCALE_REWARDS = "scaleRewardsByTime";
+    public static final String USE_UNIFORMIZATION = "useUniformization";
+    public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
 
 
     public String getParserName() {
@@ -49,6 +51,9 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
         boolean scaleRewards = xo.getAttribute(SCALE_REWARDS,true);
 
+        boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
+        int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
+
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
@@ -59,7 +64,9 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 scalingScheme,
                 dataType,
                 stateTag,
-                substModel
+                substModel,
+                useUniformization,
+                nSimulants
         );
 
         int registersFound = parseAllChildren(xo, treeLikelihood, dataType.getStateCount(), jumpTag,
@@ -124,6 +131,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newStringRule(JUMP_TAG_NAME, true),
             AttributeRule.newBooleanRule(SCALE_REWARDS,true),
+            AttributeRule.newBooleanRule(USE_UNIFORMIZATION,true),
+            AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),

@@ -90,7 +90,11 @@ public class StateHistory {
             }
             currentState = nextState;
             currentTime = nextTime;
-        }       
+        }
+        if (times != null) { // Add last waiting time
+            StateChange finalState = stateList.get(nJumps + 1);
+            times[currentState] += ( finalState.getTime() - currentTime);
+        }
     }
 
     public int getNumberOfJumps() {

@@ -6,6 +6,7 @@ import dr.inference.model.Model;
 /**
  * A class extension for implementing Markov chain-induced counting processes (markovjumps)
  * via uniformization in BEAST using BEAGLE
+ * <p/>
  * This work is supported by NSF grant 0856099
  * <p/>
  * Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.

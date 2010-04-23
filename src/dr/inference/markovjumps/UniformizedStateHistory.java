@@ -80,8 +80,8 @@ public class UniformizedStateHistory extends StateHistory {
             if (startingState == endingState) {
                 // Do nothing, just a single pseudo-transition
             } else {
-                double transitionTime = startingTime + (timeDuration) * MathUtils.nextDouble();
-                history.addChange(new StateChange(transitionTime, endingState));
+                double transitionTime = (timeDuration) * MathUtils.nextDouble();
+                history.addChange(new StateChange(startingTime + transitionTime, endingState));
             }
         } else { // More than one transition; real work to do
 
@@ -90,12 +90,12 @@ public class UniformizedStateHistory extends StateHistory {
             for (int i = 1; i < stateChanges; i++) {
                 int nextState = subordinator.drawNextChainState(currentState, endingState, stateChanges, i);
                 if (nextState != currentState) {
-                    history.addChange(new StateChange(transitionTimes[i-1], nextState));
+                    history.addChange(new StateChange(startingTime + transitionTimes[i-1], nextState));
                     currentState = nextState;
                 }
             }
             if (currentState != endingState) {
-                history.addChange(new StateChange(transitionTimes[stateChanges-1], endingState));
+                history.addChange(new StateChange(startingTime + transitionTimes[stateChanges-1], endingState));
             }
         }
 

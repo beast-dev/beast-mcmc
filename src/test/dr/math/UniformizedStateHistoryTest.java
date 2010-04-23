@@ -1,9 +1,6 @@
 package test.dr.math;
 
-import dr.inference.markovjumps.SubordinatedProcess;
-import dr.inference.markovjumps.MarkovJumpsCore;
-import dr.inference.markovjumps.UniformizedStateHistory;
-import dr.inference.markovjumps.StateHistory;
+import dr.inference.markovjumps.*;
 import dr.inference.model.Parameter;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
@@ -11,6 +8,8 @@ import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.MathUtils;
+
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
@@ -39,7 +38,6 @@ public class UniformizedStateHistoryTest extends MathTestCase {
     int stateCount;
 
     public void testSubordinatedProcessGeneration() {
-
 
         double[] oneStep = process.getDtmcProbabilities(1);
         double[] threeStep = process.getDtmcProbabilities(3);
@@ -142,7 +140,7 @@ public class UniformizedStateHistoryTest extends MathTestCase {
         assertEquals(3, draw);
     }
 
-    public void testStateHistorySimulation() {
+    public void testStateHistorySimulationForJumps() {
 
         double startingTime = 1.0;
         double endingTime = 3.0;
@@ -190,6 +188,55 @@ public class UniformizedStateHistoryTest extends MathTestCase {
             assertEquals(mjExpectations[startingState * stateCount + endingState], expectations[j], 1E-2);
         }
     }
+    public void testStateHistorySimulationForRewards() {
+
+        double startingTime = 1.0;
+        double endingTime = 3.0;
+        int startingState = 1;
+        int endingState = 3;
+
+        int N = 1000000;
+
+        double[] tmp = new double[stateCount * stateCount];
+        hky.getTransitionProbabilities(endingTime - startingTime, tmp);
+        double transitionProbability = tmp[startingState * stateCount + endingState];
+
+        double[][] registers = new double[3][stateCount];
+        Arrays.fill(registers[0], 1.0); // Reward all states
+        registers[1][0] = 1.0; // Reward just one state!
+        registers[2][3] = 1.0; // Reward just one state!
+
+        double[] expectations = new double[registers.length];
+
+        for (int i = 0; i < N; i++) {
+
+            StateHistory history = UniformizedStateHistory.simulateConditionalOnEndingState(
+                    startingTime,
+                    startingState,
+                    endingTime,
+                    endingState,
+                    transitionProbability,
+                    stateCount,
+                    process);
+            for (int j = 0; j < registers.length; j++) {
+                expectations[j] += history.getTotalReward(registers[j]);
+            }
+        }
+
+        // Determine analytic solution
+        MarkovJumpsSubstitutionModel markovjumps = new MarkovJumpsSubstitutionModel(hky, MarkovJumpsType.REWARDS);
+        double[] mjExpectations = new double[stateCount * stateCount];
+
+        for (int j = 0; j < registers.length; j++) {
+            expectations[j] /= (double) N;
+            System.out.println("Expected reward for register[" + j +"] = " + expectations[j]);
+
+            markovjumps.setRegistration(registers[j]);
+            markovjumps.computeCondStatMarkovJumps(endingTime - startingTime, mjExpectations);
+
+            assertEquals(mjExpectations[startingState * stateCount + endingState], expectations[j], 1E-2);
+        }
+    }    
 }
 
 /*

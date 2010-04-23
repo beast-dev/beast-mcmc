@@ -4,6 +4,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.UniformizedSubstitutionModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
@@ -37,10 +38,15 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme, DataType dataType, String stateTag,
-                                           SubstitutionModel substModel) {
+                                           SubstitutionModel substModel,
+                                           boolean useUniformization,
+                                           int nSimulants) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
                 scalingScheme, dataType, stateTag, substModel);
+
+        this.useUniformization = useUniformization;
+        this.nSimulants = nSimulants;
 
         markovjumps = new ArrayList<MarkovJumpsSubstitutionModel>();
         registerParameter = new ArrayList<Parameter>();
@@ -64,7 +70,11 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         addVariable(addRegisterParameter);
         registerParameter.add(addRegisterParameter);
-        markovjumps.add(new MarkovJumpsSubstitutionModel(substitutionModel,type));
+        if (useUniformization) {
+            markovjumps.add(new UniformizedSubstitutionModel(substitutionModel, type, nSimulants));
+        } else {
+            markovjumps.add(new MarkovJumpsSubstitutionModel(substitutionModel,type));
+        }
         setupRegistration(numRegisters);
         numRegisters++;
         jumpTag.add(addRegisterParameter.getId());
@@ -164,22 +174,83 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         final double substTime = branchRate * (tree.getNodeHeight(parentNode) - tree.getNodeHeight(childNode));
 
         for(int r = 0; r < markovjumps.size(); r++) {
-            // Fill condJumps with conditional mean values for this branch
-            markovjumps.get(r).computeCondStatMarkovJumps(substTime,probabilities,condJumps);
+//            //Fill condJumps with conditional mean values for this branch
+//            markovjumps.get(r).computeCondStatMarkovJumps(substTime,probabilities,condJumps);
+//
+//            if (scaleByTime[r]) {
+//                for(int i=0; i<condJumps.length; i++) {
+//                    condJumps[i] /= branchRate;
+//                }
+//            }
+//
+//            double[][] thisExpectedJumps = expectedJumps.get(r);
+//
+//            for(int j=0; j<patternCount; j++) { // Pick out values given parent and child states
+//                thisExpectedJumps[childNum][j] = condJumps[parentStates[j] * stateCount + childStates[j]];
+//            }
+            MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
 
-            if (scaleByTime[r]) {         
+            if (useUniformization) {
+                computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
+                        branchRate, childNum, parentStates, childStates, probabilities, scaleByTime[r],
+                        expectedJumps.get(r));
+            } else {
+                computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
+                        childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r));
+            }
+        }
+        
+    }
+
+    private void computeSampledMarkovJumpsForBranch(UniformizedSubstitutionModel thisMarkovJumps,
+                                                    double substTime,
+                                                    double branchRate,
+                                                    int childNum,
+                                                    int[] parentStates,
+                                                    int[] childStates,
+                                                    double[] probabilities,
+                                                    boolean scaleByTime,
+                                                    double[][] thisExpectedJumps) {
+
+
+        // Fill condJumps with sampled values for this branch for each site
+        for (int j = 0; j < patternCount; j++) {
+            double value = thisMarkovJumps.computeCondStatMarkovJumps(
+                    parentStates[j],
+                    childStates[j],
+                    substTime,
+                    probabilities[parentStates[j] * stateCount + childStates[j]]
+            );
+            if (scaleByTime) {
+                value /= branchRate;
+            }
+            thisExpectedJumps[childNum][j] = value;
+        }
+    }
+
+    private void computeIntegratedMarkovJumpsForBranch(MarkovJumpsSubstitutionModel thisMarkovJumps,
+                                                       double substTime,
+                                                       double branchRate,
+                                                       int childNum,
+                                                       int[] parentStates,
+                                                       int[] childStates,
+                                                       double[] probabilities,
+                                                       double[] condJumps,
+                                                       boolean scaleByTime,
+                                                       double[][] thisExpectedJumps) {
+
+            // Fill condJumps with conditional mean values for this branch
+            thisMarkovJumps.computeCondStatMarkovJumps(substTime,probabilities,condJumps);
+
+            if (scaleByTime) {
                 for(int i=0; i<condJumps.length; i++) {
                     condJumps[i] /= branchRate;
                 }
             }
 
-            double[][] thisExpectedJumps = expectedJumps.get(r);
-
             for(int j=0; j<patternCount; j++) { // Pick out values given parent and child states
                 thisExpectedJumps[childNum][j] = condJumps[parentStates[j] * stateCount + childStates[j]];
             }
-        }
-        
     }
 
     public LogColumn[] getColumns() {
@@ -220,4 +291,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private double[] tmpProbabilities;
     private double[] condJumps;
     private int numRegisters;
+    private final boolean useUniformization;
+    private final int nSimulants;
 }

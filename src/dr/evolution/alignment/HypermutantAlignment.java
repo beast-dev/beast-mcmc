@@ -73,6 +73,12 @@ public class HypermutantAlignment extends WrappedAlignment
         if (alignment.getDataType().getType() != DataType.NUCLEOTIDES) {
             throw new RuntimeException("HypermutantAlignment can only convert nucleotide alignments");
         }
+
+        mutatedContextCounts = new int[getTaxonCount()];
+        unmutatedContextCounts = new int[getTaxonCount()];
+
+        countContexts();
+
 	}
 
 	/**
@@ -95,6 +101,9 @@ public class HypermutantAlignment extends WrappedAlignment
 		return state;
 	}
 
+    /**
+     * This finds the next state downstream of siteIndex, skipping over gaps
+     */
     private int getNextContextState(int taxonIndex, int siteIndex) {
         int nextState = Nucleotides.GAP_STATE;
 
@@ -106,9 +115,61 @@ public class HypermutantAlignment extends WrappedAlignment
 
         return nextState;
     }
-	// **************************************************************
+
+    private void countContexts() {
+        for (int i = 0; i < getTaxonCount(); i++) {
+            for (int j = 0; j < getSiteCount(); j++) {
+                int state = alignment.getState(i, j);
+                if (state == Nucleotides.A_STATE || state == Nucleotides.G_STATE) {
+                    int nextState = getNextContextState(i, j);
+
+                    if (    (type == APOBECType.ALL) || // consider all As as G->As
+                            (type == APOBECType.HA3G && nextState == Nucleotides.G_STATE) ||
+                            (type == APOBECType.HA3F && nextState == Nucleotides.A_STATE) ||
+                            (type == APOBECType.BOTH && (nextState == Nucleotides.G_STATE || nextState == Nucleotides.A_STATE))
+                            ) {
+                        if (state == Nucleotides.A_STATE) {
+                            // a mutated context
+                            mutatedContextCounts[i] ++;
+                        } else {
+                            // an unmutated context
+                            unmutatedContextCounts[i] ++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public int[] getMutatedContextCounts() {
+        return mutatedContextCounts;
+    }
+
+    public int[] getUnmutatedContextCounts() {
+        return unmutatedContextCounts;
+    }
+
+    public int getMutatedContextCount() {
+        int total = 0;
+        for (int count: mutatedContextCounts) {
+            total += count;
+        }
+        return total;
+    }
+
+    public int getUnmutatedContextCount() {
+        int total = 0;
+        for (int count: unmutatedContextCounts) {
+            total += count;
+        }
+        return total;
+    }
+
+    // **************************************************************
 	// INSTANCE VARIABLES
 	// **************************************************************
 
 	private APOBECType type = null;
+    private int[] mutatedContextCounts;
+    private int[] unmutatedContextCounts;
 }

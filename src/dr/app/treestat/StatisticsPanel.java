@@ -25,15 +25,15 @@
 
 package dr.app.treestat;
 
+import dr.app.beauti.priorsPanel.RealNumberField;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import org.virion.jam.components.RealNumberField;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+import jam.table.TableRenderer;
+import jam.util.IconUtils;
 import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

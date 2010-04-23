@@ -1,8 +1,11 @@
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.HypermutantAlignment;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -16,9 +19,13 @@ public class HypermutantErrorModel extends TipPartialsModel {
     public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";
     public static final String HYPERMUTATION_RATE = "hypermutationRate";
     public static final String HYPERMUTATION_INDICATORS = "hypermutationIndicators";
+    public static final String UNLINKED_RATES = "unlinkedRates";
 
-    public HypermutantErrorModel(Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter) {
+    public HypermutantErrorModel(HypermutantAlignment hypermutantAlignment, Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter, boolean unlinkedRates) {
         super(HYPERMUTANT_ERROR_MODEL, null, null);
+        this.hypermutantAlignment = hypermutantAlignment;
+        this.unlinkedRates = unlinkedRates;
+
         this.hypermutationRateParameter = hypermutationRateParameter;
         addVariable(this.hypermutationRateParameter);
 
@@ -27,11 +34,16 @@ public class HypermutantErrorModel extends TipPartialsModel {
         addVariable(this.hypermuationIndicatorParameter);
 
         addStatistic(new TaxonHypermutatedStatistic());
+        addStatistic(new TaxonHypermutationRateStatistic());
+        addStatistic(new HypermutatedProportionStatistic());
     }
 
     protected void taxaChanged() {
         if (hypermuationIndicatorParameter.getDimension() <= 1) {
             this.hypermuationIndicatorParameter.setDimension(tree.getExternalNodeCount());
+        }
+        if (unlinkedRates && hypermutationRateParameter.getDimension() <= 1) {
+            this.hypermutationRateParameter.setDimension(tree.getExternalNodeCount());
         }
     }
 
@@ -39,7 +51,7 @@ public class HypermutantErrorModel extends TipPartialsModel {
         int[] states = this.states[nodeIndex];
         boolean isHypermutated = hypermuationIndicatorParameter.getParameterValue(nodeIndex) > 0.0;
 
-        double rate = hypermutationRateParameter.getParameterValue(0);
+        double rate = (unlinkedRates ? hypermutationRateParameter.getParameterValue(nodeIndex) : hypermutationRateParameter.getParameterValue(0));
 
         int k = 0;
         for (int j = 0; j < patternCount; j++) {
@@ -95,111 +107,33 @@ public class HypermutantErrorModel extends TipPartialsModel {
 
     }
 
-    /*
-    public void getTipPartials(int nodeIndex, double[] partials) {
-        int[] states = this.states[nodeIndex];
-
-        if (hypermuationIndicatorParameter.getParameterValue(nodeIndex) > 0.0) {
-            double rate = hypermutationRateParameter.getParameterValue(0);
-
-            int k = 0;
-            int nextState;
-            for (int j = 0; j < patternCount; j++) {
-
-                switch (states[j]) {
-                    case 0: // is an A
-                        double pMutated = 0.0;
-                        if (j < patternCount - 1) {
-                            nextState = states[j+1];
-
-                            if (    (type == APOBECType.ALL) ||
-                                    (type == APOBECType.HA3G && nextState == 2) || // is a G
-                                    (type == APOBECType.HA3F && nextState == 0) || // is an A
-                                    (type == APOBECType.BOTH && (nextState == 2 || nextState == 0))
-                                    ) {
-                                pMutated = rate;
-                            }
-                        }
-                        partials[k] = 1.0 - pMutated;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = pMutated;
-                        partials[k + 3] = 0.0;
-
-                        break;
-                    case 1: // is an C
-                        partials[k] = 0.0;
-                        partials[k + 1] = 1.0;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 0.0;
-                        break;
-                    case 2: // is an G
-                        partials[k] = 0.0;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 1.0;
-                        partials[k + 3] = 0.0;
-                        break;
-                    case 3: // is an T
-                        partials[k] = 0.0;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 1.0;
-                        break;
-                    default: // is an ambiguity
-                        partials[k] = 1.0;
-                        partials[k + 1] = 1.0;
-                        partials[k + 2] = 1.0;
-                        partials[k + 3] = 1.0;
-                }
-
-                k += stateCount;
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == hypermuationIndicatorParameter) {
+            fireModelChanged();
+        } else if (variable == hypermutationRateParameter) {
+            if (!unlinkedRates || hypermuationIndicatorParameter.getValue(index)  > 0.5) {
+                // only fire an update if the indicator is on....
+                fireModelChanged();
             }
         } else {
-
-            int k = 0;
-            for (int j = 0; j < patternCount; j++) {
-                switch (states[j]) {
-                    case 0: // is an A
-                        partials[k] = 1.0;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 0.0;
-                        break;
-                    case 1: // is an C
-                        partials[k] = 0.0;
-                        partials[k + 1] = 1.0;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 0.0;
-                        break;
-                    case 2: // is an G
-                        partials[k] = 0.0;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 1.0;
-                        partials[k + 3] = 0.0;
-                        break;
-                    case 3: // is an T
-                        partials[k] = 0.0;
-                        partials[k + 1] = 0.0;
-                        partials[k + 2] = 0.0;
-                        partials[k + 3] = 1.0;
-                        break;
-                    default: // is an ambiguity
-                        partials[k] = 1.0;
-                        partials[k + 1] = 1.0;
-                        partials[k + 2] = 1.0;
-                        partials[k + 3] = 1.0;
-                }
-                k += stateCount;
-            }
+            throw new RuntimeException("Unknown parameter has changed in HypermutantErrorModel.handleVariableChangedEvent");
         }
 
     }
-    */
+
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() { return HYPERMUTANT_ERROR_MODEL; }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            boolean unlinkedRates = false;
+            if (xo.hasAttribute(UNLINKED_RATES)) {
+                unlinkedRates = xo.getBooleanAttribute(UNLINKED_RATES);
+            }
+
+            HypermutantAlignment hypermutantAlignment = (HypermutantAlignment)xo.getChild(HypermutantAlignment.class);
 
             Parameter hypermutationRateParameter = null;
             if (xo.hasChildNamed(HYPERMUTATION_RATE)) {
@@ -211,7 +145,7 @@ public class HypermutantErrorModel extends TipPartialsModel {
                 hypermuationIndicatorParameter = (Parameter)xo.getElementFirstChild(HYPERMUTATION_INDICATORS);
             }
 
-            HypermutantErrorModel errorModel =  new HypermutantErrorModel(hypermutationRateParameter, hypermuationIndicatorParameter);
+            HypermutantErrorModel errorModel =  new HypermutantErrorModel(hypermutantAlignment, hypermutationRateParameter, hypermuationIndicatorParameter, unlinkedRates);
 
             Logger.getLogger("dr.evomodel").info("Using APOBEC error model");
 
@@ -232,6 +166,8 @@ public class HypermutantErrorModel extends TipPartialsModel {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                AttributeRule.newBooleanRule(UNLINKED_RATES, true),
+                new ElementRule(HypermutantAlignment.class),
                 new ElementRule(HYPERMUTATION_RATE, Parameter.class, "The hypermutation rate per target site per sequence"),
                 new ElementRule(HYPERMUTATION_INDICATORS, Parameter.class, "A binary indicator of whether the sequence is hypermutated"),
         };
@@ -251,13 +187,68 @@ public class HypermutantErrorModel extends TipPartialsModel {
             return taxonMap.get(dim);
         }
 
-        public double getStatisticValue(int i) {
-            return hypermuationIndicatorParameter.getParameterValue(i);
+        public double getStatisticValue(int dim) {
+            return hypermuationIndicatorParameter.getParameterValue(dim);
         }
 
     }
 
+    public class TaxonHypermutationRateStatistic extends Statistic.Abstract {
 
+        public TaxonHypermutationRateStatistic() {
+            super("hypermutationRate");
+        }
+
+        public int getDimension() {
+            return hypermutationRateParameter.getDimension();
+        }
+
+        public String getDimensionName(int dim) {
+            return taxonMap.get(dim) + ".rate";
+        }
+
+        public double getStatisticValue(int dim) {
+            return hypermutationRateParameter.getParameterValue(dim) * hypermuationIndicatorParameter.getParameterValue(dim);
+        }
+
+    }
+
+    public class HypermutatedProportionStatistic extends Statistic.Abstract {
+
+        public HypermutatedProportionStatistic() {
+            super("proportionHypermutated");
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public String getDimensionName(int dim) {
+            return "P(hypermutated)";
+        }
+
+        public double getStatisticValue(int dim) {
+            int[] mutatedCounts = hypermutantAlignment.getMutatedContextCounts();
+            int[] unmutatedCounts = hypermutantAlignment.getUnmutatedContextCounts();
+
+            double mutatedCount = 0;
+            double totalCount = 0;
+            for (int i = 0; i < hypermuationIndicatorParameter.getDimension(); i++) {
+                if (hypermuationIndicatorParameter.getParameterValue(i) > 0.5) {
+                    mutatedCount += mutatedCounts[i];
+                    totalCount += mutatedCount + unmutatedCounts[i];
+
+                }
+            }
+
+            double r = hypermutationRateParameter.getParameterValue(0);
+            return (r * mutatedCount) / totalCount;
+        }
+
+    }
+
+    private final HypermutantAlignment hypermutantAlignment;
     private final Parameter hypermutationRateParameter;
     private final Parameter hypermuationIndicatorParameter;
+    private final boolean unlinkedRates;
 }

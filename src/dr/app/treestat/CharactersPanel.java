@@ -34,8 +34,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import dr.gui.table.TableSorter;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.framework.Exportable;
+import jam.table.TableRenderer;
+import jam.framework.Exportable;
 
 
 public class CharactersPanel extends JPanel implements Exportable {
@@ -92,7 +92,7 @@ public class CharactersPanel extends JPanel implements Exportable {
 
         charactersTable.getColumnModel().getColumn(0).setCellRenderer(
             new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-
+                                                                                                                                      
         charactersTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) { charactersTableSelectionChanged(); }
         });

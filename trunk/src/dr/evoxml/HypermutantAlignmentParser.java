@@ -63,7 +63,11 @@ public class HypermutantAlignmentParser extends AbstractXMLObjectParser {
         }
 
         HypermutantAlignment convert = new HypermutantAlignment(type, alignment);
-        Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "' to a hypermutant alignment targeting " + type.toString() + " contexts.");
+        int mutatedCount = convert.getMutatedContextCount();
+        int totalCount = mutatedCount + convert.getUnmutatedContextCount();
+
+        Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "' to a hypermutant alignment targeting " + type.toString() + " contexts.\r" +
+                "\tPotentially mutated contexts: " + mutatedCount + " out of a total of " + totalCount + " contexts");
 
         return convert;
     }

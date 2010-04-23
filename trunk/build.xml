@@ -346,7 +346,8 @@
 	</target>
 
 
-	<property name="version" value="1.6.pre.1" />
+	<property name="version" value="1.6.pre1" />
+    <property name="version_number" value="1.6.0" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />
@@ -402,36 +403,36 @@
 		<launch4j configFile="${Windows_dir}/BEAUTi_launch4j.xml"
 		          jar="${dist}/beauti.jar"
 				  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
-		          fileVersion="${version}.0"
+		          fileVersion="${version_number}.0"
 		          txtFileVersion="${version}"
-		          productVersion="${version}.0"
+		          productVersion="${version_number}.0"
 		          txtProductVersion="${version}"/>
 
 		<!-- BEAST v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
 		          jar="${dist}/beast.jar"
 			      outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
-		          fileVersion="${version}.0"
+		          fileVersion="${version_number}.0"
 		          txtFileVersion="${version}"
-		          productVersion="${version}.0"
+		          productVersion="${version_number}.0"
 		          txtProductVersion="${version}"/>
 
 		<!-- TreeAnnotator v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${TreeAnnotator_name} v${version}.exe"
-				  fileVersion="${version}.0"
+				  fileVersion="${version_number}.0"
 				  txtFileVersion="${version}"
-				  productVersion="${version}.0"
+				  productVersion="${version_number}.0"
 				  txtProductVersion="${version}"/>
 
 		<!-- LogCombiner v?.?.?.exe -->
 		<launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
-				  fileVersion="${version}.0"
+				  fileVersion="${version_number}.0"
 				  txtFileVersion="${version}"
-				  productVersion="${version}.0"
+				  productVersion="${version_number}.0"
 				  txtProductVersion="${version}"/>
 
 		<!-- LogAnalyser v?.?.?.exe 

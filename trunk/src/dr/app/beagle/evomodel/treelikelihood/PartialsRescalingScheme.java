@@ -9,6 +9,7 @@ public enum PartialsRescalingScheme {
     DEFAULT("default"),
     NONE("none"),
     DYNAMIC("dynamic"),
+    AUTO("auto"),
     ALWAYS("always");
 
     PartialsRescalingScheme(String text) {

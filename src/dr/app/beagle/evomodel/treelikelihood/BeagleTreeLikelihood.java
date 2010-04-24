@@ -164,10 +164,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));
             }
 
+            // Define default behaviour here
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
-                // the default is now to try and let BEAGLE do it
-//                preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();   // NOT WORKING YET
-                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
+                //if GPU: the default is now to try and let BEAGLE do it
+//                if ((requirementFlags & BeagleFlag.PROCESSOR_GPU.getMask() != 0) ||
+//                        (preferenceFlags & BeagleFlag.PROCESSOR_GPU.getMask() != 0)) {
+//                this.rescalingScheme = PartialsRescalingScheme.AUTO;
+                //else if CPU: just run as fast as possible
+                this.rescalingScheme = PartialsRescalingScheme.NONE;
+            }
+
+            if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
+                preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
+                useAutoScaling = true;              
             } else {
                 preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
             }
@@ -416,7 +425,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
 
-        if (useScaleFactors) { // Only store when actually used
+        if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
             System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
         }
@@ -435,7 +444,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
 
-        if (useScaleFactors ) {
+        if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();
             int[] tmp = storedScaleBufferIndices;
             storedScaleBufferIndices = scaleBufferIndices;
@@ -534,7 +543,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         boolean done = true;
 
         do {
-            beagle.updatePartials(operations, operationCount, -1);
+            beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
             int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
 
@@ -552,6 +561,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 } else {
                     cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
                 }
+            } else if (useAutoScaling) {
+                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
             }
 
             // these could be set only when they change but store/restore would need to be considered
@@ -566,7 +577,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             logL = sumLogLikelihoods[0];
 
             if  (Double.isNaN(logL) || Double.isInfinite(logL)) {
-//                logL = Double.NEGATIVE_INFINITY;
+                logL = Double.NEGATIVE_INFINITY;
 
                 if (!done) {
                     if (rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
@@ -702,6 +713,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     }
 
                 } else {
+
+                 //   if (useAutoScaling) {
+                 //       scaleBufferIndices[operationCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                 //   }
                     operations[x + 1] = Beagle.NONE; // Not using scaleFactors
                     operations[x + 2] = Beagle.NONE;
                 }
@@ -744,6 +759,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private PartialsRescalingScheme rescalingScheme;
     protected boolean useScaleFactors = false;
+    private boolean useAutoScaling = false;
     private boolean recomputeScaleFactors = false;
     private int rescalingCount = 0;
 

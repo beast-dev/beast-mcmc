@@ -167,11 +167,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // Define default behaviour here
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
                 //if GPU: the default is now to try and let BEAGLE do it
-//                if ((requirementFlags & BeagleFlag.PROCESSOR_GPU.getMask() != 0) ||
-//                        (preferenceFlags & BeagleFlag.PROCESSOR_GPU.getMask() != 0)) {
-//                this.rescalingScheme = PartialsRescalingScheme.AUTO;
-                //else if CPU: just run as fast as possible
-                this.rescalingScheme = PartialsRescalingScheme.NONE;
+                if (resourceList != null && resourceList[0] > 1) {
+                    this.rescalingScheme = PartialsRescalingScheme.AUTO;
+                } else { // if CPU: just run as fast as possible
+                    this.rescalingScheme = PartialsRescalingScheme.NONE;
+                }
             }
 
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
@@ -714,9 +714,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                 } else {
 
-                 //   if (useAutoScaling) {
-                 //       scaleBufferIndices[operationCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-                 //   }
+                    if (useAutoScaling) {
+                        scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                    }
                     operations[x + 1] = Beagle.NONE; // Not using scaleFactors
                     operations[x + 2] = Beagle.NONE;
                 }

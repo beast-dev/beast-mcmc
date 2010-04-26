@@ -96,7 +96,7 @@ public class Trace<T> {
         return values[index];
     }
 
-    public T[] getValues(int start, int length) {
+    public T[] createValues(int start, int length) {
         T[] destination = (T[]) new Object[length];
         getValues(start, destination, 0);
         return destination;

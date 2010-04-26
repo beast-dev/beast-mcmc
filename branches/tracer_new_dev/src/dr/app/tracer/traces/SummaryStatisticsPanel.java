@@ -186,17 +186,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
             TraceCorrelation tc = null;
 
-            if (traceLists != null && traceNames != null) {
-                int n1 = (col - 1) / traceNames.size();
-                int n2 = (col - 1) % traceNames.size();
-
-                TraceList tl = traceLists[n1];
-                int index = tl.getTraceIndex(traceNames.get(n2));
-                tc = tl.getCorrelationStatistics(index);
-            } else {
-                return "-";
-            }
-
             if (col == 0) {
                 if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 5) {
                     return CRED_SET_ROW;
@@ -207,6 +196,17 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 }
             }
 
+            if (traceLists != null && traceNames != null) {
+                int n1 = (col - 1) / traceNames.size();
+                int n2 = (col - 1) % traceNames.size();
+
+                TraceList tl = traceLists[n1];
+                int index = tl.getTraceIndex(traceNames.get(n2));
+                tc = tl.getCorrelationStatistics(index);
+            } else {
+                return "-";
+            }
+            
             double value = 0.0;
 
             if (tc != null) {

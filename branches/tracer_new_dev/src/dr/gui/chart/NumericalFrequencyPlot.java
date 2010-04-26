@@ -25,12 +25,14 @@
 
 package dr.gui.chart;
 
+import dr.inference.trace.Trace;
+import dr.inference.trace.TraceDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 
-public class FrequencyPlot extends Plot.AbstractPlot {
+public class NumericalFrequencyPlot extends Plot.AbstractPlot {
 
     private Variate raw = null;
 
@@ -44,14 +46,32 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
 
-    public FrequencyPlot(Variate data, int minimumBinCount) {
+    private TraceDistribution traceD = null;
+
+    public NumericalFrequencyPlot(Variate data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(double[] data, int minimumBinCount) {
+    public NumericalFrequencyPlot(double[] data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
+    }
+
+    public NumericalFrequencyPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+        super();
+        this.traceD = traceD;
+        setData(data, minimumBinCount);
+    }
+
+    public NumericalFrequencyPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+        super();
+        this.traceD = traceD;
+        double[] doubleData = new double[data.length];
+        for (int i = 0; i < data.length; i++) {
+            doubleData[i] = (double) data[i];
+        }
+        setData(doubleData, minimumBinCount);
     }
 
     /**

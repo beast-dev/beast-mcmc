@@ -131,6 +131,10 @@ public class LogFileTraces extends AbstractTraceList {
         return traces.get(index);
     }
 
+    public int getSrcPosition() {
+        return (burnIn / stepSize);
+    }
+
     public void setBurnIn(int burnIn) {
         this.burnIn = burnIn;
         super.setBurnIn(burnIn);
@@ -154,16 +158,21 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+//    public Object[] createValues(int index, int length) {
+//        Trace trace = getTrace(index);
+//        return getTrace(index).createValues((burnIn / stepSize), length);
+//    }
+
     public <T> void getValues(int index, T[] destination) {
         try{
-             getTrace(index).getValues((burnIn / stepSize), destination, 0);
+             getTrace(index).getValues(getSrcPosition(), destination, 0);
         } catch (Exception e) {
              System.err.println("trace index = " + index);
         }
     }
 
     public <T> void getValues(int index, T[] destination, int offset) {
-        ((Trace<T>) getTrace(index)).getValues((burnIn / stepSize), destination, offset);
+        ((Trace<T>) getTrace(index)).getValues(getSrcPosition(), destination, offset);
     }
 
     public <T> void getBurninValues(int index, T[] destination) {
@@ -278,8 +287,8 @@ public class LogFileTraces extends AbstractTraceList {
 //                        values[i] = Double.parseDouble(tokens.nextToken());
                         addParsedValue(i, value);
                     } catch (NumberFormatException nfe) {
-                        throw new TraceException("State " + state + ": Expected real value in column " + (i + 1) +
-                                " (Line " + reader.getLineNumber() + ")");
+                        throw new TraceException("State " + state + ": Expected correct number type (Double, Integer or String) in column "
+                                + (i + 1) + " (Line " + reader.getLineNumber() + ")");
                     }
                 } else {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
@@ -393,19 +402,20 @@ public class LogFileTraces extends AbstractTraceList {
      * @param nTrace trace index
      * @param value  next value
      */
-    private <T> void addParsedValue(int nTrace, String value) {
-        Trace<T> thisTrace = (Trace<T>) getTrace(nTrace);
+    private void addParsedValue(int nTrace, String value) {
+        Trace thisTrace = getTrace(nTrace);
 
         if (thisTrace.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
              Double v = Double.parseDouble(value);
-             thisTrace.add((T) v);
+             thisTrace.add(v);
             
          } else if (thisTrace.getTraceType() == TraceFactory.TraceType.DISCRETE.getType()) {
-             Integer v = Integer.parseInt(value);
-             thisTrace.add((T) v);
+//             Integer v = Integer.parseInt(value);
+            int v = (int) Double.parseDouble(value); 
+            thisTrace.add(v);
 
          } else if (thisTrace.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
-            thisTrace.add((T) value);
+            thisTrace.add(value);
 
          } else {
              throw new RuntimeException("Trace type is not recognized: " + thisTrace.getTraceType());

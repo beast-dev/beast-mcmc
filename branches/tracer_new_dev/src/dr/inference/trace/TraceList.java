@@ -113,14 +113,18 @@ public interface TraceList {
      * @param traceIndex the index of the trace
      * @return the trace distribution statistic object for the given index
      */
-    TraceDistribution<?> getDistributionStatistics(int traceIndex);
+    TraceDistribution getDistributionStatistics(int traceIndex);
 
     /**
      * @param traceIndex the index of the trace
      * @return the trace correlation statistic object for the given index
      */
-    TraceCorrelation<?> getCorrelationStatistics(int traceIndex);
+    TraceCorrelation getCorrelationStatistics(int traceIndex);
 
     void analyseTrace(int index);
+
+    Trace getTrace(int index);
+
+    int getSrcPosition();
 
 }

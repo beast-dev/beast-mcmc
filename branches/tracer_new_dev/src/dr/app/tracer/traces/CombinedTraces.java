@@ -25,10 +25,7 @@
 
 package dr.app.tracer.traces;
 
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 
 
 /**
@@ -191,6 +188,14 @@ public class CombinedTraces implements TraceList {
 
 	    getValues(index, values);
         traceStatistics[index] = new TraceCorrelation (values, getStepSize());
+    }
+
+    public Trace getTrace(int index) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public int getSrcPosition() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     /**

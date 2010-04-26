@@ -177,7 +177,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((DensityPlot) traceChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
+                            ((NumericalDensityPlot) traceChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
                         }
                         traceChart.recalibrate();
                         validate();
@@ -190,7 +190,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((DensityPlot) traceChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
+                            ((NumericalDensityPlot) traceChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
                         }
                         traceChart.recalibrate();
                         validate();
@@ -283,15 +283,15 @@ public class DensityPanel extends JPanel implements Exportable {
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                DensityPlot plot = new DensityPlot(Trace.arrayConvert(values), minimumBins);
-                plot.setName(name);
+                NumericalDensityPlot plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins);
+                plotNumerical.setName(name);
                 if (tl instanceof CombinedTraces) {
-                    plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                    plotNumerical.setLineStyle(new BasicStroke(2.0f), paints[i]);
                 } else {
-                    plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                    plotNumerical.setLineStyle(new BasicStroke(1.0f), paints[i]);
                 }
 
-                traceChart.addPlot(plot);
+                traceChart.addPlot(plotNumerical);
 
                 if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
                     i++;

@@ -3,6 +3,7 @@ package dr.app.tracer.traces;
 import dr.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 
 import javax.swing.*;
@@ -109,20 +110,33 @@ public class FrequencyPanel extends JPanel implements Exportable {
             chartPanel.setYAxisTitle("");
             return;
         }
-
-        Double values[] = new Double[traceList.getStateCount()];
+        NumericalFrequencyPlot plotNumerical = null;
         int traceIndex = traceList.getTraceIndex(traceName);
-
-        traceList.getValues(traceIndex, values);
-
-        FrequencyPlot plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins);
-
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
-        if (td != null) {
-            plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+
+        if (td == null || td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+             Double values[] = new Double[traceList.getStateCount()];
+             traceList.getValues(traceIndex, values);
+             plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+
+        } else if (td.getTraceType() == TraceFactory.TraceType.DISCRETE) {
+             Integer values[] = new Integer[traceList.getStateCount()];        
+             traceList.getValues(traceIndex, values);
+             plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+
+        } else if (td.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + td.getTraceType());
         }
 
-        traceChart.addPlot(plot);
+
+        if (td != null) {
+            plotNumerical.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+        }
+
+        traceChart.addPlot(plotNumerical);
 
         chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
         chartPanel.setYAxisTitle("Frequency");

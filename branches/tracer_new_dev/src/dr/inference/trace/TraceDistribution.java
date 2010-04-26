@@ -28,10 +28,7 @@ package dr.inference.trace;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A class that stores the distribution statistics for a trace
@@ -129,38 +126,39 @@ public class TraceDistribution<T> {
             throw new RuntimeException("Trace values not yet set");
         }
 
-        if (values[0] instanceof Double) {
+        if (values[0] instanceof Number) {
             double[] doubleValues = new double[values.length];
             for (int i = 0; i < values.length; i++) {
-                doubleValues[i] = ((Double) values[i]).doubleValue();
+                doubleValues[i] = ((Number) values[i]).doubleValue();
             }
 
             return DiscreteStatistics.meanSquaredError(doubleValues, trueValue);
 
         } else {
-            throw new RuntimeException("Require Continuous Trace Type in the Trace Distribution: " + this);
+            throw new RuntimeException("Require Number Trace Type in the Trace Distribution: " + this);
         }
     }
 
     private void analyseDistribution(T[] values) {
         this.values = values;
 
-        if (values[0] instanceof Double) {
-            double[] doubleValues = new double[values.length];
-            for (int i = 0; i < values.length; i++) {
-                doubleValues[i] = ((Double) values[i]).doubleValue();
-            }
-            analyseDistributionContinuous(doubleValues, 0.95);
-
-        } else if (values[0] instanceof Integer) {
-
-
-        } else if (values[0] instanceof String) {
-
-
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
-        }
+        CredibleSet credSet = new CredibleSet(values, 0.95);
+//        if (values[0] instanceof Double) {
+//            double[] doubleValues = new double[values.length];
+//            for (int i = 0; i < values.length; i++) {
+//                doubleValues[i] = ((Double) values[i]).doubleValue();
+//            }
+//            analyseDistributionContinuous(doubleValues, 0.95);
+//
+//        } else if (values[0] instanceof Integer) {
+//
+//
+//        } else if (values[0] instanceof String) {
+//
+//
+//        } else {
+//            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
+//        }
     }
 
     /**
@@ -234,52 +232,60 @@ public class TraceDistribution<T> {
 
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
-        public Map<T, Integer> credibleSet = new HashMap<T, Integer>();
-        public Map<T, Integer> inCredibleSet = new HashMap<T, Integer>();
+        public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
+//        public Map<T, Integer> inCredibleSet = new HashMap<T, Integer>();
+        public List<T> credibleSet = new ArrayList<T>();
+        public List<T> inCredibleSet = new ArrayList<T>();
 
         public CredibleSet(T[] values, double proportion) {
+            valuesMap.clear();
             credibleSet.clear();
-            for (T value : values) {
-               if (credibleSet.containsKey(value)) {
-                   Integer i = credibleSet.get(value);
-                   credibleSet.put(value, i++);
-               } else {
-                   credibleSet.put(value, 1);
-               }
-            }
+            inCredibleSet.clear();
 
-            for (T value : credibleSet.keySet()) {
-                double prob = credibleSet.get(value) / values.length;
-                if (prob < (1 - proportion)) {
-                    inCredibleSet.put(value, credibleSet.get(value));
-                    credibleSet.remove(value);
+            if (values[0] instanceof Double) {
+                double[] newValues = new double[values.length];
+                for (int i=0; i<values.length; i++) {
+                   newValues[i] = ((Double) values[i]).doubleValue();
+                }
+                analyseDistributionContinuous(newValues, proportion);
+            } else {
+                for (T value : values) {
+                    if (valuesMap.containsKey(value)) {
+                        Integer i = valuesMap.get(value);
+                        valuesMap.put(value, i++);
+                    } else {
+                        valuesMap.put(value, 1);
+                    }
+                }
+
+                for (T value : valuesMap.keySet()) {
+                    double prob = valuesMap.get(value) / values.length;
+                    if (prob < (1 - proportion)) {
+                        inCredibleSet.add(value);
+                    } else {
+                        credibleSet.add(value);
+                    }
                 }
             }
         }
 
-        public CredibleSet(Double[] values, double proportion) {
-            analyseDistributionContinuous(Trace.arrayConvert(values), proportion);
-        }
-
         public boolean inside(T value) {
-            return credibleSet.containsKey(value);
+            return valuesMap.containsKey(value);
         }
 
         public boolean inside(Double value) {
             return value <= hpdUpper && value >= hpdLower;
         }
 
-        private String getSet(Map set) {
+        private String getSet(List<T> list) {
             String line = "{";
-            Set<T> values = set.keySet();
-            TreeSet<T> sortedValues = new TreeSet<T>(values);
-            for (T value : sortedValues) {
-               line = line + value + ", ";
+            for (T value : list) {
+                line = line + value + ", ";
             }
             if (line.endsWith(", ")) {
-               line = line.substring(0, line.lastIndexOf(", ")) + "}";
+                line = line.substring(0, line.lastIndexOf(", ")) + "}";
             } else {
-               line = "n/a"; 
+                line = "n/a";
             }
             return line;
         }

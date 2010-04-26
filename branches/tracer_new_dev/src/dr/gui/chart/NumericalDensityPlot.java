@@ -31,7 +31,7 @@ import dr.util.FrequencyDistribution;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 
-public class DensityPlot extends FrequencyPlot {
+public class NumericalDensityPlot extends NumericalFrequencyPlot {
 
     boolean relativeDensity = true;
     int minimumBinCount;
@@ -46,12 +46,12 @@ public class DensityPlot extends FrequencyPlot {
 
     boolean solid = true;
 
-    public DensityPlot(Variate data, int minimumBinCount) {
+    public NumericalDensityPlot(Variate data, int minimumBinCount) {
         super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }
 
-    public DensityPlot(double[] data, int minimumBinCount) {
+    public NumericalDensityPlot(double[] data, int minimumBinCount) {
         super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }

@@ -97,7 +97,11 @@ public class ArrayTraceList extends AbstractTraceList {
         getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
-    Trace getTrace(int index) {
+    public Trace getTrace(int index) {
         return traces.get(index);
+    }
+
+    public int getSrcPosition() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

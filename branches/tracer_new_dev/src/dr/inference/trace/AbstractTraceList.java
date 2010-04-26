@@ -24,14 +24,14 @@ public abstract class AbstractTraceList implements TraceList {
         }
 
         Trace trace = getTrace(index);        
-        traceStatistics[index] = new TraceCorrelation(trace.getValues(offset, getStateCount()), getStepSize());
+        traceStatistics[index] = new TraceCorrelation(trace.createValues(offset, getStateCount()), getStepSize());
     }
 
     public void setBurnIn(int burnIn) {
         traceStatistics = null;
     }
 
-    abstract Trace getTrace(int index);
+//    abstract Trace getTrace(int index);
 
     private TraceCorrelation[] traceStatistics = null;
 }

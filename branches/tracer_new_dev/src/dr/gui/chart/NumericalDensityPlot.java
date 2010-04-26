@@ -25,6 +25,7 @@
 
 package dr.gui.chart;
 
+import dr.inference.trace.TraceDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -51,8 +52,18 @@ public class NumericalDensityPlot extends NumericalFrequencyPlot {
         this.minimumBinCount = minimumBinCount;
     }
 
-    public NumericalDensityPlot(double[] data, int minimumBinCount) {
-        super(data, minimumBinCount);
+//    public NumericalDensityPlot(double[] data, int minimumBinCount) {
+//        super(data, minimumBinCount);
+//        this.minimumBinCount = minimumBinCount;
+//    }
+
+    public NumericalDensityPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+        super(data, minimumBinCount, traceD);
+        this.minimumBinCount = minimumBinCount;
+    }
+
+    public NumericalDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+        super(data, minimumBinCount, traceD);
         this.minimumBinCount = minimumBinCount;
     }
 

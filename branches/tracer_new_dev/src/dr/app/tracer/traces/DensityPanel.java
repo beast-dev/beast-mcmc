@@ -27,6 +27,7 @@ package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
 import dr.inference.trace.Trace;
+import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
@@ -276,14 +277,33 @@ public class DensityPanel extends JPanel implements Exportable {
             int n = tl.getStateCount();
 
             for (String traceName : traceNames) {
-                Double values[] = new Double[n];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, values);
+                Trace trace = tl.getTrace(traceIndex);
+                TraceDistribution td = tl.getDistributionStatistics(traceIndex);
+                NumericalDensityPlot plotNumerical = null;
+
+                if (trace.getTraceType() == Double.class) {
+                    Double values[] = new Double[tl.getStateCount()];
+                    tl.getValues(traceIndex, values);
+                    plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+
+                } else if (trace.getTraceType() == Integer.class) {
+                    Integer values[] = new Integer[tl.getStateCount()];
+                    tl.getValues(traceIndex, values);
+                    plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+
+                } else if (trace.getTraceType() == String.class) {
+
+
+                } else {
+                    throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+                }
+
                 String name = tl.getTraceName(traceIndex);
                 if (traceLists.length > 1) {
                     name = tl.getName() + " - " + name;
                 }
-                NumericalDensityPlot plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins);
+
                 plotNumerical.setName(name);
                 if (tl instanceof CombinedTraces) {
                     plotNumerical.setLineStyle(new BasicStroke(2.0f), paints[i]);

@@ -142,6 +142,14 @@ public class Trace<T> {
         return src;
     }
 
+    public static double[] arrayIntToDouble(Integer[] src) {
+        double[] dest = new double[src.length];
+        for (int i=0; i < src.length; i++) {
+            dest[i] = (double) src[i];
+        }
+        return dest;
+    }
+
 
     public Class getTraceType() {
         return values[0].getClass();

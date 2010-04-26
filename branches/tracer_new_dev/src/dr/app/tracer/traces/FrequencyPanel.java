@@ -110,25 +110,27 @@ public class FrequencyPanel extends JPanel implements Exportable {
             chartPanel.setYAxisTitle("");
             return;
         }
+
         NumericalFrequencyPlot plotNumerical = null;
         int traceIndex = traceList.getTraceIndex(traceName);
+        Trace trace = traceList.getTrace(traceIndex);
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
 
-        if (td == null || td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+        if (trace.getTraceType() == Double.class) {
              Double values[] = new Double[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
              plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
-        } else if (td.getTraceType() == TraceFactory.TraceType.DISCRETE) {
-             Integer values[] = new Integer[traceList.getStateCount()];        
+        } else if (trace.getTraceType() == Integer.class) {
+             Integer values[] = new Integer[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
              plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
-        } else if (td.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+        } else if (trace.getTraceType() == String.class) {
 
 
         } else {
-            throw new RuntimeException("Trace type is not recognized: " + td.getTraceType());
+            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
         }
 
 

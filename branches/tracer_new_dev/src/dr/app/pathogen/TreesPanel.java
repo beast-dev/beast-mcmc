@@ -266,7 +266,7 @@ public class TreesPanel extends JPanel implements Exportable {
                 double values[] = temporalRooting.getRootToTipDistances(currentTree);
 
                 rootToTipChart.removeAllPlots();
-                NumericalDensityPlot dp = new NumericalDensityPlot(values, 20);
+                NumericalDensityPlot dp = new NumericalDensityPlot(values, 20, null);
                 dp.setLineColor(new Color(9,70,15));
 
                 double yOffset = dp.getYData().getMax() / 2;

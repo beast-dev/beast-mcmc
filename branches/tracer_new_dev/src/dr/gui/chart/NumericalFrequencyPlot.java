@@ -46,7 +46,7 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
 
-    private TraceDistribution traceD = null;
+    protected TraceDistribution traceD = null;
 
     public NumericalFrequencyPlot(Variate data, int minimumBinCount) {
         super();

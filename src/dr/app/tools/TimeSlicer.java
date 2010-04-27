@@ -46,7 +46,6 @@ public class TimeSlicer {
     public static final String SLICE_ELEMENT = "slice";
     public static final String REGIONS_ELEMENT = "hpdRegion";
     public static final String TRAIT = "trait";
-    public static final String LOCATIONTRAIT = "location";
     public static final String NAME = "name";
     public static final String DENSITY_VALUE = "density";
     public static final String SLICE_VALUE = "time";
@@ -59,6 +58,7 @@ public class TimeSlicer {
     public static final String opacity = "6f";
 
     public static final String BURNIN = "burnin";
+    public static final String SKIP = "skip";
     public static final String SLICE_TIMES = "sliceTimes";
     public static final String SLICE_HEIGHTS = "sliceHeights";
     public static final String SLICE_COUNT = "sliceCount";
@@ -86,7 +86,7 @@ public class TimeSlicer {
     private final static Calendar calendar = GregorianCalendar.getInstance();
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public TimeSlicer(String treeFileName, int burnin, String[] traits, double[] sliceHeights, boolean impute,
+    public TimeSlicer(String treeFileName, int burnin, int skipEvery, String[] traits, double[] sliceHeights, boolean impute,
                       boolean trueNoise, double mrsd, ContourMode contourMode,
                       Normalization normalize, boolean getSRD, String progress, boolean branchNormalization, BranchSet branchset, Set backboneTaxa) {
 
@@ -126,7 +126,7 @@ public class TimeSlicer {
         }
 
         try {
-            readAndAnalyzeTrees(treeFileName, burnin, traits, sliceHeights, impute, trueNoise, normalize, branchNormalization, branchset, backboneTaxa);
+            readAndAnalyzeTrees(treeFileName, burnin, skipEvery, traits, sliceHeights, impute, trueNoise, normalize, branchNormalization, branchset, backboneTaxa);
         } catch (IOException e) {
             System.err.println("Error reading file: " + treeFileName);
             System.exit(-1);
@@ -693,7 +693,7 @@ public class TimeSlicer {
 //        return treeList;
 //    }
 
-    private void readAndAnalyzeTrees(String treeFileName, int burnin,
+    private void readAndAnalyzeTrees(String treeFileName, int burnin, int skipEvery,
                                      String[] traits, double[] slices,
                                      boolean impute, boolean trueNoise, Normalization normalize,
                                      boolean divideByBranchLength, BranchSet branchset, Set backboneTaxa)
@@ -719,13 +719,15 @@ public class TimeSlicer {
             importer1 = new NewickImporter(new FileReader(treeFileName));
         }
         totalTrees = 0;
+
         while (importer1.hasTree()) {
             Tree treeTime = importer1.importNextTree();
-            treesRead++;
-            if (totalTrees >= burnin) {
-                analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize, divideByBranchLength, branchset, backboneTaxa);
+            if (totalTrees % skipEvery == 0) {
+                treesRead++;
+                if (totalTrees >= burnin) {
+                    analyzeTree(treeTime, traits, slices, impute, trueNoise, normalize, divideByBranchLength, branchset, backboneTaxa);
+                }
             }
-
             if (totalTrees > 0 && totalTrees % stepSize == 0) {
                 progressStream.print("*");
                 totalStars++;
@@ -942,11 +944,11 @@ public class TimeSlicer {
                                 treeSliceTime[i] += (parentHeight - nodeHeight);
                                 //TreeModel model = new TreeModel(treeTime, true);
                                 //treeSliceDistance[i] += getKilometerGreatCircleDistance(model.getMultivariateNodeTrait(node, LOCATIONTRAIT),model.getMultivariateNodeTrait(model.getParent(node), LOCATIONTRAIT));
-                                Trait nodeLocationTrait = new Trait(treeTime.getNodeAttribute(node, LOCATIONTRAIT));
-                                Trait parentNodeLocationTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), LOCATIONTRAIT));
-                                treeSliceDistance[i] += getKilometerGreatCircleDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue());
-                                //treeSliceDiffusionCoefficientWA[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
-                                treeSliceDiffusionCoefficientA[i] += (Math.pow((getKilometerGreatCircleDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue())), 2.0) / (4.0 * (parentHeight - nodeHeight)));
+                                Trait nodeLocationTrait = new Trait(treeTime.getNodeAttribute(node, traits[0]));
+                                Trait parentNodeLocationTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[0]));
+                                treeSliceDistance[i] += getGeographicalDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue());
+                                //treeSliceDiffusionCoefficientWA[i] += (Math.pow((getGeographicalDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
+                                treeSliceDiffusionCoefficientA[i] += (Math.pow((getGeographicalDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue())), 2.0) / (4.0 * (parentHeight - nodeHeight)));
                                 treeSliceBranchCount[i]++;
                             }
                         }
@@ -999,8 +1001,8 @@ public class TimeSlicer {
                                 if (sdr) {
                                     treeSliceTime[i] += (parentHeight - slices[i]);
                                     Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
-                                    treeSliceDistance[i] += getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue());
-                                    treeSliceDiffusionCoefficientA[i] += (Math.pow((getKilometerGreatCircleDistance(trait.getValue(), parentTrait.getValue())), 2.0) / (4.0 * (parentHeight - slices[i])));
+                                    treeSliceDistance[i] += getGeographicalDistance(trait.getValue(), parentTrait.getValue());
+                                    treeSliceDiffusionCoefficientA[i] += (Math.pow((getGeographicalDistance(trait.getValue(), parentTrait.getValue())), 2.0) / (4.0 * (parentHeight - slices[i])));
                                     treeSliceBranchCount[i]++;
                                     double tempDistanceFromRoot = getDistanceFromRoot(treeTime, traits[j], trait.getValue());
                                     if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
@@ -1052,6 +1054,16 @@ public class TimeSlicer {
     //    }
     //
 
+    private static double getGeographicalDistance(double[] location1, double[] location2) {
+        if (location1.length == 1) {
+            // assume we only have latitude so put them on the prime meridian
+            return getKilometerGreatCircleDistance(new double[] { location1[0], 0.0}, new double[] { location2[0], 0.0});
+        } else if (location1.length == 2) {
+            return getKilometerGreatCircleDistance(location1, location2);
+        }
+        throw new RuntimeException("Distances can only be calculated for longitude and latitude (or just latitude)");
+    }
+
     private static double getKilometerGreatCircleDistance(double[] location1, double[] location2) {
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(location1[0], location1[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(location2[0], location2[1]);
@@ -1063,14 +1075,14 @@ public class TimeSlicer {
         double pathDistance = 0;
         NodeRef parentNode = tree.getParent(node);
         Trait parentTrait = new Trait(tree.getNodeAttribute(parentNode, locationTrait));
-        pathDistance += getKilometerGreatCircleDistance(sliceTrait, parentTrait.getValue());
+        pathDistance += getGeographicalDistance(sliceTrait, parentTrait.getValue());
 
         while (parentNode != tree.getRoot()) {
             node = tree.getParent(node);
             parentNode = tree.getParent(parentNode);
             Trait nodeTrait = new Trait(tree.getNodeAttribute(node, locationTrait));
             parentTrait = new Trait(tree.getNodeAttribute(parentNode, locationTrait));
-            pathDistance += getKilometerGreatCircleDistance(nodeTrait.getValue(), parentTrait.getValue());
+            pathDistance += getGeographicalDistance(nodeTrait.getValue(), parentTrait.getValue());
         }
         return pathDistance;
     }
@@ -1078,7 +1090,7 @@ public class TimeSlicer {
     private double getDistanceFromRoot(Tree tree, String locationTrait, double[] sliceTrait) {
         NodeRef rootNode = tree.getRoot();
         Trait rootTrait = new Trait(tree.getNodeAttribute(rootNode, locationTrait));
-        return getKilometerGreatCircleDistance(sliceTrait, rootTrait.getValue());
+        return getGeographicalDistance(sliceTrait, rootTrait.getValue());
     }
 
     private int traitCount;
@@ -1225,7 +1237,7 @@ public class TimeSlicer {
         if (returnList.size() > 0) {
             double[] doubleArray = new double[returnList.size()];
             for (int i = 0; i < doubleArray.length; i++)
-            doubleArray[i] = returnList.get(i);
+                doubleArray[i] = returnList.get(i);
 
             return doubleArray;
         }
@@ -1527,6 +1539,7 @@ public class TimeSlicer {
         ContourMode contourMode = ContourMode.SNYDER;
         Normalization normalize = Normalization.LENGTH;
         int burnin = -1;
+        int skipEvery = 1;
         double mrsd = 0;
         double hpdValue = 0.80;
         String outputFileSDR = null;
@@ -1546,6 +1559,7 @@ public class TimeSlicer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption(SKIP, "skip every i'th tree [default = 0]"),
                         new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
                         new Arguments.StringOption(SLICE_TIMES, "slice_times", "specifies a slice time-list [default=none]"),
                         new Arguments.StringOption(SLICE_HEIGHTS, "slice_heights", "specifies a slice height-list [default=none]"),
@@ -1620,6 +1634,10 @@ public class TimeSlicer {
 
             if (arguments.hasOption(BURNIN)) {
                 burnin = arguments.getIntegerOption(BURNIN);
+            }
+
+            if (arguments.hasOption(SKIP)) {
+                skipEvery = arguments.getIntegerOption(SKIP) + 1;
             }
 
 
@@ -1777,7 +1795,7 @@ public class TimeSlicer {
             }
         }
 
-        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, traitNames, sliceHeights, impute,
+        TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, skipEvery, traitNames, sliceHeights, impute,
                 trueNoise, mrsd, contourMode, normalize, getSDR, progress, branchNormalization, set, backboneTaxa);
         timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
 

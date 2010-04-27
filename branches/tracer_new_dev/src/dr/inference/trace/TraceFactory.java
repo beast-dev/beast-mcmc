@@ -7,12 +7,13 @@ package dr.inference.trace;
 public class TraceFactory {
 
     public enum TraceType {
-        CONTINUOUS("continuous", Double.class),
-        DISCRETE("discrete", Integer.class),
-        CATEGORY("category", String.class);
+        CONTINUOUS("continuous", "C", Double.class),
+        DISCRETE("discrete", "D", Integer.class),
+        CATEGORY("category", "S", String.class);
 
-        TraceType(String name, Class type) {
+        TraceType(String name, String brief, Class type) {
             this.name = name;
+            this.brief = brief;
             this.type = type;
         }
 
@@ -20,11 +21,16 @@ public class TraceFactory {
             return name;
         }
 
+        public String getBrief() {
+            return brief;
+        }
+
         public Class getType() {
             return type;
         }
 
         private final String name;
+        private final String brief;
         private final Class type;
     }
 

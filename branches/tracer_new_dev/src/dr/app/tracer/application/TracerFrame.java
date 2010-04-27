@@ -156,10 +156,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         statisticTable.getColumnModel().getColumn(1).setCellRenderer(renderer);
         statisticTable.getColumnModel().getColumn(2).setPreferredWidth(50);
         statisticTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);        
-        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(50);
-        statisticTable.getColumnModel().getColumn(3).setCellRenderer(comboBoxRenderer);
+//        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
+//        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(10);
+        statisticTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
         statisticTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         statisticTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -1160,7 +1160,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-            if (col == 3) return td.getTraceType();
+            if (col == 3) return td.getTraceType().getBrief();
             
             double value = 0.0;
             boolean warning = false;

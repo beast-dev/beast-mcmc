@@ -27,6 +27,7 @@ package dr.gui.chart;
 
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceFactory;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -45,6 +46,9 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
     private boolean hasIntervals = false;
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
+
+    private boolean hasIncredibleSet = false;
+    private TraceDistribution.CredibleSet credSet;
 
     protected TraceDistribution traceD = null;
 
@@ -182,6 +186,13 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
         lowerInterval = lower;
     }
 
+    /**
+     * Set arbitrary intervals to use (0 for none).
+     */
+    public void setInCredibleSet(TraceDistribution.CredibleSet credSet) {
+        this.credSet = credSet;
+        hasIncredibleSet = credSet.inCredibleSet.size() > 0;
+    }
 
     /**
      * Set bar fill style. Use a barPaint of null to not fill bar.
@@ -240,12 +251,17 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
                                 fillRect(g2, upper, y1, x2, y2);
                             }
                         } else {
-
                             g2.setPaint(barPaint);
-                            fillRect(g2, x1, y1, x2, y2);
+                            fillRect(g2, x1, y1, x2, y2);                                           
                         }
+                    } else if (hasIncredibleSet) {
+                        if (credSet.inCredibleSet.contains((int) x1) || credSet.inCredibleSet.contains((int) x2)) {
+                            g2.setPaint(quantilePaint);
+                        } else {
+                            g2.setPaint(barPaint);
+                        }
+                        fillRect(g2, x1, y1, x2, y2);
                     } else {
-
                         g2.setPaint(barPaint);
                         fillRect(g2, x1, y1, x2, y2);
                     }
@@ -259,4 +275,21 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
 			}
 		}
 	}
+
+    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+        if (traceD != null && traceD.getTraceType() == TraceFactory.TraceType.DISCRETE) {
+            super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
+        } else {
+            super.fillRect(g2, x1, y1, x2, y2);
+        }
+    }
+
+    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+        if (traceD != null && traceD.getTraceType() == TraceFactory.TraceType.DISCRETE) {
+            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
+        } else {
+            super.drawRect(g2, x1, y1, x2, y2);
+        }
+    }
+
 }

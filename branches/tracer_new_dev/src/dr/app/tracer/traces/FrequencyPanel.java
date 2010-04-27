@@ -121,11 +121,18 @@ public class FrequencyPanel extends JPanel implements Exportable {
              traceList.getValues(traceIndex, values);
              plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
+            if (td != null) {
+                plotNumerical.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+            }
+
         } else if (trace.getTraceType() == Integer.class) {
              Integer values[] = new Integer[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
              plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
+            if (td != null) {
+                plotNumerical.setInCredibleSet(td.credSet);
+            }
         } else if (trace.getTraceType() == String.class) {
 
 
@@ -133,10 +140,6 @@ public class FrequencyPanel extends JPanel implements Exportable {
             throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
         }
 
-
-        if (td != null) {
-            plotNumerical.setIntervals(td.getUpperHPD(), td.getLowerHPD());
-        }
 
         traceChart.addPlot(plotNumerical);
 

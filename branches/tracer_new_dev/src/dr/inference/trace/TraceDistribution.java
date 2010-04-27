@@ -40,7 +40,8 @@ import java.util.*;
 public class TraceDistribution<T> {
 
     public TraceDistribution(T[] values) {
-        analyseDistribution(values);
+        this.values = values;
+        credSet = new CredibleSet(values, 0.95);
     }
 
     public TraceDistribution(T[] values, double ESS) {
@@ -139,28 +140,6 @@ public class TraceDistribution<T> {
         }
     }
 
-    private void analyseDistribution(T[] values) {
-        this.values = values;
-
-        CredibleSet credSet = new CredibleSet(values, 0.95);
-//        if (values[0] instanceof Double) {
-//            double[] doubleValues = new double[values.length];
-//            for (int i = 0; i < values.length; i++) {
-//                doubleValues[i] = ((Double) values[i]).doubleValue();
-//            }
-//            analyseDistributionContinuous(doubleValues, 0.95);
-//
-//        } else if (values[0] instanceof Integer) {
-//
-//
-//        } else if (values[0] instanceof String) {
-//
-//
-//        } else {
-//            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
-//        }
-    }
-
     /**
      * @param values the values to analyze
      */
@@ -228,7 +207,7 @@ public class TraceDistribution<T> {
     protected double ESS;
 
     protected T[] values;
-
+    public CredibleSet credSet = null;
 
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
@@ -237,6 +216,9 @@ public class TraceDistribution<T> {
         public List<T> credibleSet = new ArrayList<T>();
         public List<T> inCredibleSet = new ArrayList<T>();
 
+        public T mode;
+        public int freqOfMode = 0;
+
         public CredibleSet(T[] values, double proportion) {
             valuesMap.clear();
             credibleSet.clear();
@@ -244,28 +226,38 @@ public class TraceDistribution<T> {
 
             if (values[0] instanceof Double) {
                 double[] newValues = new double[values.length];
-                for (int i=0; i<values.length; i++) {
-                   newValues[i] = ((Double) values[i]).doubleValue();
+                for (int i = 0; i < values.length; i++) {
+                    newValues[i] = ((Double) values[i]).doubleValue();
                 }
                 analyseDistributionContinuous(newValues, proportion);
             } else {
+                if (values[0] instanceof Integer) {
+                    double[] newValues = new double[values.length];
+                    for (int i = 0; i < values.length; i++) {
+                        newValues[i] = ((Integer) values[i]).doubleValue();
+                    }
+                    analyseDistributionContinuous(newValues, proportion);
+                }
+
                 for (T value : values) {
                     if (valuesMap.containsKey(value)) {
-                        Integer i = valuesMap.get(value);
-                        valuesMap.put(value, i++);
+                        int i = valuesMap.get(value) + 1;
+                        valuesMap.put(value, i);
                     } else {
                         valuesMap.put(value, 1);
                     }
                 }
 
                 for (T value : valuesMap.keySet()) {
-                    double prob = valuesMap.get(value) / values.length;
+                    double prob = (double) valuesMap.get(value) / (double) values.length;
                     if (prob < (1 - proportion)) {
                         inCredibleSet.add(value);
                     } else {
                         credibleSet.add(value);
                     }
                 }
+
+                calculateMode();
             }
         }
 
@@ -275,6 +267,23 @@ public class TraceDistribution<T> {
 
         public boolean inside(Double value) {
             return value <= hpdUpper && value >= hpdLower;
+        }
+
+        public T getMode() {
+            return mode;
+        }
+
+        public int getFrequencyOfMode() {
+            return freqOfMode;
+        }
+
+        private void calculateMode() {
+            for (T value : valuesMap.keySet()) {
+                if (freqOfMode < valuesMap.get(value)) {
+                    freqOfMode = valuesMap.get(value);
+                    mode = value;
+                }
+            }
         }
 
         private String getSet(List<T> list) {

@@ -294,7 +294,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
                 } else if (trace.getTraceType() == String.class) {
 
-
+                    
                 } else {
                     throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
                 }

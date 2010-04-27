@@ -3,14 +3,12 @@ package dr.app.tracer.traces;
 import dr.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
+import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-
-import org.virion.jam.framework.Exportable;
 
 
 /**
@@ -32,7 +30,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
     private JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
-
+    private JCheckBox showValuesCheckBox = new JCheckBox("Show values on above chart");
     private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
 
@@ -66,6 +64,18 @@ public class FrequencyPanel extends JPanel implements Exportable {
         label.setLabelFor(binsCombo);
         toolBar.add(label);
         toolBar.add(binsCombo);
+        toolBar.add(new JLabel("                 "));
+        toolBar.add(showValuesCheckBox);
+        showValuesCheckBox.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        
+                        validate();
+                        repaint();
+                    }
+                }
+        );
+
 
         add(toolBar, BorderLayout.SOUTH);
 

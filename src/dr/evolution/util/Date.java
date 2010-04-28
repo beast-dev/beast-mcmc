@@ -55,6 +55,16 @@ public class Date extends TimeScale implements Attribute {
     /**
      * Constructor for an absolute date.
      * @param date the date
+     */
+    public Date(java.util.Date date) {
+        super(Units.Type.YEARS, false);
+        origin = -1970.0;
+        initUsingDate(date);
+    }
+
+    /**
+     * Constructor for an absolute date.
+     * @param date the date
      * @param units the units
      */
     public Date(java.util.Date date, Type units) {
@@ -152,18 +162,21 @@ public class Date extends TimeScale implements Attribute {
 	//************************************************************************
 	
 	private void initUsingDate(java.util.Date date) {
-	
+
+        // get the number of milliseconds this date is after the 1st January 1970
 		long millisAhead = date.getTime();
 		
 		double daysAhead = ((double)millisAhead)/MILLIS_PER_DAY;
-		
-		switch (units) {	
+
+		switch (units) {
 			case DAYS: time = daysAhead; break;
 			case MONTHS: time = daysAhead / DAYS_PER_MONTH; break;
-			case YEARS: time = daysAhead / DAYS_PER_YEAR; break;
+			case YEARS: time = daysAhead / DAYS_PER_YEAR;
+                break;
 			default: throw new IllegalArgumentException();
 		}
-		
+
+
 		if (time < getOrigin()) {
 			time = getOrigin() - time;
 			backwards = true;
@@ -171,6 +184,8 @@ public class Date extends TimeScale implements Attribute {
 			time = time - getOrigin();
 			backwards = false;
 		}
+
+        
 	}
 	
 	/**

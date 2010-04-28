@@ -101,7 +101,4 @@ public class ArrayTraceList extends AbstractTraceList {
         return traces.get(index);
     }
 
-    public int getSrcPosition() {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 }

@@ -131,10 +131,6 @@ public class LogFileTraces extends AbstractTraceList {
         return traces.get(index);
     }
 
-    public int getSrcPosition() {
-        return (burnIn / stepSize);
-    }
-
     public void setBurnIn(int burnIn) {
         this.burnIn = burnIn;
         super.setBurnIn(burnIn);
@@ -165,19 +161,19 @@ public class LogFileTraces extends AbstractTraceList {
 
     public <T> void getValues(int index, T[] destination) {
         try{
-             getTrace(index).getValues(getSrcPosition(), destination, 0);
+             getTrace(index).getValues(getBurninStateCount(), destination, 0);
         } catch (Exception e) {
              System.err.println("trace index = " + index);
         }
     }
 
     public <T> void getValues(int index, T[] destination, int offset) {
-        ((Trace<T>) getTrace(index)).getValues(getSrcPosition(), destination, offset);
+        ((Trace<T>) getTrace(index)).getValues(getBurninStateCount(), destination, offset);
     }
 
     public <T> void getBurninValues(int index, T[] destination) {
          try{
-        ((Trace<T>) getTrace(index)).getValues(0, (burnIn / stepSize), destination, 0);
+        ((Trace<T>) getTrace(index)).getValues(0, getBurninStateCount(), destination, 0);
          } catch (Exception e) {
              System.err.println("trace index = " + index);
         }

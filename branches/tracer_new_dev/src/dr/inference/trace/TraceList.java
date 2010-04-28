@@ -125,6 +125,4 @@ public interface TraceList {
 
     Trace getTrace(int index);
 
-    int getSrcPosition();
-
 }

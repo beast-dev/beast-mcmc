@@ -28,7 +28,10 @@ package dr.inference.trace;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A class that stores the distribution statistics for a trace
@@ -267,6 +270,15 @@ public class TraceDistribution<T> {
 
         public boolean inside(Double value) {
             return value <= hpdUpper && value >= hpdLower;
+        }
+
+        public int getIndex(T value) {
+            int i = -1;
+            for (T v : valuesMap.keySet()) {
+                i++;
+                if (v.equals(value)) return i;
+            }
+            return i;
         }
 
         public T getMode() {

@@ -108,7 +108,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
         binsCombo.setOpaque(false);
-        binsCombo.setSelectedItem(100);
+        binsCombo.setSelectedItem(minimumBins);
         JLabel label = new JLabel("Bins:");
         label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(binsCombo);
@@ -280,21 +280,29 @@ public class DensityPanel extends JPanel implements Exportable {
                 int traceIndex = tl.getTraceIndex(traceName);
                 Trace trace = tl.getTrace(traceIndex);
                 TraceDistribution td = tl.getDistributionStatistics(traceIndex);
-                NumericalDensityPlot plotNumerical = null;
+                FrequencyPlot plot = null;
 
                 if (trace.getTraceType() == Double.class) {
                     Double values[] = new Double[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
-                    plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+                    relativeDensityCheckBox.setEnabled(true);
 
                 } else if (trace.getTraceType() == Integer.class) {
                     Integer values[] = new Integer[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
-                    plotNumerical = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    plot = new CategoryDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+                    relativeDensityCheckBox.setEnabled(false);
 
                 } else if (trace.getTraceType() == String.class) {
+                    String values[] = new String[tl.getStateCount()];
+                    tl.getValues(traceIndex, values);
+                    plot = new CategoryDensityPlot(values, minimumBins, td);
+                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+                    relativeDensityCheckBox.setEnabled(false);
 
-                    
                 } else {
                     throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
                 }
@@ -304,14 +312,14 @@ public class DensityPanel extends JPanel implements Exportable {
                     name = tl.getName() + " - " + name;
                 }
 
-                plotNumerical.setName(name);
+                plot.setName(name);
                 if (tl instanceof CombinedTraces) {
-                    plotNumerical.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                    plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
                 } else {
-                    plotNumerical.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                    plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
                 }
 
-                traceChart.addPlot(plotNumerical);
+                traceChart.addPlot(plot);
 
                 if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
                     i++;

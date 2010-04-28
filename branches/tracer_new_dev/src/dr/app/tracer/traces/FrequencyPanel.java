@@ -58,7 +58,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
 
         binsCombo.setOpaque(false);
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
-        binsCombo.setSelectedItem(100);
+        binsCombo.setSelectedItem(minimumBins);
         JLabel label = new JLabel("Bins:");
         label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(binsCombo);
@@ -121,7 +121,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
             return;
         }
 
-        NumericalFrequencyPlot plotNumerical = null;
+        FrequencyPlot plot = null;
         int traceIndex = traceList.getTraceIndex(traceName);
         Trace trace = traceList.getTrace(traceIndex);
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
@@ -129,29 +129,35 @@ public class FrequencyPanel extends JPanel implements Exportable {
         if (trace.getTraceType() == Double.class) {
              Double values[] = new Double[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
-             plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+             plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
             if (td != null) {
-                plotNumerical.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+                plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
             }
 
         } else if (trace.getTraceType() == Integer.class) {
              Integer values[] = new Integer[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
-             plotNumerical = new NumericalFrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+             plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
             if (td != null) {
-                plotNumerical.setInCredibleSet(td.credSet);
+                plot.setInCredibleSet(td.credSet);
             }
         } else if (trace.getTraceType() == String.class) {
+             String values[] = new String[traceList.getStateCount()];
+             traceList.getValues(traceIndex, values);
+             plot = new FrequencyPlot(values, minimumBins, td);
 
+            if (td != null) {
+                plot.setInCredibleSet(td.credSet);
+            }
 
         } else {
             throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
         }
 
 
-        traceChart.addPlot(plotNumerical);
+        traceChart.addPlot(plot);
 
         chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
         chartPanel.setYAxisTitle("Frequency");

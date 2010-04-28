@@ -32,7 +32,7 @@ import dr.util.FrequencyDistribution;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 
-public class NumericalDensityPlot extends NumericalFrequencyPlot {
+public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean relativeDensity = true;
     int minimumBinCount;

@@ -194,10 +194,6 @@ public class CombinedTraces implements TraceList {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public int getSrcPosition() {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
     /**
      * @return the number of trace lists that make up this combined
      */

@@ -25,7 +25,6 @@
 
 package dr.gui.chart;
 
-import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceFactory;
 import dr.stats.Variate;
@@ -33,11 +32,11 @@ import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 
-public class NumericalFrequencyPlot extends Plot.AbstractPlot {
+public class FrequencyPlot extends Plot.AbstractPlot {
 
-    private Variate raw = null;
+    protected Variate raw = null;
 
-    private Paint barPaint = Color.blue;
+    protected Paint barPaint = Color.blue;
     private Paint quantilePaint = Color.red;
 
     private boolean hasQuantiles = false;
@@ -51,29 +50,44 @@ public class NumericalFrequencyPlot extends Plot.AbstractPlot {
     private TraceDistribution.CredibleSet credSet;
 
     protected TraceDistribution traceD = null;
+    protected String[] categoryData;
 
-    public NumericalFrequencyPlot(Variate data, int minimumBinCount) {
+    protected FrequencyPlot(TraceDistribution traceD) {
+        super();
+        this.traceD = traceD;;
+    }
+
+    public FrequencyPlot(Variate data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
     }
 
-    public NumericalFrequencyPlot(double[] data, int minimumBinCount) {
+    public FrequencyPlot(double[] data, int minimumBinCount) {
         super();
         setData(data, minimumBinCount);
     }
 
-    public NumericalFrequencyPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
-        super();
-        this.traceD = traceD;
+    public FrequencyPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+        this(traceD);
         setData(data, minimumBinCount);
     }
 
-    public NumericalFrequencyPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
-        super();
-        this.traceD = traceD;
+    public FrequencyPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+        this(traceD);
         double[] doubleData = new double[data.length];
         for (int i = 0; i < data.length; i++) {
             doubleData[i] = (double) data[i];
+        }
+        setData(doubleData, minimumBinCount);
+    }
+
+    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
+        this(traceD);
+        categoryData = new String[data.length];
+        double[] doubleData = new double[data.length];
+        for (int i = 0; i < data.length; i++) {
+            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
+            categoryData[i] = data[i];
         }
         setData(doubleData, minimumBinCount);
     }

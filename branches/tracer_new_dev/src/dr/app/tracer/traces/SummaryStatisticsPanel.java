@@ -58,6 +58,17 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         statisticsTable.getColumnModel().getColumn(1).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
+//        statisticsTable.addMouseMotionListener(new MouseMotionAdapter(){
+//            public void mouseMoved(MouseEvent e){
+//                Point p = e.getPoint();
+//                int row = statisticsTable.rowAtPoint(p);
+//                if (row == 6) {
+//                    Object t = statisticsModel.getValueAt(9,1);
+//                    if (t != null) statisticsTable.setToolTipText("Incredible set : " + t);
+//                }
+//            }//end MouseMoved
+//        }); // end MouseMotionAdapter
+
         scrollPane1 = new JScrollPane(statisticsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -260,16 +271,22 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                     case 6:
                         if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
                             return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]"; 
-                        } else if (tc.getTraceType() == TraceFactory.TraceType.DISCRETE) {
+                        } else {
                             return tc.credSet.getCredibleSet();
                         }
-                        break;
                     case 7:
                         value = tc.getACT();
                         break;
                     case 8:
                         value = tc.getESS();
                         break;
+                    case 9:
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+                            return null;
+                        } else {
+                            return tc.credSet.getInCredibleSet();
+                        }
+
                 }
             } else {
                 return "-";

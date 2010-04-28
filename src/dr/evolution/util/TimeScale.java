@@ -212,7 +212,7 @@ public class TimeScale implements Units {
 	//*************************************************************************
 
 	// The origin is specified in days relative to 1st January 1970
-	protected double origin;
+	protected double origin = 720035.0;
 	protected Type units;
 	protected boolean backwards;
 	

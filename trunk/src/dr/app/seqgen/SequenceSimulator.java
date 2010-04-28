@@ -71,7 +71,7 @@ public class SequenceSimulator {
 	Sequence intArray2Sequence(int [] seq, NodeRef node) {
     	String sSeq = "";
     	for (int i  = 0; i < m_nReplications; i++) {
-    		char c = m_siteModel.getFrequencyModel().getDataType().getChar(seq[i]);
+    		String c = m_siteModel.getFrequencyModel().getDataType().getCode(seq[i]);
     		sSeq += c;
     	}
 		return new Sequence(m_tree.getNodeTaxon(node), sSeq);
@@ -175,7 +175,7 @@ public class SequenceSimulator {
     public static final String SEQUENCE_SIMULATOR = "sequenceSimulator";
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String TREE = "tree";
-    public static final String BRANCH_RATE_MODEL = "branchRateModel";
+//    public static final String BRANCH_RATE_MODEL = "branchRateModel";
     public static final String REPLICATIONS = "replications";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -237,7 +237,7 @@ public class SequenceSimulator {
     		if (args.length == 0) {
     			printUsageAndExit();
     		}
-    		int nReplications = new Integer(args[0]).intValue();
+    		int nReplications = Integer.parseInt(args[0]);
 
     		// create tree
     		NewickImporter importer = new NewickImporter("((A:1.0,B:1.0)AB:1.0,(C:1.0,D:1.0)CD:1.0)ABCD;");

@@ -48,9 +48,13 @@ public class BeastImporter {
         dateFormat.setLenient(true);
 
         Calendar cal = Calendar.getInstance(Locale.getDefault());
-        cal.set(0000, 01, 01);
-        origin = cal.getTime();
 
+        // set uses a zero based month (Jan = 0):
+        cal.set(0000, 00, 01);
+//        origin = cal.getTime();
+
+        cal.setTimeInMillis(0);
+        origin = cal.getTime();
     }
 
     public void importBEAST(List<TaxonList> taxonLists, List<Alignment> alignments) throws Importer.ImportException {
@@ -150,7 +154,7 @@ public class BeastImporter {
             backwards = false;
         }
         try {
-            return new Date(dateFormat.parse(value), Units.Type.YEARS, origin);
+            return new Date(dateFormat.parse(value));
         } catch (ParseException e1) {
             // ignore the parse exception and try it just as a number
         }

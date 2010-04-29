@@ -286,22 +286,27 @@ public class DensityPanel extends JPanel implements Exportable {
                     Double values[] = new Double[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
                     plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+                    traceChart.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK));
                     relativeDensityCheckBox.setEnabled(true);
+                    chartPanel.setYAxisTitle("Density");
 
                 } else if (trace.getTraceType() == Integer.class) {
                     Integer values[] = new Integer[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
                     plot = new CategoryDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    traceChart.setXAxis(new DiscreteAxis(true, true));
                     traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
                     relativeDensityCheckBox.setEnabled(false);
+                    chartPanel.setYAxisTitle("Probability");
 
                 } else if (trace.getTraceType() == String.class) {
                     String values[] = new String[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
                     plot = new CategoryDensityPlot(values, minimumBins, td);
+                    traceChart.setXAxis(new DiscreteAxis(true, true));
                     traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
                     relativeDensityCheckBox.setEnabled(false);
+                    chartPanel.setYAxisTitle("Probability");
 
                 } else {
                     throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());

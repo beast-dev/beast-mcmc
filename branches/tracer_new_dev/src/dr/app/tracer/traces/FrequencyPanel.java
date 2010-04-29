@@ -134,6 +134,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
             if (td != null) {
                 plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
             }
+            traceChart.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
+            chartPanel.setYAxisTitle("Frequency");
 
         } else if (trace.getTraceType() == Integer.class) {
              Integer values[] = new Integer[traceList.getStateCount()];
@@ -143,6 +145,9 @@ public class FrequencyPanel extends JPanel implements Exportable {
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
+            traceChart.setXAxis(new DiscreteAxis(true, true));
+            chartPanel.setYAxisTitle("Count");
+
         } else if (trace.getTraceType() == String.class) {
              String values[] = new String[traceList.getStateCount()];
              traceList.getValues(traceIndex, values);
@@ -151,6 +156,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
+            traceChart.setXAxis(new DiscreteAxis(true, true));
+            chartPanel.setYAxisTitle("Count");
 
         } else {
             throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
@@ -160,7 +167,6 @@ public class FrequencyPanel extends JPanel implements Exportable {
         traceChart.addPlot(plot);
 
         chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
-        chartPanel.setYAxisTitle("Frequency");
     }
 
     public JComponent getExportableComponent() {

@@ -570,6 +570,7 @@ public class JChart extends JPanel {
 				}
 			}
 		}
+
 	}
 
 	protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)

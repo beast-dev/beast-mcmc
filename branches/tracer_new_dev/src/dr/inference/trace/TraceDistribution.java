@@ -179,7 +179,7 @@ public class TraceDistribution<T> {
         calculateHPDInterval(proportion, values, indices);
         ESS = values.length;
 
-        isValid = true;
+//        isValid = true;
     }
 
     /**
@@ -261,7 +261,11 @@ public class TraceDistribution<T> {
                 }
 
                 calculateMode();
+
             }
+
+            isValid = true;
+
         }
 
         public boolean inside(T value) {

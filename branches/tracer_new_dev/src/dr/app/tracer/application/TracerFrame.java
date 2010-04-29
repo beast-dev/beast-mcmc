@@ -29,10 +29,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -51,6 +48,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private JTable statisticTable = null;
     private StatisticTableModel statisticTableModel = null;
+    private JPopupMenu popupMenu = new JPopupMenu();
 
     private JScrollPane scrollPane1 = null;
 
@@ -164,6 +162,44 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         });
 
+        statisticTable.addMouseListener(new MouseAdapter() {
+            private void maybeShowPopup(MouseEvent e) {
+                if (e.isPopupTrigger() && statisticTable.isEnabled()) {
+                    Point p = new Point(e.getX(), e.getY());
+                    int col = statisticTable.columnAtPoint(p);
+                    int row = statisticTable.rowAtPoint(p);
+
+                    // translate table index to model index
+                    int mcol = statisticTable.getColumn(statisticTable.getColumnName(col)).getModelIndex();
+
+                    if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
+//                        CellEditor ce = statisticTable.getCellEditor();
+//                        if (ce != null) {
+//                            ce.cancelCellEditing();
+//                        }
+
+                        // create popup menu...
+                        JPopupMenu contextMenu = createContextMenu(row, mcol);
+
+                        // ... and show it
+                        if (contextMenu != null && contextMenu.getComponentCount() > 0) {
+                            contextMenu.show(statisticTable, p.x, p.y);
+                        }
+                    }
+                    statisticTable.setRowSelectionInterval(row, row);
+                    statisticTableSelectionChanged();
+                }
+            }
+
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+        });
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
 
         JScrollPane scrollPane2 = new JScrollPane(statisticTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -173,6 +209,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
+        bottomPanel.add(new JLabel("<html>Traces Type: continuous(C) is double, discrete(D) is integer, " +
+                "category(S) is string. Right click to change trace type in a selected cell.<html>"), 
+                BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
         leftPanel.setPreferredSize(new Dimension(400, 300));
@@ -195,11 +234,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         splitPane2.setDividerLocation(350);
 
         Color focusColor = UIManager.getColor("Focus.color");
-        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
-        splitPane1.setBorder(BorderFactory.createEmptyBorder( 2, 2, 2, 2 ));
-        new FileDrop( null, splitPane1, focusBorder, new FileDrop.Listener()
-        {   public void filesDropped( java.io.File[] files )
-            {
+        Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
+        splitPane1.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        new FileDrop(null, splitPane1, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(java.io.File[] files) {
                 importFiles(files);
             }   // end filesDropped
         }); // end FileDrop.Listener
@@ -209,6 +247,38 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
+    }
+
+    private JPopupMenu createContextMenu(final int rowIndex, final int columnIndex) {
+        JPopupMenu contextMenu = new JPopupMenu();
+        JMenuItem menu = new JMenuItem();
+        menu.setText("continuous (C)");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        contextMenu.add(menu);
+
+        menu = new JMenuItem();
+        menu.setText("discrete (D)");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        contextMenu.add(menu);
+
+        menu = new JMenuItem();
+        menu.setText("category (S)");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        contextMenu.add(menu);
+        
+        return contextMenu;
     }
 
     public void setVisible(boolean b) {
@@ -449,7 +519,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         java.util.List<String> selectedTraces = new ArrayList<String>();
-        for( int selRow : selRows ) {
+        for (int selRow : selRows) {
             selectedTraces.add(commonTraceNames.get(selRow));
         }
 
@@ -460,7 +530,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             currentTraceLists.toArray(tl);
             try {
                 tracePanel.setTraces(tl, selectedTraces);
-            } catch(ChartRuntimeException cre) {
+            } catch (ChartRuntimeException cre) {
                 JOptionPane.showMessageDialog(this, "One or more traces contain invalid values and \rare not able to be displayed.",
                         "Problem with tree file",
                         JOptionPane.ERROR_MESSAGE);
@@ -635,7 +705,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
             Rectangle2D bounds = tracePanel.getExportableComponent().getBounds();
-            Document document = new Document(new com.lowagie.text.Rectangle((float)bounds.getWidth(), (float)bounds.getHeight()));
+            Document document = new Document(new com.lowagie.text.Rectangle((float) bounds.getWidth(), (float) bounds.getHeight()));
             try {
                 // step 2
                 PdfWriter writer;
@@ -644,13 +714,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 document.open();
 // step 4
                 PdfContentByte cb = writer.getDirectContent();
-                PdfTemplate tp = cb.createTemplate((float)bounds.getWidth(), (float)bounds.getHeight());
-                Graphics2D g2d = tp.createGraphics((float)bounds.getWidth(), (float)bounds.getHeight(), new DefaultFontMapper());
+                PdfTemplate tp = cb.createTemplate((float) bounds.getWidth(), (float) bounds.getHeight());
+                Graphics2D g2d = tp.createGraphics((float) bounds.getWidth(), (float) bounds.getHeight(), new DefaultFontMapper());
                 tracePanel.getExportableComponent().print(g2d);
                 g2d.dispose();
                 cb.addTemplate(tp, 0, 0);
             }
-            catch(DocumentException de) {
+            catch (DocumentException de) {
                 JOptionPane.showMessageDialog(this, "Error writing PDF file: " + de,
                         "Export PDF Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -665,7 +735,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
 
-
     public final void doImport() {
         final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
@@ -674,7 +743,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         chooser.setFileFilter(filter);
 
         final int returnVal = chooser.showOpenDialog(this);
-        if( returnVal == JFileChooser.APPROVE_OPTION ) {
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
             importFiles(files);
         }
@@ -683,7 +752,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private void importFiles(File[] files) {
         LogFileTraces[] traces = new LogFileTraces[files.length];
 
-        for(int i = 0; i < files.length; i++) {
+        for (int i = 0; i < files.length; i++) {
             traces[i] = new LogFileTraces(files[i].getName(), files[i]);
         }
 
@@ -691,11 +760,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private File openDefaultDirectory = null;
+
     private void setDefaultDir(File file) {
         final String s = file.getAbsolutePath();
         String p = s.substring(0, s.length() - file.getName().length());
         openDefaultDirectory = new File(p);
-        if( ! openDefaultDirectory.isDirectory() ) {
+        if (!openDefaultDirectory.isDirectory()) {
             openDefaultDirectory = null;
         }
     }
@@ -705,7 +775,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         final JFrame frame = this;
 
         // set default dir to directory of last file
-        setDefaultDir(tracesArray[tracesArray.length-1].getFile());
+        setDefaultDir(tracesArray[tracesArray.length - 1].getFile());
 
         if (tracesArray.length == 1) {
             try {
@@ -1157,7 +1227,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
             if (col == 3) return td.getTraceType().getBrief();
-            
+
             double value = 0.0;
             boolean warning = false;
             boolean extremeWarning = false;
@@ -1186,12 +1256,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public boolean isCellEditable(int row, int col) {
-             return true;
-            
+            return true;
+
         }
 
         public Class getColumnClass(int c) {
-           if (getRowCount() == 0) {
+            if (getRowCount() == 0) {
                 return Object.class;
             }
             return getValueAt(0, c).getClass();

@@ -236,8 +236,14 @@ public abstract class Generator {
         String multi = "";
 
         multi += value + "";
-        for (int i = 2; i <= dimension; i++)
-            multi += " " + value;
+
+        // AR: A multidimensional parameter only needs to give initial values for every dimension
+        // if they are actually different. A single value will automatically be expanded to every
+        // dimension and make for a cleaner looking XML (and more robust to changes in the number
+        // of groups/taxa etc.
+
+//        for (int i = 2; i <= dimension; i++)
+//            multi += " " + value;
 
         return multi;
     }

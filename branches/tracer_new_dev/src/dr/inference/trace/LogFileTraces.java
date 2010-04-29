@@ -304,12 +304,12 @@ public class LogFileTraces extends AbstractTraceList {
     private void initializeTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
-            if (firstToken.contains(TraceFactory.TraceType.DISCRETE.toString())
-                    || firstToken.contains(TraceFactory.TraceType.DISCRETE.toString().toUpperCase())) {
+            if (firstToken.contains(TraceFactory.TraceType.INTEGER.toString())
+                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {
                 token = tokens.nextToken(); // move to 1st trace name
-                tracesType.put(token, TraceFactory.TraceType.DISCRETE); // record 1st trace name if only 1 name
+                tracesType.put(token, TraceFactory.TraceType.INTEGER); // record 1st trace name if only 1 name
                 while (tokens.hasMoreTokens()) {
-                    tracesType.put(token, TraceFactory.TraceType.DISCRETE);
+                    tracesType.put(token, TraceFactory.TraceType.INTEGER);
                     token = tokens.nextToken();
                 }
             } else if (firstToken.contains(TraceFactory.TraceType.CATEGORY.toString())
@@ -327,9 +327,9 @@ public class LogFileTraces extends AbstractTraceList {
 //    public Trace<?> assignTraceType(String name, int numberOfLines) {
 //        Trace<?> trace = null;
 //        if (tracesType != null) {
-//            if (tracesType.get(name) == TraceFactory.TraceType.DISCRETE) {
+//            if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
 //                trace = new DiscreteTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.DISCRETE);
+////                trace.setTraceType(TraceType.INTEGER);
 //            } else if (tracesType.get(name) == TraceFactory.TraceType.CATEGORY) {
 //                trace = new CategoryTrace(name, numberOfLines);
 ////                trace.setTraceType(TraceType.CATEGORY);
@@ -405,7 +405,7 @@ public class LogFileTraces extends AbstractTraceList {
              Double v = Double.parseDouble(value);
              thisTrace.add(v);
             
-         } else if (thisTrace.getTraceType() == TraceFactory.TraceType.DISCRETE.getType()) {
+         } else if (thisTrace.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
 //             Integer v = Integer.parseInt(value);
             int v = (int) Double.parseDouble(value); 
             thisTrace.add(v);
@@ -423,7 +423,7 @@ public class LogFileTraces extends AbstractTraceList {
 
     private final List<Trace> traces = new ArrayList<Trace>();
     // List traces is added before having types
-    // tracesType only save DISCRETE and CATEGORY
+    // tracesType only save INTEGER and CATEGORY
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
 
     private int burnIn = -1;

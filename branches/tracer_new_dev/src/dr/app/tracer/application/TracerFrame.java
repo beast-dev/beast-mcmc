@@ -12,10 +12,7 @@ import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.TracePanel;
 import dr.gui.chart.ChartRuntimeException;
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.panels.ActionPanel;
 import org.virion.jam.table.TableEditorStopper;
@@ -48,8 +45,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private JTable statisticTable = null;
     private StatisticTableModel statisticTableModel = null;
-    private JPopupMenu popupMenu = new JPopupMenu();
-
+    
     private JScrollPane scrollPane1 = null;
 
     private JLabel progressLabel;
@@ -145,14 +141,15 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         statisticTableModel = new StatisticTableModel();
         statisticTable = new JTable(statisticTableModel);
+        statisticTable.getColumnModel().getColumn(0).setPreferredWidth(150);
         statisticTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
-        statisticTable.getColumnModel().getColumn(1).setPreferredWidth(50);
+        statisticTable.getColumnModel().getColumn(1).setPreferredWidth(70);
         statisticTable.getColumnModel().getColumn(1).setCellRenderer(renderer);
-        statisticTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+        statisticTable.getColumnModel().getColumn(2).setPreferredWidth(70);
         statisticTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
 //        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
 //        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(10);
+        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(1);
         statisticTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
         statisticTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -209,8 +206,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
-        bottomPanel.add(new JLabel("<html>Traces Type: continuous(C) is double, discrete(D) is integer, " +
-                "category(S) is string. Right click to change trace type in a selected cell.<html>"), 
+        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
+                "category(C) is string. Right click to change trace type in a selected cell.<html>"), 
                 BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
@@ -252,7 +249,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JPopupMenu createContextMenu(final int rowIndex, final int columnIndex) {
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem menu = new JMenuItem();
-        menu.setText("continuous (C)");
+        menu.setText(TraceFactory.TraceType.CONTINUOUS + " (" + TraceFactory.TraceType.CONTINUOUS.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
@@ -261,7 +258,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         contextMenu.add(menu);
 
         menu = new JMenuItem();
-        menu.setText("discrete (D)");
+        menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
@@ -270,7 +267,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         contextMenu.add(menu);
 
         menu = new JMenuItem();
-        menu.setText("category (S)");
+        menu.setText(TraceFactory.TraceType.CATEGORY + " (" + TraceFactory.TraceType.CATEGORY.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 

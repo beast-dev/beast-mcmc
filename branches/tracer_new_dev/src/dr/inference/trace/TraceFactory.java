@@ -7,9 +7,9 @@ package dr.inference.trace;
 public class TraceFactory {
 
     public enum TraceType {
-        CONTINUOUS("continuous", "C", Double.class),
-        DISCRETE("discrete", "D", Integer.class),
-        CATEGORY("category", "S", String.class);
+        CONTINUOUS("real", "R", Double.class),
+        INTEGER("integer", "I", Integer.class),
+        CATEGORY("category", "C", String.class);
 
         TraceType(String name, String brief, Class type) {
             this.name = name;
@@ -45,7 +45,7 @@ public class TraceFactory {
         switch (traceType) {
             case CONTINUOUS:
                 return new Trace<Double>(name, initialSize, Double.valueOf(0));
-            case DISCRETE:
+            case INTEGER:
                 return new Trace<Integer>(name, initialSize, Integer.valueOf(0));
             case CATEGORY:
                 return new Trace<String>(name, initialSize, "initial_value");

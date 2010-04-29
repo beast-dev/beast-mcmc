@@ -199,7 +199,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         public Object getValueAt(int row, int col) {
 
             TraceCorrelation tc = null;
-            if (traceLists != null && traceNames != null) {
+            if (traceLists != null && traceNames != null && traceNames.size() > 0) {
                 int colNew = col;
                 if (col == 0) {
                     colNew++;

@@ -56,8 +56,8 @@ public class TraceDistribution<T> {
         if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
             return TraceFactory.TraceType.CONTINUOUS;
 
-        } else if (values[0].getClass() == TraceFactory.TraceType.DISCRETE.getType()) {
-            return TraceFactory.TraceType.DISCRETE;
+        } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+            return TraceFactory.TraceType.INTEGER;
 
         } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
             return TraceFactory.TraceType.CATEGORY;

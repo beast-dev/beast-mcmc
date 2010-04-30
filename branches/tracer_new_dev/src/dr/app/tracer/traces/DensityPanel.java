@@ -295,7 +295,6 @@ public class DensityPanel extends JPanel implements Exportable {
                     tl.getValues(traceIndex, values);
                     plot = new CategoryDensityPlot(Trace.arrayConvert(values), minimumBins, td);
                     traceChart.setXAxis(new DiscreteAxis(true, true));
-                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
                     relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
 
@@ -304,7 +303,6 @@ public class DensityPanel extends JPanel implements Exportable {
                     tl.getValues(traceIndex, values);
                     plot = new CategoryDensityPlot(values, minimumBins, td);
                     traceChart.setXAxis(new DiscreteAxis(true, true));
-                    traceChart.getXAxis().setAxisFlags(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
                     relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
 

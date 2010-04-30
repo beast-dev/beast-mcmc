@@ -116,7 +116,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
             axis.setPrefNumTicks(majorTickCount, 4);
 
             binSize = axis.getMinorTickSpacing();
-            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize);
+            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
         }
 
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);

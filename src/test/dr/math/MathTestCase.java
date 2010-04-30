@@ -8,6 +8,13 @@ import junit.framework.TestCase;
  */
 public class MathTestCase extends TestCase {
 
+    public MathTestCase() {        
+    }
+
+    public MathTestCase(String name) {
+        super(name);
+    }
+
     protected void assertEquals(double[] a, double[] b, double accuracy) {
         assertEquals(a.length, b.length);
         for (int i = 0; i < a.length; i++) {

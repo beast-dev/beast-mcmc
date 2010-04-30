@@ -136,7 +136,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                         }
                     }
                 }
-
             }
 
             // first set the rescaling scheme to use from the parser
@@ -154,6 +153,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (resourceOrder.size() > 0) {
                 // added the zero on the end so that a CPU is selected if requested resource fails
                 resourceList = new int[] { resourceOrder.get(instanceCount % resourceOrder.size()), 0 };
+                if (resourceList[0] > 0) {
+                    preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
+                }
             }
 
             if (System.getProperty(PREFERRED_FLAGS_PROPERTY) != null) {

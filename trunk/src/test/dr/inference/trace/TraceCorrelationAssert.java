@@ -15,12 +15,12 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.trace.TraceCorrelation;
-import junit.framework.TestCase;
+import test.dr.math.MathTestCase;
 
 /**
  * @author Alexei Drummond
  */
-public class TraceCorrelationAssert extends TestCase {
+public class TraceCorrelationAssert extends MathTestCase {
 
     protected static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
 

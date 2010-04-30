@@ -111,17 +111,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
          // Setup cumulate scale buffers
 //         traverseCollectScaleBuffers(treeModel, treeModel.getRoot());
 
-         // Sample across-site-rate-variation, if it exists
-         int[] rateCategory = null;
-         if (categoryCount > 1) {
-             rateCategory = new int[patternCount];
-             double[] categoryWeight = siteRateModel.getCategoryProportions();
-             for (int i = 0; i < patternCount; i++) {
-                 rateCategory[i] = MathUtils.randomChoicePDF(categoryWeight);
-             }
-         }
          // Sample states
-         traverseSample(treeModel, treeModel.getRoot(), null, rateCategory);
+         traverseSample(treeModel, treeModel.getRoot(), null, null);
          areStatesRedrawn = true;
      }
 
@@ -229,8 +220,33 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                  // This is the root node
                 getPartials(nodeNum,partials);
+                
+                boolean sampleCategory = categoryCount > 1;
+                double[] posteriorWeightedCategory = null;
+                double[] priorWeightedCategory = null;
+
+                if (sampleCategory) {
+                    rateCategory = new int[patternCount];
+                    posteriorWeightedCategory = new double[categoryCount];
+                    priorWeightedCategory = siteRateModel.getCategoryProportions();
+                }
+
                 for (int j = 0; j < patternCount; j++) {
 
+                    // Sample across-site-rate-variation, if it exists
+                    if (sampleCategory) {
+                        for (int r = 0; r < categoryCount; r++) {
+                            posteriorWeightedCategory[r] = 0;
+                            for (int k = 0; k < stateCount; k++) {
+                                posteriorWeightedCategory[r] += partials[r * stateCount * patternCount +
+                                        j * stateCount + k];
+                            }
+                            posteriorWeightedCategory[r] *= priorWeightedCategory[r];
+                        }
+                        rateCategory[j] = MathUtils.randomChoicePDF(posteriorWeightedCategory);
+                    }
+
+                    // Sample root character state
                     int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
                     System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
 

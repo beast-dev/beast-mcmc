@@ -10,6 +10,8 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.text.DecimalFormat;
 
 
@@ -58,16 +60,18 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         statisticsTable.getColumnModel().getColumn(1).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-//        statisticsTable.addMouseMotionListener(new MouseMotionAdapter(){
-//            public void mouseMoved(MouseEvent e){
-//                Point p = e.getPoint();
-//                int row = statisticsTable.rowAtPoint(p);
-//                if (row == 6) {
-//                    Object t = statisticsModel.getValueAt(9,1);
-//                    if (t != null) statisticsTable.setToolTipText("Incredible set : " + t);
-//                }
-//            }//end MouseMoved
-//        }); // end MouseMotionAdapter
+        statisticsTable.addMouseMotionListener(new MouseMotionAdapter(){
+            public void mouseMoved(MouseEvent e){
+                Point p = e.getPoint();
+                int row = statisticsTable.rowAtPoint(p);
+                if (row == 6) {
+                    Object t = statisticsModel.getValueAt(9,1);
+                    if (!t.equals("-")) {
+                        statisticsTable.setToolTipText("Incredible set : " + t);
+                    }
+                }
+            }//end MouseMoved
+        }); // end MouseMotionAdapter
 
         scrollPane1 = new JScrollPane(statisticsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -282,7 +286,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         break;
                     case 9:
                         if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
-                            return null;
+                            return "-";
                         } else {
                             return tc.credSet.getInCredibleSet();
                         }

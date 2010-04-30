@@ -310,7 +310,7 @@ public class TraceDistribution<T> {
             if (line.endsWith(", ")) {
                 line = line.substring(0, line.lastIndexOf(", ")) + "}";
             } else {
-                line = "n/a";
+                line = "{}";
             }
             return line;
         }

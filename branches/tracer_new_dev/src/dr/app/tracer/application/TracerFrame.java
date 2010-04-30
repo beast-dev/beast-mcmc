@@ -45,7 +45,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private JTable statisticTable = null;
     private StatisticTableModel statisticTableModel = null;
-    
+
     private JScrollPane scrollPane1 = null;
 
     private JLabel progressLabel;
@@ -161,30 +161,32 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         statisticTable.addMouseListener(new MouseAdapter() {
             private void maybeShowPopup(MouseEvent e) {
-                if (e.isPopupTrigger() && statisticTable.isEnabled()) {
-                    Point p = new Point(e.getX(), e.getY());
-                    int col = statisticTable.columnAtPoint(p);
-                    int row = statisticTable.rowAtPoint(p);
+                if (traceTable.getSelectedRowCount() < 2) { // TODO generic to CombinedTraces ?
+                    if (e.isPopupTrigger() && statisticTable.isEnabled()) {
+                        Point p = new Point(e.getX(), e.getY());
+                        int col = statisticTable.columnAtPoint(p);
+                        int row = statisticTable.rowAtPoint(p);
 
-                    // translate table index to model index
-                    int mcol = statisticTable.getColumn(statisticTable.getColumnName(col)).getModelIndex();
+                        // translate table index to model index
+//                    int mcol = statisticTable.getColumn(statisticTable.getColumnName(col)).getModelIndex();
 
-                    if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
+                        if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
 //                        CellEditor ce = statisticTable.getCellEditor();
 //                        if (ce != null) {
 //                            ce.cancelCellEditing();
 //                        }
 
-                        // create popup menu...
-                        JPopupMenu contextMenu = createContextMenu(row, mcol);
+                            // create popup menu...
+                            JPopupMenu contextMenu = createContextMenu(row);
 
-                        // ... and show it
-                        if (contextMenu != null && contextMenu.getComponentCount() > 0) {
-                            contextMenu.show(statisticTable, p.x, p.y);
+                            // ... and show it
+                            if (contextMenu != null && contextMenu.getComponentCount() > 0) {
+                                contextMenu.show(statisticTable, p.x, p.y);
+                            }
                         }
+                        statisticTable.setRowSelectionInterval(row, row);
+                        statisticTableSelectionChanged();
                     }
-                    statisticTable.setRowSelectionInterval(row, row);
-                    statisticTableSelectionChanged();
                 }
             }
 
@@ -207,7 +209,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
-                "category(C) is string. Right click to change trace type in a selected cell.<html>"), 
+                "category(C) is string. Right click to change trace type in a selected cell.<html>"),
                 BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
@@ -246,13 +248,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     }
 
-    private JPopupMenu createContextMenu(final int rowIndex, final int columnIndex) {
+    private JPopupMenu createContextMenu(final int rowIndex) {
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem menu = new JMenuItem();
         menu.setText(TraceFactory.TraceType.CONTINUOUS + " (" + TraceFactory.TraceType.CONTINUOUS.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
+                changeTraceType(rowIndex, TraceFactory.TraceType.CONTINUOUS);
             }
         });
         contextMenu.add(menu);
@@ -261,7 +263,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
+                changeTraceType(rowIndex, TraceFactory.TraceType.INTEGER);
             }
         });
         contextMenu.add(menu);
@@ -270,12 +272,27 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         menu.setText(TraceFactory.TraceType.CATEGORY + " (" + TraceFactory.TraceType.CATEGORY.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
+                changeTraceType(rowIndex, TraceFactory.TraceType.CATEGORY);
             }
         });
         contextMenu.add(menu);
-        
+
         return contextMenu;
+    }
+
+    private void changeTraceType(final int rowIndex, TraceFactory.TraceType newType) {
+        try {
+            traceLists.get(traceTable.getSelectedRow()).loadTraces(rowIndex, newType);
+            traceLists.get(traceTable.getSelectedRow()).analyseTrace(rowIndex);
+        } catch (TraceException e) {
+            JOptionPane.showMessageDialog(this, e,
+                        "Trace Type Exception",
+                        JOptionPane.ERROR_MESSAGE);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        statisticTableModel.fireTableDataChanged();
+        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);                
     }
 
     public void setVisible(boolean b) {
@@ -792,7 +809,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 Thread readThread = new Thread() {
                     public void run() {
                         try {
-                            traces.loadTraces(reader, -1);
+                            traces.loadTraces(reader, -1, -1, null);
 
                             EventQueue.invokeLater(
                                     new Runnable() {
@@ -857,7 +874,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     try {
                         for (final LogFileTraces traces : tracesArray) {
                             final Reader reader = new FileReader(traces.getFile());
-                            traces.loadTraces(reader, -1);
+                            traces.loadTraces(reader, -1, -1, null);
 
                             EventQueue.invokeLater(
                                     new Runnable() {

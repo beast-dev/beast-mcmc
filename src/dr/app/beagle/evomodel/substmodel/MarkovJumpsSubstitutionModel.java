@@ -44,6 +44,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         registration = new double[stateCount * stateCount];
     }
 
+    public MarkovJumpsType getType() {
+        return type;
+    }
+
     public void setRegistration(double[] inRegistration) {
 
         if (type == MarkovJumpsType.COUNTS) {

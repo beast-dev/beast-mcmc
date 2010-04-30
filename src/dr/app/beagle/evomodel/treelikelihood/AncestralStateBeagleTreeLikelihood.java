@@ -42,8 +42,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         this.dataType = dataType;
         this.tag = tag;
 
-        probabilities = new double[stateCount*stateCount];
-        partials = new double[stateCount*patternCount];
+        probabilities = new double[stateCount * stateCount * categoryCount];
+        partials = new double[stateCount * patternCount * categoryCount];
 //        rootPartials = new double[stateCount*patternCount];
 //        cumulativeScaleBuffers = new int[nodeCount][];
 //        scaleBufferIndex = getScaleBufferCount() - 1;
@@ -102,11 +102,26 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
      protected boolean areStatesRedrawn = false;
 
+     public void makeDirty() {
+         super.makeDirty();
+         areStatesRedrawn = false;         
+     }
+
      public void redrawAncestralStates() {
          // Setup cumulate scale buffers
 //         traverseCollectScaleBuffers(treeModel, treeModel.getRoot());
+
+         // Sample across-site-rate-variation, if it exists
+         int[] rateCategory = null;
+         if (categoryCount > 1) {
+             rateCategory = new int[patternCount];
+             double[] categoryWeight = siteRateModel.getCategoryProportions();
+             for (int i = 0; i < patternCount; i++) {
+                 rateCategory[i] = MathUtils.randomChoicePDF(categoryWeight);
+             }
+         }
          // Sample states
-         traverseSample(treeModel, treeModel.getRoot(), null);
+         traverseSample(treeModel, treeModel.getRoot(), null, rateCategory);
          areStatesRedrawn = true;
      }
 
@@ -193,7 +208,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //    }
 
 
-    public void traverseSample(TreeModel tree, NodeRef node, int[] parentState) {
+    public void traverseSample(TreeModel tree, NodeRef node, int[] parentState, int[] rateCategory) {
 
         if (reconstructedStates == null)
             reconstructedStates = new int[tree.getNodeCount()][patternCount];
@@ -216,7 +231,9 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 getPartials(nodeNum,partials);
                 for (int j = 0; j < patternCount; j++) {
 
-                    System.arraycopy(partials, j * stateCount, conditionalProbabilities, 0, stateCount);
+                    int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
+                    System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
+
                     double[] frequencies = substitutionModel.getFrequencyModel().getFrequencies();
                     for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] *= frequencies[i];
@@ -234,7 +251,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             } else {
 
                 // This is an internal node, but not the root
-                double[] partialLikelihood = new double[stateCount * patternCount];
+                double[] partialLikelihood = new double[stateCount * patternCount * categoryCount];
                 getPartials(nodeNum,partialLikelihood);
 
                 if (categoryCount > 1)
@@ -247,24 +264,27 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int parentIndex = parentState[j] * stateCount;
                     int childIndex = j * stateCount;
 
+                    int category = rateCategory == null ? 0 : rateCategory[j];
+                    int matrixIndex = category * stateCount * stateCount;
+                    int partialIndex = category * stateCount * patternCount;
+
                     for (int i = 0; i < stateCount; i++)
-                        // fixed bug here, index was i, now childIndex + i
-                        // is this correct?
-                        conditionalProbabilities[i] = partialLikelihood[childIndex + i] * probabilities[parentIndex + i];
+                        conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
+                                * probabilities[matrixIndex + parentIndex + i];
 
                     state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
                 }
 
-                hookCalculation(tree, parent, node, parentState, state, probabilities);
+                hookCalculation(tree, parent, node, parentState, state, probabilities, rateCategory);
             }
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            traverseSample(tree, child1, state);
+            traverseSample(tree, child1, state, rateCategory);
 
             NodeRef child2 = tree.getChild(node, 1);
-            traverseSample(tree, child2, state);
+            traverseSample(tree, child2, state, rateCategory);
         } else {
 
             // This is an external leaf
@@ -280,19 +300,22 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 if (dataType.isAmbiguousState(thisState)) {
 
                     int parentIndex = parentState[j] * stateCount;
+                    int category = rateCategory == null ? 0 : rateCategory[j];
+                    int matrixIndex = category * stateCount * stateCount;
+                    
                     getMatrix(nodeNum,probabilities);
-                    System.arraycopy(probabilities, parentIndex, conditionalProbabilities, 0, stateCount);
+                    System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
                 }
             }
 
-            hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null);
+            hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null, rateCategory);
         }
     }
 
     protected void hookCalculation(Tree tree, NodeRef parentNode, NodeRef childNode,
                                    int[] parentStates, int[] childStates,
-                                   double[] probabilities) {
+                                   double[] probabilities, int[] rateCategory) {
         // Do nothing
     }
 

@@ -268,6 +268,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 logger.info("  Using rescaling scheme : " + this.rescalingScheme.getText());
             }
 
+            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
+            }
+                        
             updateSubstitutionModel = true;
             updateSiteModel = true;
 
@@ -430,6 +434,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
             System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
+//            storedRescalingCount = rescalingCount;
         }
 
         super.storeState();
@@ -451,12 +456,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             int[] tmp = storedScaleBufferIndices;
             storedScaleBufferIndices = scaleBufferIndices;
             scaleBufferIndices = tmp;
+//            rescalingCount = storedRescalingCount;
         }
 
         super.restoreState();
 
     }
 
+//    int marcCount = 0;
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
@@ -488,7 +495,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
             useScaleFactors = true;
             recomputeScaleFactors = true;
-        } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+        } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC && everUnderflowed) {
             useScaleFactors = true;
             if (rescalingCount == 0) {
                 recomputeScaleFactors = true;
@@ -578,7 +585,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             logL = sumLogLikelihoods[0];
 
-            if  (Double.isNaN(logL) || Double.isInfinite(logL)) {
+            if  (Double.isNaN(logL) || Double.isInfinite(logL) || logL > 0) { // TODO logL > 0 is a hack to keep things working; this need to find bug
+                rescalingCount = 0;
+                everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
                 if (!done) {
@@ -763,7 +772,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected boolean useScaleFactors = false;
     private boolean useAutoScaling = false;
     private boolean recomputeScaleFactors = false;
+    private boolean everUnderflowed = false;
     private int rescalingCount = 0;
+//    private int storedRescalingCount;
 
     /**
      * the branch-site model for these sites

@@ -66,6 +66,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static List<Integer> resourceOrder = null;
 
     private static final int RESCALE_FREQUENCY = 10000;
+    private static final int RESCALE_TIMES = 5;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -497,14 +498,16 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             recomputeScaleFactors = true;
         } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC && everUnderflowed) {
             useScaleFactors = true;
-            if (rescalingCount == 0) {
+            if (rescalingCountInner < RESCALE_TIMES) {
                 recomputeScaleFactors = true;
 //                System.err.println("Recomputing scale factors");
             }
 
+            rescalingCountInner++;
             rescalingCount ++;
             if (rescalingCount > RESCALE_FREQUENCY) {
                 rescalingCount = 0;
+                rescalingCountInner = 0;
             }
         }
 
@@ -585,8 +588,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             logL = sumLogLikelihoods[0];
 
-            if  (Double.isNaN(logL) || Double.isInfinite(logL) || logL > 0) { // TODO logL > 0 is a hack to keep things working; this need to find bug
-                rescalingCount = 0;
+            if  (Double.isNaN(logL) || Double.isInfinite(logL) ) {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
@@ -774,6 +776,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean recomputeScaleFactors = false;
     private boolean everUnderflowed = false;
     private int rescalingCount = 0;
+    private int rescalingCountInner = 0;
 //    private int storedRescalingCount;
 
     /**

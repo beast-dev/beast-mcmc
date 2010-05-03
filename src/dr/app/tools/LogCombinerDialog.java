@@ -25,6 +25,7 @@
 
 package dr.app.tools;
 
+import dr.app.gui.FileDrop;
 import dr.app.util.Utils;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.ActionPanel;
@@ -33,6 +34,7 @@ import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -103,6 +105,15 @@ public class LogCombinerDialog {
 		panel.add(new JLabel("Select input files:"), BorderLayout.NORTH);
 		panel.add(scrollPane1, BorderLayout.CENTER);
 		panel.add(actionPanel1, BorderLayout.SOUTH);
+
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
+        new FileDrop( null, scrollPane1, focusBorder, new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {
+                addFiles(files);
+            }   // end filesDropped
+        }); // end FileDrop.Listener
 
 		resampleText.setEnabled(false);
 		resampleText.setColumns(12);
@@ -221,6 +232,22 @@ public class LogCombinerDialog {
 		}
 	}
 
+    private void addFiles(File[] fileArray) {
+        int sel1 = files.size();
+        for (File file : fileArray) {
+            FileInfo fileInfo = new FileInfo();
+            fileInfo.file = file;
+            fileInfo.burnin = 0;
+
+            files.add(fileInfo);
+        }
+
+        filesTableModel.fireTableDataChanged();
+
+        int sel2 = files.size() - 1;
+        filesTable.setRowSelectionInterval(sel1, sel2);
+    }
+
 	Action addFileAction = new AbstractAction("+") {
 
 		/**
@@ -231,18 +258,9 @@ public class LogCombinerDialog {
 		public void actionPerformed(ActionEvent ae) {
 
 			File file = Utils.getLoadFile("Select log file");
-			if (file != null) {
-				FileInfo fileInfo = new FileInfo();
-				fileInfo.file = file;
-				fileInfo.burnin = 0;
-
-				files.add(fileInfo);
-
-				filesTableModel.fireTableDataChanged();
-
-				int sel = files.size() - 1;
-				filesTable.setRowSelectionInterval(sel, sel);
-			}
+            if (file != null) {
+                addFiles(new File[] { file });
+            }
 		}
 	};
 

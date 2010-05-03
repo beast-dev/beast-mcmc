@@ -25,11 +25,13 @@
 
 package dr.app.tools;
 
+import dr.app.gui.FileDrop;
 import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -148,7 +150,18 @@ public class TreeAnnotatorDialog {
         JPanel panel2 = new JPanel(new BorderLayout(0,0));
 		panel2.add(inputFileNameText, BorderLayout.CENTER);
 		panel2.add(inputFileButton, BorderLayout.EAST);
-		optionPanel.addComponentWithLabel("Input Tree File: ", panel2);
+
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
+        new FileDrop( null, inputFileNameText, focusBorder, new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {
+                inputFile = files[0];
+                inputFileNameText.setText(inputFile.getName());
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+
+        optionPanel.addComponentWithLabel("Input Tree File: ", panel2);
 
 		JButton outputFileButton = new JButton("Choose File...");
 		final JTextField outputFileNameText = new JTextField("not selected", 16);

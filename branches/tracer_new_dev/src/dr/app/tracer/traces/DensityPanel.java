@@ -63,8 +63,6 @@ public class DensityPanel extends JPanel implements Exportable {
             Color.DARK_GRAY
     };
 
-    private int minimumBins = 100;
-
     private ChartSetupDialog chartSetupDialog = null;
 
 //    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
@@ -72,6 +70,8 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
+    private int minimumBins = 100;
+    private JLabel labelBins;
     private JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
@@ -113,10 +113,10 @@ public class DensityPanel extends JPanel implements Exportable {
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
         binsCombo.setOpaque(false);
         binsCombo.setSelectedItem(minimumBins);
-        JLabel label = new JLabel("Bins:");
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-        label.setLabelFor(binsCombo);
-        toolBar.add(label);
+        labelBins = new JLabel("Bins:");
+        labelBins.setFont(UIManager.getFont("SmallSystemFont"));
+        labelBins.setLabelFor(binsCombo);
+        toolBar.add(labelBins);
         toolBar.add(binsCombo);
 
         relativeDensityCheckBox.setOpaque(false);
@@ -131,7 +131,7 @@ public class DensityPanel extends JPanel implements Exportable {
 //		toolBar.add(solidCheckBox);
 
         toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
-        label = new JLabel("Legend:");
+        JLabel label = new JLabel("Legend:");
         label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(legendCombo);
         toolBar.add(label);
@@ -292,17 +292,23 @@ public class DensityPanel extends JPanel implements Exportable {
                     tl.getValues(traceIndex, values);
                     plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
                     traceChart.setXAxis(false, categoryDataMap);
-                    relativeDensityCheckBox.setEnabled(true);
                     chartPanel.setYAxisTitle("Density");
+
+                    relativeDensityCheckBox.setVisible(true);
+                    labelBins.setVisible(true);
+                    binsCombo.setVisible(true);
 
                 } else if (trace.getTraceType() == Integer.class) {
                     Integer values[] = new Integer[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
-                    plot = new CategoryDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                    plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td);
                     traceChart.setXAxis(true, categoryDataMap);
-                    relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
 
+                    relativeDensityCheckBox.setVisible(false);
+                    labelBins.setVisible(false);
+                    binsCombo.setVisible(false);
+                    
                 } else if (trace.getTraceType() == String.class) {
                     String values[] = new String[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
@@ -313,11 +319,13 @@ public class DensityPanel extends JPanel implements Exportable {
                         categoryDataMap.put(intData[v], values[v]);
                     }
 
-                    plot = new CategoryDensityPlot(intData, minimumBins, td);
+                    plot = new CategoryDensityPlot(intData, -1, td);
                     traceChart.setXAxis(false, categoryDataMap);
-
-                    relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
+
+                    relativeDensityCheckBox.setVisible(false);
+                    labelBins.setVisible(false);
+                    binsCombo.setVisible(false);
 
                 } else {
                     throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());

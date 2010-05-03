@@ -33,19 +33,7 @@ import java.awt.*;
 
 public class CategoryDensityPlot extends FrequencyPlot {
 
-
-//    public CategoryDensityPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
-//        super(traceD);
-//
-//        categoryDataMap.clear();
-//        double[] doubleData = new double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
-//            categoryDataMap.put(doubleData[i], data[i]);
-//        }
-//        setData(doubleData, minimumBinCount);
-//    }
-
+    // for string[], passing the int[] storing the index of string[]
     public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
         super(traceD);
         double[] doubleData = new double[data.length];
@@ -111,12 +99,14 @@ public class CategoryDensityPlot extends FrequencyPlot {
         double binSize = axis.getMinorTickSpacing();
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
+        if (minimumBinCount > 0) {
         while (binCount < minimumBinCount) {
             majorTickCount++;
             axis.setPrefNumTicks(majorTickCount, 4);
 
             binSize = axis.getMinorTickSpacing();
             binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+        }
         }
 
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);

@@ -28,9 +28,9 @@ public class FrequencyPanel extends JPanel implements Exportable {
     private String traceName = null;
 
     private int minimumBins = 50;
-
     private JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
+    private JLabel labelBins;
 
     private JCheckBox showValuesCheckBox = new JCheckBox("Show values on above chart");
 //    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
@@ -62,10 +62,10 @@ public class FrequencyPanel extends JPanel implements Exportable {
         binsCombo.setOpaque(false);
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
         binsCombo.setSelectedItem(minimumBins);
-        JLabel label = new JLabel("Bins:");
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-        label.setLabelFor(binsCombo);
-        toolBar.add(label);
+        labelBins = new JLabel("Bins:");
+        labelBins.setFont(UIManager.getFont("SmallSystemFont"));
+        labelBins.setLabelFor(binsCombo);
+        toolBar.add(labelBins);
         toolBar.add(binsCombo);
         toolBar.add(new JLabel("                 "));
         toolBar.add(showValuesCheckBox);
@@ -140,17 +140,21 @@ public class FrequencyPanel extends JPanel implements Exportable {
             }
             traceChart.setXAxis(false, categoryDataMap);
             chartPanel.setYAxisTitle("Frequency");
+            labelBins.setVisible(true);
+            binsCombo.setVisible(true);
 
         } else if (trace.getTraceType() == Integer.class) {
             Integer values[] = new Integer[traceList.getStateCount()];
             traceList.getValues(traceIndex, values);
-            plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+            plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
 
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
             traceChart.setXAxis(true, categoryDataMap);
             chartPanel.setYAxisTitle("Count");
+            labelBins.setVisible(false);
+            binsCombo.setVisible(false);
 
         } else if (trace.getTraceType() == String.class) {
             String values[] = new String[traceList.getStateCount()];
@@ -162,13 +166,15 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 categoryDataMap.put(intData[v], values[v]);
             }
 
-            plot = new FrequencyPlot(intData, minimumBins, td);
+            plot = new FrequencyPlot(intData, -1, td);
 
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
             traceChart.setXAxis(false, categoryDataMap);
             chartPanel.setYAxisTitle("Count");
+            labelBins.setVisible(false);
+            binsCombo.setVisible(false);
 
         } else {
             throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());

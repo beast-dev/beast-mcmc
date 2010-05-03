@@ -163,12 +163,14 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         double binSize = axis.getMinorTickSpacing();
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
-        while (binCount < minimumBinCount) {
-            majorTickCount++;
-            axis.setPrefNumTicks(majorTickCount, 4);
+        if (minimumBinCount > 0) {
+            while (binCount < minimumBinCount) {
+                majorTickCount++;
+                axis.setPrefNumTicks(majorTickCount, 4);
 
-            binSize = axis.getMinorTickSpacing();
-            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+                binSize = axis.getMinorTickSpacing();
+                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+            }
         }
 
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);

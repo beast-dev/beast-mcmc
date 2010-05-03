@@ -160,14 +160,13 @@ public class CombinedTraces implements TraceList {
      * @return the trace distribution statistic object for the given index
      */
     public TraceDistribution getDistributionStatistics(int index) {
-	return getCorrelationStatistics(index);
+        return getCorrelationStatistics(index);
     }
 
     /**
      * @return the trace correlation statistic object for the given index
      */
-    public TraceCorrelation getCorrelationStatistics(int index)
-    {
+    public TraceCorrelation getCorrelationStatistics(int index) {
         if (traceStatistics == null) {
             return null;
             // this can happen if the ESS has not been calculated yet.
@@ -178,20 +177,40 @@ public class CombinedTraces implements TraceList {
     }
 
     public void analyseTrace(int index) {
-        Object[] values = new Object[getStateCount()];
-
-	// no offset: burnin is handled inside each TraceList we own and invisible to us.
+        // no offset: burnin is handled inside each TraceList we own and invisible to us.
 
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];
         }
 
-	    getValues(index, values);
-        traceStatistics[index] = new TraceCorrelation (values, getStepSize());
+        Trace trace = getTrace(index);
+
+        if (trace.getTraceType() == Double.class) {
+            Double values[] = new Double[getStateCount()];
+
+            getValues(index, values);
+            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+        } else if (trace.getTraceType() == Integer.class) {
+            Integer values[] = new Integer[getStateCount()];
+
+            getValues(index, values);
+            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+        } else if (trace.getTraceType() == String.class) {
+            String values[] = new String[getStateCount()];
+
+            getValues(index, values);
+            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+        }
+
     }
 
     public Trace getTrace(int index) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return traceLists[0].getTrace(index);
     }
 
     /**

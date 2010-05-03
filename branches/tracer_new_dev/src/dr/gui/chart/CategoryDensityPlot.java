@@ -34,17 +34,17 @@ import java.awt.*;
 public class CategoryDensityPlot extends FrequencyPlot {
 
 
-    public CategoryDensityPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
-        super(traceD);
-
-        categoryData = new String[data.length];
-        double[] doubleData = new double[data.length];
-        for (int i = 0; i < data.length; i++) {
-            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
-            categoryData[i] = data[i];
-        }
-        setData(doubleData, minimumBinCount);
-    }
+//    public CategoryDensityPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
+//        super(traceD);
+//
+//        categoryDataMap.clear();
+//        double[] doubleData = new double[data.length];
+//        for (int i = 0; i < data.length; i++) {
+//            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
+//            categoryDataMap.put(doubleData[i], data[i]);
+//        }
+//        setData(doubleData, minimumBinCount);
+//    }
 
     public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
         super(traceD);

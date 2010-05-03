@@ -9,6 +9,8 @@ import org.virion.jam.framework.Exportable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -31,7 +33,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
     private JCheckBox showValuesCheckBox = new JCheckBox("Show values on above chart");
-    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+//    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+    private DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
 
     /**
@@ -69,7 +72,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
         showValuesCheckBox.addActionListener(
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(ActionEvent actionEvent) {
-                        
+
                         validate();
                         repaint();
                     }
@@ -126,37 +129,45 @@ public class FrequencyPanel extends JPanel implements Exportable {
         Trace trace = traceList.getTrace(traceIndex);
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
 
+        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
         if (trace.getTraceType() == Double.class) {
-             Double values[] = new Double[traceList.getStateCount()];
-             traceList.getValues(traceIndex, values);
-             plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+            Double values[] = new Double[traceList.getStateCount()];
+            traceList.getValues(traceIndex, values);
+            plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
             if (td != null) {
                 plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
             }
-            traceChart.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS));
+            traceChart.setXAxis(false, categoryDataMap);
             chartPanel.setYAxisTitle("Frequency");
 
         } else if (trace.getTraceType() == Integer.class) {
-             Integer values[] = new Integer[traceList.getStateCount()];
-             traceList.getValues(traceIndex, values);
-             plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+            Integer values[] = new Integer[traceList.getStateCount()];
+            traceList.getValues(traceIndex, values);
+            plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
-            traceChart.setXAxis(new DiscreteAxis(true, true));
+            traceChart.setXAxis(true, categoryDataMap);
             chartPanel.setYAxisTitle("Count");
 
         } else if (trace.getTraceType() == String.class) {
-             String values[] = new String[traceList.getStateCount()];
-             traceList.getValues(traceIndex, values);
-             plot = new FrequencyPlot(values, minimumBins, td);
+            String values[] = new String[traceList.getStateCount()];
+            traceList.getValues(traceIndex, values);
+
+            int[] intData = new int[values.length];
+            for (int v = 0; v < values.length; v++) {
+                intData[v] = td.credSet.getIndex(values[v]);
+                categoryDataMap.put(intData[v], values[v]);
+            }
+
+            plot = new FrequencyPlot(intData, minimumBins, td);
 
             if (td != null) {
                 plot.setInCredibleSet(td.credSet);
             }
-            traceChart.setXAxis(new DiscreteAxis(true, true));
+            traceChart.setXAxis(false, categoryDataMap);
             chartPanel.setYAxisTitle("Count");
 
         } else {

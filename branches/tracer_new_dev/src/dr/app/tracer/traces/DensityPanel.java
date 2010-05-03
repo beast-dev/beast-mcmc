@@ -35,6 +35,8 @@ import org.virion.jam.framework.Exportable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A panel that displays density plots of traces
@@ -65,7 +67,9 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private ChartSetupDialog chartSetupDialog = null;
 
-    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+//    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+    private DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
     private JComboBox binsCombo = new JComboBox(
@@ -282,11 +286,12 @@ public class DensityPanel extends JPanel implements Exportable {
                 TraceDistribution td = tl.getDistributionStatistics(traceIndex);
                 FrequencyPlot plot = null;
 
+                Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
                 if (trace.getTraceType() == Double.class) {
                     Double values[] = new Double[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
                     plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                    traceChart.setXAxis(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK));
+                    traceChart.setXAxis(false, categoryDataMap);
                     relativeDensityCheckBox.setEnabled(true);
                     chartPanel.setYAxisTitle("Density");
 
@@ -294,15 +299,23 @@ public class DensityPanel extends JPanel implements Exportable {
                     Integer values[] = new Integer[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
                     plot = new CategoryDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                    traceChart.setXAxis(new DiscreteAxis(true, true));
+                    traceChart.setXAxis(true, categoryDataMap);
                     relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
 
                 } else if (trace.getTraceType() == String.class) {
                     String values[] = new String[tl.getStateCount()];
                     tl.getValues(traceIndex, values);
-                    plot = new CategoryDensityPlot(values, minimumBins, td);
-                    traceChart.setXAxis(new DiscreteAxis(true, true));
+
+                    int[] intData = new int[values.length];
+                    for (int v = 0; v < values.length; v++) {
+                        intData[v] = td.credSet.getIndex(values[v]);
+                        categoryDataMap.put(intData[v], values[v]);
+                    }
+
+                    plot = new CategoryDensityPlot(intData, minimumBins, td);
+                    traceChart.setXAxis(false, categoryDataMap);
+
                     relativeDensityCheckBox.setEnabled(false);
                     chartPanel.setYAxisTitle("Probability");
 

@@ -49,8 +49,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private boolean hasIncredibleSet = false;
     private TraceDistribution.CredibleSet credSet;
 
-    protected TraceDistribution traceD = null;
-    protected String[] categoryData;
+    protected TraceDistribution traceD = null;    
 
     protected FrequencyPlot(TraceDistribution traceD) {
         super();
@@ -81,16 +80,16 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(doubleData, minimumBinCount);
     }
 
-    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
-        this(traceD);
-        categoryData = new String[data.length];
-        double[] doubleData = new double[data.length];
-        for (int i = 0; i < data.length; i++) {
-            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
-            categoryData[i] = data[i];
-        }
-        setData(doubleData, minimumBinCount);
-    }
+//    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
+//        this(traceD);
+//        categoryDataMap.clear();
+//        double[] doubleData = new double[data.length];
+//        for (int i = 0; i < data.length; i++) {
+//            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
+//            categoryDataMap.put(doubleData[i], data[i]);
+//        }
+//        setData(doubleData, minimumBinCount);
+//    }
 
     /**
      * Set data

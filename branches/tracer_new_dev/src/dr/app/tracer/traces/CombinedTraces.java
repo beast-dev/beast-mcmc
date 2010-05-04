@@ -185,31 +185,38 @@ public class CombinedTraces implements TraceList {
 
         Trace trace = getTrace(index);
 
-        if (trace.getTraceType() == Double.class) {
-            Double values[] = new Double[getStateCount()];
+        if (trace != null) {
+            if (trace.getTraceType() == Double.class) {
+                Double values[] = new Double[getStateCount()];
 
-            getValues(index, values);
-            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
 
-        } else if (trace.getTraceType() == Integer.class) {
-            Integer values[] = new Integer[getStateCount()];
+            } else if (trace.getTraceType() == Integer.class) {
+                Integer values[] = new Integer[getStateCount()];
 
-            getValues(index, values);
-            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
 
-        } else if (trace.getTraceType() == String.class) {
-            String values[] = new String[getStateCount()];
+            } else if (trace.getTraceType() == String.class) {
+                String values[] = new String[getStateCount()];
 
-            getValues(index, values);
-            traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
 
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+            } else {
+                throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+            }
         }
 
     }
 
     public Trace getTrace(int index) {
+        for (TraceList traceList : traceLists) {
+            if (traceList.getTrace(index).getTraceType() != traceLists[0].getTrace(index).getTraceType()) {
+                return null; // trace type not comparable
+            }
+        }
         return traceLists[0].getTrace(index);
     }
 

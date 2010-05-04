@@ -408,7 +408,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     public void updateCombinedTraces() {
         if (traceLists.size() > 1) {
             TraceList[] traces = new TraceList[traceLists.size()];
-            traceLists.toArray(traces);
+            try {
+                traceLists.toArray(traces);
+            } catch (ArrayStoreException ase) {
+                combinedTraces = null;
+//                JOptionPane.showMessageDialog(this, "",
+//                        "Trace Type Exception",
+//                        JOptionPane.WARNING_MESSAGE);
+            }
             try {
                 combinedTraces = new CombinedTraces("Combined", traces);
 

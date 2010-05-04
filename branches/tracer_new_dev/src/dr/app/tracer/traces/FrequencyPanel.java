@@ -67,7 +67,6 @@ public class FrequencyPanel extends JPanel implements Exportable {
         labelBins.setLabelFor(binsCombo);
         toolBar.add(labelBins);
         toolBar.add(binsCombo);
-        toolBar.add(new JLabel("                 "));
         toolBar.add(showValuesCheckBox);
         showValuesCheckBox.addActionListener(
                 new java.awt.event.ActionListener() {
@@ -129,60 +128,64 @@ public class FrequencyPanel extends JPanel implements Exportable {
         Trace trace = traceList.getTrace(traceIndex);
         TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
 
-        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-        if (trace.getTraceType() == Double.class) {
-            Double values[] = new Double[traceList.getStateCount()];
-            traceList.getValues(traceIndex, values);
-            plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
+        if (trace != null) {
+            Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+            if (trace.getTraceType() == Double.class) {
+                Double values[] = new Double[traceList.getStateCount()];
+                traceList.getValues(traceIndex, values);
+                plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
 
-            if (td != null) {
-                plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+                if (td != null) {
+                    plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+                }
+                traceChart.setXAxis(false, categoryDataMap);
+                chartPanel.setYAxisTitle("Frequency");
+                labelBins.setVisible(true);
+                binsCombo.setVisible(true);
+                showValuesCheckBox.setVisible(false);
+
+            } else if (trace.getTraceType() == Integer.class) {
+                Integer values[] = new Integer[traceList.getStateCount()];
+                traceList.getValues(traceIndex, values);
+                plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
+
+                if (td != null) {
+                    plot.setInCredibleSet(td.credSet);
+                }
+                traceChart.setXAxis(true, categoryDataMap);
+                chartPanel.setYAxisTitle("Count");
+                labelBins.setVisible(false);
+                binsCombo.setVisible(false);
+                showValuesCheckBox.setVisible(true);
+
+            } else if (trace.getTraceType() == String.class) {
+                String values[] = new String[traceList.getStateCount()];
+                traceList.getValues(traceIndex, values);
+
+                int[] intData = new int[values.length];
+                for (int v = 0; v < values.length; v++) {
+                    intData[v] = td.credSet.getIndex(values[v]);
+                    categoryDataMap.put(intData[v], values[v]);
+                }
+
+                plot = new FrequencyPlot(intData, -1, td);
+
+                if (td != null) {
+                    plot.setInCredibleSet(td.credSet);
+                }
+                traceChart.setXAxis(false, categoryDataMap);
+                chartPanel.setYAxisTitle("Count");
+                labelBins.setVisible(false);
+                binsCombo.setVisible(false);
+                showValuesCheckBox.setVisible(true);
+
+            } else {
+                throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
             }
-            traceChart.setXAxis(false, categoryDataMap);
-            chartPanel.setYAxisTitle("Frequency");
-            labelBins.setVisible(true);
-            binsCombo.setVisible(true);
 
-        } else if (trace.getTraceType() == Integer.class) {
-            Integer values[] = new Integer[traceList.getStateCount()];
-            traceList.getValues(traceIndex, values);
-            plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
 
-            if (td != null) {
-                plot.setInCredibleSet(td.credSet);
-            }
-            traceChart.setXAxis(true, categoryDataMap);
-            chartPanel.setYAxisTitle("Count");
-            labelBins.setVisible(false);
-            binsCombo.setVisible(false);
-
-        } else if (trace.getTraceType() == String.class) {
-            String values[] = new String[traceList.getStateCount()];
-            traceList.getValues(traceIndex, values);
-
-            int[] intData = new int[values.length];
-            for (int v = 0; v < values.length; v++) {
-                intData[v] = td.credSet.getIndex(values[v]);
-                categoryDataMap.put(intData[v], values[v]);
-            }
-
-            plot = new FrequencyPlot(intData, -1, td);
-
-            if (td != null) {
-                plot.setInCredibleSet(td.credSet);
-            }
-            traceChart.setXAxis(false, categoryDataMap);
-            chartPanel.setYAxisTitle("Count");
-            labelBins.setVisible(false);
-            binsCombo.setVisible(false);
-
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+            traceChart.addPlot(plot);
         }
-
-
-        traceChart.addPlot(plot);
-
         chartPanel.setXAxisTitle(traceList.getTraceName(traceIndex));
     }
 

@@ -254,67 +254,69 @@ public class RawTracePanel extends JPanel implements Exportable {
                 Trace trace = tl.getTrace(traceIndex);
                 TraceDistribution td = tl.getDistributionStatistics(traceIndex);
 
-                Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                if (trace.getTraceType() == Double.class) {
-                    Double values[] = new Double[tl.getStateCount()];
-                    tl.getValues(traceIndex, values);
+                if (trace != null) {
+                    Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+                    if (trace.getTraceType() == Double.class) {
+                        Double values[] = new Double[tl.getStateCount()];
+                        tl.getValues(traceIndex, values);
 
-                    Double[] burninValues = null;
-                    if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                        burninValues = new Double[tl.getBurninStateCount()];
-                        tl.getBurninValues(traceIndex, burninValues);
-                    }
-
-                    traceChart.setYAxis(false, categoryDataMap);
-                    traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values), Trace.arrayConvert(burninValues), paints[i]);
-
-                } else if (trace.getTraceType() == Integer.class) {
-                    Integer values[] = new Integer[tl.getStateCount()];
-                    tl.getValues(traceIndex, values);
-
-                    Integer[] burninValues = null;
-                    if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                        burninValues = new Integer[tl.getBurninStateCount()];
-                        tl.getBurninValues(traceIndex, burninValues);
-                    }
-
-                    traceChart.setYAxis(true, categoryDataMap);
-                    traceChart.addTrace(name, stateStart, stateStep, Trace.arrayIntToDouble(values), Trace.arrayIntToDouble(burninValues), paints[i]);
-
-                } else if (trace.getTraceType() == String.class) {
-                    String values[] = new String[tl.getStateCount()];
-                    tl.getValues(traceIndex, values);
-
-                    double[] doubleData = new double[values.length];
-                    for (int v = 0; v < values.length; v++) {
-                        doubleData[v] = td.credSet.getIndex(values[v]);
-                        categoryDataMap.put((int) doubleData[v], values[v]);
-                    }
-
-                    double[] doubleBurninData = null;
-                    if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                        String[] burninValues = new String[tl.getBurninStateCount()];
-                        tl.getBurninValues(traceIndex, burninValues);
-
-                        doubleBurninData = new double[burninValues.length];
-                        categoryDataMap.clear();
-                        for (int v = 0; v < burninValues.length; v++) {
-                            doubleBurninData[v] = td.credSet.getIndex(burninValues[v]);
-                            categoryDataMap.put((int) doubleBurninData[v], burninValues[v]);
+                        Double[] burninValues = null;
+                        if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                            burninValues = new Double[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, burninValues);
                         }
+
+                        traceChart.setYAxis(false, categoryDataMap);
+                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values), Trace.arrayConvert(burninValues), paints[i]);
+
+                    } else if (trace.getTraceType() == Integer.class) {
+                        Integer values[] = new Integer[tl.getStateCount()];
+                        tl.getValues(traceIndex, values);
+
+                        Integer[] burninValues = null;
+                        if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                            burninValues = new Integer[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, burninValues);
+                        }
+
+                        traceChart.setYAxis(true, categoryDataMap);
+                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayIntToDouble(values), Trace.arrayIntToDouble(burninValues), paints[i]);
+
+                    } else if (trace.getTraceType() == String.class) {
+                        String values[] = new String[tl.getStateCount()];
+                        tl.getValues(traceIndex, values);
+
+                        double[] doubleData = new double[values.length];
+                        for (int v = 0; v < values.length; v++) {
+                            doubleData[v] = td.credSet.getIndex(values[v]);
+                            categoryDataMap.put((int) doubleData[v], values[v]);
+                        }
+
+                        double[] doubleBurninData = null;
+                        if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                            String[] burninValues = new String[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, burninValues);
+
+                            doubleBurninData = new double[burninValues.length];
+                            categoryDataMap.clear();
+                            for (int v = 0; v < burninValues.length; v++) {
+                                doubleBurninData[v] = td.credSet.getIndex(burninValues[v]);
+                                categoryDataMap.put((int) doubleBurninData[v], burninValues[v]);
+                            }
+                        }
+
+                        traceChart.setYAxis(false, categoryDataMap);
+                        traceChart.addTrace(name, stateStart, stateStep, doubleData, doubleBurninData, paints[i]);
+
+                    } else {
+                        throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
                     }
 
-                    traceChart.setYAxis(false, categoryDataMap);
-                    traceChart.addTrace(name, stateStart, stateStep, doubleData, doubleBurninData, paints[i]);
-
-                } else {
-                    throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+                    if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
+                        i++;
+                    }
+                    if (i == paints.length) i = 0;
                 }
-
-                if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
-                    i++;
-                }
-                if (i == paints.length) i = 0;
             }
             if (colourBy == COLOUR_BY_FILE) {
                 i++;

@@ -25,9 +25,6 @@
 
 package dr.inference.trace;
 
-import java.lang.reflect.Array;
-
-
 /**
  * A simple class that stores a trace for a single statistic
  *
@@ -39,7 +36,7 @@ public class Trace<T> {
 
     public static final int INITIAL_SIZE = 1000;
     public static final int INCREMENT_SIZE = 1000;
-    
+
     //    private TraceType traceType = TraceType.CONTINUOUS;
     protected T[] values = (T[]) new Object[INITIAL_SIZE];
     protected int valueCount = 0;
@@ -123,17 +120,23 @@ public class Trace<T> {
 //    }
 
     public static double[] arrayConvert(Double[] src) {
-        double[] dest = new double[src.length];
-        for (int i=0; i < src.length; i++) {
-            dest[i] = src[i].doubleValue();
+        double[] dest = null;
+        if (src != null) {
+            dest = new double[src.length];
+            for (int i = 0; i < src.length; i++) {
+                dest[i] = src[i].doubleValue();
+            }
         }
         return dest;
     }
 
     public static int[] arrayConvert(Integer[] src) {
-        int[] dest = new int[src.length];
-        for (int i=0; i < src.length; i++) {
-            dest[i] = src[i].intValue();
+        int[] dest = null;
+        if (src != null) {
+            dest = new int[src.length];
+            for (int i = 0; i < src.length; i++) {
+                dest[i] = src[i].intValue();
+            }
         }
         return dest;
     }
@@ -143,9 +146,12 @@ public class Trace<T> {
     }
 
     public static double[] arrayIntToDouble(Integer[] src) {
-        double[] dest = new double[src.length];
-        for (int i=0; i < src.length; i++) {
-            dest[i] = (double) src[i];
+        double[] dest = null;
+        if (src != null) {
+            dest = new double[src.length];
+            for (int i = 0; i < src.length; i++) {
+                dest[i] = (double) src[i];
+            }
         }
         return dest;
     }

@@ -26,7 +26,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
+import dr.gui.chart.DiscreteJChart;
 import dr.gui.chart.Plot;
 import dr.stats.Variate;
 
@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 
-public class JTraceChart extends JChart {
+public class JTraceChart extends DiscreteJChart {
 
     private static final int SAMPLE_POINTS = 1000;
 

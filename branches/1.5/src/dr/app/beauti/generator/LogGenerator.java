@@ -342,6 +342,10 @@ public class LogGenerator extends Generator {
                 treeFileName = options.fileNameStem + "." + tree.getPrefix() + GMRFFixedGridImportanceSampler.TREE_FILE_NAME; // stem.partitionName.tree
             }
 
+            if (options.treeFileName.get(0).endsWith(".txt")) {
+                treeFileName += ".txt";
+            }
+
             List<Attribute> attributes = new ArrayList<Attribute>();
 
             attributes.add(new Attribute.Default<String>(XMLParser.ID, tree.getPrefix() + TREE_FILE_LOG)); // partionName.treeFileLog

@@ -26,8 +26,8 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
-import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
@@ -188,6 +188,22 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         messageLabel.setText("");
 
+        if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY && td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+
+        } else if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY || td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+
+        } else {
+            numericalPlot(td1, td2);
+        }
+
+        chartPanel.setXAxisTitle(name1);
+        chartPanel.setYAxisTitle(name2);
+
+        validate();
+        repaint();
+    }
+
+    private void numericalPlot(TraceDistribution td1, TraceDistribution td2) {
         int maxCount = Math.max(tl1.getStateCount(), tl2.getStateCount());
         int minCount = Math.min(tl1.getStateCount(), tl2.getStateCount());
 
@@ -209,37 +225,58 @@ public class CorrelationPanel extends JPanel implements Exportable {
             }
         }
 
-        Double values[] = new Double[maxCount];
-
-        tl1.getValues(traceIndex1, values);
-
         double samples1[] = new double[sampleSize];
         int k = 0;
-        for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = values[k];
-            k += minCount / sampleSize;
-        }
 
-        tl2.getValues(traceIndex2, values);
+        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            correlationChart.setXAxis(new DiscreteAxis(true, true));
+
+            Integer values[] = new Integer[maxCount];
+            tl1.getValues(traceIndex1, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = (double) values[k];
+                k += minCount / sampleSize;
+            }
+        } else {
+            correlationChart.setXAxis(new LinearAxis());
+
+            Double values[] = new Double[maxCount];
+            tl1.getValues(traceIndex1, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = values[k];
+                k += minCount / sampleSize;
+            }
+        }
 
         double samples2[] = new double[sampleSize];
         k = 0;
-        for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values[k];
-            k += minCount / sampleSize;
+
+        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            correlationChart.setYAxis(new DiscreteAxis(true, true));
+
+            Integer values[] = new Integer[maxCount];
+            tl2.getValues(traceIndex2, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples2[i] = (double) values[k];
+                k += minCount / sampleSize;
+            }
+        } else {
+            correlationChart.setXAxis(new LinearAxis());
+            
+            Double values[] = new Double[maxCount];
+            tl2.getValues(traceIndex2, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples2[i] = values[k];
+                k += minCount / sampleSize;
+            }
         }
 
         ScatterPlot plot = new ScatterPlot(samples1, samples2);
         plot.setMarkStyle(pointsCheckBox.isSelected() ? Plot.POINT_MARK : Plot.CIRCLE_MARK, pointsCheckBox.isSelected() ? 1.0 : 3.0,
                 new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER),
-                new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255), new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255));
+                new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255),
+                new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255));
         correlationChart.addPlot(plot);
-
-        chartPanel.setXAxisTitle(name1);
-        chartPanel.setYAxisTitle(name2);
-
-        validate();
-        repaint();
     }
 
     public JComponent getExportableComponent() {

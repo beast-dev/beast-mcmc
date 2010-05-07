@@ -11,110 +11,117 @@ import java.util.ArrayList;
 
 public class JIntervalsChart extends JChart {
 
-	//private static final int MAX_POINTS = 1000;
+    //private static final int MAX_POINTS = 1000;
 
-	// private boolean isLinePlot = false;
+    // private boolean isLinePlot = false;
 
-	private class Interval {
-		String name;
-		double value, upper, lower;
-		boolean bold;
+    private class Interval {
+        String name;
+        double value, upper, lower;
+        boolean bold;
 
-		Interval(String name, double value, double upper, double lower, boolean bold) {
+        Interval(String name, double value, double upper, double lower, boolean bold) {
 
-			this.name = name;
-			this.value = value;
-			this.upper = upper;
-			this.lower = lower;
-			this.bold = bold;
-		}
-	}
+            this.name = name;
+            this.value = value;
+            this.upper = upper;
+            this.lower = lower;
+            this.bold = bold;
+        }
+    }
 
-	private final ArrayList<Interval> intervals = new ArrayList<Interval>();
+    private final ArrayList<Interval> intervals = new ArrayList<Interval>();
 
-	public JIntervalsChart(Axis yAxis) {
-		super(new DiscreteAxis(true, true), yAxis);
-	}
+    public JIntervalsChart(Axis yAxis) {
+        super(new DiscreteAxis(true, true), yAxis);
+    }
 
-	public void addIntervals(String name, double value, double upper, double lower, boolean bold) {
+     public JIntervalsChart(Axis xAxis, Axis yAxis) {
+        super(xAxis, yAxis);
+    }
 
-		intervals.add(new Interval(name, value, upper, lower, bold));
+    public void addIntervals(String name, double value, double upper, double lower, boolean bold) {
 
-		xAxis.addRange(1, intervals.size());
-		yAxis.addRange(lower, upper);
+        intervals.add(new Interval(name, value, upper, lower, bold));
 
-		recalibrate();
-		repaint();
-	}
+        xAxis.addRange(1, intervals.size());
+        yAxis.addRange(lower, upper);
 
-	public void removeAllIntervals() {
-		intervals.clear();
-		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		removeAllPlots();
-		recalibrate();
-		repaint();
-	}
+        recalibrate();
+        repaint();
+    }
 
-	protected void calibrate(Graphics2D g2, Dimension size) { }
+    public void removeAllIntervals() {
+        intervals.clear();
+        xAxis.setRange(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        yAxis.setRange(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        removeAllPlots();
+        recalibrate();
+        repaint();
+    }
 
-	protected boolean hasContents() {
-		return intervals.size() > 0;
-	}
+    protected void calibrate(Graphics2D g2, Dimension size) {
+    }
 
-	protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
-	{
-		if (horizontalAxis) {
-			g2.setPaint(getAxisPaint());
-			g2.setStroke(getAxisStroke());
+    protected boolean hasContents() {
+        return intervals.size() > 0;
+    }
 
-			int index = ((int)value) - 1;
-			Interval interval = intervals.get(index);
-			String label = interval.name;
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis) {
+        if (hasContents() && horizontalAxis) {
+            g2.setPaint(getAxisPaint());
+            g2.setStroke(getAxisStroke());
 
-			double pos = transformX(value);
+            int index = ((int) value) - 1;
+            Interval interval = intervals.get(index);
+            String label = interval.name;
 
-			Line2D line = new Line2D.Double(pos, getPlotBounds().getMaxY(), pos, getPlotBounds().getMaxY() + getMajorTickSize());
-			g2.draw(line);
+            double pos = transformX(value);
 
-			g2.setPaint(getLabelPaint());
-			double width = g2.getFontMetrics().stringWidth(label);
-			g2.drawString(label, (float)(pos - (width / 2)), (float)(getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
-		} else {
-			super.paintMajorTick(g2, value, horizontalAxis);
-		}
-	}
+            Line2D line = new Line2D.Double(pos, getPlotBounds().getMaxY(), pos, getPlotBounds().getMaxY() + getMajorTickSize());
+            g2.draw(line);
 
-	protected void paintContents(Graphics2D g2) {
+            g2.setPaint(getLabelPaint());
+            double width = g2.getFontMetrics().stringWidth(label);
+            g2.drawString(label, (float) (pos - (width / 2)), (float) (getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
+        } else {
+            super.paintMajorTick(g2, value, horizontalAxis);
+        }
+    }
 
-		for (int i = 0; i < intervals.size(); i++) {
+    protected void paintContents(Graphics2D g2) {
+        if (hasContents()) {
+            for (int i = 0; i < intervals.size(); i++) {
 
-			Interval interval = intervals.get(i);
+                Interval interval = intervals.get(i);
 
-			float x = (float)transformX(i + 1);
-			float xLeft = (float)transformX(((double)i + 1) - 0.1);
-			float xRight = (float)transformX(((double)i + 1) + 0.1);
-			//float y = (float)transformY(interval.value);
-			float yUpper = (float)transformY(interval.upper);
-			float yLower = (float)transformY(interval.lower);
+                float x = (float) transformX(i + 1);
+                float xLeft = (float) transformX(((double) i + 1) - 0.1);
+                float xRight = (float) transformX(((double) i + 1) + 0.1);
+                //float y = (float)transformY(interval.value);
+                float yUpper = (float) transformY(interval.upper);
+                float yLower = (float) transformY(interval.lower);
 
-			GeneralPath path = new GeneralPath();
-			path.moveTo(xLeft , yUpper);
-			path.lineTo(xRight, yUpper);
-			path.moveTo(x, yUpper);
-			path.lineTo(x, yLower);
-			path.moveTo(xLeft , yLower);
-			path.lineTo(xRight, yLower);
+                GeneralPath path = new GeneralPath();
+                path.moveTo(xLeft, yUpper);
+                path.lineTo(xRight, yUpper);
+                path.moveTo(x, yUpper);
+                path.lineTo(x, yLower);
+                path.moveTo(xLeft, yLower);
+                path.lineTo(xRight, yLower);
 
-			if (interval.bold) {
-				g2.setStroke(new BasicStroke(2.0f));
-			} else {
-				g2.setStroke(new BasicStroke(1.0f));
-			}
-			g2.setPaint(Color.black);
-			g2.draw(path);
-		}
+                if (interval.bold) {
+                    g2.setStroke(new BasicStroke(2.0f));
+                } else {
+                    g2.setStroke(new BasicStroke(1.0f));
+                }
+                g2.setPaint(Color.black);
+                g2.draw(path);
+            }
+        } else {
+            super.paintContents(g2);
+        }
 
-	}
+    }
 
 }

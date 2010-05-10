@@ -81,6 +81,7 @@ public class Patterns implements PatternList {
     public Patterns(DataType dataType, TaxonList taxonList) {
         this.dataType = dataType;
         this.taxonList = taxonList;
+        patternLength = taxonList.getTaxonCount();
     }
 
     /**
@@ -308,7 +309,7 @@ public class Patterns implements PatternList {
     /**
      * @return true if the pattern has one or more gaps
      */
-    private boolean isGapped(int[] pattern) {
+    protected boolean isGapped(int[] pattern) {
         int len = pattern.length;
 
         for (int i = 0; i < len; i++) {
@@ -322,7 +323,7 @@ public class Patterns implements PatternList {
     /**
      * @return true if the pattern has one or more ambiguous states
      */
-    private boolean isAmbiguous(int[] pattern) {
+    protected boolean isAmbiguous(int[] pattern) {
         int len = pattern.length;
 
         for (int i = 0; i < len; i++) {
@@ -336,7 +337,7 @@ public class Patterns implements PatternList {
     /**
      * @return true if the pattern is invariant
      */
-    private boolean isUnknown(int[] pattern) {
+    protected boolean isUnknown(int[] pattern) {
         int len = pattern.length;
 
         for (int i = 0; i < len; i++) {
@@ -350,7 +351,7 @@ public class Patterns implements PatternList {
     /**
      * @return true if the pattern is invariant
      */
-    public static boolean isInvariant(int[] pattern) {
+    protected static boolean isInvariant(int[] pattern) {
         int len = pattern.length;
 
         int state = pattern[0];
@@ -368,7 +369,7 @@ public class Patterns implements PatternList {
      *
      * @return true if they are identical
      */
-    private boolean comparePatterns(int[] pattern1, int[] pattern2) {
+    protected boolean comparePatterns(int[] pattern1, int[] pattern2) {
 
         int len = pattern1.length;
         for (int i = 0; i < len; i++) {

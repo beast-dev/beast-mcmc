@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools;
+package dr.app.pathogen;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.util.Arguments;
+import dr.app.tools.NexusExporter;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
@@ -45,6 +46,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
+ * Essentially a command line version of PathOgen. Written to
+ * perform the analysis on sets of trees.
+ * 
  * @author Andrew Rambaut
  */
 
@@ -52,7 +56,7 @@ public class RootToTip {
 
     private final static Version version = new BeastVersion();
 
-    public RootToTip(int burnin, String dateOrder, String outgroup,
+    public RootToTip(int burnin, String dateOrder, final boolean keepRoot, String outgroup,
                      boolean writeTree, String inputFileName, String outputFileName) throws IOException {
 
         System.out.println("Reading tree(s)...");
@@ -96,7 +100,12 @@ public class RootToTip {
                 }
 
                 if (totalTrees >= burnin) {
-                    Tree rootedTree = temporalRooting.findRoot(tree);
+                    Tree rootedTree = tree;
+
+                    if (!keepRoot) {
+                        rootedTree = temporalRooting.findRoot(tree, TemporalRooting.RootingFunction.CORRELATION);
+                    }
+
                     regressions.add(temporalRooting.getRootToTipRegression(rootedTree));
 
                     if (writeTree) {
@@ -217,6 +226,7 @@ public class RootToTip {
                         new Arguments.IntegerOption("burnin", "the number of trees to be ignored as 'burn-in' [default = 0]"),
                         new Arguments.StringOption("dateorder", "date_order", "order of date field in taxon name: first, last, 1, 2 etc. [default = last]"),
 //                        new Arguments.StringOption("outgroup", "{taxon list}", "one or more taxa that will be used to root the tree(s) [default = find root]"),
+                        new Arguments.Option("keeproot", "keep the existing root of the input trees [default = estimate root]"),
                         new Arguments.Option("writetree", "Write the optimally rooted tree to the output file"),
                         new Arguments.Option("help", "option to print this message"),
                 });
@@ -249,6 +259,8 @@ public class RootToTip {
             outgroup = arguments.getStringOption("dateorder").toUpperCase();
         }
 
+        boolean keepRoot = arguments.hasOption("keeproot");
+
         boolean writeTree = arguments.hasOption("writetree");
 
         String[] args2 = arguments.getLeftoverArguments();
@@ -274,6 +286,7 @@ public class RootToTip {
 
         new RootToTip(burnin,
                 dateOrder,
+                keepRoot,
                 outgroup,
                 writeTree,
                 inputFileName,

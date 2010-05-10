@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+
+<beast>
+
+    <taxa id="taxa1">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+    </taxa>
+
+    <taxa id="AB">
+        <taxon idref="A"/>
+        <taxon idref="B"/>
+    </taxa>
+
+    <!-- create a demographic model and intialize currentPopulationSize parameter -->
+    <constantSize id="demo1" units="years">
+        <populationSize>
+            <parameter id="demo1.pop1" value="10.0"/>
+        </populationSize>
+    </constantSize>
+
+    <!-- starting tree -->
+    <newick id="startingTree">
+        ((A:1,B:1):1,C:2);
+    </newick>
+
+
+    <!-- A prior on the distribution node heights defined given                  -->
+    <!-- a Yule speciation process (a pure birth process).                       -->
+    <yuleModel id="yule" units="substitutions">
+        <birthRate>
+            <!-- lambda is the birthRate below -->
+            <parameter id="yule.birthRate" value="1.0" lower="0.0"
+                       upper="100.0"/>
+        </birthRate>
+    </yuleModel>
+
+    <treeModel id="treeModel">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel1.rootHeight"/>
+        </rootHeight>
+        <nodeHeights rootNode="false" internalNodes="true">
+            <parameter id="treeModel1.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights rootNode="true" internalNodes="true">
+            <parameter id="treeModel1.allNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <tmrcaStatistic id="tmrca(AB)">
+        <mrca>
+            <taxa idref="AB"/>
+        </mrca>
+        <treeModel idref="treeModel"/>
+    </tmrcaStatistic>
+
+    <monophylyStatistic id="mono(AB)">
+        <mrca>
+            <taxa idref="AB"/>
+        </mrca>
+        <treeModel idref="treeModel"/>
+    </monophylyStatistic>
+
+    <speciationLikelihood id="speciation">
+        <model>
+            <yuleModel idref="yule"/>
+        </model>
+        <speciesTree>
+            <treeModel idref="treeModel"/>
+        </speciesTree>
+    </speciationLikelihood>
+
+    <treeLengthStatistic name="TL" id="TL">
+        <treeModel idref="treeModel"/>
+    </treeLengthStatistic>
+
+    <mcmc id="mcmc1" chainLength="1000000">
+        <posterior>
+            <speciationLikelihood idref="speciation"/>
+            <!-- theta is the scale in gamma prior below -->
+            <gammaPrior shape="2" scale="1">
+                <tmrcaStatistic idref="tmrca(AB)"/>
+            </gammaPrior>
+            <booleanLikelihood>
+                <monophylyStatistic idref="mono(AB)"/>
+            </booleanLikelihood>
+        </posterior>
+        <log id="logScreen2" logEvery="100000">
+            <column dp="4">
+                <speciationLikelihood idref="speciation"/>
+                <parameter idref="treeModel1.rootHeight"/>
+                <treeLengthStatistic idref="TL"/>
+                <tmrcaStatistic idref="tmrca(AB)"/>
+            </column>
+        </log>
+        <log id="log1" logEvery="10" fileName="yuleCase3.log">
+            <speciationLikelihood idref="speciation"/>
+            <parameter idref="treeModel1.rootHeight"/>
+            <treeLengthStatistic idref="TL"/>
+            <tmrcaStatistic idref="tmrca(AB)"/>
+        </log>
+        <logTree id="logTree1" logEvery="100" nexusFormat="true"
+                 fileName="yuleCase3.trees">
+            <treeModel idref="treeModel"/>
+        </logTree>
+        <operators>
+            <subtreeSlide weight="1" gaussian="true" size="1">
+                <treeModel idref="treeModel"/>
+            </subtreeSlide>
+        </operators>
+    </mcmc>
+
+    <report>
+        Time taken:
+        <property name="timer">
+            <mcmc idref="mcmc1"/>
+        </property>
+    </report>
+
+    <traceAnalysis fileName="yuleCase3.log" burnIn="1000">
+        <!-- expectation of trmca(AB) for 3 tips, theta = 1 and lambda = 1 is 1 / 2 -->
+        <expectation name="tmrca(AB)" value="0.5"/>
+    </traceAnalysis>
+
+    <treeTraceAnalysis fileName="yulePrior.trees"/>
+
+</beast>
+
+

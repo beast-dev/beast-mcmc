@@ -53,17 +53,21 @@ public class TraceCorrelation<T> extends TraceDistribution {
     private void analyseCorrelation(T[] values, int stepSize) {
         this.values = values;
 
-         if (values[0] instanceof Double) {
+         if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
              double[] doubleValues = new double[values.length];
              for (int i = 0; i < values.length; i++) {
                 doubleValues[i] = ((Double) values[i]).doubleValue();
             }
              analyseCorrelationContinuous(doubleValues, stepSize);
 
-         } else if (values[0] instanceof Integer) {
+         } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+              double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Integer) values[i]).doubleValue();
+            }
+             analyseCorrelationContinuous(doubleValues, stepSize);
 
-
-         } else if (values[0] instanceof String) {
+         } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
 
 
          } else {

@@ -293,6 +293,15 @@ public class TraceDistribution<T> {
             return freqOfMode;
         }
 
+        public List<String> getValues() {
+            List<String> values = new ArrayList<String>();
+            for (T value : valuesMap.keySet()) {
+                if (!values.contains(value.toString()))
+                    values.add(value.toString());                 
+            }
+            return values;
+        }
+
         private void calculateMode() {
             for (T value : valuesMap.keySet()) {
                 if (freqOfMode < valuesMap.get(value)) {

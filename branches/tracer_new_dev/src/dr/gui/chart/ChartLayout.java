@@ -118,7 +118,7 @@ public class ChartLayout implements LayoutManager2 {
                 name = "Chart";
             }
 
-            if ("Chart".equals(name)) {
+            if ("Chart".equals(name) || "Table".equals(name)) {
                 chart = comp;
             } else if ("Title".equals(name)) {
                 title = comp;

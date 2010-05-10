@@ -36,13 +36,14 @@ public class JIntervalsChart extends JChart {
         super(new DiscreteAxis(true, true), yAxis);
     }
 
-     public JIntervalsChart(Axis xAxis, Axis yAxis) {
+    public JIntervalsChart(Axis xAxis, Axis yAxis) {
         super(xAxis, yAxis);
+        intervals.clear();
     }
 
-    public void addIntervals(String name, double value, double upper, double lower, boolean bold) {
+    public void addIntervals(String name, double mean, double upper, double lower, boolean bold) {
 
-        intervals.add(new Interval(name, value, upper, lower, bold));
+        intervals.add(new Interval(name, mean, upper, lower, bold));
 
         xAxis.addRange(1, intervals.size());
         yAxis.addRange(lower, upper);
@@ -64,11 +65,15 @@ public class JIntervalsChart extends JChart {
     }
 
     protected boolean hasContents() {
-        return intervals.size() > 0;
+        if (intervals.size() > 0) {
+            return intervals.size() > 0;
+        } else {
+            return super.hasContents();
+        }
     }
 
     protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis) {
-        if (hasContents() && horizontalAxis) {
+        if (intervals.size() > 0 && horizontalAxis) {
             g2.setPaint(getAxisPaint());
             g2.setStroke(getAxisStroke());
 
@@ -90,7 +95,7 @@ public class JIntervalsChart extends JChart {
     }
 
     protected void paintContents(Graphics2D g2) {
-        if (hasContents()) {
+        if (intervals.size() > 0) {
             for (int i = 0; i < intervals.size(); i++) {
 
                 Interval interval = intervals.get(i);

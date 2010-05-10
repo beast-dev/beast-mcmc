@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * A panel that displays correlation plots of 2 traces
@@ -48,8 +49,11 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     private ChartSetupDialog chartSetupDialog = null;
 
-    private JChart correlationChart = new JChart(new LinearAxis(), new LinearAxis());
+    private JIntervalsChart correlationChart = new JIntervalsChart(new LinearAxis(), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(correlationChart, null, "", "");
+    private TablePanel tablePanel = new TablePanel(null, "", "");
+    private JChartPanel currentPanel = null;
+
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private JCheckBox sampleCheckBox = new JCheckBox("Sample only");
@@ -73,8 +77,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
         setMinimumSize(new Dimension(300, 150));
         setLayout(new BorderLayout());
 
-        add(messageLabel, BorderLayout.NORTH);
-        add(chartPanel, BorderLayout.CENTER);
+//        add(messageLabel, BorderLayout.NORTH);
+//        add(chartPanel, BorderLayout.CENTER);
 
         JToolBar toolBar = new JToolBar();
         toolBar.setOpaque(false);
@@ -140,7 +144,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
-        correlationChart.removeAllPlots();
+//        correlationChart.removeAllPlots();
 
         if (traceLists != null && traceNames != null && traceLists.length == 2 && traceNames.size() == 1) {
             tl1 = traceLists[0];
@@ -168,39 +172,130 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     private void setupChart() {
 
-        correlationChart.removeAllPlots();
-
         if (tl1 == null || tl2 == null) {
+            currentPanel = chartPanel;
+
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("Select two statistics or traces from the table to view their correlation");
+            correlationChart.removeAllPlots();
             return;
         }
 
         TraceDistribution td1 = tl1.getDistributionStatistics(traceIndex1);
         TraceDistribution td2 = tl2.getDistributionStatistics(traceIndex2);
         if (td1 == null || td2 == null) {
+            currentPanel = chartPanel;
+
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("Waiting for analysis to complete");
+            correlationChart.removeAllPlots();
             return;
         }
 
         messageLabel.setText("");
 
-        if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY && td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+        if (td1.getTraceType() != TraceFactory.TraceType.CONTINUOUS && td2.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+            currentPanel = tablePanel;
+            sampleCheckBox.setVisible(false);
+            pointsCheckBox.setVisible(false);
+            translucencyCheckBox.setVisible(false);
 
-        } else if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY || td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+            Object[] rowNames = td1.credSet.getValues().toArray();
+            Object[] colNames = td2.credSet.getValues().toArray();
+            double[][] data = categoryPlot(td1, td2);
 
+            tablePanel.setTable(rowNames, colNames, data);
+            tablePanel.repaint();
         } else {
-            numericalPlot(td1, td2);
-        }
+            currentPanel = chartPanel;
+            sampleCheckBox.setVisible(true);
+            pointsCheckBox.setVisible(true);
+            translucencyCheckBox.setVisible(true);
+            correlationChart.removeAllPlots();
 
-        chartPanel.setXAxisTitle(name1);
-        chartPanel.setYAxisTitle(name2);
+            if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+
+                correlationChart.setXAxis(new DiscreteAxis(true, true));
+
+//              correlationChart.addIntervals(name, td2.getMean(), td2.getUpperHPD(), td2.getLowerHPD(), false);
+
+            } else if (td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+
+                correlationChart.setXAxis(new DiscreteAxis(true, true));
+
+//            intervalsChart.addIntervals(name, td.getMean(), td.getUpperHPD(), td.getLowerHPD(), false);
+            } else {
+                numericalPlot(td1, td2);
+            }
+        }
+        currentPanel.setXAxisTitle(name1);
+        currentPanel.setYAxisTitle(name2);
 
         validate();
         repaint();
+    }
+
+    private double[][] categoryPlot(TraceDistribution td1, TraceDistribution td2) {
+        List<String> rowNames = td1.credSet.getValues();
+        List<String> colNames = td2.credSet.getValues();
+
+        double[][] data = new double[rowNames.size()][colNames.size()];
+
+        int maxCount = Math.max(tl1.getStateCount(), tl2.getStateCount());
+        int minCount = Math.min(tl1.getStateCount(), tl2.getStateCount());
+
+        int sampleSize = minCount;
+
+        String samples1[] = new String[sampleSize];
+        int k = 0;
+
+        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            tl1.getValues(traceIndex1, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = values[k].toString();
+                k += minCount / sampleSize;
+            }
+        } else {
+            String values[] = new String[maxCount];
+            tl1.getValues(traceIndex1, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = values[k];
+                k += minCount / sampleSize;
+            }
+        }
+
+        String samples2[] = new String[sampleSize];
+        k = 0;
+
+        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            tl2.getValues(traceIndex2, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples2[i] = values[k].toString();
+                k += minCount / sampleSize;
+            }
+        } else {
+            String values[] = new String[maxCount];
+            tl2.getValues(traceIndex2, values);
+            for (int i = 0; i < sampleSize; i++) {
+                samples2[i] = values[k];
+                k += minCount / sampleSize;
+            }
+        }
+
+        // calculate count
+        for (int i = 0; i < sampleSize; i++) {
+            if (rowNames.contains(samples1[i]) && colNames.contains(samples2[i])) {
+               data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] =+ 1;
+            } else {
+               System.err.println("Not find row or column name. i = " + i); 
+            }
+        }
+
+        return data;
     }
 
     private void numericalPlot(TraceDistribution td1, TraceDistribution td2) {
@@ -261,8 +356,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
                 k += minCount / sampleSize;
             }
         } else {
-            correlationChart.setXAxis(new LinearAxis());
-            
+            correlationChart.setYAxis(new LinearAxis());
+
             Double values[] = new Double[maxCount];
             tl2.getValues(traceIndex2, values);
             for (int i = 0; i < sampleSize; i++) {

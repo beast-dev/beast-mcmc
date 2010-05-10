@@ -317,20 +317,16 @@ public class LogFileTraces extends AbstractTraceList {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
             if (firstToken.contains(TraceFactory.TraceType.INTEGER.toString())
-                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {
-                token = tokens.nextToken(); // move to 1st trace name
-                tracesType.put(token, TraceFactory.TraceType.INTEGER); // record 1st trace name if only 1 name
+                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {                
                 while (tokens.hasMoreTokens()) {
-                    tracesType.put(token, TraceFactory.TraceType.INTEGER);
                     token = tokens.nextToken();
+                    tracesType.put(token, TraceFactory.TraceType.INTEGER);
                 }
             } else if (firstToken.contains(TraceFactory.TraceType.CATEGORY.toString())
                     || firstToken.contains(TraceFactory.TraceType.CATEGORY.toString().toUpperCase())) {
-                token = tokens.nextToken(); // move to 1st trace name
-                tracesType.put(token, TraceFactory.TraceType.CATEGORY);
                 while (tokens.hasMoreTokens()) {
-                    tracesType.put(token, TraceFactory.TraceType.CATEGORY);
-                    token = tokens.nextToken();
+                   token = tokens.nextToken();
+                   tracesType.put(token, TraceFactory.TraceType.CATEGORY);
                 }
             }
         }

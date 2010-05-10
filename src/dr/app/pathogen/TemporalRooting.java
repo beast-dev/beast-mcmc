@@ -23,15 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools;
+package dr.app.pathogen;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.*;
 import dr.evolution.util.Date;
 import dr.stats.Regression;
 import dr.stats.DiscreteStatistics;
-import dr.math.UnivariateMinimum;
-import dr.math.UnivariateFunction;
+import dr.math.*;
 
 import java.util.*;
 
@@ -41,6 +40,24 @@ import java.util.*;
 
 public class TemporalRooting {
 
+    public enum RootingFunction {
+        RESIDUAL_MEAN_SQUARED("residual mean squared"),
+//        SUM_RESIDUAL_SQUARED("sum squared residuals"),
+        CORRELATION("correlation"),
+        R_SQUARED("R squared");
+
+        RootingFunction(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    }
+
     private boolean contemporaneous = false;
     private final TaxonList taxa;
     private final Map<String, Double> dates;
@@ -48,6 +65,9 @@ public class TemporalRooting {
     private double targetRate = 0.0;
     private double dateMin;
     private double dateMax;
+
+    private int currentRootBranch = 0;
+    private int totalRootBranches = 0;
 
     public TemporalRooting(TaxonList taxa) {
         this.taxa = taxa;
@@ -91,10 +111,10 @@ public class TemporalRooting {
         return dateMax - dateMin;
     }
 
-    public Tree findRoot(Tree tree) {
+    public Tree findRoot(Tree tree, RootingFunction rootingFunction) {
 
         double[] dates = getTipDates(tree);
-        return findGlobalRoot(tree, dates);
+        return findGlobalRoot(tree, dates, rootingFunction);
     }
 
     public Regression getRootToTipRegression(Tree tree) {
@@ -152,20 +172,21 @@ public class TemporalRooting {
         return labels;
     }
 
-    private Tree findGlobalRoot(final Tree source, final double[] dates) {
+    private Tree findGlobalRoot(final Tree source, final double[] dates, RootingFunction rootingFunction) {
 
         FlexibleTree bestTree = new FlexibleTree(source);
-        double minF = findLocalRoot(bestTree, dates);
+        double minF = findLocalRoot(bestTree, dates, rootingFunction);
         double minDiff = Double.MAX_VALUE;
 
-        for (int i = 0; i < source.getNodeCount(); i++) {
+        totalRootBranches = source.getNodeCount();
+        for (currentRootBranch = 0; currentRootBranch < source.getNodeCount(); currentRootBranch++) {
             FlexibleTree tmpTree = new FlexibleTree(source);
-            NodeRef node = tmpTree.getNode(i);
+            NodeRef node = tmpTree.getNode(currentRootBranch);
             if (!tmpTree.isRoot(node)) {
                 double length = tmpTree.getBranchLength(node);
                 tmpTree.changeRoot(node, length * 0.5, length * 0.5);
 
-                double f = findLocalRoot(tmpTree, dates);
+                double f = findLocalRoot(tmpTree, dates, rootingFunction);
                 if (useTargetRate) {
                     Regression r = getRootToTipRegression(tmpTree);
                     if (Math.abs(r.getGradient() - targetRate) < minDiff) {
@@ -180,10 +201,11 @@ public class TemporalRooting {
                 }
             }
         }
+
         return bestTree;
     }
 
-    private double findLocalRoot(final FlexibleTree tree, final double[] dates) {
+    private double findLocalRoot(final FlexibleTree tree, final double[] dates, final RootingFunction rootingFunction) {
 
         NodeRef node1 = tree.getChild(tree.getRoot(), 0);
         NodeRef node2 = tree.getChild(tree.getRoot(), 1);
@@ -199,7 +221,8 @@ public class TemporalRooting {
         final double[] y = new double[tree.getExternalNodeCount()];
 
         UnivariateFunction f = new UnivariateFunction() {
-            public double evaluate(double argument) {
+            //        MultivariateFunction f = new MultivariateFunction() {
+            public double evaluate(final double argument) {
                 double l1 = argument * sumLength;
 
                 for (NodeRef tip : tipSet1) {
@@ -212,22 +235,52 @@ public class TemporalRooting {
                     y[tip.getNumber()] = getRootToTipDistance(tree, tip) - length2 + l2;
                 }
 
+                double score;
+
                 if (!contemporaneous) {
                     Regression r = new Regression(dates, y);
-                    return -r.getCorrelationCoefficient();
-//                    return -r.getRSquared();
-//                    return r.getResidualMeanSquared();
+                    switch (rootingFunction) {
+
+                        case CORRELATION:
+                            score = -r.getCorrelationCoefficient();
+                            break;
+                        case R_SQUARED:
+                            score = -r.getRSquared();
+                            break;
+                        case RESIDUAL_MEAN_SQUARED:
+                            score = r.getResidualMeanSquared();
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown enum value");
+                    }
                 } else {
-                    return DiscreteStatistics.variance(y);
+                    score = DiscreteStatistics.variance(y);
                 }
+
+                return score;
             }
 
-            public double getLowerBound() { return 0; }
-            public double getUpperBound() { return 1.0; }
+            public int getNumArguments() {
+                return 1;
+            }
+
+            public double getLowerBound() {
+                return 0;
+            }
+
+            public double getUpperBound() {
+                return 1.0;
+            }
         };
 
-        UnivariateMinimum minimum = new UnivariateMinimum();
+//        DifferentialEvolution minimum = new DifferentialEvolution(1);
+//        ConjugateDirectionSearch minimum = new ConjugateDirectionSearch();
+//        double[] minx = new double[] { 0.5 };
+//
+//        double fminx = minimum.findMinimum(f, minx);
+//        double x = minx[0];
 
+        UnivariateMinimum minimum = new UnivariateMinimum();
         double x = minimum.findMinimum(f);
 
         double fminx = minimum.fminx;
@@ -258,6 +311,14 @@ public class TemporalRooting {
         adjustTreeToConstraints(tree, tree.getRoot(), null, cladeHeights);
 
         return tree;
+    }
+
+    public int getCurrentRootBranch() {
+        return currentRootBranch;
+    }
+
+    public int getTotalRootBranches() {
+        return totalRootBranches;
     }
 
     private double adjustTreeToConstraints(FlexibleTree tree, NodeRef node,

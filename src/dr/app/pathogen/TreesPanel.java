@@ -25,7 +25,6 @@
 
 package dr.app.pathogen;
 
-import dr.app.tools.TemporalRooting;
 import dr.evolution.tree.*;
 import dr.gui.chart.*;
 import dr.stats.DiscreteStatistics;
@@ -34,6 +33,7 @@ import dr.stats.Variate;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.table.TableRenderer;
+import org.virion.jam.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -65,6 +65,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
     private Tree tree = null;
     private Tree currentTree = null;
+    private Tree bestFittingRootTree = null;
 
     PathogenFrame frame = null;
     JTabbedPane tabbedPane = new JTabbedPane();
@@ -82,6 +83,7 @@ public class TreesPanel extends JPanel implements Exportable {
     Map<Node, Integer> pointMap = new HashMap<Node, Integer>();
 
     private boolean bestFittingRoot;
+    private TemporalRooting.RootingFunction rootingFunction;
     private TemporalRooting temporalRooting = null;
 
     public TreesPanel(PathogenFrame parent, Tree tree) {
@@ -101,12 +103,27 @@ public class TreesPanel extends JPanel implements Exportable {
 //        toolBar1.setFloatable(false);
 //        toolBar1.setOpaque(false);
 //        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        JPanel controlPanel1 = new JPanel(new BorderLayout(0, 0));
+        Box controlPanel1 = new Box(BoxLayout.PAGE_AXIS);
         controlPanel1.setOpaque(false);
-        final JCheckBox rootingCheck = new JCheckBox("Best-fitting root");
-        controlPanel1.add(rootingCheck, BorderLayout.CENTER);
+
+        JPanel panel3 = new JPanel(new BorderLayout(0,0));
+        panel3.setOpaque(false);
+        rootingCheck = new JCheckBox("Best-fitting root");
+        panel3.add(rootingCheck, BorderLayout.CENTER);
+
+        controlPanel1.add(panel3);
+
+        final JComboBox rootingFunctionCombo = new JComboBox(TemporalRooting.RootingFunction.values());
+        /*
+        JPanel panel4 = new JPanel(new BorderLayout(0,0));
+        panel4.setOpaque(false);
+        panel4.add(new JLabel("Function: "), BorderLayout.WEST);
+        panel4.add(rootingFunctionCombo, BorderLayout.CENTER);
+        controlPanel1.add(panel4);
+        */
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.NORTH);
@@ -161,7 +178,13 @@ public class TreesPanel extends JPanel implements Exportable {
 
         rootingCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                setBestFittingRoot(rootingCheck.isSelected());
+                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction)rootingFunctionCombo.getSelectedItem());
+            }
+        });
+
+        rootingFunctionCombo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction)rootingFunctionCombo.getSelectedItem());
             }
         });
 
@@ -190,7 +213,12 @@ public class TreesPanel extends JPanel implements Exportable {
     }
 
     public void timeScaleChanged() {
-        setupPanel();
+        bestFittingRootTree = null;
+        if (rootingCheck.isSelected()) {
+            rootingCheck.setSelected(false);
+        } else {
+            setupPanel();
+        }
     }
 
     public JComponent getExportableComponent() {
@@ -202,8 +230,16 @@ public class TreesPanel extends JPanel implements Exportable {
         setupPanel();
     }
 
-    public void setBestFittingRoot(boolean bestFittingRoot) {
+    public void setBestFittingRoot(boolean bestFittingRoot, final TemporalRooting.RootingFunction rootingFunction) {
         this.bestFittingRoot = bestFittingRoot;
+        if (this.rootingFunction != rootingFunction) {
+            bestFittingRootTree = null;
+            this.rootingFunction = rootingFunction;
+        }
+        if (this.bestFittingRoot && bestFittingRootTree == null) {
+            findRoot();
+        }
+
         setupPanel();
     }
 
@@ -244,8 +280,9 @@ public class TreesPanel extends JPanel implements Exportable {
         if (tree != null) {
             temporalRooting = new TemporalRooting(tree);
             currentTree = this.tree;
-            if (bestFittingRoot) {
-                currentTree = temporalRooting.findRoot(tree);
+
+            if (bestFittingRoot && bestFittingRootTree != null) {
+                currentTree = bestFittingRootTree;
                 sb.append("Best-fitting root");
             } else {
                 sb.append("User root");
@@ -382,13 +419,79 @@ public class TreesPanel extends JPanel implements Exportable {
         repaint();
     }
 
+    private javax.swing.Timer timer = null;
+
+
+    private void findRoot() {
+
+//        bestFittingRootTree = temporalRooting.findRoot(tree);
+        final FindRootTask analyseTask = new FindRootTask();
+
+        final ProgressMonitor progressMonitor = new ProgressMonitor(frame,
+                "Finding best-fit root",
+                "", 0, tree.getNodeCount());
+        progressMonitor.setMillisToPopup(0);
+        progressMonitor.setMillisToDecideToPopup(0);
+
+        timer = new javax.swing.Timer(10, new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                progressMonitor.setProgress(analyseTask.getCurrent());
+                if (progressMonitor.isCanceled() || analyseTask.done()) {
+                    progressMonitor.close();
+                    analyseTask.stop();
+                    timer.stop();
+                }
+            }
+        });
+
+        analyseTask.go();
+        timer.start();
+
+    }
+
+    class FindRootTask extends LongTask {
+
+        public FindRootTask() {
+        }
+
+        public int getCurrent() {
+            return temporalRooting.getCurrentRootBranch();
+        }
+
+        public int getLengthOfTask() {
+            return temporalRooting.getTotalRootBranches();
+        }
+
+        public String getDescription() {
+            return "Calculating demographic reconstruction...";
+        }
+
+        public String getMessage() {
+            return null;
+        }
+
+        public Object doWork() {
+            bestFittingRootTree = temporalRooting.findRoot(tree, rootingFunction);
+            EventQueue.invokeLater(
+                    new Runnable() {
+                        public void run() {
+                            setupPanel();
+                        }
+                    });
+
+            return null;
+        }
+
+    }
+
+
     public TemporalRooting getTemporalRooting() {
         return temporalRooting;
     }
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNamesDatedTips = {"Date range", "Slope (rate)", "X-Intercept (TMRCA)", "Correlation Coefficient", "R squared"};
+        String[] rowNamesDatedTips = {"Date range", "Slope (rate)", "X-Intercept (TMRCA)", "Correlation Coefficient", "R squared", "Residual Mean Squared"};
         String[] rowNamesContemporaneousTips = {"Mean root-tip", "Coefficient of variation", "Stdev", "Variance"};
 
         private DecimalFormat formatter = new DecimalFormat("0.####E0");
@@ -455,6 +558,9 @@ public class TreesPanel extends JPanel implements Exportable {
                     case 4:
                         value = r.getRSquared();
                         break;
+                    case 5:
+                        value = r.getResidualMeanSquared();
+                        break;
                 }
             }
 
@@ -503,4 +609,5 @@ public class TreesPanel extends JPanel implements Exportable {
         }
     }
 
+    private JCheckBox rootingCheck;
 }

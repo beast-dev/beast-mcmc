@@ -41,6 +41,7 @@ public class Regression {
     private double gradient;
     private double intercept;
     private double covariance;
+    private double sumResidualsSquared;
     private double residualMeanSquared;
     private double correlationCoefficient;
 
@@ -146,6 +147,10 @@ public class Regression {
         return residualMeanSquared;
     }
 
+    public double getSumResidualsSquared() {
+        return sumResidualsSquared;
+    }
+
     public double getCorrelationCoefficient() {
         if (!regressionKnown) {
             calculateRegression();
@@ -215,7 +220,7 @@ public class Regression {
 
         //Calculate residual mean square
 
-        double sumResidualsSquared = 0;
+        sumResidualsSquared = 0;
         double residual;
         for (i = 0; i < n; i++) {
             residual = yData.get(i) - ((gradient * xData.get(i)) + intercept);

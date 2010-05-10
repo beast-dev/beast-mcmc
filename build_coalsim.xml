@@ -28,10 +28,14 @@
             depends="compile-basic">
     </target>
 
+    <path id="classpath">
+		<fileset dir="${lib}" includes="**/*.jar"/>
+	</path>
+
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}"
-               classpath="${lib}/jebl-0.4.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar">
+        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+               classpathref="classpath">
             <include name="dr/app/coalgen/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/alignment/**"/>
@@ -94,7 +98,9 @@
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
             </fileset>
-            <zipgroupfileset dir="${lib}" includes="**/*.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jam.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-2.0.jar"/>
         </jar>
     </target>
 </project>

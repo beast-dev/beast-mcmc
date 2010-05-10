@@ -215,6 +215,7 @@
                         mainclass="dr.app.tracer.application.TracerApp"
                         icon="${Mac_dir}/icons/Tracer.icns"
                         jvmversion="1.5+"
+                        vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
                         infostring="${name} v${version}, Copyright 2003-2009, Andrew Rambaut &amp; Alexei J. Drummond"

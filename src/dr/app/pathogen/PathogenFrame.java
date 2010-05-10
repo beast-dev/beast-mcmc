@@ -14,7 +14,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
-import dr.app.tools.TemporalRooting;
+import dr.app.pathogen.TemporalRooting;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
@@ -25,9 +25,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-
-import jebl.evolution.io.NewickExporter;
 
 /**
  * @author Andrew Rambaut
@@ -74,7 +71,7 @@ public class PathogenFrame extends DocumentFrame {
         treesPanel = new TreesPanel(this, trees.get(0));
 
         tabbedPane.addTab("Sample Dates", samplesPanel);
-        tabbedPane.addTab("Trees", treesPanel);
+        tabbedPane.addTab("Analysis", treesPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));

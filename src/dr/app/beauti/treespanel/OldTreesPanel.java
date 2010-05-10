@@ -32,7 +32,7 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.tools.TemporalRooting;
+import dr.app.pathogen.TemporalRooting;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
@@ -80,7 +80,7 @@ public class OldTreesPanel extends BeautiPanel {
     private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
     private JComboBox userTreeCombo = new JComboBox();
     private JButton button;
-    
+
     private CreateTreeAction createTreeAction = new CreateTreeAction();
     private TreeDisplayPanel treeDisplayPanel;
 
@@ -275,7 +275,7 @@ public class OldTreesPanel extends BeautiPanel {
                 case NJ:
                     tree = new NeighborJoiningTree(distances);
                     temporalRooting = new TemporalRooting(tree);
-                    tree = temporalRooting.findRoot(tree);
+                    tree = temporalRooting.findRoot(tree, TemporalRooting.RootingFunction.CORRELATION);
                     break;
                 case UPGMA:
                     tree = new UPGMATree(distances);
@@ -320,7 +320,7 @@ public class OldTreesPanel extends BeautiPanel {
             button.setEnabled(true);
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             treePriorPanel.addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-            button.setEnabled(true);        
+            button.setEnabled(true);
         } else {
         	button.setEnabled(true);
         }

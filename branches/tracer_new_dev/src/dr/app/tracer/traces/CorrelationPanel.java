@@ -51,8 +51,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     private JIntervalsChart correlationChart = new JIntervalsChart(new LinearAxis(), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(correlationChart, null, "", "");
-    private TablePanel tablePanel = new TablePanel(null, "", "");
-    private JChartPanel currentPanel = null;
+    private TableScrollPane tableScrollPane = new TableScrollPane();
 
     private JLabel messageLabel = new JLabel("No data loaded");
 
@@ -173,43 +172,47 @@ public class CorrelationPanel extends JPanel implements Exportable {
     private void setupChart() {
 
         if (tl1 == null || tl2 == null) {
-            currentPanel = chartPanel;
+            correlationChart.removeAllPlots();
+            chartPanel.remove(tableScrollPane);
 
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("Select two statistics or traces from the table to view their correlation");
-            correlationChart.removeAllPlots();
             return;
         }
 
         TraceDistribution td1 = tl1.getDistributionStatistics(traceIndex1);
         TraceDistribution td2 = tl2.getDistributionStatistics(traceIndex2);
         if (td1 == null || td2 == null) {
-            currentPanel = chartPanel;
-
+            correlationChart.removeAllPlots();
+            chartPanel.remove(tableScrollPane);
+            
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("Waiting for analysis to complete");
-            correlationChart.removeAllPlots();
             return;
         }
 
         messageLabel.setText("");
 
         if (td1.getTraceType() != TraceFactory.TraceType.CONTINUOUS && td2.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
-            currentPanel = tablePanel;
+            chartPanel.remove(correlationChart);
+            chartPanel.add(tableScrollPane, "Table");
+
             sampleCheckBox.setVisible(false);
             pointsCheckBox.setVisible(false);
             translucencyCheckBox.setVisible(false);
 
             Object[] rowNames = td1.credSet.getValues().toArray();
             Object[] colNames = td2.credSet.getValues().toArray();
-            double[][] data = categoryPlot(td1, td2);
+            double[][] data = categoricalPlot(td1, td2);
 
-            tablePanel.setTable(rowNames, colNames, data);
-            tablePanel.repaint();
+            tableScrollPane.setTable(rowNames, colNames, data);
+
         } else {
-            currentPanel = chartPanel;
+            chartPanel.remove(tableScrollPane);
+            chartPanel.add(correlationChart, "Chart");
+
             sampleCheckBox.setVisible(true);
             pointsCheckBox.setVisible(true);
             translucencyCheckBox.setVisible(true);
@@ -230,14 +233,20 @@ public class CorrelationPanel extends JPanel implements Exportable {
                 numericalPlot(td1, td2);
             }
         }
-        currentPanel.setXAxisTitle(name1);
-        currentPanel.setYAxisTitle(name2);
+        chartPanel.setXAxisTitle(name1);
+        chartPanel.setYAxisTitle(name2);
 
         validate();
         repaint();
     }
 
-    private double[][] categoryPlot(TraceDistribution td1, TraceDistribution td2) {
+    private void mixedCategoricalPlot(TraceDistribution td1, TraceDistribution td2) {
+
+
+
+    }
+
+    private double[][] categoricalPlot(TraceDistribution td1, TraceDistribution td2) {
         List<String> rowNames = td1.credSet.getValues();
         List<String> colNames = td2.credSet.getValues();
 
@@ -289,7 +298,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
         // calculate count
         for (int i = 0; i < sampleSize; i++) {
             if (rowNames.contains(samples1[i]) && colNames.contains(samples2[i])) {
-               data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] =+ 1;
+               data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] += 1;
             } else {
                System.err.println("Not find row or column name. i = " + i); 
             }

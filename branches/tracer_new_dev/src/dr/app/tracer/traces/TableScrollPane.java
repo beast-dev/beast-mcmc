@@ -1,6 +1,5 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.JChartPanel;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
@@ -14,32 +13,24 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: TablePanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
+ * @version $Id: TableScrollPane.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class TablePanel extends JChartPanel implements Exportable {
+public class TableScrollPane extends JScrollPane implements Exportable {
 
-    JTable dataTable = null;
-    JScrollPane scrollPane;
-    DataTableModel dataTableModel;
-    ListModel lm;
-    Object[] rowNames = new Object[0];
-    Object[] columnNames = new Object[0];
-    double[][] data;
+    Object[] rowNames;
+        Object[] columnNames;
+        double[][] data;
 
-    public TablePanel(String title, String xAxisTitle, String yAxisTitle) {
-        super(null, title, xAxisTitle, yAxisTitle);
+    ListModel lm = new RowHeaderModel();
 
-        lm = new RowHeaderModel();
-        dataTableModel = new DataTableModel(); //(int rowCount, int columnCount)
-        dataTable = new JTable(dataTableModel);
-        dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    DataTableModel dataTableModel = new DataTableModel();
+    JTable dataTable = new JTable(dataTableModel);
 
-        scrollPane = new JScrollPane(dataTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        scrollPane.setOpaque(false);
-        add(scrollPane, "Table");
+    public TableScrollPane() {
+        super();
+        setViewportView(dataTable);        
 
+        setOpaque(false);
     }
 
     public void setTable(Object[] rowNames, Object[] columnNames, double[][] data) {
@@ -47,9 +38,11 @@ public class TablePanel extends JChartPanel implements Exportable {
         this.columnNames = columnNames;
         this.data = data;
 
+        dataTableModel = new DataTableModel();
+        dataTable = new JTable(dataTableModel);
+        setViewportView(dataTable);
+        
         lm = new RowHeaderModel();
-
-        dataTableModel.fireTableDataChanged();
 
         JList rowHeader = new JList(lm);
         rowHeader.setFixedCellWidth(50);
@@ -57,8 +50,9 @@ public class TablePanel extends JChartPanel implements Exportable {
         //                           + table.getIntercellSpacing().height);
         rowHeader.setCellRenderer(new RowHeaderRenderer(dataTable));
 
-        scrollPane.setRowHeaderView(rowHeader);
+        setRowHeaderView(rowHeader);
 //        removeAll();
+        dataTableModel.fireTableDataChanged();
 
         validate();
         repaint();
@@ -70,6 +64,7 @@ public class TablePanel extends JChartPanel implements Exportable {
 
     class RowHeaderModel extends AbstractListModel {
         public int getSize() {
+            if (rowNames == null) return 0;
             return rowNames.length;
         }
 
@@ -108,10 +103,14 @@ public class TablePanel extends JChartPanel implements Exportable {
         }
 
         public int getColumnCount() {
+            if (columnNames == null) return 0; 
             return columnNames.length;
         }
 
         public int getRowCount() {
+            if (lm == null) {
+                return 0;
+            }
             return lm.getSize();
         }
 

@@ -36,7 +36,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A panel that displays correlation plots of 2 traces
@@ -53,6 +56,9 @@ public class CorrelationPanel extends JPanel implements Exportable {
     private JChartPanel chartPanel = new JChartPanel(correlationChart, null, "", "");
     private TableScrollPane tableScrollPane = new TableScrollPane();
 
+    private JComboBox cateTableProbTypeCombo = new JComboBox(CateTableProbType.values());
+    private JCheckBox defaultNumberFormatCheckBox = new JCheckBox("Use default number format");
+
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private JCheckBox sampleCheckBox = new JCheckBox("Sample only");
@@ -66,6 +72,21 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     private String name1;
     private String name2;
+
+    public enum CateTableProbType {
+        JOINT_PRO("Joint Probability"), COND_PRO_X("Conditional Prob (?|row)"),
+        COND_PRO_Y("Conditional Prob (?|column)"), COUNT("Count");
+
+        CateTableProbType(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    }
 
     /**
      * Creates new CorrelationPanel
@@ -104,6 +125,15 @@ public class CorrelationPanel extends JPanel implements Exportable {
         translucencyCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
         toolBar.add(translucencyCheckBox);
 
+        cateTableProbTypeCombo.setOpaque(false);
+        cateTableProbTypeCombo.setFont(UIManager.getFont("SmallSystemFont"));
+        toolBar.add(cateTableProbTypeCombo);
+
+        defaultNumberFormatCheckBox.setOpaque(false);
+        defaultNumberFormatCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+        defaultNumberFormatCheckBox.setSelected(true);
+        toolBar.add(defaultNumberFormatCheckBox);
+
         toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
 
         add(messageLabel, BorderLayout.NORTH);
@@ -133,6 +163,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
         sampleCheckBox.addActionListener(listener);
         pointsCheckBox.addActionListener(listener);
         translucencyCheckBox.addActionListener(listener);
+        cateTableProbTypeCombo.addActionListener(listener);
+        defaultNumberFormatCheckBox.addActionListener(listener);
     }
 
     public void setCombinedTraces() {
@@ -170,9 +202,10 @@ public class CorrelationPanel extends JPanel implements Exportable {
     }
 
     private void setupChart() {
+        correlationChart.removeAllIntervals();
 
         if (tl1 == null || tl2 == null) {
-            correlationChart.removeAllPlots();
+//            correlationChart.removeAllPlots();
             chartPanel.remove(tableScrollPane);
 
             chartPanel.setXAxisTitle("");
@@ -184,9 +217,9 @@ public class CorrelationPanel extends JPanel implements Exportable {
         TraceDistribution td1 = tl1.getDistributionStatistics(traceIndex1);
         TraceDistribution td2 = tl2.getDistributionStatistics(traceIndex2);
         if (td1 == null || td2 == null) {
-            correlationChart.removeAllPlots();
+//            correlationChart.removeAllPlots();
             chartPanel.remove(tableScrollPane);
-            
+
             chartPanel.setXAxisTitle("");
             chartPanel.setYAxisTitle("");
             messageLabel.setText("Waiting for analysis to complete");
@@ -202,35 +235,47 @@ public class CorrelationPanel extends JPanel implements Exportable {
             sampleCheckBox.setVisible(false);
             pointsCheckBox.setVisible(false);
             translucencyCheckBox.setVisible(false);
+            cateTableProbTypeCombo.setVisible(true);
+            defaultNumberFormatCheckBox.setVisible(true);
 
             Object[] rowNames = td1.credSet.getValues().toArray();
             Object[] colNames = td2.credSet.getValues().toArray();
             double[][] data = categoricalPlot(td1, td2);
 
-            tableScrollPane.setTable(rowNames, colNames, data);
+            tableScrollPane.setTable(rowNames, colNames, data, defaultNumberFormatCheckBox.isSelected());
 
         } else {
             chartPanel.remove(tableScrollPane);
             chartPanel.add(correlationChart, "Chart");
-
-            sampleCheckBox.setVisible(true);
-            pointsCheckBox.setVisible(true);
-            translucencyCheckBox.setVisible(true);
-            correlationChart.removeAllPlots();
+//            correlationChart.removeAllPlots();
+            cateTableProbTypeCombo.setVisible(false);
+            defaultNumberFormatCheckBox.setVisible(false);
 
             if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                mixedCategoricalPlot(td1, false); // isFirstTraceListNumerical
 
-                correlationChart.setXAxis(new DiscreteAxis(true, true));
+                sampleCheckBox.setVisible(false);
+                pointsCheckBox.setVisible(false);
+                translucencyCheckBox.setVisible(false);
 
-//              correlationChart.addIntervals(name, td2.getMean(), td2.getUpperHPD(), td2.getLowerHPD(), false);
 
             } else if (td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                mixedCategoricalPlot(td2, true); // isFirstTraceListNumerical
 
-                correlationChart.setXAxis(new DiscreteAxis(true, true));
+                sampleCheckBox.setVisible(false);
+                pointsCheckBox.setVisible(false);
+                translucencyCheckBox.setVisible(false);
 
-//            intervalsChart.addIntervals(name, td.getMean(), td.getUpperHPD(), td.getLowerHPD(), false);
+                String swapName = name1;
+                name1 = name2;
+                name2 = swapName;
+
             } else {
                 numericalPlot(td1, td2);
+
+                sampleCheckBox.setVisible(true);
+                pointsCheckBox.setVisible(true);
+                translucencyCheckBox.setVisible(true);
             }
         }
         chartPanel.setXAxisTitle(name1);
@@ -240,10 +285,78 @@ public class CorrelationPanel extends JPanel implements Exportable {
         repaint();
     }
 
-    private void mixedCategoricalPlot(TraceDistribution td1, TraceDistribution td2) {
+    private void mixedCategoricalPlot(TraceDistribution td, boolean isFirstTraceListNumerical) {
+        correlationChart.setXAxis(new DiscreteAxis(true, true));
+        List<String> categoryValues = td.credSet.getValues();
+        Map<String, TraceDistribution> categoryTdMap = new HashMap<String, TraceDistribution>();
 
+        if (categoryValues == null || categoryValues.size() < 1) return;
 
+        int maxCount = Math.max(tl1.getStateCount(), tl2.getStateCount());
+        int minCount = Math.min(tl1.getStateCount(), tl2.getStateCount());
 
+        int sampleSize = minCount;
+
+        double samples1[] = new double[sampleSize];
+        int k = 0;
+
+        if (td.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            if (isFirstTraceListNumerical) {
+                tl1.getValues(traceIndex1, values);
+            } else {
+                tl2.getValues(traceIndex2, values);
+            }
+
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = (double) values[k];
+                k += minCount / sampleSize;
+            }
+        } else {
+            Double values[] = new Double[maxCount];
+            if (isFirstTraceListNumerical) {
+                tl1.getValues(traceIndex1, values);
+            } else {
+                tl2.getValues(traceIndex2, values);
+            }
+            for (int i = 0; i < sampleSize; i++) {
+                samples1[i] = values[k];
+                k += minCount / sampleSize;
+            }
+        }
+
+        String samples2[] = new String[sampleSize];
+        k = 0;
+
+        String values[] = new String[maxCount];
+        if (isFirstTraceListNumerical) {
+            tl2.getValues(traceIndex2, values);
+        } else {
+            tl1.getValues(traceIndex1, values);
+        }
+        for (int i = 0; i < sampleSize; i++) {
+            samples2[i] = values[k];
+            k += minCount / sampleSize;
+        }
+
+        // separate samples into categoryTdMap
+        ArrayList[] sepValues = new ArrayList[categoryValues.size()];
+        for (int i = 0; i < categoryValues.size(); i++) {
+            sepValues[i] = new ArrayList<Double>();
+            for (int j = 0; j < samples2.length; j++) {
+                if (categoryValues.get(i).equals(samples2[j])) {
+                    sepValues[i].add(samples1[j]);
+                }
+            }
+
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i].toArray());
+            categoryTdMap.put(categoryValues.get(i), categoryTd);
+        }
+
+        for (String categoryValue : categoryValues) {
+            TraceDistribution categoryTd = categoryTdMap.get(categoryValue);
+            correlationChart.addIntervals(categoryValue, categoryTd.getMean(), categoryTd.getUpperHPD(), categoryTd.getLowerHPD(), false);
+        }
     }
 
     private double[][] categoricalPlot(TraceDistribution td1, TraceDistribution td2) {
@@ -257,6 +370,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         int sampleSize = minCount;
 
+        if (sampleSize <= 0) System.err.println("sampleSize cannot be 0. sampleSize = " + sampleSize);
+
         String samples1[] = new String[sampleSize];
         int k = 0;
 
@@ -265,7 +380,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
             tl1.getValues(traceIndex1, values);
             for (int i = 0; i < sampleSize; i++) {
                 samples1[i] = values[k].toString();
-                k += minCount / sampleSize;
+                k += minCount / sampleSize; // = 1 for non-continous vs non-continous
             }
         } else {
             String values[] = new String[maxCount];
@@ -298,11 +413,44 @@ public class CorrelationPanel extends JPanel implements Exportable {
         // calculate count
         for (int i = 0; i < sampleSize; i++) {
             if (rowNames.contains(samples1[i]) && colNames.contains(samples2[i])) {
-               data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] += 1;
+                data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] += 1;
             } else {
-               System.err.println("Not find row or column name. i = " + i); 
+                System.err.println("Not find row or column name. i = " + i);
             }
         }
+
+        if (cateTableProbTypeCombo.getSelectedItem() == CateTableProbType.JOINT_PRO) {
+            for (int r = 0; r < data.length; r++) {
+                for (int c = 0; c < data[0].length; c++) {
+                    data[r][c] = data[r][c] / sampleSize;
+                }
+            }
+        } else if (cateTableProbTypeCombo.getSelectedItem() == CateTableProbType.COND_PRO_X) {
+            for (int r = 0; r < data.length; r++) {
+                double count = 0;
+                for (int c = 0; c < data[0].length; c++) {
+                    count = count + data[r][c];
+                }
+                for (int c = 0; c < data[0].length; c++) {
+                    if (count != 0) 
+                        data[r][c] = data[r][c] / count;
+                }
+            }
+
+        } else if (cateTableProbTypeCombo.getSelectedItem() == CateTableProbType.COND_PRO_Y) {
+            for (int c = 0; c < data[0].length; c++) {
+                double count = 0;
+                for (int r = 0; r < data.length; r++) {
+                    count = count + data[r][c];
+                }
+                for (int r = 0; r < data.length; r++) {
+                    if (count != 0)
+                        data[r][c] = data[r][c] / count;
+                }
+            }
+
+        }
+        // else COUNT
 
         return data;
     }

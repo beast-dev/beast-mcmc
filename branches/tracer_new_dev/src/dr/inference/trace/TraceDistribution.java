@@ -227,13 +227,7 @@ public class TraceDistribution<T> {
             credibleSet.clear();
             inCredibleSet.clear();
 
-            if (values[0] instanceof Double) {
-                double[] newValues = new double[values.length];
-                for (int i = 0; i < values.length; i++) {
-                    newValues[i] = ((Double) values[i]).doubleValue();
-                }
-                analyseDistributionContinuous(newValues, proportion);
-            } else {
+            if (!(values[0] instanceof Double)) {// make sure: if T is Object then default to double
                 if (values[0] instanceof Integer) {
                     double[] newValues = new double[values.length];
                     for (int i = 0; i < values.length; i++) {
@@ -262,6 +256,12 @@ public class TraceDistribution<T> {
 
                 calculateMode();
 
+            } else {
+                double[] newValues = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    newValues[i] = ((Double) values[i]).doubleValue();
+                }
+                analyseDistributionContinuous(newValues, proportion);
             }
 
             isValid = true;
@@ -297,7 +297,7 @@ public class TraceDistribution<T> {
             List<String> values = new ArrayList<String>();
             for (T value : valuesMap.keySet()) {
                 if (!values.contains(value.toString()))
-                    values.add(value.toString());                 
+                    values.add(value.toString());
             }
             return values;
         }

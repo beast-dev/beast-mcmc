@@ -18,30 +18,32 @@ import java.awt.*;
 public class TableScrollPane extends JScrollPane implements Exportable {
 
     Object[] rowNames;
-        Object[] columnNames;
-        double[][] data;
+    Object[] columnNames;
+    double[][] data;
 
     ListModel lm = new RowHeaderModel();
 
     DataTableModel dataTableModel = new DataTableModel();
     JTable dataTable = new JTable(dataTableModel);
+    private boolean defaultNumberFormat = true;
 
     public TableScrollPane() {
         super();
-        setViewportView(dataTable);        
+        setViewportView(dataTable);
 
         setOpaque(false);
     }
 
-    public void setTable(Object[] rowNames, Object[] columnNames, double[][] data) {
+    public void setTable(Object[] rowNames, Object[] columnNames, double[][] data, boolean defaultNumberFormat) {
         this.rowNames = rowNames;
         this.columnNames = columnNames;
         this.data = data;
+        this.defaultNumberFormat = defaultNumberFormat;
 
         dataTableModel = new DataTableModel();
         dataTable = new JTable(dataTableModel);
         setViewportView(dataTable);
-        
+
         lm = new RowHeaderModel();
 
         JList rowHeader = new JList(lm);
@@ -103,7 +105,7 @@ public class TableScrollPane extends JScrollPane implements Exportable {
         }
 
         public int getColumnCount() {
-            if (columnNames == null) return 0; 
+            if (columnNames == null) return 0;
             return columnNames.length;
         }
 
@@ -115,6 +117,9 @@ public class TableScrollPane extends JScrollPane implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
+            if (defaultNumberFormat) {
+                return SummaryStatisticsPanel.formattedNumber(data[row][col]);
+            }
             return data[row][col];
         }
 

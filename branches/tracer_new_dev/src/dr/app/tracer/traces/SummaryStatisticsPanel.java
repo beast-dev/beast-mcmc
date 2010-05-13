@@ -116,6 +116,15 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         }
     }
 
+    public static String formattedNumber(double value) {
+        DecimalFormat formatter = new DecimalFormat("0.####E0");
+        DecimalFormat formatter2 = new DecimalFormat("####0.####");
+
+        if (value > 0 && (Math.abs(value) < 0.01 || Math.abs(value) >= 100000.0)) {
+            return formatter.format(value);
+        } else return formatter2.format(value);
+    }
+
     public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
         this.traceLists = traceLists;
@@ -180,10 +189,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
         String[] rowNames = {MEAN_ROW, STDEV_ROW, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
                 LOWER_UPPER_ROW, ACT_ROW, ESS_ROW};
-
-
-        private DecimalFormat formatter = new DecimalFormat("0.####E0");
-        private DecimalFormat formatter2 = new DecimalFormat("####0.####");
 
         public StatisticsModel() {
         }
@@ -299,12 +304,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             return formattedNumber(value);
         }
 
-        private String formattedNumber(double value) {
-            if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0)) {
-                return formatter.format(value);
-            } else return formatter2.format(value);
-        }
-
         public String getColumnName(int column) {
             if (column == 0) return "Summary Statistic";
             if (traceLists != null && traceNames != null) {
@@ -351,4 +350,5 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             return buffer.toString();
         }
     }
+
 }

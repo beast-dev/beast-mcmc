@@ -276,6 +276,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
         remove(messageLabel);
 
+        Class iniTraceType = null;
         int i = 0;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
@@ -287,69 +288,72 @@ public class DensityPanel extends JPanel implements Exportable {
                 FrequencyPlot plot = null;
 
                 if (trace != null) {
-                    Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                    if (trace.getTraceType() == Double.class) {
-                        Double values[] = new Double[tl.getStateCount()];
-                        tl.getValues(traceIndex, values);
-                        plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                        traceChart.setXAxis(false, categoryDataMap);
-                        chartPanel.setYAxisTitle("Density");
+                    if (iniTraceType == null) iniTraceType = trace.getTraceType();
+                    if (iniTraceType == trace.getTraceType()) {
+                        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+                        if (trace.getTraceType() == Double.class) {
+                            Double values[] = new Double[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
+                            plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                            traceChart.setXAxis(false, categoryDataMap);
+                            chartPanel.setYAxisTitle("Density");
 
-                        relativeDensityCheckBox.setVisible(true);
-                        labelBins.setVisible(true);
-                        binsCombo.setVisible(true);
+                            relativeDensityCheckBox.setVisible(true);
+                            labelBins.setVisible(true);
+                            binsCombo.setVisible(true);
 
-                    } else if (trace.getTraceType() == Integer.class) {
-                        Integer values[] = new Integer[tl.getStateCount()];
-                        tl.getValues(traceIndex, values);
-                        plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td);
-                        traceChart.setXAxis(true, categoryDataMap);
-                        chartPanel.setYAxisTitle("Probability");
+                        } else if (trace.getTraceType() == Integer.class) {
+                            Integer values[] = new Integer[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
+                            plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td);
+                            traceChart.setXAxis(true, categoryDataMap);
+                            chartPanel.setYAxisTitle("Probability");
 
-                        relativeDensityCheckBox.setVisible(false);
-                        labelBins.setVisible(false);
-                        binsCombo.setVisible(false);
+                            relativeDensityCheckBox.setVisible(false);
+                            labelBins.setVisible(false);
+                            binsCombo.setVisible(false);
 
-                    } else if (trace.getTraceType() == String.class) {
-                        String values[] = new String[tl.getStateCount()];
-                        tl.getValues(traceIndex, values);
+                        } else if (trace.getTraceType() == String.class) {
+                            String values[] = new String[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
 
-                        int[] intData = new int[values.length];
-                        for (int v = 0; v < values.length; v++) {
-                            intData[v] = td.credSet.getIndex(values[v]);
-                            categoryDataMap.put(intData[v], values[v]);
+                            int[] intData = new int[values.length];
+                            for (int v = 0; v < values.length; v++) {
+                                intData[v] = td.credSet.getIndex(values[v]);
+                                categoryDataMap.put(intData[v], values[v]);
+                            }
+
+                            plot = new CategoryDensityPlot(intData, -1, td);
+                            traceChart.setXAxis(false, categoryDataMap);
+                            chartPanel.setYAxisTitle("Probability");
+
+                            relativeDensityCheckBox.setVisible(false);
+                            labelBins.setVisible(false);
+                            binsCombo.setVisible(false);
+
+                        } else {
+                            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
                         }
 
-                        plot = new CategoryDensityPlot(intData, -1, td);
-                        traceChart.setXAxis(false, categoryDataMap);
-                        chartPanel.setYAxisTitle("Probability");
+                        String name = tl.getTraceName(traceIndex);
+                        if (traceLists.length > 1) {
+                            name = tl.getName() + " - " + name;
+                        }
 
-                        relativeDensityCheckBox.setVisible(false);
-                        labelBins.setVisible(false);
-                        binsCombo.setVisible(false);
+                        plot.setName(name);
+                        if (tl instanceof CombinedTraces) {
+                            plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                        } else {
+                            plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                        }
 
-                    } else {
-                        throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+                        traceChart.addPlot(plot);
+
+                        if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
+                            i++;
+                        }
+                        if (i == paints.length) i = 0;
                     }
-
-                    String name = tl.getTraceName(traceIndex);
-                    if (traceLists.length > 1) {
-                        name = tl.getName() + " - " + name;
-                    }
-
-                    plot.setName(name);
-                    if (tl instanceof CombinedTraces) {
-                        plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
-                    } else {
-                        plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
-                    }
-
-                    traceChart.addPlot(plot);
-
-                    if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
-                        i++;
-                    }
-                    if (i == paints.length) i = 0;
                 }
             }
             if (colourBy == COLOUR_BY_FILE) {

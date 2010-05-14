@@ -34,6 +34,7 @@ import java.awt.*;
 public class CategoryDensityPlot extends FrequencyPlot {
 
     // for string[], passing the int[] storing the index of string[]
+
     public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
         super(traceD);
         double[] doubleData = new double[data.length];
@@ -100,13 +101,13 @@ public class CategoryDensityPlot extends FrequencyPlot {
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
         if (minimumBinCount > 0) {
-        while (binCount < minimumBinCount) {
-            majorTickCount++;
-            axis.setPrefNumTicks(majorTickCount, 4);
+            while (binCount < minimumBinCount) {
+                majorTickCount++;
+                axis.setPrefNumTicks(majorTickCount, 4);
 
-            binSize = axis.getMinorTickSpacing();
-            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
-        }
+                binSize = axis.getMinorTickSpacing();
+                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+            }
         }
 
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
@@ -138,8 +139,8 @@ public class CategoryDensityPlot extends FrequencyPlot {
 
             if (y1 != y2) {
                 if (barPaint != null) {
-                        g2.setPaint(barPaint);
-                        fillRect(g2, x1, y1, x2, y2);
+                    g2.setPaint(barPaint);
+                    fillRect(g2, x1, y1, x2, y2);
                 }
 
                 if (lineStroke != null && linePaint != null) {

@@ -264,6 +264,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     reconstructedStates[nodeNum][j] = state[j];
                 }
 
+                if (sampleCategory) {
+                    if (this.rateCategory == null) {
+                        this.rateCategory = new int[patternCount];
+                    }
+                    System.arraycopy(rateCategory, 0, this.rateCategory, 0, patternCount);
+                }
+
             } else {
 
                 // This is an internal node, but not the root
@@ -345,6 +352,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     private double[] probabilities;
     private double[] partials;
+
+    protected int[] rateCategory = null;
 //    private double[] rootPartials;
 //    private int[][] cumulativeScaleBuffers;
 //    private int scaleBufferIndex;

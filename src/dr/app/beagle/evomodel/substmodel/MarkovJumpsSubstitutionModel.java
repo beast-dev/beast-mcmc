@@ -6,8 +6,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
-import dr.evolution.datatype.Nucleotides;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard
@@ -102,6 +100,24 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         regRateChanged = false;
     }
 
+    public double getMarginalRate() {
+
+        if (regRateChanged) {
+            makeRateRegistrationMatrix(registration, rateReg);
+        }
+
+        FrequencyModel freqModel = substModel.getFrequencyModel();
+        double rate = 0;
+        int index = 0;
+        for (int i = 0; i < stateCount; i++) {
+            double freq_i = freqModel.getFrequency(i);
+            for (int j = 0; j < stateCount; j++) {
+                rate += freq_i * rateReg[index++];
+            }
+        }
+        return rate;
+    }
+
     public void computeCondStatMarkovJumps(double time,
                                            double[] countMatrix) {
 
@@ -160,69 +176,6 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         // Do nothing
     }
 
-
-    public static void main(String[] args) {
-
-        HKY substModel = new HKY(2.0, new FrequencyModel(Nucleotides.INSTANCE, new double[]{0.3, 0.2, 0.25, 0.25})); // A,C,G,T
-        int states = substModel.getDataType().getStateCount();
-        
-        MarkovJumpsSubstitutionModel markovjumps = new MarkovJumpsSubstitutionModel(substModel,
-                MarkovJumpsType.COUNTS);
-        double[] r = new double[states * states];
-        double[] q = new double[states * states];
-        double[] j = new double[states * states];
-        double[] c = new double[states * states];
-        double[] p = new double[states * states];
-
-        double time = 1.0;
-        int from = 0; // A
-        int to = 1; // C
-        MarkovJumpsCore.fillRegistrationMatrix(r, from, to, states, 1.0);
-        markovjumps.setRegistration(r);
-
-        substModel.getInfinitesimalMatrix(q);
-
-        substModel.getTransitionProbabilities(time, p);
-
-        markovjumps.computeJointStatMarkovJumps(time, j);
-
-        markovjumps.computeCondStatMarkovJumps(time, c);
-
-        MarkovJumpsCore.makeComparableToRPackage(q);
-        System.err.println("Q = " + new Vector(q));
-
-        MarkovJumpsCore.makeComparableToRPackage(p);
-        System.err.println("P = " + new Vector(p));
-
-        System.err.println("Counts:");
-        MarkovJumpsCore.makeComparableToRPackage(r);
-        System.err.println("R = " + new Vector(r));
-
-        MarkovJumpsCore.makeComparableToRPackage(j);
-        System.err.println("J = " + new Vector(j));
-
-        MarkovJumpsCore.makeComparableToRPackage(c);
-        System.err.println("C = " + new Vector(c));
-
-        markovjumps = new MarkovJumpsSubstitutionModel(substModel, MarkovJumpsType.REWARDS);
-        double[] rewards = {1.0, 1.0, 1.0, 1.0};
-        markovjumps.setRegistration(rewards);
-
-        markovjumps.computeJointStatMarkovJumps(time, j);
-
-        markovjumps.computeCondStatMarkovJumps(time, c);
-
-        System.err.println("Rewards:");
-        MarkovJumpsCore.makeComparableToRPackage(rewards);
-        System.err.println("R = " + new Vector(rewards));
-
-        MarkovJumpsCore.makeComparableToRPackage(j);
-        System.err.println("J = " + new Vector(j));
-
-        MarkovJumpsCore.makeComparableToRPackage(c);
-        System.err.println("C = " + new Vector(c));                        
-    }
-
     public int stateCount;
     private double[] rateReg;
     private double[] transitionProbs;
@@ -238,20 +191,3 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     protected MarkovJumpsType type;
 }
 
-/*
-# R script to compare main to original package:
-
-subst.model.eigen = as.eigen.hky(c(2,1),
-	c(0.3,0.25,0.2,0.25),scale=T)
-
-time = 1.0
-from = 0 # A
-to   = 2 # C
-R = matrix(0,nrow=4,ncol=4)
-R[from + to*4 + 1] = 1.0
-
-P = matexp.eigen(subst.model.eigen,time)
-J = joint.mean.markov.jumps(subst.model.eigen,R,time)
-C = cond.mean.markov.jumps(subst.model.eigen,R,time)
-
- */

@@ -66,7 +66,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static List<Integer> resourceOrder = null;
 
     private static final int RESCALE_FREQUENCY = 10000;
-    private static final int RESCALE_TIMES = 5;
+    private static final int RESCALE_TIMES = 1;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -169,9 +169,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             // Define default behaviour here
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
-                //if GPU: the default is now to try and let BEAGLE do it
+                //if GPU: the default is dynamic scaling in BEAST
                 if (resourceList != null && resourceList[0] > 1) {
-                    this.rescalingScheme = PartialsRescalingScheme.AUTO;
+                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
                 } else { // if CPU: just run as fast as possible
                     this.rescalingScheme = PartialsRescalingScheme.NONE;
                 }
@@ -181,11 +181,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
                 useAutoScaling = true;              
             } else {
-                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
+//                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
             }
 
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
-                if ( stateCount == 4 && patternList.getPatternCount() < 1000) // TODO determine good cut-off
+                if ( stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
                     preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
 
@@ -500,6 +500,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             useScaleFactors = true;
             if (rescalingCountInner < RESCALE_TIMES) {
                 recomputeScaleFactors = true;
+                makeDirty();
 //                System.err.println("Recomputing scale factors");
             }
 

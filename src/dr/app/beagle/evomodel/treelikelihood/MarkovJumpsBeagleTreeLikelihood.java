@@ -41,12 +41,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            PartialsRescalingScheme scalingScheme, DataType dataType, String stateTag,
                                            SubstitutionModel substModel,
                                            boolean useUniformization,
+                                           boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
                 scalingScheme, dataType, stateTag, substModel);
 
         this.useUniformization = useUniformization;
+        this.reportUnconditionedColumns = reportUnconditionedColumns;
         this.nSimulants = nSimulants;
 
         markovjumps = new ArrayList<MarkovJumpsSubstitutionModel>();
@@ -173,7 +175,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         final double substTime = (tree.getNodeHeight(parentNode) - tree.getNodeHeight(childNode));
 
         for (int r = 0; r < markovjumps.size(); r++) {
-             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
+            MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
             if (useUniformization) {
                 computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
                         branchRate, childNum, parentStates, childStates, probabilities, scaleByTime[r],
@@ -257,7 +259,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 }
             } else {
                 Arrays.fill(condJumps[i], 0.0);
-                if (thisMarkovJumps.getType() == MarkovJumpsType.REWARDS && scaleByTime) {                                 
+                if (thisMarkovJumps.getType() == MarkovJumpsType.REWARDS && scaleByTime) {
                     for (int j = 0; j < stateCount; j++) {
                         condJumps[i][j * stateCount + j] = substTime;
                     }
@@ -272,23 +274,53 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     }
 
     public LogColumn[] getColumns() {
-        LogColumn[] allColumns = new LogColumn[patternCount * numRegisters];
+
+        int nColumns = patternCount * numRegisters;
+        if (reportUnconditionedColumns) {
+            if (categoryCount == 1) {
+                nColumns += numRegisters;
+            } else {
+                nColumns *= 2;
+            }
+        }
+
+        int index = 0;
+        LogColumn[] allColumns = new LogColumn[nColumns];
         for (int r = 0; r < numRegisters; r++) {
             for (int j = 0; j < patternCount; j++) {
-                allColumns[r * patternCount + j] = new CountColumn(jumpTag.get(r), r, j);
+                allColumns[index++] = new ConditionedCountColumn(jumpTag.get(r), r, j);
+                if (reportUnconditionedColumns) {
+                    if (categoryCount > 1) {
+                        allColumns[index++] = new UnconditionedCountColumn(jumpTag.get(r), r, j, rateCategory);
+                    }
+                }
+            }
+            if (reportUnconditionedColumns) {
+                if (categoryCount == 1) {
+                    allColumns[index++] = new UnconditionedCountColumn(jumpTag.get(r), r);
+                }
             }
         }
         return allColumns;
     }
 
-    protected class CountColumn extends NumberColumn {
-        private int indexSite;
-        private int indexRegistration;
+    protected abstract class CountColumn extends NumberColumn {
+        protected int indexRegistration;
+        protected int indexSite;
 
         public CountColumn(String label, int r, int j) {
-            super(label + "[" + (j + 1) + "]");
+            super(label + (j >= 0 ? "[" + (j + 1) + "]" : ""));
             indexRegistration = r;
             indexSite = j;
+        }
+
+        public abstract double getDoubleValue();
+    }
+
+    protected class ConditionedCountColumn extends CountColumn {
+
+        public ConditionedCountColumn(String label, int r, int j) {
+            super("c_" + label, r, j);
         }
 
         public double getDoubleValue() {
@@ -298,6 +330,39 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 total += values[i][indexSite];
             }
             return total;
+        }
+    }
+
+    protected class UnconditionedCountColumn extends CountColumn {
+        int[] rateCategory;
+
+        public UnconditionedCountColumn(String label, int r, int j, int[] rateCategory) {
+            super("u_" + label, r, j);
+            this.rateCategory = rateCategory;
+        }
+
+        public UnconditionedCountColumn(String label, int r) {
+            this(label, r, -1, null);
+        }
+
+        public double getDoubleValue() {
+            double value = markovjumps.get(indexRegistration).getMarginalRate() * getExpectedTreeLength();
+            if (rateCategory != null) {
+                value *= siteRateModel.getRateForCategory(rateCategory[indexSite]);
+            }
+            return value;
+        }
+
+        private double getExpectedTreeLength() {
+            double expectedTreeLength = 0;
+            for (int i = 0; i < treeModel.getNodeCount(); i++) {
+                NodeRef node = treeModel.getNode(i);
+                if (!treeModel.isRoot(node)) {
+                    expectedTreeLength += branchRateModel.getBranchRate(treeModel, node)
+                            * treeModel.getBranchLength(node);
+                }
+            }
+            return expectedTreeLength;
         }
     }
 
@@ -311,4 +376,5 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private int numRegisters;
     private final boolean useUniformization;
     private final int nSimulants;
+    private final boolean reportUnconditionedColumns;
 }

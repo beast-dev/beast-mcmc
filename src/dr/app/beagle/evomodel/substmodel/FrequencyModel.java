@@ -55,6 +55,10 @@ public class FrequencyModel extends AbstractModel {
         this(dataType, new Parameter.Default(frequencyParameter));
     }
 
+    public FrequencyModel(String name) {
+        super(name);
+    }
+
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
 
         super(FrequencyModelParser.FREQUENCY_MODEL);

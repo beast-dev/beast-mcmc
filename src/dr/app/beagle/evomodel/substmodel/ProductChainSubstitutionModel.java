@@ -50,13 +50,17 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
             }
         }
 
+        List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
         stateSizes = new int[numBaseModel];
         stateCount = 1;
         for (int i = 0; i < numBaseModel; i++) {
+            freqModels.add(baseModels.get(i).getFrequencyModel());
             DataType dataType = baseModels.get(i).getDataType();
             stateSizes[i] = dataType.getStateCount();
             stateCount *= dataType.getStateCount();
         }
+
+        pcFreqModel = new ProductChainFrequencyModel("pc",freqModels);
 
         String[] codeStrings = getCharacterStrings();
 
@@ -202,7 +206,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     }
 
     public FrequencyModel getFrequencyModel() {
-        throw new RuntimeException("ProductChainSumSubstitionModel currently does not have a FrequencyModel");
+        return pcFreqModel;
     }
 
     protected void frequenciesChanged() {
@@ -221,5 +225,6 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     private final List<SubstitutionModel> baseModels;
     private final List<SiteRateModel> rateModels;
     private final int[] stateSizes;
+    private final ProductChainFrequencyModel pcFreqModel;    
     private double[] rateMatrix = null;
 }

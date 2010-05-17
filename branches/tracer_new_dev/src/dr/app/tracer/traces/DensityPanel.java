@@ -296,8 +296,8 @@ public class DensityPanel extends JPanel implements Exportable {
                 }
             }
         }
-        int barIntId = 1;
-        int barCatId = 1;
+        int barIntId = 0; // start from 0
+        int barCatId = 0;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
 

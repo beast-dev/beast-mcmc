@@ -49,6 +49,8 @@ public class DiscreteJChart extends JChart {
         g2.setPaint(getAxisPaint());
         g2.setStroke(getAxisStroke());
 
+        if (label == null) label = " "; 
+
         if (horizontalAxis) {
             double pos = transformX(value);
 

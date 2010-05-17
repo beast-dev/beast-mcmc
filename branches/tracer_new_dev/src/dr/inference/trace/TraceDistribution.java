@@ -28,10 +28,7 @@ package dr.inference.trace;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A class that stores the distribution statistics for a trace
@@ -245,7 +242,7 @@ public class TraceDistribution<T> {
                     }
                 }
 
-                for (T value : valuesMap.keySet()) {
+                for (T value : new TreeSet<T>(valuesMap.keySet())) {
                     double prob = (double) valuesMap.get(value) / (double) values.length;
                     if (prob < (1 - proportion)) {
                         inCredibleSet.add(value);
@@ -278,7 +275,7 @@ public class TraceDistribution<T> {
 
         public int getIndex(T value) {
             int i = -1;
-            for (T v : valuesMap.keySet()) {
+            for (T v : new TreeSet<T>(valuesMap.keySet())) {
                 i++;
                 if (v.equals(value)) return i;
             }
@@ -295,7 +292,7 @@ public class TraceDistribution<T> {
 
         public List<String> getValues() {
             List<String> values = new ArrayList<String>();
-            for (T value : valuesMap.keySet()) {
+            for (T value : new TreeSet<T>(valuesMap.keySet())) {
                 if (!values.contains(value.toString()))
                     values.add(value.toString());
             }
@@ -303,7 +300,7 @@ public class TraceDistribution<T> {
         }
 
         private void calculateMode() {
-            for (T value : valuesMap.keySet()) {
+            for (T value : new TreeSet<T>(valuesMap.keySet())) {
                 if (freqOfMode < valuesMap.get(value)) {
                     freqOfMode = valuesMap.get(value);
                     mode = value;

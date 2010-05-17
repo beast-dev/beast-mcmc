@@ -88,11 +88,13 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private int colourBy = COLOUR_BY_TRACE;
 
+    private final JFrame frame;
     /**
      * Creates new FrequencyPanel
      */
     public DensityPanel(final JFrame frame) {
-
+        this.frame = frame;
+        
         setOpaque(false);
 
         setMinimumSize(new Dimension(300, 150));
@@ -278,6 +280,24 @@ public class DensityPanel extends JPanel implements Exportable {
 
         Class iniTraceType = null;
         int i = 0;
+//        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+        int numOfBarsInt = 0;
+        int numOfBarsCat = 0;
+        for (TraceList tl : traceLists) {
+            for (String traceName : traceNames) {
+                int traceIndex = tl.getTraceIndex(traceName);
+                Trace trace = tl.getTrace(traceIndex);
+                if (trace != null) {
+                    if (trace.getTraceType() == Integer.class) {
+                        numOfBarsInt++;
+                    } else if (trace.getTraceType() == String.class) {
+                        numOfBarsCat++;
+                    }
+                }
+            }
+        }
+        int barIntId = 1;
+        int barCatId = 1;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
 
@@ -295,7 +315,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             Double values[] = new Double[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
                             plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                            traceChart.setXAxis(false, categoryDataMap);
+                            traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
                             chartPanel.setYAxisTitle("Density");
 
                             relativeDensityCheckBox.setVisible(true);
@@ -305,8 +325,9 @@ public class DensityPanel extends JPanel implements Exportable {
                         } else if (trace.getTraceType() == Integer.class) {
                             Integer values[] = new Integer[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
-                            plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td);
-                            traceChart.setXAxis(true, categoryDataMap);
+                            plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
+                            barIntId++;
+                            traceChart.setXAxis(true, new HashMap<Integer, String>());
                             chartPanel.setYAxisTitle("Probability");
 
                             relativeDensityCheckBox.setVisible(false);
@@ -323,7 +344,8 @@ public class DensityPanel extends JPanel implements Exportable {
                                 categoryDataMap.put(intData[v], values[v]);
                             }
 
-                            plot = new CategoryDensityPlot(intData, -1, td);
+                            plot = new CategoryDensityPlot(intData, -1, td, numOfBarsCat, barCatId);
+                            barCatId++;
                             traceChart.setXAxis(false, categoryDataMap);
                             chartPanel.setYAxisTitle("Probability");
 
@@ -353,6 +375,11 @@ public class DensityPanel extends JPanel implements Exportable {
                             i++;
                         }
                         if (i == paints.length) i = 0;
+                    } else {
+//                         JOptionPane.showMessageDialog(frame,
+//                                 "Selected traces contain different trace types\rso that the plot is displayed improperly.",
+//                                 "Incompatible trace type",
+//                                 JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }

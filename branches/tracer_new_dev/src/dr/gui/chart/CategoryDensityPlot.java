@@ -32,11 +32,15 @@ import dr.util.FrequencyDistribution;
 import java.awt.*;
 
 public class CategoryDensityPlot extends FrequencyPlot {
-
+    private int numOfBars;
+    private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+    public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
         super(traceD);
+        this.numOfBars = numOfBars;
+        this.barId = barId;
+        
         double[] doubleData = new double[data.length];
         for (int i = 0; i < data.length; i++) {
             doubleData[i] = (double) data[i];
@@ -123,23 +127,29 @@ public class CategoryDensityPlot extends FrequencyPlot {
      * Paint data series
      */
     protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
-
         double x1, y1, x2, y2;
 
         int n = xData.getCount();
 
-
         g2.setStroke(lineStroke);
         for (int i = 0; i < n; i += 2) {
 
-            x1 = xData.get(i);
+
+               x1 = xData.get(i);
+               x2 = xData.get(i + 1);
+
+
             y1 = yData.get(i);
-            x2 = xData.get(i + 1);
             y2 = yData.get(i + 1);
 
+
             if (y1 != y2) {
-                if (barPaint != null) {
-                    g2.setPaint(barPaint);
+                if (linePaint != null) {
+                    Paint fillPaint = new Color(
+                    ((Color) linePaint).getRed(),
+                    ((Color) linePaint).getGreen(),
+                    ((Color) linePaint).getBlue(), 155);
+                    g2.setPaint(fillPaint);
                     fillRect(g2, x1, y1, x2, y2);
                 }
 
@@ -151,6 +161,23 @@ public class CategoryDensityPlot extends FrequencyPlot {
             }
         }
     }
+
+//    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+//            super.fillRect(g2, x1 - ((double) (numOfBars - barId + 1)) * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * (x2-x1) * 2.0, y2);
+//        } else {
+//            super.fillRect(g2, x1, y1, x2, y2);
+//        }
+//    }
+//
+//    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+////            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
+//           super.fillRect(g2, x1 - ((double) (numOfBars - barId + 1)) * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * (x2-x1) * 2.0, y2);
+//        } else {
+//            super.drawRect(g2, x1, y1, x2, y2);
+//        }
+//    }
 }
 
 

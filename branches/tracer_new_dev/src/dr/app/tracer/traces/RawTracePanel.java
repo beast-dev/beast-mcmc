@@ -266,7 +266,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                             tl.getBurninValues(traceIndex, burninValues);
                         }
 
-                        traceChart.setYAxis(false, categoryDataMap);
+                        traceChart.setYAxis(false, new HashMap<Integer, String>());
                         traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values), Trace.arrayConvert(burninValues), paints[i]);
 
                     } else if (trace.getTraceType() == Integer.class) {
@@ -279,7 +279,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                             tl.getBurninValues(traceIndex, burninValues);
                         }
 
-                        traceChart.setYAxis(true, categoryDataMap);
+                        traceChart.setYAxis(true, new HashMap<Integer, String>());
                         traceChart.addTrace(name, stateStart, stateStep, Trace.arrayIntToDouble(values), Trace.arrayIntToDouble(burninValues), paints[i]);
 
                     } else if (trace.getTraceType() == String.class) {

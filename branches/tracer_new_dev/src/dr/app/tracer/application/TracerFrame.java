@@ -30,9 +30,8 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
 
@@ -57,6 +56,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private final java.util.List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
+
+    private JComboBox filterCombo = new JComboBox(new String[]{"None"});
+    private JLabel filterStatus = new JLabel();
 
     private int dividerLocation = -1;
 
@@ -246,6 +248,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+        filterPanel.add(new JLabel("Filtered by : "));
+        filterCombo.setPreferredSize(new Dimension(260, 20));
+        filterPanel.add(filterCombo);
+
+        filterPanel.add(filterStatus);
+        getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
     private JPopupMenu createContextMenu(final int rowIndex) {
@@ -286,13 +296,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             traceLists.get(traceTable.getSelectedRow()).analyseTrace(rowIndex);
         } catch (TraceException e) {
             JOptionPane.showMessageDialog(this, e,
-                        "Trace Type Exception",
-                        JOptionPane.ERROR_MESSAGE);
+                    "Trace Type Exception",
+                    JOptionPane.ERROR_MESSAGE);
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         statisticTableModel.fireTableDataChanged();
-        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);                
+        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
     public void setVisible(boolean b) {
@@ -527,6 +537,33 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             statisticTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
+        getIntersectionOfSelectedTraceLists();
+    }
+
+    private void getIntersectionOfSelectedTraceLists() {
+        Map<String, Class> tracesIntersection = new HashMap<String, Class>();
+        List<String> incompatibleTrace = new ArrayList<String>();
+        for (TraceList tl : currentTraceLists) {
+            for (int i = 0; i < tl.getTraceCount(); i++) {
+                String traceName = tl.getTraceName(i);
+                if (!incompatibleTrace.contains(traceName)){
+
+                    Class traceType = tl.getTrace(i).getTraceType();
+                    if (traceType == null) {
+                        incompatibleTrace.add(traceName);
+                        break;
+                    }
+
+                    if (tracesIntersection.containsKey(traceName)) {
+
+
+                    } else {
+
+                        tracesIntersection.put(traceName, traceType);
+                    }
+                }
+            } // end i loop
+        }
     }
 
     public void statisticTableSelectionChanged() {

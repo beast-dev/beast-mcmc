@@ -170,11 +170,12 @@ public class TimeSlicer {
         if (!summaryOnly) {
             outputHeader(traits);
 
-            if (sliceHeights == null || sliceHeights.length == 0)
+            if (sliceHeights == null || sliceHeights.length == 0) {
                 outputSlice(0, Double.NaN);
-            else {
-                for (int i = 0; i < sliceHeights.length; i++)
+            } else {
+                for (int i = 0; i < sliceHeights.length; i++) {
                     outputSlice(i, sliceHeights[i]);
+                }
 
             }
         } else { // Output summaries
@@ -295,6 +296,9 @@ public class TimeSlicer {
                             //sliceTreeWeightedAverageDiffusionCoefficients[s][t] = Math.pow((distanceArray[t] - distanceArray[t+1]),2.0)/(4.0*(timeArray[t] - timeArray[t+1]));
                         } else {
                             if (timeArray[t] > 0) {
+                                if (t == 0) {
+                                    throw new RuntimeException("Philippe to fix: the time slices are expected in ascending height order");
+                                }
                                 sliceTreeWeightedAverageRates[s][t] = sliceTreeWeightedAverageRates[s][t - 1];
                                 //sliceTreeWeightedAverageDiffusionCoefficients[s][t] = sliceTreeWeightedAverageDiffusionCoefficients[s][t-1];
                             } else {
@@ -1469,7 +1473,7 @@ public class TimeSlicer {
 
     private static double[][] getArrayHPDintervals(double[][] array) {
 
-        double[][] returnArray = new double[array.length][2];
+        double[][] returnArray = new double[array[0].length][2];
 
         for (int col = 0; col < array[0].length; col++) {
 
@@ -1481,22 +1485,28 @@ public class TimeSlicer {
                     counter += 1;
                 }
             }
-            double[] columnNoNaNArray = new double[counter];
 
-            int index = 0;
-            for (int row = 0; row < array.length; row++) {
+            if (counter > 0) {
+                double[] columnNoNaNArray = new double[counter];
 
-                if (!(((Double) array[row][col]).isNaN())) {
-                    columnNoNaNArray[index] = array[row][col];
-                    index += 1;
+                int index = 0;
+                for (int row = 0; row < array.length; row++) {
+
+                    if (!(((Double) array[row][col]).isNaN())) {
+                        columnNoNaNArray[index] = array[row][col];
+                        index += 1;
+                    }
                 }
-            }
-            int[] indices = new int[counter];
-            HeapSort.sort(columnNoNaNArray, indices);
-            double hpdBinInterval[] = getHPDInterval(0.95, columnNoNaNArray, indices);
+                int[] indices = new int[counter];
+                HeapSort.sort(columnNoNaNArray, indices);
+                double hpdBinInterval[] = getHPDInterval(0.95, columnNoNaNArray, indices);
 
-            returnArray[col][0] = hpdBinInterval[0];
-            returnArray[col][1] = hpdBinInterval[1];
+                returnArray[col][0] = hpdBinInterval[0];
+                returnArray[col][1] = hpdBinInterval[1];
+            } else {
+                returnArray[col][0] = Double.NaN;
+                returnArray[col][1] = Double.NaN;
+            }
 
         }
 
@@ -1634,12 +1644,16 @@ public class TimeSlicer {
 
             if (arguments.hasOption(BURNIN)) {
                 burnin = arguments.getIntegerOption(BURNIN);
+                System.err.println("Ignoring a burnin of " + burnin + " trees.");
             }
 
             if (arguments.hasOption(SKIP)) {
-                skipEvery = arguments.getIntegerOption(SKIP) + 1;
+                skipEvery = arguments.getIntegerOption(SKIP);
+                System.err.println("Skipping every " + skipEvery + " trees.");
             }
-
+            if (skipEvery < 1) {
+                skipEvery = 1;
+            }
 
             if (arguments.hasOption(HPD)) {
                 int intValue = arguments.getIntegerOption(HPD);
@@ -1758,6 +1772,7 @@ public class TimeSlicer {
             String branch = arguments.getStringOption(BRANCHSET);
             if (branch != null) {
                 set = BranchSet.valueOf(branch.toUpperCase());
+                System.out.println("Using the branch set: " + set.name());
             }
             if (set == set.BACKBONE) {
                 if (arguments.hasOption(BACKBONETAXA)) {

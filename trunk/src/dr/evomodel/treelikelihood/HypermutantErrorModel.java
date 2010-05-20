@@ -3,11 +3,14 @@ package dr.evomodel.treelikelihood;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.HypermutantAlignment;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -23,7 +26,9 @@ public class HypermutantErrorModel extends TipPartialsModel {
 
     public HypermutantErrorModel(HypermutantAlignment hypermutantAlignment, Parameter hypermutationRateParameter, Parameter hypermuationIndicatorParameter, boolean unlinkedRates) {
         super(HYPERMUTANT_ERROR_MODEL, null, null);
+
         this.hypermutantAlignment = hypermutantAlignment;
+
         this.unlinkedRates = unlinkedRates;
 
         this.hypermutationRateParameter = hypermutationRateParameter;
@@ -121,7 +126,6 @@ public class HypermutantErrorModel extends TipPartialsModel {
 
     }
 
-
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() { return HYPERMUTANT_ERROR_MODEL; }
@@ -208,7 +212,7 @@ public class HypermutantErrorModel extends TipPartialsModel {
         }
 
         public double getStatisticValue(int dim) {
-            return hypermutationRateParameter.getParameterValue(dim) * hypermuationIndicatorParameter.getParameterValue(dim);
+            return hypermutationRateParameter.getParameterValue(dim) * hypermuationIndicatorParameter.getParameterValue(dim);                           
         }
 
     }
@@ -228,15 +232,24 @@ public class HypermutantErrorModel extends TipPartialsModel {
         }
 
         public double getStatisticValue(int dim) {
-            int[] mutatedCounts = hypermutantAlignment.getMutatedContextCounts();
-            int[] unmutatedCounts = hypermutantAlignment.getUnmutatedContextCounts();
+            if (mutatedContextCounts == null) {
+                mutatedContextCounts = new HashMap<Integer, Integer>();
+                unmutatedContextCounts = new HashMap<Integer, Integer>();
+
+                for (int index : taxonMap.keySet()) {
+                    String name = taxonMap.get(index);
+                    int i = hypermutantAlignment.getTaxonIndex(name);
+                    mutatedContextCounts.put(index, hypermutantAlignment.getMutatedContextCounts()[i]);
+                    unmutatedContextCounts.put(index, hypermutantAlignment.getUnmutatedContextCounts()[i]);
+                }
+            }
 
             double mutatedCount = 0;
             double totalCount = 0;
             for (int i = 0; i < hypermuationIndicatorParameter.getDimension(); i++) {
                 if (hypermuationIndicatorParameter.getParameterValue(i) > 0.5) {
-                    mutatedCount += mutatedCounts[i];
-                    totalCount += mutatedCount + unmutatedCounts[i];
+                    mutatedCount += mutatedContextCounts.get(i);
+                    totalCount += mutatedCount + unmutatedContextCounts.get(i);
 
                 }
             }
@@ -246,6 +259,9 @@ public class HypermutantErrorModel extends TipPartialsModel {
         }
 
     }
+
+    Map<Integer, Integer> mutatedContextCounts = null;
+    Map<Integer, Integer> unmutatedContextCounts = null;
 
     private final HypermutantAlignment hypermutantAlignment;
     private final Parameter hypermutationRateParameter;

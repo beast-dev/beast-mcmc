@@ -17,20 +17,6 @@ import dr.math.MathUtils;
  */
 public class AncestralStateTreeLikelihood extends TreeLikelihood implements NodeAttributeProvider {
 
-    private DataType dataType;
-    private int[][] reconstructedStates;
-    private int[][] storedReconstructedStates;
-
-    private String tag;
-    private boolean areStatesRedrawn = false;
-    private boolean storedAreStatesRedrawn = false;
-
-    private boolean useMAP = false;
-    private boolean returnMarginalLogLikelihood = true;
-
-    private double jointLogLikelihood;
-    private double storedJointLogLikelihood;
-
 //    private boolean useExtraReconstructedStates = false;
 
 
@@ -321,5 +307,20 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
             }
         }
     }
+
+    private DataType dataType;
+    private int[][] reconstructedStates;
+    private int[][] storedReconstructedStates;
+
+    private String tag;
+    private boolean areStatesRedrawn = false;
+    private boolean storedAreStatesRedrawn = false;
+
+    private boolean useMAP = false;
+    private boolean returnMarginalLogLikelihood = true;
+
+    private double jointLogLikelihood;
+    private double storedJointLogLikelihood;
+    
 
 }

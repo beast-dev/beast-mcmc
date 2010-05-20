@@ -30,6 +30,19 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               DataType dataType,
                                               String tag,
                                               SubstitutionModel substModel) {
+        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+                dataType, tag, substModel, false, true);
+    }
+
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
+                                              BranchRateModel branchRateModel, boolean useAmbiguities,
+                                              PartialsRescalingScheme scalingScheme,
+                                              DataType dataType,
+                                              String tag,
+                                              SubstitutionModel substModel,
+                                              boolean useMAP,
+                                              boolean returnML) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme);
 
@@ -60,6 +73,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         }
 
         substitutionModel = substModel;
+
+        reconstructedStates = new int[treeModel.getNodeCount()][patternCount];
+        storedReconstructedStates = new int[treeModel.getNodeCount()][patternCount];
+                  
+        this.useMAP = useMAP;
+        this.returnMarginalLogLikelihood = returnML;
     }
 
     public SubstitutionModel getSubstitutionModel() {
@@ -100,7 +119,21 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return internalNodeCount + 2;
     }
 
-     protected boolean areStatesRedrawn = false;
+    private int drawChoice(double[] measure) {
+        if (useMAP) {
+            double max = measure[0];
+            int choice = 0;
+            for (int i = 1; i < measure.length; i++) {
+                if (measure[i] > max) {
+                    max = measure[i];
+                    choice = i;
+                }
+            }
+            return choice;
+        } else {
+            return MathUtils.randomChoicePDF(measure);
+        }
+    }
 
      public void makeDirty() {
          super.makeDirty();
@@ -116,9 +149,20 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
          areStatesRedrawn = true;
      }
 
+//    protected double calculateLogLikelihood() {
+//        areStatesRedrawn = false;
+//        return super.calculateLogLikelihood();
+//    }
+
     protected double calculateLogLikelihood() {
         areStatesRedrawn = false;
-        return super.calculateLogLikelihood();
+        double marginalLogLikelihood = super.calculateLogLikelihood();
+        if (returnMarginalLogLikelihood) {
+            return marginalLogLikelihood;
+        }
+        // redraw states and return joint density of drawn states
+        redrawAncestralStates();
+        return jointLogLikelihood;
     }
 
     private static String formattedState(int[] state, DataType dataType) {
@@ -198,12 +242,34 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //        return thisLen;
 //    }
 
+    public void storeState() {
+
+        super.storeState();
+
+        if (areStatesRedrawn) {
+            for (int i = 0; i < reconstructedStates.length; i++) {
+                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
+            }
+        }
+
+        storedAreStatesRedrawn = areStatesRedrawn;
+        storedJointLogLikelihood = jointLogLikelihood;
+    }
+
+    public void restoreState() {
+
+        super.restoreState();
+
+        int[][] temp = reconstructedStates;
+        reconstructedStates = storedReconstructedStates;
+        storedReconstructedStates = temp;
+
+        areStatesRedrawn = storedAreStatesRedrawn;
+        jointLogLikelihood = storedJointLogLikelihood;
+    }
 
     public void traverseSample(TreeModel tree, NodeRef node, int[] parentState, int[] rateCategory) {
 
-        if (reconstructedStates == null)
-            reconstructedStates = new int[tree.getNodeCount()][patternCount];
-        
         int nodeNum = node.getNumber();
 
         NodeRef parent = tree.getParent(node);
@@ -255,13 +321,17 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                         conditionalProbabilities[i] *= frequencies[i];
                     }
                     try {
-                        state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                        state[j] = drawChoice(conditionalProbabilities); //MathUtils.randomChoicePDF(conditionalProbabilities);
                     } catch (Error e) {
                         System.err.println(e.toString());
                         System.err.println("Please report error to Marc");
                         state[j] = 0;
                     }
                     reconstructedStates[nodeNum][j] = state[j];
+
+                    if (!returnMarginalLogLikelihood) {
+                        jointLogLikelihood += Math.log(frequencies[state[j]]);
+                    }
                 }
 
                 if (sampleCategory) {
@@ -295,8 +365,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                         conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
                                 * probabilities[matrixIndex + parentIndex + i];
 
-                    state[j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                    state[j] = drawChoice(conditionalProbabilities); //MathUtils.randomChoicePDF(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
+
+                    if (!returnMarginalLogLikelihood) {
+                        double contrib = probabilities[parentIndex + state[j]];
+                        jointLogLikelihood += Math.log(contrib);
+                    }
                 }
 
                 hookCalculation(tree, parent, node, parentState, state, probabilities, rateCategory);
@@ -322,13 +397,20 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                 if (dataType.isAmbiguousState(thisState)) {
 
-                    int parentIndex = parentState[j] * stateCount;
+                    final int parentIndex = parentState[j] * stateCount;
                     int category = rateCategory == null ? 0 : rateCategory[j];
                     int matrixIndex = category * stateCount * stateCount;
                     
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                }
+
+                if (!returnMarginalLogLikelihood) {
+                    final int parentIndex = parentState[j] * stateCount;
+                    getMatrix(nodeNum, probabilities);
+                    double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
+                    jointLogLikelihood += Math.log(contrib);
                 }
             }
 
@@ -344,7 +426,17 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     private DataType dataType;
     private int[][] reconstructedStates;
+    private int[][] storedReconstructedStates;
+
     private String tag;
+    protected boolean areStatesRedrawn = false;
+    protected boolean storedAreStatesRedrawn = false;
+
+    private boolean useMAP = false;
+    private boolean returnMarginalLogLikelihood = true;
+
+    private double jointLogLikelihood;
+    private double storedJointLogLikelihood;
 
     private int[][] tipStates;
 

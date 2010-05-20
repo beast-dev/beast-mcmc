@@ -25,6 +25,8 @@
 
 package dr.inference.model;
 
+import dr.math.MathUtils;
+import dr.math.distributions.Distribution;
 import dr.xml.*;
 
 /**
@@ -42,6 +44,7 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
     public static final String DIMENSION = "dimension";
     public static final String VALUE = "value";
     public static final String PARAMETER = "parameter";
+    public static final String RANDOMIZE = "randomize";
 
     public String getParserName() {
         return PARAMETER;
@@ -77,7 +80,11 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
                 values = new double[xo.getIntegerAttribute(DIMENSION)];
             } else {
                 // parameter dimension will get set correctly by TreeModel presumably.
-                return new Parameter.Default(1);
+                if (!xo.hasChildNamed(RANDOMIZE)) {
+                    return new Parameter.Default(1);
+                }
+                values = new double[1];
+                values[0] = 1.0;
             }
         }
 
@@ -134,9 +141,26 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             }
         }
 
-        // make values consistent with bounds
-        for(int i = 0; i < values.length; i++) {
-            if( uppers[i] < values[i] ) values[i] = uppers[i];
+        if (xo.hasChildNamed(RANDOMIZE)) {
+                     
+            Distribution distribution = (Distribution) xo.getChild(RANDOMIZE).getChild(Distribution.class);
+            for (int i = 0; i < values.length; i++) {
+                do {
+                    // Not an efficient way to draw random variables, but this is currently the only general interface
+                    values[i] = distribution.quantile(MathUtils.nextDouble());
+                } while (values[i] < lowers[i] || values[i] > uppers[i]);
+            }
+
+        } else {
+
+            // make values consistent with bounds
+            for(int i = 0; i < values.length; i++) {
+                if( uppers[i] < values[i] ) values[i] = uppers[i];
+            }
+
+            for(int i = 0; i < values.length; i++) {
+                if (lowers[i] > values[i]) values[i] = lowers[i];
+            }
         }
 
         Parameter param = new Parameter.Default(values.length);
@@ -155,7 +179,10 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             AttributeRule.newDoubleArrayRule(VALUE, true),
             AttributeRule.newIntegerRule(DIMENSION, true),
             AttributeRule.newDoubleArrayRule(UPPER, true),
-            AttributeRule.newDoubleArrayRule(LOWER, true)
+            AttributeRule.newDoubleArrayRule(LOWER, true),
+            new ElementRule(RANDOMIZE, new XMLSyntaxRule[] {
+                    new ElementRule(Distribution.class),
+            },true),
     };
 
 

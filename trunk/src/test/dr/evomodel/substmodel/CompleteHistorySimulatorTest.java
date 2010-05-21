@@ -26,7 +26,7 @@ import test.dr.math.MathTestCase;
 
 public class CompleteHistorySimulatorTest extends MathTestCase {
 
-    public static final int N = 1000;
+    public int N = 1000;
 
     public void setUp() throws Exception {
         super.setUp();
@@ -106,10 +106,17 @@ public class CompleteHistorySimulatorTest extends MathTestCase {
 
     }
 
-    private void runSimulation(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel, int nSites,
+    protected void runSimulation(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel, int nSites,
                                double[][] registers, double analyticResult) {
+        runSimulation(N, tree, siteModel, branchRateModel, nSites, registers, analyticResult, null, null);
+    }
 
-        CompleteHistorySimulator simulator = new CompleteHistorySimulator(tree, siteModel, branchRateModel, nSites);
+    protected void runSimulation(int N, Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel, int nSites,
+                               double[][] registers, double analyticResult, Parameter variableParam,
+                               Parameter valuesParam) {
+
+        CompleteHistorySimulator simulator = new CompleteHistorySimulator(tree, siteModel, branchRateModel, nSites,
+                false, variableParam, valuesParam);
 
         for (int r = 0; r < registers.length; r++) {
             Parameter registerParameter = new Parameter.Default(registers[r]);

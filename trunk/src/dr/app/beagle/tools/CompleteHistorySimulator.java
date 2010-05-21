@@ -18,6 +18,7 @@ import dr.math.MathUtils;
 
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Simulates a complete transition history and alignment of sequences given a tree, substitution model and
@@ -63,6 +64,10 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //    protected double[] lambda;
 //    protected double[][] probabilities;
 
+    private boolean branchSpecificLambda = false;
+    private Parameter branchVariableParameter = null;
+    private Parameter branchPossibleValuesParameter = null;
+
     protected List<double[]> registers;
     protected List<String> jumpTags;
     protected List<MarkovJumpsType> jumpTypes;
@@ -72,7 +77,6 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     private final Map<String, Integer> idMap = new HashMap<String, Integer>();
 
-
     /**
      * Constructor
      *
@@ -81,13 +85,20 @@ public class CompleteHistorySimulator extends SimpleAlignment
      * @param branchRateModel
      * @param nReplications:  nr of samples to generate
      */
-    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
-                                    int nReplications) {
-        this(tree, siteModel, branchRateModel, nReplications, false);
-    }
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//                                    int nReplications) {
+//        this(tree, siteModel, branchRateModel, nReplications, false);
+//    }
+//
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//                                    int nReplications, boolean sumAcrossSites) {
+//        this(tree, siteModel, branchRateModel, nReplications, sumAcrossSites, null, null);
+//
+//    }
 
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
-                                    int nReplications, boolean sumAcrossSites) {
+                                    int nReplications, boolean sumAcrossSites,
+                                    Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
         this.tree = tree;
         this.siteModel = siteModel;
         this.branchRateModel = branchRateModel;
@@ -110,6 +121,26 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
         format = NumberFormat.getNumberInstance(Locale.ENGLISH);
         format.setMaximumFractionDigits(3);
+
+        if (branchVariableParameter != null && branchPossibleValuesParameter != null) {
+            if (branchVariableParameter.getDimension() != 1) {
+                throw new RuntimeException("branchVariableParameter has the wrong dimension; should be 1");
+            }
+            if (branchPossibleValuesParameter.getDimension() != tree.getNodeCount()) {
+                throw new RuntimeException("branchPossibleValuesParameter has the wrong dimension; should be "
+                        + tree.getNodeCount());
+            }
+            branchSpecificLambda = true;
+            this.branchPossibleValuesParameter = branchPossibleValuesParameter;
+            this.branchVariableParameter = branchVariableParameter;
+            StringBuilder sb = new StringBuilder();
+            sb.append("Doing a complete history simulation using branch-specific variables\n\tReplacing variable '");
+            sb.append(branchVariableParameter.getId());
+            sb.append("' with values from '");
+            sb.append(branchPossibleValuesParameter.getId());
+            sb.append("'");
+            Logger.getLogger("dr.app.beagle.tools").info(sb.toString());            
+        }
     }
 
     /**
@@ -252,7 +283,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
         double[] lambda = new double[stateCount * stateCount];
 
-        siteModel.getSubstitutionModel().getInfinitesimalMatrix(lambda); // Assumes a single generator for whole tree
+        if (!branchSpecificLambda) {
+            siteModel.getSubstitutionModel().getInfinitesimalMatrix(lambda); // Assumes a single generator for whole tree
+        }
 
         NodeRef root = tree.getRoot();
 
@@ -288,8 +321,15 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
             NodeRef child = tree.getChild(node, iChild);
             int[] seq = new int[nReplications];
-
             StateHistory[] histories = new StateHistory[nReplications];
+
+            if (branchSpecificLambda) {               
+                final double branchValue = branchPossibleValuesParameter.getParameterValue(child.getNumber());
+                branchVariableParameter.setParameterValue(0, branchValue);
+//                System.err.println("trying value = " + branchValue + " for " + child.getNumber());
+                siteModel.getSubstitutionModel().getInfinitesimalMatrix(lambda);
+            }
+
             for (int i = 0; i < nReplications; i++) {
                 histories[i] = simulateAlongBranch(tree, child, category[i], parentSequence[i], lambda);
                 seq[i] = histories[i].getEndingState();

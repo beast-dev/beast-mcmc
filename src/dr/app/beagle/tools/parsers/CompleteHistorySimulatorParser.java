@@ -33,6 +33,10 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
     public static final String NON_SYN_JUMPS = "reportNonSynonymousMutations";
     public static final String SUM_SITES = "sumAcrossSites";
 
+    public static final String BRANCH_SPECIFIC_SPECIFICATION = "branchSpecificSpecification";
+    public static final String BRANCH_VARIABLE_PARAMETER = "variableParameter";
+    public static final String VARIABLE_VALUE_PARAMETER = "valuesParameter";
+
     public String getParserName() {
         return HISTORY_SIMULATOR;
     }
@@ -54,8 +58,17 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
         boolean sumAcrossSites = xo.getAttribute(SUM_SITES, false);
 
+        Parameter branchSpecificParameter = null;
+        Parameter variableValueParameter = null;
+
+        if (xo.hasChildNamed(BRANCH_SPECIFIC_SPECIFICATION)) {
+            XMLObject cxo = xo.getChild(BRANCH_SPECIFIC_SPECIFICATION);
+            branchSpecificParameter = (Parameter) cxo.getChild(BRANCH_VARIABLE_PARAMETER).getChild(Parameter.class);
+            variableValueParameter = (Parameter) cxo.getChild(VARIABLE_VALUE_PARAMETER).getChild(Parameter.class);           
+        }
+
         CompleteHistorySimulator history = new CompleteHistorySimulator(tree, siteModel, rateModel, nReplications,
-                sumAcrossSites);
+                sumAcrossSites, branchSpecificParameter, variableValueParameter);
 
         XMLObject cxo = xo.getChild(COUNTS);
         if (cxo != null) {
@@ -113,5 +126,9 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SYN_JUMPS, true),
             AttributeRule.newBooleanRule(NON_SYN_JUMPS, true),
             AttributeRule.newBooleanRule(SUM_SITES, true),
+            new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
+                    new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
+                    new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),
+            }, true),
     };
 }

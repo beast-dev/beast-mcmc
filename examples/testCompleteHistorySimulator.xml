@@ -77,6 +77,21 @@
         <completeHistorySimulator id="myAlignment" replications='10000'>
             <tree idref="treeML"/>
             <siteModel idref="simSiteModel"/>
+            <branchSpecificSpecification>
+            	<variableParameter>
+            		<parameter idref="simjc69.kappa"/>
+            	</variableParameter>
+            	<valuesParameter>
+            		<parameter id="replacementValues" dimension="11">
+            			<randomize>
+            				<gammaDistributionModel>
+            					<shape> 1 </shape>
+            					<scale> 2 </scale>
+            				</gammaDistributionModel>            			
+            			</randomize>            		
+            		</parameter>
+            	</valuesParameter>
+            </branchSpecificSpecification>            
         </completeHistorySimulator>
     </report>
 

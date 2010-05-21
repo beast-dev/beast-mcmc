@@ -330,5 +330,32 @@ public class TraceDistribution<T> {
         }
     }
 
+    //******************** Filter **************************** todo move to FilteredTraceList???
+    protected boolean[] notSelected;
 
+    public void setFilter(Filter filter) {
+        if (notSelected == null) notSelected = new boolean[values.length]; // default false
+
+        for (int i = 0; i < values.length; i++) {
+            if (!filter.isIn(values[i])) {
+                notSelected[i] = true; // not selected this value
+            }
+        }
+    }
+
+    public void removeFilter() {
+        notSelected = null; 
+    }
+
+    public void getFilteredValues(Filter filter) {
+        if (notSelected == null) notSelected = new boolean[values.length]; // default false
+
+        for (int i = 0; i < values.length; i++) {
+            if (!filter.isIn(values[i])) {
+                notSelected[i] = true; // not selected this value
+            }
+        }
+
+        // do walter magic with boolean[]
+    }
 }

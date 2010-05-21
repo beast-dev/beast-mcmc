@@ -249,9 +249,16 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         splitPane1.setDividerLocation(2000);
 
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-        filterPanel.add(new JLabel("Filtered by : "));
-        filterCombo.setPreferredSize(new Dimension(260, 20));
+        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 8, 12, 12)));
+        JButton filterButton = new JButton("Filtered by :");
+        filterButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+//        filterPanel.add(new JLabel("Filtered by : "));
+        filterPanel.add(filterButton);
+        filterCombo.setPreferredSize(new Dimension(230, 20));
         filterPanel.add(filterCombo);
 
         filterPanel.add(filterStatus);
@@ -541,28 +548,57 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void getIntersectionOfSelectedTraceLists() {
-        Map<String, Class> tracesIntersection = new HashMap<String, Class>();
-        List<String> incompatibleTrace = new ArrayList<String>();
+        filterCombo.removeAllItems();
+        filterCombo.addItem("None");
+
+//        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
+        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
+        List<Class> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<Class>());
+        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
         for (TraceList tl : currentTraceLists) {
+            List<String> currentTrace = new ArrayList<String>();
             for (int i = 0; i < tl.getTraceCount(); i++) {
                 String traceName = tl.getTraceName(i);
+                currentTrace.add(traceName);
                 if (!incompatibleTrace.contains(traceName)){
-
                     Class traceType = tl.getTrace(i).getTraceType();
                     if (traceType == null) {
                         incompatibleTrace.add(traceName);
                         break;
                     }
 
-                    if (tracesIntersection.containsKey(traceName)) {
+                    if (tracesIntersection.contains(traceName)) {
+                       if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
+                           tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                           tracesIntersection.remove(traceName);
+                           incompatibleTrace.add(traceName);
+                           break;
+                       }
 
+                    } else if (currentTraceLists.indexOf(tl) == 0) {
 
-                    } else {
-
-                        tracesIntersection.put(traceName, traceType);
+                        tracesIntersection.add(traceName);
+                        tracesIntersectionClass.add(traceType);
                     }
                 }
             } // end i loop
+
+            for (String traceName : tracesIntersection) {
+               if (!currentTrace.contains(traceName)) {
+                   tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                   tracesIntersection.remove(traceName);
+                   incompatibleTrace.add(traceName);
+               }
+            }
+            
+        }
+
+        assert(tracesIntersection.size() == tracesIntersectionClass.size());
+
+        if (!tracesIntersection.isEmpty()) {
+            for (String traceName : tracesIntersection) {
+               filterCombo.addItem(traceName);
+            }
         }
     }
 

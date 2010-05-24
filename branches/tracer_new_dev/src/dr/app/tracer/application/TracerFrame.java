@@ -51,7 +51,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JProgressBar progressBar;
 
     private final java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private final java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
+    private final java.util.List<FilteredTraceList> currentTraceLists = new ArrayList<FilteredTraceList>();
     private CombinedTraces combinedTraces = null;
 
     private final java.util.List<String> commonTraceNames = new ArrayList<String>();
@@ -253,7 +253,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         JButton filterButton = new JButton("Filtered by :");
         filterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                
+                createFilter();
             }
         });
 //        filterPanel.add(new JLabel("Filtered by : "));
@@ -263,6 +263,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         filterPanel.add(filterStatus);
         getContentPane().add(filterPanel, BorderLayout.SOUTH);
+    }
+
+    private void createFilter() {
+        //To change body of created methods use File | Settings | File Templates.
     }
 
     private JPopupMenu createContextMenu(final int rowIndex) {
@@ -424,7 +428,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void updateCombinedTraces() {
         if (traceLists.size() > 1) {
-            TraceList[] traces = new TraceList[traceLists.size()];
+            FilteredTraceList[] traces = new FilteredTraceList[traceLists.size()];
             try {
                 traceLists.toArray(traces);
             } catch (ArrayStoreException ase) {
@@ -497,7 +501,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         boolean isFirst = true;
         for (int row : selRows) {
             if (row < traceLists.size()) {
-                TraceList tl = traceLists.get(row);
+                FilteredTraceList tl = traceLists.get(row);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -521,7 +525,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 currentTraceLists.add(tl);
             } else if (isFirst) {
                 // if the 'Combined' trace is selected but no other trace files, then add all traces
-                TraceList tl = traceLists.get(0);
+                FilteredTraceList tl = traceLists.get(0);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -555,7 +559,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
         List<Class> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<Class>());
         List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
-        for (TraceList tl : currentTraceLists) {
+        for (FilteredTraceList tl : currentTraceLists) {
             List<String> currentTrace = new ArrayList<String>();
             for (int i = 0; i < tl.getTraceCount(); i++) {
                 String traceName = tl.getTraceName(i);
@@ -607,7 +611,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int[] selRows = statisticTable.getSelectedRows();
 
         boolean isIncomplete = false;
-        for (TraceList tl : currentTraceLists) {
+        for (FilteredTraceList tl : currentTraceLists) {
             if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
                 isIncomplete = true;
         }
@@ -620,7 +624,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         if (currentTraceLists.size() == 0 || isIncomplete) {
             tracePanel.setTraces(null, selectedTraces);
         } else {
-            TraceList[] tl = new TraceList[currentTraceLists.size()];
+            FilteredTraceList[] tl = new FilteredTraceList[currentTraceLists.size()];
             currentTraceLists.toArray(tl);
             try {
                 tracePanel.setTraces(tl, selectedTraces);
@@ -632,7 +636,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
-    public void analyseTraceList(TraceList job) {
+    public void analyseTraceList(FilteredTraceList job) {
 
         if (analyseTask == null) {
             analyseTask = new AnalyseTraceTask();
@@ -675,12 +679,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         }
 
-        private final AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
+        private final AnalysisStack<FilteredTraceList> analysisStack = new AnalysisStack<FilteredTraceList>();
 
         public AnalyseTraceTask() {
         }
 
-        public void add(TraceList job) {
+        public void add(FilteredTraceList job) {
             analysisStack.add(job);
             current = 0;
         }
@@ -720,7 +724,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             do {
                 if (analysisStack.getCount() > 0) {
                     Object job = analysisStack.get(0);
-                    TraceList tl = (TraceList) job;
+                    FilteredTraceList tl = (FilteredTraceList) job;
 
                     try {
                         for (int i = 0; i < tl.getTraceCount(); i++) {
@@ -1239,7 +1243,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public Object getValueAt(int row, int col) {
-            TraceList traceList;
+            FilteredTraceList traceList;
 
             if (traceLists.size() == 0) {
                 switch (col) {

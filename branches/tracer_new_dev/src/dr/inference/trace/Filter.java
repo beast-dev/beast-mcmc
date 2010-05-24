@@ -6,10 +6,12 @@ package dr.inference.trace;
 public class Filter<T> {
 
     String traceName;
+    TraceFactory.TraceType traceType;
     T[] in; // it is selected, so that Trace.notSelected[i] = false
 
-    public Filter(String traceName, T[] in) {
+    public Filter(String traceName, TraceFactory.TraceType traceType, T[] in) {
         this.traceName = traceName;
+        this.traceType = traceType;
         this.in = in;
     }
 
@@ -30,4 +32,9 @@ public class Filter<T> {
         return traceName;
     }
 
+    public TraceFactory.TraceType getTraceType() {
+        return traceType;
+    }
+
+    
 }

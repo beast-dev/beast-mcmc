@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.FilteredTraceList;
 import dr.inference.trace.MarginalLikelihoodAnalysis;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
@@ -83,12 +84,12 @@ public class BayesFactorsDialog {
         return likelihoodTrace;
     }
 
-    public int showDialog(List<TraceList> traceLists) {
+    public int showDialog(List<FilteredTraceList> traceLists) {
 
         setArguments();
 
         List<String> statistics = new ArrayList<String>();
-        TraceList tl = traceLists.get(0);
+        FilteredTraceList tl = traceLists.get(0);
         for (int j = 0; j < tl.getTraceCount(); j++) {
             statistics.add(tl.getTraceName(j));
         }
@@ -168,7 +169,7 @@ public class BayesFactorsDialog {
 
     Timer timer = null;
 
-    public void createBayesFactorsFrame(List<TraceList> traceLists, DocumentFrame parent) {
+    public void createBayesFactorsFrame(List<FilteredTraceList> traceLists, DocumentFrame parent) {
 
 //        boolean harmonicOnly = harmonicOnlyCheck.isSelected();
         int bootstrapLength = bootstrapCountField.getValue();
@@ -212,7 +213,7 @@ public class BayesFactorsDialog {
 
     class MarginalLikelihoodTask extends LongTask {
 
-        List<TraceList> traceLists;
+        List<FilteredTraceList> traceLists;
         BayesFactorsFrame frame;
         boolean harmonicOnly;
         int bootstrapLength;
@@ -220,7 +221,7 @@ public class BayesFactorsDialog {
         private int lengthOfTask = 0;
         private int current = 0;
 
-        public MarginalLikelihoodTask(BayesFactorsFrame frame, List<TraceList> traceLists, boolean harmonicOnly, int bootstrapLength) {
+        public MarginalLikelihoodTask(BayesFactorsFrame frame, List<FilteredTraceList> traceLists, boolean harmonicOnly, int bootstrapLength) {
             this.traceLists = traceLists;
             this.harmonicOnly = harmonicOnly;
             this.bootstrapLength = bootstrapLength;

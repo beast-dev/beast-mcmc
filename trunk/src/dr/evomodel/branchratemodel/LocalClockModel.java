@@ -80,6 +80,16 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         addVariable(rateParameter);
     }
 
+    public void addBackboneClock(TaxonList taxonList, Parameter rateParameter, boolean relative) throws Tree.MissingTaxonException {
+        BitSet tips = getTipsForTaxa(treeModel, taxonList);
+        LocalClock clock = new LocalClock(rateParameter, relative, tips);
+        for (int i = tips.nextSetBit(0); i >= 0; i = tips.nextSetBit(i + 1)) {
+            localTipClocks.put(i, clock);
+        }
+        addVariable(rateParameter);
+    }
+
+
     /**
      * @param tree the tree
      * @param taxa the taxa

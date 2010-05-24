@@ -3,100 +3,35 @@ package dr.inference.trace;
 /**
  *
  */
-public class FilteredTraceList implements TraceList {
+public abstract class FilteredTraceList implements TraceList {
 
-    TraceList base;
-    Filter filter; // todo Filter[]?
-    TraceDistribution[] filteredTraces;
-
-    public FilteredTraceList(TraceList baseList) {
-        this.base = baseList;
-
-
-    }
+    Filter filter; // todo multi-filter for one traceList
+    protected TraceCorrelation[] traceStatistics = null;
 
     public void setFilter(Filter filter) {
         this.filter = filter;
         doFilter();
     }
 
-     public void removeFilter() {
+    public Filter getFilter(String traceName) {
+        if (traceStatistics != null && getTraceIndex(traceName) > 0) {
+           this.filter = traceStatistics[getTraceIndex(traceName)].getFilter(); 
+        } else {
+           this.filter = null;
+        }
+        doFilter();
+        return this.filter;
+    }
+
+    public void removeFilter() {
         this.filter = null;
         doFilter();
     }
 
     private void doFilter() {
-
-        for (TraceDistribution traceD : filteredTraces) {
-            traceD.setFilter(filter);
+        for (TraceDistribution traceD : traceStatistics) {
+            traceD.setSelectedValues(filter);
         }
     }
 
-    public String getName() {
-        return base.getName();
-    }
-
-    public int getTraceCount() {
-        return base.getTraceCount();
-    }
-
-    public int getTraceIndex(String name) {
-        return base.getTraceIndex(name);
-    }
-
-    public String getTraceName(int index) {
-        return base.getTraceName(index);
-    }
-
-    public int getBurnIn() {
-        return base.getBurnIn();
-    }
-
-    public int getStateCount() {
-        return base.getStateCount();
-    }
-
-    public int getBurninStateCount() {
-        return base.getBurninStateCount();
-    }
-
-    public int getStepSize() {
-        return base.getStepSize();
-    }
-
-    public int getMaxState() {
-        return base.getMaxState();
-    }
-
-    public boolean isIncomplete() {
-        return base.isIncomplete();
-    }
-
-    public <T> void getValues(int index, T[] destination) {
-        base.getValues(index, destination);
-    }
-
-    public <T> void getValues(int index, T[] destination, int offset) {
-        base.getValues(index, destination, offset);
-    }
-
-    public <T> void getBurninValues(int index, T[] destination) {
-        base.getBurninValues(index, destination);
-    }
-
-    public TraceDistribution getDistributionStatistics(int traceIndex) {
-        return base.getDistributionStatistics(traceIndex);
-    }
-
-    public TraceCorrelation getCorrelationStatistics(int traceIndex) {
-        return base.getCorrelationStatistics(traceIndex);
-    }
-
-    public void analyseTrace(int index) {
-        base.analyseTrace(index);
-    }
-
-    public Trace getTrace(int index) {
-        return base.getTrace(index);
-    }
 }

@@ -41,7 +41,7 @@ public class TraceDistribution<T> {
 
     public TraceDistribution(T[] values) {
         this.values = values;
-        credSet = new CredibleSet(values, 0.95);
+        credSet = new CredibleSet(getValuesArray(), 0.95);
     }
 
     public TraceDistribution(T[] values, double ESS) {
@@ -128,9 +128,9 @@ public class TraceDistribution<T> {
         }
 
         if (values[0] instanceof Number) {
-            double[] doubleValues = new double[values.length];
-            for (int i = 0; i < values.length; i++) {
-                doubleValues[i] = ((Number) values[i]).doubleValue();
+            double[] doubleValues = new double[getValuesArray().length];
+            for (int i = 0; i < getValuesArray().length; i++) {
+                doubleValues[i] = ((Number) getValuesArray()[i]).doubleValue();
             }
 
             return DiscreteStatistics.meanSquaredError(doubleValues, trueValue);
@@ -143,23 +143,23 @@ public class TraceDistribution<T> {
     /**
      * @param values the values to analyze
      */
-    private void analyseDistributionContinuous(double[] values, double proportion) {
-//        this.values = values;   // move to analyseDistribution(T[] values)
+    private void analyseDistributionContinuous(double[] valuesC, double proportion) {
+//        this.values = values;   // move to analyseDistribution(T[] valuesC)
 
-        mean = DiscreteStatistics.mean(values);
-        stdError = DiscreteStatistics.stdev(values);
-        variance = DiscreteStatistics.variance(values);
+        mean = DiscreteStatistics.mean(valuesC);
+        stdError = DiscreteStatistics.stdev(valuesC);
+        variance = DiscreteStatistics.variance(valuesC);
 
         minimum = Double.POSITIVE_INFINITY;
         maximum = Double.NEGATIVE_INFINITY;
 
-        for (double value : values) {
+        for (double value : valuesC) {
             if (value < minimum) minimum = value;
             if (value > maximum) maximum = value;
         }
 
         if (minimum > 0) {
-            geometricMean = DiscreteStatistics.geometricMean(values);
+            geometricMean = DiscreteStatistics.geometricMean(valuesC);
             hasGeometricMean = true;
         }
 
@@ -168,13 +168,13 @@ public class TraceDistribution<T> {
             return;
         }
 
-        int[] indices = new int[values.length];
-        HeapSort.sort(values, indices);
-        median = DiscreteStatistics.quantile(0.5, values, indices);
-        cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
-        cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
-        calculateHPDInterval(proportion, values, indices);
-        ESS = values.length;
+        int[] indices = new int[valuesC.length];
+        HeapSort.sort(valuesC, indices);
+        median = DiscreteStatistics.quantile(0.5, valuesC, indices);
+        cpdLower = DiscreteStatistics.quantile(0.025, valuesC, indices);
+        cpdUpper = DiscreteStatistics.quantile(0.975, valuesC, indices);
+        calculateHPDInterval(proportion, valuesC, indices);
+        ESS = valuesC.length;
 
 //        isValid = true;
     }
@@ -209,6 +209,15 @@ public class TraceDistribution<T> {
     protected T[] values;
     public CredibleSet credSet = null;
 
+    public T[] getValuesArray() {
+        if (selectedValues != null) {
+            return selectedValues;
+        } else {
+            return values;
+        }
+    }
+
+
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
         public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
@@ -219,21 +228,21 @@ public class TraceDistribution<T> {
         public T mode;
         public int freqOfMode = 0;
 
-        public CredibleSet(T[] values, double proportion) {
+        public CredibleSet(T[] valuesCS, double proportion) {
             valuesMap.clear();
             credibleSet.clear();
             inCredibleSet.clear();
 
-            if (!(values[0] instanceof Double)) {// make sure: if T is Object then default to double
-                if (values[0] instanceof Integer) {
-                    double[] newValues = new double[values.length];
-                    for (int i = 0; i < values.length; i++) {
-                        newValues[i] = ((Integer) values[i]).doubleValue();
+            if (!(valuesCS[0] instanceof Double)) {// make sure: if T is Object then default to double
+                if (valuesCS[0] instanceof Integer) {
+                    double[] newValues = new double[valuesCS.length];
+                    for (int i = 0; i < valuesCS.length; i++) {
+                        newValues[i] = ((Integer) valuesCS[i]).doubleValue();
                     }
                     analyseDistributionContinuous(newValues, proportion);
                 }
 
-                for (T value : values) {
+                for (T value : valuesCS) {
                     if (valuesMap.containsKey(value)) {
                         int i = valuesMap.get(value) + 1;
                         valuesMap.put(value, i);
@@ -243,7 +252,7 @@ public class TraceDistribution<T> {
                 }
 
                 for (T value : new TreeSet<T>(valuesMap.keySet())) {
-                    double prob = (double) valuesMap.get(value) / (double) values.length;
+                    double prob = (double) valuesMap.get(value) / (double) valuesCS.length;
                     if (prob < (1 - proportion)) {
                         inCredibleSet.add(value);
                     } else {
@@ -254,9 +263,9 @@ public class TraceDistribution<T> {
                 calculateMode();
 
             } else {
-                double[] newValues = new double[values.length];
-                for (int i = 0; i < values.length; i++) {
-                    newValues[i] = ((Double) values[i]).doubleValue();
+                double[] newValues = new double[valuesCS.length];
+                for (int i = 0; i < valuesCS.length; i++) {
+                    newValues[i] = ((Double) valuesCS[i]).doubleValue();
                 }
                 analyseDistributionContinuous(newValues, proportion);
             }
@@ -291,12 +300,12 @@ public class TraceDistribution<T> {
         }
 
         public List<String> getValues() {
-            List<String> values = new ArrayList<String>();
+            List<String> valuesList = new ArrayList<String>();
             for (T value : new TreeSet<T>(valuesMap.keySet())) {
-                if (!values.contains(value.toString()))
-                    values.add(value.toString());
+                if (!valuesList.contains(value.toString()))
+                    valuesList.add(value.toString());
             }
-            return values;
+            return valuesList;
         }
 
         private void calculateMode() {
@@ -330,32 +339,36 @@ public class TraceDistribution<T> {
         }
     }
 
-    //******************** Filter **************************** todo move to FilteredTraceList???
-    protected boolean[] notSelected;
+    //******************** Filter ****************************
+    protected T[] selectedValues;
+    private Filter filter;
+
+    public void setSelectedValues(Filter filter) {
+        setFilter(filter);
+        
+        List<T> selectedValuesList = new ArrayList<T>();
+        if (filter == null) {
+            selectedValues = null;
+            return;
+        }
+
+        for (int i = 0; i < values.length; i++) {
+            if (filter.isIn(values[i])) {
+                selectedValuesList.add(values[i]);
+            }
+        }
+
+        selectedValues = (T[]) new Object[selectedValuesList.size()];
+
+        selectedValues = selectedValuesList.toArray(selectedValues);
+    }
 
     public void setFilter(Filter filter) {
-        if (notSelected == null) notSelected = new boolean[values.length]; // default false
-
-        for (int i = 0; i < values.length; i++) {
-            if (!filter.isIn(values[i])) {
-                notSelected[i] = true; // not selected this value
-            }
-        }
+        this.filter = filter;
     }
 
-    public void removeFilter() {
-        notSelected = null; 
+    public Filter getFilter() {
+        return filter;
     }
-
-    public void getFilteredValues(Filter filter) {
-        if (notSelected == null) notSelected = new boolean[values.length]; // default false
-
-        for (int i = 0; i < values.length; i++) {
-            if (!filter.isIn(values[i])) {
-                notSelected[i] = true; // not selected this value
-            }
-        }
-
-        // do walter magic with boolean[]
-    }
+    
 }

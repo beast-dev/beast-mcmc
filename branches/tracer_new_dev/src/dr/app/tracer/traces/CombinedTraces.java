@@ -36,7 +36,7 @@ import dr.inference.trace.*;
  * @version $Id: CombinedTraces.java,v 1.3 2006/11/29 16:04:12 rambaut Exp $
  */
 
-public class CombinedTraces implements TraceList {
+public class CombinedTraces extends FilteredTraceList {
 
     public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
 
@@ -241,7 +241,7 @@ public class CombinedTraces implements TraceList {
 
     private TraceList[] traceLists = null;
 
-    private TraceCorrelation[] traceStatistics = null;
+//    private TraceCorrelation[] traceStatistics = null;
 
     private String name;
 }

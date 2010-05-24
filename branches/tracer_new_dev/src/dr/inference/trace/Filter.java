@@ -5,11 +5,11 @@ package dr.inference.trace;
  */
 public class Filter<T> {
 
-    int columnIndex;
+    String traceName;
     T[] in; // it is selected, so that Trace.notSelected[i] = false
 
-    public Filter(int index, T[] in) {
-        columnIndex = index;
+    public Filter(String traceName, T[] in) {
+        this.traceName = traceName;
         this.in = in;
     }
 
@@ -25,4 +25,9 @@ public class Filter<T> {
         }
         return false;
     }
+    
+    public String getTraceName() {
+        return traceName;
+    }
+
 }

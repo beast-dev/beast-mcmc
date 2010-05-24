@@ -3,7 +3,7 @@ package dr.inference.trace;
 /**
  * @author Alexei Drummond
  */
-public abstract class AbstractTraceList implements TraceList {
+public abstract class AbstractTraceList extends FilteredTraceList {
     public TraceDistribution getDistributionStatistics(int index) {
         return getCorrelationStatistics(index);
     }
@@ -33,5 +33,5 @@ public abstract class AbstractTraceList implements TraceList {
 
 //    abstract Trace getTrace(int index);
 
-    private TraceCorrelation[] traceStatistics = null;
+//    private TraceCorrelation[] traceStatistics = null;
 }

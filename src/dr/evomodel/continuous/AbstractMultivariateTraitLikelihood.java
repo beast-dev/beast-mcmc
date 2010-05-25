@@ -441,16 +441,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             // Mark duplicates
             for (int i = 1; i < numTraits; i++) {
                 if (traitArray[i].compareTo(traitArray[i - 1]) == 0) {
-                    boolean toUpdate = true;
-                    for (int j = 0; j < dim; j++) {
-                        if ((trait.getParameterValue(i * dim + j)) == Double.NaN) {
-                            toUpdate = false;
-                        }
-                    }
-                    if (toUpdate) {
-                        update[traitArray[i - 1].getIndex()] = true;
-                        update[traitArray[i].getIndex()] = true;
-                    }
+                    update[traitArray[i - 1].getIndex()] = true;
+                    update[traitArray[i].getIndex()] = true;
                 }
             }
         }
@@ -464,8 +456,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 }
                 for (int j = 0; j < dim; j++) {
                     final double oldValue = trait.getParameterValue(i * dim + j);
-                    final double newValue = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
-                            oldValue;
+                    final double newValue;
+                    if (oldValue == Double.NaN){
+                       newValue = oldValue;
+                    }  else {
+                       newValue  = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
+                          oldValue;
+                    }
                     trait.setParameterValue(i * dim + j, newValue);
                     if (verbose) {
                         sb1.append(" ").append(oldValue);

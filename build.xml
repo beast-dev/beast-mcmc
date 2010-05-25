@@ -283,11 +283,13 @@
 		<jar jarfile="${dist}/beast-beagle.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
+                <attribute name="Main-Class" value="${main_class_BEAST}" />
 			</manifest>
 			<fileset dir="${build}">
 				<include name="dr/app/beagle/**/*.class" />
 			</fileset>
 			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+            <zipgroupfileset dir="${dist}" includes="beast.jar" />
 		</jar>
 
 	</target>

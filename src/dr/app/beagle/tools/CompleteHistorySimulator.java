@@ -260,9 +260,12 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     public String toString() {
         StringBuffer sb = new StringBuffer();
+        //alignment output
+        sb.append("alignment\n");
         sb.append(super.toString());
         sb.append("\n");
-
+        //tree output
+        sb.append("tree\n");
         Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
                 format, null,
                 (nJumpProcesses > 0 ? new NodeAttributeProvider[]{this} : null),

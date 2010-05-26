@@ -209,14 +209,25 @@ public class TraceDistribution<T> {
     protected T[] values;
     public CredibleSet credSet = null;
 
-    public T[] getValuesArray() {
-        if (selectedValues != null) {
+    protected T[] getValuesArray() {
+        if (filter != null) {
+            List<T> selectedValuesList = new ArrayList<T>();
+
+            for (int i = 0; i < values.length; i++) {
+                if (filter.getSelected(i)) {
+                    selectedValuesList.add(values[i]);
+                }
+            }
+
+            T[] selectedValues = (T[]) new Object[selectedValuesList.size()];
+            selectedValues = selectedValuesList.toArray(selectedValues);
+
             return selectedValues;
+
         } else {
             return values;
         }
     }
-
 
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
@@ -340,28 +351,7 @@ public class TraceDistribution<T> {
     }
 
     //******************** Filter ****************************
-    protected T[] selectedValues;
     private Filter filter;
-
-    public void setSelectedValues(Filter filter) {
-        setFilter(filter);
-        
-        List<T> selectedValuesList = new ArrayList<T>();
-        if (filter == null) {
-            selectedValues = null;
-            return;
-        }
-
-        for (int i = 0; i < values.length; i++) {
-            if (filter.isIn(values[i])) {
-                selectedValuesList.add(values[i]);
-            }
-        }
-
-        selectedValues = (T[]) new Object[selectedValuesList.size()];
-
-        selectedValues = selectedValuesList.toArray(selectedValues);
-    }
 
     public void setFilter(Filter filter) {
         this.filter = filter;
@@ -370,5 +360,5 @@ public class TraceDistribution<T> {
     public Filter getFilter() {
         return filter;
     }
-    
+
 }

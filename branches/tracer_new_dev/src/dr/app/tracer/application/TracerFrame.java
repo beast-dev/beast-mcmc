@@ -10,6 +10,7 @@ import dr.app.gui.FileDrop;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
+import dr.app.tracer.traces.FilterDialog;
 import dr.app.tracer.traces.TracePanel;
 import dr.gui.chart.ChartRuntimeException;
 import dr.inference.trace.*;
@@ -59,6 +60,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private JLabel filterStatus = new JLabel();
+
+    private FilterDialog filterDialog;
 
     private int dividerLocation = -1;
 
@@ -266,6 +269,39 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void createFilter() {
+        if (filterDialog == null) {
+                filterDialog = new FilterDialog(this);
+            }
+
+        String traceName = filterCombo.getSelectedItem().toString();
+        if (traceName.equalsIgnoreCase("None")) {
+            removeFilters();
+            return;
+        }
+
+        if (currentTraceLists == null) {
+            JOptionPane.showMessageDialog(this, "There is no tree file being selected !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        int result = filterDialog.showDialog(traceName, currentTraceLists);
+
+        if (result == JOptionPane.YES_OPTION) { // todo move to FilterDialog
+//            Filter f = new Filter();
+            return;
+        } else if (result == JOptionPane.NO_OPTION) {
+            removeFilters();
+            return;
+        } else if (result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        return;
+
+    }
+
+    private void removeFilters() {
         //To change body of created methods use File | Settings | File Templates.
     }
 

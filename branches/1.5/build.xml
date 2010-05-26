@@ -33,17 +33,21 @@
 
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="build_all_BEAST" depends="clean,compile-all,junit"
-        description="Clean and Build all run-time stuff">
+        description="Clean and Build all run-time stuff with unit test">
 	</target>
 
 	<!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
 	<target name="build_jar_all_BEAST" depends="clean,compile-all,junit,dist_all_BEAST"
-        description="Clean and Build all run-time stuff">
+        description="Clean and Build all run-time stuff with unit test and distribute jar">
 	</target>
 
 	<!-- No JUnit Test, clean previous build, compile Java source code, and make the beast.jar and beauti.jar -->
 	<target name="build_jar_all_BEAST_NoJUnitTest" depends="clean,compile-all,dist_all_BEAST"
-        description="Clean and Build all run-time stuff">
+        description="Clean and Build all run-time stuff without unit test and distribute jar">
+	</target>
+
+    <target name="build_jar_all_BEAST_BEAGLE_NoJUnitTest" depends="build_jar_all_BEAST_NoJUnitTest,dist_all_BEAST_BEAGLE"
+        description="Clean and Build all run-time stuff without unit test and distribute jar">
 	</target>
 
 	<!-- compile Java source code -->
@@ -283,6 +287,19 @@
 		<jar jarfile="${dist}/beast-beagle.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/beagle/**/*.class" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+		</jar>
+
+	</target>
+
+    <target name="dist_all_BEAST_BEAGLE" depends="build_jar_all_BEAST_NoJUnitTest" description="create BEAST-BEAGLE-all jar">
+        <jar jarfile="${dist}/beast-beagle-all.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
                 <attribute name="Main-Class" value="${main_class_BEAST}" />
 			</manifest>
 			<fileset dir="${build}">
@@ -291,8 +308,7 @@
 			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
             <zipgroupfileset dir="${dist}" includes="beast.jar" />
 		</jar>
-
-	</target>
+    </target>
 
 	<!-- run beast.jar -->
 	<target name="run_BEAST">

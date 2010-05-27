@@ -31,6 +31,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
@@ -253,6 +254,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                         setStates(beagle, patternList, index, i);
                     }
                 }
+            }
+                        
+            if (patternList instanceof AscertainedSitePatterns) {
+                ascertainedSitePatterns = true;
             }
 
             beagle.setPatternWeights(patternWeights);
@@ -589,6 +594,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             logL = sumLogLikelihoods[0];
 
+            if (ascertainedSitePatterns) {
+                // Need to correct for ascertainedSitePatterns
+                beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+                logL = getAscertainmentCorrectedLogLikelihood((AscertainedSitePatterns) patternList,
+                        patternLogLikelihoods, patternWeights);               
+            }
+
             if  (Double.isNaN(logL) || Double.isInfinite(logL) ) {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
@@ -634,6 +646,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         updateSiteModel = false;
         //********************************************************************
 
+        return logL;
+    }
+
+    private double getAscertainmentCorrectedLogLikelihood(AscertainedSitePatterns patternList,
+                                                          double[] patternLogLikelihoods,
+                                                          double[] patternWeights) {
+        double logL = 0.0;
+        double ascertainmentCorrection = patternList.getAscertainmentCorrection(patternLogLikelihoods);
+        for (int i = 0; i < patternCount; i++) {
+            logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
+        }
         return logL;
     }
 
@@ -830,6 +853,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling
 //     */
 //    private boolean dynamicRescaling = false;
+
+
+    /**
+     * Flag to specify if site patterns are acertained
+     */
+
+    private boolean ascertainedSitePatterns = false;
 
     protected class BufferIndexHelper {
         /**

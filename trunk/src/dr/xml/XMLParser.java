@@ -203,6 +203,9 @@ public class XMLParser {
                 throw new XMLParseException("Object with idref=" + idref + " has not been previously declared.");
             }
 
+            if (restoredXMLObject.getNativeObject() == null) {
+                throw new XMLParseException("Object with idref=" + idref + " has not been parsed.");
+            }
 
             XMLObjectParser parser = parserStore.get(e.getTagName());
             boolean classMatch = parser != null && parser.getReturnType().isAssignableFrom(restoredXMLObject.getNativeObject().getClass());

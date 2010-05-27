@@ -375,33 +375,15 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     }
 
     /* Calculate ascertainment correction if working off of AscertainedSitePatterns
-    @param patternProbs log pattern probabilities
+    @param patternLogProbs log pattern probabilities
     @return the log total probability for a pattern.
     */
-    protected double getAscertainmentCorrection(double[] patternProbs) {
-        // This function probably belongs better to the AscertainedSitePatterns
-        double excludeProb = 0, includeProb = 0, returnProb = 1.0;
+    protected double getAscertainmentCorrection(double[] patternLogProbs) {               
         if (patternList instanceof AscertainedSitePatterns) {
-            int[] includeIndices = ((AscertainedSitePatterns) patternList).getIncludePatternIndices();
-            int[] excludeIndices = ((AscertainedSitePatterns) patternList).getExcludePatternIndices();
-            for (int i = 0; i < ((AscertainedSitePatterns) patternList).getIncludePatternCount(); i++) {
-                int index = includeIndices[i];
-                includeProb += Math.exp(patternProbs[index]);
-            }
-            for (int j = 0; j < ((AscertainedSitePatterns) patternList).getExcludePatternCount(); j++) {
-                int index = excludeIndices[j];
-                excludeProb += Math.exp(patternProbs[index]);
-            }
-            if (includeProb == 0.0) {
-                returnProb -= excludeProb;
-            } else if (excludeProb == 0.0) {
-                returnProb = includeProb;
-            } else {
-                returnProb = includeProb - excludeProb;
-            }
+            return ((AscertainedSitePatterns) patternList).getAscertainmentCorrection(patternLogProbs);
+        } else {
+            return 0.0;
         }
-
-        return Math.log(returnProb);
     }
 
     /**

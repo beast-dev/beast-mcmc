@@ -251,4 +251,12 @@ public class Utils {
 //            return null;
 //        }
 //    }
+
+    public static boolean contains(String[] all, String one) {
+        for (String s : all) {
+            if (s.equals(one))
+                return true;
+        }
+        return false;
+    }
 }

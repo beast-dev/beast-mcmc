@@ -256,7 +256,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         JButton filterButton = new JButton("Filtered by :");
         filterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                createFilter();
+                invokeFilter();
             }
         });
 //        filterPanel.add(new JLabel("Filtered by : "));
@@ -268,7 +268,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
-    private void createFilter() {
+    private void invokeFilter() {
         if (filterDialog == null) {
                 filterDialog = new FilterDialog(this);
             }
@@ -285,19 +285,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        int result = filterDialog.showDialog(traceName, currentTraceLists);
+        filterDialog.showDialog(traceName, currentTraceLists);
 
-        if (result == JOptionPane.YES_OPTION) { // todo move to FilterDialog
-//            Filter f = new Filter();
-            return;
-        } else if (result == JOptionPane.NO_OPTION) {
-            removeFilters();
-            return;
-        } else if (result == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
 
-        return;
 
     }
 

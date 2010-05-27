@@ -229,6 +229,10 @@ public class TraceDistribution<T> {
         }
     }
 
+    public T[] getValues() {
+        return values;
+    }
+
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
         public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
@@ -355,6 +359,7 @@ public class TraceDistribution<T> {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
+//        credSet = new CredibleSet(getValuesArray(), 0.95); //todo
     }
 
     public Filter getFilter() {

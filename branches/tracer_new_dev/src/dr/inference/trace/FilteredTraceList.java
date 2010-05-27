@@ -10,7 +10,11 @@ public abstract class FilteredTraceList implements TraceList {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
-        doFilter();
+        traceStatistics[getTraceIndex(filter.getTraceName())].setFilter(filter);
+    }
+
+    public Filter getFilter() {
+        return this.filter;
     }
 
     public Filter getFilter(String traceName) {
@@ -19,18 +23,23 @@ public abstract class FilteredTraceList implements TraceList {
         } else {
            this.filter = null;
         }
-        doFilter();
+//        doFilter();
         return this.filter;
     }
 
-    public void removeFilter() {
+    public void removeFilter(String traceName) {
+        this.filter = null;
+        traceStatistics[getTraceIndex(traceName)].setFilter(null);
+    }
+
+    public void removeAllFilters() {
         this.filter = null;
         doFilter();
     }
 
     private void doFilter() {
         for (TraceDistribution traceD : traceStatistics) {
-            traceD.setSelectedValues(filter);
+            traceD.setFilter(filter);
         }
     }
 

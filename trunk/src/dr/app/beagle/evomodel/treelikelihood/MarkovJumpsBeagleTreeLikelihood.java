@@ -40,12 +40,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme, DataType dataType, String stateTag,
                                            SubstitutionModel substModel,
+                                           boolean useMAP,
+                                           boolean returnMarginalLikelihood,
                                            boolean useUniformization,
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
-                scalingScheme, dataType, stateTag, substModel);
+                scalingScheme, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;
         this.reportUnconditionedColumns = reportUnconditionedColumns;

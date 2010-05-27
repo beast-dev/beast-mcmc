@@ -52,6 +52,9 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
         boolean scaleRewards = xo.getAttribute(SCALE_REWARDS,true);
 
+        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+        boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
@@ -67,6 +70,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 dataType,
                 stateTag,
                 substModel,
+                useMAP,
+                useMarginalLogLikelihood,
                 useUniformization,
                 reportUnconditionedColumns,
                 nSimulants

@@ -22,6 +22,8 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = "state";
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
+    public static final String MAP_RECONSTRUCTION = "useMAP";
+    public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
 
     public String getParserName() {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
@@ -40,6 +42,9 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 
+        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+        boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+
         return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
                 patternList,
                 treeModel,
@@ -50,7 +55,9 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 scalingScheme,
                 dataType,
                 tag,
-                substModel
+                substModel,
+                useMAP,
+                useMarginalLogLikelihood
         );
     }
 

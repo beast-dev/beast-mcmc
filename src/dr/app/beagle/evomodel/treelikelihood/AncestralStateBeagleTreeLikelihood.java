@@ -23,16 +23,16 @@ import java.util.logging.Logger;
 
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements NodeAttributeProvider {
 
-    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
-                                              BranchRateModel branchRateModel, boolean useAmbiguities,
-                                              PartialsRescalingScheme scalingScheme,
-                                              DataType dataType,
-                                              String tag,
-                                              SubstitutionModel substModel) {
-        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
-                dataType, tag, substModel, false, true);
-    }
+//    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+//                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
+//                                              BranchRateModel branchRateModel, boolean useAmbiguities,
+//                                              PartialsRescalingScheme scalingScheme,
+//                                              DataType dataType,
+//                                              String tag,
+//                                              SubstitutionModel substModel) {
+//        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+//                dataType, tag, substModel, false, true);
+//    }
 
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,

@@ -34,4 +34,18 @@ public class CommonCitations {
             801, 814,
             Citation.Status.PUBLISHED
     );
+
+    public static Citation ALEKSEYENKO_2008 = new Citation(
+            new Author[] {
+                    new Author("AV", "Alekseyenko"),
+                    new Author("C", "Lee"),
+                    new Author("MA", "Suchard")
+            },
+            "Wagner and Dollo: a stochastic duet by composing two parsiminious solos",
+            2008,
+            "Systematic Biology",
+            57,
+            772, 784,
+            Citation.Status.PUBLISHED
+    );    
 }

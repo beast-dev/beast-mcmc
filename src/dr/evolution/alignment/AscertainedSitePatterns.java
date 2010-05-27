@@ -1,6 +1,12 @@
 package dr.evolution.alignment;
 
 import dr.evolution.util.TaxonList;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Package: AscertainedSitePatterns
@@ -12,7 +18,7 @@ import dr.evolution.util.TaxonList;
  * Date: Mar 10, 2008
  * Time: 12:50:36 PM
  */
-public class AscertainedSitePatterns extends SitePatterns {
+public class AscertainedSitePatterns extends SitePatterns implements Citable {
 
     protected int[] includePatterns;
     protected int[] excludePatterns;
@@ -81,6 +87,14 @@ public class AscertainedSitePatterns extends SitePatterns {
 
     }
 
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(
+                CommonCitations.ALEKSEYENKO_2008
+        );
+        return citations;
+    }    
+
     public int getIncludePatternCount() {
         return ascertainmentIncludeCount;
     }
@@ -91,9 +105,9 @@ public class AscertainedSitePatterns extends SitePatterns {
 
     protected void includePatterns(int includeFrom, int includeTo, int every) {
         if (includePatterns == null) {
-            includePatterns = new int[includeTo - includeFrom];
+            includePatterns = new int[includeTo - includeFrom + 1];
         }
-        for (int i = includeFrom; i < includeTo; i += every) {
+        for (int i = includeFrom; i <= includeTo; i += every) {
             int[] pattern = siteList.getPattern(i);
             int index = addAscertainmentPattern(pattern);
             includePatterns[ascertainmentIncludeCount] = index;
@@ -111,15 +125,39 @@ public class AscertainedSitePatterns extends SitePatterns {
 
     protected void excludePatterns(int excludeFrom, int excludeTo, int every) {
         if (excludePatterns == null)
-            excludePatterns = new int[excludeTo - excludeFrom];
+            excludePatterns = new int[excludeTo - excludeFrom + 1];
 
-        for (int i = excludeFrom; i < excludeTo; i += every) {
+        for (int i = excludeFrom; i <= excludeTo; i += every) {
             int[] pattern = siteList.getPattern(i);
             int index = addAscertainmentPattern(pattern);
+            weights[index] = 0.0; // Site is excluded, so set weight = 0
             excludePatterns[ascertainmentExcludeCount] = index;
             ascertainmentExcludeCount += 1;
         }
 
+    }
+
+    public double getAscertainmentCorrection(double[] patternLogProbs) {
+        double excludeProb = 0, includeProb = 0, returnProb = 1.0;
+
+        int[] includeIndices = getIncludePatternIndices();
+        int[] excludeIndices = getExcludePatternIndices();
+        for (int i = 0; i < getIncludePatternCount(); i++) {
+            int index = includeIndices[i];
+            includeProb += Math.exp(patternLogProbs[index]);
+        }
+        for (int j = 0; j < getExcludePatternCount(); j++) {
+            int index = excludeIndices[j];
+            excludeProb += Math.exp(patternLogProbs[index]);
+        }
+        if (includeProb == 0.0) {
+            returnProb -= excludeProb;
+        } else if (excludeProb == 0.0) {
+            returnProb = includeProb;
+        } else {
+            returnProb = includeProb - excludeProb;
+        }
+        return Math.log(returnProb);
     }
 
     private int addAscertainmentPattern(int[] pattern) {

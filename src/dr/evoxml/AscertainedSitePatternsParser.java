@@ -5,6 +5,7 @@ import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.util.TaxonList;
 import dr.xml.*;
+import dr.util.Citable;
 
 import java.util.logging.Logger;
 
@@ -73,17 +74,17 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         if (from < 0) from = 0;
         if (to < 0) to = alignment.getSiteCount() - 1;
 
-        if (xo.hasAttribute(XMLParser.ID)) {
+//        if (xo.hasAttribute(XMLParser.ID)) {
             Logger.getLogger("dr.evoxml").info("Creating ascertained site patterns '" + xo.getId() + "' from positions " +
                     Integer.toString(from + 1) + "-" + Integer.toString(to + 1) +
                     " of alignment '" + alignment.getId() + "'");
             if (every > 1) {
                 Logger.getLogger("dr.evoxml").info("  only using every " + every + " site");
             }
-        }
+//        }
 
         if (xo.hasChildNamed(INCLUDE)) {
-            xoc = (XMLObject) xo.getChild(INCLUDE);
+            xoc = xo.getChild(INCLUDE);
             if (xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)) {
                 startInclude = xoc.getIntegerAttribute(FROM) - 1;
                 stopInclude = xoc.getIntegerAttribute(TO) - 1;
@@ -98,7 +99,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasChildNamed(EXCLUDE)) {
-            xoc = (XMLObject) xo.getChild(EXCLUDE);
+            xoc = xo.getChild(EXCLUDE);
             if (xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)) {
                 startExclude = xoc.getIntegerAttribute(FROM) - 1;
                 stopExclude = xoc.getIntegerAttribute(TO) - 1;
@@ -118,7 +119,8 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
                 startExclude, stopExclude);
 
         Logger.getLogger("dr.evoxml").info("\tThere are " + patterns.getPatternCount() + " patterns in total.");
-
+        
+        Logger.getLogger("dr.evoxml").info("\tPlease cite:\n" + Citable.Utils.getCitationString(patterns));
 
         return patterns;
     }

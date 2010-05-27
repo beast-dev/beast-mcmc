@@ -302,6 +302,22 @@ public class UniformNodeHeightPrior extends AbstractModelLikelihood {
             if (k > 0) {    // Also valid for leading-term approximation
                 // the tips are contemporaneous
                 logLike = logFactorialK - (double) k * Math.log(rootHeight);
+
+//                double cutoff = 62;
+//                int count = 0;
+//                for (int i = 0; i < tree.getNodeCount(); i++) {
+//                    if (tree.getNodeHeight(tree.getNode(i)) >  cutoff) {
+//                        count++;
+////                        if (tree.isExternal(tree.getNode(i))) {
+////                            System.err.println("Problem");
+////                            System.exit(-1);
+////                        }
+//                    }
+//                }
+//                count -= 1; // ignore root
+////                System.err.println("c = " + count);
+//                logLike = logFactorial(count) - (double) count * Math.log(rootHeight - cutoff);
+//                logLike = logFactorial(k - count) - (double) (k - count) * Math.log(cutoff);
                 
             } else {
                 // TODO Rewrite description above to discuss this new prior

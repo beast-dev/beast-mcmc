@@ -32,11 +32,13 @@ package dr.evolution.colouring;
  * 
  * @author Gerton Lunter
  *
- * @version 
+ * @version 1
  */
 
 
 public class ColourChangeMatrix {
+
+    public ColourChangeMatrix() { }
 	
     public ColourChangeMatrix( double[] changeRates, int numColours ) {
 
@@ -168,7 +170,7 @@ public class ColourChangeMatrix {
        */
     public double[] getEquilibrium() {
     	
-    	return (double[])( equilibrium.clone() );
+    	return equilibrium.clone();
     	
     }
 

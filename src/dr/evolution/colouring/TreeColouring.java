@@ -18,4 +18,8 @@ public interface TreeColouring {
     BranchColouring getBranchColouring(NodeRef node);
 
     int getColourChangeCount();
+
+    boolean hasProbability();
+
+    void setLogProbabilityDensity(double p);
 }

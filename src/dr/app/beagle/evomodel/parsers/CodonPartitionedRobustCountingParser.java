@@ -3,7 +3,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.xml.*;
 import dr.app.beagle.evomodel.substmodel.CodonPartitionedRobustCounting;
 import dr.app.beagle.evomodel.substmodel.CodonLabeling;
-import dr.app.beagle.evomodel.substmodel.RobustCountingOutputFormat;
+import dr.app.beagle.evomodel.substmodel.StratifiedTraitOutputFormat;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -62,15 +62,15 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         }
 
         String branchFormatString = xo.getAttribute(BRANCH_FORMAT,
-                RobustCountingOutputFormat.SUM_OVER_SITES.getText());
-        RobustCountingOutputFormat branchFormat = RobustCountingOutputFormat.parseFromString(branchFormatString);
+                StratifiedTraitOutputFormat.SUM_OVER_SITES.getText());
+        StratifiedTraitOutputFormat branchFormat = StratifiedTraitOutputFormat.parseFromString(branchFormatString);
         if (branchFormat == null) {
             throw new XMLParseException("Unrecognized branch output format '" + branchFormat + "'");
         }
 
-        String logFormatString = xo.getAttribute(BRANCH_FORMAT,
-                RobustCountingOutputFormat.SUM_OVER_SITES.getText());
-        RobustCountingOutputFormat logFormat = RobustCountingOutputFormat.parseFromString(logFormatString);
+        String logFormatString = xo.getAttribute(LOG_FORMAT,
+                StratifiedTraitOutputFormat.SUM_OVER_SITES.getText());
+        StratifiedTraitOutputFormat logFormat = StratifiedTraitOutputFormat.parseFromString(logFormatString);
         if (logFormat == null) {
             throw new XMLParseException("Unrecognized log output format '" + branchFormat + "'");
         }

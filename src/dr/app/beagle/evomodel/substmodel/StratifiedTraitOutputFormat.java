@@ -8,12 +8,14 @@ package dr.app.beagle.evomodel.substmodel;
  *         This work is supported by NSF grant 0856099
  */
 
-public enum RobustCountingOutputFormat {
+public enum StratifiedTraitOutputFormat {
     SUM_OVER_SITES("sumOverAllSites"),
     PER_SITE("perSite"),
-    ARBITRARY_SITES("arbitrarySites");
+    PER_SITE_WITH_UNCONDITIONED("perSiteWithUnconditioned"),
+    ARBITRARY_SITES("arbitrarySites"),
+    ARBITRARY_SITES_WITH_UNCONDITIONED("arbitrarySitesWithUnconditioned");
 
-    RobustCountingOutputFormat(String text) {
+    StratifiedTraitOutputFormat(String text) {
         this.text = text;
     }
 
@@ -21,8 +23,8 @@ public enum RobustCountingOutputFormat {
         return text;
     }
 
-    public static RobustCountingOutputFormat parseFromString(String text) {
-        for (RobustCountingOutputFormat format : RobustCountingOutputFormat.values()) {
+    public static StratifiedTraitOutputFormat parseFromString(String text) {
+        for (StratifiedTraitOutputFormat format : StratifiedTraitOutputFormat.values()) {
             if (format.getText().compareToIgnoreCase(text) == 0)
                 return format;
         }

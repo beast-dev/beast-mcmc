@@ -14,6 +14,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -31,23 +32,24 @@ import java.util.ArrayList;
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements BranchAttributeProvider, Loggable {
 
-    public CodonPartitionedRobustCounting(String name, Tree tree,
+    public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
                                           CodonLabeling codonLabeling) {
         this(name, tree, partition, codons, codonLabeling,
-                RobustCountingOutputFormat.SUM_OVER_SITES, RobustCountingOutputFormat.SUM_OVER_SITES);
+                StratifiedTraitOutputFormat.SUM_OVER_SITES, StratifiedTraitOutputFormat.SUM_OVER_SITES);
 
     }
 
-    public CodonPartitionedRobustCounting(String name, Tree tree,
+    public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
                                           CodonLabeling codonLabeling,
-                                          RobustCountingOutputFormat branchFormat,
-                                          RobustCountingOutputFormat logFormat) {
+                                          StratifiedTraitOutputFormat branchFormat,
+                                          StratifiedTraitOutputFormat logFormat) {
         super(name);
         this.tree = tree;
+        addModel(tree);
 
         if (partition.length != 3) {
             throw new RuntimeException("CodonPartition models require 3 partitions");
@@ -56,6 +58,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         this.partition = partition;
         this.codonLabeling = codonLabeling;
         branchRateModel = partition[0].getBranchRateModel();
+        addModel(branchRateModel);
 
         List<SubstitutionModel> substModelsList = new ArrayList<SubstitutionModel>(3);
         List<SiteRateModel> siteRateModelsList = new ArrayList<SiteRateModel>(3);
@@ -68,12 +71,11 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
             if (partition[i].getPatternWeights().length != numCodons) {
                 throw new RuntimeException("All sequence lengths must be equal in CodonPartitionedRobustCounting");
             }
-//            addModel(partition[i].getSubstitutionModel()); // I do not believe these are necessary
-//            addModel(partition[i].getSiteRateModel());
         }
 
         ProductChainSubstitutionModel productChainModel =
                 new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
+        addModel(productChainModel);
 
         markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
         double[] synRegMatrix = CodonLabeling.getRegisterMatrix(codonLabeling, codons, true);
@@ -83,9 +85,28 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
 
         this.branchFormat = branchFormat;
         this.logFormat = logFormat;
+
+        computedCounts = new double[tree.getNodeCount()][]; // TODO Temporary until there exists a helper class
     }
 
-    public double[] getExpectedCountsForBranch(NodeRef child) {
+    public double[] getExpectedCountsForBranch(NodeRef child) { // TODO This function will implement TraitProvider
+        if (!countsKnown) {
+            computeAllExpectedCounts();
+        }
+        return computedCounts[child.getNumber()];
+    }
+
+    private void computeAllExpectedCounts() {
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef child = tree.getNode(i);
+            if (!tree.isRoot(child)) {
+                computedCounts[child.getNumber()] = computeExpectedCountsForBranch(child);
+            }
+        }
+        countsKnown = true;
+    }
+
+    private double[] computeExpectedCountsForBranch(NodeRef child) {
 
         // Get child node reconstructed sequence
         final int[] childSeq0 = partition[0].getStatesForNode(tree, child);
@@ -140,13 +161,13 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         double[] counts = getExpectedCountsForBranch(node);
         final String returnString;
 
-        if (branchFormat == RobustCountingOutputFormat.SUM_OVER_SITES) {
+        if (branchFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
             double total = 0;
             for (double x : counts) {
                 total += x;
             }
             returnString = String.valueOf(total);
-        } else if (branchFormat == RobustCountingOutputFormat.PER_SITE) {
+        } else if (branchFormat == StratifiedTraitOutputFormat.PER_SITE) {
             if (counts.length == 1) {
                 return String.valueOf(counts[0]);
             }
@@ -161,7 +182,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         return returnString;
     }
 
-    public double getRobustCount() {
+    public double[] getRobustCountPerSite() { // TODO Move to StratifiedTraitLogger
         double[] count = new double[numCodons];
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
@@ -170,7 +191,12 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
                 addToMatrix(count, getExpectedCountsForBranch(node));
             }
         }
+        return count;
+    }
 
+    public double getRobustCount() { // TODO Move to StratifiedTraitLogger
+
+        double[] count = getRobustCountPerSite();
         double total = 0;
         for (double x : count) {
             total += x;
@@ -178,7 +204,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         return total;
     }
 
-    public double getRobustCount(int site) {
+    public double getRobustCount(int site) { // TODO Move to StratifiedTraitLogger
 
         if (site < 0 || site >= numCodons) {
             throw new RuntimeException("Invalid site #");
@@ -193,7 +219,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         return total;
     }
 
-    private void addToMatrix(double[] total, double[] summant) {
+    private void addToMatrix(double[] total, double[] summant) { // TODO Move to StratifiedTraitLogger
         final int length = summant.length;
         for (int i = 0; i < length; i++) {
             total[i] += summant[i];
@@ -219,7 +245,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
 
     public LogColumn[] getColumns() {
 
-        if (logFormat == RobustCountingOutputFormat.SUM_OVER_SITES) {
+        if (logFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
             return new LogColumn[]{
                     new RobustCountColumn(codonLabeling.getText())
             };
@@ -228,12 +254,32 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         }
     }
 
+    public int getDimension() {
+        return numCodons;
+    }
+
+    public double getUnconditionedTraitValue() {
+        return markovJumps.getMarginalRate() * getExpectedTreeLength();
+    }
+
+    private double getExpectedTreeLength() {
+        double expectedTreeLength = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                expectedTreeLength += branchRateModel.getBranchRate(tree, node)
+                        * tree.getBranchLength(node);
+            }
+        }
+        return expectedTreeLength;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // Do nothing
+        countsKnown = false;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // Do nothing
+        countsKnown = false;
     }
 
     protected void storeState() {
@@ -241,7 +287,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
     }
 
     protected void restoreState() {
-        // Do nothing
+        countsKnown = false;
     }
 
     protected void acceptState() {
@@ -266,12 +312,15 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
     private final CodonLabeling codonLabeling;
     private final Tree tree;
 
-    private final RobustCountingOutputFormat branchFormat;
-    private final RobustCountingOutputFormat logFormat;
+    private final StratifiedTraitOutputFormat branchFormat;
+    private final StratifiedTraitOutputFormat logFormat;
 
     private final double[] condMeanMatrix;
 
     private int numCodons;
 
     private static final boolean DEBUG = false;
+
+    private boolean countsKnown;
+    private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
 }

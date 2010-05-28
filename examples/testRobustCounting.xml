@@ -359,6 +359,11 @@
             <ancestralTreeLikelihood idref="CP3.treeLikelihood"/>
         </thirdPosition>
     </codonPartitionedRobustCounting>    
+    
+    <stratifiedTraitLogger id="SperSite" format="perSiteWithUnconditioned">
+    	<treeModel idref="treeModel"/>
+    	<codonPartitionedRobustCounting idref="robustCounting"/>
+    </stratifiedTraitLogger>
 	
 	<!-- Define MCMC                                                             -->
 	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
@@ -405,7 +410,7 @@
 			</column>
 			<column label="SynCounts" sf="6" width="12">
 				<codonPartitionedRobustCounting idref="robustCounting"/>
-			</column>
+			</column>			
 		</log>
 		<!-- write log to file                                                       -->
 		<log id="fileLog" logEvery="1000" fileName="testRobustCounting.log">
@@ -427,6 +432,7 @@
 			<treeLikelihood idref="CP3.treeLikelihood"/>
 			<coalescentLikelihood idref="coalescent"/>
 			<codonPartitionedRobustCounting idref="robustCounting"/>
+			<stratifiedTraitLogger idref="SperSite"/>
 		</log>
 		<!-- write tree log to file                                                  -->
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testRobustCounting.trees" sortTranslationTable="true">

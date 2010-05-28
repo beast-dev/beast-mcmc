@@ -11,6 +11,7 @@ public abstract class FilteredTraceList implements TraceList {
     public void setFilter(Filter filter) {
         this.filter = filter;
         traceStatistics[getTraceIndex(filter.getTraceName())].setFilter(filter);
+        doFilter();
     }
 
     public Filter getFilter() {
@@ -30,16 +31,20 @@ public abstract class FilteredTraceList implements TraceList {
     public void removeFilter(String traceName) {
         this.filter = null;
         traceStatistics[getTraceIndex(traceName)].setFilter(null);
+        doFilter();
     }
 
     public void removeAllFilters() {
         this.filter = null;
-        doFilter();
+        for (TraceDistribution traceD : traceStatistics) {
+            traceD.setFilter(null);
+            traceD.doFilter();
+        }
     }
 
     private void doFilter() {
         for (TraceDistribution traceD : traceStatistics) {
-            traceD.setFilter(filter);
+            traceD.doFilter();
         }
     }
 

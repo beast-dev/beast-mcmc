@@ -238,8 +238,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(true);
             defaultNumberFormatCheckBox.setVisible(true);
 
-            Object[] rowNames = td1.credSet.getValues().toArray();
-            Object[] colNames = td2.credSet.getValues().toArray();
+            Object[] rowNames = td1.credSet.getRange().toArray();
+            Object[] colNames = td2.credSet.getRange().toArray();
             double[][] data = categoricalPlot(td1, td2);
 
             tableScrollPane.setTable(rowNames, colNames, data, defaultNumberFormatCheckBox.isSelected());
@@ -287,7 +287,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
     private void mixedCategoricalPlot(TraceDistribution td, boolean isFirstTraceListNumerical) {
         correlationChart.setXAxis(new DiscreteAxis(true, true));
-        List<String> categoryValues = td.credSet.getValues();
+        List<String> categoryValues = td.credSet.getRange();
         Map<String, TraceDistribution> categoryTdMap = new HashMap<String, TraceDistribution>();
 
         if (categoryValues == null || categoryValues.size() < 1) return;
@@ -360,8 +360,8 @@ public class CorrelationPanel extends JPanel implements Exportable {
     }
 
     private double[][] categoricalPlot(TraceDistribution td1, TraceDistribution td2) {
-        List<String> rowNames = td1.credSet.getValues();
-        List<String> colNames = td2.credSet.getValues();
+        List<String> rowNames = td1.credSet.getRange();
+        List<String> colNames = td2.credSet.getRange();
 
         double[][] data = new double[rowNames.size()][colNames.size()];
 

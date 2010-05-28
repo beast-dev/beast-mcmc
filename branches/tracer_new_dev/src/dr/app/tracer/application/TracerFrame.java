@@ -269,15 +269,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void invokeFilter() {
+        int rowIndex = statisticTable.getSelectedRow();
+
         if (filterDialog == null) {
                 filterDialog = new FilterDialog(this);
             }
-
-        String traceName = filterCombo.getSelectedItem().toString();
-        if (traceName.equalsIgnoreCase("None")) {
-            removeFilters();
-            return;
-        }
 
         if (currentTraceLists == null) {
             JOptionPane.showMessageDialog(this, "There is no tree file being selected !",
@@ -285,14 +281,17 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     JOptionPane.ERROR_MESSAGE);
         }
 
+        String traceName = filterCombo.getSelectedItem().toString();
+        if (traceName.equalsIgnoreCase("None")) {
+            currentTraceLists.get(0).removeAllFilters();
+            return;
+        }
+
         filterDialog.showDialog(traceName, currentTraceLists);
 
 
-
-    }
-
-    private void removeFilters() {
-        //To change body of created methods use File | Settings | File Templates.
+        statisticTableModel.fireTableDataChanged();
+        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
     private JPopupMenu createContextMenu(final int rowIndex) {

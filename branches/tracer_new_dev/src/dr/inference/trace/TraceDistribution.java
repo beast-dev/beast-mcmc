@@ -233,6 +233,17 @@ public class TraceDistribution<T> {
         return values;
     }
 
+    public String[] getRangeAll() { // only use for integer and string
+        List<String> valuesList = new ArrayList<String>();
+        for (T value : values) {
+            if (!valuesList.contains(value.toString()))
+                valuesList.add(value.toString());
+        }
+        Collections.sort(valuesList);
+        return valuesList.toArray(new String[valuesList.size()]);
+    }
+
+
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
         public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
@@ -314,7 +325,7 @@ public class TraceDistribution<T> {
             return freqOfMode;
         }
 
-        public List<String> getValues() {
+        public List<String> getRange() {
             List<String> valuesList = new ArrayList<String>();
             for (T value : new TreeSet<T>(valuesMap.keySet())) {
                 if (!valuesList.contains(value.toString()))
@@ -359,11 +370,13 @@ public class TraceDistribution<T> {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
-//        credSet = new CredibleSet(getValuesArray(), 0.95); //todo
     }
 
     public Filter getFilter() {
         return filter;
     }
 
+     public void doFilter() {
+        credSet = new CredibleSet(getValuesArray(), 0.95); 
+    }
 }

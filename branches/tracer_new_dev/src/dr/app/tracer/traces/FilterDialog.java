@@ -52,7 +52,7 @@ public class FilterDialog {
         nameField.setEditable(false);
 
         tittlePanel = new OptionsPanel(12, 12);
-        tittlePanel.addComponentWithLabel("Tree File : ", treeFileCombo);
+        tittlePanel.addComponentWithLabel("File Name: ", treeFileCombo);
         tittlePanel.addComponentWithLabel("Trace Name : ", nameField);
         tittlePanel.addComponentWithLabel("Trace Type : ", typeField);
 
@@ -126,19 +126,13 @@ public class FilterDialog {
         if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
 
         } else {// integer and string
-            List vl = td.credSet.getValues();
-            String[] all = new String[vl.size()];
+            String[] all = td.getRangeAll();
             String[] sel;
 
             if (f == null) {
                 sel = null;
             } else {
                 sel = f.getIn();
-            }
-
-            for (int i = 0; i < vl.size(); i++) {
-//                if (f == null || (!Utils.contains(sel, all[i])) )  // f != null && (!Utils.contains(sel, all[i]))
-                    all[i] = vl.get(i).toString();                 
             }
 
             filterPanel = new FilterDiscretePanel(all, sel);

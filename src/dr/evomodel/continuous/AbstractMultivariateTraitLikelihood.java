@@ -423,7 +423,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         //diffusionModel.randomize(trait);
     }
 
-    public void jitter(Parameter trait, int dim, double[] window, boolean duplicates, boolean verbose) {
+    public void jitter(Parameter trait, int dim, List<Integer> missingIndices, double[] window, boolean duplicates, boolean verbose) {
         int numTraits = trait.getDimension() / dim;
         boolean[] update = new boolean[numTraits];
         if (!duplicates) {
@@ -454,22 +454,24 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     sb1 = new StringBuffer();
                     sb2 = new StringBuffer();
                 }
+                boolean hitAtLeastOneComponent = false;
                 for (int j = 0; j < dim; j++) {
                     final double oldValue = trait.getParameterValue(i * dim + j);
                     final double newValue;
-                    if (oldValue == Double.NaN){
-                       newValue = oldValue;
-                    }  else {
-                       newValue  = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
-                          oldValue;
+                    if (!missingIndices.contains(i * dim + j)) {
+                        newValue = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
+                              oldValue;
+                        trait.setParameterValue(i * dim + j, newValue);
+                        hitAtLeastOneComponent = true;
+                    } else {
+                        newValue = oldValue;
                     }
-                    trait.setParameterValue(i * dim + j, newValue);
                     if (verbose) {
                         sb1.append(" ").append(oldValue);
                         sb2.append(" ").append(newValue);
                     }
                 }
-                if (verbose) {
+                if (verbose && hitAtLeastOneComponent) {
                     Logger.getLogger("dr.evomodel.continuous").info(
                             "  Replacing trait #" + (i + 1) + "  Old:" + sb1.toString() + " New: " + sb2.toString()
                     );
@@ -611,7 +613,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             if (oneValue.compareTo("NA") == 0) {
                                 Logger.getLogger("dr.evomodel.continuous").info(
                                         "Warning: Missing value in tip for taxon " + taxonName +
-                                                " (filling with 0)"   // See comment below
+                                                " (filling with 0 as starting value when sampling only)"   // See comment below
                                 );
                             } else {
                                 try {
@@ -745,7 +747,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                 double[] window = cxo.getDoubleArrayAttribute(WINDOW); // Must be included, no default value
                 boolean duplicates = cxo.getAttribute(DUPLICATES, true); // default = true
-                like.jitter(traits, diffusionModel.getPrecisionmatrix().length, window, duplicates, true);
+                like.jitter(traits, diffusionModel.getPrecisionmatrix().length, missingIndices, window, duplicates, true);
             }
 
             if (xo.hasChildNamed(CHECK)) {

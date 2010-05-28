@@ -174,7 +174,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 if (resourceList != null && resourceList[0] > 1) {
                     this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
                 } else { // if CPU: just run as fast as possible
-                    this.rescalingScheme = PartialsRescalingScheme.NONE;
+//                    this.rescalingScheme = PartialsRescalingScheme.NONE;
+                    // Dynamic should run as fast as none until first underflow
+                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
                 }
             }
 
@@ -262,21 +264,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             beagle.setPatternWeights(patternWeights);
 
-            if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT &&
+            if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
                     (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
                 // If auto scaling in BEAGLE is not supported then do it here
-//                this.rescalingScheme = PartialsRescalingScheme.NONE;
-//                this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
                 logger.info("  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText());
             } else {
                 logger.info("  Using rescaling scheme : " + this.rescalingScheme.getText());
             }
 
-            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
-            }
+//            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+//                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
+//            }
                         
             updateSubstitutionModel = true;
             updateSiteModel = true;

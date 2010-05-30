@@ -53,12 +53,19 @@ public class DnDsPerSiteAnalysis {
     }
 
     private void collectDnAndDsPerSite() {
-
+        dSPerSiteSample = new double[sampleSperSite.length][sampleSperSite[0].length];
+        dNPerSiteSample = new double[sampleNperSite.length][sampleNperSite[0].length];
+        dNdSRatioPerSiteSample = new double[sampleSperSite.length][sampleSperSite[0].length];
         for (int r = 0; r < sampleSperSite.length; r++) {
             for (int c = 0; c < sampleSperSite[0].length; c++) {
+                //System.out.println(sampleSperSite[r][c]);
+                //System.out.println(unconditionalS[c]);
+                //System.out.println(sampleNperSite[r][c]);
+                //System.out.println(unconditionalN[c]);
+
                 dSPerSiteSample[r][c] = sampleSperSite[r][c]/unconditionalS[c];
                 dNPerSiteSample[r][c] = sampleNperSite[r][c]/unconditionalN[c];
-                dNdSRatioPerSiteSample[r][c] = dSPerSiteSample[r][c]/dNPerSiteSample[r][c];
+                dNdSRatioPerSiteSample[r][c] = dNPerSiteSample[r][c]/dSPerSiteSample[r][c];
             }
         }
     }
@@ -67,11 +74,13 @@ public class DnDsPerSiteAnalysis {
         double[] dSPerSiteMean = mean(getdSPerSiteSample());
         double[] dNPerSiteMean = mean(getdNPerSiteSample());
         double[] dNdSRatioPerSiteMean = mean(getdNdSRatioPerSiteSample());
+        double[] SPerSiteMean = mean(dSPerSiteSample);
+        double[] NPerSiteMean = mean(dNPerSiteSample);
 
         StringBuffer sb = new StringBuffer();
-        sb.append("site\tdS\tdN\tdN/dS\n");
-        for(int i = 0; i < dNdSRatioPerSiteMean[i]; i++) {
-            sb.append(i+1+"\t"+dSPerSiteMean+"\t"+dNPerSiteMean+"\t"+dNdSRatioPerSiteMean+"\n");    
+        sb.append("site\tS\tN\tdS\tdN\tdN/dS\n");
+        for(int i = 0; i < dNdSRatioPerSiteMean.length; i++) {
+            sb.append(i+1+"\t"+SPerSiteMean[i]+"\t"+NPerSiteMean[i]+"\t"+dSPerSiteMean[i]+"\t"+dNPerSiteMean[i]+"\t"+dNdSRatioPerSiteMean[i]+"\n");    
         }
 
         return sb.toString();
@@ -79,9 +88,10 @@ public class DnDsPerSiteAnalysis {
     }
 
     private static double[] mean(double[][] x)    {
-         double[] returnArray = null;
+         double[] returnArray = new double[x.length];
          for (int i = 0; i < x.length; i++) {
             returnArray[i] = DiscreteStatistics.mean(x[i]);
+            //System.out.println(DiscreteStatistics.mean(x[i]));
          }
          return returnArray;
      }
@@ -142,17 +152,21 @@ public class DnDsPerSiteAnalysis {
                 int traceIndexUnconditionalS = -1;
                 int traceIndexNperSite = -1;
                 int traceIndexUnconditionalN = -1;
+                boolean traceIndexSperSiteFound = false;
+                boolean traceIndexNperSiteFound = false;
 
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
-                    if (traceName.trim().contains(sPerSiteColumnName)) {
+                    if (traceName.trim().contains(sPerSiteColumnName) && !traceIndexSperSiteFound) {
                         traceIndexSperSite = i;
+                        traceIndexSperSiteFound = true;
                     }
                     if (traceName.trim().equals(unconditionalSName)) {
                         traceIndexUnconditionalS = i;
                     }
-                    if (traceName.trim().contains(nPerSiteColumnName)) {
+                    if (traceName.trim().contains(nPerSiteColumnName) && !traceIndexNperSiteFound) {
                         traceIndexNperSite = i;
+                        traceIndexNperSiteFound = true;
                     }
                     if (traceName.trim().equals(unconditionalNName)) {
                         traceIndexUnconditionalN = i;
@@ -183,6 +197,7 @@ public class DnDsPerSiteAnalysis {
                     }
                 }
                 numberOfSperSite = 1 + (traceEndIndexSperSite - traceIndexSperSite);
+                //System.out.println(traceIndexSperSite+"\t"+traceEndIndexSperSite+"\t"+numberOfSperSite);
 
                 int traceEndIndexNperSite = -1;
                 int numberOfNperSite = 1;
@@ -193,6 +208,7 @@ public class DnDsPerSiteAnalysis {
                     }
                 }
                 numberOfNperSite = 1 + (traceEndIndexNperSite - traceIndexNperSite);
+                //System.out.println(traceIndexNperSite+"\t"+traceEndIndexNperSite+"\t"+numberOfNperSite);
 
                 if (numberOfSperSite != numberOfNperSite) {
                     throw new XMLParseException("different number of sites for N (" +numberOfNperSite+") and S ("+numberOfSperSite+") counts for " + getParserName() + " ??");
@@ -205,11 +221,11 @@ public class DnDsPerSiteAnalysis {
                 double unconditionalN[] = new double[traces.getStateCount()];
 
                 //collect all arrays
-                for(int a = traceIndexSperSite; a < numberOfSperSite; a++){
-                    traces.getValues(a, sampleSperSite[a]);
+                for(int a = 0; a < numberOfSperSite; a++){
+                    traces.getValues((a + traceIndexSperSite), sampleSperSite[a]);
                 }
-                for(int b = traceIndexNperSite; b < numberOfNperSite; b++){
-                    traces.getValues(b, sampleNperSite[b]);
+                for(int b = 0; b < numberOfNperSite; b++){
+                    traces.getValues((b + traceIndexNperSite), sampleNperSite[b]);
                 }
                 traces.getValues(traceIndexUnconditionalS, unconditionalS);
                 traces.getValues(traceIndexUnconditionalN, unconditionalN);
@@ -256,10 +272,10 @@ public class DnDsPerSiteAnalysis {
                         new StringAttributeRule(Attribute.NAME, "The column name")}),
         };
     };
-    private final double[][] sampleSperSite;
-    private final double[][] sampleNperSite;
-    private final double[] unconditionalS;
-    private final double[] unconditionalN;
+    private double[][] sampleSperSite;
+    private double[][] sampleNperSite;
+    private double[] unconditionalS;
+    private double[] unconditionalN;
 
     private boolean dNAnddSPerSiteSampleCollected = false;
     private double[][] dSPerSiteSample;

@@ -6,8 +6,7 @@ import dr.util.Attribute;
 import dr.inferencexml.trace.MarginalLikelihoodAnalysisParser;
 import dr.stats.DiscreteStatistics;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 
 import jebl.evolution.alignments.Alignment;
 
@@ -58,29 +57,27 @@ public class DnDsPerSiteAnalysis {
         dNdSRatioPerSiteSample = new double[sampleSperSite.length][sampleSperSite[0].length];
         for (int r = 0; r < sampleSperSite.length; r++) {
             for (int c = 0; c < sampleSperSite[0].length; c++) {
-                //System.out.println(sampleSperSite[r][c]);
-                //System.out.println(unconditionalS[c]);
-                //System.out.println(sampleNperSite[r][c]);
-                //System.out.println(unconditionalN[c]);
-
                 dSPerSiteSample[r][c] = sampleSperSite[r][c]/unconditionalS[c];
                 dNPerSiteSample[r][c] = sampleNperSite[r][c]/unconditionalN[c];
                 dNdSRatioPerSiteSample[r][c] = dNPerSiteSample[r][c]/dSPerSiteSample[r][c];
             }
         }
+
     }
 
     public String toString() {
         double[] dSPerSiteMean = mean(getdSPerSiteSample());
         double[] dNPerSiteMean = mean(getdNPerSiteSample());
         double[] dNdSRatioPerSiteMean = mean(getdNdSRatioPerSiteSample());
-        double[] SPerSiteMean = mean(dSPerSiteSample);
-        double[] NPerSiteMean = mean(dNPerSiteSample);
+        double[] SPerSiteMean = mean(sampleSperSite);
+        double[] NPerSiteMean = mean(sampleNperSite);
+        double unconditionalSMean = DiscreteStatistics.mean(unconditionalS);
+        double unconditionalNMean = DiscreteStatistics.mean(unconditionalN);
 
         StringBuffer sb = new StringBuffer();
-        sb.append("site\tS\tN\tdS\tdN\tdN/dS\n");
+        sb.append("site\tS\tN\tdS\tdN\tdN/dS\tdN-dS\n");
         for(int i = 0; i < dNdSRatioPerSiteMean.length; i++) {
-            sb.append(i+1+"\t"+SPerSiteMean[i]+"\t"+NPerSiteMean[i]+"\t"+dSPerSiteMean[i]+"\t"+dNPerSiteMean[i]+"\t"+dNdSRatioPerSiteMean[i]+"\n");    
+            sb.append(i+1+"\t"+SPerSiteMean[i]+"\t"+NPerSiteMean[i]+"\t"+dSPerSiteMean[i]+"\t"+dNPerSiteMean[i]+"\t"+dNdSRatioPerSiteMean[i]+"\t"+(dNPerSiteMean[i]-dSPerSiteMean[i])+"\n");    
         }
 
         return sb.toString();
@@ -88,13 +85,32 @@ public class DnDsPerSiteAnalysis {
     }
 
     private static double[] mean(double[][] x)    {
-         double[] returnArray = new double[x.length];
-         for (int i = 0; i < x.length; i++) {
+        double[] returnArray = new double[x.length];
+        //System.out.println("lala");
+        for (int i = 0; i < x.length; i++) {
             returnArray[i] = DiscreteStatistics.mean(x[i]);
+            //System.out.println((i+1)+"\t"+DiscreteStatistics.mean(x[i]));
             //System.out.println(DiscreteStatistics.mean(x[i]));
          }
          return returnArray;
      }
+
+    private static void print2DArray(double[][] array, String name) {
+        try {
+            PrintWriter outFile = new PrintWriter(new FileWriter(name), true);
+
+            for (int i = 0; i < array.length; i++) {
+                for (int j = 0; j < array[0].length; j++) {
+                    outFile.print(array[i][j]+"\t");
+                }
+            outFile.println("");
+            }
+            outFile.close();
+
+        } catch(IOException io) {
+           System.err.print("Error writing to file: " + name);
+        }
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -140,6 +156,7 @@ public class DnDsPerSiteAnalysis {
 
                 // leaving the burnin attribute off will result in 10% being used
                 int burnin = xo.getAttribute(MarginalLikelihoodAnalysisParser.BURN_IN, maxState / 10);
+                //TODO: implement custom burn-in
 
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 5;
@@ -189,25 +206,23 @@ public class DnDsPerSiteAnalysis {
 
 
                 int traceEndIndexSperSite = -1;
-                int numberOfSperSite = 1;
                 for (int i = traceIndexSperSite; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
-                    if (traceName.trim().contains(sPerSiteColumnName)) {
+                    if (traceName.trim().contains(sPerSiteColumnName) && !traceName.trim().contains(unconditionalSName)) {
                         traceEndIndexSperSite = i;
                     }
                 }
-                numberOfSperSite = 1 + (traceEndIndexSperSite - traceIndexSperSite);
-                //System.out.println(traceIndexSperSite+"\t"+traceEndIndexSperSite+"\t"+numberOfSperSite);
+                int numberOfSperSite = 1 + (traceEndIndexSperSite - traceIndexSperSite);
+                //System.out.println(traceIndexSperSite+"\t"+traceEndIndexSperSite+"\t"+numberOfSperSite+"\t"+traceIndexUnconditionalS);
 
                 int traceEndIndexNperSite = -1;
-                int numberOfNperSite = 1;
                 for (int i = traceIndexNperSite; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
-                    if (traceName.trim().contains(nPerSiteColumnName)) {
+                    if (traceName.trim().contains(nPerSiteColumnName) && !traceName.trim().contains(unconditionalNName)) {
                         traceEndIndexNperSite =  i;
                     }
                 }
-                numberOfNperSite = 1 + (traceEndIndexNperSite - traceIndexNperSite);
+                int numberOfNperSite = 1 + (traceEndIndexNperSite - traceIndexNperSite);
                 //System.out.println(traceIndexNperSite+"\t"+traceEndIndexNperSite+"\t"+numberOfNperSite);
 
                 if (numberOfSperSite != numberOfNperSite) {

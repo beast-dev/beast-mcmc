@@ -110,6 +110,7 @@
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
                 <include name="dr/app/java16compat/**/*.class"/>
+                <include name="dr/app/beagle/**/*.class" />  <!-- include beagle -->
 				<include name="dr/evolution/**/*.class" />
 				<exclude name="dr/evomodel/beagle/**" />
 				<include name="dr/evomodel/**/*.class" />
@@ -141,6 +142,7 @@
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
 			<zipgroupfileset dir="${lib}" includes="colt.jar" />
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
 		</jar>
 
 		<!-- Put everything in ${build} into the beauti.jar file -->
@@ -283,7 +285,7 @@
 			<zipgroupfileset dir="${lib}" includes="commons-math-1.2.jar" />
 		</jar> -->
 
-		<!-- Put everything in ${build} into the beast.jar file -->
+		<!-- Put everything in ${build} into the beast.jar file
 		<jar jarfile="${dist}/beast-beagle.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
@@ -292,7 +294,7 @@
 				<include name="dr/app/beagle/**/*.class" />
 			</fileset>
 			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
-		</jar>
+		</jar> -->
 
 	</target>
 

@@ -144,7 +144,7 @@ public class TraceDistribution<T> {
      * @param values the values to analyze
      */
     private void analyseDistributionContinuous(double[] valuesC, double proportion) {
-//        this.values = values;   // move to analyseDistribution(T[] valuesC)
+//        this.values = values;   // move to TraceDistribution(T[] values)
 
         mean = DiscreteStatistics.mean(valuesC);
         stdError = DiscreteStatistics.stdev(valuesC);
@@ -366,17 +366,15 @@ public class TraceDistribution<T> {
     }
 
     //******************** Filter ****************************
-    private Filter filter;
+    protected Filter filter;
 
-    public void setFilter(Filter filter) {
-        this.filter = filter;
-    }
+//    public void setFilter(Filter filter) {
+//        this.filter = filter;
+//        credSet = new CredibleSet(getValuesArray(), 0.95);
+//    }
+//
+//    public Filter getFilter() {
+//        return filter;
+//    }
 
-    public Filter getFilter() {
-        return filter;
-    }
-
-     public void doFilter() {
-        credSet = new CredibleSet(getValuesArray(), 0.95); 
-    }
 }

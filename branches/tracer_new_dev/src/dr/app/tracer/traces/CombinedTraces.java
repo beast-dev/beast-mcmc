@@ -181,6 +181,7 @@ public class CombinedTraces extends FilteredTraceList {
 
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];
+            initFilters();
         }
 
         Trace trace = getTrace(index);

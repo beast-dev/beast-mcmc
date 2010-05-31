@@ -5,47 +5,49 @@ package dr.inference.trace;
  */
 public abstract class FilteredTraceList implements TraceList {
 
-    Filter filter; // todo multi-filter for one traceList
+    Filter[] filters; // store configured filter
     protected TraceCorrelation[] traceStatistics = null;
 
     public void setFilter(Filter filter) {
-        this.filter = filter;
-        traceStatistics[getTraceIndex(filter.getTraceName())].setFilter(filter);
-        doFilter();
+        int fId = getTraceIndex(filter.getTraceName());
+        filters[fId] = filter;
+        doFilter(filter);
     }
 
-    public Filter getFilter() {
-        return this.filter;
+    public Filter getFilter(int index) {
+        return filters[index];
     }
 
     public Filter getFilter(String traceName) {
-        if (traceStatistics != null && getTraceIndex(traceName) > 0) {
-           this.filter = traceStatistics[getTraceIndex(traceName)].getFilter(); 
-        } else {
-           this.filter = null;
+        int fId = getTraceIndex(traceName);
+        if (traceStatistics != null && fId > 0) {
+            return filters[fId];
         }
-//        doFilter();
-        return this.filter;
+        return null;
     }
 
     public void removeFilter(String traceName) {
-        this.filter = null;
-        traceStatistics[getTraceIndex(traceName)].setFilter(null);
-        doFilter();
+        int fId = getTraceIndex(traceName);
+        if (filters[fId] != null) {
+            filters[fId] = null;
+            doFilter(null);
+        }
     }
 
     public void removeAllFilters() {
-        this.filter = null;
-        for (TraceDistribution traceD : traceStatistics) {
-            traceD.setFilter(null);
-            traceD.doFilter();
+        for (Filter f : filters) {
+            f = null;
+        }
+        doFilter(null);
+    }
+
+    private void doFilter(Filter filter) {
+        for (TraceCorrelation traceC : traceStatistics) {
+            traceC.setFilter(filter);
         }
     }
 
-    private void doFilter() {
-        for (TraceDistribution traceD : traceStatistics) {
-            traceD.doFilter();
-        }
+    protected void initFilters() { // used in void analyseTrace(int index)
+        if (filters == null) filters = new Filter[traceStatistics.length];
     }
-
 }

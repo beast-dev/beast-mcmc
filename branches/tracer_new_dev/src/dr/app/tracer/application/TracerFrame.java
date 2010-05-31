@@ -276,22 +276,28 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
 
         if (currentTraceLists == null) {
-            JOptionPane.showMessageDialog(this, "There is no tree file being selected !",
+            JOptionPane.showMessageDialog(this, "There is no file being selected !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        if (hasDiffValues(currentTraceLists)) {
+            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
                     "Invalid Action",
                     JOptionPane.ERROR_MESSAGE);
         }
 
         String traceName = filterCombo.getSelectedItem().toString();
-        if (traceName.equalsIgnoreCase("None")) {
-            currentTraceLists.get(0).removeAllFilters();
-            return;
-        }
 
         filterDialog.showDialog(traceName, currentTraceLists);
 
 
         statisticTableModel.fireTableDataChanged();
         statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
+    }
+
+    private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {
+        return false;  //Todo 
     }
 
     private JPopupMenu createContextMenu(final int rowIndex) {

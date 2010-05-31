@@ -11,8 +11,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -26,7 +24,7 @@ public class FilterDialog {
     List<FilteredTraceList> filteredTraceListGroup;
     String traceName;
 
-    JComboBox treeFileCombo;
+    JList fileList;
     JTextField typeField;
     JTextField nameField;
 
@@ -37,13 +35,15 @@ public class FilterDialog {
     public FilterDialog(JFrame frame) {
         this.frame = frame;
 
-        treeFileCombo = new JComboBox();
-        treeFileCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                if (filteredTraceListGroup != null && treeFileCombo.getSelectedIndex() > 0)
-                    initComponents(filteredTraceListGroup.get(treeFileCombo.getSelectedIndex()));
-            }
-        });
+        fileList = new JList();
+        fileList.setVisibleRowCount(6);
+        fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+//        fileList.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent e) {
+//                if (filteredTraceListGroup != null && fileList.getSelectedIndex() > 0)
+//                    initComponents(filteredTraceListGroup.get(fileList.getSelectedIndex()));
+//            }
+//        });
         typeField = new JTextField();
         typeField.setColumns(20);
         typeField.setEditable(false);
@@ -52,7 +52,7 @@ public class FilterDialog {
         nameField.setEditable(false);
 
         tittlePanel = new OptionsPanel(12, 12);
-        tittlePanel.addComponentWithLabel("File Name: ", treeFileCombo);
+        tittlePanel.addComponentWithLabel("Selected File(s) : ", fileList);
         tittlePanel.addComponentWithLabel("Trace Name : ", nameField);
         tittlePanel.addComponentWithLabel("Trace Type : ", typeField);
 
@@ -63,59 +63,25 @@ public class FilterDialog {
         this.filteredTraceListGroup = filteredTraceListGroup;
         this.traceName = traceName;
 
-        treeFileCombo.removeAllItems();
-        for (FilteredTraceList treeFile : filteredTraceListGroup) {
-            treeFileCombo.addItem(treeFile.getName());
+        if (traceName.equalsIgnoreCase("None")) {
+            for (FilteredTraceList filteredTraceList : filteredTraceListGroup) {
+                filteredTraceList.removeAllFilters();
+            }             
+            return;
         }
 
-        treeFileCombo.setSelectedIndex(0);
-        initComponents(filteredTraceListGroup.get(0));
-
-        JPanel basePanel = new JPanel(new BorderLayout(0, 0));
-        basePanel.add(tittlePanel, BorderLayout.NORTH);
-        basePanel.add(filterPanel, BorderLayout.CENTER);
-
-        Object[] options = {"Apply Filter", "Remove Filter", "Cancel"};
-        JOptionPane optionPane = new JOptionPane(basePanel,
-                JOptionPane.PLAIN_MESSAGE,
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                null,
-                options,
-                options[2]);
-        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        final JDialog dialog = optionPane.createDialog(frame, "Create A Filter");
-        dialog.pack();
-        dialog.setVisible(true);
-
-        Object result = optionPane.getValue();
-
-        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
-        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
-
-        if (result.equals(options[0])) {
-            Filter f = filteredTraceList.getFilter(traceName);
-
-            if (f == null) {
-                f = new Filter(traceName, td.getTraceType(), filterPanel.getSelectedValues(), td.getValues());
-            } else {
-                f.setIn(filterPanel.getSelectedValues(), td.getValues());
-            }
-
-            filteredTraceList.setFilter(f);
-
-        } else if (result.equals(options[1])) {
-            filteredTraceList.removeFilter(traceName);
-
-        } else if (result.equals(options[2])) {
-
+        Object[] fileNames = new Object[filteredTraceListGroup.size()];
+        int[] indices = new int[filteredTraceListGroup.size()];
+        for (int i = 0; i < fileNames.length; i++) {
+            fileNames[i] = filteredTraceListGroup.get(i).getName();
+            indices[i] = i;
         }
 
+        fileList.setListData(fileNames);
+        fileList.setSelectedIndices(indices);
 
-    }
-
-    private void initComponents(FilteredTraceList filteredTraceList) {
-
+//        initComponents(filteredTraceListGroup.get(0));
+        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(fileList.getSelectedIndex()); // only pick up the 1st one
         TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
 
         typeField.setText(td.getTraceType().toString());
@@ -139,7 +105,79 @@ public class FilterDialog {
         }
 
 
+        JPanel basePanel = new JPanel(new BorderLayout(0, 0));
+        basePanel.add(tittlePanel, BorderLayout.NORTH);
+        basePanel.add(filterPanel, BorderLayout.CENTER);
+
+        Object[] options = {"Apply Filter", "Remove Filter", "Cancel"};
+        JOptionPane optionPane = new JOptionPane(basePanel,
+                JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                null,
+                options,
+                options[2]);
+        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+        final JDialog dialog = optionPane.createDialog(frame, "Create A Filter");
+        dialog.pack();
+        dialog.setVisible(true);
+
+        Object result = optionPane.getValue();
+
+//        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
+//        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
+
+        if (result.equals(options[0])) {
+            for (int i = 0; i < filteredTraceListGroup.size(); i++) {
+                f = filteredTraceListGroup.get(i).getFilter(traceName);
+
+                if (f == null) {
+                    f = new Filter(traceName, td.getTraceType(), filterPanel.getSelectedValues(), td.getValues());
+                } else {
+                    f.setIn(filterPanel.getSelectedValues(), td.getValues());
+                }
+
+                filteredTraceListGroup.get(i).setFilter(f);
+            }
+
+        } else if (result.equals(options[1])) {
+            for (int i = 0; i < filteredTraceListGroup.size(); i++) {
+                 filteredTraceListGroup.get(i).removeFilter(traceName);
+            }
+
+        } else if (result.equals(options[2])) {
+
+        }
+
+
     }
+
+//    private void initComponents(FilteredTraceList filteredTraceList) {
+//
+//        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
+//
+//        typeField.setText(td.getTraceType().toString());
+//        nameField.setText(traceName);
+//
+//        Filter f = filteredTraceList.getFilter(traceName);
+//
+//        if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+//
+//        } else {// integer and string
+//            String[] all = td.getRangeAll();
+//            String[] sel;
+//
+//            if (f == null) {
+//                sel = null;
+//            } else {
+//                sel = f.getIn();
+//            }
+//
+//            filterPanel = new FilterDiscretePanel(all, sel);
+//        }
+//
+//
+//    }
 
     public String getName() {
         return nameField.getText();
@@ -153,7 +191,7 @@ public class FilterDialog {
         JList allValues;
         JList selectedValues;
         JButton selectButton;
-        
+
         FilterDiscretePanel(String[] allValuesArray, String[] selectedValuesArray) {
             setLayout(new FlowLayout());
 
@@ -201,7 +239,7 @@ public class FilterDialog {
         public Object[] getSelectedValues() {
             return allValues.getSelectedValues();
         }
-        
+
     }
 
 }

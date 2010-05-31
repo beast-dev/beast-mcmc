@@ -32,10 +32,12 @@ package dr.inference.trace;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation<T> extends TraceDistribution {
+public class TraceCorrelation<T> extends TraceDistribution<T> {
+    final int stepSize;
 
     public TraceCorrelation(T[] values, int stepSize) {
         super(values, stepSize);
+        this.stepSize = stepSize;
 
         if (isValid) {
             analyseCorrelation(values, stepSize);
@@ -51,7 +53,7 @@ public class TraceCorrelation<T> extends TraceDistribution {
     }
 
     private void analyseCorrelation(T[] values, int stepSize) {
-        this.values = values;
+//        this.values = values; // move to TraceDistribution(T[] values)
 
          if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
              double[] doubleValues = new double[values.length];
@@ -147,4 +149,18 @@ public class TraceCorrelation<T> extends TraceDistribution {
     protected double stdErrOfACT;
 
     private static final int MAX_LAG = 2000;
+
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+        credSet = new CredibleSet(getValuesArray(), 0.95);
+
+        if (isValid) {
+            analyseCorrelation(getValuesArray(), stepSize);
+        }
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
 }

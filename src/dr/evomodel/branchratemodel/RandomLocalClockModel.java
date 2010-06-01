@@ -48,8 +48,8 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class RandomLocalClockModel extends AbstractModel
-        implements BranchRateModel, NodeAttributeProvider, RandomLocalTreeVariable {
+public class RandomLocalClockModel extends AbstractBranchRateModel
+        implements RandomLocalTreeVariable {
 
     public RandomLocalClockModel(TreeModel treeModel,
                                  Parameter meanRateParameter,
@@ -127,7 +127,7 @@ public class RandomLocalClockModel extends AbstractModel
     protected void acceptState() {
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         return unscaledBranchRates[node.getNumber()] * scaleFactor;
     }
 
@@ -193,28 +193,22 @@ public class RandomLocalClockModel extends AbstractModel
             scaleFactor *= meanRateParameter.getParameterValue(0);
     }
 
-    private static String[] attributeLabel = {"changed"};
-
-    public String[] getNodeAttributeLabel() {
-        return attributeLabel;
-    }
-
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-
-        if (tree.isRoot(node)) {
-            return new String[]{"false"};
-        }
-
-        return new String[]{(isVariableSelected((TreeModel) tree, node) ? "true" : "false")};
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
+    // AR - as TreeParameterModels are now loggable, the indicator parameter should be logged
+    // directly.
+//    private static String[] attributeLabel = {"changed"};
+//
+//    public String[] getNodeAttributeLabel() {
+//        return attributeLabel;
+//    }
+//
+//    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+//
+//        if (tree.isRoot(node)) {
+//            return new String[]{"false"};
+//        }
+//
+//        return new String[]{(isVariableSelected((TreeModel) tree, node) ? "true" : "false")};
+//    }
 
     // the scale factor necessary to maintain the mean rate
     private double scaleFactor;

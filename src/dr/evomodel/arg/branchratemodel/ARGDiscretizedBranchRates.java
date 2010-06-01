@@ -28,6 +28,7 @@ package dr.evomodel.arg.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModel;
@@ -44,7 +45,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: ARGDiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class ARGDiscretizedBranchRates extends AbstractModel implements BranchRateModel {
+public class ARGDiscretizedBranchRates extends AbstractBranchRateModel {
 
 
     public static final String DISCRETIZED_BRANCH_RATES = "argDiscretizedBranchRates";
@@ -298,11 +299,4 @@ ParametricDistributionModel model) {
         rootNodeNumber = newRootNodeNumber;
     }
 
-    public String getBranchAttributeLabel() {
-        return null;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return null;
-    }
 }

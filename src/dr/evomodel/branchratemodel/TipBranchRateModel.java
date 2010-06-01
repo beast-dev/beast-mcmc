@@ -37,7 +37,7 @@ import dr.xml.*;
  * @author Andrew Rambaut
  * @version $Id: TipBranchRateModel.java,v 1.1 2005/12/14 16:46:20 rambaut Exp $
  */
-public class TipBranchRateModel extends AbstractModel implements BranchRateModel {
+public class TipBranchRateModel extends AbstractBranchRateModel {
 
     public static final String TIP_BRANCH_RATE_MODEL = "tipBranchRateModel";
     public static final String EXTERNAL_RATE = "externalRate";
@@ -115,7 +115,7 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
         };
     };
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         if (tree.isExternal(node)) {
             return externalRateParameter.getParameterValue(0);
         } else {
@@ -123,14 +123,5 @@ public class TipBranchRateModel extends AbstractModel implements BranchRateModel
 
         }
     }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
-
 
 }

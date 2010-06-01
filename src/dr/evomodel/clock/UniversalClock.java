@@ -27,6 +27,7 @@ package dr.evomodel.clock;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -40,7 +41,7 @@ import dr.inference.model.Variable;
  * @version $Id: UniversalClock.java,v 1.5 2005/02/21 15:16:09 rambaut Exp $
  */
 
-public class UniversalClock extends AbstractModel implements BranchRateModel {
+public class UniversalClock extends AbstractBranchRateModel {
 
     public static final String UNIVERSAL_CLOCK = "universalClock";
 
@@ -130,14 +131,6 @@ public class UniversalClock extends AbstractModel implements BranchRateModel {
 
     public double getBranchRate(Tree tree, NodeRef node) {
         throw new RuntimeException("Look at code before running this class!");
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     Parameter rateParameter = null;

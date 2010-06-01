@@ -13,7 +13,7 @@ import dr.inference.model.*;
  * @author Wai Lok Sibon Li
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2009/12/01 17:44:30 rambaut Exp $
  */
-public class MixtureModelBranchRates extends AbstractModel implements BranchRateModel {
+public class MixtureModelBranchRates extends AbstractBranchRateModel {
 
     private final ParametricDistributionModel[] distributionModels;
 
@@ -207,14 +207,6 @@ public class MixtureModelBranchRates extends AbstractModel implements BranchRate
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
         //int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
         return rates[node.getNumber()] * scaleFactor;
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     /**

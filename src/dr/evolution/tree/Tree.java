@@ -843,9 +843,9 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return buffer.toString();
         }
 
-        public static String newick(Tree tree, BranchRateController branchRateController) {
+        public static String newick(Tree tree, BranchRateProvider branchRateProvider) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_SUBSTITUTIONS, null, branchRateController, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_SUBSTITUTIONS, null, branchRateProvider, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -877,7 +877,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @param node                     The node [tree.getRoot()]
          * @param labels                   whether labels or numbers should be used
          * @param lengths                  What type of branch lengths: NO_BRANCH_LENGTHS, LENGTHS_AS_TIME, LENGTHS_AS_SUBSTITUTIONS
-         * @param branchRateController     An optional BranchRateController (or null)
+         * @param branchRateProvider        An optional BranchRateProvider (or null) used to scale branch times into substitutions
          * @param nodeAttributeProviders   An array of NodeAttributeProviders
          * @param branchAttributeProviders An array of BranchAttributeProviders
          * @param format                   formatter for branch lengths
@@ -885,7 +885,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @param buffer                   The StringBuffer
          */
         public static void newick(Tree tree, NodeRef node, boolean labels, BranchLengthType lengths, NumberFormat format,
-                                  BranchRateController branchRateController,
+                                  BranchRateProvider branchRateProvider,
                                   NodeAttributeProvider[] nodeAttributeProviders,
                                   BranchAttributeProvider[] branchAttributeProviders,
                                   Map<String, Integer> idMap, StringBuffer buffer) {
@@ -906,14 +906,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             } else {
                 buffer.append("(");
                 newick(tree, tree.getChild(node, 0), labels, lengths, format,
-                        branchRateController,
+                        branchRateProvider,
                         nodeAttributeProviders,
                         branchAttributeProviders, idMap,
                         buffer);
                 for (int i = 1; i < tree.getChildCount(node); i++) {
                     buffer.append(",");
                     newick(tree, tree.getChild(node, i), labels, lengths, format,
-                            branchRateController,
+                            branchRateProvider,
                             nodeAttributeProviders,
                             branchAttributeProviders, idMap,
                             buffer);
@@ -973,10 +973,10 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 if (lengths != BranchLengthType.NO_BRANCH_LENGTHS) {
                     double length = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
                     if (lengths == BranchLengthType.LENGTHS_AS_SUBSTITUTIONS) {
-                        if (branchRateController == null) {
-                            throw new IllegalArgumentException("No BranchRateController provided");
+                        if (branchRateProvider == null) {
+                            throw new IllegalArgumentException("No BranchRateProvider provided");
                         }
-                        length *= branchRateController.getBranchRate(tree, node);
+                        length *= branchRateProvider.getBranchRate(tree, node);
                     }
                     String lengthString;
                     if (format != null) {

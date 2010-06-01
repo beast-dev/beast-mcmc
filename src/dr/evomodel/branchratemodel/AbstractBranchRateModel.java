@@ -1,5 +1,5 @@
 /*
- * DefaultBranchRateModel.java
+ * DiscretizedBranchRates.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -27,77 +27,23 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.Model;
-import dr.inference.model.ModelListener;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 /**
+ * An abstract base class for BranchRateModels to help implement some of the interfaces
  * @author Andrew Rambaut
- * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
+ * @version $Id:$
  */
-public final class DefaultBranchRateModel implements BranchRateModel {
-    public double getBranchRate(Tree tree, NodeRef node) {
-        return 1.0;
-    }
-
-    public void addModelListener(ModelListener listener) {
-        // nothing to do
-    }
-
-    public void removeModelListener(ModelListener listener) {
-        // nothing to do
-    }
-
-    public void storeModelState() {
-        // nothing to do
-    }
-
-    public void restoreModelState() {
-        // nothing to do
-    }
-
-    public void acceptModelState() {
-        // nothing to do
-    }
-
-    public boolean isValidState() {
-        return true;
-    }
-
-    public int getModelCount() {
-        return 0;
-    }
-
-    public Model getModel(int i) {
-        return null;
-    }
-
-    public int getVariableCount() {
-        return 0;
-    }
-
-    public Variable getVariable(int i) {
-        return null;
-    }
-
-    public String getModelName() {
-        return null;
-    }
-
-    public String getId() {
-        return null;
-    }
-
-    public void setId(String id) {
-        // nothing to do
-    }
-
-    public boolean isUsed() {
-        return false;
+public abstract class AbstractBranchRateModel extends AbstractModel implements BranchRateModel {
+    /**
+     * @param name Model Name
+     */
+    public AbstractBranchRateModel(String name) {
+        super(name);
     }
 
     public String getTraitName() {
-        return RATE;
+        return BranchRateModel.RATE;
     }
 
     public Intent getIntent() {

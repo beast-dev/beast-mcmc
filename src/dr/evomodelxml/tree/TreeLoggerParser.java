@@ -1,4 +1,4 @@
-package dr.inferencexml.loggers;
+package dr.evomodelxml.tree;
 
 import dr.evolution.colouring.BranchColouring;
 import dr.evolution.colouring.TreeColouring;
@@ -8,6 +8,7 @@ import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
+import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
 import java.io.PrintWriter;
@@ -110,9 +111,9 @@ public class TreeLoggerParser extends LoggerParser {
             }
             //}
         }
-        BranchRateController branchRateProvider = null;
+        BranchRateProvider branchRateProvider = null;
         if (substitutions) {
-            branchRateProvider = (BranchRateController) xo.getChild(BranchRateController.class);
+            branchRateProvider = (BranchRateProvider) xo.getChild(BranchRateProvider.class);
         }
         if (substitutions && branchRateProvider == null) {
             throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
@@ -183,7 +184,7 @@ public class TreeLoggerParser extends LoggerParser {
             new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in",
                     new String[]{TIME, SUBSTITUTIONS}, true),
             new ElementRule(Tree.class, "The tree which is to be logged"),
-            new ElementRule(BranchRateController.class, true),
+            new ElementRule(BranchRateProvider.class, true),
             new ElementRule(TreeColouringProvider.class, true),
             new ElementRule(Likelihood.class, true),
             new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),

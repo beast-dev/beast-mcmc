@@ -1,16 +1,14 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.TraitBranchRateModel;
+import dr.evomodel.branchratemodel.ContinuousTraitBranchRateModel;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
-/**
- */
-public class TraitBranchRateModelParser extends AbstractXMLObjectParser {
+public class ContinuousTraitBranchRateModelParser extends AbstractXMLObjectParser {
 
     public static final String TRAIT_BRANCH_RATES = "traitBranchRates";
     public static final String TRAIT = "trait";
@@ -41,10 +39,10 @@ public class TraitBranchRateModelParser extends AbstractXMLObjectParser {
             Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
             Parameter ratioParameter = (Parameter) xo.getElementFirstChild(RATIO);
 
-            return new TraitBranchRateModel(trait, rateParameter, ratioParameter);
+            return new ContinuousTraitBranchRateModel(trait, rateParameter, ratioParameter);
         } else {
 
-            return new TraitBranchRateModel(traitLikelihood, dimension);
+            return new ContinuousTraitBranchRateModel(traitLikelihood, dimension);
         }
     }
 
@@ -58,7 +56,7 @@ public class TraitBranchRateModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TraitBranchRateModel.class;
+        return ContinuousTraitBranchRateModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -45,7 +45,7 @@ import java.util.*;
 public class TreeLogger extends MCLogger {
 
     private Tree tree;
-    private BranchRateController branchRateProvider = null;
+    private BranchRateProvider branchRateProvider = null;
 
     private TreeAttributeProvider[] treeAttributeProviders;
     private NodeAttributeProvider[] nodeAttributeProviders;
@@ -88,7 +88,7 @@ public class TreeLogger extends MCLogger {
         this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null/*, Double.NaN*/);
     }
 
-    public TreeLogger(Tree tree, BranchRateController branchRateProvider,
+    public TreeLogger(Tree tree, BranchRateProvider branchRateProvider,
                       TreeAttributeProvider[] treeAttributeProviders,
                       NodeAttributeProvider[] nodeAttributeProviders,
                       BranchAttributeProvider[] branchAttributeProviders,

@@ -41,7 +41,7 @@ import dr.inference.model.Variable;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class RateEpochBranchRateModel extends AbstractModel implements BranchRateModel {
+public class RateEpochBranchRateModel extends AbstractBranchRateModel {
 
     protected final Parameter[] timeParameters;
     protected final Parameter[] rateParameters;
@@ -72,7 +72,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
         // nothing to do
     }
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         fireModelChanged();
     }
 
@@ -88,7 +88,7 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
         // nothing to do
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -124,14 +124,6 @@ public class RateEpochBranchRateModel extends AbstractModel implements BranchRat
 
     protected double normalizeRate(double rate) {
         return rate;
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
 }

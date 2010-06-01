@@ -42,7 +42,7 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractModel implements BranchRateModel {
+public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     // The rates of each branch
     final TreeParameterModel rates;
@@ -72,7 +72,7 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
         rates.setNodeValue(tree, node, value);
     }
    
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
@@ -103,14 +103,6 @@ public class ArbitraryBranchRates extends AbstractModel implements BranchRateMod
     }
 
     protected void acceptState() {
-    }
-
-    public String getBranchAttributeLabel() {
-        return RATE;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
 }

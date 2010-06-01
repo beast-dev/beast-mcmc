@@ -41,7 +41,7 @@ import dr.inference.model.*;
  * @author Wai Lok Sibon Li
  * @version $Id: RandomDiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class RandomDiscretizedBranchRates extends AbstractModel implements BranchRateModel {
+public class RandomDiscretizedBranchRates extends AbstractBranchRateModel {
 
     private final ParametricDistributionModel distributionModel;
 
@@ -209,14 +209,6 @@ public class RandomDiscretizedBranchRates extends AbstractModel implements Branc
         //int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
         //System.out.println("dslkjafsdf " + node.getNumber());
         return rates[node.getNumber()] * scaleFactor;
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     /**

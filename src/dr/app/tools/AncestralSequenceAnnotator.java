@@ -361,7 +361,7 @@ public class AncestralSequenceAnnotator {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
-            String[] sample = likelihood.getAttributeForNode(treeModel, node);
+            String[] sample = likelihood.getTraitString(treeModel, node);
 
             String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
 

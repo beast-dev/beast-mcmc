@@ -39,7 +39,7 @@ import dr.inference.model.*;
  * @author Michael Defoin Platel
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class DiscretizedBranchRates extends AbstractModel implements BranchRateModel {
+public class DiscretizedBranchRates extends AbstractBranchRateModel {
 
     private final ParametricDistributionModel distributionModel;
 
@@ -180,14 +180,6 @@ public class DiscretizedBranchRates extends AbstractModel implements BranchRateM
 
         //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
         return rates[rateCategory] * scaleFactor;
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     /**

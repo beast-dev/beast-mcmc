@@ -29,8 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.TraitBranchRateModelParser;
-import dr.inference.model.AbstractModel;
+import dr.evomodelxml.branchratemodel.ContinuousTraitBranchRateModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -41,7 +40,7 @@ import dr.inference.model.Variable;
  * @author Andrew Rambaut
  * @author Marc Suchard
  */
-public class TraitBranchRateModel extends AbstractModel implements BranchRateModel {
+public class ContinuousTraitBranchRateModel extends AbstractBranchRateModel {
 
     private final String trait;
     private final int dimension;
@@ -49,8 +48,8 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     private final Parameter ratioParameter;
     private SampledMultivariateTraitLikelihood traitLikelihood;
 
-    public TraitBranchRateModel(SampledMultivariateTraitLikelihood traitLikelihood, int dimension) {
-        super(TraitBranchRateModelParser.TRAIT_BRANCH_RATES);
+    public ContinuousTraitBranchRateModel(SampledMultivariateTraitLikelihood traitLikelihood, int dimension) {
+        super(ContinuousTraitBranchRateModelParser.TRAIT_BRANCH_RATES);
 
         this.traitLikelihood = traitLikelihood;
         this.trait = traitLikelihood.getTraitName();
@@ -61,8 +60,8 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
         addModel(traitLikelihood);
     }
 
-    public TraitBranchRateModel(String trait, Parameter rateParameter, Parameter ratioParameter) {
-        super(TraitBranchRateModelParser.TRAIT_BRANCH_RATES);
+    public ContinuousTraitBranchRateModel(String trait, Parameter rateParameter, Parameter ratioParameter) {
+        super(ContinuousTraitBranchRateModelParser.TRAIT_BRANCH_RATES);
 
         this.trait = trait;
         dimension = 0;
@@ -96,7 +95,7 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
     }
 
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         NodeRef parent = tree.getParent(node);
         if (parent == null) {
             throw new IllegalArgumentException("Root does not have a valid rate");
@@ -139,14 +138,6 @@ public class TraitBranchRateModel extends AbstractModel implements BranchRateMod
         }
 
         return rate;
-    }
-
-    public String getBranchAttributeLabel() {
-        return RATE;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
 }

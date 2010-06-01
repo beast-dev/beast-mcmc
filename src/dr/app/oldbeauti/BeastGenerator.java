@@ -70,7 +70,7 @@ import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
-import dr.inferencexml.loggers.TreeLoggerParser;
+import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.inferencexml.model.*;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;

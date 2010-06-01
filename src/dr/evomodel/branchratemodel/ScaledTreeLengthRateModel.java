@@ -44,7 +44,7 @@ import dr.inference.model.Variable;
  * Date: Mar 18, 2008
  * Time: 3:58:43 PM
  */
-public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRateModel {
+public class ScaledTreeLengthRateModel extends AbstractBranchRateModel {
 
     private Parameter totalLength;
     protected Tree treeModel;
@@ -61,13 +61,13 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
         addVariable(totalLength);
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
-        if (!currentFactorKnown)
+    public double getBranchRate(final Tree tree, final NodeRef node) {
+        assert(tree == treeModel);
+
+        if (!currentFactorKnown) {
             updateCurrentLength();
-        if (tree == treeModel) {
-            return rateFactor;
         }
-        return 0; // This is an error, we are referenced through a different Tree!!!
+        return rateFactor;
     }
 
     public double getTotalLength() {
@@ -128,14 +128,6 @@ public class ScaledTreeLengthRateModel extends AbstractModel implements BranchRa
      * Sub-models are handled automatically and do not need to be considered in this method.
      */
     protected void acceptState() {
-    }
-
-    public String getBranchAttributeLabel() {
-        return RATE;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
 }

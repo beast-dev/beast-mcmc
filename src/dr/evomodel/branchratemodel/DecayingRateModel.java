@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: DecayingRateModel.java,v 1.3 2006/01/10 16:48:27 rambaut Exp $
  */
-public class DecayingRateModel extends AbstractModel implements BranchRateModel {
+public class DecayingRateModel extends AbstractBranchRateModel {
 
     public static final String DECAYING_RATE_MODEL = "decayingRateModel";
     public static final String MUTATION_RATE = "mutationRate";
@@ -110,7 +110,7 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         // nothing to do
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
         if (!ratesCalculated) {
             double mu = mutationRateParameter.getParameterValue(0);
@@ -129,14 +129,6 @@ public class DecayingRateModel extends AbstractModel implements BranchRateModel 
         }
 
         return rates[node.getNumber()];
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     /**

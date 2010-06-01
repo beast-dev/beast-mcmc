@@ -28,6 +28,7 @@ package dr.evomodel.arg;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel.Node;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -36,7 +37,7 @@ import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.xml.*;
 
-public class ARGRelaxedClock extends AbstractModel implements BranchRateModel {
+public class ARGRelaxedClock extends AbstractBranchRateModel {
 
     public static final String ARG_LOCAL_CLOCK = "argLocalClock";
     public static final String PARTITION = "partition";
@@ -93,14 +94,6 @@ public class ARGRelaxedClock extends AbstractModel implements BranchRateModel {
 
 
         return globalRateParameter.getParameterValue(0) * argNode.getRate(partition);
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

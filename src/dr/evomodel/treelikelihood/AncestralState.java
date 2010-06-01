@@ -60,10 +60,7 @@ public class AncestralState implements Loggable {
 
         NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-        String rtn = null;
-        for (int i = 0; i < tree.getNodeCount(); i++)
-            rtn = ancestralTreeLikelihood.getAttributeForNode(tree, node)[0];
-        return rtn;
+        return ancestralTreeLikelihood.getTraitString(tree, node)[0];
     }
 
     // **************************************************************

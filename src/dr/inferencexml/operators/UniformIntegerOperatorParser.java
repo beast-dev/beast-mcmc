@@ -27,11 +27,15 @@ public class UniformIntegerOperatorParser extends AbstractXMLObjectParser {
         int upper = (int) (double) parameter.getBounds().getUpperLimit(0);
         if (xo.hasAttribute("upper")) upper = xo.getIntegerAttribute("upper");
 
+        int count = 1;
+        if (xo.hasAttribute("count")) count = xo.getIntegerAttribute("count");
+
         if (upper == lower || lower == (int) Double.NEGATIVE_INFINITY || upper == (int) Double.POSITIVE_INFINITY) {
-            throw new XMLParseException(this.getParserName() + " boundaries not found in parameter " + parameter.getParameterName() + " Use operator lower and upper !");
+            throw new XMLParseException(this.getParserName() + " boundaries not found in parameter "
+                    + parameter.getParameterName() + " Use operator lower and upper !");
         }
 
-        return new UniformIntegerOperator(parameter, lower, upper, weight);
+        return new UniformIntegerOperator(parameter, lower, upper, weight, count);
     }
 
     //************************************************************************
@@ -51,10 +55,11 @@ public class UniformIntegerOperatorParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule("upper", true),
             AttributeRule.newDoubleRule("lower", true),
+            AttributeRule.newDoubleRule("count", true),
             new ElementRule(Parameter.class)
     };
 }

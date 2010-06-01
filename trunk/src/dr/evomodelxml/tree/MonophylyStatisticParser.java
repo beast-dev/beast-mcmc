@@ -78,7 +78,7 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new StringAttributeRule(Statistic.NAME, "A name for this statistic for the purpose of logging", true),
             // Any tree will do, no need to insist on a Tree Model
             new ElementRule(Tree.class),

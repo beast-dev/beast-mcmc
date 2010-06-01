@@ -9,8 +9,7 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * Parses an element from an DOM document into a DemographicModel. Recognises
- * ConstantPopulation and ExponentialGrowth.
+ * Parses a GeneralSubstitutionModel or one of its more specific descendants.
  */
 public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 

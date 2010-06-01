@@ -25,6 +25,8 @@
 
 package dr.gui.chart;
 
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceFactory;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -32,9 +34,9 @@ import java.awt.*;
 
 public class FrequencyPlot extends Plot.AbstractPlot {
 
-    private Variate raw = null;
+    protected Variate raw = null;
 
-    private Paint barPaint = Color.blue;
+    protected Paint barPaint = Color.blue;
     private Paint quantilePaint = Color.red;
 
     private boolean hasQuantiles = false;
@@ -43,6 +45,16 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private boolean hasIntervals = false;
     private double upperInterval = 0.0;
     private double lowerInterval = 0.0;
+
+    private boolean hasIncredibleSet = false;
+    private TraceDistribution.CredibleSet credSet;
+
+    protected TraceDistribution traceD = null;    
+
+    protected FrequencyPlot(TraceDistribution traceD) {
+        super();
+        this.traceD = traceD;;
+    }
 
     public FrequencyPlot(Variate data, int minimumBinCount) {
         super();
@@ -53,6 +65,31 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         super();
         setData(data, minimumBinCount);
     }
+
+    public FrequencyPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+        this(traceD);
+        setData(data, minimumBinCount);
+    }
+
+    public FrequencyPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+        this(traceD);
+        double[] doubleData = new double[data.length];
+        for (int i = 0; i < data.length; i++) {
+            doubleData[i] = (double) data[i];
+        }
+        setData(doubleData, minimumBinCount);
+    }
+
+//    public FrequencyPlot(String[] data, int minimumBinCount, TraceDistribution traceD) {
+//        this(traceD);
+//        categoryDataMap.clear();
+//        double[] doubleData = new double[data.length];
+//        for (int i = 0; i < data.length; i++) {
+//            doubleData[i] = (double) traceD.credSet.getIndex(data[i]);
+//            categoryDataMap.put(doubleData[i], data[i]);
+//        }
+//        setData(doubleData, minimumBinCount);
+//    }
 
     /**
      * Set data
@@ -126,12 +163,14 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         double binSize = axis.getMinorTickSpacing();
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
 
-        while (binCount < minimumBinCount) {
-            majorTickCount++;
-            axis.setPrefNumTicks(majorTickCount, 4);
+        if (minimumBinCount > 0) {
+            while (binCount < minimumBinCount) {
+                majorTickCount++;
+                axis.setPrefNumTicks(majorTickCount, 4);
 
-            binSize = axis.getMinorTickSpacing();
-            binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize);
+                binSize = axis.getMinorTickSpacing();
+                binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2; // should +2, otherwise the last bar will lose
+            }
         }
 
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
@@ -162,6 +201,13 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         lowerInterval = lower;
     }
 
+    /**
+     * Set arbitrary intervals to use (0 for none).
+     */
+    public void setInCredibleSet(TraceDistribution.CredibleSet credSet) {
+        this.credSet = credSet;
+        hasIncredibleSet = credSet.inCredibleSet.size() > 0;
+    }
 
     /**
      * Set bar fill style. Use a barPaint of null to not fill bar.
@@ -220,12 +266,17 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                                 fillRect(g2, upper, y1, x2, y2);
                             }
                         } else {
-
                             g2.setPaint(barPaint);
-                            fillRect(g2, x1, y1, x2, y2);
+                            fillRect(g2, x1, y1, x2, y2);                                           
                         }
+                    } else if (hasIncredibleSet) {
+                        if (credSet.inCredibleSet.contains((int) x1) || credSet.inCredibleSet.contains((int) x2)) {
+                            g2.setPaint(quantilePaint);
+                        } else {
+                            g2.setPaint(barPaint);
+                        }
+                        fillRect(g2, x1, y1, x2, y2);
                     } else {
-
                         g2.setPaint(barPaint);
                         fillRect(g2, x1, y1, x2, y2);
                     }
@@ -239,4 +290,21 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 			}
 		}
 	}
+
+    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+            super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
+        } else {
+            super.fillRect(g2, x1, y1, x2, y2);
+        }
+    }
+
+    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
+        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
+        } else {
+            super.drawRect(g2, x1, y1, x2, y2);
+        }
+    }
+
 }

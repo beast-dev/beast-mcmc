@@ -28,6 +28,8 @@ package dr.inference.trace;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
+import java.util.*;
+
 /**
  * A class that stores the distribution statistics for a trace
  *
@@ -35,15 +37,31 @@ import dr.util.HeapSort;
  * @author Alexei Drummond
  * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class TraceDistribution {
+public class TraceDistribution<T> {
 
-    public TraceDistribution(double[] values) {
-        analyseDistribution(values);
+    public TraceDistribution(T[] values) {
+        this.values = values;
+        credSet = new CredibleSet(getValuesArray(), 0.95);
     }
 
-    public TraceDistribution(double[] values, double ESS) {
-        analyseDistribution(values);
+    public TraceDistribution(T[] values, double ESS) {
+        this(values);
         this.ESS = ESS;
+    }
+
+    public TraceFactory.TraceType getTraceType() {
+        if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+            return TraceFactory.TraceType.CONTINUOUS;
+
+        } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+            return TraceFactory.TraceType.INTEGER;
+
+        } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
+            return TraceFactory.TraceType.CATEGORY;
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
+        }
     }
 
     public boolean isValid() {
@@ -57,7 +75,7 @@ public class TraceDistribution {
     public double getVariance() {
         return variance;
     }
-    
+
     public double getStdError() {
         return stdError;
     }
@@ -67,7 +85,8 @@ public class TraceDistribution {
     }
 
     public double getGeometricMean() {
-        return geometricMean;     }
+        return geometricMean;
+    }
 
 
     public double getMedian() {
@@ -107,30 +126,40 @@ public class TraceDistribution {
         if (values == null) {
             throw new RuntimeException("Trace values not yet set");
         }
-        return DiscreteStatistics.meanSquaredError(values, trueValue);
+
+        if (values[0] instanceof Number) {
+            double[] doubleValues = new double[getValuesArray().length];
+            for (int i = 0; i < getValuesArray().length; i++) {
+                doubleValues[i] = ((Number) getValuesArray()[i]).doubleValue();
+            }
+
+            return DiscreteStatistics.meanSquaredError(doubleValues, trueValue);
+
+        } else {
+            throw new RuntimeException("Require Number Trace Type in the Trace Distribution: " + this);
+        }
     }
 
     /**
      * @param values the values to analyze
      */
-    private void analyseDistribution(double[] values) {
+    private void analyseDistributionContinuous(double[] valuesC, double proportion) {
+//        this.values = values;   // move to TraceDistribution(T[] values)
 
-        this.values = values;
+        mean = DiscreteStatistics.mean(valuesC);
+        stdError = DiscreteStatistics.stdev(valuesC);
+        variance = DiscreteStatistics.variance(valuesC);
 
-        mean = DiscreteStatistics.mean(values);
-        stdError = DiscreteStatistics.stdev(values);
-        variance = DiscreteStatistics.variance(values);
-        
         minimum = Double.POSITIVE_INFINITY;
         maximum = Double.NEGATIVE_INFINITY;
 
-        for (double value : values) {
+        for (double value : valuesC) {
             if (value < minimum) minimum = value;
             if (value > maximum) maximum = value;
         }
 
         if (minimum > 0) {
-            geometricMean = DiscreteStatistics.geometricMean(values);
+            geometricMean = DiscreteStatistics.geometricMean(valuesC);
             hasGeometricMean = true;
         }
 
@@ -139,15 +168,15 @@ public class TraceDistribution {
             return;
         }
 
-        int[] indices = new int[values.length];
-        HeapSort.sort(values, indices);
-        median = DiscreteStatistics.quantile(0.5, values, indices);
-        cpdLower = DiscreteStatistics.quantile(0.025, values, indices);
-        cpdUpper = DiscreteStatistics.quantile(0.975, values, indices);
-        calculateHPDInterval(0.95, values, indices);
-        ESS = values.length;
+        int[] indices = new int[valuesC.length];
+        HeapSort.sort(valuesC, indices);
+        median = DiscreteStatistics.quantile(0.5, valuesC, indices);
+        cpdLower = DiscreteStatistics.quantile(0.025, valuesC, indices);
+        cpdUpper = DiscreteStatistics.quantile(0.975, valuesC, indices);
+        calculateHPDInterval(proportion, valuesC, indices);
+        ESS = valuesC.length;
 
-        isValid = true;
+//        isValid = true;
     }
 
     /**
@@ -177,5 +206,175 @@ public class TraceDistribution {
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
 
-    protected double[] values;
+    protected T[] values;
+    public CredibleSet credSet = null;
+
+    protected T[] getValuesArray() {
+        if (filter != null) {
+            List<T> selectedValuesList = new ArrayList<T>();
+
+            for (int i = 0; i < values.length; i++) {
+                if (filter.getSelected(i)) {
+                    selectedValuesList.add(values[i]);
+                }
+            }
+
+            T[] selectedValues = (T[]) new Object[selectedValuesList.size()];
+            selectedValues = selectedValuesList.toArray(selectedValues);
+
+            return selectedValues;
+
+        } else {
+            return values;
+        }
+    }
+
+    public T[] getValues() {
+        return values;
+    }
+
+    public String[] getRangeAll() { // only use for integer and string
+        List<String> valuesList = new ArrayList<String>();
+        for (T value : values) {
+            if (!valuesList.contains(value.toString()))
+                valuesList.add(value.toString());
+        }
+        Collections.sort(valuesList);
+        return valuesList.toArray(new String[valuesList.size()]);
+    }
+
+
+    public class CredibleSet<T> {
+        // <T, frequency> for T = Integer and String
+        public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
+//        public Map<T, Integer> inCredibleSet = new HashMap<T, Integer>();
+        public List<T> credibleSet = new ArrayList<T>();
+        public List<T> inCredibleSet = new ArrayList<T>();
+
+        public T mode;
+        public int freqOfMode = 0;
+
+        public CredibleSet(T[] valuesCS, double proportion) {
+            valuesMap.clear();
+            credibleSet.clear();
+            inCredibleSet.clear();
+
+            if (!(valuesCS[0] instanceof Double)) {// make sure: if T is Object then default to double
+                if (valuesCS[0] instanceof Integer) {
+                    double[] newValues = new double[valuesCS.length];
+                    for (int i = 0; i < valuesCS.length; i++) {
+                        newValues[i] = ((Integer) valuesCS[i]).doubleValue();
+                    }
+                    analyseDistributionContinuous(newValues, proportion);
+                }
+
+                for (T value : valuesCS) {
+                    if (valuesMap.containsKey(value)) {
+                        int i = valuesMap.get(value) + 1;
+                        valuesMap.put(value, i);
+                    } else {
+                        valuesMap.put(value, 1);
+                    }
+                }
+
+                for (T value : new TreeSet<T>(valuesMap.keySet())) {
+                    double prob = (double) valuesMap.get(value) / (double) valuesCS.length;
+                    if (prob < (1 - proportion)) {
+                        inCredibleSet.add(value);
+                    } else {
+                        credibleSet.add(value);
+                    }
+                }
+
+                calculateMode();
+
+            } else {
+                double[] newValues = new double[valuesCS.length];
+                for (int i = 0; i < valuesCS.length; i++) {
+                    newValues[i] = ((Double) valuesCS[i]).doubleValue();
+                }
+                analyseDistributionContinuous(newValues, proportion);
+            }
+
+            isValid = true;
+
+        }
+
+        public boolean inside(T value) {
+            return valuesMap.containsKey(value);
+        }
+
+        public boolean inside(Double value) {
+            return value <= hpdUpper && value >= hpdLower;
+        }
+
+        public int getIndex(T value) {
+            int i = -1;
+            for (T v : new TreeSet<T>(valuesMap.keySet())) {
+                i++;
+                if (v.equals(value)) return i;
+            }
+            return i;
+        }
+
+        public T getMode() {
+            return mode;
+        }
+
+        public int getFrequencyOfMode() {
+            return freqOfMode;
+        }
+
+        public List<String> getRange() {
+            List<String> valuesList = new ArrayList<String>();
+            for (T value : new TreeSet<T>(valuesMap.keySet())) {
+                if (!valuesList.contains(value.toString()))
+                    valuesList.add(value.toString());
+            }
+            return valuesList;
+        }
+
+        private void calculateMode() {
+            for (T value : new TreeSet<T>(valuesMap.keySet())) {
+                if (freqOfMode < valuesMap.get(value)) {
+                    freqOfMode = valuesMap.get(value);
+                    mode = value;
+                }
+            }
+        }
+
+        private String getSet(List<T> list) {
+            String line = "{";
+            for (T value : list) {
+                line = line + value + ", ";
+            }
+            if (line.endsWith(", ")) {
+                line = line.substring(0, line.lastIndexOf(", ")) + "}";
+            } else {
+                line = "{}";
+            }
+            return line;
+        }
+
+        public String getCredibleSet() {
+            return getSet(credibleSet);
+        }
+
+        public String getInCredibleSet() {
+            return getSet(inCredibleSet);
+        }
+    }
+
+    //******************** Filter ****************************
+    protected Filter filter;
+
+//    public void setFilter(Filter filter) {
+//        this.filter = filter;
+//        credSet = new CredibleSet(getValuesArray(), 0.95);
+//    }
+//
+//    public Filter getFilter() {
+//        return filter;
+//    }
+
 }

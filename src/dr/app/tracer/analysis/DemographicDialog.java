@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -406,7 +407,7 @@ public class DemographicDialog {
             current = 0;
 
             int[] argIndices = argumentIndices[demographicCombo.getSelectedIndex()];
-            double[][] values = new double[argIndices.length][n];
+            Double[][] values = new Double[argIndices.length][n];
 
             Variate[] bins = new Variate[binCount];
             for (int k = 0; k < binCount; k++) {
@@ -414,7 +415,7 @@ public class DemographicDialog {
             }
 
             int index = traceList.getTraceIndex(rootHeightTrace);
-            double[] heights = new double[n];
+            Double[] heights = new Double[n];
             traceList.getValues(index, heights);
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());

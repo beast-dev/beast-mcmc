@@ -157,7 +157,7 @@ public class CoalGenFrame extends DocumentFrame {
                     try {
                         final File file1 = new File(fileName);
                         final LogFileTraces traces = new LogFileTraces(fileName, file1);
-                        traces.loadTraces(reader, FileHelpers.numberOfLines(file1));
+                        traces.loadTraces(reader, FileHelpers.numberOfLines(file1), -1, null);
 
                         EventQueue.invokeLater(
                                 new Runnable() {

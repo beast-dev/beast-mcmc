@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
@@ -194,7 +195,7 @@ public class TimeDensityDialog {
 
         public Object doWork() {
 
-            double[] times = new double[stateCount];
+            Double[] times = new Double[stateCount];
             traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), times);
 
             minTime = frame.getMinTime();

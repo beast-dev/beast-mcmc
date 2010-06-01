@@ -73,6 +73,11 @@ public interface Axis {
     void setLabelLast(boolean labelLast);
 
     /**
+     *@return IsDiscrete
+     */
+    boolean getIsDiscrete();
+
+    /**
      *@return show label for first tick
      */
     boolean getLabelFirst();
@@ -308,6 +313,14 @@ public interface Axis {
         public String format(double value) {
             return formatter.format(value);
         }
+
+        /**
+         *	return show label for first tick flag
+         */
+        public boolean getIsDiscrete() {
+            return this.isDiscrete;
+        }
+
 
         /**
          *	return show label for first tick flag

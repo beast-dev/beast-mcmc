@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -426,7 +427,7 @@ public class GMRFSkyrideDialog {
 
         int stateCount;
 
-        double[][] popSizes;
+        Double[][] popSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -448,7 +449,7 @@ public class GMRFSkyrideDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new double[popSizeCount][stateCount];
+            popSizes = new Double[popSizeCount][stateCount];
             for (int i = 0; i < popSizeCount; i++) {
                 traceList.getValues(firstPopSize + i, popSizes[i]);
             }
@@ -472,7 +473,7 @@ public class GMRFSkyrideDialog {
 
         public Object doWork() {
 
-            double[] heights = new double[stateCount];
+            Double[] heights = new Double[stateCount];
             traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());

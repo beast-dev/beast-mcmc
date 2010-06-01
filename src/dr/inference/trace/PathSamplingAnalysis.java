@@ -172,14 +172,14 @@ public class PathSamplingAnalysis {
                     throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
                 }
 
-                double sampleLogLikelihood[] = new double[traces.getStateCount()];
-                double sampleTheta[] = new double[traces.getStateCount()];
+                Double sampleLogLikelihood[] = new Double[traces.getStateCount()];
+                Double sampleTheta[] = new Double[traces.getStateCount()];
                 traces.getValues(traceIndexLikelihood, sampleLogLikelihood);
                 traces.getValues(traceIndexTheta, sampleTheta);
 
                 PathSamplingAnalysis analysis = new PathSamplingAnalysis(
-                        sampleLogLikelihood, likelihoodName,
-                        sampleTheta);
+                        Trace.arrayConvert(sampleLogLikelihood), likelihoodName,
+                        Trace.arrayConvert(sampleTheta));
 
                 System.out.println(analysis.toString());
 

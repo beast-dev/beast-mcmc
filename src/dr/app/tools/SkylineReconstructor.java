@@ -25,10 +25,7 @@
 
 package dr.app.tools;
 
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import dr.stats.Variate;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
@@ -92,19 +89,19 @@ public class SkylineReconstructor {
             }
         }
 
-        double[][] popSizes;
-        double[][] groupSizes;
+        Double[][] popSizes;
+        Double[][] groupSizes;
 
-        popSizes = new double[popSizeCount][stateCount];
+        popSizes = new Double[popSizeCount][stateCount];
         for (int i = 0; i < popSizeCount; i++) {
             traces.getValues(firstPopSize + i, popSizes[i]);
         }
-        groupSizes = new double[groupSizeCount][stateCount];
+        groupSizes = new Double[groupSizeCount][stateCount];
         for (int i = 0; i < groupSizeCount; i++) {
             traces.getValues(firstGroupSize + i, groupSizes[i]);
         }
 
-        double[] heights = new double[stateCount];
+        Double[] heights = new Double[stateCount];
         traces.getValues(traces.getTraceIndex("treeModel.rootHeight"), heights);
         TraceDistribution distribution = new TraceDistribution(heights, traces.getStepSize());
 

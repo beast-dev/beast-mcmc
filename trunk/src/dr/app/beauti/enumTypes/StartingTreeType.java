@@ -29,8 +29,8 @@ package dr.app.beauti.enumTypes;
 public enum StartingTreeType {
 
     RANDOM("randomly generated"),
-    USER("user-specified"),
-    UPGMA("UPGMA generated");
+    UPGMA("UPGMA generated"),
+    USER("user-specified");
 
     StartingTreeType(String name) {
         this.name = name;

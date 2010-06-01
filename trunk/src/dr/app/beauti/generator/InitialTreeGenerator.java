@@ -45,7 +45,11 @@ public class InitialTreeGenerator extends Generator {
         
         switch (model.getStartingTreeType()) {
             case USER:
-                writeUserTree(model.getUserStartingTree(), writer);
+                if (model.isNewick()) {
+                    writeNewickTree(model.getUserStartingTree(), writer);
+                } else {
+                    writeSimpleTree(model.getUserStartingTree(), writer);
+                }
                 break;
 
             case UPGMA:
@@ -187,23 +191,54 @@ public class InitialTreeGenerator extends Generator {
     	
     }
 
+    private void writeNewickTree (Tree tree, XMLWriter writer) {
+
+        writer.writeComment("The user-specified starting tree in a newick tree format.");
+        writer.writeOpenTag(
+                NewickParser.NEWICK,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, STARTING_TREE),
+//                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                }
+        );
+        writeNewickNode(tree, tree.getRoot(), writer);
+        writer.writeCloseTag(NewickParser.NEWICK);
+    }
+
+    private void writeNewickNode(Tree tree, NodeRef node, XMLWriter writer) {
+        if (tree.getChildCount(node) > 0)
+            writer.writeText("(");
+        if (tree.getChildCount(node) == 0)
+            writer.writeText("\'" + tree.getNodeTaxon(node).getId() + "\' : " + tree.getBranchLength(node));
+
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (i > 0) writer.writeText(", ");
+            writeNewickNode(tree, tree.getChild(node, i), writer);
+
+        }
+        if (tree.getChildCount(node) > 0)
+            writer.writeText(")");
+    }
+
     /**
      * Generate XML for the user tree
      *
      * @param tree   the user tree
      * @param writer the writer
      */
-    private void writeUserTree(Tree tree, XMLWriter writer) {
+    private void writeSimpleTree (Tree tree, XMLWriter writer) {
 
-        writer.writeComment("The starting tree.");
+        writer.writeComment("The user-specified starting tree in a simple tree format.");
         writer.writeOpenTag(
                 "tree",
                 new Attribute[]{
-                        new Attribute.Default<String>("height", STARTING_TREE),
-                        new Attribute.Default<String>("usingDates", (options.clockModelOptions.isTipCalibrated() ? "true" : "false"))
+                        new Attribute.Default<String>(XMLParser.ID, STARTING_TREE),
+//                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
         );
-        writeNode(tree, tree.getRoot(), writer);
+        writeSimpleNode(tree, tree.getRoot(), writer);
         writer.writeCloseTag("tree");
     }
 
@@ -214,18 +249,18 @@ public class InitialTreeGenerator extends Generator {
      * @param node   the current node
      * @param writer the writer
      */
-    private void writeNode(Tree tree, NodeRef node, XMLWriter writer) {
+    private void writeSimpleNode(Tree tree, NodeRef node, XMLWriter writer) {
 
         writer.writeOpenTag(
                 "node",
-                new Attribute[]{new Attribute.Default<String>("height", "" + tree.getNodeHeight(node))}
+                new Attribute[]{new Attribute.Default<Double>("height", tree.getNodeHeight(node))}
         );
 
         if (tree.getChildCount(node) == 0) {
         	writer.writeIDref(TaxonParser.TAXON, tree.getNodeTaxon(node).getId());
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
-            writeNode(tree, tree.getChild(node, i), writer);
+            writeSimpleNode(tree, tree.getChild(node, i), writer);
         }
         writer.writeCloseTag("node");
     }

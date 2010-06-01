@@ -45,6 +45,8 @@ public class PartitionTreeModel extends PartitionModelOptions {
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
+
+    private boolean isNewick = true;
     
     private double initialRootHeight = 1.0;
 
@@ -195,6 +197,14 @@ public class PartitionTreeModel extends PartitionModelOptions {
         this.userStartingTree = userStartingTree;
     }
 
+    public boolean isNewick() {
+        return isNewick;
+    }
+
+    public void setNewick(boolean newick) {
+        isNewick = newick;
+    }
+    
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;
     }

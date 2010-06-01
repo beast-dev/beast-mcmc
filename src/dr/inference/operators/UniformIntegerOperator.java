@@ -12,14 +12,21 @@ import dr.math.MathUtils;
  * @version $Id: UniformOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class UniformIntegerOperator extends SimpleMCMCOperator {
+    private final int howMany;
 
-    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
+    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight,
+                                  int howMany) {
         this.parameter = parameter;
         this.lower = lower;
         this.upper = upper;
+        this.howMany = howMany;
         setWeight(weight);
     }
 
+    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
+      this(parameter, lower, upper, weight, 1);
+    }
+    
     /**
      * @return the parameter this operator acts on.
      */
@@ -32,10 +39,13 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
      */
     public final double doOperation() {
 
-        int index = MathUtils.nextInt(parameter.getDimension());
-        int newValue = MathUtils.nextInt(upper - lower) + lower;
+        for(int n = 0; n < howMany; ++n) {
+            // do not worry about duplication, does not matter
+            int index = MathUtils.nextInt(parameter.getDimension());
+            int newValue = MathUtils.nextInt(upper - lower) + lower;
 
-        parameter.setParameterValue(index, newValue);
+            parameter.setParameterValue(index, newValue);
+        }
 
         return 0.0;
     }
@@ -91,6 +101,6 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     //PRIVATE STUFF
 
     private Parameter parameter = null;
-    private int upper;
-    private int lower;
+    private final int upper;
+    private final int lower;
 }

@@ -37,7 +37,7 @@ public class SpeciesTreeStatisticParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
             new ElementRule("speciesTree",
                     new XMLSyntaxRule[]{new ElementRule(Tree.class)}),

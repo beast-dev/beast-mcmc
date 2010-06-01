@@ -43,7 +43,7 @@ public class NodeHeightsStatisticParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(Statistic.NAME, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Parameter.class, true),

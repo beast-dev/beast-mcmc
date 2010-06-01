@@ -67,7 +67,7 @@ public class BitSwapOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule(RADIUS),
+            AttributeRule.newDoubleRule(RADIUS, true),
             new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
             new ElementRule(INDICATORS, new XMLSyntaxRule[]{new ElementRule(Statistic.class)}),
     };

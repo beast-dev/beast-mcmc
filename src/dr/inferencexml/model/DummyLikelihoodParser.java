@@ -19,7 +19,7 @@ public class DummyLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) {
 
         Model model = (Model)xo.getChild(Model.class);
-        DummyLikelihood likelihood = new DummyLikelihood(model);
+        final DummyLikelihood likelihood = new DummyLikelihood(model);
 
         return likelihood;
     }
@@ -36,8 +36,7 @@ public class DummyLikelihoodParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private final XMLSyntaxRule[] rules = {
         new ElementRule(Model.class, "A model element")
     };
-
 }

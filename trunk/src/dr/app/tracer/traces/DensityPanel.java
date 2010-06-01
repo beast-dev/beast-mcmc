@@ -26,6 +26,8 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
+import dr.inference.trace.Trace;
+import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
@@ -33,6 +35,8 @@ import org.virion.jam.framework.Exportable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A panel that displays density plots of traces
@@ -59,13 +63,15 @@ public class DensityPanel extends JPanel implements Exportable {
             Color.DARK_GRAY
     };
 
-    private int minimumBins = 100;
-
     private ChartSetupDialog chartSetupDialog = null;
 
-    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+//    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+    private DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
+    private int minimumBins = 100;
+    private JLabel labelBins;
     private JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
@@ -82,11 +88,13 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private int colourBy = COLOUR_BY_TRACE;
 
+    private final JFrame frame;
     /**
      * Creates new FrequencyPanel
      */
     public DensityPanel(final JFrame frame) {
-
+        this.frame = frame;
+        
         setOpaque(false);
 
         setMinimumSize(new Dimension(300, 150));
@@ -106,11 +114,11 @@ public class DensityPanel extends JPanel implements Exportable {
 
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
         binsCombo.setOpaque(false);
-        binsCombo.setSelectedItem(100);
-        JLabel label = new JLabel("Bins:");
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-        label.setLabelFor(binsCombo);
-        toolBar.add(label);
+        binsCombo.setSelectedItem(minimumBins);
+        labelBins = new JLabel("Bins:");
+        labelBins.setFont(UIManager.getFont("SmallSystemFont"));
+        labelBins.setLabelFor(binsCombo);
+        toolBar.add(labelBins);
         toolBar.add(binsCombo);
 
         relativeDensityCheckBox.setOpaque(false);
@@ -125,7 +133,7 @@ public class DensityPanel extends JPanel implements Exportable {
 //		toolBar.add(solidCheckBox);
 
         toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
-        label = new JLabel("Legend:");
+        JLabel label = new JLabel("Legend:");
         label.setFont(UIManager.getFont("SmallSystemFont"));
         label.setLabelFor(legendCombo);
         toolBar.add(label);
@@ -176,7 +184,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((DensityPlot) traceChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
+                            ((NumericalDensityPlot) traceChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
                         }
                         traceChart.recalibrate();
                         validate();
@@ -189,7 +197,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
                         for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((DensityPlot) traceChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
+                            ((NumericalDensityPlot) traceChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
                         }
                         traceChart.recalibrate();
                         validate();
@@ -270,32 +278,110 @@ public class DensityPanel extends JPanel implements Exportable {
 
         remove(messageLabel);
 
+        Class iniTraceType = null;
         int i = 0;
+//        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+        int numOfBarsInt = 0;
+        int numOfBarsCat = 0;
+        for (TraceList tl : traceLists) {
+            for (String traceName : traceNames) {
+                int traceIndex = tl.getTraceIndex(traceName);
+                Trace trace = tl.getTrace(traceIndex);
+                if (trace != null) {
+                    if (trace.getTraceType() == Integer.class) {
+                        numOfBarsInt++;
+                    } else if (trace.getTraceType() == String.class) {
+                        numOfBarsCat++;
+                    }
+                }
+            }
+        }
+        int barIntId = 0; // start from 0
+        int barCatId = 0;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
 
             for (String traceName : traceNames) {
-                double values[] = new double[n];
                 int traceIndex = tl.getTraceIndex(traceName);
-                tl.getValues(traceIndex, values);
-                String name = tl.getTraceName(traceIndex);
-                if (traceLists.length > 1) {
-                    name = tl.getName() + " - " + name;
-                }
-                DensityPlot plot = new DensityPlot(values, minimumBins);
-                plot.setName(name);
-                if (tl instanceof CombinedTraces) {
-                    plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
-                } else {
-                    plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
-                }
+                Trace trace = tl.getTrace(traceIndex);
+                TraceDistribution td = tl.getDistributionStatistics(traceIndex);
+                FrequencyPlot plot = null;
 
-                traceChart.addPlot(plot);
+                if (trace != null) {
+                    if (iniTraceType == null) iniTraceType = trace.getTraceType();
+                    if (iniTraceType == trace.getTraceType()) {
+                        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+                        if (trace.getTraceType() == Double.class) {
+                            Double values[] = new Double[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
+                            plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                            traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+                            chartPanel.setYAxisTitle("Density");
 
-                if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
-                    i++;
+                            relativeDensityCheckBox.setVisible(true);
+                            labelBins.setVisible(true);
+                            binsCombo.setVisible(true);
+
+                        } else if (trace.getTraceType() == Integer.class) {
+                            Integer values[] = new Integer[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
+                            plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
+                            barIntId++;
+                            traceChart.setXAxis(true, new HashMap<Integer, String>());
+                            chartPanel.setYAxisTitle("Probability");
+
+                            relativeDensityCheckBox.setVisible(false);
+                            labelBins.setVisible(false);
+                            binsCombo.setVisible(false);
+
+                        } else if (trace.getTraceType() == String.class) {
+                            String values[] = new String[tl.getStateCount()];
+                            tl.getValues(traceIndex, values);
+
+                            int[] intData = new int[values.length];
+                            for (int v = 0; v < values.length; v++) {
+                                intData[v] = td.credSet.getIndex(values[v]);
+                                categoryDataMap.put(intData[v], values[v]);
+                            }
+
+                            plot = new CategoryDensityPlot(intData, -1, td, numOfBarsCat, barCatId);
+                            barCatId++;
+                            traceChart.setXAxis(false, categoryDataMap);
+                            chartPanel.setYAxisTitle("Probability");
+
+                            relativeDensityCheckBox.setVisible(false);
+                            labelBins.setVisible(false);
+                            binsCombo.setVisible(false);
+
+                        } else {
+                            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+                        }
+
+                        String name = tl.getTraceName(traceIndex);
+                        if (traceLists.length > 1) {
+                            name = tl.getName() + " - " + name;
+                        }
+
+                        plot.setName(name);
+                        if (tl instanceof CombinedTraces) {
+                            plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                        } else {
+                            plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                        }
+
+                        traceChart.addPlot(plot);
+
+                        if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
+                            i++;
+                        }
+                        if (i == paints.length) i = 0;
+                    } else {
+//                         JOptionPane.showMessageDialog(frame,
+//                                 "Selected traces contain different trace types\rso that the plot is displayed improperly.",
+//                                 "Incompatible trace type",
+//                                 JOptionPane.ERROR_MESSAGE);
+                    }
                 }
-                if (i == paints.length) i = 0;
             }
             if (colourBy == COLOUR_BY_FILE) {
                 i++;

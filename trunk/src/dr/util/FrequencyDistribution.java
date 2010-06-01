@@ -84,6 +84,18 @@ public class FrequencyDistribution {
 		return bins[bin];
 	}
 
+    public double getProb(int bin) {
+        int total = 0;
+        for (int b : bins) {
+            total = total + b;
+        }
+        if (total == 0) {
+            return 0.0;
+        } else {
+		    return (double) bins[bin] / (double) total;
+        }
+	}
+
 	public void addValue(double value) {
 	
 		double diff = value - start;

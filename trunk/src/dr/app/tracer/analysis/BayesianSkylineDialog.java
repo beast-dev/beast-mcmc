@@ -25,6 +25,7 @@
 
 package dr.app.tracer.analysis;
 
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -477,8 +478,8 @@ public class BayesianSkylineDialog {
 
         int stateCount;
 
-        double[][] popSizes;
-        double[][] groupSizes;
+        Double[][] popSizes;
+        Double[][] groupSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -508,11 +509,11 @@ public class BayesianSkylineDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new double[popSizeCount][stateCount];
+            popSizes = new Double[popSizeCount][stateCount];
             for (int i = 0; i < popSizeCount; i++) {
                 traceList.getValues(firstPopSize + i, popSizes[i]);
             }
-            groupSizes = new double[groupSizeCount][stateCount];
+            groupSizes = new Double[groupSizeCount][stateCount];
             for (int i = 0; i < groupSizeCount; i++) {
                 traceList.getValues(firstGroupSize + i, groupSizes[i]);
             }
@@ -537,7 +538,7 @@ public class BayesianSkylineDialog {
 
         public Object doWork() {
 
-            double[] heights = new double[stateCount];
+            Double[] heights = new Double[stateCount];
             traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());

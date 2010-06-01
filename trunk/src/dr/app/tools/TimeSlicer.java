@@ -13,6 +13,7 @@ import dr.geo.KernelDensityEstimator2D;
 import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.geo.math.SphericalPolarCoordinates;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.HeapSort;
@@ -438,7 +439,7 @@ public class TimeSlicer {
             }
 
             int count = thisTrait.size();
-            double[][] x = new double[dim][count];
+            Double[][] x = new Double[dim][count];
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
                 double[] value = trait.getValue();
@@ -490,11 +491,11 @@ public class TimeSlicer {
 
                 ContourMaker contourMaker;
                 if (contourMode == ContourMode.JAVA)
-                    contourMaker = new KernelDensityEstimator2D(x[0], x[1]);
+                    contourMaker = new KernelDensityEstimator2D(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else if (contourMode == ContourMode.R)
-                    contourMaker = new ContourWithR(x[0], x[1]);
+                    contourMaker = new ContourWithR(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else if (contourMode == ContourMode.SNYDER)
-                    contourMaker = new ContourWithSynder(x[0], x[1]);
+                    contourMaker = new ContourWithSynder(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]));
                 else
                     throw new RuntimeException("Unimplemented ContourModel!");
 
@@ -520,7 +521,14 @@ public class TimeSlicer {
                             testElement.addContent(coords.toXML());
                             Polygon2D testPolygon = new Polygon2D(testElement);
                             totalArea += testPolygon.calculateArea();
-                            numberOfPointsInPolygons += getNumberOfPointsInPolygon(x, testPolygon);
+
+                            double[][] dest = new double[x.length][x[0].length];
+                            for (int i = 0; i < x.length; i++) {
+                                for (int j = 0; j < x[0].length; j++) {
+                                    dest[i][j] = x[i][j].doubleValue();
+                                }
+                            }
+                            numberOfPointsInPolygons += getNumberOfPointsInPolygon(dest, testPolygon);
                         }
 
                         folderElement.addContent(placemarkElement);

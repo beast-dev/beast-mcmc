@@ -230,10 +230,10 @@ public class DnDsPerSiteAnalysis {
                 }
 
 
-                double sampleSperSite[][] = new double[numberOfSperSite][traces.getStateCount()];
-                double sampleNperSite[][] = new double[numberOfNperSite][traces.getStateCount()];
-                double unconditionalS[] = new double[traces.getStateCount()];
-                double unconditionalN[] = new double[traces.getStateCount()];
+                Double sampleSperSite[][] = new Double[numberOfSperSite][traces.getStateCount()];
+                Double sampleNperSite[][] = new Double[numberOfNperSite][traces.getStateCount()];
+                Double unconditionalS[] = new Double[traces.getStateCount()];
+                Double unconditionalN[] = new Double[traces.getStateCount()];
 
                 //collect all arrays
                 for(int a = 0; a < numberOfSperSite; a++){
@@ -246,8 +246,8 @@ public class DnDsPerSiteAnalysis {
                 traces.getValues(traceIndexUnconditionalN, unconditionalN);
 
                 DnDsPerSiteAnalysis analysis = new DnDsPerSiteAnalysis(
-                        sampleSperSite, unconditionalS,
-                        sampleNperSite, unconditionalN);
+                        Trace.arrayConvert(sampleSperSite), Trace.arrayConvert(unconditionalS),
+                        Trace.arrayConvert(sampleNperSite), Trace.arrayConvert(unconditionalN));
 
                 System.out.println(analysis.toString());
 

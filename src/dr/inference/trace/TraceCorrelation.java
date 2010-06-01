@@ -32,10 +32,12 @@ package dr.inference.trace;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation extends TraceDistribution {
+public class TraceCorrelation<T> extends TraceDistribution<T> {
+    final int stepSize;
 
-    public TraceCorrelation(double[] values, int stepSize) {
+    public TraceCorrelation(T[] values, int stepSize) {
         super(values, stepSize);
+        this.stepSize = stepSize;
 
         if (isValid) {
             analyseCorrelation(values, stepSize);
@@ -50,13 +52,38 @@ public class TraceCorrelation extends TraceDistribution {
         return ACT;
     }
 
+    private void analyseCorrelation(T[] values, int stepSize) {
+//        this.values = values; // move to TraceDistribution(T[] values)
+
+         if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+             double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Double) values[i]).doubleValue();
+            }
+             analyseCorrelationContinuous(doubleValues, stepSize);
+
+         } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+              double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Integer) values[i]).doubleValue();
+            }
+             analyseCorrelationContinuous(doubleValues, stepSize);
+
+         } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
+
+
+         } else {
+             throw new RuntimeException("Trace type is not recognized");
+         }
+    }
+
     /**
      * Analyze trace
      *
      * @param values   the values
      * @param stepSize the sampling frequency of the values
      */
-    private void analyseCorrelation(double[] values, int stepSize) {
+    private void analyseCorrelationContinuous(double[] values, int stepSize) {
 
         final int samples = values.length;
         int maxLag = Math.min(samples - 1, MAX_LAG);
@@ -122,4 +149,18 @@ public class TraceCorrelation extends TraceDistribution {
     protected double stdErrOfACT;
 
     private static final int MAX_LAG = 2000;
+
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+        credSet = new CredibleSet(getValuesArray(), 0.95);
+
+        if (isValid) {
+            analyseCorrelation(getValuesArray(), stepSize);
+        }
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
 }

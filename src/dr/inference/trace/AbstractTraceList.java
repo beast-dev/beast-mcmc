@@ -3,7 +3,7 @@ package dr.inference.trace;
 /**
  * @author Alexei Drummond
  */
-public abstract class AbstractTraceList implements TraceList {
+public abstract class AbstractTraceList extends FilteredTraceList {
     public TraceDistribution getDistributionStatistics(int index) {
         return getCorrelationStatistics(index);
     }
@@ -17,23 +17,22 @@ public abstract class AbstractTraceList implements TraceList {
     }
 
     public void analyseTrace(int index) {
-        double[] values = new double[getStateCount()];
         int offset = (getBurnIn() / getStepSize());
 
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];
+            initFilters();
         }
 
-        Trace trace = getTrace(index);
-        trace.getValues(offset, values);
-        traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+        Trace trace = getTrace(index);        
+        traceStatistics[index] = new TraceCorrelation(trace.createValues(offset, getStateCount()), getStepSize());
     }
 
     public void setBurnIn(int burnIn) {
         traceStatistics = null;
     }
 
-    abstract Trace getTrace(int index);
+//    abstract Trace getTrace(int index);
 
-    private TraceCorrelation[] traceStatistics = null;
+//    private TraceCorrelation[] traceStatistics = null;
 }

@@ -25,10 +25,7 @@
 
 package dr.app.tracer.traces;
 
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 
 
 /**
@@ -39,7 +36,7 @@ import dr.inference.trace.TraceList;
  * @version $Id: CombinedTraces.java,v 1.3 2006/11/29 16:04:12 rambaut Exp $
  */
 
-public class CombinedTraces implements TraceList {
+public class CombinedTraces extends FilteredTraceList {
 
     public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
 
@@ -140,7 +137,7 @@ public class CombinedTraces implements TraceList {
         return getStateCount() * getStepSize();
     }
 
-    public void getValues(int index, double[] destination) {
+    public <T> void getValues(int index, T[] destination) {
         int offset = 0;
         for (TraceList traceList : traceLists) {
             traceList.getValues(index, destination, offset);
@@ -148,14 +145,14 @@ public class CombinedTraces implements TraceList {
         }
     }
 
-    public void getValues(int index, double[] destination, int offset) {
+    public <T> void getValues(int index, T[] destination, int offset) {
         for (TraceList traceList : traceLists) {
             traceList.getValues(index, destination, offset);
             offset += traceList.getStateCount();
         }
     }
 
-    public void getBurninValues(int index, double[] destination) {
+    public <T> void getBurninValues(int index, T[] destination) {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
@@ -163,14 +160,13 @@ public class CombinedTraces implements TraceList {
      * @return the trace distribution statistic object for the given index
      */
     public TraceDistribution getDistributionStatistics(int index) {
-	return getCorrelationStatistics(index);
+        return getCorrelationStatistics(index);
     }
 
     /**
      * @return the trace correlation statistic object for the given index
      */
-    public TraceCorrelation getCorrelationStatistics(int index)
-    {
+    public TraceCorrelation getCorrelationStatistics(int index) {
         if (traceStatistics == null) {
             return null;
             // this can happen if the ESS has not been calculated yet.
@@ -181,16 +177,48 @@ public class CombinedTraces implements TraceList {
     }
 
     public void analyseTrace(int index) {
-        double[] values = new double[getStateCount()];
-
-	// no offset: burnin is handled inside each TraceList we own and invisible to us.
+        // no offset: burnin is handled inside each TraceList we own and invisible to us.
 
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];
+            initFilters();
         }
 
-	getValues(index,values);
-        traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+        Trace trace = getTrace(index);
+
+        if (trace != null) {
+            if (trace.getTraceType() == Double.class) {
+                Double values[] = new Double[getStateCount()];
+
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+            } else if (trace.getTraceType() == Integer.class) {
+                Integer values[] = new Integer[getStateCount()];
+
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+            } else if (trace.getTraceType() == String.class) {
+                String values[] = new String[getStateCount()];
+
+                getValues(index, values);
+                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
+
+            } else {
+                throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+            }
+        }
+
+    }
+
+    public Trace getTrace(int index) {
+        for (TraceList traceList : traceLists) {
+            if (traceList.getTrace(index).getTraceType() != traceLists[0].getTrace(index).getTraceType()) {
+                return null; // trace type not comparable
+            }
+        }
+        return traceLists[0].getTrace(index);
     }
 
     /**
@@ -214,7 +242,7 @@ public class CombinedTraces implements TraceList {
 
     private TraceList[] traceLists = null;
 
-    private TraceCorrelation[] traceStatistics = null;
+//    private TraceCorrelation[] traceStatistics = null;
 
     private String name;
 }

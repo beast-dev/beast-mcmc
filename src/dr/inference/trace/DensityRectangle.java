@@ -211,7 +211,7 @@ public class DensityRectangle {
         traces.loadTraces();
         traces.setBurnIn(burnin);
 
-        double[][] values = new double[2][traces.getStateCount()];
+        Double[][] values = new Double[2][traces.getStateCount()];
         for (int j = 0; j < 2; j++) {
             traces.getValues(indices[j], values[j]);
         }

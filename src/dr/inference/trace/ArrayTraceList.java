@@ -25,7 +25,7 @@ public class ArrayTraceList extends AbstractTraceList {
         }
 
         Trace stateTrace = traces.get(0);
-        this.stepSize = (int) Math.round(stateTrace.getValue(1) - stateTrace.getValue(0));
+        this.stepSize = (int) Math.round((Double) stateTrace.getValue(1) - (Double) stateTrace.getValue(0));
     }
 
     public String getName() {
@@ -85,20 +85,20 @@ public class ArrayTraceList extends AbstractTraceList {
      * @param index       the index of trace
      * @param destination the array to copy values into
      */
-    public void getValues(int index, double[] destination) {
-
-        traces.get(index).getValues(0, destination, burnin);
+    public <T> void getValues(int index, T[] destination) {
+        getTrace(index).getValues(0, destination, burnin);
     }
 
-    public void getValues(int index, double[] destination, int offset) {
-        traces.get(index).getValues(0, destination, offset);
+    public <T> void getValues(int index, T[] destination, int offset) {
+        getTrace(index).getValues(0, destination, offset);
     }
 
-    public void getBurninValues(int index, double[] destination) {
+    public <T> void getBurninValues(int index, T[] destination) {
         getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
-    Trace getTrace(int index) {
+    public Trace getTrace(int index) {
         return traces.get(index);
     }
+
 }

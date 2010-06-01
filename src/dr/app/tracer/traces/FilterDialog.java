@@ -63,13 +63,6 @@ public class FilterDialog {
         this.filteredTraceListGroup = filteredTraceListGroup;
         this.traceName = traceName;
 
-        if (traceName.equalsIgnoreCase("None")) {
-            for (FilteredTraceList filteredTraceList : filteredTraceListGroup) {
-                filteredTraceList.removeAllFilters();
-            }             
-            return;
-        }
-
         Object[] fileNames = new Object[filteredTraceListGroup.size()];
         int[] indices = new int[filteredTraceListGroup.size()];
         for (int i = 0; i < fileNames.length; i++) {

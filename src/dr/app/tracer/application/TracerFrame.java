@@ -262,6 +262,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //        filterPanel.add(new JLabel("Filtered by : "));
         filterPanel.add(filterButton);
         filterCombo.setPreferredSize(new Dimension(230, 20));
+//        filterCombo.addItemListener(new ItemListener () { //todo problem
+//            public void itemStateChanged(ItemEvent e) {
+//                if (filterCombo.getItemCount() > 0) {
+//                String traceName = filterCombo.getSelectedItem().toString();
+//                removeAllFilters(traceName);
+//                }
+//            }
+//        });
         filterPanel.add(filterCombo);
 
         filterPanel.add(filterStatus);
@@ -288,12 +296,27 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         String traceName = filterCombo.getSelectedItem().toString();
+        removeAllFilters(traceName);
 
         filterDialog.showDialog(traceName, currentTraceLists);
 
 
         statisticTableModel.fireTableDataChanged();
         statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
+    }
+
+    private void removeAllFilters(String traceName) {
+        if (traceName.equalsIgnoreCase("None")) {
+            int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
+                "Filter Configuration", JOptionPane.YES_NO_OPTION);
+
+            if (n == JOptionPane.YES_OPTION) {
+                for (FilteredTraceList filteredTraceList : currentTraceLists) {
+                    filteredTraceList.removeAllFilters();
+                }
+            }
+            return;
+        }
     }
 
     private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {

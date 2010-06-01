@@ -3,6 +3,7 @@ package dr.app.beagle.evomodel.branchratemodel;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -18,7 +19,7 @@ import dr.inference.model.Variable;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class MarkovJumpsBranchRateModel extends AbstractModel implements BranchRateModel {
+public class MarkovJumpsBranchRateModel extends AbstractBranchRateModel {
 
     public MarkovJumpsBranchRateModel(String name, TreeModel treeModel, MarkovJumpsBeagleTreeLikelihood markovJumpsBeagleTreeLikelihood, Parameter rateParameter, Parameter indicatorParameter) {
         super(name);
@@ -31,14 +32,6 @@ public class MarkovJumpsBranchRateModel extends AbstractModel implements BranchR
         addModel(treeModel);
         addVariable(rateParameter);
         addVariable(rateParameter);
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     public double getBranchRate(Tree tree, NodeRef node) {

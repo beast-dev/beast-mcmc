@@ -89,7 +89,7 @@ public class AncestralStateTreeLikelihoodTest extends TestCase {
         StringBuffer buffer = new StringBuffer();
 
         Tree.Utils.newick(treeModel, treeModel.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                null, null, new NodeAttributeProvider[]{treeLikelihood}, null, null, buffer);
+                null, null, new NodeAttributeProvider[]{ new NodeAttributeProvider.Wrapper(treeLikelihood) }, null, null, buffer);
 
         System.out.println(buffer);
 

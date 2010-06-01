@@ -3,9 +3,9 @@ package dr.evomodel.treelikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
@@ -15,7 +15,7 @@ import dr.math.MathUtils;
 /**
  * @author Marc A. Suchard
  */
-public class AncestralStateTreeLikelihood extends TreeLikelihood implements NodeAttributeProvider {
+public class AncestralStateTreeLikelihood extends TreeLikelihood implements TreeTrait<int[]> {
 
 //    private boolean useExtraReconstructedStates = false;
 
@@ -90,14 +90,31 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
         jointLogLikelihood = storedJointLogLikelihood;
     }
 
-
-    public String[] getNodeAttributeLabel() {
-        return new String[]{tag};
+    public String getTraitName() {
+        return tag;
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+    public Intent getIntent() {
+        return Intent.NODE;
+    }
+
+    public Class getTraitClass() {
+        return null;
+    }
+
+    public int getDimension() {
+        return 1;
+    }
+
+    public int[][] getTrait(Tree tree, NodeRef node) {
+        return new int[][]{getStatesForNode(tree, node)};
+    }
+
+
+    public String[] getTraitString(Tree tree, NodeRef node) {
         return new String[]{formattedState(getStatesForNode(tree, node), dataType)};
     }
+
 
     public DataType getDataType() {
         return dataType;
@@ -321,6 +338,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Node
 
     private double jointLogLikelihood;
     private double storedJointLogLikelihood;
-    
+
 
 }

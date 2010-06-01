@@ -44,7 +44,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id:=$
  */
-public class CompoundBranchRateModel extends AbstractModel implements BranchRateModel {
+public class CompoundBranchRateModel extends AbstractBranchRateModel {
 
     private final List<BranchRateModel> branchRateModels = new ArrayList<BranchRateModel>();
 
@@ -75,7 +75,7 @@ public class CompoundBranchRateModel extends AbstractModel implements BranchRate
         // nothing to do
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         double rate = 1.0;
         for (BranchRateModel branchRateModel : branchRateModels) {
             rate *= branchRateModel.getBranchRate(tree, node);
@@ -83,11 +83,4 @@ public class CompoundBranchRateModel extends AbstractModel implements BranchRate
         return rate;
     }
 
-    public String getBranchAttributeLabel() {
-        return RATE;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
 }

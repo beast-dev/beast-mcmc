@@ -27,6 +27,7 @@ package dr.evomodel.clock;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -44,7 +45,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Michael Defoin Platel
  */
-public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood implements BranchRateModel {
+public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
 
     public static final String RATES = "rates";
     public static final String EPISODIC = "episodic";
@@ -208,14 +209,6 @@ public abstract class RateEvolutionLikelihood extends AbstractModelLikelihood im
     // **************************************************************
     // Private members
     // **************************************************************
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
 
     private double logLikelihood;
     private boolean likelihoodKnown = false;

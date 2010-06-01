@@ -47,7 +47,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Marc Suchard
  */
-public class DiscreteTraitRateModel extends AbstractModel implements BranchRateModel {
+public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
     public static final String DISCRETE_TRAIT_RATE_MODEL = "discreteTraitRateModel";
     public static final String RATES = "rates";
@@ -88,10 +88,6 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         this.traitIndex = traitIndex;
         this.ratesParameter = ratesParameter;
         addVariable(ratesParameter);
-    }
-
-    int getNodeTrait(Tree tree, NodeRef node) {
-        return ancestors.getStatesForNode(tree, node)[traitIndex];
     }
 
     public DiscreteTraitRateModel(TreeModel treeModel, AncestralStateTreeLikelihood like, int traitIndex, Parameter ratesParameter) {
@@ -144,7 +140,7 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         // nothing to do
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
         if (!normKnown) {
             norm = calculateNorm(tree);
@@ -173,7 +169,7 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
         return rateTime / time;
     }
 
-    double getRawBranchRate(Tree tree, NodeRef node) {
+    double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
         if (fitch) {
@@ -197,14 +193,6 @@ public class DiscreteTraitRateModel extends AbstractModel implements BranchRateM
             rate = ratesParameter.getParameterValue(trait);
         }
         return rate;
-    }
-
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

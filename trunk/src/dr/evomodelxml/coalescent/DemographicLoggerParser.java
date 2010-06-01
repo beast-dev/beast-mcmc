@@ -1,9 +1,10 @@
-package dr.inferencexml.loggers;
+package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.DemographicLogger;
 import dr.evomodel.coalescent.DemographicReconstructor;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
 import java.io.PrintWriter;

@@ -44,7 +44,7 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @version $Id: LocalClockModel.java,v 1.1 2005/04/05 09:27:48 rambaut Exp $
  */
-public class LocalClockModel extends AbstractModel implements BranchRateModel {
+public class LocalClockModel extends AbstractBranchRateModel {
 
     private TreeModel treeModel;
     protected Map<Integer, LocalClock> localTipClocks = new HashMap<Integer, LocalClock>();
@@ -144,7 +144,7 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
 
     // BranchRateModel implementation
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
         if (tree.isRoot(node)) {
             throw new IllegalArgumentException("root node doesn't have a rate!");
@@ -169,14 +169,6 @@ public class LocalClockModel extends AbstractModel implements BranchRateModel {
         }
 
         return rate;
-    }
-
-    public String getBranchAttributeLabel() {
-        return RATE;
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
     }
 
     private void setupRateParameters(Tree tree, NodeRef node, BitSet tips) {

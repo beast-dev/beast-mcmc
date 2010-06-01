@@ -38,7 +38,7 @@ import dr.inference.model.Variable;
  * @author Andrew Rambaut
  * @version $Id: StrictClockBranchRates.java,v 1.3 2006/01/09 17:44:30 rambaut Exp $
  */
-public class StrictClockBranchRates extends AbstractModel implements BranchRateModel {
+public class StrictClockBranchRates extends AbstractBranchRateModel {
 
     private final Parameter rateParameter;
 
@@ -71,15 +71,8 @@ public class StrictClockBranchRates extends AbstractModel implements BranchRateM
         // nothing to do
     }
 
-    public double getBranchRate(Tree tree, NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
         return rateParameter.getParameterValue(0);
     }
 
-    public String getBranchAttributeLabel() {
-        return "rate";
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getBranchRate(tree, node));
-    }
 }

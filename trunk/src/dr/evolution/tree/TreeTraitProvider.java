@@ -108,7 +108,8 @@ public interface TreeTraitProvider {
         // Implementation of TreeTraitProvider interface
 
         public TreeTrait[] getTreeTraits() {
-            return (TreeTrait[])traits.values().toArray();
+            TreeTrait[] traitArray = new TreeTrait[traits.values().size()];
+            return traits.values().toArray(traitArray);
         }
 
         public TreeTrait getTreeTrait(String key) {

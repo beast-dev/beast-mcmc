@@ -66,7 +66,8 @@ public class JTreePanel extends JPanel {
 			lastIcon = new ImageIcon(dr.app.util.Utils.getImage(this, "/images/last.png"));
 		} catch (Exception e) { }
 		
-		firstButton = new JButton(firstIcon);
+//		firstButton = new JButton(firstIcon);
+        firstButton = new JButton("First Tree");
 		firstButton.putClientProperty("JButton.buttonType", "toolbar");
 		firstButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
@@ -76,7 +77,8 @@ public class JTreePanel extends JPanel {
 		firstButton.setOpaque(false);
 		firstButton.setEnabled(true);
 
-		prevButton = new JButton(prevIcon);
+//		prevButton = new JButton(prevIcon);
+        prevButton = new JButton("Previous Tree");
 		prevButton.putClientProperty("JButton.buttonType", "toolbar");
 		prevButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
@@ -86,7 +88,8 @@ public class JTreePanel extends JPanel {
 		prevButton.setOpaque(false);
 		prevButton.setEnabled(true);
 
-		nextButton = new JButton(nextIcon);
+//		nextButton = new JButton(nextIcon);
+        nextButton = new JButton("Next Tree");
 		nextButton.putClientProperty("JButton.buttonType", "toolbar");
 		nextButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
@@ -96,7 +99,8 @@ public class JTreePanel extends JPanel {
 		nextButton.setOpaque(false);
 		nextButton.setEnabled(true);
 
-		lastButton = new JButton(lastIcon);
+//		lastButton = new JButton(lastIcon);
+        lastButton = new JButton("Last Tree");
 		lastButton.putClientProperty("JButton.buttonType", "toolbar");
 		lastButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
@@ -118,7 +122,7 @@ public class JTreePanel extends JPanel {
 		toolBar.add(new JToolBar.Separator());
 //		toolBar.add(new JSpinner());
 		
-		add(toolBar, BorderLayout.NORTH);
+//		add(toolBar, BorderLayout.NORTH);
 	}
 	
 	public void setTrees(ArrayList trees) {

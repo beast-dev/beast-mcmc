@@ -348,7 +348,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
             PartitionTreeModelPanel panel = treeModelPanels.get(model);
             if (panel == null) {
-                panel = new PartitionTreeModelPanel(model, options);
+                panel = new PartitionTreeModelPanel(frame, model, options);
                 treeModelPanels.put(model, panel);
             }
 

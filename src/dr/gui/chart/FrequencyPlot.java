@@ -270,7 +270,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                             fillRect(g2, x1, y1, x2, y2);                                           
                         }
                     } else if (hasIncredibleSet) {
-                        if (credSet.inCredibleSet.contains((int) x1) || credSet.inCredibleSet.contains((int) x2)) {
+                        if (credSet.inCredibleSetContains((int) x1) || credSet.inCredibleSetContains((int) x2)) {
                             g2.setPaint(quantilePaint);
                         } else {
                             g2.setPaint(barPaint);

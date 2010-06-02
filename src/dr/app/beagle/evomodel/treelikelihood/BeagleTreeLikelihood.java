@@ -558,7 +558,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         double logL;
-        boolean done = true;
+        boolean done;
+        boolean firstRescaleAttempt = true;
 
         do {
             beagle.updatePartials(operations, operationCount, Beagle.NONE);
@@ -605,29 +606,28 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
-                if (!done) {
-                    if (rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                        // we have had a potential under/over flow so attempt a rescaling
-                        recomputeScaleFactors = true;
+                if (firstRescaleAttempt && rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                    // we have had a potential under/over flow so attempt a rescaling
+                    useScaleFactors = true;
+                    recomputeScaleFactors = true;
 
-                        // traverse again but without flipping partials indices as we
-                        // just want to overwrite the last attempt. We will flip the
-                        // scale buffer indices though as we are recomputing them.
-                        traverse(treeModel, root, null, false);
+                    branchUpdateCount = 0;
+                    operationCount = 0;
 
-                        done = false;
-                    } else {
-                        // either we are not rescaling or always rescaling
-                        // so just return the likelihood...
-                        done = true;
-                    }
+                    // traverse again but without flipping partials indices as we
+                    // just want to overwrite the last attempt. We will flip the
+                    // scale buffer indices though as we are recomputing them.
+                    traverse(treeModel, root, null, false);
+
+                    done = false; // Run through do-while loop again
+                    firstRescaleAttempt = false; // Only try to rescale once
                 } else {
-                    // we have already tried a rescale
+                    // we have already tried a rescale, not rescaling or always rescaling
                     // so just return the likelihood...
                     done = true;
                 }
             } else {
-                done = true;
+                done = true; // No under-/over-flow, then done
             }
 
         } while (!done);

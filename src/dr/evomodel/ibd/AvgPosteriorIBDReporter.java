@@ -1,8 +1,9 @@
 package dr.evomodel.ibd;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
@@ -23,7 +24,7 @@ import dr.xml.*;
  * Date: 04-Aug-2008
  * Time: 13:46:33
  */
-public class AvgPosteriorIBDReporter extends AbstractModel implements NodeAttributeProvider {
+public class AvgPosteriorIBDReporter extends AbstractModel implements TreeTraitProvider {
 
     protected double[] ibdweights;
     protected double[][] ibdForward;
@@ -178,20 +179,39 @@ public class AvgPosteriorIBDReporter extends AbstractModel implements NodeAttrib
         diagonalRates[3] = ((freq[0] + freq[2]) + freq[1] * kappa) * mutationRate * beta;
     }
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{"AvgPosteriorIBDWeight"};
+    TreeTrait avgPosteriorIBDWeight = new TreeTrait.D() {
+        public String getTraitName() {
+            return "AvgPosteriorIBDWeight";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public Double[] getTrait(Tree tree, NodeRef node) {
+            if (!weightsKnown) {
+                expectedIBD();
+                weightsKnown = true;
+            }
+            if (tree.isExternal(node)) {
+                int nodeNum = node.getNumber();
+                return new Double[]{ibdweights[nodeNum] + 1};
+            }
+            return new Double[0];
+        }
+    };
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { avgPosteriorIBDWeight };
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        if (!weightsKnown) {
-            expectedIBD();
-            weightsKnown = true;
-        }
-        if (tree.isExternal(node)) {
-            int nodeNum = node.getNumber();
-            return new String[]{Double.toString(ibdweights[nodeNum] + 1)};
-        }
-        return new String[]{""};
+    public TreeTrait getTreeTrait(String key) {
+        // ignore the key - it must be the one they wanted, no?
+        return avgPosteriorIBDWeight;
     }
 
     /**

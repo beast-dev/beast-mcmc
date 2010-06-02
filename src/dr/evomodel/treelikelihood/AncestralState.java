@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.TaxonList;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -34,7 +35,7 @@ import dr.inference.loggers.Loggable;
 import java.util.Set;
 
 /**
- * A statistic that tracks the time of MRCA of a set of taxa
+ * A statistic that logs the inferred state at the MRCA of a set of taxa
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -42,10 +43,10 @@ import java.util.Set;
  */
 public class AncestralState implements Loggable {
 
-    public AncestralState(String name, AncestralStateTreeLikelihood ancestralTreeLikelihood, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+    public AncestralState(String name, TreeTrait ancestralState, Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
         this.name = name;
         this.tree = tree;
-        this.ancestralTreeLikelihood = ancestralTreeLikelihood;
+        this.ancestralState = ancestralState;
         this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
     }
 
@@ -60,7 +61,7 @@ public class AncestralState implements Loggable {
 
         NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-        return ancestralTreeLikelihood.getTraitString(tree, node)[0];
+        return ancestralState.getTraitString(tree, node)[0];
     }
 
     // **************************************************************
@@ -82,7 +83,7 @@ public class AncestralState implements Loggable {
     }
 
     private final Tree tree;
-    private final AncestralStateTreeLikelihood ancestralTreeLikelihood;
+    private final TreeTrait ancestralState;
     private final String name;
     private Set<String> leafSet = null;
 

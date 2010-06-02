@@ -26,11 +26,9 @@
 package dr.evomodel.tree;
 
 import dr.app.tools.NexusExporter;
-import dr.app.tools.NormaliseMeanTreeRate;
 import dr.evolution.tree.*;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
-import dr.inference.trace.TraceException;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -45,11 +43,10 @@ import java.util.*;
 public class TreeLogger extends MCLogger {
 
     private Tree tree;
-    private BranchRateProvider branchRateProvider = null;
+    private BranchRates branchRates = null;
 
     private TreeAttributeProvider[] treeAttributeProviders;
-    private NodeAttributeProvider[] nodeAttributeProviders;
-    private BranchAttributeProvider[] branchAttributeProviders;
+    private TreeTraitProvider[] treeTraitProviders;
 
     private boolean nexusFormat = false;
     public boolean usingRates = false;
@@ -79,24 +76,23 @@ public class TreeLogger extends MCLogger {
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames) {
 
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null, null/*, Double.NaN*/);
+        this(tree, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null, null/*, Double.NaN*/);
     }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames, NumberFormat format) {
 
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null/*, Double.NaN*/);
+        this(tree, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null/*, Double.NaN*/);
     }
 
-    public TreeLogger(Tree tree, BranchRateProvider branchRateProvider,
+    public TreeLogger(Tree tree, BranchRates branchRates,
                       TreeAttributeProvider[] treeAttributeProviders,
-                      NodeAttributeProvider[] nodeAttributeProviders,
-                      BranchAttributeProvider[] branchAttributeProviders,
+                      TreeTraitProvider[] treeTraitProviders,
                       LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames, NumberFormat format,
                       TreeLogger.LogUpon condition) {
 
-        /*this(tree, branchRateProvider, treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition, Double.NaN);
+        /*this(tree, branchRates, treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition, Double.NaN);
 
     }
 
@@ -112,7 +108,7 @@ public class TreeLogger extends MCLogger {
         this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null, normaliseMeanRateTo);
     }
 
-    public TreeLogger(Tree tree, BranchRateController branchRateProvider,
+    public TreeLogger(Tree tree, BranchRateController branchRates,
                       TreeAttributeProvider[] treeAttributeProviders,
                       NodeAttributeProvider[] nodeAttributeProviders,
                       BranchAttributeProvider[] branchAttributeProviders,
@@ -133,14 +129,12 @@ public class TreeLogger extends MCLogger {
         // if not NEXUS, can't map names
         this.mapNames = mapNames && nexusFormat;
 
-        this.branchRateProvider = branchRateProvider;
+        this.branchRates = branchRates;
 
         this.treeAttributeProviders = treeAttributeProviders;
-        this.nodeAttributeProviders = nodeAttributeProviders;
+        this.treeTraitProviders = treeTraitProviders;
 
-        this.branchAttributeProviders = branchAttributeProviders;
-
-        if (this.branchRateProvider != null) {
+        if (this.branchRates != null) {
             this.substitutions = true;
         }
         this.tree = tree;
@@ -241,10 +235,10 @@ public class TreeLogger extends MCLogger {
 
             if (substitutions) {
                 Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
-                        format, branchRateProvider, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
+                        format, branchRates, treeTraitProviders, idMap, buffer);
             } else {
                 Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                        format, null, nodeAttributeProviders, branchAttributeProviders, idMap, buffer);
+                        format, null, treeTraitProviders, idMap, buffer);
             }
 
             buffer.append(";");

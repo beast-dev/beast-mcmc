@@ -4,8 +4,9 @@ import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.BranchAttributeProvider;
 import dr.evolution.datatype.Codons;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
@@ -30,7 +31,7 @@ import java.util.ArrayList;
  *         molecular sequences. Molecular Biology and Evolution, 26, 801-814
  */
 
-public class CodonPartitionedRobustCounting extends AbstractModel implements BranchAttributeProvider, Loggable {
+public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
 
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
@@ -153,33 +154,42 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Bra
         return count;
     }
 
-    public String getBranchAttributeLabel() {
-        return codonLabeling.getText();
+    TreeTrait counts = new TreeTrait.D() {
+        public String getTraitName() {
+            return codonLabeling.getText();
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public Double[] getTrait(Tree tree, NodeRef node) {
+            double[] counts = getExpectedCountsForBranch(node);
+            if (branchFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
+                double total = 0;
+                for (double x : counts) {
+                    total += x;
+                }
+                return new Double[] { total };
+            } else if (branchFormat == StratifiedTraitOutputFormat.PER_SITE) {
+                return toArray(counts);
+            } else {
+                throw new RuntimeException("Not yet implemented.");
+            }
+        }
+    };
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { counts };
     }
 
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        double[] counts = getExpectedCountsForBranch(node);
-        final String returnString;
-
-        if (branchFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
-            double total = 0;
-            for (double x : counts) {
-                total += x;
-            }
-            returnString = String.valueOf(total);
-        } else if (branchFormat == StratifiedTraitOutputFormat.PER_SITE) {
-            if (counts.length == 1) {
-                return String.valueOf(counts[0]);
-            }
-            StringBuffer sb = new StringBuffer("{");
-            for (int i = 0; i < counts.length - 1; i++)
-                sb.append(Double.toString(counts[i])).append(",");
-            sb.append(Double.toString(counts[counts.length - 1])).append("}");
-            returnString = sb.toString();
-        } else {
-            throw new RuntimeException("Not yet implemented.");
-        }
-        return returnString;
+    public TreeTrait getTreeTrait(String key) {
+        // ignore the key - it must be the one they wanted, no?
+        return counts;
     }
 
     public double[] getRobustCountPerSite() { // TODO Move to StratifiedTraitLogger

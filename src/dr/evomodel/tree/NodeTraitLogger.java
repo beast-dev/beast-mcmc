@@ -1,8 +1,8 @@
 package dr.evomodel.tree;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * @author Marc A. Suchard
  */
-public class NodeTraitLogger implements NodeAttributeProvider {
+public class NodeTraitLogger extends TreeTraitProvider.Helper {
 
 	public static final String TRAIT_LOGGER = "logAllTraits";
 
@@ -21,14 +21,10 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 
 	public NodeTraitLogger(TreeModel treeModel) {
 		this.treeModel = treeModel;
-	}
 
-	public String[] getNodeAttributeLabel() {
-		return getAllNodeTraitLabels(treeModel);
-	}
+        throw new RuntimeException("NodeTraitLogger has not been fully converted to using TreeTraitProvider");
 
-	public String[] getAttributeForNode(Tree tree, NodeRef node) {
-		return getAllNodeTraitValues(treeModel, node);
+        // need to find all the traits here....
 	}
 
 	public static String[] getAllNodeTraitLabels(TreeModel tree) {
@@ -108,7 +104,7 @@ public class NodeTraitLogger implements NodeAttributeProvider {
 		}
 
 		public Class getReturnType() {
-			return NodeAttributeProvider.class;
+			return TreeTraitProvider.class;
 		}
 	};
 }

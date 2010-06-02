@@ -1,9 +1,10 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -23,7 +24,7 @@ import dr.xml.*;
  * Date: 01-Aug-2008
  * Time: 10:36:39
  */
-public class NodePosteriorTreeLikelihood extends TreeLikelihood implements NodeAttributeProvider {
+public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeTraitProvider {
 
     protected double[][] nodePosteriors;
     protected double[][] forwardProbs;
@@ -46,18 +47,37 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements NodeA
         posteriorsKnown = false;
     }
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{"posteriors"};
+    TreeTrait posteriors = new TreeTrait.D() {
+        public String getTraitName() {
+            return "posteriors";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public int getDimension() {
+            return stateCount;
+        }
+
+        public Double[] getTrait(Tree tree, NodeRef node) {
+            if (tree != treeModel) {
+                throw new RuntimeException("Can only calculate node posteriors on treeModel given to constructor");
+            }
+            if (!posteriorsKnown) {
+                calculatePosteriors();
+            }
+            return toArray(nodePosteriors[node.getNumber()]);
+        }
+
+    };
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { posteriors };
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        if (tree != treeModel) {
-            throw new RuntimeException("Can only calculate node posteriors on treeModel given to constructor");
-        }
-        if (!posteriorsKnown) {
-            calculatePosteriors();
-        }
-        return new String[]{new Vector(nodePosteriors[node.getNumber()]).toString()};
+    public TreeTrait getTreeTrait(String key) {
+        // ignore the key - it must be the one they wanted, no?
+        return posteriors;
     }
 
     public double[] getPosteriors(int nodeNum) {

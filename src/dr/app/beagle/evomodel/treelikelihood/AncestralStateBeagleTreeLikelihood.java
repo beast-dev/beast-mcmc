@@ -1,11 +1,13 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
+import dr.app.beagle.evomodel.substmodel.StratifiedTraitOutputFormat;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
@@ -21,7 +23,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements NodeAttributeProvider {
+public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider {
 
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
@@ -38,8 +40,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
-                                              DataType dataType,
-                                              String tag,
+                                              final DataType dataType,
+                                              final String tag,
                                               SubstitutionModel substModel,
                                               boolean useMAP,
                                               boolean returnML) {
@@ -79,6 +81,33 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                   
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
+
+        treeTraits.addTrait(new TreeTrait<int[]>() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public int[][] getTrait(Tree tree, NodeRef node) {
+                return new int[][] { getStatesForNode(tree,node) };
+            }
+
+            public String[] getTraitString(Tree tree, NodeRef node) {
+                return new String[]{ formattedState(getStatesForNode(tree,node), dataType) };
+            }
+        });
+        
     }
 
     public SubstitutionModel getSubstitutionModel() {
@@ -95,12 +124,14 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return states;
     }
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{tag};
+    protected Helper treeTraits = new Helper();
+
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        return new String[]{formattedState(getStatesForNode(tree,node), dataType)};
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
     }
 
     public int[] getStatesForNode(Tree tree, NodeRef node) {
@@ -424,11 +455,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         // Do nothing
     }
 
-    private DataType dataType;
+    private final DataType dataType;
     private int[][] reconstructedStates;
     private int[][] storedReconstructedStates;
 
-    private String tag;
+    private final String tag;
     protected boolean areStatesRedrawn = false;
     protected boolean storedAreStatesRedrawn = false;
 

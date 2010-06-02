@@ -54,39 +54,42 @@ public class TreeLoggerParser extends LoggerParser {
         boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
 
         List<TreeAttributeProvider> taps = new ArrayList<TreeAttributeProvider>();
-        List<NodeAttributeProvider> naps = new ArrayList<NodeAttributeProvider>();
-        List<BranchAttributeProvider> baps = new ArrayList<BranchAttributeProvider>();
+        List<TreeTraitProvider> ttps = new ArrayList<TreeTraitProvider>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object cxo = xo.getChild(i);
-            if (cxo instanceof TreeColouringProvider) {
-                final TreeColouringProvider colouringProvider = (TreeColouringProvider) cxo;
-                baps.add(new BranchAttributeProvider() {
 
-                    public String getBranchAttributeLabel() {
-                        return "deme";
-                    }
+            // This needs to be refactored into using a TreeTrait if Colouring is resurrected...
+//            if (cxo instanceof TreeColouringProvider) {
+//                final TreeColouringProvider colouringProvider = (TreeColouringProvider) cxo;
+//                baps.add(new BranchAttributeProvider() {
+//
+//                    public String getBranchAttributeLabel() {
+//                        return "deme";
+//                    }
+//
+//                    public String getAttributeForBranch(Tree tree, NodeRef node) {
+//                        TreeColouring colouring = colouringProvider.getTreeColouring(tree);
+//                        BranchColouring bcol = colouring.getBranchColouring(node);
+//                        StringBuilder buffer = new StringBuilder();
+//                        if (bcol != null) {
+//                            buffer.append("{");
+//                            buffer.append(bcol.getChildColour());
+//                            for (int i = 1; i <= bcol.getNumEvents(); i++) {
+//                                buffer.append(",");
+//                                buffer.append(bcol.getBackwardTime(i));
+//                                buffer.append(",");
+//                                buffer.append(bcol.getBackwardColourAbove(i));
+//                            }
+//                            buffer.append("}");
+//                        }
+//                        return buffer.toString();
+//                    }
+//                });
+//
+//            } else
 
-                    public String getAttributeForBranch(Tree tree, NodeRef node) {
-                        TreeColouring colouring = colouringProvider.getTreeColouring(tree);
-                        BranchColouring bcol = colouring.getBranchColouring(node);
-                        StringBuilder buffer = new StringBuilder();
-                        if (bcol != null) {
-                            buffer.append("{");
-                            buffer.append(bcol.getChildColour());
-                            for (int i = 1; i <= bcol.getNumEvents(); i++) {
-                                buffer.append(",");
-                                buffer.append(bcol.getBackwardTime(i));
-                                buffer.append(",");
-                                buffer.append(bcol.getBackwardColourAbove(i));
-                            }
-                            buffer.append("}");
-                        }
-                        return buffer.toString();
-                    }
-                });
-
-            } else if (cxo instanceof Likelihood) {
+            if (cxo instanceof Likelihood) {
                 final Likelihood likelihood = (Likelihood) cxo;
                 taps.add(new TreeAttributeProvider() {
 
@@ -103,19 +106,16 @@ public class TreeLoggerParser extends LoggerParser {
             if (cxo instanceof TreeAttributeProvider) {
                 taps.add((TreeAttributeProvider) cxo);
             }
-            if (cxo instanceof NodeAttributeProvider) {
-                naps.add((NodeAttributeProvider) cxo);
-            }
-            if (cxo instanceof BranchAttributeProvider) {
-                baps.add((BranchAttributeProvider) cxo);
+            if (cxo instanceof TreeTraitProvider) {
+                ttps.add((TreeTraitProvider) cxo);
             }
             //}
         }
-        BranchRateProvider branchRateProvider = null;
+        BranchRates branchRates = null;
         if (substitutions) {
-            branchRateProvider = (BranchRateProvider) xo.getChild(BranchRateProvider.class);
+            branchRates = (BranchRates) xo.getChild(BranchRates.class);
         }
-        if (substitutions && branchRateProvider == null) {
+        if (substitutions && branchRates == null) {
             throw new XMLParseException("To log trees in units of substitutions a BranchRateModel must be provided");
         }
 
@@ -138,10 +138,8 @@ public class TreeLoggerParser extends LoggerParser {
 
         TreeAttributeProvider[] treeAttributeProviders = new TreeAttributeProvider[taps.size()];
         taps.toArray(treeAttributeProviders);
-        NodeAttributeProvider[] nodeAttributeProviders = new NodeAttributeProvider[naps.size()];
-        naps.toArray(nodeAttributeProviders);
-        BranchAttributeProvider[] branchAttributeProviders = new BranchAttributeProvider[baps.size()];
-        baps.toArray(branchAttributeProviders);
+        TreeTraitProvider[] treeTraitProviders = new TreeTraitProvider[ttps.size()];
+        ttps.toArray(treeTraitProviders);
 
         // I think the default should be to have names rather than numbers, thus the false default - AJD
         // I think the default should be numbers - using names results in larger files and end user never
@@ -150,8 +148,8 @@ public class TreeLoggerParser extends LoggerParser {
 
         final TreeLogger.LogUpon condition = logEvery == 0 ? (TreeLogger.LogUpon) xo.getChild(TreeLogger.LogUpon.class) : null;
 
-        TreeLogger logger = new TreeLogger(tree, branchRateProvider,
-                treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders,
+        TreeLogger logger = new TreeLogger(tree, branchRates,
+                treeAttributeProviders, treeTraitProviders,
                 formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition/*,
                 normaliseMeanRateTo*/);
 
@@ -184,12 +182,11 @@ public class TreeLoggerParser extends LoggerParser {
             new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in",
                     new String[]{TIME, SUBSTITUTIONS}, true),
             new ElementRule(Tree.class, "The tree which is to be logged"),
-            new ElementRule(BranchRateProvider.class, true),
+            new ElementRule(BranchRates.class, true),
             new ElementRule(TreeColouringProvider.class, true),
             new ElementRule(Likelihood.class, true),
             new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
-            new ElementRule(NodeAttributeProvider.class, 0, Integer.MAX_VALUE),
-            new ElementRule(BranchAttributeProvider.class, 0, Integer.MAX_VALUE),
+            new ElementRule(TreeTraitProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(TreeLogger.LogUpon.class, true),
             AttributeRule.newBooleanRule(MAP_NAMES, true),
             AttributeRule.newIntegerRule(DECIMAL_PLACES, true)

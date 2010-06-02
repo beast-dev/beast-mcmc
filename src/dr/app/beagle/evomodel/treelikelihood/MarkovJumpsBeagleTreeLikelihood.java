@@ -9,6 +9,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
@@ -81,8 +82,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             markovjumps.add(new MarkovJumpsSubstitutionModel(substitutionModel, type));
         }
         setupRegistration(numRegisters);
-        numRegisters++;
-        jumpTag.add(addRegisterParameter.getId());
+
+        final String tag = addRegisterParameter.getId();
+
+        jumpTag.add(tag);
         expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 
         boolean[] oldScaleByTime = this.scaleByTime;
@@ -92,26 +95,28 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             System.arraycopy(oldScaleByTime, 0, this.scaleByTime, 0, oldScaleByTimeLength);
         }
         this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
-    }
 
-    public String[] getNodeAttributeLabel() {
-        String[] old = super.getNodeAttributeLabel();
-        String[] rtn = new String[old.length + numRegisters];
-        System.arraycopy(old, 0, rtn, 0, old.length);
-        for (int r = 0; r < numRegisters; r++) {
-            rtn[old.length + r] = jumpTag.get(r);
-        }
-        return rtn;
-    }
+        final int r = numRegisters;
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        String[] old = super.getAttributeForNode(tree, node);
-        String[] rtn = new String[old.length + numRegisters];
-        System.arraycopy(old, 0, rtn, 0, old.length);
-        for (int r = 0; r < numRegisters; r++) {
-            rtn[old.length + r] = formattedValue(getMarkovJumpsForNodeAndRegister(tree, node, r));
-        }
-        return rtn;
+        treeTraits.addTrait( new TreeTrait.D() {
+                    public String getTraitName() {
+                        return tag;
+                    }
+
+                    public Intent getIntent() {
+                        return Intent.NODE;
+                    }
+
+                    public int getDimension() {
+                        return 1;
+                    }
+
+                    public Double[] getTrait(Tree tree, NodeRef node) {
+                        return toArray(getMarkovJumpsForNodeAndRegister(tree, node, r));
+                    }
+                });
+
+        numRegisters++;
     }
 
     public double[] getMarkovJumpsForNodeAndRegister(Tree tree, NodeRef node, int whichRegister) {

@@ -26,7 +26,7 @@ import java.util.*;
  * @author Joseph Heled
  *         Date: 24/05/2008
  */
-public class SpeciesTreeModel extends AbstractModel implements MutableTree, NodeAttributeProvider, TreeLogger.LogUpon, Scalable {
+public class SpeciesTreeModel extends AbstractModel implements MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable {
     private final SimpleTree spTree;
     private final SpeciesBindings species;
     private final Map<NodeRef, NodeProperties> props = new HashMap<NodeRef, NodeProperties>();
@@ -1066,19 +1066,38 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Node
         return false;
     }
 
-    public String[] getNodeAttributeLabel() {
-        // keep short, repeated endlessly in tree log
-        return new String[]{"dmf"};
+    TreeTrait dmf = new TreeTrait.S() {
+        public String getTraitName() {
+            return "dmf";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public String[] getTrait(Tree tree, NodeRef node) {
+            assert tree == SpeciesTreeModel.this;
+
+            //final VDdemographicFunction df = getProps().get(node).demogf;
+
+            final DemographicFunction df = getNodeDemographic(node);
+            return new String[] { df.toString() };
+        }
+    };
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { dmf };
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        assert tree == this;
-
-        //final VDdemographicFunction df = getProps().get(node).demogf;
-
-        final DemographicFunction df = getNodeDemographic(node);
-        return new String[]{"{" + df.toString() + "}"};
+    public TreeTrait getTreeTrait(String key) {
+        // ignore the key - it must be the one they wanted, no?
+        return dmf;
     }
+
 
     // boring delegation
     public SimpleTree getSimpleTree() {

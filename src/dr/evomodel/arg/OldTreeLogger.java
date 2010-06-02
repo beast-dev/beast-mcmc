@@ -179,10 +179,10 @@ public class OldTreeLogger extends MCLogger {
 
             if (substitutions) {
                 Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
-                        null, branchRateModel, null, null, null, buffer);
+                        null, branchRateModel, null, null, buffer);
             } else {
                 Tree.Utils.newick(printTree, printTree.getRoot(), useTaxonLabels(), Tree.BranchLengthType.LENGTHS_AS_TIME,
-                        null, branchRateModel, null, null, null, buffer);
+                        null, branchRateModel, null, null, buffer);
             }
 
             buffer.append(";");

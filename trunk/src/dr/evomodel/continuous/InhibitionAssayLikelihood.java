@@ -1,6 +1,5 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -22,7 +21,7 @@ import java.util.logging.Logger;
  */
 
 
-public class InhibitionAssayLikelihood extends AbstractModelLikelihood implements NodeAttributeProvider {
+public class InhibitionAssayLikelihood extends AbstractModelLikelihood /*implements NodeAttributeProvider*/ {
 
     public static final String TRAIT_LIKELIHOOD = "inhibitionLikelihood";
     public static final String TRAIT_NAME = "traitName";

@@ -1,8 +1,9 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -30,7 +31,7 @@ import java.util.logging.Logger;
  */
 
 public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelLikelihood
-        implements NodeAttributeProvider, Citable {
+        implements TreeTraitProvider, Citable {
 
     public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
     public static final String TRAIT_NAME = "traitName";
@@ -141,8 +142,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     protected abstract String extraInfo();
 
-    public String getTraitName() {
-        return traitName;
+    public CompoundParameter getTraitParameter() {
+        return traitParameter;
     }
 
     public double getRescaledBranchLength(NodeRef node) {
@@ -314,6 +315,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return treeModel;
     }
 
+    public String getTraitName() {
+        return traitName;
+    }
+
     public MultivariateDiffusionModel getDiffusionModel() {
         return diffusionModel;
     }
@@ -373,20 +378,64 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     // Loggable IMPLEMENTATION
     // **************************************************************
 
-    private String[] attributeLabel = null;
+    private TreeTrait[] treeTraits = null;
 
-    public String[] getNodeAttributeLabel() {
-        if (attributeLabel == null) {
-            double[] trait = getRootNodeTrait();
-            if (trait.length == 1 || reportAsMultivariate)
-                attributeLabel = new String[]{traitName};
-            else {
-                attributeLabel = new String[trait.length];
-                for (int i = 1; i <= trait.length; i++)
-                    attributeLabel[i - 1] = traitName + i;
+    public TreeTrait[] getTreeTraits() {
+        if (treeTraits == null) {
+            final double[] trait = getRootNodeTrait();
+            if (trait.length == 1 || reportAsMultivariate) {
+                treeTraits = new TreeTrait[] {
+                        new TreeTrait<Double>() {
+                            public String getTraitName() {
+                                return traitName;
+                            }
+
+                            public Intent getIntent() {
+                                return Intent.NODE;
+                            }
+
+                            public Class getTraitClass() {
+                                return Double.class;
+                            }
+
+                            public int getDimension() {
+                                return trait.length;
+                            }
+
+                            public Double[] getTrait(Tree tree, NodeRef node) {
+                                double trait[] = getTraitForNode(tree, node, traitName);
+                                Double[] values = new Double[trait.length];
+                                    for (int i = 0; i < trait.length; i++) {
+                                        values[i] = trait[i];
+                                    }
+                                return values;
+                            }
+
+                            public String[] getTraitString(Tree tree, NodeRef node) {
+                                double trait[] = getTraitForNode(treeModel, node, traitName);
+                                String[] values = new String[trait.length];
+                                for (int i = 0; i < trait.length; i++) {
+                                    values[i] = Double.toString(trait[i]);
+                                }
+                                return values;
+                            }
+                        }
+                };
+            } else {
+                throw new RuntimeException("Reporting of traits is only supported as multivariate");
             }
         }
-        return attributeLabel;
+        return treeTraits;
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        TreeTrait[] tts = getTreeTraits();
+        for (TreeTrait tt : tts) {
+            if (tt.getTraitName().equals(key)) {
+                return tt;
+            }
+        }
+        return null;
     }
 
     protected double[] getRootNodeTrait() {
@@ -394,23 +443,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     public abstract double[] getTraitForNode(Tree tree, NodeRef node, String traitName);
-
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        double trait[] = getTraitForNode(treeModel, node, traitName);
-        String[] value;
-        if (!reportAsMultivariate || trait.length == 1) {
-            value = new String[trait.length];
-            for (int i = 0; i < trait.length; i++)
-                value[i] = Double.toString(trait[i]);
-        } else {
-            StringBuffer sb = new StringBuffer("{");
-            for (int i = 0; i < trait.length - 1; i++)
-                sb.append(Double.toString(trait[i])).append(",");
-            sb.append(Double.toString(trait[trait.length - 1])).append("}");
-            value = new String[]{sb.toString()};
-        }
-        return value;
-    }
 
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)

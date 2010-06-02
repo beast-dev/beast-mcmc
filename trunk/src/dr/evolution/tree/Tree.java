@@ -820,7 +820,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newick(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -838,24 +838,23 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
             format.setMaximumFractionDigits(dp);
 
-            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, format, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, format, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
 
-        public static String newick(Tree tree, BranchRateProvider branchRateProvider) {
+        public static String newick(Tree tree, BranchRates branchRates) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_SUBSTITUTIONS, null, branchRateProvider, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_SUBSTITUTIONS, null, branchRates, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
 
         public static String newick(Tree tree,
-                                    NodeAttributeProvider[] nodeAttributeProviders,
-                                    BranchAttributeProvider[] branchAttributeProviders
+                                    TreeTraitProvider[] treeTraitProviders
         ) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, nodeAttributeProviders, branchAttributeProviders, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.LENGTHS_AS_TIME, null, null, treeTraitProviders, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -865,7 +864,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          */
         public static String newickNoLengths(Tree tree) {
             StringBuffer buffer = new StringBuffer();
-            newick(tree, tree.getRoot(), true, BranchLengthType.NO_BRANCH_LENGTHS, null, null, null, null, null, buffer);
+            newick(tree, tree.getRoot(), true, BranchLengthType.NO_BRANCH_LENGTHS, null, null, null, null, buffer);
             buffer.append(";");
             return buffer.toString();
         }
@@ -877,17 +876,15 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @param node                     The node [tree.getRoot()]
          * @param labels                   whether labels or numbers should be used
          * @param lengths                  What type of branch lengths: NO_BRANCH_LENGTHS, LENGTHS_AS_TIME, LENGTHS_AS_SUBSTITUTIONS
-         * @param branchRateProvider        An optional BranchRateProvider (or null) used to scale branch times into substitutions
-         * @param nodeAttributeProviders   An array of NodeAttributeProviders
-         * @param branchAttributeProviders An array of BranchAttributeProviders
+         * @param branchRates              An optional BranchRates (or null) used to scale branch times into substitutions
+         * @param treeTraitProviders       An array of TreeTraitProvider
          * @param format                   formatter for branch lengths
          * @param idMap                    A map if id names to integers that is used to overide node labels when present
          * @param buffer                   The StringBuffer
          */
         public static void newick(Tree tree, NodeRef node, boolean labels, BranchLengthType lengths, NumberFormat format,
-                                  BranchRateProvider branchRateProvider,
-                                  NodeAttributeProvider[] nodeAttributeProviders,
-                                  BranchAttributeProvider[] branchAttributeProviders,
+                                  BranchRates branchRates,
+                                  TreeTraitProvider[] treeTraitProviders,
                                   Map<String, Integer> idMap, StringBuffer buffer) {
 
             NodeRef parent = tree.getParent(node);
@@ -906,77 +903,32 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             } else {
                 buffer.append("(");
                 newick(tree, tree.getChild(node, 0), labels, lengths, format,
-                        branchRateProvider,
-                        nodeAttributeProviders,
-                        branchAttributeProviders, idMap,
+                        branchRates,
+                        treeTraitProviders, idMap,
                         buffer);
                 for (int i = 1; i < tree.getChildCount(node); i++) {
                     buffer.append(",");
                     newick(tree, tree.getChild(node, i), labels, lengths, format,
-                            branchRateProvider,
-                            nodeAttributeProviders,
-                            branchAttributeProviders, idMap,
+                            branchRates,
+                            treeTraitProviders, idMap,
                             buffer);
                 }
                 buffer.append(")");
             }
 
-            if (nodeAttributeProviders != null) {
-                boolean hasAttribute = false;
-                for (NodeAttributeProvider nap : nodeAttributeProviders) {
-                    String[] attributeLabel = nap.getNodeAttributeLabel();
-                    String[] attributeValue = nap.getAttributeForNode(tree, node);
-                    for (int i = 0; i < attributeLabel.length; i++) {
-
-                        if (!hasAttribute) {
-                            buffer.append("[&");
-                            hasAttribute = true;
-                        } else {
-                            buffer.append(",");
-                        }
-                        buffer.append(attributeLabel[i]);
-                        buffer.append("=");
-                        buffer.append(attributeValue[i]);
-                    }
-
-//                    buffer.append(nap.getNodeAttributeLabel());
-//                    buffer.append("=");
-//                    buffer.append(nap.getAttributeForNode(tree, node));
-
-                }
-                if (hasAttribute) {
-                    buffer.append("]");
-                }
-            }
+            writeTreeTraits(buffer, tree, node, treeTraitProviders, TreeTrait.Intent.NODE);
 
             if (parent != null && lengths != BranchLengthType.NO_BRANCH_LENGTHS) {
                 buffer.append(":");
-                if (branchAttributeProviders != null) {
-                    boolean hasAttribute = false;
-                    for (BranchAttributeProvider bap : branchAttributeProviders) {
-                        if (!hasAttribute) {
-                            buffer.append("[&");
-                            hasAttribute = true;
-                        } else {
-                            buffer.append(",");
-                        }
-                        buffer.append(bap.getBranchAttributeLabel());
-                        buffer.append("=");
-                        buffer.append(bap.getAttributeForBranch(tree, node));
-
-                    }
-                    if (hasAttribute) {
-                        buffer.append("]");
-                    }
-                }
+                writeTreeTraits(buffer, tree, node, treeTraitProviders, TreeTrait.Intent.BRANCH);
 
                 if (lengths != BranchLengthType.NO_BRANCH_LENGTHS) {
                     double length = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
                     if (lengths == BranchLengthType.LENGTHS_AS_SUBSTITUTIONS) {
-                        if (branchRateProvider == null) {
-                            throw new IllegalArgumentException("No BranchRateProvider provided");
+                        if (branchRates == null) {
+                            throw new IllegalArgumentException("No BranchRates provided");
                         }
-                        length *= branchRateProvider.getBranchRate(tree, node);
+                        length *= branchRates.getBranchRate(tree, node);
                     }
                     String lengthString;
                     if (format != null) {
@@ -990,6 +942,44 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             }
         }
 
+        private static void writeTreeTraits(StringBuffer buffer, Tree tree, NodeRef node, TreeTraitProvider[] treeTraitProviders, TreeTrait.Intent intent) {
+            if (treeTraitProviders != null) {
+                boolean hasAttribute = false;
+                for (TreeTraitProvider ttp : treeTraitProviders) {
+                    TreeTrait[] tts = ttp.getTreeTraits();
+                    for (TreeTrait treeTrait: tts) {
+                        if (treeTrait.getIntent() == intent && treeTrait.getDimension() > 0) {
+                            if (!hasAttribute) {
+                                buffer.append("[&");
+                                hasAttribute = true;
+                            } else {
+                                buffer.append(",");
+                            }
+                            buffer.append(treeTrait.getTraitName());
+                            buffer.append("=");
+
+                            String[] values = treeTrait.getTraitString(tree, node);
+
+                            if (treeTrait.getDimension() > 1) {
+                                buffer.append("{");
+                                buffer.append(values[0]);
+                                for (int i = 1; i < values.length; i++) {
+                                    buffer.append(",");
+                                    buffer.append(values[i]);
+                                }
+                                buffer.append("}");
+                            } else {
+                                buffer.append(values[0]);
+                            }
+                        }
+
+                    }
+                }
+                if (hasAttribute) {
+                    buffer.append("]");
+                }
+            }
+        }
         /**
          * Recursive function for constructing a newick tree representation in the given buffer.
          */

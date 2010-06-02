@@ -23,13 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app;
+package dr.app.tools;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.MigrateTreeImporter;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 
 import java.io.*;
 
@@ -70,30 +71,36 @@ public class ConvertMigrateTrees {
 
         PrintWriter out = new PrintWriter(new FileWriter(filename));
 
-        NodeAttributeProvider popAttributes = new NodeAttributeProvider() {
-
-            public String[] getNodeAttributeLabel() {
-                return new String[]{LABEL};
+        TreeTraitProvider.Helper popAttributes = new TreeTraitProvider.Helper();
+        popAttributes.addTrait( new TreeTrait.S() {
+            public String getTraitName() {
+                return LABEL;
             }
 
-            public String[] getAttributeForNode(Tree tree, NodeRef node) {
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public String[] getTrait(Tree tree, NodeRef node) {
                 Object attribute = tree.getNodeAttribute(node, MigrateTreeImporter.POP);
                 if (attribute == null) {
-
                     throw new RuntimeException(MigrateTreeImporter.POP + " is null for node " + node.getNumber());
                 }
 
                 String output = (forceDiscrete ? "d" : "") + attribute.toString();
 
-                return new String[]{output};
+                return new String[]{ output };
             }
-        };
+        });
 
         writeNexusHeader(out);
         for (int i = 0; i < trees.length; i++) {
-
             out.println("tree tree_" + i + " = " +
-                    Tree.Utils.newick(trees[i], new NodeAttributeProvider[]{popAttributes}, null));
+                    Tree.Utils.newick(trees[i], new TreeTraitProvider[] { popAttributes}));
         }
         out.println("end;");
 

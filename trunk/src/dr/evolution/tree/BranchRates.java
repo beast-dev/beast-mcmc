@@ -30,9 +30,9 @@ package dr.evolution.tree;
  * Time: 1:59:24 PM
  *
  * @author Andrew Rambaut
- * @version $Id: BranchRateProvider.java,v 1.2 2005/03/22 21:51:51 rambaut Exp $
+ * @version $Id: BranchRates.java,v 1.2 2005/03/22 21:51:51 rambaut Exp $
  */
-public interface BranchRateProvider {
+public interface BranchRates {
 
     double getBranchRate(final Tree tree, final NodeRef node);
 }

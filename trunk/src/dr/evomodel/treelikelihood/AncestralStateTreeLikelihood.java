@@ -6,6 +6,7 @@ import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
@@ -15,7 +16,8 @@ import dr.math.MathUtils;
 /**
  * @author Marc A. Suchard
  */
-public class AncestralStateTreeLikelihood extends TreeLikelihood implements TreeTrait<int[]> {
+public class AncestralStateTreeLikelihood extends TreeLikelihood implements TreeTraitProvider {
+    public static final String STATES_KEY = "states";
 
 //    private boolean useExtraReconstructedStates = false;
 
@@ -39,8 +41,8 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                         SiteModel siteModel, BranchRateModel branchRateModel,
                                         boolean useAmbiguities, boolean storePartials,
-                                        DataType dataType,
-                                        String tag,
+                                        final DataType dataType,
+                                        final String tag,
                                         boolean forceRescaling,
                                         boolean useMAP,
                                         boolean returnML) {
@@ -54,6 +56,32 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
 
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
+
+        treeTraits.addTrait(STATES_KEY, new TreeTrait<int[]>() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public int[][] getTrait(Tree tree, NodeRef node) {
+                return new int[][] { getStatesForNode(tree,node) };
+            }
+
+            public String[] getTraitString(Tree tree, NodeRef node) {
+                return new String[]{ formattedState(getStatesForNode(tree,node), dataType) };
+            }
+        });
     }
 
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,
@@ -89,32 +117,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         areStatesRedrawn = storedAreStatesRedrawn;
         jointLogLikelihood = storedJointLogLikelihood;
     }
-
-    public String getTraitName() {
-        return tag;
-    }
-
-    public Intent getIntent() {
-        return Intent.NODE;
-    }
-
-    public Class getTraitClass() {
-        return null;
-    }
-
-    public int getDimension() {
-        return 1;
-    }
-
-    public int[][] getTrait(Tree tree, NodeRef node) {
-        return new int[][]{getStatesForNode(tree, node)};
-    }
-
-
-    public String[] getTraitString(Tree tree, NodeRef node) {
-        return new String[]{formattedState(getStatesForNode(tree, node), dataType)};
-    }
-
 
     public DataType getDataType() {
         return dataType;
@@ -163,6 +165,17 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         redrawAncestralStates();
         return jointLogLikelihood;
     }
+
+    protected TreeTraitProvider.Helper treeTraits = new Helper();
+
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
+    }
+
 
     private static String formattedState(int[] state, DataType dataType) {
         StringBuffer sb = new StringBuffer();

@@ -25,7 +25,6 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;

@@ -1,8 +1,6 @@
 package dr.evomodel.continuous;
 
 import dr.xml.*;
-//import dr.math.matrixAlgebra.Vector;
-import dr.evolution.tree.BranchAttributeProvider;
 
 /*
  * @author Marc Suchard
@@ -48,7 +46,7 @@ public class BranchDirectionAttributeProvider extends BivariateTraitBranchAttrib
          }
 
          public Class getReturnType() {
-             return BranchAttributeProvider.class;
+             return BivariateTraitBranchAttributeProvider.class;
          }
 
          public String getParserName() {

@@ -39,12 +39,12 @@ public class AncestralTraitParser extends AbstractXMLObjectParser {
         TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
         TreeTraitProvider treeTraitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
 
-        TreeTrait ancestralState = treeTraitProvider.getTreeTrait(traitName);
-        if (ancestralState == null) {
+        TreeTrait trait = treeTraitProvider.getTreeTrait(traitName);
+        if (trait == null) {
             throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with name " + xo.getId());
         }
         try {
-            return new AncestralTrait(name, ancestralState, tree, taxa);
+            return new AncestralTrait(name, trait, tree, taxa);
         } catch (Tree.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }

@@ -29,10 +29,10 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.parsimony.FitchParsimony;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -48,12 +48,18 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  */
 public class DiscreteTraitRateModel extends AbstractBranchRateModel {
+    enum Mode {
+        NODE_STATES,
+        DWELL_TIMES,
+        PARSIMONY
+    }
 
     public static final String DISCRETE_TRAIT_RATE_MODEL = "discreteTraitRateModel";
     public static final String RATES = "rates";
     public static final String TRAIT_INDEX = "traitIndex";
+    public static final String TRAIT_NAME = "traitName";
 
-    private AncestralStateTreeLikelihood ancestors;
+    private TreeTrait trait = null;
     private Parameter ratesParameter;
     private int traitIndex;
     private boolean normKnown = false;
@@ -66,10 +72,17 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
     private boolean treeChanged = true;
     private boolean shouldRestoreTree = false;
 
-    private boolean fitch;
+    private Mode mode;
 
 //    private int treeInitializeCounter = 0;
 
+    /**
+     * A constructor for the (crude) parsimony reconstruction form of this class.
+     * @param treeModel
+     * @param patternList
+     * @param traitIndex
+     * @param ratesParameter
+     */
     public DiscreteTraitRateModel(TreeModel treeModel, PatternList patternList, int traitIndex, Parameter ratesParameter) {
 
         this(treeModel, traitIndex, ratesParameter);
@@ -79,7 +92,44 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         }
 
         fitchParsimony = new FitchParsimony(patternList, false);
-        fitch = true;
+        mode = Mode.PARSIMONY;
+    }
+
+    /**
+     * A constructor for a node-sampled discrete trait
+     * @param treeModel
+     * @param trait
+     * @param traitIndex
+     * @param ratesParameter
+     */
+    public DiscreteTraitRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex, Parameter ratesParameter) {
+
+        this(treeModel, traitIndex, ratesParameter);
+
+//        if (trait.getTreeModel() != treeModel)
+//            throw new IllegalArgumentException("Tree Models for ancestral state tree likelihood and target model of these rates must match!");
+
+        this.trait = trait;
+
+        if (trait.getClass().equals(Integer.class)) {
+            // Assume the trait is one or more discrete traits reconstructed at nodes
+            mode = Mode.NODE_STATES;
+            if (traitIndex < 0 || traitIndex >= trait.getDimension()) {
+                throw new IllegalArgumentException("The trait index must be within the dimension of the trait.");
+            }
+        } else if (trait.getClass().equals(double[].class)) {
+            // Assume the trait itself is the dwell times for the individual states on the branch above the node
+            mode = Mode.DWELL_TIMES;
+            if (trait.getDimension() != ratesParameter.getDimension()) {
+                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
+            }
+        } else {
+            throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
+        }
+
+        if (trait instanceof Model) {
+            addModel((Model)trait);
+        }
     }
 
     private DiscreteTraitRateModel(TreeModel treeModel, int traitIndex, Parameter ratesParameter) {
@@ -88,23 +138,6 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         this.traitIndex = traitIndex;
         this.ratesParameter = ratesParameter;
         addVariable(ratesParameter);
-    }
-
-    public DiscreteTraitRateModel(TreeModel treeModel, AncestralStateTreeLikelihood like, int traitIndex, Parameter ratesParameter) {
-
-        this(treeModel, traitIndex, ratesParameter);
-
-        if (like.getTreeModel() != treeModel)
-            throw new IllegalArgumentException("Tree Models for ancestral state tree likelihood and target model of these rates must match!");
-
-        ancestors = like;
-
-        if (like.getDataType().getStateCount() != ratesParameter.getDimension())
-            throw new IllegalArgumentException("ancestral likelihood datatype must have same size as rates parameter!");
-
-        addModel(like);
-
-        fitch = false;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -142,11 +175,14 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-        if (!normKnown) {
-            norm = calculateNorm(tree);
-            normKnown = true;
-        }
-        return getRawBranchRate(tree, node) / norm;
+//        if (!normKnown) {
+//            norm = calculateNorm(tree);
+//            normKnown = true;
+//        }
+//        return getRawBranchRate(tree, node) / norm;
+
+        // AR - I am not sure the normalization is required here?
+        return getRawBranchRate(tree, node);
     }
 
     double calculateNorm(Tree tree) {
@@ -172,7 +208,34 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
     double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
-        if (fitch) {
+        double[] dwellTimes;
+        if (mode == Mode.DWELL_TIMES) {
+            dwellTimes = ((double[][])trait.getTrait(tree, node))[0];
+        } else {
+            dwellTimes = getDwellTimes(tree, node);
+        }
+
+        double totalTime = 0;
+        for (int i = 0; i < ratesParameter.getDimension(); i++) {
+            rate = ratesParameter.getParameterValue(i) * dwellTimes[i];
+            totalTime += dwellTimes[i];
+        }
+        rate /= totalTime;
+
+        return rate;
+    }
+
+    private double[] getDwellTimes(final Tree tree, final NodeRef node) {
+
+        double[] dwellTimes = new double[ratesParameter.getDimension()];
+        double branchTime = tree.getBranchLength(node);
+
+        if (mode == Mode.PARSIMONY) {
+            // an approximation to dwell times using parsimony, assuming
+            // the state changes midpoint on the tree. Does a weighted
+            // average of the equally parsimonious state reconstructions
+            // at the top and bottom of each branch.
+
             if (treeChanged) {
                 fitchParsimony.initialize(tree);
                 // Debugging test to count work
@@ -182,17 +245,31 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 //                }
                 treeChanged = false;
             }
-            int[] traits = fitchParsimony.getStates(tree, node);
-            for (int trait : traits) {
-                rate += ratesParameter.getParameterValue(trait);
-            }
-            rate /= traits.length;
+            int[] states = fitchParsimony.getStates(tree, node);
+            int[] parentStates = fitchParsimony.getStates(tree, tree.getParent(node));
 
-        } else {
-            int trait = ancestors.getStatesForNode(tree, node)[traitIndex];
-            rate = ratesParameter.getParameterValue(trait);
+            for (int state : states) {
+                dwellTimes[state] += branchTime / 2;
+            }
+            for (int state : parentStates) {
+                dwellTimes[state] += branchTime / 2;
+            }
+
+            for (int i = 0; i < dwellTimes.length; i++) {
+                // normalize by the number of equally parsimonious states at each end of the branch
+                // dwellTimes should add up to the total branch length
+                dwellTimes[i] /= (states.length + parentStates.length) / 2;
+            }
+        } else if (mode == Mode.NODE_STATES) {
+            // if the states are being sampled - then there is only one possible state at each
+            // end of the branch.
+            int state = (Integer)trait.getTrait(tree, node)[traitIndex];
+            dwellTimes[state] += branchTime / 2;
+            int parentState = (Integer)trait.getTrait(tree, node)[traitIndex];
+            dwellTimes[parentState] += branchTime / 2;
         }
-        return rate;
+
+        return dwellTimes;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -207,20 +284,27 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-            AncestralStateTreeLikelihood ancestors = (AncestralStateTreeLikelihood) xo.getChild(AncestralStateTreeLikelihood.class);
+            TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
 
             Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
             int traitIndex = xo.getAttribute(TRAIT_INDEX, 1) - 1;
+            String traitName = xo.getAttribute(TRAIT_NAME, "states");
 
             Logger.getLogger("dr.evomodel").info("Using discrete trait branch rate model.\n" +
                     "\tIf you use this model, please cite:\n" +
                     "\t\tDrummond and Suchard (in preparation)");
 
-            if (ancestors == null) {
+            if (traitProvider == null) {
+                // Use the version that reconstructs the trait using parsimony:
                 return new DiscreteTraitRateModel(treeModel, patternList, traitIndex, ratesParameter);
             } else {
-                return new DiscreteTraitRateModel(treeModel, ancestors, traitIndex, ratesParameter);
+                TreeTrait trait = traitProvider.getTreeTrait(traitName);
+                if (trait == null) {
+                    throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
+                }
+
+                return new DiscreteTraitRateModel(treeModel, trait, traitIndex, ratesParameter);
             }
         }
 
@@ -230,7 +314,7 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
         public String getParserDescription() {
             return
-                    "This Branch Rate Model takes a discrete trait reconstruction (provided by AncestralStateTreeLikelihood) and " +
+                    "This Branch Rate Model takes a discrete trait reconstruction (provided by a TreeTraitProvider) and " +
                             "gives the rate for each branch of the tree based on the child trait of " +
                             "that branch. The rates for each trait value are specified in a multidimensional parameter.";
         }
@@ -246,10 +330,11 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class, "The tree model"),
                 new XORRule(
-                        new ElementRule(AncestralStateTreeLikelihood.class, "The colour sampler model"),
+                        new ElementRule(TreeTraitProvider.class, "The trait provider"),
                         new ElementRule(PatternList.class)),
                 new ElementRule(RATES, Parameter.class, "The rates of the different trait values", false),
-                AttributeRule.newIntegerRule(TRAIT_INDEX, true)
+                AttributeRule.newIntegerRule(TRAIT_INDEX, true),
+                AttributeRule.newStringRule(TRAIT_NAME, true)
         };
     };
 

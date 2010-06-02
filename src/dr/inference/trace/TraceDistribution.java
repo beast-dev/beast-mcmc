@@ -317,6 +317,28 @@ public class TraceDistribution<T> {
             return i;
         }
 
+        public boolean credibleSetContains(int valueORIndex) {
+            return contains(credibleSet, valueORIndex);
+        }
+
+        public boolean inCredibleSetContains(int valueORIndex) {
+            return contains(inCredibleSet, valueORIndex);
+        }
+
+        private boolean contains(List<T> list, int valueORIndex) {
+            if (values[0] instanceof Integer) {
+                return list.contains(valueORIndex);
+            } else { // String
+                String valueString = null;
+                int i = -1;
+                for (T v : new TreeSet<T>(valuesMap.keySet())) {
+                    i++;
+                    if (i == valueORIndex) valueString = v.toString();
+                }
+                return list.contains(valueString);
+            }
+        }
+
         public T getMode() {
             return mode;
         }
@@ -343,7 +365,7 @@ public class TraceDistribution<T> {
             }
         }
 
-        private String getSet(List<T> list) {
+        private String printSet(List<T> list) {
             String line = "{";
             for (T value : list) {
                 line = line + value + ", ";
@@ -356,12 +378,12 @@ public class TraceDistribution<T> {
             return line;
         }
 
-        public String getCredibleSet() {
-            return getSet(credibleSet);
+        public String printCredibleSet() {
+            return printSet(credibleSet);
         }
 
-        public String getInCredibleSet() {
-            return getSet(inCredibleSet);
+        public String printInCredibleSet() {
+            return printSet(inCredibleSet);
         }
     }
 

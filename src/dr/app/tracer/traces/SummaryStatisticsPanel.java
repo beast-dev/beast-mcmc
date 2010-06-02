@@ -281,7 +281,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
                             return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]"; 
                         } else {
-                            return tc.credSet.getCredibleSet();
+                            return tc.credSet.printCredibleSet();
                         }
                     case 7:
                         value = tc.getACT();
@@ -293,7 +293,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
                             return "-";
                         } else {
-                            return tc.credSet.getInCredibleSet();
+                            return tc.credSet.printInCredibleSet();
                         }
 
                 }

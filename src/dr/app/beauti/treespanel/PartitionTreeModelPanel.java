@@ -25,6 +25,7 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
@@ -32,10 +33,15 @@ import dr.app.beauti.options.*;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
+import dr.gui.tree.JTreeDisplay;
+import dr.gui.tree.JTreePanel;
+import dr.gui.tree.SquareTreePainter;
 import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.*;
 
 /**
@@ -54,8 +60,10 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JComboBox userTreeCombo = new JComboBox();
 
     private ButtonGroup treeFormatButtonGroup = new ButtonGroup();
-    private JRadioButton newickJRadioButton = new JRadioButton("Newick Tree Format in XML");
-    private JRadioButton simpleJRadioButton = new JRadioButton("Simple Tree Format in XML");
+    private JRadioButton newickJRadioButton = new JRadioButton("Generate Newick Starting Tree");
+    private JRadioButton simpleJRadioButton = new JRadioButton("Generate XML Starting Tree");
+
+    private JButton treeDisplayButton = new JButton("Display Selected Tree");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
@@ -66,7 +74,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(PartitionTreeModel parTreeModel, BeautiOptions options) {
+    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel parTreeModel, BeautiOptions options) {
         super(12, 18);
 
         this.partitionTreeModel = parTreeModel;
@@ -96,9 +104,36 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(treeDisplayButton);
+        treeDisplayButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                SquareTreePainter treePainter = new SquareTreePainter();
+                treePainter.setColorAttribute("color");
+                treePainter.setLineAttribute("line");
+//        treePainter.setShapeAttribute("shape");
+                treePainter.setLabelAttribute("label");
+                Tree tree = getSelectedUserTree();
+                JTreeDisplay treeDisplay = new JTreeDisplay(treePainter, tree);
+
+                JTreePanel treePanel = new JTreePanel(treeDisplay);
+
+                JOptionPane optionPane = new JOptionPane(treePanel,
+                        JOptionPane.PLAIN_MESSAGE,
+                        JOptionPane.OK_CANCEL_OPTION,
+                        null,
+                        null,
+                        null);
+                optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+                final JDialog dialog = optionPane.createDialog(parent, "Display the selected starting tree - " + tree.getId());
+                dialog.setSize(600, 400);
+                dialog.setResizable(true);
+                dialog.setVisible(true);
+            }
+        });
+
         treeFormatButtonGroup.add(newickJRadioButton);
         treeFormatButtonGroup.add(simpleJRadioButton);
-
         ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreeModel.setNewick(newickJRadioButton.isSelected());
@@ -106,12 +141,12 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         };
         newickJRadioButton.addItemListener(itemListener);
         simpleJRadioButton.addItemListener(itemListener);
-        
+
         setupPanel();
     }
 
     private void fireUserTreeChanged() {
-        partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
+        partitionTreeModel.setUserStartingTree(getSelectedUserTree());
     }
 
     private void setupPanel() {
@@ -146,10 +181,12 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.setEnabled(true);
             }
 
+            addComponent(treeDisplayButton);
             addComponent(newickJRadioButton);
             addComponent(simpleJRadioButton);
             newickJRadioButton.setSelected(partitionTreeModel.isNewick());
 //            simpleJRadioButton.setSelected(!partitionTreeModel.isNewick());
+
         }
 
 //		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
@@ -195,7 +232,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 //    	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
     }
 
-    private Tree getSelectedUserTree(BeautiOptions options) {
+    private Tree getSelectedUserTree() {
         String treeId = (String) userTreeCombo.getSelectedItem();
         for (Tree tree : options.userTrees) {
             if (tree.getId().equals(treeId)) {

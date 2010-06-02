@@ -2,7 +2,6 @@ package dr.evomodelxml;
 
 import dr.xml.*;
 import dr.evomodel.tree.WanderingTaxonLogger;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.util.Taxon;
 
 /**
@@ -39,7 +38,7 @@ public class WanderingTaxonLoggerParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return NodeAttributeProvider.class;
+        return WanderingTaxonLogger.class;
     }
 
     public String getParserName() {

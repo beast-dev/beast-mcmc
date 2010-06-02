@@ -25,9 +25,10 @@
 
 package dr.evomodel.ibd;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
@@ -46,7 +47,7 @@ import dr.xml.*;
  * Date: 04-Aug-2008
  * Time: 13:46:33
  */
-public class IBDReporter extends AbstractModel implements NodeAttributeProvider {
+public class IBDReporter extends AbstractModel implements TreeTraitProvider {
 
     protected double[] ibdweights;
     protected double[][] ibdForward;
@@ -169,20 +170,50 @@ public class IBDReporter extends AbstractModel implements NodeAttributeProvider 
         diagonalRates[3] = ((freq[0] + freq[2]) + freq[1] * kappa) * mutationRate * beta;
     }
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{"IBDWeight"};
+    TreeTrait ibdWeight = new TreeTrait.D() {
+        public String getTraitName() {
+            return "IBDWeight";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public Double[] getTrait(Tree tree, NodeRef node) {
+            if (!weightsKnown) {
+                expectedIBD();
+                weightsKnown = true;
+            }
+            if (tree.isExternal(node)) {
+                return new Double[] { getIBDWeight(tree, node) };
+            }
+            return new Double[0];
+        }
+    };
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { ibdWeight };
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
+    public TreeTrait getTreeTrait(String key) {
+        // ignore the key - it must be the one they wanted, no?
+        return ibdWeight;
+    }
+
+    private double getIBDWeight(Tree tree, NodeRef node) {
         if (!weightsKnown) {
             expectedIBD();
             weightsKnown = true;
         }
         if (tree.isExternal(node)) {
             int nodeNum = node.getNumber();
-            return new String[]{Double.toString(ibdweights[nodeNum] + 1)};
+            return ibdweights[nodeNum] + 1;
         }
-        return new String[]{""};
+        return 0;
     }
 
     /**
@@ -260,4 +291,5 @@ public class IBDReporter extends AbstractModel implements NodeAttributeProvider 
 
     protected void acceptState() {
     }
+
 }

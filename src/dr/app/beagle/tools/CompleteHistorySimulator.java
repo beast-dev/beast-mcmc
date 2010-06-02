@@ -6,9 +6,10 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
  * @author remco@cs.waikato.ac.nz
  */
 public class CompleteHistorySimulator extends SimpleAlignment
-        implements MarkovJumpsRegisterAcceptor, NodeAttributeProvider {
+        implements MarkovJumpsRegisterAcceptor, TreeTraitProvider {
 
     /**
      * number of replications
@@ -139,7 +140,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
             sb.append("' with values from '");
             sb.append(branchPossibleValuesParameter.getId());
             sb.append("'");
-            Logger.getLogger("dr.app.beagle.tools").info(sb.toString());            
+            Logger.getLogger("dr.app.beagle.tools").info(sb.toString());
         }
     }
 
@@ -184,10 +185,33 @@ public class CompleteHistorySimulator extends SimpleAlignment
             realizedJumps = new ArrayList<double[][]>();
         }
 
+        final String tag = addRegisterParameter.getId();
+
         registers.add(addRegisterParameter.getParameterValues());
-        jumpTags.add(addRegisterParameter.getId());
+        jumpTags.add(tag);
         jumpTypes.add(type);
         realizedJumps.add(new double[tree.getNodeCount()][nReplications]);
+
+        final int r = nJumpProcesses;
+
+        treeTraits.addTrait(new TreeTrait.S() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public String[] getTrait(Tree tree, NodeRef node) {
+                return new String[] { formattedValue(tree, node, r) };
+            }
+        });
+
         nJumpProcesses++;
 
         // scaleByTime is currently ignored
@@ -212,26 +236,14 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //        return rtn;
 //    }
 
-    public String[] getNodeAttributeLabel() {
-        if (nJumpProcesses == 0) {
-            return null;
-        }
-        String[] rtn = new String[nJumpProcesses];
-        for (int r = 0; r < nJumpProcesses; r++) {
-            rtn[r] = jumpTags.get(r);
-        }
-        return rtn;
+    protected Helper treeTraits = new Helper();
+
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        if (nJumpProcesses == 0) {
-            return null;
-        }
-        String[] rtn = new String[nJumpProcesses];
-        for (int r = 0; r < nJumpProcesses; r++) {
-            rtn[r] = formattedValue(tree, node, r);
-        }
-        return rtn;
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
     }
 
     private String formattedValue(Tree tree, NodeRef node, int jump) {
@@ -268,8 +280,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
         sb.append("tree\n");
         Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
                 format, null,
-                (nJumpProcesses > 0 ? new NodeAttributeProvider[]{this} : null),
-                null,
+                (nJumpProcesses > 0 ? new TreeTraitProvider[]{this} : null),
                 idMap,
                 sb);
         sb.append("\n");
@@ -326,7 +337,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
             int[] seq = new int[nReplications];
             StateHistory[] histories = new StateHistory[nReplications];
 
-            if (branchSpecificLambda) {               
+            if (branchSpecificLambda) {
                 final double branchValue = branchPossibleValuesParameter.getParameterValue(child.getNumber());
                 branchVariableParameter.setParameterValue(0, branchValue);
 //                System.err.println("trying value = " + branchValue + " for " + child.getNumber());

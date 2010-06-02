@@ -10,10 +10,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeExporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -358,10 +355,11 @@ public class AncestralSequenceAnnotator {
 
         flexTree.setAttribute(LIKELIHOOD, logLikelihood);
 
+        TreeTrait ancestralStates = likelihood.getTreeTrait(AncestralStateTreeLikelihood.STATES_KEY);
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
-            String[] sample = likelihood.getTraitString(treeModel, node);
+            String[] sample = ancestralStates.getTraitString(treeModel, node);
 
             String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
 

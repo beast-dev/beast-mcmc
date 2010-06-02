@@ -25,10 +25,9 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.BranchAttributeProvider;
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -43,7 +42,7 @@ import dr.inference.model.Variable;
  *
  * @author Alexei Drummond
  */
-public class TreeParameterModel extends AbstractModel implements BranchAttributeProvider, NodeAttributeProvider {
+public class TreeParameterModel extends AbstractModel implements TreeTrait<Double> {
 
     private final TreeModel tree;
 
@@ -202,5 +201,29 @@ public class TreeParameterModel extends AbstractModel implements BranchAttribute
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
         return new String[]{getAttributeForBranch(tree, node)};
+    }
+
+    public String getTraitName() {
+        return null;
+    }
+
+    public Intent getIntent() {
+        return null;
+    }
+
+    public Class getTraitClass() {
+        return null;
+    }
+
+    public int getDimension() {
+        return 0;
+    }
+
+    public Double[] getTrait(Tree tree, NodeRef node) {
+        return new Double[0];
+    }
+
+    public String[] getTraitString(Tree tree, NodeRef node) {
+        return new String[0];
     }
 }

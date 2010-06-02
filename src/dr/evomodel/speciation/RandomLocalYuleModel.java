@@ -25,9 +25,10 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.tree.NodeAttributeProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.evomodelxml.speciation.RandomLocalYuleModelParser;
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
  *
  * @author Alexei Drummond
  */
-public class RandomLocalYuleModel extends UltrametricSpeciationModel implements NodeAttributeProvider, RandomLocalTreeVariable {
+public class RandomLocalYuleModel extends UltrametricSpeciationModel implements TreeTraitProvider, RandomLocalTreeVariable {
     private boolean calculateAllBirthRates = false;
 
     public RandomLocalYuleModel(Parameter birthRates, Parameter indicators, Parameter meanRate,
@@ -73,6 +74,44 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
         Logger.getLogger("dr.evomodel").info("  indicator parameter is named '" + indicatorsName + "'");
 
         this.birthRates = new double[birthRates.getDimension() + 1];
+
+        treeTraits.addTrait(new TreeTrait.I() {
+            public String getTraitName() {
+                return "I";
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public Integer[] getTrait(Tree tree, NodeRef node) {
+                return new Integer[] { (isVariableSelected((TreeModel) tree, node) ? 1 : 0) };
+            }
+
+        });
+
+        treeTraits.addTrait(new TreeTrait.D() {
+            public String getTraitName() {
+                return "b";
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public Double[] getTrait(Tree tree, NodeRef node) {
+                return new Double[] { RandomLocalYuleModel.this.birthRates[node.getNumber()] };
+            }
+
+        });
     }
 
     public final double getVariable(TreeModel tree, NodeRef node) {
@@ -170,19 +209,14 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
 //        return birthRate;
 //    }
 
-    public String[] getNodeAttributeLabel() {
-        return new String[]{"I", "b"};
+    protected TreeTraitProvider.Helper treeTraits = new Helper();
+
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
     }
 
-    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-
-        String rateString = format.format(birthRates[node.getNumber()]);
-
-        if (tree.isRoot(node)) {
-            return new String[]{"0", rateString};
-        }
-
-        return new String[]{(isVariableSelected((TreeModel) tree, node) ? "1" : "0"), rateString};
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
     }
 
     public boolean includeExternalNodesInLikelihoodCalculation() {

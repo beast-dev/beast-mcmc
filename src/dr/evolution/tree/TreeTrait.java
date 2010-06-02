@@ -54,5 +54,85 @@ public interface TreeTrait<T> {
      * @return the trait string representations
      */
     String[] getTraitString(final Tree tree, final NodeRef node);
+
+     /**
+     * An abstract base class for Double implementations
+     */
+    public abstract class D implements TreeTrait<Double> {
+
+        public Class getTraitClass() {
+            return Double.class;
+        }
+
+        public String[] getTraitString(Tree tree, NodeRef node) {
+            Double[] values = getTrait(tree, node);
+            String[] strings = new String[values.length];
+            for (int i = 0; i < values.length; i++) {
+                strings[i] = values[i].toString();
+            }
+            return strings;
+        }
+
+         /**
+          * A static utility function to convert an array of native doubles into
+          * an equivalent array of Double objects. 
+          * @param values
+          * @return
+          */
+        public static Double[] toArray(double[] values) {
+            Double[] array = new Double[values.length];
+            for (int i = 0; i < values.length; i++) {
+                array[i] = values[i];
+            }
+            return array;
+        }
+    }
+
+    /**
+     * An abstract base class for Double implementations
+     */
+    public abstract class I implements TreeTrait<Integer> {
+
+        public Class getTraitClass() {
+            return Double.class;
+        }
+
+        public String[] getTraitString(Tree tree, NodeRef node) {
+            Integer[] values = getTrait(tree, node);
+            String[] strings = new String[values.length];
+            for (int i = 0; i < values.length; i++) {
+                strings[i] = values[i].toString();
+            }
+            return strings;
+        }
+
+        /**
+         * A static utility function to convert an array of native ints into
+         * an equivalent array of Integer objects.
+         * @param values
+         * @return
+         */
+        public static Integer[] toArray(int[] values) {
+            Integer[] array = new Integer[values.length];
+            for (int i = 0; i < values.length; i++) {
+                array[i] = values[i];
+            }
+            return array;
+        }
+    }
+
+    /**
+     * An abstract base class for Double implementations
+     */
+    public abstract class S implements TreeTrait<String> {
+
+        public Class getTraitClass() {
+            return String.class;
+        }
+
+        public String[] getTraitString(Tree tree, NodeRef node) {
+            return getTrait(tree, node);
+        }
+    }
 }
 

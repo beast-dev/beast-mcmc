@@ -129,7 +129,7 @@
 
     </target>
 
-    <property name="version" value="1.5" />
+    <property name="version" value="1.6pre" />
     <property name="release_dir" value="release_tracer" />
     <property name="name" value="Tracer" />
 

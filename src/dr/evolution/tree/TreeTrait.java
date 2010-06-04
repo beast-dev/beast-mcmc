@@ -66,6 +66,9 @@ public interface TreeTrait<T> {
 
         public String[] getTraitString(Tree tree, NodeRef node) {
             Double[] values = getTrait(tree, node);
+            if (values == null) {
+                return null;
+            }
             String[] strings = new String[values.length];
             for (int i = 0; i < values.length; i++) {
                 strings[i] = values[i].toString();
@@ -99,6 +102,9 @@ public interface TreeTrait<T> {
 
         public String[] getTraitString(Tree tree, NodeRef node) {
             Integer[] values = getTrait(tree, node);
+            if (values == null) {
+                return null;
+            }
             String[] strings = new String[values.length];
             for (int i = 0; i < values.length; i++) {
                 strings[i] = values[i].toString();

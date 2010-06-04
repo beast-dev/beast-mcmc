@@ -46,7 +46,7 @@
         description="Clean and Build all run-time stuff without unit test and distribute jar">
 	</target>
 
-    <target name="build_jar_all_BEAST_BEAGLE_NoJUnitTest" depends="build_jar_all_BEAST_NoJUnitTest,dist_all_BEAST_BEAGLE"
+    <target name="build_jar_all_BEAST_BEAGLE_NoJUnitTest" depends="build_jar_all_BEAST_NoJUnitTest,dist_BEAST_BEAGLE"
         description="Clean and Build all run-time stuff without unit test and distribute jar">
 	</target>
 
@@ -298,8 +298,8 @@
 
 	</target>
 
-    <target name="dist_all_BEAST_BEAGLE" depends="build_jar_all_BEAST_NoJUnitTest" description="create BEAST-BEAGLE-all jar">
-        <jar jarfile="${dist}/beast-beagle-all.jar">
+    <target name="dist_BEAST_BEAGLE" depends="build_jar_all_BEAST_NoJUnitTest" description="create BEAST-BEAGLE jar">
+        <jar jarfile="${dist}/beast-beagle.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
                 <attribute name="Main-Class" value="${main_class_BEAST}" />
@@ -308,8 +308,7 @@
 				<include name="dr/app/beagle/**/*.class" />
 			</fileset>
 			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
-            <zipgroupfileset dir="${dist}" includes="beast.jar" />
-		</jar>    
+		</jar>
     </target>
 
 	<!-- run beast.jar -->

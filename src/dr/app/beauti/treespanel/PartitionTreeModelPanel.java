@@ -41,7 +41,6 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.*;
 
 /**
@@ -64,6 +63,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JRadioButton simpleJRadioButton = new JRadioButton("Generate XML Starting Tree");
 
     private JButton treeDisplayButton = new JButton("Display Selected Tree");
+    private JButton correctBranchLengthButton = new JButton("Correct Branch Length to Get Ultrametric Tree");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
@@ -119,7 +119,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
                 JOptionPane optionPane = new JOptionPane(treePanel,
                         JOptionPane.PLAIN_MESSAGE,
-                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.OK_OPTION,
                         null,
                         null,
                         null);
@@ -141,6 +141,15 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         };
         newickJRadioButton.addItemListener(itemListener);
         simpleJRadioButton.addItemListener(itemListener);
+
+        PanelUtils.setupComponent(correctBranchLengthButton);
+        correctBranchLengthButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+//                Tree tree = getSelectedUserTree();
+//                Tree.Utils.correctBranchLengthToGetUltrametricTree(tree);
+//                partitionTreeModel.setUserStartingTree(tree);
+            }
+        });
 
         setupPanel();
     }

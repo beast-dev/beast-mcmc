@@ -1253,6 +1253,20 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             }
             return true;
         }
+
+        public static void correctBranchLengthToGetUltrametricTree(Tree tree, double givenLength) {
+
+			
+		}
+
+        private void setHeight(Tree tree, NodeRef node, double givenLength) {
+             if (tree.getChildCount(node) == 0) {
+
+            }
+           for (int i = 0; i < tree.getChildCount(node); i++) {
+            
+            }
+        }
     }
 
 }

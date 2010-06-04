@@ -2,6 +2,7 @@ package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
 import dr.inference.trace.Trace;
+import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import org.virion.jam.framework.Exportable;
@@ -126,17 +127,19 @@ public class FrequencyPanel extends JPanel implements Exportable {
         FrequencyPlot plot = null;
         int traceIndex = traceList.getTraceIndex(traceName);
         Trace trace = traceList.getTrace(traceIndex);
-        TraceDistribution td = traceList.getDistributionStatistics(traceIndex);
+        TraceCorrelation td = traceList.getCorrelationStatistics(traceIndex);
 
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
             if (trace.getTraceType() == Double.class) {
                 Double values[] = new Double[traceList.getStateCount()];
                 traceList.getValues(traceIndex, values);
-                plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
-
+                
                 if (td != null) {
+                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
+                } else {
+                    plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);    
                 }
                 traceChart.setXAxis(false, categoryDataMap);
                 chartPanel.setYAxisTitle("Frequency");
@@ -147,10 +150,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
             } else if (trace.getTraceType() == Integer.class) {
                 Integer values[] = new Integer[traceList.getStateCount()];
                 traceList.getValues(traceIndex, values);
-                plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
 
                 if (td != null) {
+                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td); 
                     plot.setInCredibleSet(td.credSet);
+                } else {
+                    plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
                 }
                 traceChart.setXAxis(true, categoryDataMap);
                 chartPanel.setYAxisTitle("Count");
@@ -163,7 +168,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, values);
 
                 int[] intData = new int[values.length];
-                for (int v = 0; v < values.length; v++) {
+                for (int v = 0; v < values.length; v++) { //TODO filtered
                     intData[v] = td.credSet.getIndex(values[v]);
                     categoryDataMap.put(intData[v], values[v]);
                 }

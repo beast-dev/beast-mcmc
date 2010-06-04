@@ -117,15 +117,12 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
             if (traitIndex < 0 || traitIndex >= trait.getDimension()) {
                 throw new IllegalArgumentException("The trait index must be within the dimension of the trait.");
             }
-        } else if (trait.getClass().equals(double[].class)) {
+        } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
             // Assume the trait itself is the dwell times for the individual states on the branch above the node
             mode = Mode.DWELL_TIMES;
-            if (trait.getDimension() != ratesParameter.getDimension()) {
-                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
-            }
-        } else {
+        } /* else {
             throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
-        }
+        } */
 
         if (trait instanceof Model) {
             addModel((Model)trait);
@@ -211,6 +208,9 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         double[] dwellTimes;
         if (mode == Mode.DWELL_TIMES) {
             dwellTimes = ((double[][])trait.getTrait(tree, node))[0];
+            if (dwellTimes.length != ratesParameter.getDimension()) {
+                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
+            }
         } else {
             dwellTimes = getDwellTimes(tree, node);
         }

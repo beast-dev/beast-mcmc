@@ -96,28 +96,44 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
 
-        final int r = numRegisters;
+        treeTraits.addTrait("dwellTimes", new TreeTrait<double[]>() {
+            public String getTraitName() {
+                return tag;
+            }
 
-        treeTraits.addTrait( new TreeTrait.D() {
-                    public String getTraitName() {
-                        return tag;
-                    }
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
 
-                    public Intent getIntent() {
-                        return Intent.NODE;
-                    }
+            public Class getTraitClass() {
+                return double[].class;
+            }
 
-                    public int getDimension() {
-                        return 1;
-                    }
+            public int getDimension() {
+                return 1;
+            }
 
-                    public Double[] getTrait(Tree tree, NodeRef node) {
-                        return toArray(getMarkovJumpsForNodeAndRegister(tree, node, r));
-                    }
-                });
+            public double[][] getTrait(Tree tree, NodeRef node) {
+                return new double[][] { getDwellTimesForNodeAndPattern(tree, node, 0) };
+            }
+
+            public String[] getTraitString(Tree tree, NodeRef node) {
+                return new String[0];
+            }
+        });
 
         numRegisters++;
     }
+
+    public double[] getDwellTimesForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
+        double[] rtn = new double[numRegisters];
+        for (int r = 0; r < numRegisters; r++) {
+            double[] mjs = getMarkovJumpsForNodeAndRegister(tree, node, r); 
+            rtn[r] = mjs[pattern];
+        }
+        return rtn;
+    }
+
 
     public double[] getMarkovJumpsForNodeAndRegister(Tree tree, NodeRef node, int whichRegister) {
         return getMarkovJumpsForRegister(tree, whichRegister)[node.getNumber()];

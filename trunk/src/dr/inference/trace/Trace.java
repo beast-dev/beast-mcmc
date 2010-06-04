@@ -25,6 +25,8 @@
 
 package dr.inference.trace;
 
+import java.util.ArrayList;
+
 /**
  * A simple class that stores a trace for a single statistic
  *
@@ -130,6 +132,28 @@ public class Trace<T> {
         return dest;
     }
 
+    public static double[] arrayConvert(Double[] src, Filter filter) {
+        if (filter != null) {
+            java.util.List<Double> selectedValuesList = new ArrayList<Double>();
+
+            for (int i = 0; i < src.length; i++) {
+                if (filter.getSelected(i)) {
+                    selectedValuesList.add(src[i]);
+                }
+            }
+
+            double[] dest = new double[selectedValuesList.size()];
+            for (int i = 0; i < src.length; i++) {
+                dest[i] = selectedValuesList.get(i).doubleValue();
+            }
+
+            return dest;
+
+        } else {
+            return arrayConvert(src);
+        }
+    }
+
     public static double[][] arrayConvert(Double[][] src) {
         double[][] dest = null;
         if (src != null) {
@@ -152,6 +176,28 @@ public class Trace<T> {
             }
         }
         return dest;
+    }
+
+    public static int[] arrayConvert(Integer[] src, Filter filter) {
+        if (filter != null) {
+            java.util.List<Integer> selectedValuesList = new ArrayList<Integer>();
+
+            for (int i = 0; i < src.length; i++) {
+                if (filter.getSelected(i)) {
+                    selectedValuesList.add(src[i]);
+                }
+            }
+
+            int[] dest = new int[selectedValuesList.size()];
+            for (int i = 0; i < src.length; i++) {
+                dest[i] = selectedValuesList.get(i).intValue();
+            }
+
+            return dest;
+
+        } else {
+            return arrayConvert(src);
+        }
     }
 
     public static String[] arrayConvert(String[] src) {

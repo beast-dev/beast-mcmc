@@ -58,6 +58,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String DUPLICATES = "duplicatesOnly";
     public static final String RECIPROCAL_RATES = "reciprocalRates";
     public static final String PRIOR_SAMPLE_SIZE = "priorSampleSize";
+    public static final String RANDOM_SAMPLE = "randomSample";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                TreeModel treeModel,
@@ -576,6 +577,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
             boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
             boolean reportAsMultivariate = xo.getAttribute(REPORT_MULTIVARIATE, false);
+            int randomSampleSizeFlag = xo.getAttribute(RANDOM_SAMPLE, -1);
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -605,6 +607,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             if (xo.hasAttribute(TRAIT_NAME)) {
 
+                List<Integer> randomSample = null;
+
                 traitName = xo.getStringAttribute(TRAIT_NAME);
 
 //                boolean traitDimensionKnown = existingTraitParameter;
@@ -632,29 +636,40 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     else {
                         StringTokenizer st = new StringTokenizer(object);
                         int count = st.countTokens();
-                        if (count != traitParam.getDimension()) {
+                        int sampleSize = count;
+                        if (randomSampleSizeFlag > 0) {
+                            if (randomSample == null) {
+                                randomSample = drawRandomSample(randomSampleSizeFlag, count);
+                            }
+                            sampleSize = randomSampleSizeFlag;
+                        }
+                        if (sampleSize != traitParam.getDimension()) {
                             if (existingTraitParameter) {
                                 throw new RuntimeException("Trait length must match trait parameter dimension");
                             } else {
-                                traitParam.setDimension(count);
+                                traitParam.setDimension(sampleSize);
                             }
                         }
+                        int index = 0;
                         for (int j = 0; j < count; j++) {
                             String oneValue = st.nextToken();
-                            double value = Double.NaN;
-                            if (oneValue.compareTo("NA") == 0) {
-                                Logger.getLogger("dr.evomodel.continuous").info(
-                                        "Warning: Missing value in tip for taxon " + taxonName +
-                                                " (filling with 0 as starting value when sampling only)"   // See comment below
-                                );
-                            } else {
-                                try {
-                                    value = new Double(oneValue);
-                                } catch (NumberFormatException e) {
-                                    throw new RuntimeException(e.getMessage());
+                            if (randomSampleSizeFlag == -1 || randomSample.contains(j)) {
+                                double value = Double.NaN;
+                                if (oneValue.compareTo("NA") == 0) {
+                                    Logger.getLogger("dr.evomodel.continuous").info(
+                                            "Warning: Missing value in tip for taxon " + taxonName +
+                                                    " (filling with 0 as starting value when sampling only)"   // See comment below
+                                    );
+                                } else {
+                                    try {
+                                        value = new Double(oneValue);
+                                    } catch (NumberFormatException e) {
+                                        throw new RuntimeException(e.getMessage());
+                                    }
                                 }
+                                traitParam.setParameterValue(index, value);
+                                index++;
                             }
-                            traitParam.setParameterValue(j, value);
                         }
                     }
                 }
@@ -791,6 +806,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             return like;
         }
 
+        private List<Integer> drawRandomSample(int total, int length) {
+            List<Integer> thisList = new ArrayList<Integer>(total);
+            for (int i = 0; i < total; i++) {
+                thisList.add(MathUtils.nextInt(length));
+            }
+            return thisList;
+        }
 
         private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 
@@ -838,6 +860,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
+                AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 new ElementRule(Parameter.class, true),
                 new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
                         AttributeRule.newDoubleRule(RANDOMIZE_LOWER, true),

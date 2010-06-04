@@ -169,6 +169,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         public Double[] getTrait(Tree tree, NodeRef node) {
             double[] counts = getExpectedCountsForBranch(node);
+            if (counts == null) {
+                // Should counts be null?
+                return null;
+            }
             if (branchFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
                 double total = 0;
                 for (double x : counts) {

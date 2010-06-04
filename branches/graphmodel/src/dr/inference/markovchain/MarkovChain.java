@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  */
 public final class MarkovChain {
 
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = true;
     private final static boolean PROFILE = true;
 
     private final OperatorSchedule schedule;
@@ -468,8 +468,8 @@ public final class MarkovChain {
         if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;
         }
-        // System.err.println("** " + logPosterior + " + " + logLikelihood +
-        // " = " + (logPosterior + logLikelihood));
+         System.err.println("** " + logPosterior + " + " + logLikelihood +
+         " = " + (logPosterior + logLikelihood));
         logPosterior += logLikelihood;
 
         return logPosterior;

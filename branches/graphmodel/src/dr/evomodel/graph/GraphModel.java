@@ -194,6 +194,8 @@ public class GraphModel extends TreeModel {
        if(!n.hasNoChildren()||n.parent!=null||n.parent2!=null){
     	   throw new RuntimeException("Deleted node is linked to others!");
        }
+       n.objects0.clear();
+       n.objects1.clear();
        freeNodes.addLast(n.getNumber());
        internalNodeCount--;
        nodeCount--;
@@ -258,6 +260,10 @@ public class GraphModel extends TreeModel {
 	   storedNC = nodeCount;
 	   storedActiveNodeNumbers.clear();
 	   storedActiveNodeNumbers.addAll(activeNodeNumbers);
+	   for(CompoundParameter p : nhp)
+		   p.storeParameterValues();
+	   if(nrp!=null)	nrp.storeParameterValues();
+	   if(ntp!=null)	ntp.storeParameterValues();
    }
    protected void restoreState() {
 	   super.restoreState();
@@ -270,13 +276,20 @@ public class GraphModel extends TreeModel {
 	   while(nodeChanges.size()>0){
 		   Integer ii = nodeChanges.removeLast();
 		   if(ii<0){
-			   modifyExportedParameters((GraphModel.Node)nodes[-ii],true);
 			   freeNodes.removeLast();
 		   }else{
-			   modifyExportedParameters((GraphModel.Node)nodes[ii],false);
 			   freeNodes.add(ii);
 		   }
 	   }
+	   for(CompoundParameter p : nhp)
+		   p.restoreParameterValues();
+	   if(nrp!=null)	nrp.restoreParameterValues();
+	   if(ntp!=null)	ntp.restoreParameterValues();
+       System.out.println(linkDump());
+   }
+   protected void acceptState(){
+	   for(CompoundParameter p : nhp)
+		   p.acceptParameterValues();
    }
 
    private void modifyExportedParameters(Node n, boolean add){
@@ -476,6 +489,8 @@ public class GraphModel extends TreeModel {
             if (node.parent == this) {
                 node.parent = node.parent2;
                 node.parent2 = null;
+                node.objects0.addAll(node.objects1);
+                node.objects1.clear();
             } else if (node.parent2 == this) {
                 node.parent2 = null;
             } else {

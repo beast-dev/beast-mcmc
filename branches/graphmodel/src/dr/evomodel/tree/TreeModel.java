@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
+import dr.evomodel.graph.VariableDimensionCompoundParameter;
 import dr.inference.model.*;
 import dr.util.Attributable;
 import org.w3c.dom.Document;
@@ -896,7 +897,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")");
+        // FIXME: vdcp is only for testing!!  it will incur store/restore performance overhead.
+        // need to move this into graphmodel subclass
+        CompoundParameter parameter = new VariableDimensionCompoundParameter("nodeHeights(" + getId() + ")");
 
         for (int i = externalNodeCount; i < nodeCount; i++) {
             if ((rootNode && nodes[i] == root) || (internalNodes && nodes[i] != root)) {
@@ -931,7 +934,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeRates(" + getId() + ")");
+        // FIXME: vdcp is only for testing!!  it will incur store/restore performance overhead.
+        // need to move this into graphmodel subclass
+        CompoundParameter parameter = new VariableDimensionCompoundParameter("nodeRates(" + getId() + ")");
 
         hasRates = true;
 
@@ -968,7 +973,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter(name);
+        // FIXME: vdcp is only for testing!!  it will incur store/restore performance overhead.
+        // need to move this into graphmodel subclass
+        CompoundParameter parameter = new VariableDimensionCompoundParameter(name);
 
         hasTraits = true;
 

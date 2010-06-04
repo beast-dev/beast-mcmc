@@ -1,5 +1,9 @@
 package dr.evomodel.graphlikelihood;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -258,6 +262,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         super.restoreState();
     }
 
+    static int ldumpcount =0;
     /**
      * Calculate the log likelihood of the current state.
      * Ripped nearly verbatim from treeLikelihood
@@ -272,6 +277,7 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
         final NodeRef root = treeModel.getRoot();
         traverse((GraphModel)treeModel, root, partitionModel);
+        System.out.println("traverse done.");
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -302,6 +308,10 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             updateNode[i] = false;
         }
         //********************************************************************
+
+        // dump root ll for debug
+        ldumpcount++;
+        System.err.println("root ll count" + ldumpcount);        
 
         return logL;
     }
@@ -355,6 +365,12 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
             	int c2p = (child2!=null && gm.getParent(child2, 0)==node) ? 0 : 1;
                 boolean has1 = gm.hasObjectOnEdge(child1, c1p, p);
                 boolean has2 = child2 != null ? gm.hasObjectOnEdge(child2, c2p, p) : false;
+            	// handle reassortment loop corner case
+                if(child1==child2) {has1 = false; has2 = false; }
+
+                // determine the left and right bounds of this partition
+                int l = remapSite(p.getSiteList(), p.getLeftSite());
+                int r = remapSite(p.getSiteList(), p.getRightSite());
 
                 // If we have two children with the partition, and
                 // either child node was updated then update this node too
@@ -367,34 +383,46 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
                     likelihoodCore.setNodePartialsForUpdate(nodeNum);
 
-                    // determine the left and right bounds of this partition
-                    int l = remapSite(p.getSiteList(), p.getLeftSite());
-                    int r = remapSite(p.getSiteList(), p.getRightSite());
                     if (integrateAcrossCategories) {
                         likelihoodCore.calculatePartials(peelChild1, peelChild2, nodeNum, l, r);
                     } else {
                         likelihoodCore.calculatePartials(peelChild1, peelChild2, nodeNum, siteCategories, l, r);
                     }
+                    if(l==0)
+                    	likelihoodCore.debugPrintPartials(peelChild1, peelChild2, nodeNum, 0);
 
                     if (COUNT_TOTAL_OPERATIONS) {
                         totalOperationCount ++;
                     }
-
-                    if (parent == null) {
-                        // No parent this is the root of the tree -
-                        // calculate the pattern likelihoods
-                        FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
-                        double[] frequencies = frequencyModel.getFrequencies();
-                        double[] partials = getRootPartials(p);
-                        likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
-                    }
+                }
+                if (parent == null) {
+                    // No parent this is the root of the tree -
+                    // calculate the pattern likelihoods
+                	// do this at whatever node the partition coalesed at
+                	GraphModel.Node partitionRootNode = getPartitionRoot(p, gm, gnode);
+                    FrequencyModel frequencyModel = p.getSiteModel().getFrequencyModel();
+                    double[] frequencies = frequencyModel.getFrequencies();
+                    double[] partials = getRootPartials(p, partitionRootNode);
+                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, patternLogLikelihoods, l, r);
                 }
             }
             if(update&&parent!=null)
             	updateNodePartition[parent.getNumber()][p.getNumber()]=true;
         }
     }
-    
+
+    protected GraphModel.Node getPartitionRoot(Partition p, GraphModel gm, GraphModel.Node node){
+        GraphModel.Node child1 = (GraphModel.Node)gm.getChild(node, 0);
+        GraphModel.Node child2 = (GraphModel.Node)gm.getChild(node, 1);
+    	int c1p = gm.getParent(child1, 0)==node ? 0 : 1;
+    	int c2p = (child2!=null && gm.getParent(child2, 0)==node) ? 0 : 1;
+        boolean has1 = gm.hasObjectOnEdge(child1, c1p, p);
+        boolean has2 = child2 != null ? gm.hasObjectOnEdge(child2, c2p, p) : false;
+        if(has1&&has2)	return node;
+        if(has1&&!has2)	return getPartitionRoot(p, gm, child1);
+        if(!has1&&has2)	return getPartitionRoot(p, gm, child2);
+        throw new RuntimeException("Error, partition does not trace to root");
+    }
 
     /**
      * Set the child node's matrix immediately prior to integrating partials
@@ -406,15 +434,16 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     {
         int[] peelChild = new int[1];	// the descendant where the partition bifurcates
         double branchTime = getRateTime(g, p, n, peelChild);
+        System.out.print("");
         int nodeNum = n.getNumber();
 
-        likelihoodCore.setNodeMatrixForUpdate(nodeNum);
+        likelihoodCore.setNodeMatrixForUpdate(peelChild[0]);
 
         SiteModel siteModel = p.getSiteModel();
         for (int i = 0; i < categoryCount; i++) {
             double branchLength = siteModel.getRateForCategory(i) * branchTime;
             siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probabilities);
-            likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+            likelihoodCore.setNodeMatrix(peelChild[0], i, probabilities);
         }
         return peelChild[0];
     }
@@ -455,22 +484,27 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
         	int c2p = g.getParent(c2, 0)==n ? 0 : 1;
         	boolean has1 = g.hasObjectOnEdge(c1, c1p, p);
         	boolean has2 = g.hasObjectOnEdge(c2, c2p, p);
-        	if(has1&&!has2)
+            if(c1==c2&&!has1) has1 = g.hasObjectOnEdge(c1, 1, p);
+            if(c1==c2&&!has2) has2 = g.hasObjectOnEdge(c1, 1, p);
+
+            if(has1&&!has2)
     			branchRateTime += getRateTime(g, p, g.getChild(n, 0), peelChild);
         	if(!has1&&has2)
     			branchRateTime += getRateTime(g, p, g.getChild(n, 1), peelChild);
+        	if(has1&&has2&&c1==c2)	// pick one to follow arbitrarily
+    			branchRateTime += getRateTime(g, p, g.getChild(n, 0), peelChild);
         	if(!has1&&!has2)
     			System.err.println("Partition dead-end");
         }
     	return branchRateTime;
     }
 
-    public final double[] getRootPartials(Partition p) {
+    public final double[] getRootPartials(Partition p, NodeRef coalesceNode) {
         if (rootPartials == null) {
             rootPartials = new double[patternCount * stateCount];
         }
 
-        int nodeNum = treeModel.getRoot().getNumber();
+        int nodeNum = coalesceNode.getNumber();
         int l = remapSite(p.getSiteList(), p.getLeftSite());
         int r = remapSite(p.getSiteList(), p.getRightSite());
         if (integrateAcrossCategories) {

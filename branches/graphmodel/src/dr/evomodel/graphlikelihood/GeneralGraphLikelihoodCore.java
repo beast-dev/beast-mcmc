@@ -1,5 +1,10 @@
 package dr.evomodel.graphlikelihood;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 
 /*
@@ -97,7 +102,30 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
     	for(int i=0; i<partialsDirty.length; i++)
     		partialsDirty[i]=false;
     }
+    public void restoreState() {
+    	super.restoreState();
+    	for(int i=0; i<partialsDirty.length; i++)
+    		partialsDirty[i]=false;
+    }
 
+    public void debugPrintPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int site) {
+    	if(partials[currentPartialsIndices[nodeIndex1]][nodeIndex1]==null ||
+    			partials[currentPartialsIndices[nodeIndex2]][nodeIndex2]==null ||
+    			partials[currentPartialsIndices[nodeIndex3]][nodeIndex3]==null )
+    		return;
+    	System.out.print("Site " + site + " partials " + nodeIndex1);
+    	for(int i=0; i < stateCount*stateCount; i++)
+    		System.out.print(", " + partials[currentPartialsIndices[nodeIndex1]][nodeIndex1][site*stateCount*stateCount+i]);
+    	System.out.println("");
+    	System.out.print("Site " + site + " partials " + nodeIndex2);
+    	for(int i=0; i < stateCount*stateCount; i++)
+    		System.out.print(", " + partials[currentPartialsIndices[nodeIndex2]][nodeIndex2][site*stateCount*stateCount+i]);
+    	System.out.println("");
+    	System.out.print("Site " + site + " partials " + nodeIndex3);
+    	for(int i=0; i < stateCount*stateCount; i++)
+    		System.out.print(", " + partials[currentPartialsIndices[nodeIndex3]][nodeIndex3][site*stateCount*stateCount+i]);
+    	System.out.println("");
+    }
     /**
      * Calculates partial likelihoods at a node for a range of sites.
      *
@@ -133,6 +161,30 @@ public class GeneralGraphLikelihoodCore extends GeneralLikelihoodCore {
         	// TODO: ensure that this works correctly when only part of the sites are updated!
             scalePartials(nodeIndex3);
         }
+    }
+	static int pdumpcount = 0;
+
+    public void dumpPartialsToFile(String fileName){
+    	pdumpcount++;
+        System.err.println("Dumping partials " + pdumpcount);
+    	try{
+	    	BufferedWriter bw = new BufferedWriter(new FileWriter(new File(fileName + "." + pdumpcount)));
+	    	for(int i=0; i<partials.length; i++){
+	    		for(int j=0; j<partials[i].length; j++){
+	    			bw.write(i + "," + j + ": ");
+	    			if(partials[i][j]==null){
+	    				bw.write("NULL\n");
+	    				continue;
+	    			}
+	    			for(int k=0; k<partials[i][j].length; k++){
+	    				bw.write("\t" + partials[i][j][k]);
+	    			}
+	    			bw.write("\n");
+	    		}
+    			bw.write("\n\n");
+	    	}
+	    	bw.flush();
+    	}catch(IOException ioe){}
     }
 
     /**

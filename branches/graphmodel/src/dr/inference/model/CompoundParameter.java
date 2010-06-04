@@ -211,7 +211,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    protected final void acceptValues() {
+    protected void acceptValues() {
         for (Parameter parameter : uniqueParameters) {
             parameter.acceptParameterValues();
         }
@@ -312,12 +312,12 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    private final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
+    protected final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
-    private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-    private final ArrayList<Integer> pindex = new ArrayList<Integer>();
-    private IntersectionBounds bounds = null;
-    private int dimension;
+    protected final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    protected final ArrayList<Integer> pindex = new ArrayList<Integer>();
+    protected IntersectionBounds bounds = null;
+    protected int dimension;
     private String name;
 
     public static void main(String[] args) {

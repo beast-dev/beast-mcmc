@@ -949,27 +949,29 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                     TreeTrait[] tts = ttp.getTreeTraits();
                     for (TreeTrait treeTrait: tts) {
                         if (treeTrait.getIntent() == intent && treeTrait.getDimension() > 0) {
-                            if (!hasAttribute) {
-                                buffer.append("[&");
-                                hasAttribute = true;
-                            } else {
-                                buffer.append(",");
-                            }
-                            buffer.append(treeTrait.getTraitName());
-                            buffer.append("=");
-
                             String[] values = treeTrait.getTraitString(tree, node);
 
-                            if (treeTrait.getDimension() > 1) {
-                                buffer.append("{");
-                                buffer.append(values[0]);
-                                for (int i = 1; i < values.length; i++) {
+                            if (values != null && values.length > 0) {
+                                if (!hasAttribute) {
+                                    buffer.append("[&");
+                                    hasAttribute = true;
+                                } else {
                                     buffer.append(",");
-                                    buffer.append(values[i]);
                                 }
-                                buffer.append("}");
-                            } else {
-                                buffer.append(values[0]);
+                                buffer.append(treeTrait.getTraitName());
+                                buffer.append("=");
+
+                                if (values.length > 1) {
+                                    buffer.append("{");
+                                    buffer.append(values[0]);
+                                    for (int i = 1; i < values.length; i++) {
+                                        buffer.append(",");
+                                        buffer.append(values[i]);
+                                    }
+                                    buffer.append("}");
+                                } else {
+                                    buffer.append(values[0]);
+                                }
                             }
                         }
 
@@ -1256,15 +1258,15 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
         public static void correctBranchLengthToGetUltrametricTree(Tree tree, double givenLength) {
 
-			
-		}
+
+        }
 
         private void setHeight(Tree tree, NodeRef node, double givenLength) {
-             if (tree.getChildCount(node) == 0) {
+            if (tree.getChildCount(node) == 0) {
 
             }
-           for (int i = 0; i < tree.getChildCount(node); i++) {
-            
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+
             }
         }
     }

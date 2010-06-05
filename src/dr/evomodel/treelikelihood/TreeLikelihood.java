@@ -374,6 +374,20 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
 
+    public double[] getPatternLogLikelihoods() {
+        getLogLikelihood(); // Ensure likelihood is up-to-date
+        double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
+        double[] out = new double[patternCount];
+        for (int i = 0; i < patternCount; i++) {
+            if (patternWeights[i] > 0) {
+                out[i] = (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
+            } else {
+                out[i] = Double.NEGATIVE_INFINITY;
+            }
+        }
+        return out;
+    }
+
     /* Calculate ascertainment correction if working off of AscertainedSitePatterns
     @param patternLogProbs log pattern probabilities
     @return the log total probability for a pattern.

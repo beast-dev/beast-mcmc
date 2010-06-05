@@ -41,7 +41,7 @@ public interface TreeTrait<T> {
      * is a branch trait then it will be for the branch above the specified
      * node (and may not be valid for the root). The array will be the length
      * returned by getDimension().
-     * @param tree
+     * @param tree a reference to a tree
      * @param node a reference to a node
      * @return the trait values
      */
@@ -49,7 +49,7 @@ public interface TreeTrait<T> {
 
     /**
      * Get an array containing string representations of the trait values.
-     * @param tree
+     * @param tree a reference to a tree
      * @param node a reference to a node
      * @return the trait string representations
      */

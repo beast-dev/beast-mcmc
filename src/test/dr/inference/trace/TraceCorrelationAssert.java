@@ -7,6 +7,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.SimpleNode;
+import dr.evolution.tree.SimpleTree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
@@ -112,6 +114,53 @@ public class TraceCorrelationAssert extends MathTestCase {
     }
 
     //************************** data ****************************
+    protected TreeModel createPrimateTreeModel () {
+
+        SimpleNode[] nodes = new SimpleNode[10];
+        for (int n=0; n < 10; n++) {
+            nodes[n] = new SimpleNode();
+        }
+
+//        nodes[0].setHeight(0);
+        nodes[0].setTaxon(taxa[0]); // human
+
+        nodes[1].setTaxon(taxa[1]); // chimp
+
+        nodes[2].setTaxon(taxa[2]); // bonobo
+
+        nodes[3].setHeight(0.010772);
+        nodes[3].addChild(nodes[1]);
+        nodes[3].addChild(nodes[2]);
+
+        nodes[4].setHeight(0.024003);
+        nodes[4].addChild(nodes[0]);
+        nodes[4].addChild(nodes[3]);
+
+        nodes[5].setTaxon(taxa[3]); // gorilla
+
+        nodes[6].setHeight(0.036038);
+        nodes[6].addChild(nodes[4]);
+        nodes[6].addChild(nodes[5]);
+
+        nodes[7].setTaxon(taxa[4]); // orangutan
+
+        nodes[8].setHeight(0.069125);
+        nodes[8].addChild(nodes[6]);
+        nodes[8].addChild(nodes[7]);
+
+        nodes[9].setTaxon(taxa[5]); // siamang
+
+        SimpleNode root = new SimpleNode();
+        root.setHeight(0.099582);
+        root.addChild(nodes[8]);
+        root.addChild(nodes[9]);
+
+        Tree tree = new SimpleTree(root);
+        tree.setUnits(Units.Type.YEARS);
+
+        return new TreeModel(tree); //treeModel
+    }
+
     protected static final String[][] PRIMATES_TAXON_SEQUENCE = {{"human", "chimp", "bonobo", "gorilla", "orangutan", "siamang"},
           {"AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTAGGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATTTAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGACCAATGGGACTTAAACCCACAAACACTTAGTTAACAGCTAAGCACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCGGAGCTTGGTAAAAAGAGGCCTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCCAAAGCTGGTTTCAAGCCAACCCCATGGCCTCCATGACTTTTTCAAAAGGTATTAGAAAAACCATTTCATAACTTTGTCAAAGTTAAATTATAGGCT-AAATCCTATATATCTTA-CACTGTAAAGCTAACTTAGCATTAACCTTTTAAGTTAAAGATTAAGAGAACCAACACCTCTTTACAGTGA",
            "AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTAGGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGTAAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATTTAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTCTAGATTAATGGGACTTAAACCCACAAACATTTAGTTAACAGCTAAACACCCTAATCAAC-TGGCTTCAATCTAAAGCCCCGGCAGG-TTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAA-TCACCTCAGAGCTTGGTAAAAAGAGGCTTAACCCCTGTCTTTAGATTTACAGTCCAATGCTTCA-CTCAGCCATTTTACCACAAAAAAGGAAGGAATCGAACCCCCTAAAGCTGGTTTCAAGCCAACCCCATGACCTCCATGACTTTTTCAAAAGATATTAGAAAAACTATTTCATAACTTTGTCAAAGTTAAATTACAGGTT-AACCCCCGTATATCTTA-CACTGTAAAGCTAACCTAGCATTAACCTTTTAAGTTAAAGATTAAGAGGACCGACACCTCTTTACAGTGA",

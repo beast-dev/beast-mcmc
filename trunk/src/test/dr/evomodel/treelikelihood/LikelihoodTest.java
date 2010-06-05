@@ -46,54 +46,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
 
         createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
 
-        createTreeModel ();
-    }
-
-    private void createTreeModel () {
-
-        SimpleNode[] nodes = new SimpleNode[10];
-        for (int n=0; n < 10; n++) {
-            nodes[n] = new SimpleNode();
-        }
-
-//        nodes[0].setHeight(0);
-        nodes[0].setTaxon(taxa[0]); // human
-
-        nodes[1].setTaxon(taxa[1]); // chimp
-
-        nodes[2].setTaxon(taxa[2]); // bonobo
-
-        nodes[3].setHeight(0.010772);
-        nodes[3].addChild(nodes[1]);
-        nodes[3].addChild(nodes[2]);
-
-        nodes[4].setHeight(0.024003);
-        nodes[4].addChild(nodes[0]);
-        nodes[4].addChild(nodes[3]);
-
-        nodes[5].setTaxon(taxa[3]); // gorilla
-
-        nodes[6].setHeight(0.036038);
-        nodes[6].addChild(nodes[4]);
-        nodes[6].addChild(nodes[5]);
-
-        nodes[7].setTaxon(taxa[4]); // orangutan
-
-        nodes[8].setHeight(0.069125);
-        nodes[8].addChild(nodes[6]);
-        nodes[8].addChild(nodes[7]);
-
-        nodes[9].setTaxon(taxa[5]); // siamang
-
-        SimpleNode root = new SimpleNode();
-        root.setHeight(0.099582);
-        root.addChild(nodes[8]);
-        root.addChild(nodes[9]);
-
-        Tree tree = new SimpleTree(root);
-        tree.setUnits(Units.Type.YEARS);
-
-        treeModel = new TreeModel(tree); //treeModel
+        treeModel = createPrimateTreeModel ();
     }
 
     public void testNewickTree() {

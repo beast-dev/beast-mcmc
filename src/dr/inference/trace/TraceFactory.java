@@ -40,13 +40,13 @@ public class TraceFactory {
 //        Double[] t = new Double[10];
 //        System.arraycopy(d, 0, t, 0, d.length);
 
-        System.out.println("create trace (" + name + ") with type " + traceType);
+        // System.out.println("create trace (" + name + ") with type " + traceType);
         
         switch (traceType) {
             case CONTINUOUS:
-                return new Trace<Double>(name, initialSize, Double.valueOf(0));
+                return new Trace<Double>(name, initialSize, (double) 0);
             case INTEGER:
-                return new Trace<Integer>(name, initialSize, Integer.valueOf(0));
+                return new Trace<Integer>(name, initialSize, 0);
             case CATEGORY:
                 return new Trace<String>(name, initialSize, "initial_value");
         }

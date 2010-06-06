@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 /**
  * @author Chieh-Hsi Wu
- * 
+ *
  * Implements the LinearBiasModel of microsatellites.
  */
 public class LinearBiasModel extends OnePhaseModel{
@@ -18,12 +18,12 @@ public class LinearBiasModel extends OnePhaseModel{
      */
     private Parameter biasConst;
     private Parameter biasLin;
-    private ArrayList<Parameter> submodelParameters = null;
+    private ArrayList<Variable<Double>> submodelParameters = null;
     private boolean estimateSubmodelParams = false;
     private boolean updateSubmodelRates = false;
     private boolean inLogitSpace = false;
 
-    public double delta = 1e-15;
+    public static final double delta = 1e-15;
 
     public static final String LINEAR_BIAS_MODEL = "LINEARBIASModel";
 
@@ -56,7 +56,7 @@ public class LinearBiasModel extends OnePhaseModel{
         this.subModel = submodel;
         this.estimateSubmodelParams = estimateSubmodelParams;
         if(this.estimateSubmodelParams){
-            submodelParameters = new ArrayList<Parameter>();
+            submodelParameters = new ArrayList<Variable<Double>>();
             for(int i = 0; i < subModel.getNestedParameterCount(); i++){
 
                 if(isNested){
@@ -89,12 +89,12 @@ public class LinearBiasModel extends OnePhaseModel{
 
         this.inLogitSpace = inLogitSpace;
 
-        printDetails();
+        //printDetails();
 
         setupInfinitesimalRates();
 
         if(freqModel == null){
-            System.out.println("Creating LinearBiasModel: using empirical frequencies");
+            useStationaryFreqs = true;
             computeStationaryDistribution();
         }else{
             this.freqModel = freqModel;
@@ -119,36 +119,56 @@ public class LinearBiasModel extends OnePhaseModel{
 
         double biasConst = this.biasConst.getParameterValue(0);
         double biasLin = this.biasLin.getParameterValue(0);
-        double expansionProb = 0.5;
+        setupInfinitesimalRates(
+                infinitesimalRateMatrix,
+                subModel.getInfinitesimalRates(),
+                biasConst,
+                biasLin,
+                stateCount,
+                inLogitSpace
+        );
+
+    }
+
+
+    public static void setupInfinitesimalRates(
+            double[][] rates,
+            double[][] subModelRateMatrix,
+            double biasConst,
+            double biasLin,
+            int stateCount,
+            boolean inLogitSpace){
         double rowSum;
+        double expansionProb = 0.5;
         for(int i = 0; i < stateCount;i++){
             rowSum = 0.0;
-            expansionProb = computeExpansionProb(biasConst,biasLin,i);
+            expansionProb = computeExpansionProb(biasConst,biasLin,i, inLogitSpace);
             if(expansionProb < delta){
-                System.out.println("changing expan prob from " + expansionProb+ " to " + delta);
+                System.out.println("changing expan prob from " + expansionProb+ " to " + delta
+                +"\nbiasConst: "+biasConst+", biasLin: "+biasLin);
                 expansionProb = delta;
 
             }else if (expansionProb > (1.0-delta)){
 
-                System.out.println("changing expan prob from " + expansionProb+ " to " + (1.0-delta));
+                System.out.println("changing expan prob from " + expansionProb+ " to " + (1.0-delta)
+                        +"\nbiasConst: "+biasConst+", biasLin: "+biasLin);
                 expansionProb = 1.0-delta;
             }
             if(i - 1 > -1){
-                infinitesimalRateMatrix[i][i - 1] = subModel.getRate(i,i-1)*(1.0 - expansionProb);
-                rowSum = rowSum+infinitesimalRateMatrix[i][i - 1];
+                rates[i][i - 1] = subModelRateMatrix[i][i-1]*(1.0 - expansionProb);
+                rowSum = rowSum+rates[i][i - 1];
             }
             if(i + 1 < stateCount){
-                infinitesimalRateMatrix[i][i + 1] = subModel.getRate(i,i+1)*expansionProb;
-                rowSum = rowSum + infinitesimalRateMatrix[i][i + 1];
+                rates[i][i + 1] = subModelRateMatrix[i][i+1]*expansionProb;
+                rowSum = rowSum + rates[i][i + 1];
             }
 
-            infinitesimalRateMatrix[i][i] = rowSum*-1;
+            rates[i][i] = rowSum*-1;
 
         }
-
     }
 
-    public double computeExpansionProb(double biasConst, double biasLin, int length){
+    public static double computeExpansionProb(double biasConst, double biasLin, int length, boolean inLogitSpace){
         double expanProb = 0.5;
         if(inLogitSpace){
             double numerator = Math.exp(biasConst+biasLin*length);
@@ -159,12 +179,6 @@ public class LinearBiasModel extends OnePhaseModel{
         return  expanProb;
 
     }
-
-    public void setupMatrix(){
-        setupInfinitesimalRates();
-        super.setupMatrix();
-    }
-
 
 
     public Parameter getBiasConstant(){
@@ -190,7 +204,7 @@ public class LinearBiasModel extends OnePhaseModel{
         System.out.println("has submodel:                   "+hasSubmodel());
         if(hasSubmodel()){
             System.out.println("submodel class:                 "+subModel.getClass());
-        }        
+        }
         System.out.println("esitmating submodel parameters: "+estimateSubmodelParams);
         System.out.println("bias constant:                  "+biasConst.getParameterValue(0));
         System.out.println("bias linear coefficient:        "+biasLin.getParameterValue(0));

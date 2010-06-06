@@ -22,8 +22,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
     private Parameter onePhasePrParam;
     private Parameter transformParam;
     private boolean estimateSubmodelParams = false;
-    private boolean useEmpiricalFreqs = false;
-    private ArrayList<Parameter> submodelParameters = null;
+    private ArrayList<Variable<Double>> submodelParameters = null;
     private boolean updateSubmodelRates = false;
 
     public static final String TWO_PHASE_MODEL = "TWOPHASEModel";
@@ -55,7 +54,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         this.estimateSubmodelParams = estimateSubmodelParams;
 
         if(this.estimateSubmodelParams){
-            submodelParameters = new ArrayList<Parameter>();
+            submodelParameters = new ArrayList<Variable<Double>>();
             for(int i = 0; i < subModel.getNestedParameterCount(); i++){
                 addVariable(subModel.getNestedParameter(i));
                 submodelParameters.add(subModel.getNestedParameter(i));
@@ -77,16 +76,15 @@ public class TwoPhaseModel extends MicrosatelliteModel{
             this.transformParam = new Parameter.Default(0.0);
         }
 
-        printDetails();
+        //printDetails();
 
         setupInfinitesimalRates();
 
         if(freqModel == null){
-            useEmpiricalFreqs = true;
-            System.out.println("TwoPhaseModel: use empirical frequencies");
+            useStationaryFreqs = true;
             computeStationaryDistribution();
         }else{
-            useEmpiricalFreqs = false;
+            useStationaryFreqs = false;
         }
 
 
@@ -98,7 +96,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         double e = transformParam.getParameterValue(0);
         double m = geoParam.getParameterValue(0);
         double p = onePhasePrParam.getParameterValue(0);
-        if(p < 1 - e && m < 1 - e || p ==m){
+        if(p < 1 - e && m < 1 - e || p ==m || e ==0){
             transOnePhase = onePhasePrParam;
             transGeo = geoParam;
         }else if(m > Math.max(1 - e,p)){
@@ -129,7 +127,31 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         double geoParameter = transGeo.getParameterValue(0);
         double p = transOnePhase.getParameterValue(0);
 
+        /*double[] condProbNum = new double[stateCount];
+        for(int i = 1; i < stateCount; i++){
+            condProbNum[i] = geoParameter*Math.pow((1.0 - geoParameter),i-1);
+        }*/
+
+        setupInfinitesimalRates(
+            stateCount,
+            geoParameter,
+            p,
+            infinitesimalRateMatrix,
+            subModel.getInfinitesimalRates()
+        );
+
+
+    }
+
+    public static void setupInfinitesimalRates(
+            int stateCount,
+            double geoParameter,
+            double p,
+            double[][] rates,
+            double[][] subRates){
+
         double[] condProbNum = new double[stateCount];
+
         for(int i = 1; i < stateCount; i++){
             condProbNum[i] = geoParameter*Math.pow((1.0 - geoParameter),i-1);
         }
@@ -144,38 +166,32 @@ public class TwoPhaseModel extends MicrosatelliteModel{
             for(int j = 0; j < stateCount; j++){
                 if(j < i){
                     condGeo = condProbNum[Math.abs(i-j)]/contractionGeoDenom;
-                    submodelRate = subModel.getRate(i,i-1);
+                    submodelRate = subRates[i][i-1];
                 }else if(j > i){
-                    submodelRate = subModel.getRate(i,i+1);
+                    submodelRate = subRates[i][i+1];
                     condGeo = condProbNum[Math.abs(i-j)]/expansionGeoDenom;
                 }
 
                 if(i != j){
-
                     if(i == j + 1 || i == j - 1){
-                        infinitesimalRateMatrix[i][j]= submodelRate*(p + (1 - p)*condGeo);
+                        rates[i][j]= submodelRate*(p + (1 - p)*condGeo);
                     }else {
-                        infinitesimalRateMatrix[i][j] = submodelRate*(1 - p)*condGeo;
+                        rates[i][j] = submodelRate*(1 - p)*condGeo;
                     }
-                    rowSum = rowSum+infinitesimalRateMatrix[i][j];
+                    rowSum = rowSum+rates[i][j];
                 }
-
 
             }
 
-            infinitesimalRateMatrix[i][i] = 0.0-rowSum;
+            rates[i][i] = 0.0-rowSum;
         }
     }
 
-    public void setupMatrix(){
-        setupInfinitesimalRates();
-        super.setupMatrix();
-    }
 
     public void computeStationaryDistribution() {
 
-        if(useEmpiricalFreqs){
-            setupStationaryFrequencies();
+        if(useStationaryFreqs){
+            computeTwoPhaseStationaryDistribution();
         }
         super.computeStationaryDistribution();
     }

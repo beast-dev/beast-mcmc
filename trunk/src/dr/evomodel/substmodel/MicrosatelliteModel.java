@@ -17,6 +17,8 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     protected OnePhaseModel subModel = null;
     protected boolean isNested = false;
     protected double[][] infinitesimalRateMatrix = null;
+    protected boolean useStationaryFreqs = false;
+    protected boolean modelUpdate = false;
 
 
 
@@ -62,9 +64,9 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     }
 
     /*
-     * Set up empirical frequencies
-     */
-    public void setupStationaryFrequencies(){
+     * Set up stationary frequencies
+    */
+    public void computeTwoPhaseStationaryDistribution(){
         synchronized (this) {
             if (updateMatrix) {
                 setupMatrix();
@@ -82,29 +84,60 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
                 break;
             }
         }
-        
+        /*for(int i = 0; i < EvalImag.length; i++){
+            //System.out.println("imaginery part" + EvalImag[i]);
+            if(EvalImag[i] != 0.0){
+                throw new RuntimeException("imaginery part" + EvalImag[i]);
+            }
+        }*/
+
         double[] empFreq = new double[stateCount];
+        //System.out.println("eq dist");
         for(int i = 0; i < stateCount; i++){
             empFreq[i] = Evec[i][eigenValPos]*Ievc[eigenValPos][i];
+            //System.out.println(empFreq[i]);
 
         }
         this.freqModel = new FrequencyModel(dataType, empFreq);
     }
 
 
+    /*public void computeTwoPhaseStationaryDistribution2(){
+        setToEqualFrequencies();
+        super.computeStationaryDistribution();
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+
+        if (!wellConditioned) {
+           throw new RuntimeException("not well conditioned");
+        }
+
+        double[] empFreq = new double[stateCount];
+
+        for(int i = 0; i < stateCount; i++){
+            empFreq[i] = getOneTransitionProbabilityEntry(Double.MAX_VALUE, i, i);
+            //System.out.println(empFreq[i]);
+        }
+
+        this.freqModel = new FrequencyModel(dataType, empFreq);
+    }*/
+
 
     public double[] getRates(){
         return super.getRates();
     }
 
-    public void computeStationaryDistribution(){
+    /*public void computeStationaryDistribution(){
        super.computeStationaryDistribution();
-    }
+    }*/
 
     public abstract void setupInfinitesimalRates();
 
-    public Parameter getInfinitesimalRates(){
-        return infinitesimalRates;
+    public double[][] getInfinitesimalRates(){
+        return infinitesimalRateMatrix;
     }
 
     public double getLogOneTransitionProbabilityEntry(double distance, int parentState, int childState){
@@ -112,6 +145,7 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     }
 
     public double getOneTransitionProbabilityEntry(double distance, int parentState, int childState){
+
        double probability = 0.0;
        double temp;
 
@@ -122,6 +156,8 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         }
 
         if (!wellConditioned) {
+
+            //throw new RuntimeException("not well conditioned");
             return 0.0;
         }
 
@@ -154,6 +190,35 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
         return probability;
     }
 
+    /*
+     * The One Phase Models are special cases of the birth-death chain,
+     * and therefore we can use this to calculate the stationay distribution
+     * given a infinitesimal rate matrix.
+     */
+    public void computeOnePhaseStationaryDistribution(){
+        double[] pi = new double[stateCount];
+
+        pi[0] = 1.0;
+        double piSum = 1.0;
+        for(int i = 1; i < stateCount; i++){
+            pi[i] = pi[i-1]*infinitesimalRateMatrix[i-1][i]/infinitesimalRateMatrix[i][i-1];
+            piSum = piSum+pi[i];
+        }
+
+        for(int i = 0; i < stateCount; i++){
+            pi[i] = pi[i]/piSum;
+            //System.out.println(pi[i]);
+
+        }
+        freqModel = new FrequencyModel(dataType,pi);
+
+
+    }
+
+    public void setupMatrix(){
+        setupInfinitesimalRates();
+        super.setupMatrix();
+    }
 
 
     public MicrosatelliteModel getSubmodel(){
@@ -166,6 +231,11 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
 
     public boolean hasSubmodel(){
         return subModel != null;
+    }
+
+
+    public boolean isModelUpdated(){
+        return true;
     }
 
 }

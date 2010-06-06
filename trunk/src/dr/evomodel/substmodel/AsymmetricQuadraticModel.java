@@ -3,6 +3,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Chieh-Hsi Wu
@@ -16,12 +17,12 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     /*
      *Parameters for setting up the infinitesimal rate matrix.
      */
-    private Parameter expanConst;
-    private Parameter expanLin;
-    private Parameter expanQuad;
-    private Parameter contractConst;
-    private Parameter contractLin;
-    private Parameter contractQuad;
+    private Variable<Double> expanConst;
+    private Variable<Double> expanLin;
+    private Variable<Double> expanQuad;
+    private Variable<Double> contractConst;
+    private Variable<Double> contractLin;
+    private Variable<Double> contractQuad;
 
 
     /**
@@ -64,10 +65,16 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
      * @param contractQuad      Contraction quadratic coefficient
      * @param isNested          boolean indicating whether this object is a submodel of another microsatellite model
      */
-    public AsymmetricQuadraticModel(Microsatellite microsatellite, FrequencyModel freqModel,
-                    Parameter expanConst, Parameter expanLin, Parameter expanQuad,
-                    Parameter contractConst, Parameter contractLin, Parameter contractQuad,
-                    boolean isNested){
+    public AsymmetricQuadraticModel(
+            Microsatellite microsatellite,
+            FrequencyModel freqModel,
+            Variable<Double> expanConst,
+            Variable<Double> expanLin,
+            Variable<Double> expanQuad,
+            Variable<Double> contractConst,
+            Variable<Double> contractLin,
+            Variable<Double> contractQuad,
+            boolean isNested){
 
         super(ASYMQUAD_MODEL, microsatellite, freqModel,null);
 
@@ -83,13 +90,13 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
         this.isNested = isNested;
         addParameters();
 
-        printDetails();
+        //printDetails();
 
         setupInfinitesimalRates();
 
         //calculate the default frequencies when not provieded by the user.
         if(freqModel == null){
-            System.out.println("Creating AysmmetricQuadraticModel: using empirical frequencies");
+            useStationaryFreqs = true;
             computeStationaryDistribution();
         }else{
             this.freqModel = freqModel;
@@ -117,7 +124,7 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     /*
      *  This method will override the default value of the parameter using the value specified by the user.
      */
-    private Parameter overrideDefault(Parameter defaultParam, Parameter providedParam){
+    private Variable<Double> overrideDefault(Variable<Double> defaultParam, Variable<Double> providedParam){
         if(providedParam != null && providedParam != defaultParam)
             return providedParam;
         return defaultParam;
@@ -133,13 +140,13 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     public void setupInfinitesimalRates(){
 
 
-        double u0 = expanConst.getParameterValue(0);
-        double u1 = expanLin.getParameterValue(0);
-        double u2 = expanQuad.getParameterValue(0);
+        double u0 = expanConst.getValue(0);
+        double u1 = expanLin.getValue(0);
+        double u2 = expanQuad.getValue(0);
 
-        double d0 = contractConst.getParameterValue(0);
-        double d1 = contractLin.getParameterValue(0);
-        double d2 = contractQuad.getParameterValue(0);
+        double d0 = contractConst.getValue(0);
+        double d1 = contractLin.getValue(0);
+        double d2 = contractQuad.getValue(0);
 
         double rowSum;
         for(int i = 0; i < stateCount;i++){
@@ -164,44 +171,41 @@ public class AsymmetricQuadraticModel extends OnePhaseModel{
     }
 
 
-    public void setupMatrix(){
-        setupInfinitesimalRates();
-        super.setupMatrix();
-    }
-
-    public Parameter getExpansionConstant(){
+    public Variable<Double> getExpansionConstant(){
         return expanConst;
     }
 
-    public Parameter getExpansionLinear(){
+    public Variable<Double> getExpansionLinear(){
         return expanLin;
     }
 
-    public Parameter getExpansionQuad(){
+    public Variable<Double> getExpansionQuad(){
         return expanQuad;
     }
 
-    public Parameter getContractionConstant(){
+    public Variable<Double> getContractionConstant(){
         return contractConst;
     }
 
-    public Parameter getContractionLinear(){
+    public Variable<Double> getContractionLinear(){
         return contractLin;
     }
 
-    public Parameter getContractionQuad(){
+    public Variable<Double> getContractionQuad(){
         return contractQuad;
     }
+
+
 
     public void printDetails(){
         System.out.println("\n");
         System.out.println("Details of the asymmetric quadratic model and its parameters:");
-        System.out.println("expansion constant:   "+expanConst.getParameterValue(0));
-        System.out.println("expansion linear:     "+ expanLin.getParameterValue(0));
-        System.out.println("expansion quadratic:  "+expanQuad.getParameterValue(0));
-        System.out.println("contraction constant: "+contractConst.getParameterValue(0));
-        System.out.println("contraction linear:   "+contractLin.getParameterValue(0));
-        System.out.println("contraction quadratc: "+contractQuad.getParameterValue(0));
+        System.out.println("expansion constant:   "+expanConst.getValue(0));
+        System.out.println("expansion linear:     "+ expanLin.getValue(0));
+        System.out.println("expansion quadratic:  "+expanQuad.getValue(0));
+        System.out.println("contraction constant: "+contractConst.getValue(0));
+        System.out.println("contraction linear:   "+contractLin.getValue(0));
+        System.out.println("contraction quadratc: "+contractQuad.getValue(0));
         System.out.println("a submodel:           "+isNested);
         System.out.println("\n");
     }

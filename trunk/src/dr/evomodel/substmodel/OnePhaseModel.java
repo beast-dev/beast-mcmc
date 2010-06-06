@@ -2,6 +2,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 
@@ -12,7 +13,7 @@ import java.util.ArrayList;
  * An abstract for One Phase Microsatellite Models
  */
 public abstract class OnePhaseModel extends MicrosatelliteModel{
-    protected ArrayList<Parameter> nestedParams = null;
+    protected ArrayList<Variable<Double>> nestedParams = null;
 
     /**
      * Constructor
@@ -24,13 +25,13 @@ public abstract class OnePhaseModel extends MicrosatelliteModel{
      */
     public OnePhaseModel(String name, Microsatellite microsatellite, FrequencyModel freqModel, Parameter parameter){
         super(name, microsatellite, freqModel, parameter);
-        nestedParams=new ArrayList<Parameter>();
+        nestedParams=new ArrayList<Variable<Double>>();
     }
 
     /*
      * adding the parameters only if its not a submodel.
      */
-    protected void addParam(Parameter param){
+    protected void addParam(Variable<Double> param){
         if(isNested){
             nestedParams.add(param);
         }else{
@@ -41,7 +42,7 @@ public abstract class OnePhaseModel extends MicrosatelliteModel{
     /*
      * get the parameters in this submodel
      */
-    public Parameter getNestedParameter(int i){
+    public Variable<Double> getNestedParameter(int i){
         return nestedParams.get(i);
     }
 
@@ -58,20 +59,9 @@ public abstract class OnePhaseModel extends MicrosatelliteModel{
      * given a infinitesimal rate matrix.
      */
     public void computeStationaryDistribution(){
-        double[] pi = new double[stateCount];
-
-        pi[0] = 1.0;
-        double piSum = 1.0;
-        for(int i = 1; i < stateCount; i++){
-            pi[i] = pi[i-1]*infinitesimalRateMatrix[i-1][i]/infinitesimalRateMatrix[i][i-1];
-            piSum = piSum+pi[i];
+        if(useStationaryFreqs){
+            computeOnePhaseStationaryDistribution();
         }
-
-        for(int i = 0; i < stateCount; i++){
-            pi[i] = pi[i]/piSum;
-
-        }
-        freqModel = new FrequencyModel(dataType,pi);
         super.computeStationaryDistribution();
 
     }

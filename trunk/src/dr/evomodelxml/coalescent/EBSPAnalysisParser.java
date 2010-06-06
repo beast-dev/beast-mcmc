@@ -8,6 +8,8 @@ import dr.util.FileHelpers;
 import dr.xml.*;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
 /**
  */
@@ -30,6 +32,7 @@ public class EBSPAnalysisParser extends AbstractXMLObjectParser {
     public static final String POPULATION_FIRST_COLUMN = "populationFirstColumn";
     public static final String INDICATORS_FIRST_COLUMN = "indicatorsFirstColumn";
     public static final String ROOTHEIGHT_COLUMN = "rootheightColumn";
+    public static final String ALLDEMO_COLUMN = "allDemographicsFileName";
     public static final String NBINS = "nBins";
 
     private String getElementText(XMLObject xo, String childName) throws XMLParseException {
@@ -74,6 +77,12 @@ public class EBSPAnalysisParser extends AbstractXMLObjectParser {
                 }
             }
 
+            PrintWriter allDemoWriter = null;
+            if (xo.getChild(ALLDEMO_COLUMN) != null) {
+                String fName = getElementText(xo, ALLDEMO_COLUMN);
+                allDemoWriter = new PrintWriter(new FileWriter(fName));
+            }
+
             final boolean quantiles = xo.getAttribute(QUANTILES, false);
             final boolean logSpace = xo.getAttribute(LOG_SPACE, false);
             final boolean useMid = xo.getAttribute(USE_MIDDLE, false);
@@ -82,7 +91,8 @@ public class EBSPAnalysisParser extends AbstractXMLObjectParser {
             return new EBSPAnalysis(log, treeFiles, modelType,
                     populationFirstColumn, indicatorsFirstColumn,
                     rootHeightColumn, nBins,
-                    burnin, hpdLevels, quantiles, logSpace, useMid, onlyNchanges);
+                    burnin, hpdLevels, quantiles, logSpace, useMid, onlyNchanges,
+                    allDemoWriter);
 
         } catch (java.io.IOException ioe) {
             throw new XMLParseException(ioe.getMessage());
@@ -129,5 +139,6 @@ public class EBSPAnalysisParser extends AbstractXMLObjectParser {
             new ElementRule(POPULATION_FIRST_COLUMN, String.class, "Name of first column of population size"),
             new ElementRule(INDICATORS_FIRST_COLUMN, String.class, "Name of first column of population indicators"),
             new ElementRule(ROOTHEIGHT_COLUMN, String.class, "Name of trace column of root height", true),
+            new ElementRule(ALLDEMO_COLUMN, String.class, "Name of file to output all demographic functions", true),
     };
 }

@@ -13,6 +13,7 @@ import dr.util.TabularData;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 /**
@@ -32,10 +33,10 @@ public class EBSPAnalysis extends TabularData {
     private final boolean quantiles;
 
     public EBSPAnalysis(File log, File[] treeFiles, VariableDemographicModel.Type modelType,
-                 String firstColumnName, String firstIndicatorColumnName,
-                 String rootHeightColumnName, int coalPointBins, double burnIn,
-                 double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean mid,
-                 int restrictToNchanges)
+                        String firstColumnName, String firstIndicatorColumnName,
+                        String rootHeightColumnName, int coalPointBins, double burnIn,
+                        double[] inHPDLevels, boolean quantiles, boolean logSpace, boolean mid,
+                        int restrictToNchanges, PrintWriter allDemoWriter)
             throws IOException, Importer.ImportException, TraceException {
 
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
@@ -171,7 +172,6 @@ public class EBSPAnalysis extends TabularData {
                 } else {
                     match = false;
                 }
-
             }
 
             for (int k = 0; k < xPoints.length; ++k) {
@@ -221,6 +221,22 @@ public class EBSPAnalysis extends TabularData {
                 }
             }
             medians[nx] = DiscreteStatistics.median(popValues, indices);
+        }
+
+        if( allDemoWriter != null ) {
+            for(double xPoint : xPoints) {
+                allDemoWriter.print(xPoint);
+                allDemoWriter.append(' ');
+            }
+
+            for (int ns = 0; ns < nDataPoints; ++ns) {
+                allDemoWriter.println();
+                for(double xPoint : xPoints) {
+                    allDemoWriter.print(allDemog[ns].getDemographic(xPoint));
+                    allDemoWriter.append(' ');
+                }
+            }
+            allDemoWriter.close();
         }
     }
 

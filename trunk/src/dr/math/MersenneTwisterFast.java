@@ -119,7 +119,7 @@ class MersenneTwisterFast implements Serializable {
 	/**
 	 * Constructor using the time of day as default seed.
 	 */
-	private MersenneTwisterFast() {
+	public MersenneTwisterFast() {
 		this(System.currentTimeMillis() + seedAdditive_);
 		seedAdditive_ += nextInt();
 	}

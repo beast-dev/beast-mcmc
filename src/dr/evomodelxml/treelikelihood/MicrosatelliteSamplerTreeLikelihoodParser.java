@@ -3,8 +3,10 @@ package dr.evomodelxml.treelikelihood;
 import dr.evomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.treelikelihood.MicrosatelliteSamplerTreeLikelihood;
-import dr.inference.model.Parameter;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.xml.*;
+import dr.inference.model.Parameter;
 
 /**
  * @author Chieh-Hsi Wu
@@ -13,6 +15,7 @@ import dr.xml.*;
  */
 public class MicrosatelliteSamplerTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String MUTATION_RATE = "mutationRate";
+    public static final String BRANCH_RATE_MODEL = "branchRateModel";
     public String getParserName(){
         return "microsatelliteSamplerTreeLikelihood";
     }
@@ -24,17 +27,33 @@ public class MicrosatelliteSamplerTreeLikelihoodParser extends AbstractXMLObject
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         MicrosatelliteSamplerTreeModel mstModel = (MicrosatelliteSamplerTreeModel)xo.getChild(MicrosatelliteSamplerTreeModel.class);
         MicrosatelliteModel microsatelliteModel = (MicrosatelliteModel)xo.getChild(MicrosatelliteModel.class);
-        Parameter muRate = new Parameter.Default(1.0);
-        if(xo.hasChildNamed(MUTATION_RATE)){
-            muRate = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
+
+        BranchRateModel branchRateModel;
+        Object cxo = xo.getChild(BranchRateModel.class);
+
+        if(xo.getChild(BranchRateModel.class) !=null){
+
+            branchRateModel = (BranchRateModel)cxo;
+            System.out.println("BranchRateModel provided to MicrosatelliteSamplerTreeLikelihood");
+
+        }else if(xo.hasChildNamed(MUTATION_RATE)){
+
+            Parameter muRate = (Parameter)xo.getElementFirstChild(MUTATION_RATE);
+            branchRateModel = new StrictClockBranchRates(muRate);
+            System.out.println("mutation rate provided to MicrosatelliteSamplerTreeLikelihood");
+
+        }else{
+            branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
         }
-        return new MicrosatelliteSamplerTreeLikelihood(mstModel,microsatelliteModel, muRate);
+
+        return new MicrosatelliteSamplerTreeLikelihood(mstModel,microsatelliteModel, branchRateModel);
     }
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(MicrosatelliteSamplerTreeModel.class),
             new ElementRule(MicrosatelliteModel.class),
-            new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true)
+            new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(BranchRateModel.class,true)
     };
 
     public String getParserDescription(){

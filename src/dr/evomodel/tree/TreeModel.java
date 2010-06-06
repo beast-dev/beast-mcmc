@@ -244,9 +244,13 @@ public class TreeModel extends AbstractModel implements MutableTree {
             return parameter == node.traitParameters.get(name);
         }
 
-        public boolean areAllInternalHeightsChanged() {
-            return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
+        public boolean areAllInternalHeightsChanged(){
+            if(parameter != null){
+                return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
+            }
+            return false;
         }
+
     }
 
     // *****************************************************************
@@ -453,7 +457,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         root = (Node) newRoot;
 
         // We shouldn't need this because the addChild will already have fired appropriate events.
-        // pushTreeChangedEvent();
+         pushTreeChangedEvent(root);
     }
 
     public void addChild(NodeRef p, NodeRef c) {

@@ -32,6 +32,8 @@ import java.util.ArrayList;
  */
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
+    private static final String COUNTS_SUM = "countsSum";
+    private static final String COUNTS_PER_SITE = "countsPerSite";
 
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
@@ -154,7 +156,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return count;
     }
 
-    TreeTrait counts = new TreeTrait.D() {
+    TreeTrait countsSum = new TreeTrait.D() {
         public String getTraitName() {
             return codonLabeling.getText();
         }
@@ -163,37 +165,46 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return 1;
-        }
-
-        public Double[] getTrait(Tree tree, NodeRef node) {
+        public Double getTrait(Tree tree, NodeRef node) {
             double[] counts = getExpectedCountsForBranch(node);
             if (counts == null) {
                 // Should counts be null?
                 return null;
             }
-            if (branchFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
-                double total = 0;
-                for (double x : counts) {
-                    total += x;
-                }
-                return new Double[] { total };
-            } else if (branchFormat == StratifiedTraitOutputFormat.PER_SITE) {
-                return toArray(counts);
-            } else {
-                throw new RuntimeException("Not yet implemented.");
+            double total = 0;
+            for (double x : counts) {
+                total += x;
             }
+            return total ;
+        }
+    };
+
+    TreeTrait countsPerSite = new TreeTrait.DA() {
+        public String getTraitName() {
+            return codonLabeling.getText();
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public double[] getTrait(Tree tree, NodeRef node) {
+            return getExpectedCountsForBranch(node);
         }
     };
 
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[] { counts };
+        return new TreeTrait[] { countsSum, countsPerSite };
     }
 
     public TreeTrait getTreeTrait(String key) {
-        // ignore the key - it must be the one they wanted, no?
-        return counts;
+        if (key.equals(COUNTS_SUM)) {
+            return countsSum;
+        } else  if (key.equals(COUNTS_PER_SITE)) {
+            return countsPerSite;
+        } else {
+            throw new RuntimeException("Unrecognized trait key, " + key);
+        }
     }
 
     public double[] getRobustCountPerSite() { // TODO Move to StratifiedTraitLogger

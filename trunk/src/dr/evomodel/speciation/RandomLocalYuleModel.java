@@ -84,12 +84,8 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
                 return Intent.NODE;
             }
 
-            public int getDimension() {
-                return 1;
-            }
-
-            public Integer[] getTrait(Tree tree, NodeRef node) {
-                return new Integer[] { (isVariableSelected((TreeModel) tree, node) ? 1 : 0) };
+            public Integer getTrait(Tree tree, NodeRef node) {
+                return (isVariableSelected((TreeModel) tree, node) ? 1 : 0);
             }
 
         });
@@ -103,12 +99,8 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
                 return Intent.NODE;
             }
 
-            public int getDimension() {
-                return 1;
-            }
-
-            public Double[] getTrait(Tree tree, NodeRef node) {
-                return new Double[] { RandomLocalYuleModel.this.birthRates[node.getNumber()] };
+            public Double getTrait(Tree tree, NodeRef node) {
+                return RandomLocalYuleModel.this.birthRates[node.getNumber()];
             }
 
         });

@@ -179,19 +179,15 @@ public class IBDReporter extends AbstractModel implements TreeTraitProvider {
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return 1;
-        }
-
-        public Double[] getTrait(Tree tree, NodeRef node) {
+        public Double getTrait(Tree tree, NodeRef node) {
             if (!weightsKnown) {
                 expectedIBD();
                 weightsKnown = true;
             }
             if (tree.isExternal(node)) {
-                return new Double[] { getIBDWeight(tree, node) };
+                return getIBDWeight(tree, node);
             }
-            return new Double[0];
+            return null;
         }
     };
 

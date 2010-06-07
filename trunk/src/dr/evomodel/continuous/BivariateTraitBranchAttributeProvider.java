@@ -45,7 +45,7 @@ public abstract class BivariateTraitBranchAttributeProvider implements TreeTrait
         return 1;
     }
 
-    public Double[] getTrait(Tree tree, NodeRef node) {
+    public Double getTrait(Tree tree, NodeRef node) {
         if (tree != traitLikelihood.getTreeModel())
             throw new RuntimeException("Bad bug.");
 
@@ -55,18 +55,18 @@ public abstract class BivariateTraitBranchAttributeProvider implements TreeTrait
         double startTime = tree.getNodeHeight(parent);
         double endTime = tree.getNodeHeight(node);
 
-        return new Double[] { branchFunction(startTrait, endTrait, startTime, endTime) };
+        return branchFunction(startTrait, endTrait, startTime, endTime);
     }
 
-    public String[] getTraitString(Tree tree, NodeRef node) {
+    public String getTraitString(Tree tree, NodeRef node) {
         NodeRef parent = tree.getParent(node);
         double[] startTrait = traitLikelihood.getTraitForNode(tree, parent, traitName);
         double[] endTrait = traitLikelihood.getTraitForNode(tree, node, traitName);
         double startTime = tree.getNodeHeight(parent);
         double endTime = tree.getNodeHeight(node);
 
-        return new String[] { String.format(BivariateTraitBranchAttributeProvider.FORMAT,
-                branchFunction(startTrait, endTrait, startTime, endTime)) };
+        return String.format(BivariateTraitBranchAttributeProvider.FORMAT,
+                branchFunction(startTrait, endTrait, startTime, endTime));
     }
 
     protected AbstractMultivariateTraitLikelihood traitLikelihood;

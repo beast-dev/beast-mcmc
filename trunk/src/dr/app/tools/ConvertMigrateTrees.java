@@ -85,15 +85,13 @@ public class ConvertMigrateTrees {
                 return 1;
             }
 
-            public String[] getTrait(Tree tree, NodeRef node) {
+            public String getTrait(Tree tree, NodeRef node) {
                 Object attribute = tree.getNodeAttribute(node, MigrateTreeImporter.POP);
                 if (attribute == null) {
                     throw new RuntimeException(MigrateTreeImporter.POP + " is null for node " + node.getNumber());
                 }
 
-                String output = (forceDiscrete ? "d" : "") + attribute.toString();
-
-                return new String[]{ output };
+                return (forceDiscrete ? "d" : "") + attribute.toString();
             }
         });
 

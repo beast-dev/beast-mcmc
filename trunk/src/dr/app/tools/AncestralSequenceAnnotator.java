@@ -359,13 +359,13 @@ public class AncestralSequenceAnnotator {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
-            String[] sample = ancestralStates.getTraitString(treeModel, node);
+            String sample = ancestralStates.getTraitString(treeModel, node);
 
             String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
 
             if (oldSeq != null) {
 
-                char[] seq = (sample[0].substring(1, sample[0].length() - 1)).toCharArray();
+                char[] seq = (sample.substring(1, sample.length() - 1)).toCharArray();
 
                 int length = oldSeq.length();
 

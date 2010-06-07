@@ -203,12 +203,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
                 return Intent.NODE;
             }
 
-            public int getDimension() {
-                return 1;
-            }
-
-            public String[] getTrait(Tree tree, NodeRef node) {
-                return new String[] { formattedValue(tree, node, r) };
+            public String getTrait(Tree tree, NodeRef node) {
+                return formattedValue(tree, node, r);
             }
         });
 

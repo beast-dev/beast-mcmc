@@ -61,7 +61,7 @@ public class AncestralTrait implements Loggable {
 
         NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
         if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
-        return ancestralTrait.getTraitString(tree, node)[0];
+        return ancestralTrait.getTraitString(tree, node);
     }
 
     // **************************************************************

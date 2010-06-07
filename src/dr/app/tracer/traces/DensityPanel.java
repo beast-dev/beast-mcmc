@@ -27,6 +27,7 @@ package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
 import dr.inference.trace.Trace;
+import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -89,12 +90,13 @@ public class DensityPanel extends JPanel implements Exportable {
     private int colourBy = COLOUR_BY_TRACE;
 
     private final JFrame frame;
+
     /**
      * Creates new FrequencyPanel
      */
     public DensityPanel(final JFrame frame) {
         this.frame = frame;
-        
+
         setOpaque(false);
 
         setMinimumSize(new Dimension(300, 150));
@@ -304,7 +306,7 @@ public class DensityPanel extends JPanel implements Exportable {
             for (String traceName : traceNames) {
                 int traceIndex = tl.getTraceIndex(traceName);
                 Trace trace = tl.getTrace(traceIndex);
-                TraceDistribution td = tl.getDistributionStatistics(traceIndex);
+                TraceCorrelation td = tl.getCorrelationStatistics(traceIndex);
                 FrequencyPlot plot = null;
 
                 if (trace != null) {
@@ -314,7 +316,13 @@ public class DensityPanel extends JPanel implements Exportable {
                         if (trace.getTraceType() == Double.class) {
                             Double values[] = new Double[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
-                            plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+
+                            if (td != null) {
+                                plot = new NumericalDensityPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
+                            } else {
+                                plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
+                            }
+
                             traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
                             chartPanel.setYAxisTitle("Density");
 
@@ -325,7 +333,13 @@ public class DensityPanel extends JPanel implements Exportable {
                         } else if (trace.getTraceType() == Integer.class) {
                             Integer values[] = new Integer[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
-                            plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
+
+                            if (td != null) {
+                                plot = new CategoryDensityPlot(Trace.arrayConvert(values, td.getFilter()), -1, td, numOfBarsInt, barIntId);
+                            } else {
+                                plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
+                            }
+
                             barIntId++;
                             traceChart.setXAxis(true, new HashMap<Integer, String>());
                             chartPanel.setYAxisTitle("Probability");
@@ -335,8 +349,15 @@ public class DensityPanel extends JPanel implements Exportable {
                             binsCombo.setVisible(false);
 
                         } else if (trace.getTraceType() == String.class) {
-                            String values[] = new String[tl.getStateCount()];
-                            tl.getValues(traceIndex, values);
+                            String initValues[] = new String[tl.getStateCount()];
+                            tl.getValues(traceIndex, initValues);
+
+                            String[] values;
+                            if (td != null) {
+                                values = Trace.arrayConvert(initValues, td.getFilter());
+                            } else {
+                                values = Trace.arrayConvert(initValues);
+                            }
 
                             int[] intData = new int[values.length];
                             for (int v = 0; v < values.length; v++) {

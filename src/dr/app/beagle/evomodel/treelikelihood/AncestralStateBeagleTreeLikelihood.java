@@ -84,7 +84,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         treeTraits.addTrait(new TreeTrait.IA() {
             public String getTraitName() {
-                return tag;
+                return "states";
             }
 
             public Intent getIntent() {

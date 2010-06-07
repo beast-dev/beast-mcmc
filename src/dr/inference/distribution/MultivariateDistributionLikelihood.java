@@ -377,6 +377,11 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                 new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                         new ElementRule(MVN_MEAN,
                                 new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
+                new XORRule(
+                        new ElementRule(MVGAMMA_SCALE,
+                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                        new ElementRule(MVN_CV,
+                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
         };

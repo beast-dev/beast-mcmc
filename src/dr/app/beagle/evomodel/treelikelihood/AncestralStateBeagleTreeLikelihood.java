@@ -71,18 +71,18 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             // Find the id of tip i in the patternList
             String id = treeModel.getTaxonId(i);
             int index = patternList.getTaxonIndex(id);
-            tipStates[i] = getStates(patternList,index);          
+            tipStates[i] = getStates(patternList,index);
         }
 
         substitutionModel = substModel;
 
         reconstructedStates = new int[treeModel.getNodeCount()][patternCount];
         storedReconstructedStates = new int[treeModel.getNodeCount()][patternCount];
-                  
+
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
 
-        treeTraits.addTrait(new TreeTrait<int[]>() {
+        treeTraits.addTrait(new TreeTrait.IA() {
             public String getTraitName() {
                 return tag;
             }
@@ -95,19 +95,15 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 return int[].class;
             }
 
-            public int getDimension() {
-                return 1;
+            public int[] getTrait(Tree tree, NodeRef node) {
+                return getStatesForNode(tree,node);
             }
 
-            public int[][] getTrait(Tree tree, NodeRef node) {
-                return new int[][] { getStatesForNode(tree,node) };
-            }
-
-            public String[] getTraitString(Tree tree, NodeRef node) {
-                return new String[]{ formattedState(getStatesForNode(tree,node), dataType) };
+            public String getTraitString(Tree tree, NodeRef node) {
+                return formattedState(getStatesForNode(tree,node), dataType);
             }
         });
-        
+
     }
 
     public SubstitutionModel getSubstitutionModel() {
@@ -168,7 +164,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
      public void makeDirty() {
          super.makeDirty();
-         areStatesRedrawn = false;         
+         areStatesRedrawn = false;
      }
 
      public void redrawAncestralStates() {
@@ -317,7 +313,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                  // This is the root node
                 getPartials(nodeNum,partials);
-                
+
                 boolean sampleCategory = categoryCount > 1;
                 double[] posteriorWeightedCategory = null;
                 double[] priorWeightedCategory = null;
@@ -431,7 +427,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     final int parentIndex = parentState[j] * stateCount;
                     int category = rateCategory == null ? 0 : rateCategory[j];
                     int matrixIndex = category * stateCount * stateCount;
-                    
+
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
                     reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);

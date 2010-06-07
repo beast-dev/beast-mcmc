@@ -188,20 +188,16 @@ public class AvgPosteriorIBDReporter extends AbstractModel implements TreeTraitP
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return 1;
-        }
-
-        public Double[] getTrait(Tree tree, NodeRef node) {
+        public Double getTrait(Tree tree, NodeRef node) {
             if (!weightsKnown) {
                 expectedIBD();
                 weightsKnown = true;
             }
             if (tree.isExternal(node)) {
                 int nodeNum = node.getNumber();
-                return new Double[]{ibdweights[nodeNum] + 1};
+                return ibdweights[nodeNum] + 1;
             }
-            return new Double[0];
+            return null;
         }
     };
 

@@ -208,7 +208,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in AbstractMultivariateTraitLikelihood");
                 }
             } else if (object instanceof Parameter) {
-                // Ignoring                
+                // Ignoring
             } else {
                 throw new RuntimeException("Unexpected TreeModel event occuring in AbstractMultivariateTraitLikelihood");
             }
@@ -386,7 +386,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             final double[] trait = getRootNodeTrait();
             if (trait.length == 1 || reportAsMultivariate) {
                 treeTraits = new TreeTrait[] {
-                        new TreeTrait<Double>() {
+                        new TreeTrait.DA() {
                             public String getTraitName() {
                                 return traitName;
                             }
@@ -399,26 +399,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                 return Double.class;
                             }
 
-                            public int getDimension() {
-                                return trait.length;
-                            }
-
-                            public Double[] getTrait(Tree tree, NodeRef node) {
-                                double trait[] = getTraitForNode(tree, node, traitName);
-                                Double[] values = new Double[trait.length];
-                                    for (int i = 0; i < trait.length; i++) {
-                                        values[i] = trait[i];
-                                    }
-                                return values;
-                            }
-
-                            public String[] getTraitString(Tree tree, NodeRef node) {
-                                double trait[] = getTraitForNode(treeModel, node, traitName);
-                                String[] values = new String[trait.length];
-                                for (int i = 0; i < trait.length; i++) {
-                                    values[i] = Double.toString(trait[i]);
-                                }
-                                return values;
+                            public double[] getTrait(Tree tree, NodeRef node) {
+                                return getTraitForNode(tree, node, traitName);
                             }
                         }
                 };
@@ -849,7 +831,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                 new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
                                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                                 new ElementRule(PRIOR_SAMPLE_SIZE,
-                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),                               
+                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                         }, true),
 //                        true),
                 new ElementRule(MultivariateDiffusionModel.class),

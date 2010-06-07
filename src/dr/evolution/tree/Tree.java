@@ -948,10 +948,10 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 for (TreeTraitProvider ttp : treeTraitProviders) {
                     TreeTrait[] tts = ttp.getTreeTraits();
                     for (TreeTrait treeTrait: tts) {
-                        if (treeTrait.getIntent() == intent && treeTrait.getDimension() > 0) {
-                            String[] values = treeTrait.getTraitString(tree, node);
+                        if (treeTrait.getIntent() == intent) {
+                            String value = treeTrait.getTraitString(tree, node);
 
-                            if (values != null && values.length > 0) {
+                            if (value != null) {
                                 if (!hasAttribute) {
                                     buffer.append("[&");
                                     hasAttribute = true;
@@ -960,18 +960,19 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                                 }
                                 buffer.append(treeTrait.getTraitName());
                                 buffer.append("=");
+                                buffer.append(value);
 
-                                if (values.length > 1) {
-                                    buffer.append("{");
-                                    buffer.append(values[0]);
-                                    for (int i = 1; i < values.length; i++) {
-                                        buffer.append(",");
-                                        buffer.append(values[i]);
-                                    }
-                                    buffer.append("}");
-                                } else {
-                                    buffer.append(values[0]);
-                                }
+//                                if (values.length > 1) {
+//                                    buffer.append("{");
+//                                    buffer.append(values[0]);
+//                                    for (int i = 1; i < values.length; i++) {
+//                                        buffer.append(",");
+//                                        buffer.append(values[i]);
+//                                    }
+//                                    buffer.append("}");
+//                                } else {
+//                                    buffer.append(values[0]);
+//                                }
                             }
                         }
 

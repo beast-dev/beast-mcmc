@@ -47,7 +47,7 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeT
         posteriorsKnown = false;
     }
 
-    TreeTrait posteriors = new TreeTrait.D() {
+    TreeTrait posteriors = new TreeTrait.DA() {
         public String getTraitName() {
             return "posteriors";
         }
@@ -56,21 +56,18 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeT
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return stateCount;
-        }
-
-        public Double[] getTrait(Tree tree, NodeRef node) {
+        public double[] getTrait(Tree tree, NodeRef node) {
             if (tree != treeModel) {
                 throw new RuntimeException("Can only calculate node posteriors on treeModel given to constructor");
             }
             if (!posteriorsKnown) {
                 calculatePosteriors();
             }
-            return toArray(nodePosteriors[node.getNumber()]);
+            return nodePosteriors[node.getNumber()];
         }
 
     };
+    
     public TreeTrait[] getTreeTraits() {
         return new TreeTrait[] { posteriors };
     }
@@ -86,7 +83,7 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeT
         }
         return nodePosteriors[nodeNum];
     }
-  
+
     public void getNodeMatrix(int nodeNum, double[] probabilities) {
         ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
     }

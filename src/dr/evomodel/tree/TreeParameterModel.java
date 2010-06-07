@@ -55,6 +55,9 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     private boolean includeRoot = false;
 
+    private Intent intent;
+
+
     /**
      * This class constructs a tree parameter, and will set the dimension of the parameter
      * to match the appropriate number of nodes if necessary.
@@ -64,12 +67,26 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      * @param includeRoot tree if the parameter includes a value associated with the root node.
      */
     public TreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot) {
+        this(tree, parameter, includeRoot, Intent.NODE);
+    }
+
+    /**
+     * This class constructs a tree parameter, and will set the dimension of the parameter
+     * to match the appropriate number of nodes if necessary.
+     *
+     * @param tree        the tree that this parameter corresponds to
+     * @param parameter   the parameter to keep in sync with tree topology moves.
+     * @param includeRoot tree if the parameter includes a value associated with the root node.
+     */
+    public TreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot, Intent intent) {
 
         super("treeParameterModel");
         this.tree = tree;
         this.parameter = parameter;
 
         this.includeRoot = includeRoot;
+
+        this.intent = intent;
 
         int dim = parameter.getDimension();
         int treeSize = tree.getNodeCount();
@@ -137,14 +154,6 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         parameter.setParameterValue(index, value);
     }
 
-    public String getBranchAttributeLabel() {
-        return parameter.getId();
-    }
-
-    public String getAttributeForBranch(Tree tree, NodeRef node) {
-        return Double.toString(getNodeValue(tree, node));
-    }
-
     private int getNodeNumberFromParameterIndex(int parameterIndex) {
         if (!includeRoot && parameterIndex >= tree.getRoot().getNumber()) return parameterIndex + 1;
         return parameterIndex;
@@ -196,34 +205,30 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     public String[] getNodeAttributeLabel() {
-        return new String[]{parameter.getId()};
+        return new String[]{};
     }
 
     public String[] getAttributeForNode(Tree tree, NodeRef node) {
-        return new String[]{getAttributeForBranch(tree, node)};
+        return new String[]{};
     }
 
     public String getTraitName() {
-        return null;
+        return parameter.getId();
     }
 
     public Intent getIntent() {
-        return null;
+        return intent;
     }
 
     public Class getTraitClass() {
-        return null;
+        return Double.class;
     }
 
-    public int getDimension() {
-        return 0;
+    public Double getTrait(Tree tree, NodeRef node) {
+        return getNodeValue(tree, node);
     }
 
-    public Double[] getTrait(Tree tree, NodeRef node) {
-        return new Double[0];
-    }
-
-    public String[] getTraitString(Tree tree, NodeRef node) {
-        return new String[0];
+    public String getTraitString(Tree tree, NodeRef node) {
+        return Double.toString(getNodeValue(tree, node));
     }
 }

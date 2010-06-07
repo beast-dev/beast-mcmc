@@ -28,6 +28,19 @@ package dr.app.coalgen;
 import jam.framework.SingleDocApplication;
 
 import javax.swing.*;
+import java.io.*;
+import java.util.*;
+
+import dr.evolution.io.Importer;
+import dr.inference.trace.*;
+import dr.util.FileHelpers;
+import jebl.evolution.io.*;
+import jebl.evolution.coalescent.EmpiricalDemographicFunction;
+import jebl.evolution.treesimulation.*;
+import jebl.evolution.trees.Tree;
+import jebl.evolution.trees.RootedTree;
+import jebl.evolution.taxa.Taxon;
+import jebl.evolution.graphs.Node;
 
 /**
  * @author Andrew Rambaut
@@ -63,11 +76,166 @@ public class CoalGenApp {
         }
     }
 
+    public static void simulate(String inputFileName, String treesFileName, String outputFileName) throws IOException, TraceException, Importer.ImportException {
+        File logFile = new File(inputFileName);
+
+        BufferedReader reader = new BufferedReader(new FileReader(logFile));
+
+        System.out.println("Loading trace file: " + inputFileName);
+        LogFileTraces traces = new LogFileTraces(inputFileName, logFile);
+        traces.loadTraces(reader, FileHelpers.numberOfLines(logFile));
+        traces.setBurnIn(0);
+        System.out.println(traces.getStateCount() + " states loaded");
+
+        System.out.println();
+        System.out.println("Opening trees file: " + treesFileName);
+        reader = new BufferedReader(new FileReader(treesFileName));
+
+        System.out.println("Simulating...");
+        System.out.println("0              25             50             75            100");
+        System.out.println("|--------------|--------------|--------------|--------------|");
+
+        int stepSize = traces.getStateCount() / 60;
+        if (stepSize < 1) stepSize = 1;
+
+        PrintWriter writer = new PrintWriter(new FileWriter(outputFileName));
+
+        FileReader fileReader = new FileReader(treesFileName);
+        TreeImporter importer = new NexusImporter(fileReader);
+
+            EmpiricalDemographicFunction demo = null;
+            IntervalGenerator intervals = null;
+            TreeSimulator sim = null;
+
+            CoalGenData data = new CoalGenData();
+            data.traces = traces;
+            data.setDemographicModel(7); // const stepwise bsp
+            data.setupSkyline();
+
+            double[] popSizes = new double[data.popSizeCount];
+            double[] groupSizes = new double[data.groupSizeCount];
+
+
+            NewickExporter exporter = new NewickExporter(writer);
+            int count = 0;
+            try {
+                while (importer.hasTree()) {
+                    RootedTree inTree = (RootedTree)importer.importNextTree();
+
+                    if (sim == null) {
+                        setSamplingTimes(inTree);
+                        sim = new TreeSimulator(inTree.getTaxa(), "date");
+                    }
+
+                    data.getNextSkyline(popSizes, groupSizes);
+
+                    double[] times = getTimes(inTree, groupSizes);
+                    demo = new EmpiricalDemographicFunction(popSizes, times, true);
+                    intervals = new CoalescentIntervalGenerator(demo);
+
+                    RootedTree outTree = sim.simulate(intervals);
+
+                    exporter.exportTree(outTree);
+                    writer.println();
+                    writer.flush();
+
+                    if (count > 0 && count % stepSize == 0) {
+                        System.out.print("*");
+                        System.out.flush();
+                    }
+                    count++;
+                }
+            } catch (ImportException e) {
+                e.printStackTrace();
+            }
+
+        fileReader.close();
+
+
+        writer.close();
+
+    }
+
+    private static void setSamplingTimes(final RootedTree tree) {
+        setSamplingTimes(tree, tree.getRootNode(), 0.0);
+
+        // the dates are distances from root so make them heights
+        double maxLength = 0.0;
+        for (Taxon taxon : tree.getTaxa()) {
+            double length = (Double)taxon.getAttribute("length");
+            if (length > maxLength) {
+                maxLength = length;
+            }
+        }
+        for (Taxon taxon : tree.getTaxa()) {
+            double length = (Double)taxon.getAttribute("length");
+            taxon.setAttribute("date", maxLength - length);
+        }
+    }
+
+    private static void setSamplingTimes(final RootedTree tree, final Node node, double length) {
+        if (tree.isExternal(node)) {
+            tree.getTaxon(node).setAttribute("length", length);
+        } else {
+            for (Node child : tree.getChildren(node)) {
+                double l = tree.getLength(child);
+                setSamplingTimes(tree, child, length + l);
+            }
+        }
+    }
+
+    private static double[] getTimes(final RootedTree tree, final double[] groupSizes) {
+        double[] heights = new double[tree.getInternalNodes().size()];
+
+        int i = 0;
+        for (Node node : tree.getInternalNodes()) {
+            heights[i] = tree.getHeight(node);
+            i++;
+        }
+        Arrays.sort(heights);
+
+        if (groupSizes != null) {
+            double[] allHeights = heights;
+            heights = new double[groupSizes.length];
+            int k = 0;
+            for (int j = 0; j < groupSizes.length; j++) {
+                k += groupSizes[j];
+                heights[j] = allHeights[k - 1];
+            }
+        }
+
+        return heights;
+    }
+
+
     // Main entry point
     static public void main(String[] args) {
-        System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-        System.setProperty("apple.laf.useScreenMenuBar", "true");
+        if (args.length > 1) {
 
-        new CoalGenApp();
+            if (args.length != 3) {
+                System.err.println("Usage: coalgen <input_file> <tree_file> <output_file>");
+                return;
+            }
+
+            String inputFileName = args[0];
+            String treeFileName = args[1];
+            String outputFileName = args[2];
+
+            try {
+                CoalGenApp.simulate(inputFileName, treeFileName, outputFileName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (TraceException e) {
+                e.printStackTrace();
+            } catch (Importer.ImportException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+            new CoalGenApp();
+        }
     }
 }

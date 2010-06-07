@@ -125,7 +125,7 @@ public class Trace<T> {
         double[] dest = null;
         if (src != null) {
             dest = new double[src.length];
-            for (int i = 0; i < src.length; i++) {
+            for (int i = 0; i < dest.length; i++) {
                 dest[i] = src[i].doubleValue();
             }
         }
@@ -137,13 +137,13 @@ public class Trace<T> {
             java.util.List<Double> selectedValuesList = new ArrayList<Double>();
 
             for (int i = 0; i < src.length; i++) {
-                if (filter.getSelected(i)) {
+                if (filter.isIn(src[i])) {
                     selectedValuesList.add(src[i]);
                 }
             }
 
             double[] dest = new double[selectedValuesList.size()];
-            for (int i = 0; i < src.length; i++) {
+            for (int i = 0; i < dest.length; i++) {
                 dest[i] = selectedValuesList.get(i).doubleValue();
             }
 
@@ -158,8 +158,8 @@ public class Trace<T> {
         double[][] dest = null;
         if (src != null) {
             dest = new double[src.length][src[0].length];
-            for (int i = 0; i < src.length; i++) {
-                for (int j = 0; j < src[i].length; j++) {
+            for (int i = 0; i < dest.length; i++) {
+                for (int j = 0; j < dest[i].length; j++) {
                     dest[i][j] = src[i][j].doubleValue();
                 }
             }
@@ -171,7 +171,7 @@ public class Trace<T> {
         int[] dest = null;
         if (src != null) {
             dest = new int[src.length];
-            for (int i = 0; i < src.length; i++) {
+            for (int i = 0; i < dest.length; i++) {
                 dest[i] = src[i].intValue();
             }
         }
@@ -183,13 +183,13 @@ public class Trace<T> {
             java.util.List<Integer> selectedValuesList = new ArrayList<Integer>();
 
             for (int i = 0; i < src.length; i++) {
-                if (filter.getSelected(i)) {
+                if (filter.isIn(src[i])) {
                     selectedValuesList.add(src[i]);
                 }
             }
 
             int[] dest = new int[selectedValuesList.size()];
-            for (int i = 0; i < src.length; i++) {
+            for (int i = 0; i < dest.length; i++) {
                 dest[i] = selectedValuesList.get(i).intValue();
             }
 
@@ -202,6 +202,28 @@ public class Trace<T> {
 
     public static String[] arrayConvert(String[] src) {
         return src;
+    }
+
+    public static String[] arrayConvert(String[] src, Filter filter) {
+        if (filter != null) {
+            java.util.List<String> selectedValuesList = new ArrayList<String>();
+
+            for (int i = 0; i < src.length; i++) {
+                if (filter.isIn(src[i])) {
+                    selectedValuesList.add(src[i]);
+                }
+            }
+
+            String[] dest = new String[selectedValuesList.size()];
+//            for (int i = 0; i < dest.length; i++) {
+//                dest[i] = selectedValuesList.get(i).toString();
+//            }
+            dest = selectedValuesList.toArray(dest);
+            return dest;
+
+        } else {
+            return arrayConvert(src);
+        }
     }
 
     public static double[] arrayIntToDouble(Integer[] src) {

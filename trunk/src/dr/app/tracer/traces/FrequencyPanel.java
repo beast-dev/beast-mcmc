@@ -134,12 +134,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
             if (trace.getTraceType() == Double.class) {
                 Double values[] = new Double[traceList.getStateCount()];
                 traceList.getValues(traceIndex, values);
-                
+
                 if (td != null) {
                     plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
                 } else {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);    
+                    plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
                 }
                 traceChart.setXAxis(false, categoryDataMap);
                 chartPanel.setYAxisTitle("Frequency");
@@ -152,7 +152,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, values);
 
                 if (td != null) {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td); 
+                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td);
                     plot.setInCredibleSet(td.credSet);
                 } else {
                     plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
@@ -164,8 +164,14 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(true);
 
             } else if (trace.getTraceType() == String.class) {
-                String values[] = new String[traceList.getStateCount()];
-                traceList.getValues(traceIndex, values);
+                String[] initValues = new String[traceList.getStateCount()];
+                traceList.getValues(traceIndex, initValues);
+                String[] values;
+                if (td != null) {
+                    values = Trace.arrayConvert(initValues, td.getFilter());
+                } else {
+                    values = Trace.arrayConvert(initValues);
+                }
 
                 int[] intData = new int[values.length];
                 for (int v = 0; v < values.length; v++) { //TODO filtered

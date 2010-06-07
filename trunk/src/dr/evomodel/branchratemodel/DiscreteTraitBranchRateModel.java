@@ -108,7 +108,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
         this.trait = trait;
 
-        if (trait.getClass().equals(int[].class)) {
+        if (trait.getTraitName().equals("states")) {
             // Assume the trait is one or more discrete traits reconstructed at nodes
             mode = Mode.NODE_STATES;
         } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
@@ -201,7 +201,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         double rate = 0.0;
         double[] dwellTimes;
         if (mode == Mode.DWELL_TIMES) {
-            dwellTimes = ((double[][])trait.getTrait(tree, node))[0];
+            dwellTimes = (double[])trait.getTrait(tree, node);
             if (dwellTimes.length != ratesParameter.getDimension()) {
                 throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
             }
@@ -211,7 +211,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
         double totalTime = 0;
         for (int i = 0; i < ratesParameter.getDimension(); i++) {
-            rate = ratesParameter.getParameterValue(i) * dwellTimes[i];
+            rate += ratesParameter.getParameterValue(i) * dwellTimes[i];
             totalTime += dwellTimes[i];
         }
         rate /= totalTime;

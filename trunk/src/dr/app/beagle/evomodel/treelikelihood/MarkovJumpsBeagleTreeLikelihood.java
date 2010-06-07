@@ -96,7 +96,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
 
-        treeTraits.addTrait("dwellTimes", new TreeTrait.DA() {
+        treeTraits.addTrait("rewards", new TreeTrait.DA() {
             public String getTraitName() {
                 return tag;
             }
@@ -106,14 +106,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
 
             public double[] getTrait(Tree tree, NodeRef node) {
-                return getDwellTimesForNodeAndPattern(tree, node, 0);
+                return getRewardsForNodeAndPattern(tree, node, 0);
             }
         });
 
         numRegisters++;
     }
 
-    public double[] getDwellTimesForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
+    public double[] getRewardsForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
         double[] rtn = new double[numRegisters];
         for (int r = 0; r < numRegisters; r++) {
             double[] mjs = getMarkovJumpsForNodeAndRegister(tree, node, r);

@@ -197,6 +197,22 @@ public class LogFileTraces extends AbstractTraceList {
      * @throws TraceException      when trace contents is not valid
      * @throws java.io.IOException low level problems with file
      */
+    public void loadTraces(Reader r, int numberOfLines)
+            throws TraceException, java.io.IOException {
+
+        // is -1 a valid default?
+        loadTraces(r, numberOfLines, -1, TraceFactory.TraceType.CONTINUOUS);
+    }
+
+    /**
+     * Walter: Please comment what the extra arguments mean
+     * @param r
+     * @param numberOfLines
+     * @param reloadColumn
+     * @param reloadType
+     * @throws TraceException
+     * @throws java.io.IOException
+     */
     public void loadTraces(Reader r, int numberOfLines, int reloadColumn, TraceFactory.TraceType reloadType)
             throws TraceException, java.io.IOException {
 
@@ -317,7 +333,7 @@ public class LogFileTraces extends AbstractTraceList {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
             if (firstToken.contains(TraceFactory.TraceType.INTEGER.toString())
-                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {                
+                    || firstToken.contains(TraceFactory.TraceType.INTEGER.toString().toUpperCase())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
                     tracesType.put(token, TraceFactory.TraceType.INTEGER);

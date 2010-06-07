@@ -29,10 +29,7 @@ import dr.evolution.coalescent.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evoxml.TaxaParser;
 import dr.inference.trace.LogFileTraces;
-import org.jdom.Document;
-import org.jdom.Element;
 
 import java.io.File;
 
@@ -76,19 +73,32 @@ public class CoalGenData {
     public LogFileTraces traces = null;
     public TaxonList taxonList = new Taxa();
     public int demographicModel = 0;
+
+    public int popSizeCount = 0;
+    public int groupSizeCount = 0;
+
     public double[] argumentValues = new double[] {1000, 0.1, 0.5, 10.0, 50.0, 1000, 1};
     public boolean[] argumentFromTraces = new boolean[argumentNames.length];
     public int[] argumentTraces = new int[argumentNames.length];
     public int replicateCount = 1000;
 
     public CoalGenData() {
-        for (int i = 0; i < argumentTraces.length; i++) argumentTraces[i] = -1;
+    }
+
+    public void setDemographicModel(int model) {
+        demographicModel = model;
+        argumentTraces = new int[argumentIndices[demographicModel].length];
+        for (int i = 0; i < argumentTraces.length; i++) {
+            argumentTraces[i] = -1;
+        }
     }
 
     private int current = 0;
 
     public boolean hasNext() {
-        if (traces != null) return (current < traces.getStateCount());
+        if (traces != null) {
+            return (current < traces.getStateCount());
+        }
 
         return (current < replicateCount);
     }
@@ -126,9 +136,21 @@ public class CoalGenData {
                 demo = new Expansion(Units.Type.YEARS);
             } else if (demographicModel == 7) { // Piecewise Constant (skyline)
                 demo = new PiecewiseConstantPopulation(Units.Type.YEARS);
-            } else if (demographicModel == 8 || demographicModel == 9) { // Piecewise Linear (skyline/skyride)
-                demo = new PiecewiseConstantPopulation(Units.Type.YEARS);
+            } else if (demographicModel == 8) { // Piecewise Linear (skyline)
+                demo = new PiecewiseLinearPopulation(Units.Type.YEARS);
+            } else if (demographicModel == 9) { // Piecewise Linear (skyride)
+                demo = new PiecewiseLinearPopulation(Units.Type.YEARS);
             }
+
+            guessArguments();
+
+            if (demographicModel >= 7) { // is skyline or skyride
+                popSizeCount = getTraceRange(argumentTraces[0]);
+                if (demographicModel < 9) { // is skyline not skyride
+                    groupSizeCount = getTraceRange(argumentTraces[1]);
+                }
+            }
+
         }
 
         if (traces != null) {
@@ -175,7 +197,6 @@ public class CoalGenData {
                 value = traces.getStateValue(argumentTraces[argumentIndices[demographicModel][2]], current);
                 ((Expansion) demo).setDoublingTime(value);
             } else if (demographicModel >= 7) { // Piecewise (skyline/skyride)
-                // todo ...
             }
         } else {
             double value;
@@ -229,81 +250,70 @@ public class CoalGenData {
         return demo;
     }
 
+    public void setupSkyline() {
+        guessArguments();
+        popSizeCount = getTraceRange(argumentTraces[0]);
+        if (demographicModel < 9) { // is skyline not skyride
+            groupSizeCount = getTraceRange(argumentTraces[1]);
+        }     
+    }
+
+    public void getNextSkyline(double[] popSizes, double[] groupSizes) {
+        int popSizeIndex = argumentTraces[0];
+        for (int i = 0; i < popSizeCount; i++) {
+            popSizes[i] = traces.getStateValue(popSizeIndex + i, current);
+        }
+
+        if (groupSizes != null) { // is skyline not skyride
+            int groupSizeIndex = argumentTraces[1];
+            for (int i = 0; i < groupSizeCount; i++) {
+                groupSizes[i] = traces.getStateValue(groupSizeIndex + i, current);
+            }
+        }
+        current++;
+    }
+    
     public void reset() {
         current = 0;
     }
 
-    /**
-     * Read options from a file
-     */
-    public Document create() {
+    private void guessArguments() {
+        int argumentCount = argumentIndices[demographicModel].length;
 
-        Element root = new Element("coalGen");
-        root.setAttribute("version", version);
+        for (int i = 0; i < argumentCount; i++) {
 
-        Element taxonListElement = new Element(TaxaParser.TAXA);
+            int index = -1;
 
-        root.addContent(taxonListElement);
+            for (int j = 0; j < argumentGuesses[i].length; j++) {
+                if (index != -1) break;
 
-        Document doc = new Document(root);
-        return doc;
+                index = findArgument(argumentGuesses[argumentIndices[demographicModel][i]][j]);
+            }
+
+            argumentTraces[i] = index;
+        }
     }
 
-    private Element createChild(String name, String value) {
-        Element e = new Element(name);
-        e.setText(value);
-        return e;
+    private int findArgument(String argument) {
+        for (int i = 0; i < traces.getTraceCount(); i++) {
+            String item = traces.getTraceName(i).toLowerCase();
+            if (item.indexOf(argument) != -1) return i;
+        }
+        return -1;
     }
 
-    private Element createChild(String name, int value) {
-        Element e = new Element(name);
-        e.setText(Integer.toString(value));
-        return e;
-    }
+    private int getTraceRange(int first) {
+        int i = 1;
+        int k = first;
 
-    private Element createChild(String name, double value) {
-        Element e = new Element(name);
-        e.setText(Double.toString(value));
-        return e;
-    }
-
-    private Element createChild(String name, boolean value) {
-        Element e = new Element(name);
-        e.setText(value ? "true" : "false");
-        return e;
-    }
-
-    /**
-     * Read options from a file
-     */
-    public void parse(Document document) throws dr.xml.XMLParseException {
-
-        Element root = document.getRootElement();
-        if (!root.getName().equals("coalGen")) {
-            throw new dr.xml.XMLParseException("This document does not appear to be a CoalGen file");
+        String name = traces.getTraceName(first);
+        String root = name.substring(0, name.length() - 1);
+        while (k < traces.getTraceCount() && traces.getTraceName(k).equals(root + i)) {
+            i++;
+            k++;
         }
 
-        Element taxonListElement = root.getChild(TaxaParser.TAXA);
-    }
-
-    private String getStringChild(Element element, String childName) {
-        return element.getChildTextTrim(childName);
-    }
-
-    private int getIntegerChild(Element element, String childName) {
-        String value = element.getChildTextTrim(childName);
-        return Integer.parseInt(value);
-    }
-
-    private double getDoubleChild(Element element, String childName) {
-        String value = element.getChildTextTrim(childName);
-        return Double.parseDouble(value);
-    }
-
-    private boolean getBooleanChild(Element element, String childName) {
-        String value = element.getChildTextTrim(childName);
-        if (value.equals("true")) return true;
-        return false;
+        return i - 1;
     }
 }
 

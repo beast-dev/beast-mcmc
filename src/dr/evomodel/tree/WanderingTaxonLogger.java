@@ -34,11 +34,7 @@ public class WanderingTaxonLogger implements TreeTraitProvider {
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return 1;
-        }
-
-        public Integer[] getTrait(Tree tree, NodeRef node) {
+        public Integer getTrait(Tree tree, NodeRef node) {
             int rtnValue = 0;
             if (relative == Relative.PARENT) {
                 if (isAnyChildEqualToTaxon(tree, node, taxon, null)) {
@@ -50,10 +46,10 @@ public class WanderingTaxonLogger implements TreeTraitProvider {
                 }
             }
 
-            return new Integer[] { rtnValue };
+            return rtnValue;
         }
-
     };
+
     public TreeTrait[] getTreeTraits() {
         return new TreeTrait[] { relativeTrait };
     }
@@ -80,7 +76,7 @@ public class WanderingTaxonLogger implements TreeTraitProvider {
         PARENT,
         SISTER
     }
-  
+
     private String name;
     private Taxon taxon;
     private Relative relative;

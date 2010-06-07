@@ -54,15 +54,11 @@ public abstract class AbstractBranchRateModel extends AbstractModel implements B
         return Double.class;
     }
 
-    public int getDimension() {
-        return 1;
+    public Double getTrait(final Tree tree, final NodeRef node) {
+        return getBranchRate(tree, node);
     }
 
-    public Double[] getTrait(final Tree tree, final NodeRef node) {
-        return new Double[] { getBranchRate(tree, node)};
-    }
-
-    public String[] getTraitString(final Tree tree, final NodeRef node) {
-        return new String[] { Double.toString(getBranchRate(tree, node)) };
+    public String getTraitString(final Tree tree, final NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
     }
 }

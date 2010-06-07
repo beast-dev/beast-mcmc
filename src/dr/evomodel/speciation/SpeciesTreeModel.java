@@ -1075,17 +1075,13 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             return Intent.NODE;
         }
 
-        public int getDimension() {
-            return 1;
-        }
-
-        public String[] getTrait(Tree tree, NodeRef node) {
+        public String getTrait(Tree tree, NodeRef node) {
             assert tree == SpeciesTreeModel.this;
 
             //final VDdemographicFunction df = getProps().get(node).demogf;
 
             final DemographicFunction df = getNodeDemographic(node);
-            return new String[] { df.toString() };
+            return df.toString();
         }
     };
 

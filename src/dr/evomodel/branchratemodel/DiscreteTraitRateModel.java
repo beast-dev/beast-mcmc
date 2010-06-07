@@ -111,12 +111,9 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
         this.trait = trait;
 
-        if (trait.getClass().equals(Integer.class)) {
+        if (trait.getClass().equals(int[].class)) {
             // Assume the trait is one or more discrete traits reconstructed at nodes
             mode = Mode.NODE_STATES;
-            if (traitIndex < 0 || traitIndex >= trait.getDimension()) {
-                throw new IllegalArgumentException("The trait index must be within the dimension of the trait.");
-            }
         } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
             // Assume the trait itself is the dwell times for the individual states on the branch above the node
             mode = Mode.DWELL_TIMES;
@@ -263,9 +260,9 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         } else if (mode == Mode.NODE_STATES) {
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
-            int state = (Integer)trait.getTrait(tree, node)[traitIndex];
+            int state = ((int[])trait.getTrait(tree, node))[traitIndex];
             dwellTimes[state] += branchTime / 2;
-            int parentState = (Integer)trait.getTrait(tree, node)[traitIndex];
+            int parentState = ((int[])trait.getTrait(tree, node))[traitIndex];
             dwellTimes[parentState] += branchTime / 2;
         }
 

@@ -74,12 +74,12 @@ public class CoalGenFrame extends DocumentFrame {
         dataPanel = new DataPanel(this, data);
         modelPanel = new ModelPanel(this, data);
         simulationsPanel = new SimulationsPanel(this, data);
-        
+
         tabbedPane.addTab("Inputs", null, inputsPanel);
         tabbedPane.addTab("Taxa", null, dataPanel);
         tabbedPane.addTab("Model", null, modelPanel);
         tabbedPane.addTab("Simulations", null, simulationsPanel);
-        
+
         statusLabel = new JLabel("No taxa loaded");
 
         JPanel progressPanel = new JPanel(new BorderLayout(0, 0));

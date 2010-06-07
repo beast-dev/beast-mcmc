@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 public class ContinuousTraitBranchRateModelParser extends AbstractXMLObjectParser {
 
-    public static final String TRAIT_BRANCH_RATES = "traitBranchRates";
+    public static final String TRAIT_BRANCH_RATES = "continuousTraitRateModel";
     public static final String TRAIT = "trait";
     public static final String DIMENSION = "dimension";
     public static final String RATE = BranchRateModel.RATE;

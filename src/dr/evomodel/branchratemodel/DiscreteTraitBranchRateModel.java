@@ -47,17 +47,14 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Marc Suchard
  */
-public class DiscreteTraitRateModel extends AbstractBranchRateModel {
+public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     enum Mode {
         NODE_STATES,
         DWELL_TIMES,
         PARSIMONY
     }
 
-    public static final String DISCRETE_TRAIT_RATE_MODEL = "discreteTraitRateModel";
-    public static final String RATES = "rates";
-    public static final String TRAIT_INDEX = "traitIndex";
-    public static final String TRAIT_NAME = "traitName";
+    public static final String DISCRETE_TRAIT_BRANCH_RATE_MODEL = "discreteTraitRateModel";
 
     private TreeTrait trait = null;
     private Parameter ratesParameter;
@@ -83,7 +80,7 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
      * @param traitIndex
      * @param ratesParameter
      */
-    public DiscreteTraitRateModel(TreeModel treeModel, PatternList patternList, int traitIndex, Parameter ratesParameter) {
+    public DiscreteTraitBranchRateModel(TreeModel treeModel, PatternList patternList, int traitIndex, Parameter ratesParameter) {
 
         this(treeModel, traitIndex, ratesParameter);
 
@@ -102,7 +99,7 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
      * @param traitIndex
      * @param ratesParameter
      */
-    public DiscreteTraitRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex, Parameter ratesParameter) {
+    public DiscreteTraitBranchRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex, Parameter ratesParameter) {
 
         this(treeModel, traitIndex, ratesParameter);
 
@@ -126,8 +123,8 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
         }
     }
 
-    private DiscreteTraitRateModel(TreeModel treeModel, int traitIndex, Parameter ratesParameter) {
-        super(DISCRETE_TRAIT_RATE_MODEL);
+    private DiscreteTraitBranchRateModel(TreeModel treeModel, int traitIndex, Parameter ratesParameter) {
+        super(DISCRETE_TRAIT_BRANCH_RATE_MODEL);
         addModel(treeModel);
         this.traitIndex = traitIndex;
         this.ratesParameter = ratesParameter;
@@ -268,71 +265,5 @@ public class DiscreteTraitRateModel extends AbstractBranchRateModel {
 
         return dwellTimes;
     }
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return DISCRETE_TRAIT_RATE_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
-            PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-
-            TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
-
-            Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
-
-            int traitIndex = xo.getAttribute(TRAIT_INDEX, 1) - 1;
-            String traitName = xo.getAttribute(TRAIT_NAME, "states");
-
-            Logger.getLogger("dr.evomodel").info("Using discrete trait branch rate model.\n" +
-                    "\tIf you use this model, please cite:\n" +
-                    "\t\tDrummond and Suchard (in preparation)");
-
-            if (traitProvider == null) {
-                // Use the version that reconstructs the trait using parsimony:
-                return new DiscreteTraitRateModel(treeModel, patternList, traitIndex, ratesParameter);
-            } else {
-                TreeTrait trait = traitProvider.getTreeTrait(traitName);
-                if (trait == null) {
-                    throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
-                }
-
-                return new DiscreteTraitRateModel(treeModel, trait, traitIndex, ratesParameter);
-            }
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return
-                    "This Branch Rate Model takes a discrete trait reconstruction (provided by a TreeTraitProvider) and " +
-                            "gives the rate for each branch of the tree based on the child trait of " +
-                            "that branch. The rates for each trait value are specified in a multidimensional parameter.";
-        }
-
-        public Class getReturnType() {
-            return DiscreteTraitRateModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(TreeModel.class, "The tree model"),
-                new XORRule(
-                        new ElementRule(TreeTraitProvider.class, "The trait provider"),
-                        new ElementRule(PatternList.class)),
-                new ElementRule(RATES, Parameter.class, "The rates of the different trait values", false),
-                AttributeRule.newIntegerRule(TRAIT_INDEX, true),
-                AttributeRule.newStringRule(TRAIT_NAME, true)
-        };
-    };
 
 }

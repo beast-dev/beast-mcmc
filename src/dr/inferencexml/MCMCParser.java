@@ -83,7 +83,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, options.getChainLength() / 100));
         options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
         options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
-        options.setminOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
+        options.setMinOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
@@ -103,7 +103,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
                 "\n  autoOptimize=" + options.useCoercion() +
-                (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : ""));
+                (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
+                (options.fullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
+                );
 
         mcmc.init(options, likelihood, opsched, loggerArray);
 

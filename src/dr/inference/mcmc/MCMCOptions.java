@@ -93,7 +93,7 @@ public class MCMCOptions {
         return minOperatorCountForFullEvaluation;
     }
 
-    public final void setminOperatorCountForFullEvaluation(int count) {
+    public final void setMinOperatorCountForFullEvaluation(int count) {
         this.minOperatorCountForFullEvaluation = count;
     }
 }

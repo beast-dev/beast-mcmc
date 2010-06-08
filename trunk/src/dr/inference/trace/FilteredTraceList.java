@@ -47,7 +47,24 @@ public abstract class FilteredTraceList implements TraceList {
         }
     }
 
+//    protected abstract void updateTraceList();
+
     protected void initFilters() { // used in void analyseTrace(int index)
-        if (filters == null) filters = new Filter[traceStatistics.length];
+        if (filters == null) filters = new Filter[traceStatistics.length]; // traceStatistics.length = getTraceCount()
     }
+
+
+    //******************** Trace ****************************
+    protected boolean[] selected; // length = valueCount
+
+    public abstract void createTraceFilter(Filter filter);
+
+    public void setTraceFilter(boolean[] selected) {
+        this.selected = selected;
+    }
+
+    public boolean[] getTraceFilter() {
+        return selected;
+    }
+
 }

@@ -286,6 +286,7 @@ public class GraphModel extends TreeModel {
 	   if(nrp!=null)	nrp.restoreParameterValues();
 	   if(ntp!=null)	ntp.restoreParameterValues();
        System.out.println(linkDump());
+       validateGraph();
    }
    protected void acceptState(){
 	   for(CompoundParameter p : nhp)
@@ -334,21 +335,9 @@ public class GraphModel extends TreeModel {
 
    public void addPartitionUntilCoalescence(NodeRef node, Partition partition)
    {
-	   // walk from node to root adding a partition
-	   Node n = (Node)node;
-	   while(n!=null){
-		   if(n.hasObject(0,partition)||n.hasObject(1, partition))
-			   break;
-		   if(n.parent != null && n.parent2 != null )
-		   {
-			   boolean b = MathUtils.nextBoolean();
-			   n.addObject(b ? 0 : 1,partition);
-			   n = b ? (Node)n.parent : n.parent2;
-		   }else{
-			   n = (Node)n.parent;
-			   n.addObject(0,partition);
-		   }
-	   }
+	   if(node==null)	return;
+       if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+	   ((GraphModel.Node)node).addObjectUntilCoalescence(partition);
    }
 
    public void addChild(NodeRef p, NodeRef c) {
@@ -426,6 +415,51 @@ public class GraphModel extends TreeModel {
 	   return sb.toString();
    }
 
+   /**
+    * Debugging class to check whether a graph is valid
+    * @param graphModel
+    */
+	public void validateGraph(){
+		// sanity check that partitions are always associated with a link
+	      for(int nI=0; nI < getNodeCount(); nI++){
+	    	  GraphModel.Node nn = (GraphModel.Node)getNode(nI);
+	    	  if(getParent(nn,0)==null && nn.getObjects(0).size()>0 && getRoot()!=nn)
+    	    	  System.err.println("Partitions but no parent!!");
+	    	  if(getParent(nn,1)==null && nn.getObjects(1).size()>0)
+    	    	  System.err.println("Partitions but no parent!!");	    		  
+	      }		
+	      // sanity check that we haven't added too many partitions!
+	      for(int nI=0; nI < getNodeCount(); nI++){
+	    	  GraphModel.Node nn = (GraphModel.Node)getNode(nI);
+	    	  if(getChildCount(nn) > 0 ||
+	    			  getParent(nn)!=null){
+	    	      if(nn.getObjects(0).size() + nn.getObjects(1).size() > 2)
+	    	      {
+	    	    	  System.err.println("Too many objects at node!!");
+	    	      }
+	    	  }
+	      }
+		
+	      // sanity check that parent node propagates any partitions contained in children
+	      for(int nI=0; nI < getNodeCount(); nI++){
+	    	  GraphModel.Node node = (GraphModel.Node)getNode(nI);
+	          GraphModel.Node child1 = (GraphModel.Node)getChild(node, 0);
+	          GraphModel.Node child2 = (GraphModel.Node)getChild(node, 1);
+	          if(child1==null)	continue;
+	          int c1p = getParent(child1, 0)==node ? 0 : 1;
+	    	  for(Object o : child1.getObjects(c1p)){
+	    		  if(!node.hasObject(0, o) && !node.hasObject(1, o))
+	    			  System.err.println("Error, child partition does not flow through to parent");
+	    	  }
+	    	  if(child2==null)	continue;
+	          int c2p = getParent(child2, 0)==node ? 0 : 1;
+	    	  for(Object o : child2.getObjects(c2p)){
+	    		  if(!node.hasObject(0, o) && !node.hasObject(1, o))
+	    			  System.err.println("Error, child partition does not flow through to parent");
+	    	  }
+	      }
+	}
+   
     // **************************************************************
     // Private inner classes
     // **************************************************************
@@ -437,7 +471,6 @@ public class GraphModel extends TreeModel {
 
     	public Node parent2 = null;	// an extra parent for recombinant nodes
 
-    	// TODO: make store/restore friendly
     	protected HashSet<Object> objects0;	// arbitrary objects tied to this node.
     	protected HashSet<Object> objects1;	// arbitrary objects tied to this node.  
     	    	
@@ -489,6 +522,11 @@ public class GraphModel extends TreeModel {
             if (node.parent == this) {
                 node.parent = node.parent2;
                 node.parent2 = null;
+                if(node.objects0.size()>0 && node.parent!=null){
+	                for(Object o : node.objects0){
+	                	((GraphModel.Node)node.parent).addObjectUntilCoalescence(o);
+	                }
+                }
                 node.objects0.addAll(node.objects1);
                 node.objects1.clear();
             } else if (node.parent2 == this) {
@@ -535,6 +573,25 @@ public class GraphModel extends TreeModel {
         		objects0.remove(o);
         	else
         		objects1.remove(o);
+        }
+
+        public void addObjectUntilCoalescence(Object o)
+        {
+     	   // walk from node to root adding a partition
+     	   Node n = (Node)this;
+     	   while(n!=null){
+     		   if(n.hasObject(0,o)||n.hasObject(1, o))
+     			   break;
+     		   if(n.parent != null && n.parent2 != null )
+     		   {
+     			   boolean b = MathUtils.nextBoolean();
+     			   n.addObject(b ? 0 : 1,o);
+     			   n = b ? (Node)n.parent : n.parent2;
+     		   }else{
+     			   n.addObject(0,o);
+     			   n = (Node)n.parent;
+     		   }
+     	   }
         }
 
 

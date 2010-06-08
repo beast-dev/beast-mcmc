@@ -110,10 +110,12 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		return graphModel.getParent(child, index);
 	}
 	
-	
+	static int addOp=0;
 	private double addOperation() throws OperatorFailedException{	
-	    if(delOp==49)
+		System.out.println("add operation " + addOp);
+	    if(addOp==32)
 	    	System.out.println("debugme!");
+	    addOp++;
 		double logHastings = 0;
         
         //1. Draw some new heights.
@@ -261,8 +263,11 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
       HashSet<Object> parts = ((GraphModel.Node)reassortChild).getObjects(rcp);
       HashSet<Object> insparts = removeExistingPartitions(parts, (GraphModel.Node)newReassortment);
       for(Object o : insparts){
-          boolean b = MathUtils.nextBoolean();
-    	  graphModel.addPartition(newReassortment, b ? 0 : 1, (Partition)o);
+          int b = MathUtils.nextBoolean() ? 0 : 1;
+    	  graphModel.addPartition(newReassortment, b, (Partition)o);
+    	  if(getParentWrapper(newReassortment, b)!=newBifurcation){
+        	  graphModel.addPartitionUntilCoalescence(reassortSplitParent, (Partition)o);
+    	  }
       }
       // propagate partitions up from newBifurcation's children
 	  int bcp = graphModel.getParent((GraphModel.Node)bifurcationChild, 0)==newBifurcation ? 0 : 1;
@@ -272,12 +277,14 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
       insparts = removeExistingPartitions(parts, (GraphModel.Node)newBifurcation);
       for(Object o : insparts){
     	  graphModel.addPartition(newBifurcation, 0, (Partition)o);
+    	  graphModel.addPartitionUntilCoalescence(bifurcationSplitParent, (Partition)o);
       }
 //	  int nrp = graphModel.getParent((GraphModel.Node)newReassortment, 0)==newBifurcation ? 0 : 1;
       parts = ((GraphModel.Node)newReassortment).getObjects(1);
       insparts = removeExistingPartitions(parts, (GraphModel.Node)newBifurcation);
-      for(Object o : parts){
+      for(Object o : insparts){
     	  graphModel.addPartition(newBifurcation, 0, (Partition)o);
+    	  graphModel.addPartitionUntilCoalescence(bifurcationSplitParent, (Partition)o);
       }
       
       // ensure that no stale partition objects remain 
@@ -285,7 +292,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
       clearStalePartitions((GraphModel.Node)newReassortment);
       clearStalePartitions((GraphModel.Node)bifurcationSplitParent);
 
-      validateGraph(graphModel);
+      graphModel.validateGraph();
       try{
 			graphModel.endTreeEdit();
 		}catch(InvalidTreeException e){
@@ -295,28 +302,6 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		return 0.0;
 	}
 
-	private void validateGraph(GraphModel graphModel){
-		// sanity check that partitions are always associated with a link
-	      for(int nI=0; nI < graphModel.getNodeCount(); nI++){
-	    	  GraphModel.Node nn = (GraphModel.Node)graphModel.getNode(nI);
-	    	  if(graphModel.getParent(nn,0)==null && nn.getObjects(0).size()>0 && graphModel.getRoot()!=nn)
-    	    	  System.err.println("Partitions but no parent!!");
-	    	  if(graphModel.getParent(nn,1)==null && nn.getObjects(1).size()>0)
-    	    	  System.err.println("Partitions but no parent!!");	    		  
-	      }		
-	      // sanity check that we haven't added too many partitions!
-	      for(int nI=0; nI < graphModel.getNodeCount(); nI++){
-	    	  GraphModel.Node nn = (GraphModel.Node)graphModel.getNode(nI);
-	    	  if(graphModel.getChildCount(nn) > 0 ||
-	    			  graphModel.getParent(nn)!=null){
-	    	      if(nn.getObjects(0).size() + nn.getObjects(1).size() > 2)
-	    	      {
-	    	    	  System.err.println("Too many objects at node!!");
-	    	      }
-	    	  }
-	      }
-		
-	}
 	/*
 	 * Finds any partitions that already exist in the Node n and removes them from the set of partitions to be added
 	 */
@@ -391,7 +376,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 		 double logHastings = 0;
 	     delOp++;
 	     System.out.println("Deletion op: " + delOp);
-	     if(delOp==16)
+	     if(delOp==108)
 	    	 System.out.println("debugme!");
 	     
 	     // 1. Draw reassortment node uniform randomly
@@ -453,15 +438,21 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     if(removeReassortNode1 != removeReassortNode2){
 	    	 graphModel.addChild(keptNode, removeReassortNodeChild);
 	    	 graphModel.addChild(removeBifurcationNodeParent,removeBifurcationNodeChild);
-	    	  graphModel.removeChild(removeBifurcationNode,removeReassortNode);
-	   	   
+			graphModel.removeChild(removeBifurcationNode,removeReassortNode);
+		      // ensure keptNode has appropriate child partitions
+			  int rcp = graphModel.getParent((GraphModel.Node)removeReassortNodeChild, 0)==keptNode ? 0 : 1;
+		      HashSet<Object> parts = ((GraphModel.Node)removeReassortNodeChild).getObjects(rcp);
+		      for(Object o : parts){
+		    	  graphModel.addPartitionUntilCoalescence(keptNode, (Partition)o);
+		      }
+		      
 	     }else{
 	    	 graphModel.addChild(removeBifurcationNodeParent, removeReassortNodeChild);
 	     }
 	         
 	     graphModel.deleteNode(removeReassortNode);
 	     graphModel.deleteNode(removeBifurcationNode);
-	     
+
 	     clearStalePartitions((GraphModel.Node)removeBifurcationNodeParent);
 
 	     try{
@@ -471,7 +462,7 @@ public class GraphModelDimensionOperator extends AbstractCoercableOperator{
 	     }
          System.out.println(graphModel.linkDump());
 	     
-     	validateGraph(graphModel);
+         graphModel.validateGraph();
 	     
 	     
 	     return 0;

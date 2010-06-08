@@ -318,7 +318,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             tl.getValues(traceIndex, values);
 
                             if (td != null) {
-                                plot = new NumericalDensityPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
+                                plot = null;//new NumericalDensityPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
                             } else {
                                 plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
                             }
@@ -335,7 +335,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             tl.getValues(traceIndex, values);
 
                             if (td != null) {
-                                plot = new CategoryDensityPlot(Trace.arrayConvert(values, td.getFilter()), -1, td, numOfBarsInt, barIntId);
+                                plot = null;//new CategoryDensityPlot(Trace.arrayConvert(values, td.getFilter()), -1, td, numOfBarsInt, barIntId);
                             } else {
                                 plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
                             }
@@ -354,7 +354,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
                             String[] values;
                             if (td != null) {
-                                values = Trace.arrayConvert(initValues, td.getFilter());
+                                values = Trace.arrayConvert(initValues, null);//td.getFilter());
                             } else {
                                 values = Trace.arrayConvert(initValues);
                             }

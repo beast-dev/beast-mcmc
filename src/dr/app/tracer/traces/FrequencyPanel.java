@@ -136,7 +136,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, values);
 
                 if (td != null) {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
+                    plot = null;//new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
                 } else {
                     plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
@@ -152,7 +152,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, values);
 
                 if (td != null) {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td);
+                    plot = null;//new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td);
                     plot.setInCredibleSet(td.credSet);
                 } else {
                     plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
@@ -168,7 +168,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, initValues);
                 String[] values;
                 if (td != null) {
-                    values = Trace.arrayConvert(initValues, td.getFilter());
+                    values = Trace.arrayConvert(initValues, null);//td.getFilter());
                 } else {
                     values = Trace.arrayConvert(initValues);
                 }

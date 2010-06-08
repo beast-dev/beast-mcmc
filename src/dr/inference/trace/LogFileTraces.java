@@ -450,6 +450,17 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    @Override
+    public void createTraceFilter(Filter filter) {
+        selected = new boolean[traces.get(0).getCount()];
+        
+        for (int i = 0; i < selected.length; i++) {
+            if (filter.isIn(traces.get(0).getValue(i))) { // selected
+                selected[i] = true;
+            }
+        }
+    }
+
     private final File file;
     private final String name;
 

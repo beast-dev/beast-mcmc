@@ -56,6 +56,20 @@ public class Filter<T> {
         return selected[index];
     }
 
+    public String getStatusMessage() {
+        String message = traceName + " is filtered";
+        if (traceType == TraceFactory.TraceType.CONTINUOUS) {
+
+        } else {
+            message += " by selecting {";
+            for (Object t : in) {
+                message += t.toString() + ", ";
+            }
+            message = message.substring(0, message.lastIndexOf(", ")); // remove ", " for last in[]
+            message += "}";
+        }
+        return message;
+    }
 
     private void createSelected(T[] values) {
         selected = new boolean[values.length]; // default = false

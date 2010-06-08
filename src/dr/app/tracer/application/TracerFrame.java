@@ -298,8 +298,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         String traceName = filterCombo.getSelectedItem().toString();
         removeAllFilters(traceName);
 
-        filterDialog.showDialog(traceName, currentTraceLists);
+        String message = filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
 
+        filterStatus.setText(message);
 
         statisticTableModel.fireTableDataChanged();
         statisticTable.setRowSelectionInterval(rowIndex, rowIndex);

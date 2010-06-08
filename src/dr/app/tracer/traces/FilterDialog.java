@@ -59,7 +59,7 @@ public class FilterDialog {
 
     }
 
-    public void showDialog(String traceName, List<FilteredTraceList> filteredTraceListGroup) {
+    public String showDialog(String traceName, List<FilteredTraceList> filteredTraceListGroup, String previousMessage) {
         this.filteredTraceListGroup = filteredTraceListGroup;
         this.traceName = traceName;
 
@@ -120,6 +120,7 @@ public class FilterDialog {
 //        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
 //        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
 
+        String message = "";
         if (result.equals(options[0])) {
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
                 f = filteredTraceListGroup.get(i).getFilter(traceName);
@@ -132,17 +133,19 @@ public class FilterDialog {
 
                 filteredTraceListGroup.get(i).setFilter(f);
             }
+            message = f.getStatusMessage(); // todo
 
         } else if (result.equals(options[1])) {
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
                  filteredTraceListGroup.get(i).removeFilter(traceName);
             }
-
+            message = "";
+            
         } else if (result.equals(options[2])) {
-
+            message = previousMessage;
         }
 
-
+        return message;
     }
 
 //    private void initComponents(FilteredTraceList filteredTraceList) {

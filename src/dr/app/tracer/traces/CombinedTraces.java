@@ -245,4 +245,9 @@ public class CombinedTraces extends FilteredTraceList {
 //    private TraceCorrelation[] traceStatistics = null;
 
     private String name;
+
+    @Override
+    public void createTraceFilter(Filter filter) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

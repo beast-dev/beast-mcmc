@@ -132,6 +132,7 @@ public class FilterDialog {
                 }
 
                 filteredTraceListGroup.get(i).setFilter(f);
+                filteredTraceListGroup.get(i).createTraceFilter(f);
             }
             message = f.getStatusMessage(); // todo
 

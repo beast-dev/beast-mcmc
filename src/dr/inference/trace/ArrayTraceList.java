@@ -101,4 +101,8 @@ public class ArrayTraceList extends AbstractTraceList {
         return traces.get(index);
     }
 
+    @Override
+    public void createTraceFilter(Filter filter) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

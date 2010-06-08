@@ -101,6 +101,10 @@ public class Trace<T> {
         return destination;
     }
 
+    public T[] getValues() {
+        return values;
+    }
+
     public void getValues(int start, T[] destination, int offset) {
         System.arraycopy(values, start, destination, offset, valueCount - start);
     }
@@ -132,12 +136,14 @@ public class Trace<T> {
         return dest;
     }
 
-    public static double[] arrayConvert(Double[] src, Filter filter) {
-        if (filter != null) {
+    public static double[] arrayConvert(Double[] src, boolean[] selected) {
+        assert src.length == selected.length;
+
+        if (selected != null) {
             java.util.List<Double> selectedValuesList = new ArrayList<Double>();
 
             for (int i = 0; i < src.length; i++) {
-                if (filter.isIn(src[i])) {
+                if (selected[i]) {
                     selectedValuesList.add(src[i]);
                 }
             }
@@ -178,12 +184,14 @@ public class Trace<T> {
         return dest;
     }
 
-    public static int[] arrayConvert(Integer[] src, Filter filter) {
-        if (filter != null) {
+    public static int[] arrayConvert(Integer[] src, boolean[] selected) {
+        assert src.length == selected.length;
+
+        if (selected != null) {
             java.util.List<Integer> selectedValuesList = new ArrayList<Integer>();
 
             for (int i = 0; i < src.length; i++) {
-                if (filter.isIn(src[i])) {
+                if (selected[i]) {
                     selectedValuesList.add(src[i]);
                 }
             }
@@ -204,12 +212,14 @@ public class Trace<T> {
         return src;
     }
 
-    public static String[] arrayConvert(String[] src, Filter filter) {
-        if (filter != null) {
+    public static String[] arrayConvert(String[] src, boolean[] selected) {
+        assert src.length == selected.length;
+
+        if (selected != null) {
             java.util.List<String> selectedValuesList = new ArrayList<String>();
 
             for (int i = 0; i < src.length; i++) {
-                if (filter.isIn(src[i])) {
+                if (selected[i]) {
                     selectedValuesList.add(src[i]);
                 }
             }
@@ -245,5 +255,4 @@ public class Trace<T> {
 //    public void setTraceType(TraceFactory.TraceType traceType) {
 //        this.traceType = traceType;
 //    }
-
 }

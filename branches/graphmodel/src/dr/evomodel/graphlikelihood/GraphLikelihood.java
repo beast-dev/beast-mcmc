@@ -277,7 +277,6 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
 
         final NodeRef root = treeModel.getRoot();
         traverse((GraphModel)treeModel, root, partitionModel);
-        System.out.println("traverse done.");
 
         double logL = 0.0;
         for (int i = 0; i < patternCount; i++) {
@@ -322,10 +321,6 @@ public class GraphLikelihood extends AbstractTreeLikelihood {
     protected void traverse(GraphModel gm, NodeRef node, PartitionModel partitionModel) 
     {
     	if(node==null)	return;	// nothing to see here
-    	if(((GraphModel.Node)node).getChildCount()==1)
-    	{
-    		System.out.print("watchme\n");
-    	}
 
         int nodeNum = node.getNumber();
 

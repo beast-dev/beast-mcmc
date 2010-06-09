@@ -271,8 +271,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //            }
 //        });
         filterPanel.add(filterCombo);
-
         filterPanel.add(filterStatus);
+//        filterStatus.setHorizontalTextPosition(10);
+        
         getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
@@ -298,7 +299,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         String traceName = filterCombo.getSelectedItem().toString();
         removeAllFilters(traceName);
 
-        String message = filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
+        String message = "     " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
 
         filterStatus.setText(message);
 

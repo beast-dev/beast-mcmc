@@ -115,11 +115,23 @@ public class Trace<T> {
     }
 
     public void getSelected(int start, boolean[] destination, int offset, boolean[] selected) {
-        System.arraycopy(selected, start, destination, offset, valueCount - start);
+        if (selected != null) {
+            System.arraycopy(selected, start, destination, offset, valueCount - start);
+        } else {
+            for (int i = 0; i < destination.length; i++) {
+                destination[i] = true;
+            }
+        }
     }
 
     public void getSelected(int start, int count, boolean[] destination, int offset, boolean[] selected) {
-        System.arraycopy(selected, start, destination, offset, count);
+        if (selected != null) {
+            System.arraycopy(selected, start, destination, offset, count);
+        } else {
+            for (int i = 0; i < destination.length; i++) {
+                destination[i] = true;
+            }
+        }
     }
 
 
@@ -246,12 +258,13 @@ public class Trace<T> {
         }
     }
 
-    public static double[] arrayIntToDouble(Integer[] src) {
+    public static double[] arrayIntToDouble(Integer[] src, boolean[] selected) {
         double[] dest = null;
         if (src != null) {
-            dest = new double[src.length];
-            for (int i = 0; i < src.length; i++) {
-                dest[i] = (double) src[i];
+            int[] tmp = arrayConvert(src, selected);
+            dest = new double[tmp.length];
+            for (int i = 0; i < tmp.length; i++) {
+                dest[i] = (double) tmp[i];
             }
         }
         return dest;

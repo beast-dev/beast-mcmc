@@ -179,11 +179,31 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    public void getSelected(int index, boolean[] destination) {
+        try {
+            getTrace(index).getSelected(getBurninStateCount(), destination, 0, selected);
+        } catch (Exception e) {
+            System.err.println("trace index = " + index);
+        }
+    }
+
+    public void getSelected(int index, boolean[] destination, int offset) {
+        getTrace(index).getSelected(getBurninStateCount(), destination, offset, selected);
+    }
+
+    public void getBurningSelected(int index, boolean[] destination) {
+        try {
+            getTrace(index).getSelected(0, getBurninStateCount(), destination, 0, selected);
+        } catch (Exception e) {
+            System.err.println("trace index = " + index);
+        }
+    }
+    
     public void loadTraces() throws TraceException, IOException {
         loadTraces(-1, null);
     }
 
-     public void loadTraces(int reloadColumn, TraceFactory.TraceType reloadType) throws TraceException, IOException {
+    public void loadTraces(int reloadColumn, TraceFactory.TraceType reloadType) throws TraceException, IOException {
         FileReader reader = new FileReader(file);
         loadTraces(reader, FileHelpers.numberOfLines(file) - 1, reloadColumn, reloadType);
         reader.close();
@@ -206,6 +226,7 @@ public class LogFileTraces extends AbstractTraceList {
 
     /**
      * Walter: Please comment what the extra arguments mean
+     *
      * @param r
      * @param numberOfLines
      * @param reloadColumn
@@ -341,8 +362,8 @@ public class LogFileTraces extends AbstractTraceList {
             } else if (firstToken.contains(TraceFactory.TraceType.CATEGORY.toString())
                     || firstToken.contains(TraceFactory.TraceType.CATEGORY.toString().toUpperCase())) {
                 while (tokens.hasMoreTokens()) {
-                   token = tokens.nextToken();
-                   tracesType.put(token, TraceFactory.TraceType.CATEGORY);
+                    token = tokens.nextToken();
+                    tracesType.put(token, TraceFactory.TraceType.CATEGORY);
                 }
             }
         }
@@ -452,12 +473,19 @@ public class LogFileTraces extends AbstractTraceList {
 
     @Override
     public void createTraceFilter(Filter filter) {
-        selected = new boolean[traces.get(0).getCount()];
-        
-        for (int i = 0; i < selected.length; i++) {
-            if (filter.isIn(traces.get(0).getValue(i))) { // selected
-                selected[i] = true;
+        if (filter != null) {
+            String name = filter.getTraceName();
+            int index = getTraceIndex(name);
+
+            selected = new boolean[getTrace(index).getCount()];
+
+            for (int i = 0; i < selected.length; i++) {
+                if (filter.isIn(getTrace(index).getValue(i))) { // selected
+                    selected[i] = true;
+                }
             }
+        } else {
+            selected = null;
         }
     }
 

@@ -105,4 +105,16 @@ public class ArrayTraceList extends AbstractTraceList {
     public void createTraceFilter(Filter filter) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    public void getSelected(int index, boolean[] destination) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void getSelected(int index, boolean[] destination, int offset) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void getBurningSelected(int index, boolean[] destination) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

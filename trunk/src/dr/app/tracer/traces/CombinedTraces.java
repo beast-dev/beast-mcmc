@@ -38,14 +38,14 @@ import dr.inference.trace.*;
 
 public class CombinedTraces extends FilteredTraceList {
 
-    public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
+    public CombinedTraces(String name, FilteredTraceList[] traceLists) throws TraceException {
 
         if (traceLists == null || traceLists.length < 1) {
             throw new TraceException("Must have at least 1 Traces object in a CombinedTraces");
         }
 
         this.name = name;
-        this.traceLists = new TraceList[traceLists.length];
+        this.traceLists = new FilteredTraceList[traceLists.length];
         this.traceLists[0] = traceLists[0];
 
         for (int i = 1; i < traceLists.length; i++) {
@@ -156,6 +156,32 @@ public class CombinedTraces extends FilteredTraceList {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
+    public void getSelected(int index, boolean[] destination) {
+        int offset = 0;
+        for (FilteredTraceList traceList : traceLists) {
+            traceList.getSelected(index, destination, offset);
+            offset += traceList.getStateCount();
+        }
+    }
+
+    public void getSelected(int index, boolean[] destination, int offset) {
+        for (FilteredTraceList traceList : traceLists) {
+            traceList.getSelected(index, destination, offset);
+            offset += traceList.getStateCount();
+        }
+    }
+
+    public void getBurningSelected(int index, boolean[] destination) {
+        throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
+    }
+
+    @Override
+    public void createTraceFilter(Filter filter) {
+        for (FilteredTraceList traceList : traceLists) {
+            traceList.createTraceFilter(filter);
+        }
+    }
+    
     /**
      * @return the trace distribution statistic object for the given index
      */
@@ -213,7 +239,7 @@ public class CombinedTraces extends FilteredTraceList {
     }
 
     public Trace getTrace(int index) {
-        for (TraceList traceList : traceLists) {
+        for (FilteredTraceList traceList : traceLists) {
             if (traceList.getTrace(index).getTraceType() != traceLists[0].getTrace(index).getTraceType()) {
                 return null; // trace type not comparable
             }
@@ -240,14 +266,10 @@ public class CombinedTraces extends FilteredTraceList {
     // private methods
     //************************************************************************
 
-    private TraceList[] traceLists = null;
+    private FilteredTraceList[] traceLists = null;
 
 //    private TraceCorrelation[] traceStatistics = null;
 
     private String name;
 
-    @Override
-    public void createTraceFilter(Filter filter) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
 }

@@ -26,10 +26,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
-import dr.inference.trace.Trace;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import dr.stats.Variate;
 import org.virion.jam.framework.Exportable;
 
@@ -316,9 +313,11 @@ public class DensityPanel extends JPanel implements Exportable {
                         if (trace.getTraceType() == Double.class) {
                             Double values[] = new Double[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
+                            boolean[] selected = new boolean[tl.getStateCount()];
+                            tl.getSelected(traceIndex, selected);
 
                             if (td != null) {
-                                plot = null;//new NumericalDensityPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
+                                plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
                             } else {
                                 plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
                             }
@@ -333,9 +332,11 @@ public class DensityPanel extends JPanel implements Exportable {
                         } else if (trace.getTraceType() == Integer.class) {
                             Integer values[] = new Integer[tl.getStateCount()];
                             tl.getValues(traceIndex, values);
+                            boolean[] selected = new boolean[tl.getStateCount()];
+                            tl.getSelected(traceIndex, selected);
 
                             if (td != null) {
-                                plot = null;//new CategoryDensityPlot(Trace.arrayConvert(values, td.getFilter()), -1, td, numOfBarsInt, barIntId);
+                                plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, numOfBarsInt, barIntId);
                             } else {
                                 plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
                             }
@@ -351,10 +352,12 @@ public class DensityPanel extends JPanel implements Exportable {
                         } else if (trace.getTraceType() == String.class) {
                             String initValues[] = new String[tl.getStateCount()];
                             tl.getValues(traceIndex, initValues);
+                            boolean[] selected = new boolean[tl.getStateCount()];
+                            tl.getSelected(traceIndex, selected);
 
                             String[] values;
                             if (td != null) {
-                                values = Trace.arrayConvert(initValues, null);//td.getFilter());
+                                values = Trace.arrayConvert(initValues, selected);
                             } else {
                                 values = Trace.arrayConvert(initValues);
                             }

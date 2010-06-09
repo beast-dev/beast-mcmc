@@ -1,10 +1,7 @@
 package dr.app.tracer.traces;
 
 import dr.gui.chart.*;
-import dr.inference.trace.Trace;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
@@ -134,9 +131,11 @@ public class FrequencyPanel extends JPanel implements Exportable {
             if (trace.getTraceType() == Double.class) {
                 Double values[] = new Double[traceList.getStateCount()];
                 traceList.getValues(traceIndex, values);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
 
                 if (td != null) {
-                    plot = null;//new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), minimumBins, td);
+                    plot = new FrequencyPlot(Trace.arrayConvert(values, selected), minimumBins, td);
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
                 } else {
                     plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
@@ -150,9 +149,11 @@ public class FrequencyPanel extends JPanel implements Exportable {
             } else if (trace.getTraceType() == Integer.class) {
                 Integer values[] = new Integer[traceList.getStateCount()];
                 traceList.getValues(traceIndex, values);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
 
                 if (td != null) {
-                    plot = null;//new FrequencyPlot(Trace.arrayConvert(values, td.getFilter()), -1, td);
+                    plot = new FrequencyPlot(Trace.arrayConvert(values, selected), -1, td);
                     plot.setInCredibleSet(td.credSet);
                 } else {
                     plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
@@ -166,15 +167,17 @@ public class FrequencyPanel extends JPanel implements Exportable {
             } else if (trace.getTraceType() == String.class) {
                 String[] initValues = new String[traceList.getStateCount()];
                 traceList.getValues(traceIndex, initValues);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
                 String[] values;
                 if (td != null) {
-                    values = Trace.arrayConvert(initValues, null);//td.getFilter());
+                    values = Trace.arrayConvert(initValues, selected);
                 } else {
                     values = Trace.arrayConvert(initValues);
                 }
 
                 int[] intData = new int[values.length];
-                for (int v = 0; v < values.length; v++) { //TODO filtered
+                for (int v = 0; v < values.length; v++) { 
                     intData[v] = td.credSet.getIndex(values[v]);
                     categoryDataMap.put(intData[v], values[v]);
                 }

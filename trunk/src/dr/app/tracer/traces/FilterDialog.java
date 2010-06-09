@@ -82,18 +82,17 @@ public class FilterDialog {
 
         Filter f = filteredTraceList.getFilter(traceName);
 
+        String[] sel;
+        if (f == null) {
+            sel = null;
+        } else {
+            sel = f.getIn();
+        }
         if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
-
+            String[] minMax = new String[]{"0.1", "10"};  // todo
+            filterPanel = new FilterContinuousPanel(minMax, sel);
         } else {// integer and string
             String[] all = td.getRangeAll();
-            String[] sel;
-
-            if (f == null) {
-                sel = null;
-            } else {
-                sel = f.getIn();
-            }
-
             filterPanel = new FilterDiscretePanel(all, sel);
         }
 
@@ -138,10 +137,10 @@ public class FilterDialog {
 
         } else if (result.equals(options[1])) {
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
-                 filteredTraceListGroup.get(i).removeFilter(traceName);
+                filteredTraceListGroup.get(i).removeFilter(traceName);
             }
             message = "";
-            
+
         } else if (result.equals(options[2])) {
             message = previousMessage;
         }
@@ -187,7 +186,7 @@ public class FilterDialog {
     class FilterDiscretePanel extends FilterPanel {
         JList allValues;
         JList selectedValues;
-        JButton selectButton;
+//        JButton selectButton;
 
         FilterDiscretePanel(String[] allValuesArray, String[] selectedValuesArray) {
             setLayout(new FlowLayout());
@@ -213,7 +212,7 @@ public class FilterDialog {
                 allValues.setSelectedIndices(indices);
             }
 
-            selectButton = new JButton("Select >>>");
+            JButton selectButton = new JButton("Select >>>");
             selectButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     selectedValues.setListData(allValues.getSelectedValues());
@@ -235,6 +234,36 @@ public class FilterDialog {
 
         public Object[] getSelectedValues() {
             return allValues.getSelectedValues();
+        }
+
+    }
+
+    class FilterContinuousPanel extends FilterPanel {
+        JTextField minField;
+        JTextField maxField;
+
+        FilterContinuousPanel(String[] minMax, String[] bound) {
+            setLayout(new GridLayout(2, 3, 1, 10)); // 2 by 3, gap 5 by 1
+
+            if (bound == null) {
+               bound = new String[2];
+            }
+
+            minField = new JTextField(bound[0]);
+            minField.setColumns(20);
+            add(new JLabel("Set Minimum for Selecting Values : "));
+            add(minField);
+            add(new JLabel(", which should > " + minMax[0]));
+
+            maxField = new JTextField(bound[1]);
+            maxField.setColumns(20);
+            add(new JLabel("Set Maximum for Selecting Values : "));
+            add(maxField);
+            add(new JLabel(", which should < " + minMax[1]));
+        }
+
+        public Object[] getSelectedValues() {
+            return new String[]{minField.getText(), maxField.getText()};
         }
 
     }

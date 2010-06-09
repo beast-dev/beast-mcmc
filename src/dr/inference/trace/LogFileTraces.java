@@ -163,7 +163,7 @@ public class LogFileTraces extends AbstractTraceList {
         try {
             getTrace(index).getValues(getBurninStateCount(), destination, 0);
         } catch (Exception e) {
-            System.err.println("trace index = " + index);
+            System.err.println("getValues error: trace index = " + index);
         }
     }
 
@@ -175,7 +175,7 @@ public class LogFileTraces extends AbstractTraceList {
         try {
             ((Trace<T>) getTrace(index)).getValues(0, getBurninStateCount(), destination, 0);
         } catch (Exception e) {
-            System.err.println("trace index = " + index);
+            System.err.println("getValues error: trace index = " + index);
         }
     }
 
@@ -183,7 +183,7 @@ public class LogFileTraces extends AbstractTraceList {
         try {
             getTrace(index).getSelected(getBurninStateCount(), destination, 0, selected);
         } catch (Exception e) {
-            System.err.println("trace index = " + index);
+            System.err.println("getSelected error: trace index = " + index);
         }
     }
 

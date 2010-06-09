@@ -316,11 +316,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             boolean[] selected = new boolean[tl.getStateCount()];
                             tl.getSelected(traceIndex, selected);
 
-                            if (td != null) {
-                                plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
-                            } else {
-                                plot = new NumericalDensityPlot(Trace.arrayConvert(values), minimumBins, td);
-                            }
+                            plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
 
                             traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
                             chartPanel.setYAxisTitle("Density");
@@ -335,11 +331,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             boolean[] selected = new boolean[tl.getStateCount()];
                             tl.getSelected(traceIndex, selected);
 
-                            if (td != null) {
-                                plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, numOfBarsInt, barIntId);
-                            } else {
-                                plot = new CategoryDensityPlot(Trace.arrayConvert(values), -1, td, numOfBarsInt, barIntId);
-                            }
+                            plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, numOfBarsInt, barIntId);
 
                             barIntId++;
                             traceChart.setXAxis(true, new HashMap<Integer, String>());
@@ -355,13 +347,8 @@ public class DensityPanel extends JPanel implements Exportable {
                             boolean[] selected = new boolean[tl.getStateCount()];
                             tl.getSelected(traceIndex, selected);
 
-                            String[] values;
-                            if (td != null) {
-                                values = Trace.arrayConvert(initValues, selected);
-                            } else {
-                                values = Trace.arrayConvert(initValues);
-                            }
-
+                            String[] values = Trace.arrayConvert(initValues, selected);
+                            
                             int[] intData = new int[values.length];
                             for (int v = 0; v < values.length; v++) {
                                 intData[v] = td.credSet.getIndex(values[v]);

@@ -21,7 +21,8 @@ public class Filter<T> {
     public boolean isIn(T value) {
 
         if (value instanceof Double) {
-            return ( (Double)value >= (Double)in[0] && (Double)value <= (Double)in[1]);
+            // double filter passing String type for in[]
+            return ( (Double)value >= Double.valueOf(in[0].toString()) && (Double)value <= Double.valueOf(in[1].toString()));
         }
         for (Object t : in) {
             if (t.toString().equals(value.toString())) {

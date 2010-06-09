@@ -89,7 +89,7 @@ public class FilterDialog {
             sel = f.getIn();
         }
         if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
-            String[] minMax = new String[]{"0.1", "10"};  // todo
+            String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
             filterPanel = new FilterContinuousPanel(minMax, sel);
         } else {// integer and string
             String[] all = td.getRangeAll();
@@ -121,6 +121,14 @@ public class FilterDialog {
 
         String message = "";
         if (result.equals(options[0])) {
+            if (filterPanel.containsNullValue()) {
+                JOptionPane.showMessageDialog(frame, "The selected value for filter is invalid \ror no value is selected !",
+                    "Invalid Filter Input",
+                    JOptionPane.ERROR_MESSAGE);
+                return previousMessage;
+            }
+
+
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
                 f = filteredTraceListGroup.get(i).getFilter(traceName);
 
@@ -181,6 +189,14 @@ public class FilterDialog {
 
     abstract class FilterPanel extends JPanel {
         abstract Object[] getSelectedValues();
+
+        boolean containsNullValue() {
+            if (getSelectedValues() == null) return true;
+            for (Object ob : getSelectedValues()) {
+               if (ob == null || ob.toString().equals("")) return true;
+            }
+            return false;
+        }
     }
 
     class FilterDiscretePanel extends FilterPanel {

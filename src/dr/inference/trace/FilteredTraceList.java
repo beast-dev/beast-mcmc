@@ -12,6 +12,8 @@ public abstract class FilteredTraceList implements TraceList {
         int fId = getTraceIndex(filter.getTraceName());
         filters[fId] = filter;
         doFilter(filter);
+
+        createTraceFilter(filter);
     }
 
     public Filter getFilter(int index) {
@@ -32,6 +34,7 @@ public abstract class FilteredTraceList implements TraceList {
             filters[fId] = null;
             doFilter(null);
         }
+        selected = null;
     }
 
     public void removeAllFilters() {

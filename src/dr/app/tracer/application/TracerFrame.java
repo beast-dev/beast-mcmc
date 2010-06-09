@@ -679,7 +679,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         if (currentTraceLists.size() == 0 || isIncomplete) {
             tracePanel.setTraces(null, selectedTraces);
         } else {
-            FilteredTraceList[] tl = new FilteredTraceList[currentTraceLists.size()];
+            TraceList[] tl = new TraceList[currentTraceLists.size()];
             currentTraceLists.toArray(tl);
             try {
                 tracePanel.setTraces(tl, selectedTraces);

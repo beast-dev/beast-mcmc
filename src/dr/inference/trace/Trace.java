@@ -26,6 +26,7 @@
 package dr.inference.trace;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -112,6 +113,15 @@ public class Trace<T> {
     public void getValues(int start, int count, T[] destination, int offset) {
         System.arraycopy(values, start, destination, offset, count);
     }
+
+    public void getSelected(int start, boolean[] destination, int offset, boolean[] selected) {
+        System.arraycopy(selected, start, destination, offset, valueCount - start);
+    }
+
+    public void getSelected(int start, int count, boolean[] destination, int offset, boolean[] selected) {
+        System.arraycopy(selected, start, destination, offset, count);
+    }
+
 
     public String getName() {
         return name;

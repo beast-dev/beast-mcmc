@@ -134,12 +134,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 boolean[] selected = new boolean[traceList.getStateCount()];
                 traceList.getSelected(traceIndex, selected);
 
+                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+
                 if (td != null) {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values, selected), minimumBins, td);
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
-                } else {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values), minimumBins, td);
                 }
+
                 traceChart.setXAxis(false, categoryDataMap);
                 chartPanel.setYAxisTitle("Frequency");
                 labelBins.setVisible(true);
@@ -152,12 +152,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 boolean[] selected = new boolean[traceList.getStateCount()];
                 traceList.getSelected(traceIndex, selected);
 
+                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), -1, td);
+
                 if (td != null) {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values, selected), -1, td);
                     plot.setInCredibleSet(td.credSet);
-                } else {
-                    plot = new FrequencyPlot(Trace.arrayConvert(values), -1, td);
                 }
+
                 traceChart.setXAxis(true, categoryDataMap);
                 chartPanel.setYAxisTitle("Count");
                 labelBins.setVisible(false);
@@ -169,13 +169,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 traceList.getValues(traceIndex, initValues);
                 boolean[] selected = new boolean[traceList.getStateCount()];
                 traceList.getSelected(traceIndex, selected);
-                String[] values;
-                if (td != null) {
-                    values = Trace.arrayConvert(initValues, selected);
-                } else {
-                    values = Trace.arrayConvert(initValues);
-                }
-
+                String[] values = Trace.arrayConvert(initValues, selected);
+                
                 int[] intData = new int[values.length];
                 for (int v = 0; v < values.length; v++) { 
                     intData[v] = td.credSet.getIndex(values[v]);

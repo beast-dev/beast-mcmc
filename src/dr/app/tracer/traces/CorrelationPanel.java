@@ -157,7 +157,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
         ActionListener listener = new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent ev) {
-                setupChart();
+                setupChartOrTable();
             }
         };
         sampleCheckBox.addActionListener(listener);
@@ -198,10 +198,10 @@ public class CorrelationPanel extends JPanel implements Exportable {
             tl2 = null;
         }
 
-        setupChart();
+        setupChartOrTable();
     }
 
-    private void setupChart() {
+    private void setupChartOrTable() {
         correlationChart.removeAllIntervals();
 
         if (tl1 == null || tl2 == null) {
@@ -300,27 +300,42 @@ public class CorrelationPanel extends JPanel implements Exportable {
         double samples1[] = new double[sampleSize];
         int k = 0;
 
+        boolean[] selected;
         if (td.getTraceType() == TraceFactory.TraceType.INTEGER) {
             Integer values[] = new Integer[maxCount];
+            selected = new boolean[maxCount];
             if (isFirstTraceListNumerical) {
                 tl1.getValues(traceIndex1, values);
+                tl1.getSelected(traceIndex1, selected);
             } else {
                 tl2.getValues(traceIndex2, values);
+                tl2.getSelected(traceIndex2, selected);
             }
 
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = (double) values[k];
+                if (selected[k]) {
+                    samples1[i] = (double) values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         } else {
             Double values[] = new Double[maxCount];
+            selected = new boolean[maxCount];
             if (isFirstTraceListNumerical) {
                 tl1.getValues(traceIndex1, values);
+                tl1.getSelected(traceIndex1, selected);
             } else {
                 tl2.getValues(traceIndex2, values);
+                tl2.getSelected(traceIndex2, selected);
             }
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k];
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         }
@@ -329,13 +344,21 @@ public class CorrelationPanel extends JPanel implements Exportable {
         k = 0;
 
         String values[] = new String[maxCount];
+        selected = new boolean[maxCount];
         if (isFirstTraceListNumerical) {
             tl2.getValues(traceIndex2, values);
+            tl2.getSelected(traceIndex2, selected);
         } else {
             tl1.getValues(traceIndex1, values);
+            tl1.getSelected(traceIndex1, selected);
         }
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values[k];
+            if (selected[k]) {
+                samples2[i] = values[k];
+            } else {
+                samples2[i] = "";
+            }
+
             k += minCount / sampleSize;
         }
 
@@ -375,18 +398,35 @@ public class CorrelationPanel extends JPanel implements Exportable {
         String samples1[] = new String[sampleSize];
         int k = 0;
 
+        boolean[] selected;
         if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
             Integer values[] = new Integer[maxCount];
             tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k].toString();
+                if (selected[k]) {
+                    samples1[i] = values[k].toString();
+                } else {
+                    samples1[i] = "";
+                }
+
                 k += minCount / sampleSize; // = 1 for non-continous vs non-continous
             }
         } else {
             String values[] = new String[maxCount];
             tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k];
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = "";
+                }
+
                 k += minCount / sampleSize;
             }
         }
@@ -397,15 +437,29 @@ public class CorrelationPanel extends JPanel implements Exportable {
         if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
             Integer values[] = new Integer[maxCount];
             tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
             for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = values[k].toString();
+                if (selected[k]) {
+                    samples2[i] = values[k].toString();
+                } else {
+                    samples2[i] = "";
+                }
                 k += minCount / sampleSize;
             }
         } else {
             String values[] = new String[maxCount];
             tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = values[k];
+                if (selected[k]) {
+                    samples2[i] = values[k];
+                } else {
+                    samples2[i] = "";
+                }
+
                 k += minCount / sampleSize;
             }
         }
@@ -415,7 +469,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
             if (rowNames.contains(samples1[i]) && colNames.contains(samples2[i])) {
                 data[rowNames.indexOf(samples1[i])][colNames.indexOf(samples2[i])] += 1;
             } else {
-                System.err.println("Not find row or column name. i = " + i);
+//                System.err.println("Not find row or column name. i = " + i);
             }
         }
 
@@ -432,7 +486,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
                     count = count + data[r][c];
                 }
                 for (int c = 0; c < data[0].length; c++) {
-                    if (count != 0) 
+                    if (count != 0)
                         data[r][c] = data[r][c] / count;
                 }
             }
@@ -480,13 +534,21 @@ public class CorrelationPanel extends JPanel implements Exportable {
         double samples1[] = new double[sampleSize];
         int k = 0;
 
+        boolean[] selected;
         if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
             correlationChart.setXAxis(new DiscreteAxis(true, true));
 
             Integer values[] = new Integer[maxCount];
             tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = (double) values[k];
+                if (selected[k]) {
+                    samples1[i] = (double) values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         } else {
@@ -494,8 +556,15 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
             Double values[] = new Double[maxCount];
             tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k];
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         }
@@ -508,8 +577,15 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
             Integer values[] = new Integer[maxCount];
             tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = (double) values[k];
+                if (selected[k]) {
+                    samples2[i] = (double) values[k];
+                } else {
+                    samples2[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         } else {
@@ -517,18 +593,42 @@ public class CorrelationPanel extends JPanel implements Exportable {
 
             Double values[] = new Double[maxCount];
             tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
             for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = values[k];
+                if (selected[k]) {
+                    samples2[i] = values[k];
+                } else {
+                    samples2[i] = Double.NaN;
+                }
                 k += minCount / sampleSize;
             }
         }
 
-        ScatterPlot plot = new ScatterPlot(samples1, samples2);
+        ScatterPlot plot = new ScatterPlot(removeNaN(samples1), removeNaN(samples2));
         plot.setMarkStyle(pointsCheckBox.isSelected() ? Plot.POINT_MARK : Plot.CIRCLE_MARK, pointsCheckBox.isSelected() ? 1.0 : 3.0,
                 new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER),
                 new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255),
                 new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255));
         correlationChart.addPlot(plot);
+    }
+
+    private double[] removeNaN(double[] sample) {
+        List<Double> selectedValuesList = new ArrayList<Double>();
+
+        for (int i = 0; i < sample.length; i++) {
+            if (sample[i] != Double.NaN) {
+                selectedValuesList.add(sample[i]);
+            }
+        }
+
+        double[] dest = new double[selectedValuesList.size()];
+        for (int i = 0; i < dest.length; i++) {
+            dest[i] = selectedValuesList.get(i).doubleValue();
+        }
+
+        return dest;
     }
 
     public JComponent getExportableComponent() {

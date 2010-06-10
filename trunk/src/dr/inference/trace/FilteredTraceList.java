@@ -7,17 +7,20 @@ public abstract class FilteredTraceList implements TraceList {
 
     Filter[] filters; // store configured filter
     protected TraceCorrelation[] traceStatistics = null;
+    int currentFilter = -1;
 
     public void setFilter(Filter filter) {
         int fId = getTraceIndex(filter.getTraceName());
         filters[fId] = filter;
+        currentFilter = fId;
         doFilter(filter);
 
         createTraceFilter(filter);
     }
 
-    public Filter getFilter(int index) {
-        return filters[index];
+    public Filter getFilter() {
+        if (currentFilter < 0) return null;
+        return filters[currentFilter];
     }
 
     public Filter getFilter(String traceName) {
@@ -42,6 +45,8 @@ public abstract class FilteredTraceList implements TraceList {
             f = null;
         }
         doFilter(null);
+        selected = null;
+        currentFilter = -1;
     }
 
     private void doFilter(Filter filter) {

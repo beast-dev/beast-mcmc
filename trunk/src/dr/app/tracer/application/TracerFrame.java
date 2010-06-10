@@ -60,6 +60,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private JLabel filterStatus = new JLabel();
+    String message;
 
     private FilterDialog filterDialog;
 
@@ -154,7 +155,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         statisticTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
 //        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
 //        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(1);
+        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(20);
         statisticTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
         statisticTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -273,7 +274,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         filterPanel.add(filterCombo);
         filterPanel.add(filterStatus);
 //        filterStatus.setHorizontalTextPosition(10);
-        
+
         getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
@@ -281,8 +282,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int rowIndex = statisticTable.getSelectedRow();
 
         if (filterDialog == null) {
-                filterDialog = new FilterDialog(this);
-            }
+            filterDialog = new FilterDialog(this);
+        }
 
         if (currentTraceLists == null) {
             JOptionPane.showMessageDialog(this, "There is no file being selected !",
@@ -299,7 +300,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         String traceName = filterCombo.getSelectedItem().toString();
         removeAllFilters(traceName);
 
-        String message = "     " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
+        message = "  " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
 
         filterStatus.setText(message);
 
@@ -310,7 +311,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private void removeAllFilters(String traceName) {
         if (traceName.equalsIgnoreCase("None")) {
             int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
-                "Filter Configuration", JOptionPane.YES_NO_OPTION);
+                    "Filter Configuration", JOptionPane.YES_NO_OPTION);
 
             if (n == JOptionPane.YES_OPTION) {
                 for (FilteredTraceList filteredTraceList : currentTraceLists) {
@@ -605,6 +606,44 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         getIntersectionOfSelectedTraceLists();
+
+        message = "  " + updateStatusMessage(currentTraceLists);
+
+        filterStatus.setText(message);
+    }
+
+    private String updateStatusMessage(List<FilteredTraceList> currentTraceLists) {
+        String message = "";
+        List<String> traceNameList = new ArrayList<String>();
+        List<String> messageList = new ArrayList<String>();
+
+        for (int i = 0; i < currentTraceLists.size(); i++) {
+            Filter f = currentTraceLists.get(i).getFilter();
+
+            if (f != null) {
+                String tN = f.getTraceName();
+                if (!traceNameList.contains(tN)) {
+                    traceNameList.add(tN);
+                    message = f.getStatusMessage() + " in file(s) " + "\'" + currentTraceLists.get(i).getName() + "\'";
+                    messageList.add(message);
+                } else {
+                    int id = traceNameList.indexOf(tN);
+                    message = messageList.get(id) + " and \'" + currentTraceLists.get(i).getName() + "\'";
+                    messageList.set(id, message);
+                }
+
+                filterCombo.setSelectedItem(tN);  // todo
+            }
+        }
+
+
+        message = "";
+
+        for (String s : messageList) {
+            message += s + "; ";
+        }
+
+        return message;
     }
 
     private void getIntersectionOfSelectedTraceLists() {
@@ -620,7 +659,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             for (int i = 0; i < tl.getTraceCount(); i++) {
                 String traceName = tl.getTraceName(i);
                 currentTrace.add(traceName);
-                if (!incompatibleTrace.contains(traceName)){
+                if (!incompatibleTrace.contains(traceName)) {
                     Class traceType = tl.getTrace(i).getTraceType();
                     if (traceType == null) {
                         incompatibleTrace.add(traceName);
@@ -628,12 +667,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     }
 
                     if (tracesIntersection.contains(traceName)) {
-                       if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
-                           tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-                           tracesIntersection.remove(traceName);
-                           incompatibleTrace.add(traceName);
-                           break;
-                       }
+                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
+                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                            tracesIntersection.remove(traceName);
+                            incompatibleTrace.add(traceName);
+                            break;
+                        }
 
                     } else if (currentTraceLists.indexOf(tl) == 0) {
 
@@ -644,20 +683,20 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             } // end i loop
 
             for (String traceName : tracesIntersection) {
-               if (!currentTrace.contains(traceName)) {
-                   tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-                   tracesIntersection.remove(traceName);
-                   incompatibleTrace.add(traceName);
-               }
+                if (!currentTrace.contains(traceName)) {
+                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                    tracesIntersection.remove(traceName);
+                    incompatibleTrace.add(traceName);
+                }
             }
-            
+
         }
 
-        assert(tracesIntersection.size() == tracesIntersectionClass.size());
+        assert (tracesIntersection.size() == tracesIntersectionClass.size());
 
         if (!tracesIntersection.isEmpty()) {
             for (String traceName : tracesIntersection) {
-               filterCombo.addItem(traceName);
+                filterCombo.addItem(traceName);
             }
         }
     }

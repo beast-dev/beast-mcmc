@@ -63,11 +63,17 @@ public class FilterDialog {
         this.filteredTraceListGroup = filteredTraceListGroup;
         this.traceName = traceName;
 
+        String message = "";
         Object[] fileNames = new Object[filteredTraceListGroup.size()];
         int[] indices = new int[filteredTraceListGroup.size()];
         for (int i = 0; i < fileNames.length; i++) {
             fileNames[i] = filteredTraceListGroup.get(i).getName();
             indices[i] = i;
+//            if (i == 0) message += "[";
+//            message += fileNames[i] + ", ";
+//            if (i == (fileNames.length - 1)) {
+//                message = message.substring(0, message.lastIndexOf(", ")) + "].";
+//            }
         }
 
         fileList.setListData(fileNames);
@@ -119,12 +125,11 @@ public class FilterDialog {
 //        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
 //        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
 
-        String message = "";
         if (result.equals(options[0])) {
             if (filterPanel.containsNullValue()) {
                 JOptionPane.showMessageDialog(frame, "The selected value for filter is invalid \ror no value is selected !",
-                    "Invalid Filter Input",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Invalid Filter Input",
+                        JOptionPane.ERROR_MESSAGE);
                 return previousMessage;
             }
 
@@ -141,8 +146,13 @@ public class FilterDialog {
                 filteredTraceListGroup.get(i).setFilter(f);
                 filteredTraceListGroup.get(i).createTraceFilter(f);
             }
-            message = f.getStatusMessage(); // todo
+            message += f.getStatusMessage(); // todo
 
+            for (int i = 0; i < filteredTraceListGroup.size(); i++) {
+                if (i == 0) message += " in file(s) ";
+                if (i > 0) message += " and ";
+                message += "\'" + filteredTraceListGroup.get(i).getName() + "\'";
+            }
         } else if (result.equals(options[1])) {
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
                 filteredTraceListGroup.get(i).removeFilter(traceName);
@@ -193,7 +203,7 @@ public class FilterDialog {
         boolean containsNullValue() {
             if (getSelectedValues() == null) return true;
             for (Object ob : getSelectedValues()) {
-               if (ob == null || ob.toString().equals("")) return true;
+                if (ob == null || ob.toString().equals("")) return true;
             }
             return false;
         }
@@ -262,7 +272,7 @@ public class FilterDialog {
             setLayout(new GridLayout(2, 3, 1, 10)); // 2 by 3, gap 5 by 1
 
             if (bound == null) {
-               bound = new String[2];
+                bound = new String[2];
             }
 
             minField = new JTextField(bound[0]);

@@ -26,7 +26,7 @@ public class MicrosatelliteSimulator extends SequenceSimulator{
             Tree tree,
             SiteModel siteModel,
             BranchRateModel branchRateModel) {
-        
+
     	super(tree, siteModel, branchRateModel, 1);
         this.dataType = dataType;
         this.taxa = taxa;
@@ -42,12 +42,10 @@ public class MicrosatelliteSimulator extends SequenceSimulator{
 
     /**
      * Convert an alignment to a pattern
-     *
-     * @return simulated pattern
      */
     public Patterns simulateMsatPattern(){
         Alignment align = simulate();
-        //System.out.println(align);
+
         int[] pattern = new int[align.getTaxonCount()];
         for(int i = 0; i < pattern.length; i++){
             String taxonName = align.getSequence(i).getTaxon().getId();

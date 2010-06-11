@@ -141,6 +141,10 @@ public class CompoundLikelihood implements Likelihood {
         }
     }
 
+    public String getDiagnosis() {
+        return getDiagnosis(0);
+    }
+    
     public String getDiagnosis(int indent) {
         String message = "";
         boolean first = true;

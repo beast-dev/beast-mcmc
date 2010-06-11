@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import dr.math.MathUtils;
 
 /**
  * @author Chieh-Hsi Wu
@@ -39,7 +40,9 @@ public class MicrosatelliteAveragingOperator extends SimpleMCMCOperator{
         for(int i = 0; i < bitVec.length; i++){
             bitVec[i] = parameter.getParameterValue(i);
         }
-        int index = (int)(Math.random()*parameter.getDimension());
+        //int index = (int)Math.random()*parameter.getDimension();
+        int index = MathUtils.nextInt(parameter.getDimension());
+        //System.out.println(index);
         int oldVal  = (int)parameter.getParameterValue(index);
         int newVal = -1;
         if(oldVal == ABSENT){

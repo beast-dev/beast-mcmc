@@ -65,7 +65,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
         labelBins.setLabelFor(binsCombo);
         toolBar.add(labelBins);
         toolBar.add(binsCombo);
-        toolBar.add(showValuesCheckBox);
+//        toolBar.add(showValuesCheckBox); //todo
         showValuesCheckBox.addActionListener(
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(ActionEvent actionEvent) {

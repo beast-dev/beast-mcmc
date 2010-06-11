@@ -129,7 +129,7 @@ public class CompoundLikelihood implements Likelihood {
 
         if( DEBUG > 0 ) {
             int t = DEBUG; DEBUG = 0;
-            System.err.println(getId() + ": " + getDiagnosis() + " = " + logLikelihood);
+            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
             DEBUG = t;
         }
         return logLikelihood;
@@ -141,7 +141,7 @@ public class CompoundLikelihood implements Likelihood {
         }
     }
 
-    public String getDiagnosis() {
+    public String getDiagnosis(int indent) {
         String message = "";
         boolean first = true;
 
@@ -155,12 +155,26 @@ public class CompoundLikelihood implements Likelihood {
                 first = false;
             }
 
+            if (indent >= 0) {
+                message += "\n";
+                for (int i = 0; i < indent; i++) {
+                    message += " ";
+                }
+            }
             message += lik.prettyName() + "=";
 
             if( lik instanceof CompoundLikelihood ) {
-                final String d = ((CompoundLikelihood) lik).getDiagnosis();
+                final String d = ((CompoundLikelihood) lik).getDiagnosis(indent < 0 ? -1 : indent + 2);
                 if( d != null && d.length() > 0 ) {
-                    message += "(" + d + ")";
+                    message += "(" + d;
+
+                    if (indent >= 0) {
+                        message += "\n";
+                        for (int i = 0; i < indent; i++) {
+                            message += " ";
+                        }
+                    }
+                    message += ")";
                 }
             } else {
 

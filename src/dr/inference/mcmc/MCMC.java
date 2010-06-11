@@ -156,7 +156,7 @@ public class MCMC implements Identifiable, Spawnable {
     //public static int ontheflyFreq = 0;
 
     /**
-     * This method actually intiates the MCMC analysis.
+     * This method actually initiates the MCMC analysis.
      */
     public void chain() {
 

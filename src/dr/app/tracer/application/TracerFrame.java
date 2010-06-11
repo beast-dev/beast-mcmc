@@ -165,45 +165,38 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         });
 
-        statisticTable.addMouseListener(new MouseAdapter() {
-            private void maybeShowPopup(MouseEvent e) {
-                if (traceTable.getSelectedRowCount() < 2) { // TODO generic to CombinedTraces ?
-                    if (e.isPopupTrigger() && statisticTable.isEnabled()) {
-                        Point p = new Point(e.getX(), e.getY());
-                        int col = statisticTable.columnAtPoint(p);
-                        int row = statisticTable.rowAtPoint(p);
-
-                        // translate table index to model index
-//                    int mcol = statisticTable.getColumn(statisticTable.getColumnName(col)).getModelIndex();
-
-                        if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
-//                        CellEditor ce = statisticTable.getCellEditor();
-//                        if (ce != null) {
-//                            ce.cancelCellEditing();
+//        statisticTable.addMouseListener(new MouseAdapter() { // todo bug
+//            private void maybeShowPopup(MouseEvent e) {
+//                if (traceTable.getSelectedRowCount() < 2) { // TODO generic to CombinedTraces ?
+//                    if (e.isPopupTrigger() && statisticTable.isEnabled()) {
+//                        Point p = new Point(e.getX(), e.getY());
+//                        int col = statisticTable.columnAtPoint(p);
+//                        int row = statisticTable.rowAtPoint(p);
+//
+//                        if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
+//
+//                            // create popup menu...
+//                            JPopupMenu contextMenu = createContextMenu();
+//
+//                            // ... and show it
+//                            if (contextMenu != null && contextMenu.getComponentCount() > 0) {
+//                                contextMenu.show(statisticTable, p.x, p.y);
+//                            }
 //                        }
-
-                            // create popup menu...
-                            JPopupMenu contextMenu = createContextMenu(row);
-
-                            // ... and show it
-                            if (contextMenu != null && contextMenu.getComponentCount() > 0) {
-                                contextMenu.show(statisticTable, p.x, p.y);
-                            }
-                        }
-                        statisticTable.setRowSelectionInterval(row, row);
-                        statisticTableSelectionChanged();
-                    }
-                }
-            }
-
-            public void mousePressed(MouseEvent e) {
-                maybeShowPopup(e);
-            }
-
-            public void mouseReleased(MouseEvent e) {
-                maybeShowPopup(e);
-            }
-        });
+//                        statisticTable.setRowSelectionInterval(row, row);
+//                        statisticTableSelectionChanged();
+//                    }
+//                }
+//            }
+//
+//            public void mousePressed(MouseEvent e) {
+//                maybeShowPopup(e);
+//            }
+//
+//            public void mouseReleased(MouseEvent e) {
+//                maybeShowPopup(e);
+//            }
+//        });
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
 
@@ -214,9 +207,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
-        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
-                "category(C) is string. Right click to change trace type in a selected cell.<html>"),
-                BorderLayout.SOUTH);
+        JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        changeTraceTypePanel.add(new JLabel("Change To:"));
+        JButton realButton = new JButton("real(R)");
+        JButton integerButton = new JButton("integer(I)");
+        JButton categoryButton = new JButton("category(C)");
+        ActionListener traceTypeButton = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (((JButton) e.getSource()).getText().equals("integer(I)")) {
+                    changeTraceType(TraceFactory.TraceType.INTEGER);
+                } else if (((JButton) e.getSource()).getText().equals("category(C)")) {
+                    changeTraceType(TraceFactory.TraceType.CATEGORY);
+                } else {
+                    changeTraceType(TraceFactory.TraceType.CONTINUOUS);
+                }
+            }
+        };
+        realButton.addActionListener(traceTypeButton);
+        integerButton.addActionListener(traceTypeButton);
+        categoryButton.addActionListener(traceTypeButton);
+        changeTraceTypePanel.add(realButton);
+        changeTraceTypePanel.add(integerButton);
+        changeTraceTypePanel.add(categoryButton);
+        changeTraceTypePanel.setToolTipText("<html>Traces Type: real(R) is double, integer(I) is integer, category(C) is string.</html>");
+//        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
+        
+//        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
+//                "category(C) is string. Right click to change trace type in a selected cell.</html>"),
+//                BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
         leftPanel.setPreferredSize(new Dimension(400, 300));
@@ -257,13 +275,21 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         JButton filterButton = new JButton("Filtered by :");
         filterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                invokeFilter();
+                int rowIndex = statisticTable.getSelectedRow();
+                
+                if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
+                    removeAllFilters();
+                } else {
+                    invokeFilter();
+                }
+
+                statisticTableModel.fireTableDataChanged();
+                statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
             }
         });
-//        filterPanel.add(new JLabel("Filtered by : "));
         filterPanel.add(filterButton);
         filterCombo.setPreferredSize(new Dimension(230, 20));
-//        filterCombo.addItemListener(new ItemListener () { //todo problem
+//        filterCombo.addItemListener(new ItemListener () { //todo bug
 //            public void itemStateChanged(ItemEvent e) {
 //                if (filterCombo.getItemCount() > 0) {
 //                String traceName = filterCombo.getSelectedItem().toString();
@@ -273,14 +299,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //        });
         filterPanel.add(filterCombo);
         filterPanel.add(filterStatus);
-//        filterStatus.setHorizontalTextPosition(10);
 
         getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
     private void invokeFilter() {
-        int rowIndex = statisticTable.getSelectedRow();
-
         if (filterDialog == null) {
             filterDialog = new FilterDialog(this);
         }
@@ -298,41 +321,37 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         String traceName = filterCombo.getSelectedItem().toString();
-        removeAllFilters(traceName);
 
         message = "  " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
 
         filterStatus.setText(message);
 
-        statisticTableModel.fireTableDataChanged();
-        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
-    private void removeAllFilters(String traceName) {
-        if (traceName.equalsIgnoreCase("None")) {
-            int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
-                    "Filter Configuration", JOptionPane.YES_NO_OPTION);
+    private void removeAllFilters() {
+        int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
+                "Filter Configuration", JOptionPane.YES_NO_OPTION);
 
-            if (n == JOptionPane.YES_OPTION) {
-                for (FilteredTraceList filteredTraceList : currentTraceLists) {
-                    filteredTraceList.removeAllFilters();
-                }
+        if (n == JOptionPane.YES_OPTION) {
+            for (FilteredTraceList filteredTraceList : currentTraceLists) {
+                filteredTraceList.removeAllFilters();
             }
-            return;
         }
+
+        filterStatus.setText("");
     }
 
     private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {
         return false;  //Todo 
     }
 
-    private JPopupMenu createContextMenu(final int rowIndex) {
+    private JPopupMenu createContextMenu() {
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem menu = new JMenuItem();
         menu.setText(TraceFactory.TraceType.CONTINUOUS + " (" + TraceFactory.TraceType.CONTINUOUS.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(rowIndex, TraceFactory.TraceType.CONTINUOUS);
+                changeTraceType(TraceFactory.TraceType.CONTINUOUS);
             }
         });
         contextMenu.add(menu);
@@ -341,7 +360,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(rowIndex, TraceFactory.TraceType.INTEGER);
+                changeTraceType(TraceFactory.TraceType.INTEGER);
             }
         });
         contextMenu.add(menu);
@@ -350,7 +369,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         menu.setText(TraceFactory.TraceType.CATEGORY + " (" + TraceFactory.TraceType.CATEGORY.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(rowIndex, TraceFactory.TraceType.CATEGORY);
+                changeTraceType(TraceFactory.TraceType.CATEGORY);
             }
         });
         contextMenu.add(menu);
@@ -358,15 +377,21 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return contextMenu;
     }
 
-    private void changeTraceType(final int rowIndex, TraceFactory.TraceType newType) {
+    private void changeTraceType(TraceFactory.TraceType newType) {
+        int rowIndex = statisticTable.getSelectedRow();
+        int selRow = traceTable.getSelectedRow();
+        int id = traceLists.get(selRow).getTraceIndex(commonTraceNames.get(rowIndex));
+//        Trace trace = traceLists.get(selRow).getTrace(id);
+
         try {
-            traceLists.get(traceTable.getSelectedRow()).loadTraces(rowIndex, newType);
-            traceLists.get(traceTable.getSelectedRow()).analyseTrace(rowIndex);
+            traceLists.get(selRow).loadTraces(id, newType);
+            traceLists.get(selRow).analyseTrace(id);
         } catch (TraceException e) {
             JOptionPane.showMessageDialog(this, e,
                     "Trace Type Exception",
                     JOptionPane.ERROR_MESSAGE);
         } catch (IOException e) {
+            System.err.println("selRow = " + selRow + "; new type = " + newType);
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         statisticTableModel.fireTableDataChanged();

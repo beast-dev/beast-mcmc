@@ -113,7 +113,7 @@ public class FilterDialog {
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 null,
                 options,
-                options[2]);
+                options[0]);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         final JDialog dialog = optionPane.createDialog(frame, "Create A Filter");

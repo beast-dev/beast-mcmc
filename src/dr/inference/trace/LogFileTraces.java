@@ -163,19 +163,23 @@ public class LogFileTraces extends AbstractTraceList {
         try {
             getTrace(index).getValues(getBurninStateCount(), destination, 0);
         } catch (Exception e) {
-            System.err.println("getValues error: trace index = " + index);
+            System.err.println("getValues error: trace index = " + index + "; type = " + getTrace(index).getTraceType());
         }
     }
 
     public <T> void getValues(int index, T[] destination, int offset) {
-        ((Trace<T>) getTrace(index)).getValues(getBurninStateCount(), destination, offset);
+        try {
+            ((Trace<T>) getTrace(index)).getValues(getBurninStateCount(), destination, offset);
+        } catch (Exception e) {
+            System.err.println("getValues error: trace index = " + index + "; type = " + getTrace(index).getTraceType());
+        }
     }
 
     public <T> void getBurninValues(int index, T[] destination) {
         try {
             ((Trace<T>) getTrace(index)).getValues(0, getBurninStateCount(), destination, 0);
         } catch (Exception e) {
-            System.err.println("getValues error: trace index = " + index);
+            System.err.println("getValues error: trace index = " + index + "; type = " + getTrace(index).getTraceType());
         }
     }
 
@@ -276,10 +280,11 @@ public class LogFileTraces extends AbstractTraceList {
 
         for (int i = 0; i < labels.length; i++) {
             labels[i] = tokens.nextToken();
-            if (reloadColumn < 0) {
-                addTrace(labels[i], numberOfLines);
-            } else {
+            if (reloadColumn == i) {
+                tracesType.put(labels[i], reloadType);
                 replaceTrace(labels[i], reloadType, numberOfLines);
+            } else { //reloadColumn < 0 || reloadColumn != i
+                addTrace(labels[i], numberOfLines);
             }
         }
 
@@ -406,20 +411,17 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    // change trace type
     private void replaceTrace(String name, TraceFactory.TraceType reloadType, int numberOfLines) throws TraceException {
         if (reloadType == null) throw new TraceException("trace (" + name + ") type is null");
         if (numberOfLines < 0) throw new TraceException("numberOfLines cannot be 0");
 
-        for (int i = 0; i < traces.size(); i++) {
-            Trace trace = traces.get(i);
-            // change trace type
-            if (trace.getName().equalsIgnoreCase(name)) {
-                if (trace.getTraceType() != reloadType.getType())
-                    traces.set(i, TraceFactory.createTrace(reloadType, name, numberOfLines));
-                return;
-            }
-        }
-        throw new TraceException("Cannot find trace : " + name);
+        int id = getTraceIndex(name);
+        if (id < 0 || id >= traces.size())
+              throw new TraceException("Cannot find trace : " + name);
+//        Trace trace = traces.get(id);
+
+        traces.set(id, TraceFactory.createTrace(reloadType, name, numberOfLines));
     }
 
     /**

@@ -118,7 +118,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         throw new RuntimeException("Not implemented yet!");
     }
 
-    private final Distribution distribution;
+    protected Distribution distribution;
     private final double offset;
 }
 

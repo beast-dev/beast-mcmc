@@ -58,6 +58,10 @@ public class FitchParsimony implements ParsimonyCriterion {
 
     private final double[] siteScores;
 
+    public PatternList getPatterns() {
+        return patterns;
+    }
+
     public FitchParsimony(PatternList patterns, boolean gapsAreStates) {
         if (patterns == null) {
             throw new IllegalArgumentException("The patterns cannot be null");

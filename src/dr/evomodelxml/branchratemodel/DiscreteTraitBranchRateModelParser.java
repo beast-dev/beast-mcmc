@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser {
 
     public static final String RATES = "rates";
+    public static final String INDICATORS = "indicators";
     public static final String TRAIT_INDEX = "traitIndex";
     public static final String TRAIT_NAME = "traitName";
 
@@ -32,6 +33,11 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
         TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
 
         Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
+        Parameter indicatorsParameter = null;
+
+        if (xo.getChild(INDICATORS) != null) {
+            indicatorsParameter = (Parameter) xo.getElementFirstChild(INDICATORS);
+        }
 
         int traitIndex = xo.getAttribute(TRAIT_INDEX, 1) - 1;
         String traitName = xo.getAttribute(TRAIT_NAME, "states");
@@ -49,7 +55,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                 throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
             }
 
-            return new DiscreteTraitBranchRateModel(treeModel, trait, traitIndex, ratesParameter);
+            return new DiscreteTraitBranchRateModel(treeModel, trait, traitIndex, ratesParameter, indicatorsParameter);
         }
     }
 
@@ -78,6 +84,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                     new ElementRule(TreeTraitProvider.class, "The trait provider"),
                     new ElementRule(PatternList.class)),
             new ElementRule(RATES, Parameter.class, "The rates of the different trait values", false),
+            new ElementRule(INDICATORS, Parameter.class, "An index that links the state with a rate", true),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)
     };

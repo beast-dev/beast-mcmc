@@ -22,6 +22,7 @@ public class MarkovJumpsCore {
         auxInt = new double[stateCount2];
         tmp1 = new double[stateCount2];
         tmp2 = new double[stateCount2];
+        expEvalScalar = new double[stateCount];
     }
 
 //SEXP aux_mat1(SEXP x, SEXP y){
@@ -55,14 +56,18 @@ public class MarkovJumpsCore {
 
     private void populateAuxInt(double[] eval, double scalar, double[] auxInt) {
 
+        for (int i = 0; i < stateCount; i++) {
+            expEvalScalar[i] = Math.exp(eval[i] * scalar);
+        }
+       
         int index = 0;
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {
                 if (Math.abs(eval[i] - eval[j]) < 1E-7) {
-                    auxInt[index] = Math.exp(eval[j] * scalar) * scalar;
+                    auxInt[index] = expEvalScalar[i] * scalar;
                 } else {
-                    auxInt[index] = (Math.exp(eval[i] * scalar) -
-                            Math.exp(eval[j] * scalar)) /
+                    auxInt[index] = (expEvalScalar[i] -
+                            expEvalScalar[j]) /
                             (eval[i] - eval[j]);
                 }
                 index++;
@@ -78,6 +83,19 @@ public class MarkovJumpsCore {
                                            double[] transitionProbs,
                                            double[] countMatrix) {
         computeJointStatMarkovJumps(evec, ievc, eval, rateReg, time, countMatrix);
+        for(int i=0; i<stateCount2; i++) {
+            countMatrix[i] /= transitionProbs[i];
+        }
+    }
+
+    public void computeCondStatMarkovJumpsPrecompute(double[] evec,
+                                           double[] ievc,
+                                           double[] eval,
+                                           double[] ievcRateRegEvc,
+                                           double   time,
+                                           double[] transitionProbs,
+                                           double[] countMatrix) {
+        computeJointStatMarkovJumpsPrecompute(evec, ievc, eval, ievcRateRegEvc, time, countMatrix);
         for(int i=0; i<stateCount2; i++) {
             countMatrix[i] /= transitionProbs[i];
         }
@@ -138,6 +156,31 @@ public class MarkovJumpsCore {
         matrixMultiply(ievc, tmp1, stateCount, tmp2);
         for (int i = 0; i < stateCount2; i++) {
             tmp2[i] *= auxInt[i];
+        }
+
+        // Take (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
+        //        rate.eigen$invvectors
+        matrixMultiply(tmp2, ievc, stateCount, tmp1);
+
+        // Take factorial.moments = rate.eigen$vectors%*%
+        //      (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
+        //        rate.eigen$invvectors
+        matrixMultiply(evec, tmp1, stateCount, countMatrix);
+    }
+
+    public void computeJointStatMarkovJumpsPrecompute(double[] evec,
+                                            double[] ievc,
+                                            double[] eval,
+                                            double[] ievcRateRegEvc,
+                                            double   time,
+                                            double[] countMatrix) {
+        // Equation (37) from Minin and Suchard
+        populateAuxInt(eval,time,auxInt);
+
+        // Equation (36) from Minin and Suchard                      
+        // Take int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors)
+        for (int i = 0; i < stateCount2; i++) {
+            tmp2[i] = auxInt[i] * ievcRateRegEvc[i];
         }
 
         // Take (int.matrix*(rate.eigen$invvectors%*%rate.reg%*%rate.eigen$vectors))%*%
@@ -215,4 +258,5 @@ public class MarkovJumpsCore {
     private double[] auxInt;
     private double[] tmp1;
     private double[] tmp2;
+    private double[] expEvalScalar;
 }

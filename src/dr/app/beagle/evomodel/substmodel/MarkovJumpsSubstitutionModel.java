@@ -39,6 +39,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         rateMatrix = new double[stateCount * stateCount];
         transitionProbs = new double[stateCount * stateCount];
         rateReg = new double[stateCount * stateCount];
+        if (PRECOMPUTE) {
+            ievcRateRegEvec = new double[stateCount * stateCount];
+            tmp1 = new double[stateCount * stateCount];
+        }
         registration = new double[stateCount * stateCount];
     }
 
@@ -76,7 +80,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     }
 
     private void makeRateRegistrationMatrix(double[] registration,
-                                            double[] rateReg) {
+                                            double[] rateReg,
+                                            double[] ievcRateRegEvec) {
 
         if (type == MarkovJumpsType.COUNTS) {
 
@@ -97,13 +102,22 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
             throw new RuntimeException("Unknown expectation type in MarkovJumps");
         }
 
+        if (PRECOMPUTE) {
+//            matrixMultiply(rateReg, evec, stateCount, tmp1);
+//            matrixMultiply(ievc, tmp1, stateCount, tmp2);
+            MarkovJumpsCore.matrixMultiply(rateReg, eigenDecomposition.getEigenVectors(),
+                    stateCount, tmp1);
+            MarkovJumpsCore.matrixMultiply(eigenDecomposition.getInverseEigenVectors(), tmp1,
+                    stateCount, ievcRateRegEvec);
+        }
+
         regRateChanged = false;
     }
 
     public double getMarginalRate() {
 
         if (regRateChanged) {
-            makeRateRegistrationMatrix(registration, rateReg);
+            makeRateRegistrationMatrix(registration, rateReg, ievcRateRegEvec);
         }
 
         FrequencyModel freqModel = substModel.getFrequencyModel();
@@ -130,28 +144,37 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
                                            double[] countMatrix) {
 
         if (regRateChanged) {
-            makeRateRegistrationMatrix(registration,rateReg);
+            makeRateRegistrationMatrix(registration,rateReg,ievcRateRegEvec);
         }
 
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
         double[] eval = eigenDecomposition.getEigenValues();
 
-        markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbs, countMatrix);
+        if (PRECOMPUTE) {
+            markovJumpsCore.computeCondStatMarkovJumpsPrecompute(
+                    evec, ievc, eval, ievcRateRegEvec, time, transitionProbs, countMatrix);
+        } else {
+            markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbs, countMatrix);
+        }
     }
 
     public void computeJointStatMarkovJumps(double time,
                                             double[] countMatrix) {
 
         if (regRateChanged) {
-            makeRateRegistrationMatrix(registration,rateReg);
+            makeRateRegistrationMatrix(registration,rateReg,ievcRateRegEvec);
         }
 
         double[] evec = eigenDecomposition.getEigenVectors();
         double[] ievc = eigenDecomposition.getInverseEigenVectors();
         double[] eval = eigenDecomposition.getEigenValues();
 
-        markovJumpsCore.computeJointStatMarkovJumps(evec, ievc, eval, rateReg, time, countMatrix);
+        if (PRECOMPUTE) {
+            markovJumpsCore.computeJointStatMarkovJumpsPrecompute(evec, ievc, eval, ievcRateRegEvec, time, countMatrix);
+        } else {
+            markovJumpsCore.computeJointStatMarkovJumps(evec, ievc, eval, rateReg, time, countMatrix);
+        }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -178,6 +201,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
     public int stateCount;
     private double[] rateReg;
+    private double[] ievcRateRegEvec;
+    private double[] tmp1;
     private double[] transitionProbs;
     private double[] rateMatrix;
     protected double[] registration;
@@ -189,5 +214,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private boolean regRateChanged = true;
 
     protected MarkovJumpsType type;
+
+    private static final boolean PRECOMPUTE = true;
 }
 

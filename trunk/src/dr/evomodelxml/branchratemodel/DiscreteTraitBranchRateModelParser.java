@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser {
 
+    public static final String RATE = "rate";
     public static final String RATES = "rates";
     public static final String INDICATORS = "indicators";
     public static final String TRAIT_INDEX = "traitIndex";
@@ -32,8 +33,13 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
 
         TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
 
-        Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
+        Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
+        Parameter ratesParameter = null;
         Parameter indicatorsParameter = null;
+
+        if (xo.getChild(RATES) != null) {
+            ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
+        }
 
         if (xo.getChild(INDICATORS) != null) {
             indicatorsParameter = (Parameter) xo.getElementFirstChild(INDICATORS);
@@ -55,7 +61,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                 throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
             }
 
-            return new DiscreteTraitBranchRateModel(treeModel, trait, traitIndex, ratesParameter, indicatorsParameter);
+            return new DiscreteTraitBranchRateModel(treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
         }
     }
 
@@ -83,7 +89,8 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
             new XORRule(
                     new ElementRule(TreeTraitProvider.class, "The trait provider"),
                     new ElementRule(PatternList.class)),
-            new ElementRule(RATES, Parameter.class, "The rates of the different trait values", false),
+            new ElementRule(RATE, Parameter.class, "The absolute rate of state 0", false),
+            new ElementRule(RATES, Parameter.class, "The relative rates of state > 0", false),
             new ElementRule(INDICATORS, Parameter.class, "An index that links the state with a rate", true),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)

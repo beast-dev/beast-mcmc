@@ -35,7 +35,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     public UniformizedSubstitutionModel(SubstitutionModel substModel, MarkovJumpsType type, int numSimulants) {
         super(substModel, type);
         this.numSimulants = numSimulants;
-        constructSubordinator();
+        updateSubordinator = true;
     }
 
     protected void setupStorage() {
@@ -46,11 +46,12 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private void constructSubordinator() {
         substModel.getInfinitesimalMatrix(tmp);
         subordinator = new SubordinatedProcess(tmp, stateCount);
+        updateSubordinator = false;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == substModel) {
-            constructSubordinator();
+            updateSubordinator = true;
         }
     }
 
@@ -87,6 +88,10 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                                              double time,
                                              double transitionProbability) {
 
+        if (updateSubordinator) {
+            constructSubordinator();
+        }
+
         double total = 0;
         for (int i = 0; i < numSimulants; i++) {
             StateHistory history = UniformizedStateHistory.simulateConditionalOnEndingState(
@@ -108,6 +113,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     }
 
     private final int numSimulants;
+    private boolean updateSubordinator;
     private SubordinatedProcess subordinator;
 
     private double[] tmp;

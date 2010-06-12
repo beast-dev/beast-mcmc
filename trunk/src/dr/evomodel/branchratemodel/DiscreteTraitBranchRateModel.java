@@ -239,7 +239,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
                 if (index == 0) {
                     rate += absRate * dwellTimes[i];
                 } else {
-                    rate += (absRate + relativeRatesParameter.getParameterValue(index - 1)) * dwellTimes[i];
+                    rate += (absRate * (1.0 + relativeRatesParameter.getParameterValue(index - 1))) * dwellTimes[i];
                 }
                 totalTime += dwellTimes[i];
             }

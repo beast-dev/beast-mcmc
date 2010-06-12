@@ -90,7 +90,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                     new ElementRule(TreeTraitProvider.class, "The trait provider"),
                     new ElementRule(PatternList.class)),
             new ElementRule(RATE, Parameter.class, "The absolute rate of state 0", false),
-            new ElementRule(RATES, Parameter.class, "The relative rates of state > 0", false),
+            new ElementRule(RATES, Parameter.class, "The relative rates of state > 0", true),
             new ElementRule(INDICATORS, Parameter.class, "An index that links the state with a rate", true),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)

@@ -147,17 +147,17 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             addVariable(indicatorParameter);
         }
 
-        double[] dwellTimes = getDwellTimes(treeModel, treeModel.getExternalNode(0));
-
-        if (indicatorParameter != null) {
-            if (dwellTimes.length != indicatorParameter.getDimension()) {
-                throw new IllegalArgumentException("The dwell times must have same dimension as indicator parameter.");
-            }
-        } else {
-            if (dwellTimes.length != rateParameter.getDimension()) {
-                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
-            }
-        }
+//        double[] dwellTimes = getDwellTimes(treeModel, treeModel.getExternalNode(0));
+//
+//        if (indicatorParameter != null) {
+//            if (dwellTimes.length != indicatorParameter.getDimension()) {
+//                throw new IllegalArgumentException("The dwell times must have same dimension as indicator parameter.");
+//            }
+//        } else {
+//            if (dwellTimes.length != rateParameter.getDimension()) {
+//                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
+//            }
+//        }
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {

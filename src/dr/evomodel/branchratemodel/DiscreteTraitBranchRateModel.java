@@ -57,7 +57,8 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     public static final String DISCRETE_TRAIT_BRANCH_RATE_MODEL = "discreteTraitRateModel";
 
     private TreeTrait trait = null;
-    private Parameter ratesParameter;
+    private Parameter rateParameter;
+    private Parameter relativeRatesParameter;
     private Parameter indicatorParameter;
     private int traitIndex;
     private boolean normKnown = false;
@@ -83,7 +84,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
      */
     public DiscreteTraitBranchRateModel(TreeModel treeModel, PatternList patternList, int traitIndex, Parameter ratesParameter) {
 
-        this(treeModel, traitIndex, ratesParameter, null);
+        this(treeModel, traitIndex, ratesParameter, null, null);
 
         if (!TaxonList.Utils.getTaxonListIdSet(treeModel).equals(TaxonList.Utils.getTaxonListIdSet(patternList))) {
             throw new IllegalArgumentException("Tree model and pattern list must have the same list of taxa!");
@@ -98,11 +99,14 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
      * @param treeModel
      * @param trait
      * @param traitIndex
-     * @param ratesParameter
+     * @param rateParameter
+     * @param relativeRatesParameter
+     * @param indicatorParameter
      */
-    public DiscreteTraitBranchRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex, Parameter ratesParameter, Parameter indicatorParameter) {
+    public DiscreteTraitBranchRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex,
+                                        Parameter rateParameter, Parameter relativeRatesParameter, Parameter indicatorParameter) {
 
-        this(treeModel, traitIndex, ratesParameter, indicatorParameter);
+        this(treeModel, traitIndex, rateParameter, relativeRatesParameter, indicatorParameter);
 
 //        if (trait.getTreeModel() != treeModel)
 //            throw new IllegalArgumentException("Tree Models for ancestral state tree likelihood and target model of these rates must match!");
@@ -124,18 +128,36 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         }
     }
 
-    private DiscreteTraitBranchRateModel(TreeModel treeModel, int traitIndex, Parameter ratesParameter, Parameter indicatorParameter) {
+    private DiscreteTraitBranchRateModel(TreeModel treeModel, int traitIndex,
+                                         Parameter rateParameter, Parameter relativeRatesParameter, Parameter indicatorParameter) {
         super(DISCRETE_TRAIT_BRANCH_RATE_MODEL);
         addModel(treeModel);
         this.traitIndex = traitIndex;
-        this.ratesParameter = ratesParameter;
-        addVariable(ratesParameter);
+
+        this.rateParameter = rateParameter;
+        addVariable(rateParameter);
+
+        this.relativeRatesParameter = relativeRatesParameter;
+        if (relativeRatesParameter != null) {
+            addVariable(relativeRatesParameter);
+        }
 
         this.indicatorParameter = indicatorParameter;
         if (indicatorParameter != null) {
             addVariable(indicatorParameter);
         }
 
+        double[] dwellTimes = getDwellTimes(treeModel, treeModel.getExternalNode(0));
+
+        if (indicatorParameter != null) {
+            if (dwellTimes.length != indicatorParameter.getDimension()) {
+                throw new IllegalArgumentException("The dwell times must have same dimension as indicator parameter.");
+            }
+        } else {
+            if (dwellTimes.length != rateParameter.getDimension()) {
+                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
+            }
+        }
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -206,26 +228,24 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
-        double[] dwellTimes;
-        if (mode == Mode.DWELL_TIMES) {
-            dwellTimes = (double[])trait.getTrait(tree, node);
-            if (dwellTimes.length != ratesParameter.getDimension()) {
-                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
-            }
-        } else {
-            dwellTimes = getDwellTimes(tree, node);
-        }
+        double[] dwellTimes = getDwellTimes(tree, node);
 
         double totalTime = 0;
         if (indicatorParameter != null) {
+            double absRate = rateParameter.getParameterValue(0);
+
             for (int i = 0; i < indicatorParameter.getDimension(); i++) {
                 int index = (int)indicatorParameter.getParameterValue(i);
-                rate += ratesParameter.getParameterValue(index) * dwellTimes[i];
+                if (index == 0) {
+                    rate += absRate * dwellTimes[i];
+                } else {
+                    rate += (absRate + relativeRatesParameter.getParameterValue(index - 1)) * dwellTimes[i];
+                }
                 totalTime += dwellTimes[i];
             }
         } else {
-            for (int i = 0; i < ratesParameter.getDimension(); i++) {
-                rate += ratesParameter.getParameterValue(i) * dwellTimes[i];
+            for (int i = 0; i < rateParameter.getDimension(); i++) {
+                rate += rateParameter.getParameterValue(i) * dwellTimes[i];
                 totalTime += dwellTimes[i];
             }
         }
@@ -239,7 +259,9 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         double[] dwellTimes = null;
         double branchTime = tree.getBranchLength(node);
 
-        if (mode == Mode.PARSIMONY) {
+        if (mode == Mode.DWELL_TIMES) {
+            dwellTimes = (double[])trait.getTrait(tree, node);
+        } else if (mode == Mode.PARSIMONY) {
             // an approximation to dwell times using parsimony, assuming
             // the state changes midpoint on the tree. Does a weighted
             // average of the equally parsimonious state reconstructions
@@ -275,7 +297,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             if (indicatorParameter != null) {
                 dwellTimes = new double[indicatorParameter.getDimension()];
             } else {
-                dwellTimes = new double[ratesParameter.getDimension()];
+                dwellTimes = new double[rateParameter.getDimension()];
             }
 
             // if the states are being sampled - then there is only one possible state at each

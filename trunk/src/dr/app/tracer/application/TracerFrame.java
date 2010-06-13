@@ -226,11 +226,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         realButton.addActionListener(traceTypeButton);
         integerButton.addActionListener(traceTypeButton);
         categoryButton.addActionListener(traceTypeButton);
-        changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.add(integerButton);
         changeTraceTypePanel.add(categoryButton);
+        changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.setToolTipText("<html>Traces Type: real(R) is double, integer(I) is integer, category(C) is string.</html>");
-//        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
+        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
         
 //        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
 //                "category(C) is string. Right click to change trace type in a selected cell.</html>"),

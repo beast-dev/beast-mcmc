@@ -20,6 +20,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
     public static final String INCLUDE_STEM = "includeStem";
     public static final String EXCLUDE_CLADE = "excludeClade";
     public static final String EXTERNAL_BRANCHES = "externalBranches";
+    public static final String BACKBONE = "backbone";
 
     public String getParserName() {
         return LOCAL_CLOCK_MODEL;
@@ -78,6 +79,20 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
                     }
+                } else if (xoc.getName().equals(BACKBONE)) {
+
+                    boolean relative = xoc.getAttribute(RELATIVE, false);
+
+                    Parameter rateParameter = (Parameter) xoc.getChild(Parameter.class);
+                    TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
+
+
+                    try {
+                        localClockModel.addBackboneClock(taxonList, rateParameter, relative);
+
+                    } catch (Tree.MissingTaxonException mte) {
+                        throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
+                    }
                 }
 
             }
@@ -121,6 +136,13 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                             AttributeRule.newBooleanRule(EXCLUDE_CLADE, true, "determines whether to exclude actual branches of the clade from the siteModel (default false)."),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new ElementRule(Parameter.class, "The rate parameter")
-                    }, 0, Integer.MAX_VALUE)
+                    }, 0, Integer.MAX_VALUE),
+            new ElementRule(BACKBONE,
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(RELATIVE, true),
+                            new ElementRule(Taxa.class, "A local clock that will be applied only to " +
+                                    "the 'backbone' branches defined by these taxa"),
+                            new ElementRule(Parameter.class, "The rate parameter"),
+                    }, 0, Integer.MAX_VALUE),
     };
 }

@@ -159,7 +159,10 @@ public class Trace<T> {
     }
 
     public static double[] arrayConvert(Double[] src, boolean[] selected) {
+        if (src == null) return null;
+
         assert src.length == selected.length;
+
 
         if (selected != null) {
             java.util.List<Double> selectedValuesList = new ArrayList<Double>();
@@ -207,6 +210,8 @@ public class Trace<T> {
     }
 
     public static int[] arrayConvert(Integer[] src, boolean[] selected) {
+        if (src == null) return null;
+
         assert src.length == selected.length;
 
         if (selected != null) {
@@ -235,6 +240,8 @@ public class Trace<T> {
     }
 
     public static String[] arrayConvert(String[] src, boolean[] selected) {
+        if (src == null) return null;
+
         assert src.length == selected.length;
 
         if (selected != null) {

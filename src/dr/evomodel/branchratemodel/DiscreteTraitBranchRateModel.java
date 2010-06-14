@@ -309,7 +309,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             // end of the branch.
             int state = ((int[])trait.getTrait(tree, node))[traitIndex];
             processValues[state] += branchTime / 2;
-            int parentState = ((int[])trait.getTrait(tree, node))[traitIndex];
+            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
             processValues[parentState] += branchTime / 2;
         }
 

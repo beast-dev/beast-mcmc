@@ -93,13 +93,14 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         }
         
         if (registersFound == 0) { // Some default values for testing
-            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
-            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
-            Parameter registerParameter = new Parameter.Default(registration);
-            registerParameter.setId(jumpTag);
-            treeLikelihood.addRegister(registerParameter,
-                                       MarkovJumpsType.COUNTS,
-                                       false);
+//            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
+//            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
+//            Parameter registerParameter = new Parameter.Default(registration);
+//            registerParameter.setId(jumpTag);
+//            treeLikelihood.addRegister(registerParameter,
+//                                       MarkovJumpsType.COUNTS,
+//                                       false);
+            // Do nothing, should run the same as AncestralStateBeagleTreeLikelihood
         }
 
         return treeLikelihood;

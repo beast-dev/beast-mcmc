@@ -44,6 +44,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
             tmp1 = new double[stateCount * stateCount];
         }
         registration = new double[stateCount * stateCount];
+        reward = new double[stateCount];
     }
 
     public MarkovJumpsType getType() {
@@ -63,6 +64,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
             int index = 0;
             for (int i = 0; i < stateCount; i++) {
+                reward[i] = inRegistration[i];
                 for (int j = 0; j < stateCount; j++) {
                     if (i == j) {
                         registration[index] = inRegistration[i];
@@ -205,6 +207,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private double[] tmp1;
     private double[] transitionProbs;
     private double[] rateMatrix;
+    protected double[] reward;
     protected double[] registration;
 
     protected SubstitutionModel substModel;

@@ -40,6 +40,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
     protected void setupStorage() {
         registration = new double[stateCount * stateCount];
+        reward = new double[stateCount];
         tmp = new double[stateCount * stateCount];
     }
 
@@ -115,7 +116,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             if (type == MarkovJumpsType.COUNTS) {
                 total += history.getTotalRegisteredCounts(registration);
             } else {
-                total += history.getTotalReward(registration);
+                total += history.getTotalReward(reward);
             }
         }
         return total / (double) numSimulants;

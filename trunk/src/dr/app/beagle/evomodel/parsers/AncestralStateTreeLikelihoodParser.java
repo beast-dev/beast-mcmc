@@ -10,6 +10,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.xml.*;
 
 /**
@@ -20,7 +21,7 @@ import dr.xml.*;
 public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
-    public static final String RECONSTRUCTION_TAG = "state";
+    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
     public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";

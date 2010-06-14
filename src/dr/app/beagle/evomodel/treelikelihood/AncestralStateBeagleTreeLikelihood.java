@@ -1,6 +1,5 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.app.beagle.evomodel.substmodel.StratifiedTraitOutputFormat;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
@@ -55,7 +54,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         }
 
         this.dataType = dataType;
-        this.tag = tag;
+//        this.tag = tag;
 
         probabilities = new double[stateCount * stateCount * categoryCount];
         partials = new double[stateCount * patternCount * categoryCount];
@@ -84,7 +83,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         treeTraits.addTrait(new TreeTrait.IA() {
             public String getTraitName() {
-                return "states";
+                return tag;
             }
 
             public Intent getIntent() {
@@ -336,7 +335,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                             }
                             posteriorWeightedCategory[r] *= priorWeightedCategory[r];
                         }
-                        rateCategory[j] = MathUtils.randomChoicePDF(posteriorWeightedCategory);
+                        rateCategory[j] = drawChoice(posteriorWeightedCategory);
                     }
 
                     // Sample root character state
@@ -348,7 +347,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                         conditionalProbabilities[i] *= frequencies[i];
                     }
                     try {
-                        state[j] = drawChoice(conditionalProbabilities); //MathUtils.randomChoicePDF(conditionalProbabilities);
+                        state[j] = drawChoice(conditionalProbabilities);
                     } catch (Error e) {
                         System.err.println(e.toString());
                         System.err.println("Please report error to Marc");
@@ -392,7 +391,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                         conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
                                 * probabilities[matrixIndex + parentIndex + i];
 
-                    state[j] = drawChoice(conditionalProbabilities); //MathUtils.randomChoicePDF(conditionalProbabilities);
+                    state[j] = drawChoice(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
 
                     if (!returnMarginalLogLikelihood) {
@@ -430,7 +429,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
-                    reconstructedStates[nodeNum][j] = MathUtils.randomChoicePDF(conditionalProbabilities);
+                    reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
                 }
 
                 if (!returnMarginalLogLikelihood) {
@@ -455,7 +454,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     private int[][] reconstructedStates;
     private int[][] storedReconstructedStates;
 
-    private final String tag;
+//    private final String tag;
     protected boolean areStatesRedrawn = false;
     protected boolean storedAreStatesRedrawn = false;
 

@@ -58,6 +58,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         registerParameter = new ArrayList<Parameter>();
         jumpTag = new ArrayList<String>();
         expectedJumps = new ArrayList<double[][]>();
+        storedExpectedJumps = new ArrayList<double[][]>();
 
         tmpProbabilities = new double[stateCount * stateCount * categoryCount];
         condJumps = new double[categoryCount][stateCount * stateCount];
@@ -87,6 +88,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
         jumpTag.add(tag);
         expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
+        storedExpectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 
         boolean[] oldScaleByTime = this.scaleByTime;
         int oldScaleByTimeLength = (oldScaleByTime == null ? 0 : oldScaleByTime.length);
@@ -96,7 +98,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
 
-        treeTraits.addTrait("rewards", new TreeTrait.DA() {
+        treeTraits.addTrait(addRegisterParameter.getId(), new TreeTrait.DA() {
             public String getTraitName() {
                 return tag;
             }
@@ -145,13 +147,13 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         return expectedJumps.get(whichRegister);
     }
 
-    private static String formattedValue(double[] values) {
-        double total = 0;
-        for (double summant : values) {
-            total += summant;
-        }
-        return Double.toString(total); // Currently return the sum across sites
-    }
+//    private static String formattedValue(double[] values) {
+//        double total = 0;
+//        for (double summant : values) {
+//            total += summant;
+//        }
+//        return Double.toString(total); // Currently return the sum across sites
+//    }
 
     private void setupRegistration(int whichRegistration) {
 
@@ -284,6 +286,33 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
     }
 
+//    public void storeState() {
+//
+//        super.storeState();
+//
+////        if (areStatesRedrawn) {
+//            for (int i = 0; i < expectedJumps.size(); i++) {
+//                double[][] thisExpectedJumps = expectedJumps.get(i);
+//                double[][] storedThisExpectedJumps = storedExpectedJumps.get(i);
+//                for (int j = 0; j < thisExpectedJumps.length; j++) {
+//                    System.arraycopy(thisExpectedJumps[j], 0, storedThisExpectedJumps[j], 0,
+//                            thisExpectedJumps[j].length);
+//                }
+//            }
+////        }
+//    }
+//
+//    public void restoreState() {
+//
+//        super.restoreState();
+//
+//        List<double[][]> tmp = expectedJumps;
+//        expectedJumps = storedExpectedJumps;
+//        storedExpectedJumps = tmp;
+//        areStatesRedrawn = false;
+//
+//    }
+
     public LogColumn[] getColumns() {
 
         int nColumns = patternCount * numRegisters;
@@ -381,6 +410,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private List<Parameter> registerParameter;
     private List<String> jumpTag;
     private List<double[][]> expectedJumps;
+    private List<double[][]> storedExpectedJumps;
     private boolean[] scaleByTime;
     private double[] tmpProbabilities;
     private double[][] condJumps;

@@ -43,6 +43,14 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         tmp = new double[stateCount * stateCount];
     }
 
+    protected void storeState() {
+        storedSubordinator = subordinator;
+    }
+
+    protected void restoreState() {
+        subordinator = storedSubordinator;
+    }
+
     private void constructSubordinator() {
         substModel.getInfinitesimalMatrix(tmp);
         subordinator = new SubordinatedProcess(tmp, stateCount);
@@ -53,6 +61,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         if (model == substModel) {
             updateSubordinator = true;
         }
+        super.handleModelChangedEvent(model, object, index);       
     }
 
     public void computeCondStatMarkovJumps(double time,
@@ -115,6 +124,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private final int numSimulants;
     private boolean updateSubordinator;
     private SubordinatedProcess subordinator;
+    private SubordinatedProcess storedSubordinator;
 
     private double[] tmp;
 }

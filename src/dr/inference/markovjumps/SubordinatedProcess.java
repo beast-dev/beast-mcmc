@@ -2,6 +2,7 @@ package dr.inference.markovjumps;
 
 import dr.math.MathUtils;
 import dr.math.GammaFunction;
+import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -167,6 +168,12 @@ public class SubordinatedProcess {
         double scale = 1.0;
         int index = startingState * stateCount + endingState;
 
+        double[] check;
+        int maxTries = 1000;
+        if (DEBUG) {
+            check = new double[maxTries+1];
+        }
+
         while (cutoff >= cdf) {
             drawnNumber++;
 
@@ -175,10 +182,33 @@ public class SubordinatedProcess {
                 scale *= effectiveRate;
             }
             if (drawnNumber > 1) {
-                scale /= drawnNumber;
+                scale /= (double) drawnNumber;
             }
 
             cdf += preFactor * scale * Rn[index] / ctmcProbability;
+
+            if (DEBUG) {
+                check[drawnNumber] = cdf;
+                if (drawnNumber == maxTries) {
+                    System.err.println("cdf = " + cdf);
+                    System.err.println("cutoff = " + cutoff);
+                    System.err.println("ctmcProb = " + ctmcProbability);
+                    System.err.println("PoissonRate = " + getPoissonRate());
+
+                    double[] distr = computePDFDirectly(startingState, endingState, time, ctmcProbability, drawnNumber);
+                    double[] checkCDF = new double[distr.length];
+                    double total = 0;
+                    for (int i = 0; i < distr.length; i++) {
+                        total += distr[i];
+                        checkCDF[i] = total;
+                    }
+                    System.err.println("distr = " + new Vector(distr));
+                    System.err.println("cdf   = " + new Vector(checkCDF));
+                    System.err.println("check = " + new Vector(check));
+
+                    throw new RuntimeException("Oh yeah");
+                }
+            }
         }
         return drawnNumber;
     }
@@ -208,4 +238,6 @@ public class SubordinatedProcess {
     private final double poissonRate;
     private final int stateCount;
     private final double[] tmp;
+
+    private static final boolean DEBUG = false;
 }

@@ -232,9 +232,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         double rate = 0.0;
         double[] processValues = getProcessValues(tree, node);
 
-//        System.err.println("processValues = " + new Vector(processValues));
-//        System.exit(-1);
-
         double totalTime = 0;
         if (indicatorParameter != null) {
             double absRate = rateParameter.getParameterValue(0);

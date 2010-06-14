@@ -77,11 +77,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
         addVariable(addRegisterParameter);
         registerParameter.add(addRegisterParameter);
+        MarkovJumpsSubstitutionModel mjModel;
         if (useUniformization) {
-            markovjumps.add(new UniformizedSubstitutionModel(substitutionModel, type, nSimulants));
+            mjModel = new UniformizedSubstitutionModel(substitutionModel, type, nSimulants);
         } else {
-            markovjumps.add(new MarkovJumpsSubstitutionModel(substitutionModel, type));
+           mjModel = new MarkovJumpsSubstitutionModel(substitutionModel, type);
         }
+        markovjumps.add(mjModel);
+        addModel(mjModel);
         setupRegistration(numRegisters);
 
         final String tag = addRegisterParameter.getId();

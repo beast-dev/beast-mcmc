@@ -28,6 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
@@ -660,9 +661,11 @@ public class BeastGenerator extends Generator {
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
-            // e.g. <svsGeneralSubstitutionModel idref="locations.model" /> 
-            writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
-            writer.writeText("");
+            // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
+            if ( !(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()) ) ) {
+                writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+                writer.writeText("");
+            }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);

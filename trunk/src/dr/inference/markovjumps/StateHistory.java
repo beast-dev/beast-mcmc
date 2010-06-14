@@ -63,7 +63,7 @@ public class StateHistory {
         double[] times = getWaitingTimes();
         double total = 0;
         for (int i = 0; i < times.length; i++) {
-            total += times[i] * register[i * stateCount + i];
+            total += times[i] * register[i]; // stateCount length vector
         }
         return total;
     }

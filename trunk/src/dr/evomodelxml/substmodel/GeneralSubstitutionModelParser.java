@@ -25,6 +25,10 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         return GENERAL_SUBSTITUTION_MODEL;
     }
 
+    public String[] getParserNames() {
+        return new String[]{getParserName(), SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL};
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter ratesParameter;
@@ -50,7 +54,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 //            }
 //        }
 
-//        if (dataType == null) dataType = freqModel.getDataType();
+        if (dataType == null) dataType = freqModel.getDataType();
 
         if (dataType != freqModel.getDataType()) {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
@@ -91,7 +95,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     + INDICATOR + " " + indicatorParameter.getParameterName());
             return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
 
-        } else {// no indicator
+        } else if (xo.getName().equalsIgnoreCase(GENERAL_SUBSTITUTION_MODEL)) {// no indicator
             if (!cxo.hasAttribute(RELATIVE_TO)) {
                 throw new XMLParseException("The index of the implicit rate (value 1.0) that all other rates are relative to."
                         + " In DNA this is usually G<->T (6)");
@@ -126,6 +130,9 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             }
 
             return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
+        } else {
+            throw new XMLParseException(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL
+                    + " needs " + INDICATOR + " !");
         }
     }
 
@@ -150,7 +157,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                             DataType.getRegisteredDataTypeNames(), false),
                     new ElementRule(DataType.class)
-            ),
+            , true),
             new ElementRule(FREQUENCIES, FrequencyModel.class),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{

@@ -286,6 +286,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
             }
         }
+        // TODO MAS: I do not understand why these are NOT necessary
 
         storedAreStatesRedrawn = areStatesRedrawn;
         storedJointLogLikelihood = jointLogLikelihood;

@@ -61,7 +61,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                 throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
             }
 
-            return new DiscreteTraitBranchRateModel(treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
+            return new DiscreteTraitBranchRateModel(traitProvider, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
         }
     }
 

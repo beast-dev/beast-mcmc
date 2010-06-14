@@ -459,10 +459,11 @@ public class BeautiFrame extends DocumentFrame {
                     }
                 }
 
-                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
-                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+//                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+//                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+//                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
 
-                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
+                TraitData newTrait = new TraitData(options, traitName, file.getName(), TraitData.TraitType.DISCRETE);
 
                 if (validateTraitName(traitName))
                     traitsPanel.addTrait(newTrait);
@@ -473,7 +474,8 @@ public class BeautiFrame extends DocumentFrame {
                         // if the taxon isn't in the list then ignore it.
                         // TODO provide a warning of unmatched taxa
                         final Taxon taxon = options.taxonList.getTaxon(index);
-                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
+//                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
+                        taxon.setAttribute(traitName, v[1]);
                     }
                 }
             }

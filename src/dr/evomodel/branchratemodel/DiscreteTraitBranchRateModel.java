@@ -36,9 +36,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.xml.*;
-
-import java.util.logging.Logger;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * This Branch Rate Model takes a ancestral state likelihood and
@@ -50,7 +48,7 @@ import java.util.logging.Logger;
 public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     enum Mode {
         NODE_STATES,
-        DWELL_TIMES,
+        MARKOV_JUMP_PROCESS,
         PARSIMONY
     }
 
@@ -103,7 +101,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
      * @param relativeRatesParameter
      * @param indicatorParameter
      */
-    public DiscreteTraitBranchRateModel(TreeModel treeModel, TreeTrait trait, int traitIndex,
+    public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, TreeModel treeModel, TreeTrait trait, int traitIndex,
                                         Parameter rateParameter, Parameter relativeRatesParameter, Parameter indicatorParameter) {
 
         this(treeModel, traitIndex, rateParameter, relativeRatesParameter, indicatorParameter);
@@ -118,13 +116,17 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             mode = Mode.NODE_STATES;
         } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
             // Assume the trait itself is the dwell times for the individual states on the branch above the node
-            mode = Mode.DWELL_TIMES;
+            mode = Mode.MARKOV_JUMP_PROCESS;
         } /* else {
             throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
         } */
 
+        if (traitProvider instanceof Model) {
+            addModel((Model)traitProvider);
+        }
+
         if (trait instanceof Model) {
-            addModel((Model)trait);
+            addModel((Model)trait); // MAS: Does this ever occur?
         }
     }
 
@@ -147,7 +149,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             addVariable(indicatorParameter);
         }
 
-//        double[] dwellTimes = getDwellTimes(treeModel, treeModel.getExternalNode(0));
+//        double[] dwellTimes = getProcessValues(treeModel, treeModel.getExternalNode(0));
 //
 //        if (indicatorParameter != null) {
 //            if (dwellTimes.length != indicatorParameter.getDimension()) {
@@ -228,7 +230,10 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
-        double[] dwellTimes = getDwellTimes(tree, node);
+        double[] processValues = getProcessValues(tree, node);
+
+//        System.err.println("processValues = " + new Vector(processValues));
+//        System.exit(-1);
 
         double totalTime = 0;
         if (indicatorParameter != null) {
@@ -237,16 +242,16 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             for (int i = 0; i < indicatorParameter.getDimension(); i++) {
                 int index = (int)indicatorParameter.getParameterValue(i);
                 if (index == 0) {
-                    rate += absRate * dwellTimes[i];
+                    rate += absRate * processValues[i];
                 } else {
-                    rate += (absRate * (1.0 + relativeRatesParameter.getParameterValue(index - 1))) * dwellTimes[i];
+                    rate += (absRate * (1.0 + relativeRatesParameter.getParameterValue(index - 1))) * processValues[i];
                 }
-                totalTime += dwellTimes[i];
+                totalTime += processValues[i];
             }
         } else {
             for (int i = 0; i < rateParameter.getDimension(); i++) {
-                rate += rateParameter.getParameterValue(i) * dwellTimes[i];
-                totalTime += dwellTimes[i];
+                rate += rateParameter.getParameterValue(i) * processValues[i];
+                totalTime += processValues[i];
             }
         }
         rate /= totalTime;
@@ -254,13 +259,13 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         return rate;
     }
 
-    private double[] getDwellTimes(final Tree tree, final NodeRef node) {
+    private double[] getProcessValues(final Tree tree, final NodeRef node) {
 
-        double[] dwellTimes = null;
+        double[] processValues = null;
         double branchTime = tree.getBranchLength(node);
 
-        if (mode == Mode.DWELL_TIMES) {
-            dwellTimes = (double[])trait.getTrait(tree, node);
+        if (mode == Mode.MARKOV_JUMP_PROCESS) {
+            processValues = (double[])trait.getTrait(tree, node);
         } else if (mode == Mode.PARSIMONY) {
             // an approximation to dwell times using parsimony, assuming
             // the state changes midpoint on the tree. Does a weighted
@@ -279,36 +284,36 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             int[] states = fitchParsimony.getStates(tree, node);
             int[] parentStates = fitchParsimony.getStates(tree, tree.getParent(node));
 
-            dwellTimes = new double[fitchParsimony.getPatterns().getStateCount()];
+            processValues = new double[fitchParsimony.getPatterns().getStateCount()];
 
             for (int state : states) {
-                dwellTimes[state] += branchTime / 2;
+                processValues[state] += branchTime / 2;
             }
             for (int state : parentStates) {
-                dwellTimes[state] += branchTime / 2;
+                processValues[state] += branchTime / 2;
             }
 
-            for (int i = 0; i < dwellTimes.length; i++) {
+            for (int i = 0; i < processValues.length; i++) {
                 // normalize by the number of equally parsimonious states at each end of the branch
-                // dwellTimes should add up to the total branch length
-                dwellTimes[i] /= (states.length + parentStates.length) / 2;
+                // processValues should add up to the total branch length
+                processValues[i] /= (states.length + parentStates.length) / 2;
             }
         } else if (mode == Mode.NODE_STATES) {
             if (indicatorParameter != null) {
-                dwellTimes = new double[indicatorParameter.getDimension()];
+                processValues = new double[indicatorParameter.getDimension()];
             } else {
-                dwellTimes = new double[rateParameter.getDimension()];
+                processValues = new double[rateParameter.getDimension()];
             }
 
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
             int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-            dwellTimes[state] += branchTime / 2;
+            processValues[state] += branchTime / 2;
             int parentState = ((int[])trait.getTrait(tree, node))[traitIndex];
-            dwellTimes[parentState] += branchTime / 2;
+            processValues[parentState] += branchTime / 2;
         }
 
-        return dwellTimes;
+        return processValues;
     }
 
 }

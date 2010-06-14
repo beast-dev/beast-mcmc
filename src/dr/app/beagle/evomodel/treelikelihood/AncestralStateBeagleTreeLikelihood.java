@@ -13,6 +13,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.math.MathUtils;
+import dr.inference.model.Model;
 import beagle.Beagle;
 
 import java.util.logging.Logger;
@@ -129,15 +130,25 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return treeTraits.getTreeTrait(key);
     }
 
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        fireModelChanged(model);
+    }
+
     public int[] getStatesForNode(Tree tree, NodeRef node) {
          if (tree != treeModel) {
              throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
          }
 
-         if (!areStatesRedrawn) {
-             redrawAncestralStates();
-         }
-         return reconstructedStates[node.getNumber()];
+        if (!likelihoodKnown) {
+            calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        if (!areStatesRedrawn) {
+            redrawAncestralStates();
+        }
+        return reconstructedStates[node.getNumber()];
     }
 
     @Override
@@ -167,10 +178,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
      }
 
      public void redrawAncestralStates() {
-         // Setup cumulate scale buffers
-//         traverseCollectScaleBuffers(treeModel, treeModel.getRoot());
-
          // Sample states
+         jointLogLikelihood = 0;
          traverseSample(treeModel, treeModel.getRoot(), null, null);
          areStatesRedrawn = true;
      }
@@ -435,8 +444,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 if (!returnMarginalLogLikelihood) {
                     final int parentIndex = parentState[j] * stateCount;
                     getMatrix(nodeNum, probabilities);
-                    double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
-                    jointLogLikelihood += Math.log(contrib);
+                    if (!returnMarginalLogLikelihood) {
+                        double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
+                        jointLogLikelihood += Math.log(contrib);
+                    }
                 }
             }
 

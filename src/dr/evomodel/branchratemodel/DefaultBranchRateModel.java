@@ -104,6 +104,10 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         return Intent.BRANCH;
     }
 
+    public boolean getLoggable() {
+        return true;
+    }
+
     public Class getTraitClass() {
         return Double.class;
     }

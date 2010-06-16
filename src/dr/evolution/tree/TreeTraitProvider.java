@@ -79,6 +79,9 @@ public interface TreeTraitProvider {
          * @param trait the TreeTrait
          */
         public void addTrait(String key, TreeTrait trait) {
+            if (traits.containsKey(key)) {
+                throw new RuntimeException("All traits must have unique names");
+            }
             traits.put(key, trait);
         }
 

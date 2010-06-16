@@ -224,6 +224,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         return Double.class;
     }
 
+    public boolean getLoggable() {
+        return true;
+    }
+
     public Double getTrait(Tree tree, NodeRef node) {
         return getNodeValue(tree, node);
     }

@@ -23,7 +23,7 @@ public interface TreeTrait<T> {
     /**
      * Specifies whether this is a trait of the tree, the nodes or the branch
      *
-     * @return true if a branch property
+     * @return Intent
      */
     Intent getIntent();
 
@@ -55,9 +55,25 @@ public interface TreeTrait<T> {
     String getTraitString(final Tree tree, final NodeRef node);
 
     /**
+     * Specifies whether this trait is loggable
+     *
+     * @return Intent
+     */
+    boolean getLoggable();
+
+    /**
+     * Default behavior
+     */
+    class DefaultBehavior {
+        public boolean getLoggable() {
+            return true;
+        }
+    }
+
+    /**
      * An abstract base class for Double implementations
      */
-    public abstract class D implements TreeTrait<Double> {
+    public abstract class D extends DefaultBehavior implements TreeTrait<Double> {
 
         public Class getTraitClass() {
             return Double.class;
@@ -78,7 +94,7 @@ public interface TreeTrait<T> {
     /**
      * An abstract base class for Double implementations
      */
-    public abstract class I implements TreeTrait<Integer> {
+    public abstract class I extends DefaultBehavior implements TreeTrait<Integer> {
 
         public Class getTraitClass() {
             return Integer.class;
@@ -99,7 +115,7 @@ public interface TreeTrait<T> {
     /**
      * An abstract base class for Double implementations
      */
-    public abstract class S implements TreeTrait<String> {
+    public abstract class S extends DefaultBehavior implements TreeTrait<String> {
 
         public Class getTraitClass() {
             return String.class;
@@ -113,7 +129,7 @@ public interface TreeTrait<T> {
     /**
      * An abstract base class for double array implementations
      */
-    public abstract class DA implements TreeTrait<double[]> {
+    public abstract class DA extends DefaultBehavior implements TreeTrait<double[]> {
 
         public Class getTraitClass() {
             return double[].class;
@@ -144,7 +160,7 @@ public interface TreeTrait<T> {
     /**
      * An abstract base class for int array implementations
      */
-    public abstract class IA implements TreeTrait<int[]> {
+    public abstract class IA extends DefaultBehavior implements TreeTrait<int[]> {
 
         public Class getTraitClass() {
             return int[].class;
@@ -175,17 +191,23 @@ public interface TreeTrait<T> {
     /**
      * An abstract wrapper class that sums a TreeTrait<T> over the entire tree
      */
-    public abstract class SumOverTree<T> implements TreeTrait<T> {
+    public abstract class SumOverTree<T> extends DefaultBehavior implements TreeTrait<T> {
 
-        private static final String NAME_PREFIX = "";
+        private static final String NAME_PREFIX = "sumOverTree_";
         private TreeTrait<T> base;
+        private String name;
 
         public SumOverTree(TreeTrait<T> base) {
+            this(NAME_PREFIX + base.getTraitName(), base);
+        }
+
+        public SumOverTree(String name, TreeTrait<T> base) {
             this.base = base;
+            this.name = name;
         }
 
         public String getTraitName() {
-            return NAME_PREFIX + base.getTraitName();
+            return name;
         }
 
         public Intent getIntent() {
@@ -195,18 +217,28 @@ public interface TreeTrait<T> {
         public T getTrait(Tree tree, NodeRef node) {
             T count = null;
             for (int i = 0; i < tree.getNodeCount(); i++) {
-                addToMatrix(count, base.getTrait(tree, tree.getNode(i)));
+//                T value = base.getTrait(tree, tree.getNode(i));
+
+                count = addToMatrix(count, base.getTrait(tree, tree.getNode(i)));
             }
             return count;
         }
 
-        protected abstract void addToMatrix(T total, T summant);
+        public boolean getLoggable() {
+            return base.getLoggable();
+        }
+
+        protected abstract T addToMatrix(T total, T summant);
     }
 
     /**
      * A wrapper class that sums a TreeTrait.DA over the entire tree
      */
     public class SumOverTreeDA extends SumOverTree<double[]> {
+
+        public SumOverTreeDA(String name, TreeTrait<double[]> base) {
+            super(name, base);
+        }
 
         public SumOverTreeDA(TreeTrait<double[]> base) {
             super(base);
@@ -220,9 +252,9 @@ public interface TreeTrait<T> {
             return double[].class;
         }
 
-        protected void addToMatrix(double[] total, double[] summant) {
+        protected double[] addToMatrix(double[] total, double[] summant) {
             if (summant == null) {
-                return;
+                return total;
             }
             final int length = summant.length;
             if (total == null) {
@@ -231,6 +263,7 @@ public interface TreeTrait<T> {
             for (int i = 0; i < length; i++) {
                 total[i] += summant[i];
             }
+            return total;
         }
     }
 
@@ -238,6 +271,10 @@ public interface TreeTrait<T> {
      * A wrapper class that sums a TreeTrait.D over the entire tree
      */
     public class SumOverTreeD extends SumOverTree<Double> {
+
+        public SumOverTreeD(String name, TreeTrait<Double> base) {
+            super(name, base);
+        }
 
         public SumOverTreeD(TreeTrait<Double> base) {
             super(base);
@@ -248,34 +285,41 @@ public interface TreeTrait<T> {
         }
 
         public Class getTraitClass() {
-            return int[].class;
+            return double[].class;
         }
 
-        protected void addToMatrix(Double total, Double summant) {
+        protected Double addToMatrix(Double total, Double summant) {
             if (summant == null) {
-                return;
+                return total;
             }
             if (total == null) {
                 total = 0.0;
             }
             total += summant;
+            return total;
         }
     }
 
     /**
      * An abstract wrapper class that sums a TreeTrait.Array into a TreeTrait
      */
-    public abstract class SumAcrossArray<T,TA> implements TreeTrait<T> {
+    public abstract class SumAcrossArray<T, TA> extends DefaultBehavior implements TreeTrait<T> {
 
         private TreeTrait<TA> base;
-        public static final String NAME_PREFIX = "";
+        private String name;
+        public static final String NAME_PREFIX = "sumAcrossArray_";
 
         public SumAcrossArray(TreeTrait<TA> base) {
+            this(NAME_PREFIX + base.getTraitName(), base);
+        }
+
+        public SumAcrossArray(String name, TreeTrait<TA> base) {
+            this.name = name;
             this.base = base;
         }
 
         public String getTraitName() {
-            return NAME_PREFIX + base.getTraitName();
+            return name;
         }
 
         public Intent getIntent() {
@@ -291,6 +335,10 @@ public interface TreeTrait<T> {
 
         }
 
+        public boolean getLoggable() {
+            return base.getLoggable();
+        }
+
         protected abstract T reduce(TA values);
     }
 
@@ -298,6 +346,10 @@ public interface TreeTrait<T> {
      * A wrapper class that sums a TreeTrait.DA into a TreeTrait.D
      */
     public class SumAcrossArrayD extends SumAcrossArray<Double, double[]> {
+
+        public SumAcrossArrayD(String name, TreeTrait<double[]> base) {
+            super(name, base);
+        }
 
         public SumAcrossArrayD(TreeTrait<double[]> base) {
             super(base);
@@ -317,6 +369,84 @@ public interface TreeTrait<T> {
 
         public String getTraitString(Tree tree, NodeRef node) {
             return D.formatTrait(getTrait(tree, node));
+        }
+    }
+
+
+    /**
+     * An abstract wrapper class that picks one entry out of TreeTrait<T> where T is an array
+     */
+    public abstract class PickEntry<T,TA> extends DefaultBehavior implements TreeTrait<T> {
+
+        protected TreeTrait<TA> base;
+        private String name;
+        protected int index;
+
+        public PickEntry(TreeTrait<TA> base, int index) {
+            this(base.getTraitName() + "[" + index + "]", base, index);
+        }
+
+        public PickEntry(String name, TreeTrait<TA> base, int index) {
+            this.name = name;
+            this.base = base;
+//            if (base.getTraitClass() != int[].class || base.getTraitClass() != double[].class) {
+//                throw new RuntimeException("Only supported for arrays");
+//            }
+            this.index = index;
+        }
+
+        public String getTraitName() {
+            return name;
+        }
+
+        public Intent getIntent() {
+            return base.getIntent();
+        }
+    }
+
+    public class PickEntryD extends PickEntry<Double,double[]> {
+
+        public PickEntryD(TreeTrait<double[]> base, int index) {
+            super(base, index);
+        }
+
+        public PickEntryD(String name, TreeTrait<double[]> base, int index) {
+            super(name, base, index);
+        }
+
+        public Class getTraitClass() {
+            return Double.class;
+        }
+
+        public Double getTrait(Tree tree, NodeRef node) {
+            return base.getTrait(tree,node)[index];
+        }
+
+        public String getTraitString(Tree tree, NodeRef node) {
+            return D.formatTrait(getTrait(tree, node));
+        }
+    }
+
+    public class PickEntryI extends PickEntry<Integer,int[]> {
+
+        public PickEntryI(TreeTrait<int[]> base, int index) {
+            super(base, index);
+        }
+
+        public PickEntryI(String name, TreeTrait<int[]> base, int index) {
+            super(name, base, index);
+        }
+
+        public Class getTraitClass() {
+            return Double.class;
+        }
+
+        public Integer getTrait(Tree tree, NodeRef node) {
+            return base.getTrait(tree,node)[index];
+        }
+
+        public String getTraitString(Tree tree, NodeRef node) {
+            return I.formatTrait(getTrait(tree, node));
         }
     }
 }

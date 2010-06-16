@@ -54,6 +54,10 @@ public abstract class AbstractBranchRateModel extends AbstractModel implements B
         return Double.class;
     }
 
+    public boolean getLoggable() {
+        return true;
+    }
+
     public Double getTrait(final Tree tree, final NodeRef node) {
         return getBranchRate(tree, node);
     }

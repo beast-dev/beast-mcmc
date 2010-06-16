@@ -948,7 +948,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 for (TreeTraitProvider ttp : treeTraitProviders) {
                     TreeTrait[] tts = ttp.getTreeTraits();
                     for (TreeTrait treeTrait: tts) {
-                        if (treeTrait.getIntent() == intent) {
+                        if (treeTrait.getIntent() == intent && treeTrait.getLoggable()) {
                             String value = treeTrait.getTraitString(tree, node);
 
                             if (value != null) {

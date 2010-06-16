@@ -7,7 +7,7 @@ import dr.evolution.tree.TreeTrait;
 /**
  * @author Marc Suchard
  */
-public abstract class BivariateTraitBranchAttributeProvider implements TreeTrait<Double> {
+public abstract class BivariateTraitBranchAttributeProvider extends TreeTrait.DefaultBehavior implements TreeTrait<Double> {
 
     public static final String FORMAT = "%5.4f";
 

@@ -1,24 +1,24 @@
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
+import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.utilities.TreeTraitLogger;
 import dr.evolution.datatype.Codons;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.inference.loggers.Loggable;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Variable;
-import dr.inference.model.Parameter;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -32,8 +32,11 @@ import java.util.ArrayList;
  */
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
-    private static final String COUNTS_SUM = "countsSum";
-    private static final String COUNTS_PER_SITE = "countsPerSite";
+
+    public static final String UNCONDITIONED_PREFIX = "u_";
+    public static final String SITE_SPECIFIC_PREFIX = "c_";
+    public static final String TOTAL_PREFIX = "total_";
+    public static final String BASE_TRAIT_PREFIX = "base_";
 
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
@@ -90,6 +93,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.logFormat = logFormat;
 
         computedCounts = new double[tree.getNodeCount()][]; // TODO Temporary until there exists a helper class
+
+        setupTraits();
     }
 
     public double[] getExpectedCountsForBranch(NodeRef child) { // TODO This function will implement TraitProvider
@@ -156,99 +161,94 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return count;
     }
 
-    TreeTrait countsSum = new TreeTrait.D() {
-        public String getTraitName() {
-            return codonLabeling.getText();
-        }
+    private void setupTraits() {
 
-        public Intent getIntent() {
-            return Intent.NODE;
-        }
+        TreeTrait baseTrait = new TreeTrait.DA() {
 
-        public Double getTrait(Tree tree, NodeRef node) {
-            double[] counts = getExpectedCountsForBranch(node);
-            if (counts == null) {
-                // Should counts be null?
-                return null;
+            public String getTraitName() {
+                return BASE_TRAIT_PREFIX + codonLabeling.getText();
             }
-            double total = 0;
-            for (double x : counts) {
-                total += x;
+
+            public Intent getIntent() {
+                return Intent.BRANCH;
             }
-            return total ;
-        }
-    };
 
-    TreeTrait countsPerSite = new TreeTrait.DA() {
-        public String getTraitName() {
-            return codonLabeling.getText();
-        }
+            public double[] getTrait(Tree tree, NodeRef node) {
+                return getExpectedCountsForBranch(node);
+            }
 
-        public Intent getIntent() {
-            return Intent.NODE;
-        }
+            public boolean getLoggable() {
+                return false;
+            }
+        };
 
-        public double[] getTrait(Tree tree, NodeRef node) {
-            return getExpectedCountsForBranch(node);
-        }
-    };
+        TreeTrait unconditionedSum = new TreeTrait.D() {
+            public String getTraitName() {
+                return UNCONDITIONED_PREFIX + codonLabeling.getText();
+            }
 
-    public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[] { countsSum, countsPerSite };
+            public Intent getIntent() {
+                return Intent.WHOLE_TREE;
+            }
+
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getUnconditionedTraitValue();
+            }
+
+            public boolean getLoggable() {
+                return false;
+            }
+        };
+
+        TreeTrait sumOverTreeTrait = new TreeTrait.SumOverTreeDA(
+                SITE_SPECIFIC_PREFIX + codonLabeling.getText(),
+                baseTrait) {
+            @Override
+            public boolean getLoggable() {
+                return false;
+            }
+        };
+
+        // This should be the default output in tree logs
+        TreeTrait sumOverSitesTrait = new TreeTrait.SumAcrossArrayD(
+                codonLabeling.getText(),
+                baseTrait) {
+            @Override
+            public boolean getLoggable() {
+                return true;
+            }
+        };
+
+        // This should be the default output in columns logs
+        TreeTrait sumOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
+                TOTAL_PREFIX + codonLabeling.getText(),
+                sumOverSitesTrait) {
+            @Override
+            public boolean getLoggable() {
+                return true;
+            }
+        };
+
+
+        treeTraitLogger = new TreeTraitLogger(
+                tree,
+                new TreeTrait[]{sumOverSitesAndTreeTrait}
+        );
+
+        treeTraits.addTrait(baseTrait);
+        treeTraits.addTrait(unconditionedSum);
+        treeTraits.addTrait(sumOverSitesTrait);
+        treeTraits.addTrait(sumOverTreeTrait);
+        treeTraits.addTrait(sumOverSitesAndTreeTrait);
+
+    }
+
+    public TreeTrait[] getTreeTraits() {       
+        return treeTraits.getTreeTraits();
     }
 
     public TreeTrait getTreeTrait(String key) {
-        if (key.equals(COUNTS_SUM)) {
-            return countsSum;
-        } else  if (key.equals(COUNTS_PER_SITE)) {
-            return countsPerSite;
-        } else {
-            throw new RuntimeException("Unrecognized trait key, " + key);
-        }
-    }
-
-    public double[] getRobustCountPerSite() { // TODO Move to StratifiedTraitLogger
-        double[] count = new double[numCodons];
-
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                addToMatrix(count, getExpectedCountsForBranch(node));
-            }
-        }
-        return count;
-    }
-
-    public double getRobustCount() { // TODO Move to StratifiedTraitLogger
-
-        double[] count = getRobustCountPerSite();
-        double total = 0;
-        for (double x : count) {
-            total += x;
-        }
-        return total;
-    }
-
-    public double getRobustCount(int site) { // TODO Move to StratifiedTraitLogger
-
-        if (site < 0 || site >= numCodons) {
-            throw new RuntimeException("Invalid site #");
-        }
-        double total = 0;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                total += getExpectedCountsForBranch(node)[site];
-            }
-        }
-        return total;
-    }
-
-    private void addToMatrix(double[] total, double[] summant) { // TODO Move to StratifiedTraitLogger
-        final int length = summant.length;
-        for (int i = 0; i < length; i++) {
-            total[i] += summant[i];
-        }
+        return treeTraits.getTreeTrait(key);
     }
 
     private int getCanonicalState(int i, int j, int k) {
@@ -269,21 +269,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 //    }
 
     public LogColumn[] getColumns() {
-
-        if (logFormat == StratifiedTraitOutputFormat.SUM_OVER_SITES) {
-            return new LogColumn[]{
-                    new RobustCountColumn(codonLabeling.getText())
-            };
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
+        return treeTraitLogger.getColumns();
     }
 
     public int getDimension() {
         return numCodons;
     }
 
-    public double getUnconditionedTraitValue() {
+    public Double getUnconditionedTraitValue() {
         return markovJumps.getMarginalRate() * getExpectedTreeLength();
     }
 
@@ -319,17 +312,6 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         // Do nothing
     }
 
-    private class RobustCountColumn extends NumberColumn {
-
-        public RobustCountColumn(String label) {
-            super(label);
-        }
-
-        public double getDoubleValue() {
-            return getRobustCount();
-        }
-    }
-
     private final AncestralStateBeagleTreeLikelihood[] partition;
     private final MarkovJumpsSubstitutionModel markovJumps;
     private final BranchRateModel branchRateModel;
@@ -348,4 +330,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private boolean countsKnown;
     private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
+
+    protected Helper treeTraits = new Helper();
+    protected TreeTraitLogger treeTraitLogger;
 }

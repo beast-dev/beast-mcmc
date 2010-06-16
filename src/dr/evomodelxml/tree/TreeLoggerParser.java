@@ -1,7 +1,5 @@
 package dr.evomodelxml.tree;
 
-import dr.evolution.colouring.BranchColouring;
-import dr.evolution.colouring.TreeColouring;
 import dr.evolution.colouring.TreeColouringProvider;
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeLogger;
@@ -108,6 +106,23 @@ public class TreeLoggerParser extends LoggerParser {
             }
             if (cxo instanceof TreeTraitProvider) {
                 ttps.add((TreeTraitProvider) cxo);
+            }
+            // Without this next block, branch rates get ignored :-(
+            if (cxo instanceof TreeTrait) {
+                final TreeTrait trait = (TreeTrait)cxo;
+                TreeTraitProvider ttp = new TreeTraitProvider() {
+                    public TreeTrait[] getTreeTraits() {
+                        return new TreeTrait[]  { trait };
+                    }
+
+                    public TreeTrait getTreeTrait(String key) {
+                        if (key.equals(trait.getTraitName())) {
+                            return trait;
+                        }
+                        return null;
+                    }
+                };
+                ttps.add(ttp);
             }
             //}
         }

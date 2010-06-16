@@ -110,11 +110,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
 
             public Intent getIntent() {
-                return Intent.NODE;
+                return Intent.BRANCH;
             }
 
             public double[] getTrait(Tree tree, NodeRef node) {
-//                return getRewardsForNodeAndPattern(tree, node, 0);
                 return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
             }
         });

@@ -247,7 +247,7 @@ public class BeastGenerator extends Generator {
             generalTraitGenerator.writeGeneralDataType(trait, writer);
             writer.writeText("");
         }
-        
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
 
         //++++++++++++++++ Tree Prior Model ++++++++++++++++++
@@ -335,7 +335,7 @@ public class BeastGenerator extends Generator {
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writeStarBEAST(writer);
         }
-        
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
 
         //++++++++++++++++  ++++++++++++++++++
@@ -457,7 +457,8 @@ public class BeastGenerator extends Generator {
 
     /**
      * *BEAST block
-     * @param writer  XMLWriter
+     *
+     * @param writer XMLWriter
      */
     private void writeStarBEAST(XMLWriter writer) {
         String traitName = TraitData.Traits.TRAIT_SPECIES.toString();
@@ -662,7 +663,7 @@ public class BeastGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
             // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
-            if ( !(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()) ) ) {
+            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
                 writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
                 writer.writeText("");
             }
@@ -696,6 +697,8 @@ public class BeastGenerator extends Generator {
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator, generalTraitGenerator);
+        logGenerator.writeAdditionalLogToFile(writer, branchRatesModelGenerator, substitutionModelGenerator);
+        
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 

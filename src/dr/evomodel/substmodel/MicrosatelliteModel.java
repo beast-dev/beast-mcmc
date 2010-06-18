@@ -5,8 +5,6 @@ import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
 import dr.inference.model.Model;
 
-import java.util.Arrays;
-
 
 /**
  * @author Chieh-Hsi Wu
@@ -185,6 +183,54 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
 
         if(probability <= 0.0){
             probability = minProb;
+        }
+
+        return probability;
+    }
+
+    public double[] getColTransitionProbabilities(double distance, int childState){
+
+       double[] probability = new double[stateCount];
+       double temp;
+
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+
+        if (!wellConditioned) {
+
+            //throw new RuntimeException("not well conditioned");
+            return probability;
+        }
+
+        double [] iexp = new double[stateCount];
+        for(int i = 0; i < stateCount; i++){
+            if(EvalImag[i] == 0){
+                temp = Math.exp(distance*(Eval[i]));
+                iexp[i] = temp*Ievc[i][childState];
+
+            }else{
+                int i2 = i + 1;
+                double b = EvalImag[i];
+                double expat = Math.exp(distance * Eval[i]);
+                double expatcosbt = expat * Math.cos(distance * b);
+                double expatsinbt = expat * Math.sin(distance * b);
+                iexp[i] = expatcosbt * Ievc[i][childState] + expatsinbt * Ievc[i2][childState];
+                iexp[i2] = expatcosbt * Ievc[i2][childState] - expatsinbt * Ievc[i][childState];
+                i ++;
+
+            }
+        }
+        for(int i = 0; i < stateCount; i++){
+            for(int j = 0; j < stateCount; j++){
+                probability[i] += Evec[i][j]*iexp[j];
+
+            }
+            if(probability[i] <= 0.0){
+                probability[i] = minProb;
+            }
         }
 
         return probability;

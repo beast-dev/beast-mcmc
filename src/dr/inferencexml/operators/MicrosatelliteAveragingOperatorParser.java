@@ -31,7 +31,8 @@ public class MicrosatelliteAveragingOperatorParser extends AbstractXMLObjectPars
          public Class getReturnType() {
         return MCMCOperator.class;
     }
-         public XMLSyntaxRule[] getSyntaxRules() {
+
+    public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
          private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{

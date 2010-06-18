@@ -106,7 +106,12 @@ public class TwoPhaseModelTest extends TestCase {
                 }
             }
 
-
+            for(int j = 0; j < microsat.getStateCount();j ++){
+                double[] colTransitionProb = tpm.getColTransitionProbabilities(test.getDistance(), j);
+                for(int i =0 ; i < microsat.getStateCount(); i++){
+                    assertEquals(result[i*microsat.getStateCount()+j], colTransitionProb[i], 1e-10);
+                }
+            }
 
 
 

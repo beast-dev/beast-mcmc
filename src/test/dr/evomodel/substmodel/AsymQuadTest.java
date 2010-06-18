@@ -61,7 +61,7 @@ public class AsymQuadTest extends TestCase {
         public double getContractQuad(){
             return 0.0;
         }
-
+                                                  
         public double getDistance() {
             return 0.1;
         }
@@ -219,6 +219,13 @@ public class AsymQuadTest extends TestCase {
                 for(int j = 0; j < microsat.getStateCount(); j ++){
                     assertEquals(result[k++], aqm.getOneTransitionProbabilityEntry(test.getDistance(), i , j), 1e-10);
 
+                }
+            }
+
+            for(int j = 0; j < microsat.getStateCount();j ++){
+                double[] colTransitionProb = aqm.getColTransitionProbabilities(test.getDistance(), j);
+                for(int i =0 ; i < microsat.getStateCount(); i++){
+                    assertEquals(result[i*microsat.getStateCount()+j], colTransitionProb[i], 1e-10);
                 }
             }
 

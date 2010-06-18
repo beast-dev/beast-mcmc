@@ -6,8 +6,6 @@ import dr.evomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 
@@ -53,10 +51,7 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-            /*if(getId().equals("MSTreeLikelihood_J")){
-                System.out.println("nodeNum: "+index);
-                System.out.println(object);
-            }*/
+
         if(updatedNodeList == updateAllList){
 
         }else if (model == treeModel) {
@@ -65,8 +60,6 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
                 if(((TreeModel.TreeChangedEvent) object).areAllInternalHeightsChanged()){
                     updateAllNodes();
-                    //System.out.println("updateAllNodes");
-
                 }else if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
@@ -74,8 +67,6 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
                     updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
-                    //System.out.println("updateANode: "+((TreeModel.TreeChangedEvent) object).getNode().getNumber());
-
                 } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // Currently this event type is not used.
@@ -97,7 +88,6 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
             }
 
         } else if (model == microsatelliteModel) {
-            //System.out.println("is a real update required? "+ microsatelliteModel.isModelUpdated());
             if(microsatelliteModel.isModelUpdated()){
                 updateAllNodes();
             }
@@ -115,13 +105,7 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
         super.handleModelChangedEvent(model, object, index);
     }
 
-    /*public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if(variable == muRate){
-            updateAllNodes();
-        }else{
-            throw new RuntimeException("Unknown ParameterChangedEvent: "+ variable);
-        }
-    }*/
+
 
     public boolean hasModelChanged(){
         return modelChanged;
@@ -207,18 +191,15 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
         //clear the list of the nodes to be updated
         updatedNodeList = new ArrayList<Integer>();
 
-        //System.out.println(this.getId()+ ",logL: "+logL);
-        /*if(getId().equals("MSTreeLikelihood_J")){
-            System.out.println(this.getId()+ ",logL: "+logL);
-            System.out.println("root node 2:"+treeModel.getRoot().getNumber());
-        } */
+
+      
         return logL;
 
     }
 
     protected void storeState() {
         storedLogL = logL;
-        //System.out.println(this.getId()+ ", storeState: "+logL);
+
         super.storeState();
 
     }
@@ -228,16 +209,12 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
      */
     protected void restoreState() {
         logL = storedLogL;
-        //System.out.println(this.getId()+ ", restoreState: "+logL);
         super.restoreState();
 
     }
 
 
     private void traverse(){
-        /*if(getId().equals("MSTreeLikelihood_J")){
-            System.out.println("root node 1:"+treeModel.getRoot().getNumber());
-        }*/
         TreeModel tree = treeMicrosatSamplerModel.getTreeModel();
 
         int updateNum = updatedNodeList.size();
@@ -248,38 +225,22 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
                     NodeRef parent = tree.getParent(node);
                     int parentState = treeMicrosatSamplerModel.getNodeValue(parent);
-                    //double branchLength = tree.getBranchLength(node)*muRate.getParameterValue(0);
+
                     double branchLength = tree.getBranchLength(node)*branchRateModel.getBranchRate(tree,node);
                     double nodePr = microsatelliteModel.getLogOneTransitionProbabilityEntry(branchLength, parentState, nodeState);
-                    /*if(node.getNumber()==38 && getId().equals("MSTreeLikelihood_J")){
-                        System.out.println("node state: "+nodeState+", parent: "+parentState+", bl: "+branchLength+", nodePr: "+nodePr);
-                    }*/
+
                     treeMicrosatSamplerModel.setLogBranchLikelihood(node, nodePr);
                 }else{
                     double logEqFreq = Math.log(microsatelliteModel.getStationaryDistribution()[nodeState]);
                     treeMicrosatSamplerModel.setLogBranchLikelihood(node, logEqFreq);
-                     /*if(node.getNumber()==38 && getId().equals("MSTreeLikelihood_J")){
-                        System.out.println("node state: "+nodeState+", nodePr: "+logEqFreq);
-                    } */
+
                 }
 
 
         }
-        /*String id = this.getId();
-        if(id.equals("MSTreeLikelihood_J")){
-        for(int i = 0; i < tree.getNodeCount(); i++){
-            NodeRef node = tree.getNode(i);
-            System.out.println("Node: "+i+", " +
-                    ", NodeVal: "+treeMicrosatSamplerModel.getNodeValue(node)+
-                    ", loglik: "+treeMicrosatSamplerModel.getLogBranchLikelihood(node));
-        }
-        }*/
 
     }
 
-    /*public double getMutationRate(){
-        return muRate.getParameterValue(0);
-    } */
 
 
 

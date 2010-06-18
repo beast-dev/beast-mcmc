@@ -200,6 +200,13 @@ public class LinearBiasTest extends TestCase {
 
                 }
             }
+            
+            for(int j = 0; j < microsat.getStateCount();j ++){
+                double[] colTransitionProb = lbm.getColTransitionProbabilities(test.getDistance(), j);
+                for(int i =0 ; i < microsat.getStateCount(); i++){
+                    assertEquals(result[i*microsat.getStateCount()+j], colTransitionProb[i], 5e-9);
+                }
+            }
         }
     }
 

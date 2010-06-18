@@ -149,11 +149,11 @@ public class MicrosatelliteSamplerTreeModel extends AbstractModel {
         return Double.toString(getNodeValue(node));
     }
 
-    private int getNodeNumberFromParameterIndex(int parameterIndex) {
+    public int getNodeNumberFromParameterIndex(int parameterIndex) {
         return parameterIndex + tree.getExternalNodeCount();
     }
 
-    private int getParameterIndexFromNodeNumber(int nodeNumber) {
+    public int getParameterIndexFromNodeNumber(int nodeNumber) {
         return nodeNumber - tree.getExternalNodeCount();
     }
 

@@ -123,7 +123,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         System.arraycopy(rateMatrix, 0, out, 0, stateCount * stateCount);
     }
 
-    private double[] scaleForProductChain(double[] in, int model) {
+    protected double[] scaleForProductChain(double[] in, int model) {
         if (rateModels == null) {
             return in;
         }
@@ -221,10 +221,10 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         // Do nothing
     }
 
-    private final int numBaseModel;
-    private final List<SubstitutionModel> baseModels;
-    private final List<SiteRateModel> rateModels;
-    private final int[] stateSizes;
-    private final ProductChainFrequencyModel pcFreqModel;    
-    private double[] rateMatrix = null;
+    protected final int numBaseModel;
+    protected final List<SubstitutionModel> baseModels;
+    protected final List<SiteRateModel> rateModels;
+    protected final int[] stateSizes;
+    protected final ProductChainFrequencyModel pcFreqModel;
+    protected double[] rateMatrix = null;
 }

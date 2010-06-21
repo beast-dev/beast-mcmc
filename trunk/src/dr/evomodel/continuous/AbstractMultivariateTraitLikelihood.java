@@ -6,11 +6,11 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
-import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.Citable;
@@ -21,9 +21,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 /**
@@ -34,28 +32,17 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         implements TreeTraitProvider, Citable {
 
     public static final String TRAIT_LIKELIHOOD = "multivariateTraitLikelihood";
-    public static final String TRAIT_NAME = "traitName";
     public static final String CONJUGATE_ROOT_PRIOR = "conjugateRootPrior";
     public static final String MODEL = "diffusionModel";
     public static final String TREE = "tree";
-    public static final String TRAIT_PARAMETER = "traitParameter";
-//    public static final String SET_TRAIT = "setOutcomes";
-    public static final String MISSING = "missingIndicator";
     public static final String CACHE_BRANCHES = "cacheBranches";
     public static final String REPORT_MULTIVARIATE = "reportAsMultivariate";
-    public static final String DEFAULT_TRAIT_NAME = "trait";
-    public static final String RANDOMIZE = "randomize";
-    public static final String RANDOMIZE_LOWER = "lower";
-    public static final String RANDOMIZE_UPPER = "upper";
     public static final String CHECK = "check";
     public static final String USE_TREE_LENGTH = "useTreeLength";
     public static final String SCALE_BY_TIME = "scaleByTime";
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SAMPLING_DENSITY = "samplingDensity";
     public static final String INTEGRATE = "integrateInternalTraits";
-    public static final String JITTER = "jitter";
-    public static final String WINDOW = "window";
-    public static final String DUPLICATES = "duplicatesOnly";
     public static final String RECIPROCAL_RATES = "reciprocalRates";
     public static final String PRIOR_SAMPLE_SIZE = "priorSampleSize";
     public static final String RANDOM_SAMPLE = "randomSample";
@@ -427,105 +414,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     public abstract double[] getTraitForNode(Tree tree, NodeRef node, String traitName);
 
-    public void randomize(Parameter trait, double[] lower, double[] upper) {
-        // Draws each dimension in each trait from U[lower, upper)
-        for (int i = 0; i < trait.getDimension(); i++) {
-            final int whichLower = i % lower.length;
-            final int whichUpper = i % upper.length;
-            final double newValue = MathUtils.uniform(lower[whichLower], upper[whichUpper]);
-            trait.setParameterValue(i, newValue);
-        }
-        //diffusionModel.randomize(trait);
-    }
-
-    public void jitter(Parameter trait, int dim, List<Integer> missingIndices, double[] window, boolean duplicates, boolean verbose) {
-        int numTraits = trait.getDimension() / dim;
-        boolean[] update = new boolean[numTraits];
-        if (!duplicates) {
-            Arrays.fill(update, true);
-        } else {
-            DoubleArray[] traitArray = new DoubleArray[numTraits];
-            for (int i = 0; i < numTraits; i++) {
-                double[] x = new double[dim];
-                for (int j = 0; j < dim; j++) {
-                    x[j] = trait.getParameterValue(i * dim + j);
-                }
-                traitArray[i] = new DoubleArray(x, i);
-            }
-            Arrays.sort(traitArray);
-            // Mark duplicates
-            for (int i = 1; i < numTraits; i++) {
-                if (traitArray[i].compareTo(traitArray[i - 1]) == 0) {
-                    update[traitArray[i - 1].getIndex()] = true;
-                    update[traitArray[i].getIndex()] = true;
-                }
-            }
-        }
-        for (int i = 0; i < numTraits; i++) {
-            if (update[i]) {
-                StringBuffer sb1 = null;
-                StringBuffer sb2 = null;
-                if (verbose) {
-                    sb1 = new StringBuffer();
-                    sb2 = new StringBuffer();
-                }
-                boolean hitAtLeastOneComponent = false;
-                for (int j = 0; j < dim; j++) {
-                    final double oldValue = trait.getParameterValue(i * dim + j);
-                    final double newValue;
-                    if (!missingIndices.contains(i * dim + j)) {
-                        newValue = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
-                              oldValue;
-                        trait.setParameterValue(i * dim + j, newValue);
-                        hitAtLeastOneComponent = true;
-                    } else {
-                        newValue = oldValue;
-                    }
-                    if (verbose) {
-                        sb1.append(" ").append(oldValue);
-                        sb2.append(" ").append(newValue);
-                    }
-                }
-                if (verbose && hitAtLeastOneComponent) {
-                    Logger.getLogger("dr.evomodel.continuous").info(
-                            "  Replacing trait #" + (i + 1) + "  Old:" + sb1.toString() + " New: " + sb2.toString()
-                    );
-                }
-            }
-        }
-    }
-
-    class DoubleArray implements Comparable {
-
-        double[] value;
-        int index;
-
-        DoubleArray(double[] value, int index) {
-            this.value = value;
-            this.index = index;
-        }
-
-        public double[] getValues() {
-            return value;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public int compareTo(Object o) {
-            double[] x = ((DoubleArray) o).getValues();
-            for (int i = 0; i < value.length; i++) {
-                if (value[i] > x[i]) {
-                    return 1;
-                } else if (value[i] < x[i]) {
-                    return -1;
-                }
-            }
-            return 0;
-        }
-    }
-
     public void check(Parameter trait) throws XMLParseException {
         diffusionModel.check(trait);
     }
@@ -559,142 +447,16 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
             boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
             boolean reportAsMultivariate = xo.getAttribute(REPORT_MULTIVARIATE, false);
-            int randomSampleSizeFlag = xo.getAttribute(RANDOM_SAMPLE, -1);
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            List<Integer> missingIndices = null;
-            String traitName = DEFAULT_TRAIT_NAME;
+            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
-            XMLObject xoc = xo.getChild(TRAIT_PARAMETER);
-            Parameter parameter = (Parameter) xoc.getChild(Parameter.class);
-
-            CompoundParameter traitParameter;
-            boolean existingTraitParameter = false;
-
-            if (parameter instanceof CompoundParameter) {
-                // if we have been passed a CompoundParameter, this will be a leaf trait
-                // parameter from a tree model so use this to allow for individual sampling
-                // of leaf parameters.
-                traitParameter = (CompoundParameter) parameter;
-                existingTraitParameter = true;
-            } else {
-
-                // create a compound parameter of appropriate dimensions
-                traitParameter = new CompoundParameter(parameter.getId());
-
-                ParameterParser.replaceParameter(xoc, traitParameter);
-
-            }
-
-            if (xo.hasAttribute(TRAIT_NAME)) {
-
-                List<Integer> randomSample = null;
-
-                traitName = xo.getStringAttribute(TRAIT_NAME);
-
-//                boolean traitDimensionKnown = existingTraitParameter;
-
-                // Fill in attributeValues
-                int taxonCount = treeModel.getTaxonCount();
-                for (int i = 0; i < taxonCount; i++) {
-                    String taxonName = treeModel.getTaxonId(i);
-                    String paramName = taxonName + "." + traitName;
-
-                    Parameter traitParam;
-                    if (existingTraitParameter) {
-                        traitParam = getTraitParameterByName(traitParameter, paramName);
-                        if (traitParam == null) {
-                            throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
-                        }
-                    } else {
-                        traitParam = new Parameter.Default(paramName);
-                        traitParameter.addParameter(traitParam);
-                    }
-
-                    String object = (String) treeModel.getTaxonAttribute(i, traitName);
-                    if (object == null)
-                        throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
-                    else {
-                        StringTokenizer st = new StringTokenizer(object);
-                        int count = st.countTokens();
-                        int sampleSize = count;
-                        if (randomSampleSizeFlag > 0) {
-                            if (randomSample == null) {
-                                randomSample = drawRandomSample(randomSampleSizeFlag, count);
-                            }
-                            sampleSize = randomSampleSizeFlag;
-                        }
-                        if (sampleSize != traitParam.getDimension()) {
-                            if (existingTraitParameter) {
-                                throw new RuntimeException("Trait length must match trait parameter dimension");
-                            } else {
-                                traitParam.setDimension(sampleSize);
-                            }
-                        }
-                        int index = 0;
-                        for (int j = 0; j < count; j++) {
-                            String oneValue = st.nextToken();
-                            if (randomSampleSizeFlag == -1 || randomSample.contains(j)) {
-                                double value = Double.NaN;
-                                if (oneValue.compareTo("NA") == 0) {
-                                    Logger.getLogger("dr.evomodel.continuous").info(
-                                            "Warning: Missing value in tip for taxon " + taxonName +
-                                                    " (filling with 0 as starting value when sampling only)"   // See comment below
-                                    );
-                                } else {
-                                    try {
-                                        value = new Double(oneValue);
-                                    } catch (NumberFormatException e) {
-                                        throw new RuntimeException(e.getMessage());
-                                    }
-                                }
-                                traitParam.setParameterValue(index, value);
-                                index++;
-                            }
-                        }
-                    }
-                }
-
-                // Find missing values
-                double[] allValues = traitParameter.getParameterValues();
-                missingIndices = new ArrayList<Integer>();
-                for (int i = 0; i < allValues.length; i++) {
-                    if ((new Double(allValues[i])).isNaN()) {
-                        traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
-                        missingIndices.add(i);
-                    }
-                }
-
-                if (xo.hasChildNamed(MISSING)) {
-                    XMLObject cxo = xo.getChild(MISSING);
-                    Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
-                    for (int i : missingIndices) {
-                        missingParameter.setParameterValue(i, 1.0);
-                    }
-                    missingParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, allValues.length));
-                    ParameterParser.replaceParameter(cxo, missingParameter);
-                }
-
-                // Give warnings if trait exist for internal and root nodes when integrating them out
-                if (integrate) {
-                    int numTraits = traitParameter.getNumberOfParameters();
-                    if (numTraits != treeModel.getExternalNodeCount()) {
-                        throw new XMLParseException(
-                                "Dimensionality of '" + traitParameter.getId() + "' (" + numTraits + ") is not equal to the number" +
-                                        " of tree tips (" + treeModel.getExternalNodeCount() + ")");
-                    }
-
-                    for (int j = 0; j < numTraits; j++) {
-                        String parameterName = traitParameter.getParameter(j).getId();
-                        if (parameterName.startsWith("node") || parameterName.startsWith("root")) {
-                            throw new XMLParseException(
-                                    "Internal/root node trait parameters are not allowed when " +
-                                            "using the integrated observed data multivariateTraitLikelihoood");
-                        }
-                    }
-                }
-            }
+            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+            CompoundParameter traitParameter = returnValue.traitParameter;
+            List<Integer> missingIndices = returnValue.missingIndices;
 
             Model samplingDensity = null;
 
@@ -753,30 +515,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         reciprocalRates);
             }
 
-            if (!integrate && xo.hasChildNamed(RANDOMIZE)) {
-                XMLObject cxo = xo.getChild(RANDOMIZE);
-                Parameter traits = (Parameter) cxo.getChild(Parameter.class);
-                double[] randomizeLower;
-                double[] randomizeUpper;
-                if (cxo.hasAttribute(RANDOMIZE_LOWER)) {
-                    randomizeLower = cxo.getDoubleArrayAttribute(RANDOMIZE_LOWER);
-                } else {
-                    randomizeLower = new double[]{-90.0};
-                }
-                if (cxo.hasAttribute(RANDOMIZE_UPPER)) {
-                    randomizeUpper = cxo.getDoubleArrayAttribute(RANDOMIZE_UPPER);
-                } else {
-                    randomizeUpper = new double[]{+90.0};
-                }
-                like.randomize(traits, randomizeLower, randomizeUpper);
+            if (!integrate && xo.hasChildNamed(TreeTraitParserUtilities.RANDOMIZE)) {
+                utilities.randomize(xo);
             }
 
-            if (xo.hasChildNamed(JITTER)) {
-                XMLObject cxo = xo.getChild(JITTER);
-                Parameter traits = (Parameter) cxo.getChild(Parameter.class);
-                double[] window = cxo.getDoubleArrayAttribute(WINDOW); // Must be included, no default value
-                boolean duplicates = cxo.getAttribute(DUPLICATES, true); // default = true
-                like.jitter(traits, diffusionModel.getPrecisionmatrix().length, missingIndices, window, duplicates, true);
+            if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
             }
 
             if (xo.hasChildNamed(CHECK)) {
@@ -786,24 +530,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             return like;
-        }
-
-        private List<Integer> drawRandomSample(int total, int length) {
-            List<Integer> thisList = new ArrayList<Integer>(total);
-            for (int i = 0; i < total; i++) {
-                thisList.add(MathUtils.nextInt(length));
-            }
-            return thisList;
-        }
-
-        private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
-
-            for (int i = 0; i < traits.getNumberOfParameters(); i++) {
-                Parameter found = traits.getParameter(i);
-                if (found.getStatisticName().compareTo(name) == 0)
-                    return found;
-            }
-            return null;
         }
 
         //************************************************************************
@@ -820,8 +546,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
 
         private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
-                new ElementRule(TRAIT_PARAMETER, new XMLSyntaxRule[]{
+                new StringAttributeRule(TreeTraitParserUtilities.TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
+                new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
                 AttributeRule.newBooleanRule(INTEGRATE, true),
@@ -844,17 +570,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 new ElementRule(Parameter.class, true),
-                new ElementRule(RANDOMIZE, new XMLSyntaxRule[]{
-                        AttributeRule.newDoubleRule(RANDOMIZE_LOWER, true),
-                        AttributeRule.newDoubleRule(RANDOMIZE_UPPER, true),
-                        new ElementRule(Parameter.class)
-                }, true),
-                new ElementRule(JITTER, new XMLSyntaxRule[]{
-                        AttributeRule.newDoubleArrayRule(WINDOW),
-                        AttributeRule.newBooleanRule(DUPLICATES, true),
-                        new ElementRule(Parameter.class),
-
-                }, true),
+                TreeTraitParserUtilities.randomizeRules(true),
+                TreeTraitParserUtilities.jitterRules(true),
                 new ElementRule(CHECK, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }, true)
@@ -871,8 +588,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     String traitName = null;
     CompoundParameter traitParameter;
     List<Integer> missingIndices;
-
-//    ArrayList dataList = new ArrayList();
 
     protected double logLikelihood;
     protected double maxLogLikelihood = Double.NEGATIVE_INFINITY;

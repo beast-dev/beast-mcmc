@@ -414,7 +414,7 @@ public class LogGenerator extends Generator {
 
             if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
                 for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
-                    if (partitionData.getTraitType() != null && !partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) )
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                                 partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }

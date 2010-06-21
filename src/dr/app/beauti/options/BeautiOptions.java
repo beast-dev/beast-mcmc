@@ -629,7 +629,8 @@ public class BeautiOptions extends ModelOptions {
         }
 
         if (newTrait.getPartitionTreeModel() == null) {
-            newTrait.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree 
+            newTrait.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
+            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }
 
         return selRow; // only for trait panel

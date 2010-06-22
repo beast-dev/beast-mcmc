@@ -43,7 +43,6 @@ public class StratifiedTraitLoggerParser extends AbstractXMLObjectParser {
         boolean partition = xo.getAttribute(PARTITION, false);
 
         if (trait.getTraitClass() == Double.class || trait.getTraitClass() == Integer.class || !partition) {
-            System.err.println("building here!");
             return new TreeTraitLogger( treeModel, new TreeTrait[] { trait });
         }
                                                     
@@ -57,8 +56,7 @@ public class StratifiedTraitLoggerParser extends AbstractXMLObjectParser {
         } else {
             throw new XMLParseException("Unknown trait type for partitioning");
         }
-
-        System.err.println("here already");
+       
         TreeTrait[] partitionedTraits = new TreeTrait[length];
         for (int i = 0; i < length; i++) {
             partitionedTraits[i] = new TreeTrait.PickEntryD(trait, i);

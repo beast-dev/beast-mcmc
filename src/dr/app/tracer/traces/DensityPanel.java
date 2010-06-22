@@ -64,16 +64,16 @@ public class DensityPanel extends JPanel implements Exportable {
     private ChartSetupDialog chartSetupDialog = null;
 
 //    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
-    private DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+    protected DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
 
-    private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
+    protected JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
 
-    private int minimumBins = 100;
-    private JLabel labelBins;
-    private JComboBox binsCombo = new JComboBox(
+    protected int minimumBins = 100;
+    protected JLabel labelBins;
+    protected JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
 
-    private JCheckBox relativeDensityCheckBox = new JCheckBox("Relative density");
+    protected JCheckBox relativeDensityCheckBox = new JCheckBox("Relative density");
     private JCheckBox solidCheckBox = new JCheckBox("Fill plot");
     private JComboBox legendCombo = new JComboBox(
             new String[]{"None", "Top-Left", "Top", "Top-Right", "Left",
@@ -82,6 +82,7 @@ public class DensityPanel extends JPanel implements Exportable {
     private JComboBox colourByCombo = new JComboBox(
             new String[]{"Trace", "Trace File", "All"}
     );
+    private JButton chartSetupButton = new JButton("Axes...");
     private JLabel messageLabel = new JLabel("No data loaded");
 
     private int colourBy = COLOUR_BY_TRACE;
@@ -99,12 +100,19 @@ public class DensityPanel extends JPanel implements Exportable {
         setMinimumSize(new Dimension(300, 150));
         setLayout(new BorderLayout());
 
+        JToolBar toolBar = setupToolBar(frame);
+        
+        add(messageLabel, BorderLayout.NORTH);
+        add(toolBar, BorderLayout.SOUTH);
+        add(chartPanel, BorderLayout.CENTER);
+    }
+
+    protected JToolBar setupToolBar(final JFrame frame) {
         JToolBar toolBar = new JToolBar();
         toolBar.setOpaque(false);
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
 
-        JButton chartSetupButton = new JButton("Axes...");
         chartSetupButton.putClientProperty(
                 "Quaqua.Button.style", "placard"
         );
@@ -150,10 +158,6 @@ public class DensityPanel extends JPanel implements Exportable {
         toolBar.add(colourByCombo);
 
         toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
-
-        add(messageLabel, BorderLayout.NORTH);
-        add(toolBar, BorderLayout.SOUTH);
-        add(chartPanel, BorderLayout.CENTER);
 
         chartSetupButton.addActionListener(
                 new java.awt.event.ActionListener() {
@@ -252,6 +256,7 @@ public class DensityPanel extends JPanel implements Exportable {
                 }
         );
 
+        return toolBar;
     }
 
     private TraceList[] traceLists = null;
@@ -263,6 +268,22 @@ public class DensityPanel extends JPanel implements Exportable {
         setupTraces();
     }
 
+    protected Plot setupDoubleTrace(TraceList tl, int traceIndex, TraceCorrelation td) {
+        Double values[] = new Double[tl.getStateCount()];
+        tl.getValues(traceIndex, values);
+        boolean[] selected = new boolean[tl.getStateCount()];
+        tl.getSelected(traceIndex, selected);
+
+        FrequencyPlot plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+
+        traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+        chartPanel.setYAxisTitle("Density");
+
+        relativeDensityCheckBox.setVisible(true);
+        labelBins.setVisible(true);
+        binsCombo.setVisible(true);
+        return plot;
+    }
 
     private void setupTraces() {
         traceChart.removeAllPlots();
@@ -304,26 +325,14 @@ public class DensityPanel extends JPanel implements Exportable {
                 int traceIndex = tl.getTraceIndex(traceName);
                 Trace trace = tl.getTrace(traceIndex);
                 TraceCorrelation td = tl.getCorrelationStatistics(traceIndex);
-                FrequencyPlot plot = null;
+                Plot plot = null;
 
                 if (trace != null) {
                     if (iniTraceType == null) iniTraceType = trace.getTraceType();
                     if (iniTraceType == trace.getTraceType()) {
                         Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
                         if (trace.getTraceType() == Double.class) {
-                            Double values[] = new Double[tl.getStateCount()];
-                            tl.getValues(traceIndex, values);
-                            boolean[] selected = new boolean[tl.getStateCount()];
-                            tl.getSelected(traceIndex, selected);
-
-                            plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
-
-                            traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
-                            chartPanel.setYAxisTitle("Density");
-
-                            relativeDensityCheckBox.setVisible(true);
-                            labelBins.setVisible(true);
-                            binsCombo.setVisible(true);
+                            plot = setupDoubleTrace(tl, traceIndex, td);
 
                         } else if (trace.getTraceType() == Integer.class) {
                             Integer values[] = new Integer[tl.getStateCount()];
@@ -348,7 +357,7 @@ public class DensityPanel extends JPanel implements Exportable {
                             tl.getSelected(traceIndex, selected);
 
                             String[] values = Trace.arrayConvert(initValues, selected);
-                            
+
                             int[] intData = new int[values.length];
                             for (int v = 0; v < values.length; v++) {
                                 intData[v] = td.credSet.getIndex(values[v]);

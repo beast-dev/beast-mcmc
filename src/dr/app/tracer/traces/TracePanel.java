@@ -69,7 +69,9 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
         summaryPanel.setTraces(traceLists, traces);
         densityPanel.setTraces(traceLists, traces);
-        newDensityPanel.setTraces(traceLists, traces);
+        if (USE_KDE) {
+            newDensityPanel.setTraces(traceLists, traces);
+        }
         correlationPanel.setTraces(traceLists, traces);
         tracePanel.setTraces(traceLists, traces);
     }

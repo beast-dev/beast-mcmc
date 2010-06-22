@@ -12,8 +12,8 @@ import java.util.StringTokenizer;
 
 /**
  * @author Jennifer Tom
- * Based on S. X. Chen. Probability density function estimation using gamma kernels. Annals of the
-Institute of Statistical Mathematics, 52(3):471Ð480, 2000.
+ * Based on S. X. Chen. Probability density function estimation using gamma kernels.
+ * Annals of the Institute of Statistical Mathematics, 52(3):471Ð480, 2000.
  * Use to create KDE for positive valued functions
  * Assumes limits are (0, inf)
  * Must provide with a bandwidth, or defaults to Scott's Rule
@@ -21,6 +21,10 @@ Institute of Statistical Mathematics, 52(3):471Ð480, 2000.
  */
 public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
+
+    public GammaKDEDistribution(double[] sample) {
+        this(sample, null);
+    }
 
      public GammaKDEDistribution(double[] sample, Double bandWidth) {
          super(sample, 0.0, Double.POSITIVE_INFINITY, bandWidth);
@@ -49,7 +53,6 @@ public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
      }
 
-
      protected double evaluateKernel(double x) {
 
         double shape;
@@ -75,7 +78,7 @@ public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
     }
 
-    private double sampleMean() {return DiscreteStatistics.mean(sample);}
+//    private double sampleMean() {return DiscreteStatistics.mean(sample);}
 
 
 // public static void main(String[] args) {

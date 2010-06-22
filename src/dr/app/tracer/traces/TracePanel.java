@@ -20,8 +20,12 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
     private final SummaryStatisticsPanel summaryPanel;
     private final DensityPanel densityPanel;
+    private final BetterDensityPanel newDensityPanel;
     private final CorrelationPanel correlationPanel;
     private final RawTracePanel tracePanel;
+
+    private static final boolean USE_KDE = false;
+
 
     /**
      * Creates new form TracePanel
@@ -38,11 +42,19 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
         summaryPanel = new SummaryStatisticsPanel(parent);
         densityPanel = new DensityPanel(parent);
+        if (USE_KDE) {
+            newDensityPanel = new BetterDensityPanel(parent);
+        } else {
+            newDensityPanel = null;
+        }
         correlationPanel = new CorrelationPanel(parent);
         tracePanel = new RawTracePanel(parent);
 
         tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
         tabbedPane.addTab("Marginal Prob Distribution", densityIcon, densityPanel);
+        if (USE_KDE) {
+            tabbedPane.addTab("Better Prob Distribution", densityIcon, newDensityPanel);
+        }
         tabbedPane.addTab("Joint-Marginal", correlationIcon, correlationPanel);
         tabbedPane.addTab("Trace", traceIcon, tracePanel);
 
@@ -57,6 +69,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
         summaryPanel.setTraces(traceLists, traces);
         densityPanel.setTraces(traceLists, traces);
+        newDensityPanel.setTraces(traceLists, traces);
         correlationPanel.setTraces(traceLists, traces);
         tracePanel.setTraces(traceLists, traces);
     }

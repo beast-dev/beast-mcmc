@@ -38,21 +38,23 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     public static final String TOTAL_PREFIX = "total_";
     public static final String BASE_TRAIT_PREFIX = "base_";
 
-    public CodonPartitionedRobustCounting(String name, TreeModel tree,
-                                          AncestralStateBeagleTreeLikelihood[] partition,
-                                          Codons codons,
-                                          CodonLabeling codonLabeling,
-                                          boolean useUniformization) {
-        this(name, tree, partition, codons, codonLabeling, useUniformization,
-                StratifiedTraitOutputFormat.SUM_OVER_SITES, StratifiedTraitOutputFormat.SUM_OVER_SITES);
-
-    }
+//    public CodonPartitionedRobustCounting(String name, TreeModel tree,
+//                                          AncestralStateBeagleTreeLikelihood[] partition,
+//                                          Codons codons,
+//                                          CodonLabeling codonLabeling,
+//                                          boolean useUniformization) {
+//        this(name, tree, partition, codons, codonLabeling, useUniformization,
+//                StratifiedTraitOutputFormat.SUM_OVER_SITES, StratifiedTraitOutputFormat.SUM_OVER_SITES);
+//
+//    }
 
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
                                           CodonLabeling codonLabeling,
                                           boolean useUniformization,
+                                          boolean includeExternalBranches,
+                                          boolean includeInternalBranches,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -100,6 +102,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.logFormat = logFormat;
 
         computedCounts = new double[tree.getNodeCount()][]; // TODO Temporary until there exists a helper class
+
+        this.includeExternalBranches = includeExternalBranches;
+        this.includeInternalBranches = includeInternalBranches;
 
         setupTraits();
     }
@@ -225,7 +230,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         TreeTrait sumOverTreeTrait = new TreeTrait.SumOverTreeDA(
                 SITE_SPECIFIC_PREFIX + codonLabeling.getText(),
-                baseTrait) {
+                baseTrait,
+                includeExternalBranches,
+                includeInternalBranches) {
             @Override
             public boolean getLoggable() {
                 return false;
@@ -245,7 +252,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         // This should be the default output in columns logs
         TreeTrait sumOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
                 TOTAL_PREFIX + codonLabeling.getText(),
-                sumOverSitesTrait) {
+                sumOverSitesTrait,
+                includeExternalBranches,
+                includeInternalBranches) {
             @Override
             public boolean getLoggable() {
                 return true;
@@ -303,15 +312,26 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return markovJumps.getMarginalRate() * getExpectedTreeLength();
     }
 
+    private double getExpectedBranchLength(NodeRef node) {
+        return branchRateModel.getBranchRate(tree, node) * tree.getBranchLength(node);
+    }
+
     private double getExpectedTreeLength() {
         double expectedTreeLength = 0;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                expectedTreeLength += branchRateModel.getBranchRate(tree, node)
-                        * tree.getBranchLength(node);
+        if (includeExternalBranches) {
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef node = tree.getExternalNode(i);
+                expectedTreeLength += getExpectedBranchLength(node);
             }
         }
+        if (includeInternalBranches) {
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef node = tree.getInternalNode(i);
+                if (!tree.isRoot(node)) {
+                    expectedTreeLength += getExpectedBranchLength(node);
+                }
+            }
+        }       
         return expectedTreeLength;
     }
 
@@ -357,4 +377,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     protected Helper treeTraits = new Helper();
     protected TreeTraitLogger treeTraitLogger;
+
+    private final boolean includeExternalBranches;
+    private final boolean includeInternalBranches;
 }

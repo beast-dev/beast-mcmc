@@ -1,14 +1,14 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.xml.*;
-import dr.app.beagle.evomodel.substmodel.CodonPartitionedRobustCounting;
 import dr.app.beagle.evomodel.substmodel.CodonLabeling;
+import dr.app.beagle.evomodel.substmodel.CodonPartitionedRobustCounting;
 import dr.app.beagle.evomodel.substmodel.StratifiedTraitOutputFormat;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
@@ -23,6 +23,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String BRANCH_FORMAT = "branchFormat";
     public static final String LOG_FORMAT = "logFormat";
     public static final String USE_UNIFORMIZATION = "useUniformization";
+    public static final String INCLUDE_EXTERNAL = "includeExternalBranches";
+    public static final String INCLUDE_INTERNAL = "includeInternalBranches";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -77,6 +79,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         }
 
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
+        boolean includeExternalBranches = xo.getAttribute(INCLUDE_EXTERNAL, true);
+        boolean includeInternalBranches = xo.getAttribute(INCLUDE_INTERNAL, true);
 
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
@@ -85,6 +89,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 codons,
                 codonLabeling,
                 useUniformization,
+                includeExternalBranches,
+                includeInternalBranches,
                 branchFormat,
                 logFormat);
     }
@@ -107,6 +113,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                     "The genetic code to use",
                     GeneticCode.GENETIC_CODE_NAMES, true),
             AttributeRule.newBooleanRule(USE_UNIFORMIZATION, true),
+            AttributeRule.newBooleanRule(INCLUDE_EXTERNAL, true),
+            AttributeRule.newBooleanRule(INCLUDE_INTERNAL, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

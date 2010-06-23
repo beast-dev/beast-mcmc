@@ -194,16 +194,24 @@ public interface TreeTrait<T> {
     public abstract class SumOverTree<T> extends DefaultBehavior implements TreeTrait<T> {
 
         private static final String NAME_PREFIX = "sumOverTree_";
-        private TreeTrait<T> base;
-        private String name;
+        private final TreeTrait<T> base;
+        private final String name;
+        private final boolean includeExternalNodes;
+        private final boolean includeInternalNodes;
 
         public SumOverTree(TreeTrait<T> base) {
             this(NAME_PREFIX + base.getTraitName(), base);
         }
 
         public SumOverTree(String name, TreeTrait<T> base) {
+            this(name, base, true, true);
+        }
+
+        public SumOverTree(String name, TreeTrait<T> base, boolean includeExternalNodes, boolean includeInternalNodes) {
             this.base = base;
             this.name = name;
+            this.includeExternalNodes = includeExternalNodes;
+            this.includeInternalNodes = includeInternalNodes;
         }
 
         public String getTraitName() {
@@ -216,10 +224,15 @@ public interface TreeTrait<T> {
 
         public T getTrait(Tree tree, NodeRef node) {
             T count = null;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-//                T value = base.getTrait(tree, tree.getNode(i));
-
-                count = addToMatrix(count, base.getTrait(tree, tree.getNode(i)));
+            if (includeExternalNodes) {
+               for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                    count = addToMatrix(count, base.getTrait(tree, tree.getExternalNode(i)));
+                }
+            }
+            if (includeInternalNodes) {
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    count = addToMatrix(count, base.getTrait(tree, tree.getInternalNode(i)));
+                }
             }
             return count;
         }
@@ -235,6 +248,11 @@ public interface TreeTrait<T> {
      * A wrapper class that sums a TreeTrait.DA over the entire tree
      */
     public class SumOverTreeDA extends SumOverTree<double[]> {
+
+        public SumOverTreeDA(String name, TreeTrait<double[]> base,
+                             boolean includeExternalNodes, boolean includeInternalNodes) {
+            super(name, base, includeExternalNodes, includeInternalNodes);
+        }
 
         public SumOverTreeDA(String name, TreeTrait<double[]> base) {
             super(name, base);
@@ -271,6 +289,11 @@ public interface TreeTrait<T> {
      * A wrapper class that sums a TreeTrait.D over the entire tree
      */
     public class SumOverTreeD extends SumOverTree<Double> {
+        
+        public SumOverTreeD(String name, TreeTrait<Double> base,
+                            boolean includeExternalNodes, boolean includeInternalNodes) {
+            super(name, base, includeExternalNodes, includeInternalNodes);
+        }
 
         public SumOverTreeD(String name, TreeTrait<Double> base) {
             super(name, base);
@@ -376,7 +399,7 @@ public interface TreeTrait<T> {
     /**
      * An abstract wrapper class that picks one entry out of TreeTrait<T> where T is an array
      */
-    public abstract class PickEntry<T,TA> extends DefaultBehavior implements TreeTrait<T> {
+    public abstract class PickEntry<T, TA> extends DefaultBehavior implements TreeTrait<T> {
 
         protected TreeTrait<TA> base;
         private String name;
@@ -404,7 +427,7 @@ public interface TreeTrait<T> {
         }
     }
 
-    public class PickEntryD extends PickEntry<Double,double[]> {
+    public class PickEntryD extends PickEntry<Double, double[]> {
 
         public PickEntryD(TreeTrait<double[]> base, int index) {
             super(base, index);
@@ -419,7 +442,7 @@ public interface TreeTrait<T> {
         }
 
         public Double getTrait(Tree tree, NodeRef node) {
-            return base.getTrait(tree,node)[index];
+            return base.getTrait(tree, node)[index];
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
@@ -427,7 +450,7 @@ public interface TreeTrait<T> {
         }
     }
 
-    public class PickEntryI extends PickEntry<Integer,int[]> {
+    public class PickEntryI extends PickEntry<Integer, int[]> {
 
         public PickEntryI(TreeTrait<int[]> base, int index) {
             super(base, index);
@@ -442,7 +465,7 @@ public interface TreeTrait<T> {
         }
 
         public Integer getTrait(Tree tree, NodeRef node) {
-            return base.getTrait(tree,node)[index];
+            return base.getTrait(tree, node)[index];
         }
 
         public String getTraitString(Tree tree, NodeRef node) {

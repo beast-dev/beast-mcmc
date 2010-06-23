@@ -270,8 +270,12 @@ public class BEAUTiImporter {
                 }
 
                 if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-
-                    int adt = frame.allowDifferentTaxaJOptionPane();
+                    int adt;
+                    if (frame == null) {
+                        adt = JOptionPane.YES_OPTION;
+                    } else {
+                        adt = frame.allowDifferentTaxaJOptionPane();
+                    }
                     //TODO still have swing code
                     if (adt == JOptionPane.YES_OPTION) {
                         // set to Allow Different Taxa

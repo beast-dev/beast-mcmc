@@ -39,8 +39,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     }
 
     protected void setupStorage() {
-        registration = new double[stateCount * stateCount];
-        reward = new double[stateCount];
+        super.setupStorage();
         tmp = new double[stateCount * stateCount];
     }
 

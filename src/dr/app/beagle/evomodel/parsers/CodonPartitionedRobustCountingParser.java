@@ -22,6 +22,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String LABELING = "labeling";
     public static final String BRANCH_FORMAT = "branchFormat";
     public static final String LOG_FORMAT = "logFormat";
+    public static final String USE_UNIFORMIZATION = "useUniformization";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -75,12 +76,15 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             throw new XMLParseException("Unrecognized log output format '" + branchFormat + "'");
         }
 
+        boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
+
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
                 tree,
                 partition,
                 codons,
                 codonLabeling,
+                useUniformization,
                 branchFormat,
                 logFormat);
     }
@@ -102,6 +106,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             new StringAttributeRule(GeneticCode.GENETIC_CODE,
                     "The genetic code to use",
                     GeneticCode.GENETIC_CODE_NAMES, true),
+            AttributeRule.newBooleanRule(USE_UNIFORMIZATION, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

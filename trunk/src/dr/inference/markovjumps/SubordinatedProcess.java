@@ -37,6 +37,14 @@ public class SubordinatedProcess {
         return poissonRate;
     }
 
+    private double getCachedExp(double x) {
+        if (x != cachedXForExp) {
+            cachedXForExp = x;
+            cachedExpValue = Math.exp(x);
+        }
+        return cachedExpValue;
+    }
+
     /**
      * Compute the n-step discrete-time transition probabilities
      *
@@ -164,7 +172,8 @@ public class SubordinatedProcess {
         double cdf = 0;
 
         double effectiveRate = getPoissonRate() * time;
-        double preFactor = Math.exp(-effectiveRate);
+//        double preFactor = Math.exp(-effectiveRate);
+        double preFactor = getCachedExp(-effectiveRate);
         double scale = 1.0;
         int index = startingState * stateCount + endingState;
 
@@ -238,6 +247,9 @@ public class SubordinatedProcess {
     private final double poissonRate;
     private final int stateCount;
     private final double[] tmp;
+
+    private double cachedXForExp = Double.NaN;
+    private double cachedExpValue;
 
     private static final boolean DEBUG = false;
 }

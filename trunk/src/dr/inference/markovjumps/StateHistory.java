@@ -52,9 +52,19 @@ public class StateHistory {
 
     public double getTotalRegisteredCounts(double[] register) {
         int[] counts = getJumpCounts();
+//        double total = 0;
+//        for (int i = 0; i < counts.length; i++) {
+//            total += counts[i] * register[i];
+//        }
+//        return total;
+        return dotProduct(counts, register);
+    }
+
+    private double dotProduct(int[] a, double[] b) {
         double total = 0;
-        for (int i = 0; i < counts.length; i++) {
-            total += counts[i] * register[i];
+        final int length = a.length;
+        for (int i = 0; i < length; i++) {
+            total += a[i] * b[i];
         }
         return total;
     }

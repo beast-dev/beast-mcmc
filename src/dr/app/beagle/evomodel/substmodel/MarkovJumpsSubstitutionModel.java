@@ -179,6 +179,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         }
     }
 
+    public SubstitutionModel getSubstitutionModel() {
+        return substModel;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == substModel) {
             regRateChanged = true;

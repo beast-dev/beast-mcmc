@@ -41,8 +41,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
-                                          CodonLabeling codonLabeling) {
-        this(name, tree, partition, codons, codonLabeling,
+                                          CodonLabeling codonLabeling,
+                                          boolean useUniformization) {
+        this(name, tree, partition, codons, codonLabeling, useUniformization,
                 StratifiedTraitOutputFormat.SUM_OVER_SITES, StratifiedTraitOutputFormat.SUM_OVER_SITES);
 
     }
@@ -51,6 +52,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           AncestralStateBeagleTreeLikelihood[] partition,
                                           Codons codons,
                                           CodonLabeling codonLabeling,
+                                          boolean useUniformization,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -83,7 +85,12 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
         addModel(productChainModel);
 
-        markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
+        this.useUniformization = useUniformization;
+        if (useUniformization) {
+            markovJumps = new UniformizedSubstitutionModel(productChainModel);
+        } else {
+            markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
+        }
         double[] synRegMatrix = CodonLabeling.getRegisterMatrix(codonLabeling, codons, true);
         markovJumps.setRegistration(synRegMatrix);
 
@@ -129,9 +136,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         double branchRateTime = branchRateModel.getBranchRate(tree, child) * tree.getBranchLength(child);
 
-        markovJumps.computeCondStatMarkovJumps(branchRateTime, condMeanMatrix);
-
         double[] count = new double[numCodons];
+
+        if (!useUniformization) {
+            markovJumps.computeCondStatMarkovJumps(branchRateTime, condMeanMatrix);
+        } else {
+            // Fill condMeanMatrix with transition probabilities
+            markovJumps.getSubstitutionModel().getTransitionProbabilities(branchRateTime, condMeanMatrix);
+        }
 
         for (int i = 0; i < numCodons; i++) {
 
@@ -143,7 +155,18 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 //            final int vChildState = getVladimirState(childSeq0[i], childSeq1[i], childSeq2[i]);
 //            final int vParentState = getVladimirState(parentSeq0[i], parentSeq1[i], parentSeq2[i]);
 
-            final double codonCount = condMeanMatrix[parentState * 64 + childState];
+            final double codonCount;
+
+            if (!useUniformization) {
+                codonCount = condMeanMatrix[parentState * 64 + childState];
+            } else {
+                codonCount = ((UniformizedSubstitutionModel) markovJumps).computeCondStatMarkovJumps(
+                        parentState,
+                        childState,
+                        branchRateTime,
+                        condMeanMatrix[parentState * 64 + childState]
+                );
+            }
 
             if (DEBUG) {
 
@@ -243,7 +266,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     }
 
-    public TreeTrait[] getTreeTraits() {       
+    public TreeTrait[] getTreeTraits() {
         return treeTraits.getTreeTraits();
     }
 
@@ -314,6 +337,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private final AncestralStateBeagleTreeLikelihood[] partition;
     private final MarkovJumpsSubstitutionModel markovJumps;
+    private final boolean useUniformization;
     private final BranchRateModel branchRateModel;
 
     private final CodonLabeling codonLabeling;

@@ -4,14 +4,10 @@ import dr.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceList;
-import dr.stats.Variate;
-import org.virion.jam.framework.Exportable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Marc A. Suchard
@@ -21,7 +17,7 @@ public class BetterDensityPanel extends DensityPanel {
 
     private JButton kdeSetupButton;
     private KDESetupDialog kdeSetupDialog = null;
-      
+
     public BetterDensityPanel(final JFrame frame) {
         super(frame);
     }
@@ -30,7 +26,7 @@ public class BetterDensityPanel extends DensityPanel {
         JToolBar toolBar = super.setupToolBar(frame);
 
         kdeSetupButton = new JButton("KDE...");
-    
+
                 kdeSetupButton.putClientProperty(
                 "Quaqua.Button.style", "placard"
         );
@@ -45,7 +41,7 @@ public class BetterDensityPanel extends DensityPanel {
                                     Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
                         }
 
-                        kdeSetupDialog.showDialog(traceChart);
+                        kdeSetupDialog.showDialog(densityChart);
                         validate();
                         repaint();
                     }
@@ -55,7 +51,7 @@ public class BetterDensityPanel extends DensityPanel {
         return toolBar;
     }
 
-    protected Plot setupDoubleTrace(TraceList tl, int traceIndex, TraceCorrelation td) {
+    protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
         Double values[] = new Double[tl.getStateCount()];
         tl.getValues(traceIndex, values);
         boolean[] selected = new boolean[tl.getStateCount()];
@@ -63,7 +59,7 @@ public class BetterDensityPanel extends DensityPanel {
 
         Plot plot = new KDENumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
 
-        traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+        densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         chartPanel.setYAxisTitle("Density");
 
         relativeDensityCheckBox.setVisible(true);
@@ -73,5 +69,5 @@ public class BetterDensityPanel extends DensityPanel {
     }
 }
 
-    
+
 

@@ -73,11 +73,16 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                         + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
             }
 
+            if (cxo.hasAttribute(RELATIVE_TO)) {
+                throw new XMLParseException(RELATIVE_TO + " attribute is not allowed in SVS general substitution model.");
+            }
+
             cxo = xo.getChild(INDICATOR);
             indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
 
             if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
                 throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
+
 
             if (xo.hasChildNamed(ROOT_FREQ)) {
                 cxo = xo.getChild(ROOT_FREQ);
